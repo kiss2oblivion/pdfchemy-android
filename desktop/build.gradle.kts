@@ -44,10 +44,12 @@ val buildArkhamLaunchers by tasks.registering {
         val cppDir = file("src/main/cpp")
         
         try {
-            ProcessBuilder("cmake", "-S", ".", "-B", "build").directory(cppDir).inheritIO().start().waitFor()
-            ProcessBuilder("cmake", "--build", "build", "--config", "Release").directory(cppDir).inheritIO().start().waitFor()
-        } catch (e: Exception) {
-            println("Skipping Arkham launcher build: CMake not found or failed (${e.message})")
+            val configure = ProcessBuilder("cmake", "-S", ".", "-B", "build").directory(cppDir).inheritIO().start()
+            if (configure.waitFor() != 0) throw GradleException("CMake configure failed")
+            val build = ProcessBuilder("cmake", "--build", "build", "--config", "Release").directory(cppDir).inheritIO().start()
+            if (build.waitFor() != 0) throw GradleException("Arkham launcher build failed")
+        } catch (e: java.io.IOException) {
+            println("Skipping Arkham launcher build: CMake not found or failed to start (${e.message})")
         }
         
         val outDir = file("src/main/resources/jail")
@@ -55,7 +57,12 @@ val buildArkhamLaunchers by tasks.registering {
         
         if (isWin) {
             val exe = file("src/main/cpp/build/Release/arkham-launcher.exe")
-            if (exe.exists()) exe.copyTo(file("src/main/resources/jail/arkham-launcher.exe"), overwrite = true)
+            if (!exe.exists()) {
+                val debugExe = file("src/main/cpp/build/Debug/arkham-launcher.exe")
+                if (debugExe.exists()) debugExe.copyTo(file("src/main/resources/jail/arkham-launcher.exe"), overwrite = true)
+            } else {
+                exe.copyTo(file("src/main/resources/jail/arkham-launcher.exe"), overwrite = true)
+            }
         } else {
             val exe = file("src/main/cpp/build/arkham-launcher-linux")
             if (exe.exists()) exe.copyTo(file("src/main/resources/jail/arkham-launcher-linux"), overwrite = true)

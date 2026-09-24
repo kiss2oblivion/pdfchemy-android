@@ -88,9 +88,10 @@ bool AddAceToWindowStationAndDesktop(PSID sid) {
     PSECURITY_DESCRIPTOR pSD = NULL;
     if (GetSecurityInfo(hWinsta, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, &pOldDacl, NULL, &pSD) != ERROR_SUCCESS) return false;
     if (SetEntriesInAclW(1, &ea[0], pOldDacl, &pNewDacl) != ERROR_SUCCESS) return false;
-    SetSecurityInfo(hWinsta, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, pNewDacl, NULL);
+    DWORD res1 = SetSecurityInfo(hWinsta, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, pNewDacl, NULL);
     if (pSD) LocalFree(pSD); 
     if (pNewDacl) LocalFree(pNewDacl);
+    if (res1 != ERROR_SUCCESS) return false;
 
     // Grant DESKTOP_ALL_ACCESS (using GENERIC_ALL)
     ea[1].grfAccessPermissions = GENERIC_ALL;
@@ -103,11 +104,38 @@ bool AddAceToWindowStationAndDesktop(PSID sid) {
     pOldDacl = NULL; pNewDacl = NULL; pSD = NULL;
     if (GetSecurityInfo(hDesk, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, &pOldDacl, NULL, &pSD) != ERROR_SUCCESS) return false;
     if (SetEntriesInAclW(1, &ea[1], pOldDacl, &pNewDacl) != ERROR_SUCCESS) return false;
-    SetSecurityInfo(hDesk, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, pNewDacl, NULL);
+    DWORD res2 = SetSecurityInfo(hDesk, SE_WINDOW_OBJECT, DACL_SECURITY_INFORMATION, NULL, NULL, pNewDacl, NULL);
     if (pSD) LocalFree(pSD); 
     if (pNewDacl) LocalFree(pNewDacl);
+    if (res2 != ERROR_SUCCESS) return false;
 
     return true;
+}
+
+std::wstring quoteArg(const std::wstring& arg) {
+    if (arg.empty()) return L"\"\"";
+    if (arg.find_first_of(L" \t\n\v\"") == std::wstring::npos) return arg;
+    
+    std::wstring quoted = L"\"";
+    for (size_t i = 0; i < arg.length(); ++i) {
+        size_t numBackslashes = 0;
+        while (i < arg.length() && arg[i] == L'\\') {
+            ++i;
+            ++numBackslashes;
+        }
+        if (i == arg.length()) {
+            quoted.append(numBackslashes * 2, L'\\');
+            break;
+        } else if (arg[i] == L'"') {
+            quoted.append(numBackslashes * 2 + 1, L'\\');
+            quoted.push_back(arg[i]);
+        } else {
+            quoted.append(numBackslashes, L'\\');
+            quoted.push_back(arg[i]);
+        }
+    }
+    quoted.push_back(L'"');
+    return quoted;
 }
 
 int main(int argc, char* argv[]) {
@@ -211,12 +239,7 @@ int main(int argc, char* argv[]) {
     std::wstring cmdLine;
     for (int i = 5; i < argc; ++i) {
         if (i > 5) cmdLine += L" ";
-        std::wstring arg = toWString(argv[i]);
-        if (arg.find(L' ') != std::wstring::npos || arg.empty()) {
-            cmdLine += L"\"" + arg + L"\"";
-        } else {
-            cmdLine += arg;
-        }
+        cmdLine += quoteArg(toWString(argv[i]));
     }
     HANDLE hJar = CreateFileW(toWString(jarPath).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hJar == INVALID_HANDLE_VALUE) fail("Failed to open jar file");
@@ -242,7 +265,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Grant access to Window Station and Desktop so USER32.dll can initialize successfully
-    AddAceToWindowStationAndDesktop(appContainerSid);
+    if (!AddAceToWindowStationAndDesktop(appContainerSid)) {
+        fail("AddAceToWindowStationAndDesktop failed");
+    }
 
     // 4. Setup STARTUPINFOEX for AppContainer and Handle Allowlist
     STARTUPINFOEXW siex = { 0 };

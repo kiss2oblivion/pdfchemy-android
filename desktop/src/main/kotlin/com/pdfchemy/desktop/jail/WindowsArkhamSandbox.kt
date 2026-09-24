@@ -55,9 +55,11 @@ class WindowsArkhamSandbox(private val launcherExePath: Path) : ArkhamSandbox {
         }
         val sidGrant = "*$sidStr"
         
-        runIcacls("icacls", jreDir.absolutePath, "/grant", "$sidGrant:(OI)(CI)(RX)")
-        runIcacls("icacls", worker.classPath, "/grant", "$sidGrant:(RX)")
-        runIcacls("icacls", worker.workingDirectory.absolutePath, "/grant", "$sidGrant:(OI)(CI)(M)")
+        val systemRoot = System.getenv("SystemRoot") ?: "C:\\Windows"
+        val icaclsPath = "$systemRoot\\System32\\icacls.exe"
+        runIcacls(icaclsPath, jreDir.absolutePath, "/grant", "$sidGrant:(OI)(CI)(RX)")
+        runIcacls(icaclsPath, worker.classPath, "/grant", "$sidGrant:(RX)")
+        runIcacls(icaclsPath, worker.workingDirectory.absolutePath, "/grant", "$sidGrant:(OI)(CI)(M)")
 
         println("DEBUG: launcherArgs = $launcherArgs")
 

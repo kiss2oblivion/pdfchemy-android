@@ -281,8 +281,8 @@ class LinuxArkhamSandbox(
             bwrapHash = bwrapHash,
             bwrapVersion = bwrapVersion,
             sandboxPolicyHash = "SECCOMP:$seccompMode",
-            filesystemManifestHash = "STATIC_UBUNTU_24_04",
-            resourcePolicyHash = "CGROUP_ENFORCED",
+            filesystemManifestHash = "measured_via_ro_binds",
+            resourcePolicyHash = if (cgroup.contains("user.slice") || cgroup.contains("system.slice")) "CGROUP_DETECTED" else "UNKNOWN",
             namespaceInodes = inodes,
             cgroupIdentity = cgroup,
             

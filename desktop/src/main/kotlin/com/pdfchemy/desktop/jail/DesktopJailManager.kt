@@ -78,8 +78,7 @@ object DesktopJailManager {
                 if (response.status == "SUCCESS") {
                     responsePayload = response.payload ?: ""
                     if (payloadLength > 0) {
-                        val tempDir = File(File(System.getProperty("user.home"), ".pdfchemy/jail"), "pdfchemy_jail").apply { mkdirs() }
-                        val outputFile = File(tempDir, "jail_out_${java.util.UUID.randomUUID()}.pdf")
+                        val outputFile = com.pdfchemy.desktop.engine.DesktopStaging.createTempFile("jail_out_", ".pdf")
                         tempFiles.add(outputFile)
                         outputFile.outputStream().use { fileOut ->
                             boundedStream.copyTo(fileOut, bufferSize = 8192)
@@ -209,7 +208,7 @@ object DesktopJailManager {
                 throw SecurityException("Security Fingerprint Validation Failed for Windows: $snapshot")
             }
         } else {
-            if (snapshot.containmentStrategy != "namespaces_and_cgroups" || !snapshot.networkDenied || snapshot.filesystemManifestHash != "STATIC_UBUNTU_24_04") {
+            if (snapshot.containmentStrategy != "namespaces_and_cgroups" || !snapshot.networkDenied || snapshot.filesystemManifestHash != "measured_via_ro_binds") {
                 sandbox.terminate()
                 throw SecurityException("Security Fingerprint Validation Failed for Linux: $snapshot")
             }
@@ -382,8 +381,7 @@ class JailInteractiveSession(
                         currentTotalSize = response.totalSize
                         currentSequence = 0
                         bytesReceived = 0L
-                        val tempDir = File(File(System.getProperty("user.home"), ".pdfchemy/jail"), "pdfchemy_jail").apply { mkdirs() }
-                        currentTempFile = File.createTempFile("jail_out_${java.util.UUID.randomUUID()}", ".pdf", tempDir)
+                        currentTempFile = com.pdfchemy.desktop.engine.DesktopStaging.createTempFile("jail_out_", ".pdf")
                         currentOutputStream = currentTempFile!!.outputStream()
                     }
                     "CHUNK" -> {
