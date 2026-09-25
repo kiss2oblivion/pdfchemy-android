@@ -188,3 +188,11 @@ jobs:
               gh release edit "$tag" --draft
             fi
           done
+
+      - name: Publish to Winget
+        uses: vedantmgoyal2009/winget-releaser@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          identifier: PDFchemy.PDFchemy
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_GH_TOKEN }}

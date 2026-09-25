@@ -208,14 +208,30 @@ object DesktopJailManager {
         // Security Fingerprint Validation
         val snapshot = sandbox.getCapabilitySnapshot()
         if (System.getProperty("os.name").startsWith("Win")) {
-            if (snapshot.containmentStrategy != "LPAC" || !snapshot.networkDenied || snapshot.capabilitySetHash == null || !snapshot.capabilitySetHash!!.contains("INTEGRITY")) {
+            if (snapshot.tokenAppContainerIdentity == null || snapshot.tokenAppContainerIdentity == "unknown" || !snapshot.tokenAppContainerIdentity!!.startsWith("S-1-15-2-")) {
                 sandbox.terminate()
-                throw SecurityException("Security Fingerprint Validation Failed for Windows: $snapshot")
+                throw SecurityException("Security Fingerprint Validation Failed for Windows (Not in AppContainer): $snapshot")
+            }
+            if (snapshot.jobIdentity != "Assigned") {
+                sandbox.terminate()
+                throw SecurityException("Security Fingerprint Validation Failed for Windows (Not in Job Object): $snapshot")
+            }
+            if (snapshot.capabilitySetHash == null || !snapshot.capabilitySetHash!!.contains("Low")) {
+                sandbox.terminate()
+                throw SecurityException("Security Fingerprint Validation Failed for Windows (Not Low Integrity): $snapshot")
             }
         } else {
-            if (snapshot.containmentStrategy != "namespaces_and_cgroups" || !snapshot.networkDenied || snapshot.filesystemManifestHash != "measured_via_ro_binds") {
+            if (snapshot.capabilitySetHash == null || !snapshot.capabilitySetHash!!.contains("Seccomp: 2")) {
                 sandbox.terminate()
-                throw SecurityException("Security Fingerprint Validation Failed for Linux: $snapshot")
+                throw SecurityException("Security Fingerprint Validation Failed for Linux (Seccomp not enforced): $snapshot")
+            }
+            if (!snapshot.networkDenied) {
+                sandbox.terminate()
+                throw SecurityException("Security Fingerprint Validation Failed for Linux (Network not isolated): $snapshot")
+            }
+            if (snapshot.processMitigations == null || !snapshot.processMitigations!!.contains("mnt")) {
+                sandbox.terminate()
+                throw SecurityException("Security Fingerprint Validation Failed for Linux (Mount namespace not isolated): $snapshot")
             }
         }
         
