@@ -104,39 +104,32 @@ object FileUtils {
 
     fun openParcelFileDescriptor(context: Context, uri: Uri): android.os.ParcelFileDescriptor? {
         return try {
-            if (uri.scheme == "file") {
-                val file = java.io.File(uri.path ?: return null)
-                android.os.ParcelFileDescriptor.open(file, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
+            val maxBytes = 2L * 1024 * 1024 * 1024 // 2 GB limit
+            val randomId = java.util.UUID.randomUUID().toString()
+            val tempFile = java.io.File(context.cacheDir, "pdf_sandbox_cache_$randomId.pdf")
+            
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                java.io.FileOutputStream(tempFile).use { output ->
+                    val buffer = ByteArray(8192)
+                    var bytesCopied = 0L
+                    var read: Int
+                    while (input.read(buffer).also { read = it } != -1) {
+                        bytesCopied += read
+                        if (bytesCopied > maxBytes) {
+                            throw Exception("Input document exceeds hard size limit of 2GB")
+                        }
+                        output.write(buffer, 0, read)
+                    }
+                }
+            }
+            
+            if (tempFile.exists() && tempFile.length() > 0) {
+                // Ensure file is deleted on exit if possible, though we can't fully guarantee it without tracking.
+                tempFile.deleteOnExit()
+                android.os.ParcelFileDescriptor.open(tempFile, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
             } else {
-                // 1. Try direct descriptor from ContentResolver first
-                try {
-                    val directPfd = context.contentResolver.openFileDescriptor(uri, "r")
-                    if (directPfd != null) {
-                        try {
-                            val testRenderer = android.graphics.pdf.PdfRenderer(directPfd)
-                            testRenderer.close()
-                            return context.contentResolver.openFileDescriptor(uri, "r")
-                        } catch (_: Exception) {
-                            try { directPfd.close() } catch (_: Exception) {}
-                        }
-                    }
-                } catch (_: Exception) {}
-
-                // 2. Fallback: Copy to a deterministic session cache file to avoid re-copying on every page render
-                val hash = uri.toString().hashCode().toUInt().toString(16)
-                val tempFile = java.io.File(context.cacheDir, "pdf_seekable_$hash.pdf")
-                if (!tempFile.exists() || tempFile.length() == 0L || (System.currentTimeMillis() - tempFile.lastModified() > 10 * 60 * 1000L)) {
-                    context.contentResolver.openInputStream(uri)?.use { input ->
-                        java.io.FileOutputStream(tempFile).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                }
-                if (tempFile.exists() && tempFile.length() > 0) {
-                    android.os.ParcelFileDescriptor.open(tempFile, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
-                } else {
-                    context.contentResolver.openFileDescriptor(uri, "r")
-                }
+                tempFile.delete()
+                null
             }
         } catch (e: Exception) {
             com.pdfchemy.app.utils.AppLogger.e("FileUtils: failed to open parcel file descriptor", e)

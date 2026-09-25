@@ -2,7 +2,6 @@ package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
@@ -69,20 +68,11 @@ fun DeskewScreen(
             try {
                 withContext(Dispatchers.IO) {
                     var pfd: ParcelFileDescriptor? = null
-                    var renderer: PdfRenderer? = null
-                    var page: PdfRenderer.Page? = null
                     try {
                         pfd = context.contentResolver.openFileDescriptor(uri, "r")
                         if (pfd != null) {
-                            renderer = PdfRenderer(pfd)
-                            if (renderer.pageCount > 0) {
-                                page = renderer.openPage(0)
-                                val width = 360
-                                val height = (width.toFloat() * page.height / page.width).toInt().coerceAtLeast(1)
-                                val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                                bmp.eraseColor(AndroidColor.WHITE)
-                                page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
+                            val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, 0, 360)
+                            if (bmp != null) {
                                 val angle = PdfDeskewEngine.detectSkewAngle(bmp)
                                 withContext(Dispatchers.Main) {
                                     previewBitmap?.recycle()
@@ -92,8 +82,6 @@ fun DeskewScreen(
                             }
                         }
                     } finally {
-                        page?.close()
-                        renderer?.close()
                         pfd?.close()
                     }
                 }

@@ -8,7 +8,6 @@ package com.pdfchemy.app.ui
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
@@ -97,29 +96,21 @@ fun FormBuilderScreen(
             try {
                 withContext(Dispatchers.IO) {
                     var pfd: ParcelFileDescriptor? = null
-                    var renderer: PdfRenderer? = null
-                    var page: PdfRenderer.Page? = null
                     try {
                         pfd = context.contentResolver.openFileDescriptor(uri, "r")
                         if (pfd != null) {
-                            renderer = PdfRenderer(pfd)
-                            totalPages = renderer.pageCount
+                            totalPages = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
                             if (pageIdx in 0 until totalPages) {
-                                page = renderer.openPage(pageIdx)
-                                val width = 720
-                                val height = (width.toFloat() * page.height / page.width).toInt().coerceAtLeast(1)
-                                val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                                bmp.eraseColor(AndroidColor.WHITE)
-                                page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                                withContext(Dispatchers.Main) {
-                                    currentPageBitmap?.recycle()
-                                    currentPageBitmap = bmp
+                                val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, pageIdx, 720)
+                                if (bmp != null) {
+                                    withContext(Dispatchers.Main) {
+                                        currentPageBitmap?.recycle()
+                                        currentPageBitmap = bmp
+                                    }
                                 }
                             }
                         }
                     } finally {
-                        page?.close()
-                        renderer?.close()
                         pfd?.close()
                     }
                 }

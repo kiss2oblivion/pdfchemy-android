@@ -62,12 +62,12 @@ class CorporatePowerFeaturesTest {
             overlayLabel = "CONFIDENTIAL"
         )
 
-        val success = PdfRedactor.applyRedactions(
+        val success = PdfRedactionEngine.applyRedactions(
             context = context,
             sourceUri = Uri.fromFile(testPdf),
             destUri = Uri.fromFile(outputPdf),
             redactions = listOf(redaction)
-        )
+        ).isSuccess
 
         assertTrue(success)
         assertTrue(outputPdf.exists())
@@ -191,3 +191,4 @@ class CorporatePowerFeaturesTest {
         assertTrue(outputPdf.length() > 0)
     }
 }
+

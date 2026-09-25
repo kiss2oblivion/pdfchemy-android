@@ -16,6 +16,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.util.zip.ZipFile
 
 @RunWith(AndroidJUnit4::class)
@@ -66,8 +68,8 @@ class PdfToEpubEngineTest {
 
         val result = PdfToEpubEngine.pdfToEpub(
             context = context,
-            sourcePdfUri = samplePdfUri,
-            destEpubUri = destEpubUri,
+            inputStream = FileInputStream(samplePdfFile),
+            outputStream = FileOutputStream(destEpubFile),
             bookTitle = "Sample E-Book",
             authorName = "Author Name"
         )

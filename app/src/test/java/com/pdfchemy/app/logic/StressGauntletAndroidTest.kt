@@ -25,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 
 /**
@@ -64,7 +65,7 @@ class StressGauntletAndroidTest {
         doc.close()
 
         val sourceUri = Uri.fromFile(testFile)
-        val searchResult = PdfRedactionEngine.searchRedactionTargets(context, sourceUri, "987-65-4321")
+        val searchResult = PdfRedactionEngine.searchRedactionTargets(context, FileInputStream(testFile), "987-65-4321")
         assertTrue("Must locate sensitive token", searchResult.isSuccess)
         val targets = searchResult.getOrThrow()
         assertTrue("Found at least 1 target box", targets.isNotEmpty())
@@ -73,8 +74,8 @@ class StressGauntletAndroidTest {
         val destUri = Uri.fromFile(outFile)
         val applyResult = PdfRedactionEngine.applyRedactions(
             context = context,
-            sourcePdfUri = sourceUri,
-            destPdfUri = destUri,
+            inputStream = FileInputStream(testFile),
+            outputStream = FileOutputStream(outFile),
             boxes = targets,
             config = RedactionConfig(isBlackout = true, defaultOverlayText = "CENSORED")
         )

@@ -105,26 +105,18 @@ fun EbookConverterScreen(
                         )
                     }
                     EbookMode.PDF_TO_CBZ -> {
-                        ComicBookEngine.pdfToCbz(
+                        ComicBookEngine.convertPdfToCbz(
                             context = context,
                             sourcePdfUri = selectedSourceUri!!,
-                            destCbzUri = destUri,
-                            onProgress = { c, t ->
-                                progressCurrent = c
-                                progressTotal = t
-                            }
-                        )
+                            destCbzUri = destUri
+                        ).map { true }
                     }
                     EbookMode.CBZ_TO_PDF -> {
-                        ComicBookEngine.cbzToPdf(
+                        ComicBookEngine.convertCbzToPdf(
                             context = context,
                             sourceCbzUri = selectedSourceUri!!,
-                            destPdfUri = destUri,
-                            onProgress = { c, t ->
-                                progressCurrent = c
-                                progressTotal = t
-                            }
-                        )
+                            destPdfUri = destUri
+                        ).map { true }
                     }
                 }
                 isProcessing = false

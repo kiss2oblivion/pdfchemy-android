@@ -149,7 +149,7 @@ dependencies {
     implementation("androidx.window:window:1.2.0")
 
     // Text Conversion Libraries
-    implementation("org.jsoup:jsoup:1.23.1")
+    implementation("org.jsoup:jsoup:1.23.2")
     implementation("com.vladsch.flexmark:flexmark-all:0.64.8")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.8")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.8")
@@ -163,6 +163,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("com.tngtech.archunit:archunit:1.3.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.01"))

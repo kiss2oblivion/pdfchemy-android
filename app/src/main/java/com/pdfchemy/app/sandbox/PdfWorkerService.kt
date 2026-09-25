@@ -99,7 +99,7 @@ class PdfWorkerService : Service() {
                     ParcelFileDescriptor.AutoCloseInputStream(inputPfd).use { inputStream ->
                         val result = PdfRedactionEngine.searchRedactionTargets(
                             context = this@PdfWorkerService,
-                            inputStream = inputStream,
+                            pdfUri = android.net.Uri.EMPTY,
                             query = query,
                             isRegex = isRegex
                         )
@@ -173,9 +173,9 @@ class PdfWorkerService : Service() {
                         ParcelFileDescriptor.AutoCloseOutputStream(outputPfd).use { outputStream ->
                             val result = PdfRedactionEngine.applyRedactions(
                                 context = this@PdfWorkerService,
-                                inputStream = inputStream,
-                                outputStream = outputStream,
-                                boxes = boxes,
+                                sourceUri = android.net.Uri.EMPTY,
+                                destUri = android.net.Uri.EMPTY,
+                                redactions = boxes,
                                 config = config
                             )
                             if (result.isSuccess) {

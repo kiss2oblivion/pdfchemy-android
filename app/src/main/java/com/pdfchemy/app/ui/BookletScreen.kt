@@ -1,7 +1,7 @@
 package com.pdfchemy.app.ui
 
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.graphics.pdf.PdfRenderer
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -62,15 +62,10 @@ fun BookletScreen(
             withContext(Dispatchers.IO) {
                 try {
                     context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                        val renderer = PdfRenderer(pfd)
-                        try {
-                            val count = renderer.pageCount
-                            withContext(Dispatchers.Main) {
-                                pageCount = count
-                                bookletPlan = PdfBookletEngine.computeBookletPlan(count)
-                            }
-                        } finally {
-                            try { renderer.close() } catch (_: Throwable) {}
+                        val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                        withContext(Dispatchers.Main) {
+                            pageCount = count
+                            bookletPlan = PdfBookletEngine.computeBookletPlan(count)
                         }
                     }
                 } catch (_: Exception) {}

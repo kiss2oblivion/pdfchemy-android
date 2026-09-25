@@ -16,6 +16,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [33])
@@ -52,7 +54,7 @@ class PdfRedactionEngineTest {
     fun testSearchRedactionTargets() = runBlocking {
         val searchResult = PdfRedactionEngine.searchRedactionTargets(
             context = context,
-            pdfUri = samplePdfUri,
+            inputStream = FileInputStream(samplePdfFile),
             query = "Confidential"
         )
         assertTrue(searchResult.isSuccess)
@@ -71,8 +73,8 @@ class PdfRedactionEngineTest {
 
         val result = PdfRedactionEngine.applyRedactions(
             context = context,
-            sourcePdfUri = samplePdfUri,
-            destPdfUri = destUri,
+            inputStream = FileInputStream(samplePdfFile),
+            outputStream = FileOutputStream(destFile),
             boxes = listOf(manualBox),
             config = config
         )

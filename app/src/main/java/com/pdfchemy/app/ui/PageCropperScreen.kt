@@ -1,7 +1,6 @@
 package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.BackHandler
@@ -89,33 +88,24 @@ fun PageCropperScreen(
         coroutineScope.launch(Dispatchers.IO) {
             isRendering = true
             var pfd: ParcelFileDescriptor? = null
-            var renderer: PdfRenderer? = null
             try {
                 pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
-                renderer = PdfRenderer(pfd)
-                pageCount = renderer.pageCount
-                if (renderer.pageCount > 0) {
-                    val safeIdx = pageIndex.coerceIn(0, renderer.pageCount - 1)
+                pageCount = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                if (pageCount > 0) {
+                    val safeIdx = pageIndex.coerceIn(0, pageCount - 1)
                     currentPageIndex = safeIdx
-                    val page = renderer.openPage(safeIdx)
-                    val scale = 2
-                    val bmp = Bitmap.createBitmap(page.width * scale, page.height * scale, Bitmap.Config.ARGB_8888)
-                    try {
-                        val canvas = android.graphics.Canvas(bmp)
-                        canvas.drawColor(android.graphics.Color.WHITE)
-                        page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    } finally {
-                        page.close()
-                    }
-                    withContext(Dispatchers.Main) {
-                        previewBitmap?.recycle()
-                        previewBitmap = bmp
+                    // The original code used scale=2 on original page width, let's just request ~1000px width which is approx 2x
+                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, safeIdx, 1000)
+                    if (bmp != null) {
+                        withContext(Dispatchers.Main) {
+                            previewBitmap?.recycle()
+                            previewBitmap = bmp
+                        }
                     }
                 }
             } catch (e: Exception) {
                 AppLogger.e("PageCropperScreen: Failed to render preview", e)
             } finally {
-                try { renderer?.close() } catch (_: Throwable) {}
                 try { pfd?.close() } catch (_: Throwable) {}
                 withContext(Dispatchers.Main) {
                     isRendering = false

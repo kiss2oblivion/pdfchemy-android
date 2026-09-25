@@ -66,7 +66,7 @@ fun RedactionScreen(
 
         coroutineScope.launch {
             isSearching = true
-            val result = com.pdfchemy.app.sandbox.SandboxCoordinator.searchRedactionTargets(
+            val result = com.pdfchemy.app.logic.PdfRedactionEngine.searchRedactionTargets(
                 context = context,
                 pdfUri = uri,
                 query = query,
@@ -93,17 +93,14 @@ fun RedactionScreen(
                 val config = RedactionConfig(
                     isBlackout = isBlackout,
                     defaultOverlayText = overlayText,
-                    searchKeyword = searchQuery,
-                    isRegex = isRegex,
-                    manualBoxes = foundBoxes,
                     forensicSanitize = forensicSanitize
                 )
 
-                val result = com.pdfchemy.app.sandbox.SandboxCoordinator.applyRedactions(
+                val result = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
                     context = context,
-                    sourcePdfUri = selectedPdfUri!!,
-                    destPdfUri = destUri,
-                    boxes = foundBoxes,
+                    sourceUri = selectedPdfUri!!,
+                    destUri = destUri,
+                    redactions = foundBoxes,
                     config = config
                 )
                 isProcessing = false
@@ -135,7 +132,7 @@ fun RedactionScreen(
                     defaultOverlayText = overlayText,
                     forensicSanitize = forensicSanitize
                 )
-                val result = com.pdfchemy.app.sandbox.SandboxCoordinator.smartRedact(
+                val result = com.pdfchemy.app.logic.PdfRedactionEngine.smartRedact(
                     context = context,
                     pdfUri = selectedPdfUri!!,
                     destUri = destUri,

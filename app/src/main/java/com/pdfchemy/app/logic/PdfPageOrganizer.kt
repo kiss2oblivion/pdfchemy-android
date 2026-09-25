@@ -3,11 +3,10 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 data class PageAction(
     val originalPageIndex: Int? = null,
@@ -23,43 +22,27 @@ object PdfPageOrganizer {
         destUri: Uri,
         actions: List<PageAction>
     ): Boolean = withContext(Dispatchers.IO) {
-        var sourceDoc: PDDocument? = null
-        var newDoc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                sourceDoc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                if (sourceDoc == null) return@withContext false
-
-                newDoc = PDDocument()
-                val totalOriginalPages = sourceDoc!!.numberOfPages
-
-                for (action in actions) {
-                    if (action.isBlank) {
-                        val blankPage = PDPage(PDRectangle.LETTER)
-                        newDoc!!.addPage(blankPage)
-                    } else if (action.originalPageIndex != null && action.originalPageIndex in 0 until totalOriginalPages) {
-                        val originalPage = sourceDoc!!.getPage(action.originalPageIndex)
-                        val importedPage = newDoc!!.importPage(originalPage)
-                        val newRotation = (importedPage.rotation + action.rotationDegrees) % 360
-                        importedPage.rotation = if (newRotation < 0) newRotation + 360 else newRotation
-                    }
+            val arr = JSONArray()
+            for (action in actions) {
+                val obj = JSONObject()
+                if (action.originalPageIndex != null) {
+                    obj.put("originalPageIndex", action.originalPageIndex)
                 }
+                obj.put("rotationDegrees", action.rotationDegrees)
+                obj.put("isBlank", action.isBlank)
+                arr.put(obj)
+            }
+            
+            val params = JSONObject().apply {
+                put("actions", arr)
+            }.toString()
 
-                if (newDoc!!.numberOfPages == 0) {
-                    return@withContext false
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    newDoc!!.save(outStream)
-                }
-                true
-            } ?: false
+            PdfGateway.executeEngine(context, "PAGE_ORGANIZE", sourceUri, destUri, params)
+            true
         } catch (e: Exception) {
-            AppLogger.e("Failed to reorganize PDF pages: ${e.message}", e)
+            AppLogger.e("Failed to reorganize PDF pages: ", e)
             false
-        } finally {
-            sourceDoc?.close()
-            newDoc?.close()
         }
     }
 }

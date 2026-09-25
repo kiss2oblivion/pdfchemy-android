@@ -4,12 +4,9 @@ import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.pdmodel.PDDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.InputStream
+import org.json.JSONObject
 
 data class LinearizeStatus(
     val isLinearized: Boolean,
@@ -19,103 +16,34 @@ data class LinearizeStatus(
 
 object PdfLinearizeEngine {
 
-    /**
-     * Inspects if the PDF has Fast Web View (Linearization) enabled.
-     */
-    suspend fun checkLinearized(
-        context: Context,
-        pdfUri: Uri
-    ): Result<LinearizeStatus> = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var inputStream: InputStream? = null
-        var document: PDDocument? = null
-
+    suspend fun checkLinearized(context: Context, pdfUri: Uri): Result<LinearizeStatus> = withContext(Dispatchers.IO) {
         try {
-            inputStream = context.contentResolver.openInputStream(pdfUri)
-                ?: throw IllegalStateException("Cannot open input PDF")
-
-            val headerBytes = ByteArray(2048)
-            val bytesRead = inputStream.read(headerBytes)
-            val headerString = if (bytesRead > 0) String(headerBytes, 0, bytesRead, Charsets.US_ASCII) else ""
-            val isLinear = headerString.contains("/Linearized")
-
-            inputStream.close()
-            inputStream = context.contentResolver.openInputStream(pdfUri)
-            document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-
-            val pageCount = document.numberOfPages
+            val jsonResult = PdfGateway.executeEngine(context, "LINEARIZE_CHECK", pdfUri, null, "{}")
+            val obj = JSONObject(jsonResult)
             val size = FileUtils.getFileSize(context, pdfUri)
-
-            Result.success(
-                LinearizeStatus(
-                    isLinearized = isLinear,
-                    fileSizeOriginal = size,
-                    pageCount = pageCount
-                )
-            )
+            Result.success(LinearizeStatus(
+                isLinearized = obj.getBoolean("isLinearized"),
+                fileSizeOriginal = size,
+                pageCount = obj.getInt("pageCount")
+            ))
         } catch (e: Exception) {
             AppLogger.e("PdfLinearizeEngine: Error checking linearization", e)
             Result.failure(e)
-        } finally {
-            try { document?.close() } catch (_: Exception) {}
-            try { inputStream?.close() } catch (_: Exception) {}
         }
     }
 
-    /**
-     * Optimizes PDF object stream ordering and produces an efficient streamable PDF.
-     */
-    suspend fun optimizeFastWebView(
-        context: Context,
-        sourcePdfUri: Uri,
-        destPdfUri: Uri
-    ): Result<Long> = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var inputStream: InputStream? = null
-        var document: PDDocument? = null
-        var tempFile: File? = null
-
+    suspend fun optimizeFastWebView(context: Context, sourcePdfUri: Uri, destPdfUri: Uri): Result<Long> = withContext(Dispatchers.IO) {
         try {
-            inputStream = context.contentResolver.openInputStream(sourcePdfUri)
-                ?: throw IllegalStateException("Cannot open source PDF")
-
-            document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-            if (document.numberOfPages == 0) {
-                return@withContext Result.failure(IllegalStateException("PDF has no pages"))
-            }
-
-            tempFile = File(context.cacheDir, "linear_${System.currentTimeMillis()}.pdf")
-            // PDFBox save automatically compresses streams and reorganizes object structures
-            document.save(tempFile)
-            document.close()
-            document = null
-
-            val outBytes = tempFile.length()
-
-            context.contentResolver.openOutputStream(destPdfUri)?.use { out ->
-                tempFile.inputStream().use { inp ->
-                    inp.copyTo(out)
-                }
-            } ?: throw IllegalStateException("Cannot open destination PDF")
-
-            tempFile.delete()
-            tempFile = null
-
+            val jsonResult = PdfGateway.executeEngine(context, "LINEARIZE_OPTIMIZE", sourcePdfUri, destPdfUri, "{}")
+            val obj = JSONObject(jsonResult)
+            
             val historyRepo = HistoryRepository(context)
-            historyRepo.addHistoryItem(
-                destPdfUri,
-                FileUtils.getFileName(context, destPdfUri) ?: "web_optimized.pdf",
-                "Fast Web View Stream Optimizer"
-            )
-
-            Result.success(outBytes)
+            historyRepo.addHistoryItem(destPdfUri, FileUtils.getFileName(context, destPdfUri) ?: "web_optimized.pdf", "Fast Web View Stream Optimizer")
+            
+            Result.success(obj.getLong("outBytes"))
         } catch (e: Exception) {
             AppLogger.e("PdfLinearizeEngine: Error optimizing stream", e)
             Result.failure(e)
-        } finally {
-            try { document?.close() } catch (_: Exception) {}
-            try { inputStream?.close() } catch (_: Exception) {}
-            tempFile?.delete()
         }
     }
 }

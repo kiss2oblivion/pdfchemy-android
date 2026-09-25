@@ -1,80 +1,55 @@
 package com.pdfchemy.app.logic
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
-import android.os.ParcelFileDescriptor
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.text.PDFTextStripper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import java.io.InputStream
 import com.pdfchemy.app.utils.AppLogger
-import java.io.OutputStreamWriter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object PdfTextExtractor {
 
-    suspend fun extractText(context: Context, sourceUri: Uri, destUri: Uri): Boolean {
-        return withContext(Dispatchers.IO) {
-            var extractedText = extractUsingPdfBox(context, sourceUri)
-
-            // If the extracted text is too short, it might be a scanned document.
-            // Fallback to OCR using ML Kit.
-            if (extractedText.trim().length < 50) {
-                extractedText = extractUsingOcr(context, sourceUri)
-            }
-
-            if (extractedText.isNotBlank()) {
-                context.contentResolver.openOutputStream(destUri)?.use { outputStream ->
-                    OutputStreamWriter(outputStream).use { writer ->
-                        writer.write(extractedText)
-                    }
-                }
-                true
-            } else {
-                false
-            }
-        }
-    }
-
-    private fun extractUsingPdfBox(context: Context, sourceUri: Uri): String {
-        var document: PDDocument? = null
-        return try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val stripper = PDFTextStripper()
-                stripper.getText(document)
-            } ?: ""
+    suspend fun extractText(context: Context, sourceUri: Uri, destUri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            PdfGateway.executeEngine(context, "TEXT_EXTRACT", sourceUri, destUri, "{}")
+            true
         } catch (e: Exception) {
-            AppLogger.e("Error during PDF text extraction", e)
-            ""
-        } finally {
-            document?.close()
+            AppLogger.e("PdfTextExtractor: Error extracting text", e)
+            false
         }
     }
 
-    /**
-     * Extracts text from all pages in a single linear O(N) pass using a customized PDFTextStripper.
-     * Replaces the quadratic O(N^2) page-tree traversal loops previously found across various modules.
-     */
-    fun extractAllPagesText(document: PDDocument): List<String> {
+    suspend fun extractUsingOcr(context: Context, sourceUri: Uri): String = withContext(Dispatchers.IO) {
+        try {
+            val tempFile = java.io.File(context.cacheDir, "ocr_temp.txt")
+            val destUri = Uri.fromFile(tempFile)
+            val params = org.json.JSONObject().apply { put("forceOcr", true) }.toString()
+            PdfGateway.executeEngine(context, "TEXT_EXTRACT", sourceUri, destUri, params)
+            if (tempFile.exists()) {
+                val text = tempFile.readText()
+                tempFile.delete()
+                text
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            AppLogger.e("PdfTextExtractor: Error extracting text with OCR", e)
+            ""
+        }
+    }
+
+    // Temporary shim to fix build errors for unmigrated engines (will be removed in Batch B/C)
+    fun extractAllPagesText(document: com.tom_roush.pdfbox.pdmodel.PDDocument): List<String> {
         val totalPages = document.numberOfPages
         if (totalPages == 0) return emptyList()
 
         val pagesText = ArrayList<String>(totalPages)
         var currentWriter = java.io.StringWriter()
 
-        val stripper = object : PDFTextStripper() {
+        val stripper = object : com.tom_roush.pdfbox.text.PDFTextStripper() {
             override fun startPage(page: com.tom_roush.pdfbox.pdmodel.PDPage) {
                 currentWriter = java.io.StringWriter()
                 output = currentWriter
             }
-
             override fun endPage(page: com.tom_roush.pdfbox.pdmodel.PDPage) {
                 output.flush()
                 pagesText.add(currentWriter.toString())
@@ -85,67 +60,7 @@ object PdfTextExtractor {
         stripper.endPage = totalPages
         try {
             stripper.writeText(document, java.io.StringWriter())
-        } catch (e: Exception) {
-            AppLogger.e("PdfTextExtractor: Error during single-pass page extraction", e)
-        }
+        } catch (e: Exception) {}
         return pagesText
-    }
-
-    suspend fun extractUsingOcr(context: Context, sourceUri: Uri): String {
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        val stringBuilder = java.lang.StringBuilder()
-
-        var fileDescriptor: ParcelFileDescriptor? = null
-        var pdfRenderer: PdfRenderer? = null
-
-        try {
-            fileDescriptor = context.contentResolver.openFileDescriptor(sourceUri, "r")
-            if (fileDescriptor != null) {
-                pdfRenderer = PdfRenderer(fileDescriptor)
-                val pageCount = pdfRenderer.pageCount
-
-                for (i in 0 until pageCount) {
-                    var page: PdfRenderer.Page? = null
-                    var bitmap: Bitmap? = null
-                    try {
-                        page = pdfRenderer.openPage(i)
-                        // Render the page to a bitmap (using a higher resolution for better OCR)
-                        val width = context.resources.displayMetrics.densityDpi / 72 * page.width
-                        val height = context.resources.displayMetrics.densityDpi / 72 * page.height
-                        
-                        bitmap = Bitmap.createBitmap(
-                            if (width > 0) width else page.width * 2,
-                            if (height > 0) height else page.height * 2,
-                            Bitmap.Config.ARGB_8888
-                        )
-                        
-                        // White background
-                        bitmap.eraseColor(android.graphics.Color.WHITE)
-                        
-                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        
-                        val image = InputImage.fromBitmap(bitmap, 0)
-                        
-                        try {
-                            val result = recognizer.process(image).await()
-                            stringBuilder.append(result.text).append("\n\n")
-                        } catch (e: Exception) {
-                            AppLogger.e("Error during PDF text extraction", e)
-                        }
-                    } finally {
-                        bitmap?.recycle()
-                        page?.close()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            AppLogger.e("Error during PDF text extraction", e)
-        } finally {
-            try { pdfRenderer?.close() } catch (_: Exception) {}
-            try { fileDescriptor?.close() } catch (_: Exception) {}
-            try { recognizer.close() } catch (_: Exception) {}
-        }
-
-        return stringBuilder.toString()
     }
 }

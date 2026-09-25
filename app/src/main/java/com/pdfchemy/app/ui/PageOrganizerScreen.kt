@@ -1,8 +1,8 @@
 package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -84,7 +84,6 @@ fun PageOrganizerScreen(
         selectedPdfUri = uri
         coroutineScope.launch(Dispatchers.IO) {
                 var pfd: ParcelFileDescriptor? = null
-                var renderer: PdfRenderer? = null
                 try {
                     // Clean up existing thumbnails
                     withContext(Dispatchers.Main) {
@@ -94,28 +93,14 @@ fun PageOrganizerScreen(
                     }
 
                     pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
-                    renderer = PdfRenderer(pfd)
-                    val count = renderer.pageCount
+                    val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
                     val items = mutableListOf<OrganizerPageItem>()
 
                     for (i in 0 until count) {
                         coroutineContext.ensureActive()
-                        val page = renderer.openPage(i)
-                        try {
-                            val originalWidth = page.width.coerceAtLeast(1)
-                            val originalHeight = page.height.coerceAtLeast(1)
-                            // Downsample thumbnail to max width 240px to prevent OOM
-                            val scale = (240f / originalWidth).coerceAtMost(1.0f)
-                            val thumbWidth = (originalWidth * scale).toInt().coerceAtLeast(1)
-                            val thumbHeight = (originalHeight * scale).toInt().coerceAtLeast(1)
-
-                            val bmp = Bitmap.createBitmap(thumbWidth, thumbHeight, Bitmap.Config.RGB_565)
-                            val canvas = android.graphics.Canvas(bmp)
-                            canvas.drawColor(android.graphics.Color.WHITE)
-                            page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                        val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, i, 240)
+                        if (bmp != null) {
                             items.add(OrganizerPageItem(originalIndex = i, thumbnail = bmp))
-                        } finally {
-                            page.close()
                         }
                     }
 
@@ -127,7 +112,6 @@ fun PageOrganizerScreen(
                 } catch (e: Exception) {
                     com.pdfchemy.app.utils.AppLogger.e("Failed to load thumbnails for organizer: ${e.message}", e)
                 } finally {
-                    try { renderer?.close() } catch (_: Throwable) {}
                     try { pfd?.close() } catch (_: Throwable) {}
                 }
             }

@@ -74,6 +74,38 @@ object NativeRendererCoordinator {
         renderer.getPageCount(pdfPfd)
     }
 
+    suspend fun renderPageToBitmap(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, scaleWidth: Int = 0): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
+        withRenderer(context) { renderer ->
+            val tempFile = java.io.File(context.cacheDir, "thumb_.jpg")
+            var jpegPfd: ParcelFileDescriptor? = null
+            var bitmap: android.graphics.Bitmap? = null
+            try {
+                jpegPfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_READ_WRITE)
+                renderer.renderPageToJpeg(pdfPfd, pageIndex, jpegPfd)
+                jpegPfd.close()
+                if (tempFile.exists() && tempFile.length() > 0) {
+                    val original = android.graphics.BitmapFactory.decodeFile(tempFile.absolutePath)
+                    if (original != null) {
+                        if (scaleWidth > 0 && original.width > scaleWidth) {
+                            val scale = scaleWidth.toFloat() / original.width
+                            val h = (original.height * scale).toInt()
+                            bitmap = android.graphics.Bitmap.createScaledBitmap(original, scaleWidth, h, true)
+                            original.recycle()
+                        } else {
+                            bitmap = original
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                AppLogger.e("NativeRendererCoordinator: Failed to render bitmap", e)
+            } finally {
+                try { jpegPfd?.close() } catch (e: Exception) {}
+                tempFile.delete()
+            }
+            bitmap
+        }
+    }
+
     suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor): Boolean? = withRenderer(context) { renderer ->
         renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
         true

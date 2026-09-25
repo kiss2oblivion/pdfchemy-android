@@ -1,7 +1,6 @@
 package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -99,9 +98,7 @@ fun GrayscaleOptimizerScreen(
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                    val renderer = PdfRenderer(pfd)
-                    val count = renderer.pageCount
-                    renderer.close()
+                    val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
                     withContext(Dispatchers.Main) {
                         totalPages = count.coerceAtLeast(1)
                     }

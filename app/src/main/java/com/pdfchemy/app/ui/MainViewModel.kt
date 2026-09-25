@@ -1392,8 +1392,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     context = context,
                     sourceUri = sourceUri,
                     destUri = destUri,
-                    fieldValues = fieldValues,
-                    flattenForm = flatten
+                    fieldData = fieldValues,
+                    flatten = flatten
                 )
                 withContext(Dispatchers.Main) {
                     if (success) {
@@ -1485,12 +1485,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = UiState.Processing
         viewModelScope.launch {
             try {
-                val success = com.pdfchemy.app.logic.PdfRedactor.applyRedactions(
+                val success = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
                     context = context,
                     sourceUri = sourceUri,
                     destUri = destUri,
                     redactions = redactions
-                )
+                ).isSuccess
                 withContext(Dispatchers.Main) {
                     if (success) {
                         historyRepository.addHistoryItem(
@@ -1701,4 +1701,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = UiState.Error(if (message.isBlank()) title else "$title: $message", technicalDetails)
     }
 }
+
 

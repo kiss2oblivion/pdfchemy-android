@@ -25,4 +25,33 @@ oneway interface IPdfJailService {
         boolean rasterizePages,
         IPdfJailCallback callback
     );
+
+    /**
+     * Analyzes the PDF and returns a JSON string containing the analysis results.
+     */
+    void analyzePdf(
+        in ParcelFileDescriptor sourceFd,
+        com.pdfchemy.app.jail.IPdfJailStringCallback callback
+    );
+
+    /**
+     * Exports a modified PDF given the source, destination, and a JSON string representing modifications.
+     */
+    void exportModifiedPdf(
+        in ParcelFileDescriptor sourceFd,
+        in ParcelFileDescriptor targetFd,
+        String modificationsJson,
+        IPdfJailCallback callback
+    );
+    /**
+     * Executes a generic engine operation.
+     */
+    void executeEngine(
+        String engineName,
+        in ParcelFileDescriptor sourceFd,
+        in ParcelFileDescriptor targetFd,
+        String paramsJson,
+        com.pdfchemy.app.jail.IPdfJailStringCallback callback
+    );
 }
+

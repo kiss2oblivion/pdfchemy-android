@@ -6,20 +6,12 @@ import android.graphics.Color
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import org.json.JSONObject
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Normalized crop rectangle where (0.0, 0.0) is top-left and (1.0, 1.0) is bottom-right.
- */
 data class NormalizedCropRect(
     val left: Float = 0f,
     val top: Float = 0f,
@@ -30,10 +22,6 @@ data class NormalizedCropRect(
 }
 
 object PdfCropEngine {
-
-    /**
-     * Detects non-white content bounding box in a page bitmap and returns normalized crop rectangle.
-     */
     fun detectContentBounds(bitmap: Bitmap, toleranceThreshold: Int = 245): NormalizedCropRect {
         val width = bitmap.width
         val height = bitmap.height
@@ -55,7 +43,6 @@ object PdfCropEngine {
                 val b = Color.blue(pixel)
                 val alpha = Color.alpha(pixel)
 
-                // If not transparent and not near-white
                 if (alpha > 50 && (r < toleranceThreshold || g < toleranceThreshold || b < toleranceThreshold)) {
                     if (x < minX) minX = x
                     if (x > maxX) maxX = x
@@ -65,12 +52,10 @@ object PdfCropEngine {
             }
         }
 
-        // If whole page appears empty or white, return default uncropped
         if (minX >= maxX || minY >= maxY) {
             return NormalizedCropRect(0.05f, 0.05f, 0.95f, 0.95f)
         }
 
-        // Add 2% padding around content for aesthetics
         val padX = (width * 0.02f).toInt()
         val padY = (height * 0.02f).toInt()
 
@@ -87,93 +72,45 @@ object PdfCropEngine {
         )
     }
 
-    /**
-     * Crops pages of a PDF document by updating the PDPage cropBox.
-     * Preserves vector graphics and text sharpness completely without rasterizing.
-     */
     suspend fun cropPdf(
         context: Context,
         sourcePdfUri: Uri,
         destPdfUri: Uri,
         cropRect: NormalizedCropRect,
-        targetPageIndex: Int? = null // null means apply to all pages
+        targetPageIndex: Int? = null
     ): Result<Boolean> = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var inputStream: InputStream? = null
-        var document: PDDocument? = null
-        var tempFile: File? = null
-
         try {
-            inputStream = context.contentResolver.openInputStream(sourcePdfUri)
-                ?: throw IllegalStateException("Cannot open input PDF")
-
-            document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-            val pageCount = document.numberOfPages
-            if (pageCount == 0) {
-                return@withContext Result.failure(IllegalStateException("PDF contains no pages"))
-            }
-
-            val pagesToCrop = if (targetPageIndex != null) {
-                listOf(targetPageIndex.coerceIn(0, pageCount - 1))
+            val params = JSONObject()
+            params.put("left", cropRect.left.toDouble())
+            params.put("top", cropRect.top.toDouble())
+            params.put("right", cropRect.right.toDouble())
+            params.put("bottom", cropRect.bottom.toDouble())
+            if (targetPageIndex != null) {
+                params.put("targetPageIndex", targetPageIndex)
             } else {
-                (0 until pageCount).toList()
+                params.put("targetPageIndex", JSONObject.NULL)
             }
 
-            for (idx in pagesToCrop) {
-                val page = document.getPage(idx)
-                val mediaBox = page.mediaBox ?: PDRectangle(PDRectangle.A4.width, PDRectangle.A4.height)
-
-                val llx = mediaBox.lowerLeftX
-                val lly = mediaBox.lowerLeftY
-                val width = mediaBox.width
-                val height = mediaBox.height
-
-                // Transform top-left screen normalized coordinates to bottom-left PDF coordinates
-                val cropLeft = llx + (cropRect.left * width)
-                val cropRight = llx + (cropRect.right * width)
-                val cropTopPdf = lly + ((1f - cropRect.top) * height)
-                val cropBottomPdf = lly + ((1f - cropRect.bottom) * height)
-
-                val newCropBox = PDRectangle(
-                    cropLeft,
-                    cropBottomPdf,
-                    max(10f, cropRight - cropLeft),
-                    max(10f, cropTopPdf - cropBottomPdf)
+            val resultStr = PdfGateway.executeEngine(context, "CROP", sourcePdfUri, destPdfUri, params.toString())
+            val json = JSONObject(resultStr)
+            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
+            
+            val success = json.optBoolean("success", false)
+            if (success) {
+                val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
+                historyRepo.addHistoryItem(
+                    destPdfUri,
+                    FileUtils.getFileName(context, destPdfUri) ?: "cropped.pdf",
+                    "Cropped PDF"
                 )
-
-                page.cropBox = newCropBox
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Unknown crop failure"))
             }
-
-            // Save to temp file first
-            tempFile = File(context.cacheDir, "cropped_temp_${System.currentTimeMillis()}.pdf")
-            document.save(tempFile)
-            document.close()
-            document = null
-
-            context.contentResolver.openOutputStream(destPdfUri)?.use { destStream ->
-                tempFile.inputStream().use { tempIn ->
-                    tempIn.copyTo(destStream)
-                }
-            } ?: throw IllegalStateException("Cannot open destination stream")
-
-            tempFile.delete()
-            tempFile = null
-
-            val historyRepo = HistoryRepository(context)
-            historyRepo.addHistoryItem(
-                destPdfUri,
-                FileUtils.getFileName(context, destPdfUri) ?: "cropped.pdf",
-                "Cropped PDF"
-            )
-
-            Result.success(true)
         } catch (e: Exception) {
-            AppLogger.e("PdfCropEngine: Error cropping PDF", e)
+            AppLogger.e("PdfCropEngine: Error cropping PDF via gateway", e)
             Result.failure(e)
-        } finally {
-            try { document?.close() } catch (_: Exception) {}
-            try { inputStream?.close() } catch (_: Exception) {}
-            tempFile?.delete()
         }
     }
 }
+

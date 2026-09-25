@@ -1,7 +1,6 @@
 package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -73,37 +72,21 @@ fun PageNumberScreen(
     fun loadPreview(uri: Uri) {
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
-            var renderer: PdfRenderer? = null
             try {
                 pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
-                renderer = PdfRenderer(pfd)
-                totalPages = renderer.pageCount
-                if (renderer.pageCount > 0) {
-                    val page = renderer.openPage(0)
-                    val originalWidth = page.width.coerceAtLeast(1)
-                    val originalHeight = page.height.coerceAtLeast(1)
-                    val scale = (1080f / originalWidth).coerceAtMost(1.5f)
-                    val renderWidth = (originalWidth * scale).toInt().coerceAtLeast(1)
-                    val renderHeight = (originalHeight * scale).toInt().coerceAtLeast(1)
-
-                    val bmp = Bitmap.createBitmap(renderWidth, renderHeight, Bitmap.Config.ARGB_8888)
-                    try {
-                        val canvas = android.graphics.Canvas(bmp)
-                        canvas.drawColor(android.graphics.Color.WHITE)
-                        page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    } finally {
-                        page.close()
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        previewBitmap?.recycle()
-                        previewBitmap = bmp
+                totalPages = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                if (totalPages > 0) {
+                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, 0, 1080)
+                    if (bmp != null) {
+                        withContext(Dispatchers.Main) {
+                            previewBitmap?.recycle()
+                            previewBitmap = bmp
+                        }
                     }
                 }
             } catch (e: Exception) {
                 com.pdfchemy.app.utils.AppLogger.e("Failed to render preview: ${e.message}", e)
             } finally {
-                try { renderer?.close() } catch (_: Throwable) {}
                 try { pfd?.close() } catch (_: Throwable) {}
             }
         }

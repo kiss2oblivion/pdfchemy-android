@@ -1,24 +1,11 @@
-// =================================================================================================
-// [FEATURE: Interactive Form Builder & AcroForm Creation Engine] (FEATURES_REGISTRY Android §4)
-// Creates true AcroForm dictionaries, PDTextField, PDCheckBox, and PDChoice (ComboBox) fields.
-// =================================================================================================
-
 package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.cos.COSName
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDResources
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
-import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
-import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget
-import com.tom_roush.pdfbox.pdmodel.interactive.form.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.InputStream
-import java.io.OutputStream
+import org.json.JSONArray
+import org.json.JSONObject
 
 enum class FormFieldType {
     TEXT,
@@ -54,117 +41,49 @@ data class InteractiveFieldSpec(
 object AcroFormEngine {
 
     suspend fun hasAcroForm(context: Context, sourceUri: Uri): Boolean = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var doc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { stream ->
-                doc = PDDocument.load(stream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val acroForm = doc?.documentCatalog?.acroForm
-                val hasFields = acroForm != null && acroForm.fields.isNotEmpty()
-                hasFields
-            } ?: false
+            val params = JSONObject()
+            params.put("method", "hasAcroForm")
+            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, null, params.toString())
+            val json = JSONObject(result)
+            json.optBoolean("hasAcroForm", false)
         } catch (e: Exception) {
             false
-        } finally {
-            doc?.close()
         }
     }
 
     suspend fun extractFields(context: Context, sourceUri: Uri): List<FormFieldInfo> = withContext(Dispatchers.IO) {
-        val result = mutableListOf<FormFieldInfo>()
-        var doc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { stream ->
-                doc = PDDocument.load(stream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val acroForm = doc?.documentCatalog?.acroForm ?: return@withContext emptyList()
-                
-                for (field in acroForm.fieldTree) {
-                    val fieldInfo = parseField(field)
-                    if (fieldInfo != null) {
-                        result.add(fieldInfo)
-                    }
+            val params = JSONObject()
+            params.put("method", "extractFields")
+            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, null, params.toString())
+            val json = JSONObject(result)
+            if (!json.optBoolean("success", false)) return@withContext emptyList()
+            
+            val fieldsArr = json.optJSONArray("fields") ?: return@withContext emptyList()
+            val list = mutableListOf<FormFieldInfo>()
+            for (i in 0 until fieldsArr.length()) {
+                val obj = fieldsArr.getJSONObject(i)
+                val optsArr = obj.optJSONArray("possibleOptions")
+                val opts = mutableListOf<String>()
+                if (optsArr != null) {
+                    for (j in 0 until optsArr.length()) opts.add(optsArr.getString(j))
                 }
+                list.add(
+                    FormFieldInfo(
+                        name = obj.getString("name"),
+                        fullyQualifiedName = obj.getString("fullyQualifiedName"),
+                        type = FormFieldType.valueOf(obj.getString("type")),
+                        value = obj.getString("value"),
+                        possibleOptions = opts,
+                        isReadOnly = obj.optBoolean("isReadOnly", false),
+                        isRequired = obj.optBoolean("isRequired", false)
+                    )
+                )
             }
+            list
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to extract AcroForm fields: ${e.message}", e)
-        } finally {
-            doc?.close()
-        }
-        result
-    }
-
-    private fun parseField(field: PDField): FormFieldInfo? {
-        val name = field.partialName ?: field.fullyQualifiedName ?: return null
-        val fqName = field.fullyQualifiedName ?: name
-        val isReadOnly = field.isReadOnly
-        val isRequired = field.isRequired
-
-        return when (field) {
-            is PDTextField -> {
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.TEXT,
-                    value = field.value ?: "",
-                    isReadOnly = isReadOnly,
-                    isRequired = isRequired
-                )
-            }
-            is PDCheckBox -> {
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.CHECKBOX,
-                    value = if (field.isChecked) "Yes" else "Off",
-                    possibleOptions = listOf("Yes", "Off"),
-                    isReadOnly = isReadOnly,
-                    isRequired = isRequired
-                )
-            }
-            is PDRadioButton -> {
-                val options = field.onValues.toList()
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.RADIO,
-                    value = field.value ?: "",
-                    possibleOptions = options,
-                    isReadOnly = isReadOnly,
-                    isRequired = isRequired
-                )
-            }
-            is PDChoice -> {
-                val options = field.options ?: emptyList()
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.CHOICE,
-                    value = field.value?.firstOrNull() ?: "",
-                    possibleOptions = options,
-                    isReadOnly = isReadOnly,
-                    isRequired = isRequired
-                )
-            }
-            is PDSignatureField -> {
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.SIGNATURE,
-                    value = if (field.value != null) "Signed" else "Unsigned",
-                    isReadOnly = true,
-                    isRequired = isRequired
-                )
-            }
-            else -> {
-                FormFieldInfo(
-                    name = name,
-                    fullyQualifiedName = fqName,
-                    type = FormFieldType.OTHER,
-                    value = field.valueAsString ?: "",
-                    isReadOnly = isReadOnly,
-                    isRequired = isRequired
-                )
-            }
+            emptyList()
         }
     }
 
@@ -172,66 +91,20 @@ object AcroFormEngine {
         context: Context,
         sourceUri: Uri,
         destUri: Uri,
-        fieldValues: Map<String, String>,
-        flattenForm: Boolean = false
+        fieldData: Map<String, String>,
+        flatten: Boolean = false
     ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val acroForm = doc?.documentCatalog?.acroForm ?: return@withContext false
-                acroForm.setNeedAppearances(true)
-
-                for ((fqName, value) in fieldValues) {
-                    val field = acroForm.getField(fqName)
-                    if (field != null) {
-                        try {
-                            when (field) {
-                                is PDTextField -> field.setValue(value)
-                                is PDCheckBox -> {
-                                    if (value.equals("Yes", ignoreCase = true) || value.equals("true", ignoreCase = true) || value.equals("on", ignoreCase = true)) {
-                                        field.check()
-                                    } else {
-                                        field.unCheck()
-                                    }
-                                }
-                                is PDRadioButton -> field.setValue(value)
-                                is PDChoice -> field.setValue(value)
-                                else -> field.setValue(value)
-                            }
-                        } catch (e: Exception) {
-                            com.pdfchemy.app.utils.AppLogger.w("Could not set value for field $fqName: ${e.message}")
-                        }
-                    }
-                }
-
-                if (flattenForm) {
-                    try {
-                        if (acroForm.defaultResources == null) {
-                            val dr = com.tom_roush.pdfbox.pdmodel.PDResources()
-                            dr.put(com.tom_roush.pdfbox.cos.COSName.getPDFName("Helv"), com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA)
-                            acroForm.defaultResources = dr
-                        }
-                        acroForm.flatten()
-                    } catch (e: Exception) {
-                        com.pdfchemy.app.utils.AppLogger.w("Failed to flatten AcroForm: ${e.message}")
-                    }
-                } else {
-                    // For unflattened forms, ensure NeedAppearances is true so viewers render the updated values visibly
-                    acroForm.setNeedAppearances(true)
-                    acroForm.cosObject.setBoolean(COSName.NEED_APPEARANCES, true)
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    doc?.save(outStream)
-                }
-                true
-            } ?: false
+            val params = JSONObject()
+            params.put("method", "fillAndSaveForm")
+            val dataObj = JSONObject()
+            for ((k, v) in fieldData) dataObj.put(k, v)
+            params.put("fieldData", dataObj)
+            params.put("flatten", flatten)
+            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, destUri, params.toString())
+            JSONObject(result).optBoolean("success", false)
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to fill AcroForm: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 
@@ -241,141 +114,31 @@ object AcroFormEngine {
         destUri: Uri,
         fields: List<InteractiveFieldSpec>
     ): Boolean = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var doc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val document = doc ?: return@withContext false
-                val catalog = document.documentCatalog
-                var acroForm = catalog.acroForm
-                if (acroForm == null) {
-                    acroForm = PDAcroForm(document)
-                    catalog.acroForm = acroForm
-                }
-
-                var dr = acroForm.defaultResources
-                if (dr == null) {
-                    dr = PDResources()
-                    acroForm.defaultResources = dr
-                }
-                val helvName = COSName.getPDFName("Helv")
-                dr.put(helvName, PDType1Font.HELVETICA)
-                acroForm.defaultAppearance = "/Helv 12 Tf 0 g"
-
-                val pageCount = document.numberOfPages
-                for (spec in fields) {
-                    if (spec.pageIndex < 0 || spec.pageIndex >= pageCount) continue
-                    val page = document.getPage(spec.pageIndex)
-                    val cropBox = page.cropBox ?: page.mediaBox
-                    val pw = cropBox.width
-                    val ph = cropBox.height
-                    val rot = ((page.rotation % 360) + 360) % 360
-
-                    // Account for page orientation in display viewport vs unrotated user space
-                    val rect = when (rot) {
-                        90 -> {
-                            val x = cropBox.lowerLeftX + pw - (spec.yRatio.coerceIn(0f, 1f) + spec.heightRatio.coerceIn(0.01f, 1f)) * pw
-                            val y = cropBox.lowerLeftY + spec.xRatio.coerceIn(0f, 1f) * ph
-                            val w = spec.heightRatio.coerceIn(0.01f, 1f) * pw
-                            val h = spec.widthRatio.coerceIn(0.01f, 1f) * ph
-                            PDRectangle(x, y, w, h)
-                        }
-                        180 -> {
-                            val x = cropBox.lowerLeftX + pw - (spec.xRatio.coerceIn(0f, 1f) + spec.widthRatio.coerceIn(0.01f, 1f)) * pw
-                            val y = cropBox.lowerLeftY + spec.yRatio.coerceIn(0f, 1f) * ph
-                            val w = spec.widthRatio.coerceIn(0.01f, 1f) * pw
-                            val h = spec.heightRatio.coerceIn(0.01f, 1f) * ph
-                            PDRectangle(x, y, w, h)
-                        }
-                        270 -> {
-                            val x = cropBox.lowerLeftX + spec.yRatio.coerceIn(0f, 1f) * pw
-                            val y = cropBox.lowerLeftY + ph - (spec.xRatio.coerceIn(0f, 1f) + spec.widthRatio.coerceIn(0.01f, 1f)) * ph
-                            val w = spec.heightRatio.coerceIn(0.01f, 1f) * pw
-                            val h = spec.widthRatio.coerceIn(0.01f, 1f) * ph
-                            PDRectangle(x, y, w, h)
-                        }
-                        else -> {
-                            val x = cropBox.lowerLeftX + (spec.xRatio.coerceIn(0f, 1f) * pw)
-                            val w = (spec.widthRatio.coerceIn(0.01f, 1f) * pw)
-                            val h = (spec.heightRatio.coerceIn(0.01f, 1f) * ph)
-                            val y = cropBox.lowerLeftY + (ph - (spec.yRatio.coerceIn(0f, 1f) + spec.heightRatio.coerceIn(0.01f, 1f)) * ph)
-                            PDRectangle(x, y, w, h)
-                        }
-                    }
-
-                    when (spec.type) {
-                        FormFieldType.CHECKBOX -> {
-                            val cb = PDCheckBox(acroForm)
-                            cb.partialName = spec.name
-                            val widget = cb.widgets.firstOrNull() ?: PDAnnotationWidget().also {
-                                cb.widgets = listOf(it)
-                            }
-                            widget.rectangle = rect
-                            widget.page = page
-                            widget.isPrinted = true
-                            page.annotations.add(widget)
-                            if (spec.defaultValue.equals("Yes", true) || spec.defaultValue.equals("true", true) || spec.defaultValue.equals("1", true)) {
-                                cb.check()
-                            } else {
-                                cb.unCheck()
-                            }
-                            acroForm.fields.add(cb)
-                        }
-                        FormFieldType.CHOICE -> {
-                            val combo = PDComboBox(acroForm)
-                            combo.partialName = spec.name
-                            combo.defaultAppearance = "/Helv 12 Tf 0 g"
-                            if (spec.options.isNotEmpty()) {
-                                combo.options = spec.options
-                            }
-                            val widget = combo.widgets.firstOrNull() ?: PDAnnotationWidget().also {
-                                combo.widgets = listOf(it)
-                            }
-                            widget.rectangle = rect
-                            widget.page = page
-                            widget.isPrinted = true
-                            page.annotations.add(widget)
-                            if (spec.defaultValue.isNotBlank()) {
-                                combo.setValue(spec.defaultValue)
-                            } else if (spec.options.isNotEmpty()) {
-                                combo.setValue(spec.options.first())
-                            }
-                            acroForm.fields.add(combo)
-                        }
-                        else -> { // TEXT and default
-                            val tf = PDTextField(acroForm)
-                            tf.partialName = spec.name
-                            tf.defaultAppearance = "/Helv 12 Tf 0 g"
-                            val widget = tf.widgets.firstOrNull() ?: PDAnnotationWidget().also {
-                                tf.widgets = listOf(it)
-                            }
-                            widget.rectangle = rect
-                            widget.page = page
-                            widget.isPrinted = true
-                            page.annotations.add(widget)
-                            if (spec.defaultValue.isNotBlank()) {
-                                tf.setValue(spec.defaultValue)
-                            }
-                            acroForm.fields.add(tf)
-                        }
-                    }
-                }
-
-                // Explicitly set NeedAppearances right before save so Acrobat/Chrome render appearances
-                acroForm.setNeedAppearances(true)
-                acroForm.cosObject.setBoolean(COSName.NEED_APPEARANCES, true)
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    document.save(outStream)
-                }
-                true
-            } ?: false
+            val params = JSONObject()
+            params.put("method", "createAcroFormWithFields")
+            val arr = JSONArray()
+            for (f in fields) {
+                val obj = JSONObject()
+                obj.put("pageIndex", f.pageIndex)
+                obj.put("name", f.name)
+                obj.put("type", f.type.name)
+                obj.put("xRatio", f.xRatio)
+                obj.put("yRatio", f.yRatio)
+                obj.put("widthRatio", f.widthRatio)
+                obj.put("heightRatio", f.heightRatio)
+                obj.put("defaultValue", f.defaultValue)
+                val optsArr = JSONArray()
+                for (o in f.options) optsArr.put(o)
+                obj.put("options", optsArr)
+                arr.put(obj)
+            }
+            params.put("fields", arr)
+            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, destUri, params.toString())
+            JSONObject(result).optBoolean("success", false)
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to create AcroForm fields: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 }
+
