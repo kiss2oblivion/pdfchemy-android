@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.BookletSheetPlan
-import com.pdfchemy.app.logic.PdfBookletEngine
+import com.pdfchemy.app.logic.BookletPlanner
+import com.pdfchemy.app.logic.PdfGateway
+import org.json.JSONObject
 import com.pdfchemy.app.logic.TargetPaperSize
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +67,7 @@ fun BookletScreen(
                         val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
                         withContext(Dispatchers.Main) {
                             pageCount = count
-                            bookletPlan = PdfBookletEngine.computeBookletPlan(count)
+                            bookletPlan = BookletPlanner.computeBookletPlan(count)
                         }
                     }
                 } catch (_: Exception) {}
@@ -83,30 +85,31 @@ fun BookletScreen(
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
-                val result = PdfBookletEngine.generateBookletPdf(
-                    context = context,
-                    sourcePdfUri = selectedPdfUri!!,
-                    destPdfUri = destUri,
-                    paperSize = selectedPaperSize,
-                    drawFoldGuide = drawFoldGuide,
-                    onProgress = { c, t ->
-                        progressCurrent = c
-                        progressTotal = t
-                    }
-                )
-                isProcessing = false
-
-                if (result.isSuccess) {
+                try {
+                    val params = JSONObject()
+                        .put("paperHeightPts", selectedPaperSize.heightPts)
+                        .put("paperWidthPts", selectedPaperSize.widthPts)
+                        .put("drawFoldGuide", drawFoldGuide)
+                    PdfGateway.executeEngine(context, "BOOKLET_GENERATE", selectedPdfUri!!, destUri, params.toString())
+                    viewModel.showSuccessToast(
+                        context.getString(R.string.title_booklet_success),
+                        context.getString(R.string.desc_booklet_success)
+                    )
+                } catch (e: Exception) {
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_booklet_failed),
+                        e.localizedMessage ?: ""
+                    )
+                } finally {
+                    isProcessing = false
+                }
+                
+                if (false) {
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_booklet_success),
                         context.getString(R.string.desc_booklet_success)
                     )
                     onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_booklet_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
                 }
             }
         }

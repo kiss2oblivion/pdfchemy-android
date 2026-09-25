@@ -179,6 +179,11 @@ class PdfJailService : Service() {
                     "ACRO_FORM" -> com.pdfchemy.app.jail.engines.AcroFormEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
                     "CROP" -> com.pdfchemy.app.jail.engines.PdfCropEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
                     "REDACT" -> com.pdfchemy.app.jail.engines.PdfRedactionEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
+                    "ATTACHMENT_LIST" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.listAttachments(sourceFd!!)
+                    "ATTACHMENT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.extractAttachment(sourceFd!!, targetFd!!, paramsJson)
+                    "ATTACHMENT_REMOVE" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.removeAttachment(sourceFd!!, targetFd!!, paramsJson)
+                    "BOOKLET_GENERATE" -> com.pdfchemy.app.jail.engines.PdfBookletEngineWorker.generateBooklet(sourceFd!!, targetFd!!, paramsJson)
+
                     else -> throw IllegalArgumentException("Unknown engine: " + engineName)
                 }
                 val finalResult = com.pdfchemy.app.jail.engines.JailQuotas.enforceResultSize(resultJson)
@@ -188,7 +193,29 @@ class PdfJailService : Service() {
             }
         }
 
+
+        override fun executeEngineExtra(
+            engineName: String,
+            sourceFd: ParcelFileDescriptor?,
+            targetFd: ParcelFileDescriptor?,
+            extraFd: ParcelFileDescriptor?,
+            paramsJson: String,
+            callback: IPdfJailStringCallback
+        ) {
+            try {
+                val resultJson = when (engineName) {
+                    "ATTACHMENT_EMBED" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.embedAttachment(sourceFd!!, targetFd!!, extraFd!!, paramsJson)
+                    else -> throw IllegalArgumentException("Unknown engine for extra Fd: " + engineName)
+                }
+                val finalResult = com.pdfchemy.app.jail.engines.JailQuotas.enforceResultSize(resultJson)
+                callback.onSuccess(finalResult)
+            } catch (e: Exception) {
+                callback.onFailure(500, e.message ?: "Unknown error in engine " + engineName)
+            }
+        }
+
         override fun exportModifiedPdf(
+
             sourceFd: ParcelFileDescriptor?,
             targetFd: ParcelFileDescriptor?,
             modificationsJson: String?,

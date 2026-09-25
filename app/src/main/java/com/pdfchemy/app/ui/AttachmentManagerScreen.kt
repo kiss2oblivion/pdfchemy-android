@@ -25,7 +25,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.PdfAttachment
-import com.pdfchemy.app.logic.PdfAttachmentEngine
+import com.pdfchemy.app.logic.PdfGateway
+import org.json.JSONArray
+import org.json.JSONObject
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
 
@@ -51,10 +53,23 @@ fun AttachmentManagerScreen(
         val uri = selectedPdfUri ?: return
         coroutineScope.launch {
             isLoading = true
-            val result = PdfAttachmentEngine.listAttachments(context, uri)
-            isLoading = false
-            if (result.isSuccess) {
-                attachments = result.getOrThrow()
+            try {
+                val jsonResult = PdfGateway.executeEngine(context, "ATTACHMENT_LIST", uri, null, "{}")
+                val jsonArray = JSONArray(jsonResult)
+                val newList = mutableListOf<PdfAttachment>()
+                for (i in 0 until jsonArray.length()) {
+                    val item = jsonArray.getJSONObject(i)
+                    newList.add(PdfAttachment(
+                        name = item.optString("name"),
+                        sizeBytes = item.optLong("sizeBytes"),
+                        mimeType = item.optString("mimeType")
+                    ))
+                }
+                attachments = newList
+            } catch (e: Exception) {
+                // handle error
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -82,21 +97,17 @@ fun AttachmentManagerScreen(
     ) { destUri ->
         if (destUri != null && selectedPdfUri != null && targetExtractAttachment != null) {
             coroutineScope.launch {
-                val result = PdfAttachmentEngine.extractAttachment(
-                    context = context,
-                    pdfUri = selectedPdfUri!!,
-                    attachmentName = targetExtractAttachment!!.name,
-                    destUri = destUri
-                )
-                if (result.isSuccess) {
+                try {
+                    val params = JSONObject().put("attachmentName", targetExtractAttachment!!.name)
+                    PdfGateway.executeEngine(context, "ATTACHMENT_EXTRACT", selectedPdfUri!!, destUri, params.toString())
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_extract_success),
                         context.getString(R.string.desc_extract_success)
                     )
-                } else {
+                } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_extract_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
+                        e.localizedMessage ?: ""
                     )
                 }
             }
@@ -108,13 +119,20 @@ fun AttachmentManagerScreen(
     ) { destUri ->
         if (destUri != null && selectedPdfUri != null && fileToEmbedUri != null) {
             coroutineScope.launch {
-                val result = PdfAttachmentEngine.embedAttachment(
-                    context = context,
-                    sourcePdfUri = selectedPdfUri!!,
-                    destPdfUri = destUri,
-                    fileToEmbedUri = fileToEmbedUri!!
-                )
-                if (result.isSuccess) {
+                try {
+                    val params = JSONObject().put("fileName", FileUtils.getFileName(context, fileToEmbedUri!!)).put("fileSize", FileUtils.getFileSize(context, fileToEmbedUri!!))
+                    PdfGateway.executeEngineExtra(context, "ATTACHMENT_EMBED", selectedPdfUri!!, destUri, fileToEmbedUri!!, params.toString())
+                    viewModel.showSuccessToast(
+                        context.getString(R.string.title_embed_success),
+                        context.getString(R.string.desc_embed_success)
+                    )
+                } catch (e: Exception) {
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_embed_failed),
+                        e.localizedMessage ?: ""
+                    )
+                }
+                if (false) {
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_embed_success),
                         context.getString(R.string.desc_embed_success)
@@ -122,11 +140,6 @@ fun AttachmentManagerScreen(
                     selectedPdfUri = destUri
                     fileToEmbedUri = null
                     refreshAttachments()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_embed_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
                 }
             }
         }

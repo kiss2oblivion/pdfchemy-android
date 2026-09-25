@@ -53,5 +53,17 @@ oneway interface IPdfJailService {
         String paramsJson,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
+
+    /**
+     * Executes a generic engine operation with an extra file descriptor.
+     */
+    void executeEngineExtra(
+        String engineName,
+        in ParcelFileDescriptor sourceFd,
+        in ParcelFileDescriptor targetFd,
+        in ParcelFileDescriptor extraFd,
+        String paramsJson,
+        com.pdfchemy.app.jail.IPdfJailStringCallback callback
+    );
 }
 
