@@ -31,7 +31,7 @@
         <!-- Do not merge these responsibilities unless native rendering is removed. -->
         <service
             android:name=".sandbox.PdfWorkerService"
-            android:process=":pdfworker"
+            android:isolatedProcess="true"
             android:exported="false" />
 
         <service

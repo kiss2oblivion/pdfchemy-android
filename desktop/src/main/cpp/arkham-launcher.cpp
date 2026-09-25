@@ -140,9 +140,14 @@ std::wstring quoteArg(const std::wstring& arg) {
 
 int main(int argc, char* argv[]) {
     if (argc >= 2 && std::string(argv[1]) == "--get-sid") {
-        PCWSTR appContainerName = L"ArkhamAsylumWorker";
+        std::wstring appContainerName = L"ArkhamAsylumWorker";
+        if (argc >= 3) {
+            std::string arg2(argv[2]);
+            appContainerName = std::wstring(arg2.begin(), arg2.end());
+        }
+
         PSID appContainerSid = NULL;
-        HRESULT hr = DeriveAppContainerSidFromAppContainerName(appContainerName, &appContainerSid);
+        HRESULT hr = DeriveAppContainerSidFromAppContainerName(appContainerName.c_str(), &appContainerSid);
         if (SUCCEEDED(hr)) {
             LPSTR sidString = NULL;
             if (ConvertSidToStringSidA(appContainerSid, &sidString)) {
@@ -253,21 +258,25 @@ int main(int argc, char* argv[]) {
     // The JVM will be able to read it because FILE_SHARE_READ is set.
 
     // 2. Create AppContainer Profile
-    PCWSTR appContainerName = L"ArkhamAsylumWorker";
+    std::wstring appContainerName = L"ArkhamAsylumWorker";
+    char* envName = getenv("ARKHAM_APP_CONTAINER_NAME");
+    if (envName) {
+        std::string sName(envName);
+        appContainerName = std::wstring(sName.begin(), sName.end());
+    }
     PCWSTR appContainerDesc = L"PDFchemy Arkham Asylum Worker";
     PSID appContainerSid = NULL;
-    HRESULT hr = CreateAppContainerProfile(appContainerName, appContainerName, appContainerDesc, NULL, 0, &appContainerSid);
+    HRESULT hr = CreateAppContainerProfile(appContainerName.c_str(), appContainerName.c_str(), appContainerDesc, NULL, 0, &appContainerSid);
+
     if (hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) {
-        hr = DeriveAppContainerSidFromAppContainerName(appContainerName, &appContainerSid);
+        hr = DeriveAppContainerSidFromAppContainerName(appContainerName.c_str(), &appContainerSid);
     }
     if (FAILED(hr)) {
         fail("CreateAppContainerProfile / DeriveAppContainerSidFromAppContainerName failed");
     }
 
-    // Grant access to Window Station and Desktop so USER32.dll can initialize successfully
-    if (!AddAceToWindowStationAndDesktop(appContainerSid)) {
-        fail("AddAceToWindowStationAndDesktop failed");
-    }
+    // We no longer grant arbitrary GUI access here to follow zero-trust minimum privileges.
+    // If the worker needs GUI, it should be isolated or restricted.
 
     // 4. Setup STARTUPINFOEX for AppContainer and Handle Allowlist
     STARTUPINFOEXW siex = { 0 };

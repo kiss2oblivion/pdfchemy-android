@@ -1,0 +1,27 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=PDFchemy Tools
+GenericName=PDF Utility
+Comment=Local-First Offline Document & PDF Utility
+Exec=pdfchemy %F
+Icon=pdfchemy
+Terminal=false
+Categories=Office;Utility;Publishing;
+MimeType=application/pdf;application/epub+zip;text/plain;
+StartupNotify=true
+StartupWMClass=com-pdfchemy-desktop-MainKt
+Keywords=PDF;Compress;Merge;Split;Reflow;Reader;Sign;Encrypt;Office;
+Actions=Compress;Merge;Reader;
+
+[Desktop Action Compress]
+Name=Compress PDF
+Exec=pdfchemy --compress %F
+
+[Desktop Action Merge]
+Name=Merge PDFs
+Exec=pdfchemy --merge %F
+
+[Desktop Action Reader]
+Name=Reflow Reader
+Exec=pdfchemy --reader %F

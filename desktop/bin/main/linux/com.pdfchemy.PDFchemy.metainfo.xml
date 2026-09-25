@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.pdfchemy.PDFchemy</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>PDFchemy Tools</name>
+  <summary>Local-First Emergency Document Utility Built For The People</summary>
+  <description>
+    <p>
+      PDFchemy Tools is a 100% offline, privacy-first emergency document utility built for the people.
+      All PDF operations execute locally on your machine with zero cloud uploads and zero telemetry.
+    </p>
+    <ul>
+      <li>Visual Page Studio: Rearrange, rotate, delete, and duplicate pages with responsive visual thumbnail cards.</li>
+      <li>Smart Target Compressor: Optimize DPI and JPEG quality to guarantee your document fits under email or portal size budgets (e.g. under 2MB).</li>
+      <li>Images ⇄ PDF Studio: Compile collections of photos or receipts into a PDF, or batch-extract all pages as high-res PNG images.</li>
+      <li>Multi-Core Batch Queue: Process 50+ PDFs simultaneously across all CPU cores.</li>
+      <li>Reflow Reader: Distraction-free reading with typography scaling and dark/sepia themes.</li>
+      <li>Document Security: 128/256-bit AES password encryption and safe password removal.</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.pdfchemy.PDFchemy.desktop</launchable>
+  <provides>
+    <mediatype>application/pdf</mediatype>
+    <mediatype>application/epub+zip</mediatype>
+    <mediatype>text/plain</mediatype>
+  </provides>
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+    <category>Publishing</category>
+  </categories>
+  <developer_name>Andrei Ioan Cucos</developer_name>
+  <url type="homepage">https://github.com/kiss2oblivion/pdfchemy</url>
+  <url type="bugtracker">https://github.com/kiss2oblivion/pdfchemy/issues</url>
+  <url type="vcs-browser">https://github.com/kiss2oblivion/pdfchemy</url>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="1.0.5" date="2026-09-12">
+      <description>
+        <p>Default Language &amp; Stability: Permanent default startup language setting with file-backed persistence in ~/.pdfchemy/config.properties, robust Escape key navigation preventing accidental closure of the document reader, and enhanced download domain support for the in-app updater.</p>
+      </description>
+    </release>
+    <release version="1.0.4" date="2026-09-12">
+      <description>
+        <p>Ultimate PDF Viewing Experience: Borderless full screen immersion, PDF bookmarks outline tree, smooth zoom and 2.5x magnifier loupe, nightlight candlelight and paper dimmer, dyslexia suite with reading ruler guide, real-time color blindness matrices, and 100% offline speech synthesis.</p>
+      </description>
+    </release>
+    <release version="1.0.3" date="2026-09-12">
+      <description>
+        <p>Security enhancements with universal Vanguard Zero-Trust shield integration, EPUB text extraction support, and comprehensive performance optimizations.</p>
+      </description>
+    </release>
+    <release version="1.0.2" date="2026-09-04">
+      <description>
+        <p>Full multi-language dynamic localization across 20 languages with automatic OS detection, first-run setup modal, and CLI configuration flags.</p>
+      </description>
+    </release>
+    <release version="1.0.1" date="2026-09-04">
+      <description>
+        <p>Hardened Gauntlet release featuring true forensic redaction, corrupted PDF recovery and reconstruction, and target-size anti-inflation safeguards.</p>
+      </description>
+    </release>
+    <release version="1.0.0" date="2026-09-04">
+      <description>
+        <p>Official release featuring Visual Page Studio, Smart Target-Size Compressor, Images ⇄ PDF Studio, Multi-Core Batch Queue, and the Lifetime Manifesto.</p>
+      </description>
+    </release>
+  </releases>
+</component>

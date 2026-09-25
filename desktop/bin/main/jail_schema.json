@@ -1,0 +1,1778 @@
+{
+  "operations": [
+    {
+      "operation": "inspectMetadata",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "DesktopPdfMetadata",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "stripMetadata",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "getPageCount",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "Int",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractText",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "String",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "readImageSafely",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "maxDim",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "maxDim",
+          "type": "Int"
+        }
+      ],
+      "returnType": "BufferedImage?",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "getPageDimensions",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<PageDimension>",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractAllPagesText",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<String>",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractBookmarks",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<DesktopPdfBookmark>",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "rotateSinglePage",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "degreesDelta",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "degreesDelta",
+          "type": "Int"
+        }
+      ],
+      "returnType": "Result<Boolean>",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "renderPage",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        },
+        {
+          "name": "viewRotation",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        },
+        {
+          "name": "viewRotation",
+          "type": "Int"
+        }
+      ],
+      "returnType": "BufferedImage",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "rotateImage",
+      "args": [
+        {
+          "name": "src",
+          "type": "BufferedImage"
+        },
+        {
+          "name": "degrees",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "src",
+          "type": "BufferedImage"
+        },
+        {
+          "name": "degrees",
+          "type": "Int"
+        }
+      ],
+      "returnType": "BufferedImage",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "renderThumbnail",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "targetWidth",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "targetWidth",
+          "type": "Int"
+        }
+      ],
+      "returnType": "BufferedImage",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "renderAllThumbnails",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "targetWidth",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        },
+        {
+          "name": "targetWidth",
+          "type": "Int"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "saveReorderedPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageSpecs",
+          "type": "List<PageItemSpec>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageSpecs",
+          "type": "List<PageItemSpec>"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "mergePdfs",
+      "args": [
+        {
+          "name": "inputFiles",
+          "type": "List<File>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFiles",
+          "type": "List<File>"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "splitPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "splitEveryNPages",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputDir",
+          "type": "File"
+        },
+        {
+          "name": "splitEveryNPages",
+          "type": "Int"
+        }
+      ],
+      "returnType": "List<File>",
+      "payloadType": "MULTI_FILE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "rotatePages",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "degrees",
+          "type": "Int"
+        },
+        {
+          "name": "pageIndices",
+          "type": "Set<Int>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "degrees",
+          "type": "Int"
+        },
+        {
+          "name": "pageIndices",
+          "type": "Set<Int>"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "deletePages",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pagesToDelete",
+          "type": "Set<Int>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pagesToDelete",
+          "type": "Set<Int>"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "encryptPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "userPass",
+          "type": "String"
+        },
+        {
+          "name": "ownerPass",
+          "type": "String"
+        },
+        {
+          "name": "keyLengthBits",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "userPass",
+          "type": "String"
+        },
+        {
+          "name": "ownerPass",
+          "type": "String"
+        },
+        {
+          "name": "keyLengthBits",
+          "type": "Int"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "decryptPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "password",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "password",
+          "type": "String"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "compressPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetDpi",
+          "type": "Float"
+        },
+        {
+          "name": "quality",
+          "type": "Float"
+        },
+        {
+          "name": "rasterizePages",
+          "type": "Boolean"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetDpi",
+          "type": "Float"
+        },
+        {
+          "name": "quality",
+          "type": "Float"
+        },
+        {
+          "name": "rasterizePages",
+          "type": "Boolean"
+        }
+      ],
+      "returnType": "Long",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "compressToTargetSize",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetBytes",
+          "type": "Long"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetBytes",
+          "type": "Long"
+        }
+      ],
+      "returnType": "Long",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "extractPagesToImages",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFolder",
+          "type": "File"
+        },
+        {
+          "name": "format",
+          "type": "String"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFolder",
+          "type": "File"
+        },
+        {
+          "name": "format",
+          "type": "String"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        }
+      ],
+      "returnType": "List<File>",
+      "payloadType": "MULTI_FILE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "imagesToPdf",
+      "args": [
+        {
+          "name": "imageFiles",
+          "type": "List<File>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "imageFiles",
+          "type": "List<File>"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Unit",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "repairPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "redactPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "query",
+          "type": "String"
+        },
+        {
+          "name": "overlayText",
+          "type": "String"
+        },
+        {
+          "name": "forensicSanitize",
+          "type": "Boolean"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "query",
+          "type": "String"
+        },
+        {
+          "name": "overlayText",
+          "type": "String"
+        },
+        {
+          "name": "forensicSanitize",
+          "type": "Boolean"
+        },
+        {
+          "name": "dpi",
+          "type": "Float"
+        }
+      ],
+      "returnType": "Int",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "stampDocument",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "stampImage",
+          "type": "BufferedImage"
+        },
+        {
+          "name": "xRatio",
+          "type": "Float"
+        },
+        {
+          "name": "yRatio",
+          "type": "Float"
+        },
+        {
+          "name": "widthRatio",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "stampImage",
+          "type": "BufferedImage"
+        },
+        {
+          "name": "xRatio",
+          "type": "Float"
+        },
+        {
+          "name": "yRatio",
+          "type": "Float"
+        },
+        {
+          "name": "widthRatio",
+          "type": "Float"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "createBusinessStamp",
+      "args": [
+        {
+          "name": "title",
+          "type": "String"
+        },
+        {
+          "name": "subtext",
+          "type": "String?"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "title",
+          "type": "String"
+        },
+        {
+          "name": "subtext",
+          "type": "String?"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "returnType": "BufferedImage",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "renderStrokesToImage",
+      "args": [
+        {
+          "name": "strokes",
+          "type": "List<List<Point2D.Float>>"
+        },
+        {
+          "name": "canvasWidth",
+          "type": "Int"
+        },
+        {
+          "name": "canvasHeight",
+          "type": "Int"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        },
+        {
+          "name": "strokeWidth",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "strokes",
+          "type": "List<List<Point2D.Float>>"
+        },
+        {
+          "name": "canvasWidth",
+          "type": "Int"
+        },
+        {
+          "name": "canvasHeight",
+          "type": "Int"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        },
+        {
+          "name": "strokeWidth",
+          "type": "Float"
+        }
+      ],
+      "returnType": "BufferedImage",
+      "payloadType": "IMAGE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "addTextAnnotations",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "items",
+          "type": "List<TextAnnotationItem>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "items",
+          "type": "List<TextAnnotationItem>"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "addPageNumbers",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "formatPattern",
+          "type": "String"
+        },
+        {
+          "name": "position",
+          "type": "HeaderFooterPos"
+        },
+        {
+          "name": "fontSize",
+          "type": "Float"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "formatPattern",
+          "type": "String"
+        },
+        {
+          "name": "position",
+          "type": "HeaderFooterPos"
+        },
+        {
+          "name": "fontSize",
+          "type": "Float"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "addWatermark",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "watermarkText",
+          "type": "String"
+        },
+        {
+          "name": "opacity",
+          "type": "Float"
+        },
+        {
+          "name": "rotationDegrees",
+          "type": "Float"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "watermarkText",
+          "type": "String"
+        },
+        {
+          "name": "opacity",
+          "type": "Float"
+        },
+        {
+          "name": "rotationDegrees",
+          "type": "Float"
+        },
+        {
+          "name": "colorHex",
+          "type": "String"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "hasAcroForm",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractAcroFields",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<DesktopAcroField>",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "fillAndFlattenAcroForm",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "fieldValues",
+          "type": "Map<String, String>"
+        },
+        {
+          "name": "flatten",
+          "type": "Boolean"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "fieldValues",
+          "type": "Map<String, String>"
+        },
+        {
+          "name": "flatten",
+          "type": "Boolean"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "compareDocuments",
+      "args": [
+        {
+          "name": "fileA",
+          "type": "File"
+        },
+        {
+          "name": "fileB",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "fileA",
+          "type": "File"
+        },
+        {
+          "name": "fileB",
+          "type": "File"
+        }
+      ],
+      "returnType": "PdfDiffSummary",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "applyBatesStamping",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "config",
+          "type": "DesktopBatesConfig"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "config",
+          "type": "DesktopBatesConfig"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "auditDocumentThreats",
+      "args": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "file",
+          "type": "File"
+        }
+      ],
+      "returnType": "DesktopSanitizeResult",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "smartRedact",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "patterns",
+          "type": "List<RedactPattern>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "patterns",
+          "type": "List<RedactPattern>"
+        }
+      ],
+      "returnType": "File",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "sanitizeDocument",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "purgeJs",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeActions",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeMetadata",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeAttachments",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgePrivateAnnotations",
+          "type": "Boolean"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "purgeJs",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeActions",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeMetadata",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgeAttachments",
+          "type": "Boolean"
+        },
+        {
+          "name": "purgePrivateAnnotations",
+          "type": "Boolean"
+        }
+      ],
+      "returnType": "DesktopSanitizeResult",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "repairCorruptedPdf",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "DesktopRepairResult",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "convertToPdfA",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "cropMargins",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "config",
+          "type": "DesktopCropConfig"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "config",
+          "type": "DesktopCropConfig"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "detectContentCrop",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "paddingPt",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int"
+        },
+        {
+          "name": "paddingPt",
+          "type": "Float"
+        }
+      ],
+      "returnType": "DesktopCropConfig",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractTablesToCsv",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int?"
+        },
+        {
+          "name": "safeMode",
+          "type": "Boolean"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pageIndex",
+          "type": "Int?"
+        },
+        {
+          "name": "safeMode",
+          "type": "Boolean"
+        }
+      ],
+      "returnType": "String",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "detectSkewAngle",
+      "args": [
+        {
+          "name": "image",
+          "type": "BufferedImage"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "image",
+          "type": "BufferedImage"
+        }
+      ],
+      "returnType": "Float",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "deskewDocument",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetPages",
+          "type": "Set<Int>?"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "targetPages",
+          "type": "Set<Int>?"
+        }
+      ],
+      "returnType": "Int",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "generateBooklet",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "drawFoldGuide",
+          "type": "Boolean"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "drawFoldGuide",
+          "type": "Boolean"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "generateNUp",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "pagesPerSheet",
+          "type": "Int"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "pagesPerSheet",
+          "type": "Int"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "splitByBlankPages",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "whiteThreshold",
+          "type": "Float"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputDir",
+          "type": "File"
+        },
+        {
+          "name": "whiteThreshold",
+          "type": "Float"
+        }
+      ],
+      "returnType": "List<File>",
+      "payloadType": "MULTI_FILE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "splitByBookmarks",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputDir",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<File>",
+      "payloadType": "MULTI_FILE",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "listAttachments",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "List<DesktopAttachment>",
+      "payloadType": "JSON",
+      "ipcMode": "executeInteractive"
+    },
+    {
+      "operation": "extractAttachment",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "attachmentName",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "attachmentName",
+          "type": "String"
+        },
+        {
+          "name": "outputDir",
+          "type": "File"
+        }
+      ],
+      "returnType": "File?",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "embedAttachment",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "attachmentFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "attachmentFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Boolean",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "signDocument",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "signerName",
+          "type": "String"
+        },
+        {
+          "name": "reason",
+          "type": "String"
+        },
+        {
+          "name": "location",
+          "type": "String"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "signerName",
+          "type": "String"
+        },
+        {
+          "name": "reason",
+          "type": "String"
+        },
+        {
+          "name": "location",
+          "type": "String"
+        }
+      ],
+      "returnType": "Result<Boolean>",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "makeSearchable",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        }
+      ],
+      "returnType": "Result<Boolean>",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    },
+    {
+      "operation": "addAcroFormFields",
+      "args": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "fields",
+          "type": "List<DesktopFormFieldSpec>"
+        }
+      ],
+      "originalArgs": [
+        {
+          "name": "inputFile",
+          "type": "File"
+        },
+        {
+          "name": "outputFile",
+          "type": "File"
+        },
+        {
+          "name": "fields",
+          "type": "List<DesktopFormFieldSpec>"
+        }
+      ],
+      "returnType": "Result<Boolean>",
+      "payloadType": "FILE",
+      "ipcMode": "execute"
+    }
+  ]
+}

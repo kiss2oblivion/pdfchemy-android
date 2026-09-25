@@ -76,3 +76,7 @@ desktop/src/main/cpp/hello.cpp
 # Abandoned Kotlin/Native launcher experiment
 /arkham-launcher/
 /test_lpac.obj
+
+# Secrets
+keystore.properties
+/app/release.jks

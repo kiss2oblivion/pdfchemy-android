@@ -29,10 +29,16 @@ android {
 
     signingConfigs {
         create("release") {
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            val keystoreProperties = java.util.Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+            }
+
             storeFile = file("release.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "shrinkpdf123"
-            keyAlias = System.getenv("KEY_ALIAS") ?: "shrinkpdf-alias"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "shrinkpdf123"
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: keystoreProperties["KEYSTORE_PASSWORD"]?.toString() ?: throw GradleException("Missing KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties["KEY_ALIAS"]?.toString() ?: throw GradleException("Missing KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties["KEY_PASSWORD"]?.toString() ?: throw GradleException("Missing KEY_PASSWORD")
         }
     }
 
@@ -138,12 +144,12 @@ dependencies {
     implementation("androidx.window:window:1.2.0")
 
     // Text Conversion Libraries
-    implementation("org.jsoup:jsoup:1.17.2")
+    implementation("org.jsoup:jsoup:1.23.1")
     implementation("com.vladsch.flexmark:flexmark-all:0.64.8")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.17.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.8")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.8")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.8")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     testImplementation("junit:junit:4.13.2")
@@ -160,6 +166,6 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // PKI Digital Signatures (BouncyCastle)
-    implementation("org.bouncycastle:bcprov-jdk18on:1.78")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.78")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
 }

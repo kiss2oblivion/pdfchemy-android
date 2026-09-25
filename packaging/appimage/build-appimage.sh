@@ -37,7 +37,14 @@ chmod +x "$APP_DIR/AppRun"
 # 5. Download appimagetool if not present
 if [ ! -f "appimagetool-x86_64.AppImage" ]; then
     echo "Downloading appimagetool..."
-    wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+    wget -q "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage"
+    EXPECTED_SHA256="df3baf5ca5facbecfea28400030560a631f49ce1742df152eb7a13d80e816a7f"
+    ACTUAL_SHA256=$(sha256sum appimagetool-x86_64.AppImage | awk '{print $1}')
+    if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
+        echo "ERROR: appimagetool hash mismatch! Expected: $EXPECTED_SHA256, got: $ACTUAL_SHA256"
+        rm appimagetool-x86_64.AppImage
+        exit 1
+    fi
     chmod +x appimagetool-x86_64.AppImage
 fi
 

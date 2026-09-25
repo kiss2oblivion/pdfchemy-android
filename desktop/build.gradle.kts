@@ -19,11 +19,11 @@ dependencies {
     implementation(compose.components.resources)
 
     // Apache PDFBox for pure JVM Desktop (Windows & Linux)
-    implementation("org.apache.pdfbox:pdfbox:2.0.31")
+    implementation("org.apache.pdfbox:pdfbox:2.0.37")
 
     // BouncyCastle for PKI (Digital Signatures)
-    implementation("org.bouncycastle:bcprov-jdk18on:1.78")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.78")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
 
     // Tess4J for Desktop OCR
     implementation("net.sourceforge.tess4j:tess4j:5.7.0")
