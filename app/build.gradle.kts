@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -30,9 +33,9 @@ android {
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = java.util.Properties()
+            val keystoreProperties = Properties()
             if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
             }
 
             storeFile = file("release.jks")
@@ -82,6 +85,8 @@ android {
             excludes += "/META-INF/NOTICE.txt"
             excludes += "/META-INF/LICENSE"
             excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/DEPENDENCIES"
             excludes += "/META-INF/LICENSE-W3C-TEST"
         }
