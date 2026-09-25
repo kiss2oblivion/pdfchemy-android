@@ -2,17 +2,9 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import com.pdfchemy.app.utils.AppLogger
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
-import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
-import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
-import com.tom_roush.pdfbox.util.Matrix
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
+import org.json.JSONObject
 
 data class WatermarkOptions(
     val text: String? = null,
@@ -63,94 +55,26 @@ object PdfStampAndNumberEngine {
         sourceUri: Uri,
         destUri: Uri,
         options: WatermarkOptions
-    ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
-        try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                if (doc == null) return@withContext false
+    ): Boolean {
+        val params = JSONObject().apply {
+            put("text", options.text)
+            put("rotationDegrees", options.rotationDegrees.toDouble())
+            put("opacity", options.opacity.toDouble())
+            put("fontSize", options.fontSize.toDouble())
+            put("isTiled", options.isTiled)
+        }
 
-                val totalPages = doc!!.numberOfPages
-                val font = PDType1Font.HELVETICA_BOLD
-
-                for (i in 0 until totalPages) {
-                    val page = doc!!.getPage(i)
-                    val mediaBox = page.cropBox ?: page.mediaBox
-                    val pageWidth = mediaBox.width
-                    val pageHeight = mediaBox.height
-
-                    PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
-                        val gs = PDExtendedGraphicsState().apply {
-                            nonStrokingAlphaConstant = options.opacity.coerceIn(0.05f, 1f)
-                        }
-                        cs.setGraphicsStateParameters(gs)
-
-                        if (!options.text.isNullOrBlank()) {
-                            val text = options.text
-                            val textWidth = (font.getStringWidth(text) / 1000f) * options.fontSize
-                            val textHeight = options.fontSize
-
-                            if (options.isTiled) {
-                                // Render 3x3 tiled watermark
-                                for (row in 1..3) {
-                                    for (col in 1..3) {
-                                        val tileX = (pageWidth / 4f) * col
-                                        val tileY = (pageHeight / 4f) * row
-
-                                        cs.saveGraphicsState()
-                                        val rad = Math.toRadians(options.rotationDegrees.toDouble())
-                                        val matrix = Matrix.getRotateInstance(rad, tileX, tileY)
-                                        cs.transform(matrix)
-
-                                        cs.beginText()
-                                        cs.setFont(font, options.fontSize * 0.7f)
-                                        cs.setNonStrokingColor(128, 128, 128)
-                                        cs.newLineAtOffset(-textWidth * 0.35f, -textHeight * 0.35f)
-                                        cs.showText(text)
-                                        cs.endText()
-
-                                        cs.restoreGraphicsState()
-                                    }
-                                }
-                            } else {
-                                // Single Center Watermark
-                                cs.saveGraphicsState()
-                                val centerX = pageWidth / 2f
-                                val centerY = pageHeight / 2f
-                                val rad = Math.toRadians(options.rotationDegrees.toDouble())
-                                val matrix = Matrix.getRotateInstance(rad, centerX, centerY)
-                                cs.transform(matrix)
-
-                                cs.beginText()
-                                cs.setFont(font, options.fontSize)
-                                cs.setNonStrokingColor(128, 128, 128)
-                                cs.newLineAtOffset(-textWidth / 2f, -textHeight / 2f)
-                                cs.showText(text)
-                                cs.endText()
-
-                                cs.restoreGraphicsState()
-                            }
-                        } else if (options.imageBitmap != null) {
-                            val pdImage = LosslessFactory.createFromImage(doc, options.imageBitmap)
-                            val imgW = (pageWidth * 0.5f).coerceAtLeast(100f)
-                            val imgH = (imgW * (options.imageBitmap.height.toFloat() / options.imageBitmap.width.toFloat()))
-                            val x = (pageWidth - imgW) / 2f
-                            val y = (pageHeight - imgH) / 2f
-                            cs.drawImage(pdImage, x, y, imgW, imgH)
-                        }
-                    }
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    doc!!.save(outStream)
-                }
-                true
-            } ?: false
+        val resultStr = PdfGateway.executeEngine(
+            context,
+            "WATERMARK",
+            sourceUri,
+            destUri,
+            params.toString()
+        )
+        return try {
+            JSONObject(resultStr).optBoolean("success", false)
         } catch (e: Exception) {
-            AppLogger.e("Failed to add watermark to PDF: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 
@@ -159,64 +83,26 @@ object PdfStampAndNumberEngine {
         sourceUri: Uri,
         destUri: Uri,
         options: PageNumberOptions
-    ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
-        try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                if (doc == null) return@withContext false
+    ): Boolean {
+        val params = JSONObject().apply {
+            put("position", options.position.name)
+            put("format", options.format.name)
+            put("skipFirstPage", options.skipFirstPage)
+            put("fontSize", options.fontSize.toDouble())
+            put("marginPts", options.marginPts.toDouble())
+        }
 
-                val totalPages = doc!!.numberOfPages
-                val font = PDType1Font.HELVETICA
-
-                for (i in 0 until totalPages) {
-                    if (i == 0 && options.skipFirstPage) {
-                        continue
-                    }
-
-                    val page = doc!!.getPage(i)
-                    val mediaBox = page.cropBox ?: page.mediaBox
-                    val pageWidth = mediaBox.width
-                    val pageHeight = mediaBox.height
-
-                    val pageNumberText = when (options.format) {
-                        NumberFormat.SIMPLE -> "${i + 1}"
-                        NumberFormat.PAGE_X_OF_Y -> "Page ${i + 1} of $totalPages"
-                        NumberFormat.SLASH -> "${i + 1} / $totalPages"
-                    }
-
-                    val textWidth = (font.getStringWidth(pageNumberText) / 1000f) * options.fontSize
-                    val margin = options.marginPts
-
-                    val (x, y) = when (options.position) {
-                        NumberPosition.TOP_LEFT -> margin to (pageHeight - margin)
-                        NumberPosition.TOP_CENTER -> ((pageWidth - textWidth) / 2f) to (pageHeight - margin)
-                        NumberPosition.TOP_RIGHT -> (pageWidth - margin - textWidth) to (pageHeight - margin)
-                        NumberPosition.BOTTOM_LEFT -> margin to margin
-                        NumberPosition.BOTTOM_CENTER -> ((pageWidth - textWidth) / 2f) to margin
-                        NumberPosition.BOTTOM_RIGHT -> (pageWidth - margin - textWidth) to margin
-                    }
-
-                    PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
-                        cs.beginText()
-                        cs.setFont(font, options.fontSize)
-                        cs.setNonStrokingColor(80, 80, 80)
-                        cs.newLineAtOffset(x, y)
-                        cs.showText(pageNumberText)
-                        cs.endText()
-                    }
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    doc!!.save(outStream)
-                }
-                true
-            } ?: false
+        val resultStr = PdfGateway.executeEngine(
+            context,
+            "PAGE_NUMBERS",
+            sourceUri,
+            destUri,
+            params.toString()
+        )
+        return try {
+            JSONObject(resultStr).optBoolean("success", false)
         } catch (e: Exception) {
-            AppLogger.e("Failed to add page numbers to PDF: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 
@@ -225,57 +111,28 @@ object PdfStampAndNumberEngine {
         sourceUri: Uri,
         destUri: Uri,
         options: BatesOptions
-    ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
-        try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                if (doc == null) return@withContext false
+    ): Boolean {
+        val params = JSONObject().apply {
+            put("prefix", options.prefix)
+            put("suffix", options.suffix)
+            put("startNumber", options.startNumber)
+            put("digits", options.digits)
+            put("position", options.position.name)
+            put("fontSize", options.fontSize.toDouble())
+            put("marginPts", options.marginPts.toDouble())
+        }
 
-                val totalPages = doc!!.numberOfPages
-                val font = PDType1Font.HELVETICA
-
-                for (i in 0 until totalPages) {
-                    val page = doc!!.getPage(i)
-                    val currentNum = options.startNumber + i
-                    val formattedNum = "%0${options.digits}d".format(currentNum)
-                    val batesText = "${options.prefix}$formattedNum${options.suffix}"
-
-                    val textWidth = font.getStringWidth(batesText) / 1000f * options.fontSize
-                    val mediaBox = page.mediaBox
-                    val pageWidth = mediaBox.width
-                    val pageHeight = mediaBox.height
-                    val margin = options.marginPts
-
-                    val (x, y) = when (options.position) {
-                        NumberPosition.TOP_LEFT -> margin to (pageHeight - margin)
-                        NumberPosition.TOP_CENTER -> ((pageWidth - textWidth) / 2f) to (pageHeight - margin)
-                        NumberPosition.TOP_RIGHT -> (pageWidth - margin - textWidth) to (pageHeight - margin)
-                        NumberPosition.BOTTOM_LEFT -> margin to margin
-                        NumberPosition.BOTTOM_CENTER -> ((pageWidth - textWidth) / 2f) to margin
-                        NumberPosition.BOTTOM_RIGHT -> (pageWidth - margin - textWidth) to margin
-                    }
-
-                    PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
-                        cs.beginText()
-                        cs.setFont(font, options.fontSize)
-                        cs.setNonStrokingColor(24, 24, 27)
-                        cs.newLineAtOffset(x, y)
-                        cs.showText(batesText)
-                        cs.endText()
-                    }
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    doc!!.save(outStream)
-                }
-                true
-            } ?: false
+        val resultStr = PdfGateway.executeEngine(
+            context,
+            "BATES_STAMP",
+            sourceUri,
+            destUri,
+            params.toString()
+        )
+        return try {
+            JSONObject(resultStr).optBoolean("success", false)
         } catch (e: Exception) {
-            AppLogger.e("Failed to apply Bates stamping: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 }

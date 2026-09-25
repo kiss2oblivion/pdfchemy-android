@@ -2,21 +2,10 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
+
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.multipdf.LayerUtility
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
-import com.tom_roush.pdfbox.util.Matrix
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.InputStream
-import kotlin.math.ceil
-import kotlin.math.min
+import org.json.JSONObject
 
 enum class NUpLayout(val cols: Int, val rows: Int, val pagesPerSheet: Int, val isLandscapeDefault: Boolean) {
     TWO_UP(cols = 1, rows = 2, pagesPerSheet = 2, isLandscapeDefault = false),
@@ -42,166 +31,50 @@ data class NUpConfig(
 
 object PdfNUpEngine {
 
-    /**
-     * Generates a multi-page N-Up handout grid PDF with lossless vector page embedding.
-     */
     suspend fun generateNUpPdf(
         context: Context,
         sourcePdfUri: Uri,
         destPdfUri: Uri,
         config: NUpConfig,
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }
-    ): Result<Boolean> = withContext(Dispatchers.IO) {
-        PDFBoxResourceLoader.init(context)
-        var srcDoc: PDDocument? = null
-        var outDoc: PDDocument? = null
-        var inputStream: InputStream? = null
-        var tempFile: File? = null
-
-        try {
-            inputStream = context.contentResolver.openInputStream(sourcePdfUri)
-                ?: throw IllegalStateException("Cannot open input PDF")
-
-            srcDoc = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-            val origPageCount = srcDoc.numberOfPages
-            if (origPageCount == 0) {
-                return@withContext Result.failure(IllegalStateException("PDF contains no pages"))
+    ): Result<Boolean> {
+        return try {
+            val params = JSONObject().apply {
+                put("layoutCols", config.layout.cols)
+                put("layoutRows", config.layout.rows)
+                put("pagesPerSheet", config.layout.pagesPerSheet)
+                put("isLandscapeDefault", config.layout.isLandscapeDefault)
+                put("orderHorizontal", config.order == NUpOrder.HORIZONTAL)
+                put("paperWidthPts", config.paperSize.widthPts)
+                put("paperHeightPts", config.paperSize.heightPts)
+                put("drawBorders", config.drawBorders)
+                put("marginPt", config.marginPt.toDouble())
+                put("spacingPt", config.spacingPt.toDouble())
             }
 
-            outDoc = PDDocument()
-            val layerUtil = LayerUtility(outDoc)
-
-            val cols = config.layout.cols
-            val rows = config.layout.rows
-            val perSheet = config.layout.pagesPerSheet
-            val totalSheets = ceil(origPageCount.toDouble() / perSheet.toDouble()).toInt()
-
-            // Sheet dimensions
-            val sheetW = if (config.layout.isLandscapeDefault) config.paperSize.heightPts else config.paperSize.widthPts
-            val sheetH = if (config.layout.isLandscapeDefault) config.paperSize.widthPts else config.paperSize.heightPts
-            val sheetRect = PDRectangle(sheetW, sheetH)
-
-            val availW = sheetW - (config.marginPt * 2) - (config.spacingPt * (cols - 1))
-            val availH = sheetH - (config.marginPt * 2) - (config.spacingPt * (rows - 1))
-            val cellW = availW / cols
-            val cellH = availH / rows
-
-            for (sheetIdx in 0 until totalSheets) {
-                val sheetPage = PDPage(sheetRect)
-                outDoc.addPage(sheetPage)
-
-                PDPageContentStream(outDoc, sheetPage).use { cs ->
-                    for (slotIdx in 0 until perSheet) {
-                        val (col, row) = when (config.order) {
-                            NUpOrder.HORIZONTAL -> {
-                                val c = slotIdx % cols
-                                val r = slotIdx / cols
-                                c to (rows - 1 - r) // in PDF Y is bottom-to-top
-                            }
-                            NUpOrder.VERTICAL -> {
-                                val r = slotIdx % rows
-                                val c = slotIdx / rows
-                                c to (rows - 1 - r)
-                            }
-                        }
-
-                        val srcPageIdx = (sheetIdx * perSheet) + slotIdx
-                        if (srcPageIdx < origPageCount) {
-                            val cellX = config.marginPt + (col * (cellW + config.spacingPt))
-                            val cellY = config.marginPt + (row * (cellH + config.spacingPt))
-
-                            drawPageInCell(
-                                srcDoc = srcDoc,
-                                layerUtil = layerUtil,
-                                cs = cs,
-                                pageIndex = srcPageIdx,
-                                cellX = cellX,
-                                cellY = cellY,
-                                cellW = cellW,
-                                cellH = cellH,
-                                drawBorder = config.drawBorders
-                            )
-                        }
-                    }
-                }
-
-                onProgress(sheetIdx + 1, totalSheets)
-            }
-
-            tempFile = File(context.cacheDir, "nup_${System.currentTimeMillis()}.pdf")
-            outDoc.save(tempFile)
-            outDoc.close()
-            outDoc = null
-            srcDoc.close()
-            srcDoc = null
-
-            context.contentResolver.openOutputStream(destPdfUri)?.use { out ->
-                tempFile.inputStream().use { inp ->
-                    inp.copyTo(out)
-                }
-            } ?: throw IllegalStateException("Cannot open destination PDF stream")
-
-            tempFile.delete()
-            tempFile = null
-
-            val historyRepo = HistoryRepository(context)
-            historyRepo.addHistoryItem(
+            val resultStr = PdfGateway.executeEngine(
+                context,
+                "NUP_GENERATE",
+                sourcePdfUri,
                 destPdfUri,
-                FileUtils.getFileName(context, destPdfUri) ?: "nup_handout.pdf",
-                "${config.layout.pagesPerSheet}-Up Grid Handout"
+                params.toString()
             )
 
-            Result.success(true)
+            val json = JSONObject(resultStr)
+            if (json.optBoolean("success", false)) {
+                val historyRepo = HistoryRepository(context)
+                historyRepo.addHistoryItem(
+                    destPdfUri,
+                    FileUtils.getFileName(context, destPdfUri) ?: "nup_handout.pdf",
+                    "${config.layout.pagesPerSheet}-Up Grid Handout"
+                )
+                Result.success(true)
+            } else {
+                Result.failure(Exception(json.optString("error", "Failed to generate N-Up")))
+            }
         } catch (e: Exception) {
             AppLogger.e("PdfNUpEngine: Error generating N-Up grid", e)
             Result.failure(e)
-        } finally {
-            try { outDoc?.close() } catch (_: Exception) {}
-            try { srcDoc?.close() } catch (_: Exception) {}
-            try { inputStream?.close() } catch (_: Exception) {}
-            tempFile?.delete()
-        }
-    }
-
-    private fun drawPageInCell(
-        srcDoc: PDDocument,
-        layerUtil: LayerUtility,
-        cs: PDPageContentStream,
-        pageIndex: Int,
-        cellX: Float,
-        cellY: Float,
-        cellW: Float,
-        cellH: Float,
-        drawBorder: Boolean
-    ) {
-        val srcPage = srcDoc.getPage(pageIndex)
-        val srcBox = srcPage.cropBox ?: srcPage.mediaBox
-        val srcW = srcBox.width
-        val srcH = srcBox.height
-
-        val formXObject = layerUtil.importPageAsForm(srcDoc, pageIndex)
-        val scale = min(cellW / srcW, cellH / srcH)
-        val drawW = srcW * scale
-        val drawH = srcH * scale
-        val drawX = cellX + ((cellW - drawW) / 2f)
-        val drawY = cellY + ((cellH - drawH) / 2f)
-
-        // Draw page form
-        cs.saveGraphicsState()
-        val matrix = Matrix.getTranslateInstance(drawX, drawY)
-        matrix.scale(scale, scale)
-        cs.transform(matrix)
-        cs.drawForm(formXObject)
-        cs.restoreGraphicsState()
-
-        // Optional subtle slide frame border
-        if (drawBorder) {
-            cs.saveGraphicsState()
-            cs.setStrokingColor(200, 205, 215)
-            cs.setLineWidth(0.6f)
-            cs.addRect(drawX, drawY, drawW, drawH)
-            cs.stroke()
-            cs.restoreGraphicsState()
         }
     }
 }

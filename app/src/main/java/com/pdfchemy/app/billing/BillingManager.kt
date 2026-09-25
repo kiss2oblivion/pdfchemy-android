@@ -2,6 +2,9 @@ package com.pdfchemy.app.billing
 
 import android.app.Activity
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.android.billingclient.api.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,9 +31,26 @@ class BillingManager(
 
     companion object {
         const val PREMIUM_PRODUCT_ID = "premium_upgrade"
+        private const val PREFS_NAME = "billing_prefs_secured"
+        private const val KEY_IS_PREMIUM = "is_premium_entitled"
+    }
+    
+    private val securePrefs: SharedPreferences by lazy {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 
     init {
+        // Fallback to secure cached value immediately for offline support
+        _isPremium.value = securePrefs.getBoolean(KEY_IS_PREMIUM, false)
         initializeBillingClient()
     }
 
@@ -130,6 +150,8 @@ class BillingManager(
                     }
                 }
             }
+            // Centralize entitlement logic: Update cache with source of truth from Play Store
+            securePrefs.edit().putBoolean(KEY_IS_PREMIUM, hasPremium).apply()
             _isPremium.value = hasPremium
         }
     }

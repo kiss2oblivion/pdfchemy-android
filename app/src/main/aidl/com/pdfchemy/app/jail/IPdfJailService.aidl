@@ -65,5 +65,13 @@ oneway interface IPdfJailService {
         String paramsJson,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
+
+    void executeEngineBatch(
+        String engineName,
+        in ParcelFileDescriptor[] sourceFds,
+        in ParcelFileDescriptor[] targetFds,
+        String paramsJson,
+        com.pdfchemy.app.jail.IPdfJailStringCallback callback
+    );
 }
 

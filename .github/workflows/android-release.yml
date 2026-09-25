@@ -1,0 +1,40 @@
+name: Android CI/CD
+
+on:
+  push:
+    branches: [ "repo-android", "main" ]
+  pull_request:
+    branches: [ "repo-android", "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Run Architecture & Security Tests
+      run: ./gradlew :app:testDebugUnitTest --tests "com.pdfchemy.app.arch.ArchitectureTest"
+
+    - name: Run Unit Tests
+      run: ./gradlew test
+
+    - name: Secret Scan (TruffleHog)
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug

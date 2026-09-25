@@ -2,20 +2,9 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
-import android.os.ParcelFileDescriptor
-import com.pdfchemy.app.utils.AppLogger
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.util.Matrix as PdfMatrix
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.InputStream
-import kotlin.math.abs
+
+import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -29,7 +18,6 @@ object PdfDeskewEngine {
      * Estimates skew angle in degrees (negative = tilted counterclockwise, positive = tilted clockwise).
      */
     fun detectSkewAngle(bitmap: Bitmap): Float {
-        // Downscale to fast analysis dimensions (~250px)
         val targetWidth = 250
         val scale = targetWidth.toFloat() / bitmap.width.toFloat()
         val targetHeight = (bitmap.height * scale).toInt().coerceAtLeast(1)
@@ -38,7 +26,6 @@ object PdfDeskewEngine {
         val w = scaled.width
         val h = scaled.height
 
-        // Convert to binary/luminance array
         val pixels = IntArray(w * h)
         scaled.getPixels(pixels, 0, w, 0, 0, w, h)
         if (scaled != bitmap) {
@@ -87,7 +74,6 @@ object PdfDeskewEngine {
             return (sumSq / h.toDouble()) - (mean * mean)
         }
 
-        // Pass 1: Coarse search from -15.0 to +15.0 deg in 2.0 deg increments
         var bestAngle = 0.0f
         var maxVariance = -1.0
         var coarseAngle = -15.0f
@@ -100,7 +86,6 @@ object PdfDeskewEngine {
             coarseAngle += 2.0f
         }
 
-        // Pass 2: Fine search around best coarse angle in 0.25 deg increments
         val fineStart = (bestAngle - 2.0f).coerceAtLeast(-15.0f)
         val fineEnd = (bestAngle + 2.0f).coerceAtMost(15.0f)
         var fineAngle = fineStart
@@ -121,85 +106,25 @@ object PdfDeskewEngine {
         sourceUri: Uri,
         destUri: Uri,
         targetPages: Set<Int>? = null
-    ): Int = withContext(Dispatchers.IO) {
-        var straightenedCount = 0
-        var pfd: ParcelFileDescriptor? = null
-        var docStream: InputStream? = null
-        var renderer: PdfRenderer? = null
-        var document: PDDocument? = null
+    ): Int {
+        val params = JSONObject()
+        if (targetPages != null) {
+            val arr = org.json.JSONArray()
+            targetPages.forEach { arr.put(it) }
+            params.put("targetPages", arr)
+        }
 
-        try {
-            pfd = context.contentResolver.openFileDescriptor(sourceUri, "r")
-            docStream = context.contentResolver.openInputStream(sourceUri)
-            if (pfd != null && docStream != null) {
-                renderer = PdfRenderer(pfd)
-                document = PDDocument.load(docStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                val totalPages = document.numberOfPages
-
-                for (i in 0 until totalPages) {
-                    if (targetPages != null && i !in targetPages) continue
-
-                    var page: PdfRenderer.Page? = null
-                    var bmp: Bitmap? = null
-                    val angle = try {
-                        page = renderer.openPage(i)
-                        bmp = Bitmap.createBitmap(250, (250f * page.height / page.width).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
-                        bmp.eraseColor(Color.WHITE)
-                        page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        detectSkewAngle(bmp)
-                    } catch (e: Exception) {
-                        AppLogger.e("Deskew angle detection failed on page $i", e)
-                        0.0f
-                    } finally {
-                        bmp?.recycle()
-                        page?.close()
-                    }
-
-                    if (abs(angle) >= 0.5f) {
-                        val pdPage = document.getPage(i)
-                        applyDeskewTransform(document, pdPage, -angle)
-                        straightenedCount++
-                    }
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { out ->
-                    document.save(out)
-                }
-            }
+        val resultStr = PdfGateway.executeEngine(
+            context,
+            "DESKEW",
+            sourceUri,
+            destUri,
+            params.toString()
+        )
+        return try {
+            JSONObject(resultStr).optInt("straightenedCount", 0)
         } catch (e: Exception) {
-            AppLogger.e("Error deskewing document", e)
-        } finally {
-            try { docStream?.close() } catch (_: Exception) {}
-            try { document?.close() } catch (_: Exception) {}
-            try { renderer?.close() } catch (_: Exception) {}
-            try { pfd?.close() } catch (_: Exception) {}
-        }
-
-        straightenedCount
-    }
-
-    private fun applyDeskewTransform(doc: PDDocument, page: PDPage, correctionAngleDegrees: Float) {
-        val rad = Math.toRadians(correctionAngleDegrees.toDouble())
-        val cos = cos(rad).toFloat()
-        val sin = sin(rad).toFloat()
-
-        val mb = page.mediaBox
-        val cx = mb.width / 2f
-        val cy = mb.height / 2f
-
-        PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, false, false).use { cs ->
-            cs.saveGraphicsState()
-            val translateToCenter = PdfMatrix.getTranslateInstance(cx, cy)
-            val rotateMatrix = PdfMatrix(cos, sin, -sin, cos, 0f, 0f)
-            val translateBack = PdfMatrix.getTranslateInstance(-cx, -cy)
-
-            cs.transform(translateToCenter)
-            cs.transform(rotateMatrix)
-            cs.transform(translateBack)
-        }
-
-        PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, false, false).use { cs ->
-            cs.restoreGraphicsState()
+            0
         }
     }
 }

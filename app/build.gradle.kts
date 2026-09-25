@@ -147,6 +147,7 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.window:window:1.2.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Text Conversion Libraries
     implementation("org.jsoup:jsoup:1.23.2")

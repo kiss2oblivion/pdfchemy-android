@@ -2,25 +2,21 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
+
 import com.pdfchemy.app.utils.AppLogger
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
-import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
-import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
-import com.tom_roush.pdfbox.util.Matrix
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
+import android.util.Base64
 
 data class PlacedSignature(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -61,32 +57,29 @@ object SignatureEngine {
     }
 
     suspend fun loadSignatures(context: Context): List<Pair<String, Bitmap>> = withContext(Dispatchers.IO) {
-        val list = mutableListOf<Pair<String, Bitmap>>()
-        try {
-            val dir = getSignaturesDir(context)
-            val files = dir.listFiles { f -> f.extension.equals("png", ignoreCase = true) } ?: emptyArray()
-            for (f in files) {
-                val bmp = BitmapFactory.decodeFile(f.absolutePath)
-                if (bmp != null) {
-                    list.add(f.nameWithoutExtension to bmp)
-                }
+        val dir = getSignaturesDir(context)
+        val files = dir.listFiles { file -> file.isFile && file.name.endsWith(".png") }?.toList() ?: emptyList()
+        files.mapNotNull { file ->
+            try {
+                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                if (bitmap != null) Pair(file.nameWithoutExtension, bitmap) else null
+            } catch (e: Exception) {
+                null
             }
-        } catch (e: Exception) {
-            AppLogger.e("Failed to load signatures: ${e.message}", e)
         }
-        list
+    }
+    suspend fun listSavedSignatures(context: Context): List<File> = withContext(Dispatchers.IO) {
+        val dir = getSignaturesDir(context)
+        dir.listFiles { file -> file.isFile && file.name.endsWith(".png") }?.toList() ?: emptyList()
     }
 
     suspend fun deleteSignature(context: Context, name: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val sanitizedName = name.replace(Regex("[^a-zA-Z0-9_\\-]"), "_")
-            val dir = getSignaturesDir(context)
-            val file = File(dir, "${sanitizedName}.png")
-            if (file.exists()) file.delete() else false
-        } catch (e: Exception) {
-            AppLogger.e("Failed to delete signature: ${e.message}", e)
-            false
-        }
+        val sanitizedName = name.replace(Regex("[^a-zA-Z0-9_\\-]"), "_")
+        val dir = getSignaturesDir(context)
+        val file = File(dir, "${sanitizedName}.png")
+        if (file.exists()) {
+            file.delete()
+        } else false
     }
 
     suspend fun applySignatures(
@@ -95,74 +88,36 @@ object SignatureEngine {
         destUri: Uri,
         signatures: List<PlacedSignature>
     ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
         try {
-            context.contentResolver.openInputStream(sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                if (doc == null) return@withContext false
+            val sigsArray = JSONArray()
+            for (sig in signatures) {
+                val sigObj = JSONObject()
+                sigObj.put("pageIndex", sig.pageIndex)
+                sigObj.put("xRatio", sig.xRatio.toDouble())
+                sigObj.put("yRatio", sig.yRatio.toDouble())
+                sigObj.put("widthRatio", sig.widthRatio.toDouble())
+                sigObj.put("heightRatio", sig.heightRatio.toDouble())
+                sigObj.put("dateStamp", sig.dateStamp)
+                sigObj.put("bitmapBase64", Base64.encodeToString(sig.bitmapBytes, Base64.DEFAULT))
+                sigsArray.put(sigObj)
+            }
 
-                val totalPages = doc!!.numberOfPages
-                val signaturesByPage = signatures.groupBy { it.pageIndex }
+            val params = JSONObject().apply {
+                put("signatures", sigsArray)
+            }
 
-                for ((pageIdx, sigs) in signaturesByPage) {
-                    if (pageIdx in 0 until totalPages) {
-                        val page = doc!!.getPage(pageIdx)
-                        val mediaBox = page.cropBox ?: page.mediaBox
-                        val pageWidth = mediaBox.width
-                        val pageHeight = mediaBox.height
-                        val lowerLeftX = mediaBox.lowerLeftX
-                        val lowerLeftY = mediaBox.lowerLeftY
-                        val rotation = page.rotation
-
-                        val dispW = if (rotation == 90 || rotation == 270) pageHeight else pageWidth
-                        val dispH = if (rotation == 90 || rotation == 270) pageWidth else pageHeight
-
-                        PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
-                            for (sig in sigs) {
-                                val sigBmp = BitmapFactory.decodeByteArray(sig.bitmapBytes, 0, sig.bitmapBytes.size)
-                                if (sigBmp != null) {
-                                    val pdImage = LosslessFactory.createFromImage(doc, sigBmp)
-                                    val stampW = (sig.widthRatio * dispW).coerceAtLeast(40f)
-                                    val stampH = (sig.heightRatio * dispH).coerceAtLeast(20f)
-                                    val stampX = sig.xRatio * dispW
-                                    val stampY = dispH - (sig.yRatio * dispH) - stampH
-
-                                    cs.saveGraphicsState()
-                                    when (rotation) {
-                                        90 -> cs.transform(Matrix(0f, 1f, -1f, 0f, lowerLeftX + pageWidth, lowerLeftY))
-                                        180 -> cs.transform(Matrix(-1f, 0f, 0f, -1f, lowerLeftX + pageWidth, lowerLeftY + pageHeight))
-                                        270 -> cs.transform(Matrix(0f, -1f, 1f, 0f, lowerLeftX, lowerLeftY + pageHeight))
-                                        else -> cs.transform(Matrix(1f, 0f, 0f, 1f, lowerLeftX, lowerLeftY))
-                                    }
-
-                                    cs.drawImage(pdImage, stampX, stampY, stampW, stampH)
-
-                                    if (!sig.dateStamp.isNullOrBlank()) {
-                                        cs.beginText()
-                                        cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
-                                        cs.setNonStrokingColor(0, 0, 0)
-                                        cs.newLineAtOffset(stampX, stampY - 12f)
-                                        cs.showText("Signed: ${sig.dateStamp}")
-                                        cs.endText()
-                                    }
-
-                                    cs.restoreGraphicsState()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                context.contentResolver.openOutputStream(destUri)?.use { outStream ->
-                    doc!!.save(outStream)
-                }
-                true
-            } ?: false
+            val resultStr = PdfGateway.executeEngine(
+                context,
+                "SIGNATURE_APPLY",
+                sourceUri,
+                destUri,
+                params.toString()
+            )
+            val json = JSONObject(resultStr)
+            json.optBoolean("success", false)
         } catch (e: Exception) {
             AppLogger.e("Failed to apply signatures to PDF: ${e.message}", e)
             false
-        } finally {
-            doc?.close()
         }
     }
 
@@ -237,9 +192,6 @@ object SignatureEngine {
         return bmp
     }
 
-    /**
-     * Applies a cryptographic PKI digital signature using a self-signed certificate.
-     */
     suspend fun applyDigitalSignature(
         context: Context,
         sourceUri: Uri,
@@ -248,42 +200,25 @@ object SignatureEngine {
         reason: String,
         location: String
     ): Boolean = withContext(Dispatchers.IO) {
-        var sourceFile: File? = null
-        var destFile: File? = null
         try {
-            sourceFile = File(context.cacheDir, "temp_sign_in_${System.currentTimeMillis()}.pdf")
-            destFile = File(context.cacheDir, "temp_sign_out_${System.currentTimeMillis()}.pdf")
-            
-            context.contentResolver.openInputStream(sourceUri)?.use { ins ->
-                sourceFile.outputStream().use { fos ->
-                    ins.copyTo(fos)
-                }
-            } ?: return@withContext false
+            val params = JSONObject().apply {
+                put("signerName", signerName)
+                put("reason", reason)
+                put("location", location)
+            }
 
-            val subjectStr = "CN=$signerName, O=PDFchemy, C=US"
-            val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
-
-            AndroidPdfCryptoSigner.signPdf(
-                sourceFile = sourceFile,
-                destFile = destFile,
-                keyPairInfo = keyPairInfo,
-                reason = reason,
-                location = location
+            val resultStr = PdfGateway.executeEngine(
+                context,
+                "SIGNATURE_DIGITAL",
+                sourceUri,
+                destUri,
+                params.toString()
             )
-
-            context.contentResolver.openOutputStream(destUri)?.use { outs ->
-                destFile.inputStream().use { fis ->
-                    fis.copyTo(outs)
-                }
-            } ?: return@withContext false
-            
-            true
+            val json = JSONObject(resultStr)
+            json.optBoolean("success", false)
         } catch (e: Exception) {
             AppLogger.e("Failed to apply digital signature: ${e.message}", e)
             false
-        } finally {
-            sourceFile?.delete()
-            destFile?.delete()
         }
     }
 }
