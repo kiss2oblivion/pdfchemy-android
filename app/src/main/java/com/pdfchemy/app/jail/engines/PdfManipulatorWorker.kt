@@ -59,32 +59,40 @@ object PdfManipulatorWorker {
                 if (multiGroupsStr.isNotBlank()) {
                     // It's a multi-group split (like bookmarks or blank pages)
                     val groupsArray = JSONArray(multiGroupsStr)
-                    if (groupsArray.length() == targetFds.size) {
-                        for (i in 0 until groupsArray.length()) {
-                            val group = groupsArray.getJSONArray(i)
-                            PDDocument().use { subDoc ->
-                                for (j in 0 until group.length()) {
-                                    val pageNumber = group.getInt(j)
-                                    subDoc.importPage(document!!.getPage(pageNumber))
+                    if (groupsArray.length() != targetFds.size) {
+                        return JSONObject().put("success", false).put("error", "Target FDs count does not match group count").toString()
+                    }
+                    for (i in 0 until groupsArray.length()) {
+                        val group = groupsArray.getJSONArray(i)
+                        PDDocument().use { subDoc ->
+                            for (j in 0 until group.length()) {
+                                val pageNumber = group.getInt(j)
+                                if (pageNumber < 0 || pageNumber >= document!!.numberOfPages) {
+                                    return JSONObject().put("success", false).put("error", "Invalid page index").toString()
                                 }
-                                FileOutputStream(targetFds[i].fileDescriptor).use { outStream ->
-                                    subDoc.save(outStream)
-                                }
+                                subDoc.importPage(document!!.getPage(pageNumber))
+                            }
+                            FileOutputStream(targetFds[i].fileDescriptor).use { outStream ->
+                                subDoc.save(outStream)
                             }
                         }
                     }
                 } else if (pagesToKeepStr.isNotBlank()) {
                     // Original single-page per target behavior
                     val pagesToKeepList = pagesToKeepStr.split(",").mapNotNull { it.toIntOrNull() }
-                    if (pagesToKeepList.size == targetFds.size) {
-                        for (i in targetFds.indices) {
-                            val pageNumber = pagesToKeepList[i]
-                            PDDocument().use { singleDoc ->
-                                val page = document!!.getPage(pageNumber - 1)
-                                singleDoc.importPage(page)
-                                FileOutputStream(targetFds[i].fileDescriptor).use { outStream ->
-                                    singleDoc.save(outStream)
-                                }
+                    if (pagesToKeepList.size != targetFds.size) {
+                        return JSONObject().put("success", false).put("error", "Target FDs count does not match page count").toString()
+                    }
+                    for (i in targetFds.indices) {
+                        val pageNumber = pagesToKeepList[i]
+                        if (pageNumber < 1 || pageNumber > document!!.numberOfPages) {
+                            return JSONObject().put("success", false).put("error", "Invalid page index").toString()
+                        }
+                        PDDocument().use { singleDoc ->
+                            val page = document!!.getPage(pageNumber - 1)
+                            singleDoc.importPage(page)
+                            FileOutputStream(targetFds[i].fileDescriptor).use { outStream ->
+                                singleDoc.save(outStream)
                             }
                         }
                     }
@@ -156,6 +164,9 @@ object PdfManipulatorWorker {
                 sampleBmp.recycle()
             }
             
+            if (splitGroups.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                return JSONObject().put("success", false).put("error", "Too many groups planned").toString()
+            }
             val groupsArray = JSONArray()
             for (g in splitGroups) {
                 val arr = JSONArray()
@@ -221,6 +232,7 @@ object PdfManipulatorWorker {
                 splitIndexes.add(document!!.numberOfPages)
 
                 val groupsArray = JSONArray()
+                var groupCount = 0
                 for (i in 0 until splitIndexes.size - 1) {
                     val start = splitIndexes[i]
                     val end = splitIndexes[i + 1]
@@ -230,6 +242,10 @@ object PdfManipulatorWorker {
                     }
                     if (arr.length() > 0) {
                         groupsArray.put(arr)
+                        groupCount++
+                        if (groupCount > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                            return JSONObject().put("success", false).put("error", "Too many bookmark groups").toString()
+                        }
                     }
                 }
                 return JSONObject().put("success", true).put("groups", groupsArray).toString()
@@ -392,20 +408,37 @@ object PdfManipulatorWorker {
             val quality = params.optInt("quality", 100)
             val formatStr = params.optString("format", "jpeg").lowercase()
             val format = if (formatStr == "png") Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
-            val scale = params.optDouble("scale", 2.0).toFloat()
+            val scale = params.optDouble("scale", 2.0)
+            if (scale <= 0) {
+                return JSONObject().put("success", false).put("error", "Invalid scale").toString()
+            }
 
             renderer = PdfRenderer(sourceFd)
             val totalPages = renderer.pageCount
             
-            // Render up to the number of targetFds provided
-            val count = minOf(totalPages, targetFds.size)
+            // Require exact targetFds count matching
+            if (targetFds.size != totalPages) {
+                return JSONObject().put("success", false).put("error", "Target FDs do not match page count").toString()
+            }
+            
+            val count = targetFds.size
             for (i in 0 until count) {
                 var page: PdfRenderer.Page? = null
                 var bitmap: Bitmap? = null
                 try {
                     page = renderer.openPage(i)
-                    val w = (page.width * scale).toInt()
-                    val h = (page.height * scale).toInt()
+                    val expectedW = (page.width * scale).toLong()
+                    val expectedH = (page.height * scale).toLong()
+                    
+                    if (expectedW > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_DIMENSION || expectedH > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_DIMENSION) {
+                        return JSONObject().put("success", false).put("error", "Page dimensions exceed maximum allowed").toString()
+                    }
+                    if (expectedW * expectedH > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_PIXELS) {
+                        return JSONObject().put("success", false).put("error", "Page pixel count exceeds maximum allowed").toString()
+                    }
+                    
+                    val w = expectedW.toInt()
+                    val h = expectedH.toInt()
                     bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
                     bitmap.eraseColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)

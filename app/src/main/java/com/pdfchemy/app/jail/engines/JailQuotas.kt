@@ -7,6 +7,11 @@ object JailQuotas {
     const val MAX_JSON_RESPONSE_SIZE = 1 * 1024 * 1024 // 1 MB IPC limit
     const val MAX_ARCHIVE_FILE_COUNT = 5000 // For CBZ extraction
     const val MAX_ARCHIVE_BYTES_READ = 250L * 1024 * 1024 // 250 MB total extracted size
+    const val MAX_OUTPUT_FILES = 500
+    const val MAX_BATCH_FDS = 100
+    const val MAX_BATCH_INPUT_BYTES = 5L * 1024 * 1024 * 1024 // 5 GB
+    const val MAX_RENDER_DIMENSION = 5000
+    const val MAX_RENDER_PIXELS = 16000000L // 16 million pixels
 
     fun enforceStringLength(value: String, limit: Int = MAX_TEXT_BYTES, name: String = "Text") {
         if (value.length > limit) {

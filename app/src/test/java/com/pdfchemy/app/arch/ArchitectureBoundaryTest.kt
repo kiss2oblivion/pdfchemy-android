@@ -4,7 +4,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import org.junit.Test
 
-class ArchitectureTest {
+class ArchitectureBoundaryTest {
 
     @Test
     fun `no host components should use PDDocument directly`() {

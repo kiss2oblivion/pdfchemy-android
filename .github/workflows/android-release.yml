@@ -24,7 +24,7 @@ jobs:
       run: chmod +x gradlew
 
     - name: Run Architecture & Security Tests
-      run: ./gradlew :app:testDebugUnitTest --tests "com.pdfchemy.app.arch.ArchitectureTest"
+      run: ./gradlew :app:testDebugUnitTest --tests "com.pdfchemy.app.arch.ArchitectureBoundaryTest"
 
     - name: Run Unit Tests
       run: ./gradlew test

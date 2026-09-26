@@ -52,17 +52,22 @@ object PdfManipulator {
             pagesToKeep = parsePageRange(pageRange, totalPages)
             if (pagesToKeep.isEmpty()) return@withContext
 
-            val destUris = mutableListOf<Uri>()
-            val pagesList = pagesToKeep.toList()
-            for (pageNumber in pagesList) {
-                val fileName = "${baseName}_page_${pageNumber}.pdf"
-                val newFile = outputDirectory.createFile("application/pdf", fileName)
-                if (newFile != null) {
-                    destUris.add(newFile.uri)
-                }
+            if (pagesToKeep.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
             }
 
+            val destUris = mutableListOf<Uri>()
+            val createdOutputs = mutableListOf<DocumentFile>()
+            val pagesList = pagesToKeep.toList()
             try {
+                for (pageNumber in pagesList) {
+                    val fileName = "${baseName}_page_${pageNumber}.pdf"
+                    val newFile = outputDirectory.createFile("application/pdf", fileName)
+                        ?: throw java.io.IOException("Failed to create output $fileName")
+                    createdOutputs.add(newFile)
+                    destUris.add(newFile.uri)
+                }
+
                 val paramsJson = org.json.JSONObject().apply {
                     put("pagesToKeep", pagesList.joinToString(","))
                 }.toString()
@@ -75,6 +80,7 @@ object PdfManipulator {
                     paramsJson
                 )
             } catch (e: Exception) {
+                createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to split PDF via Gateway", e)
                 throw e
             }
@@ -101,23 +107,33 @@ object PdfManipulator {
             }
 
             val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
+            if (groupsArray.length() > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            }
 
+            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until groupsArray.length()) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
-                if (newFile != null) {
-                    outputUris.add(newFile.uri)
-                }
+                    ?: throw java.io.IOException("Failed to create output $fileName")
+                createdOutputs.add(newFile)
+                outputUris.add(newFile.uri)
             }
 
             if (outputUris.isNotEmpty()) {
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
-                PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
+                try {
+                    PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
+                } catch (e: Exception) {
+                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    throw e
+                }
             }
         } catch (e: Exception) {
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by blank pages via Gateway", e)
+            throw e
         }
         outputUris
     }
@@ -138,23 +154,33 @@ object PdfManipulator {
             }
 
             val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
+            if (groupsArray.length() > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            }
 
+            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until groupsArray.length()) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
-                if (newFile != null) {
-                    outputUris.add(newFile.uri)
-                }
+                    ?: throw java.io.IOException("Failed to create output $fileName")
+                createdOutputs.add(newFile)
+                outputUris.add(newFile.uri)
             }
 
             if (outputUris.isNotEmpty()) {
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
-                PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
+                try {
+                    PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
+                } catch (e: Exception) {
+                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    throw e
+                }
             }
         } catch (e: Exception) {
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by bookmarks via Gateway", e)
+            throw e
         }
         outputUris
     }
@@ -266,17 +292,21 @@ object PdfManipulator {
         try {
             var totalPages = getPageCountFromGateway(context, sourceUri)
             if (totalPages == 0) return@withContext emptyList()
+            if (totalPages > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            }
             
             val isPng = formatName.equals("PNG", ignoreCase = true)
             val mimeType = if (isPng) "image/png" else "image/jpeg"
             val extension = if (isPng) "png" else "jpg"
 
+            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until totalPages) {
                 val fileName = "${baseName}_page_${i + 1}.$extension"
                 val newFile = outputDirectory.createFile(mimeType, fileName)
-                if (newFile != null) {
-                    outputUris.add(newFile.uri)
-                }
+                    ?: throw java.io.IOException("Failed to create output $fileName")
+                createdOutputs.add(newFile)
+                outputUris.add(newFile.uri)
             }
 
             if (outputUris.isNotEmpty()) {
@@ -287,10 +317,16 @@ object PdfManipulator {
                     put("scale", scale.toDouble())
                 }.toString()
 
-                PdfGateway.executeEngineBatch(context, "PDF_TO_IMAGES", listOf(sourceUri), outputUris, paramsJson)
+                try {
+                    PdfGateway.executeEngineBatch(context, "PDF_TO_IMAGES", listOf(sourceUri), outputUris, paramsJson)
+                } catch (e: Exception) {
+                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    throw e
+                }
             }
         } catch (e: Exception) {
             com.pdfchemy.app.utils.AppLogger.e("Failed to convert PDF to images via Gateway", e)
+            throw e
         }
         outputUris
     }

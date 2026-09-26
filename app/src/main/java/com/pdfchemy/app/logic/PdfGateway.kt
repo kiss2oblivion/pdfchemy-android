@@ -20,13 +20,19 @@ object PdfGateway {
 
     private const val MAX_INPUT_SIZE_BYTES = 2L * 1024 * 1024 * 1024 // 2GB
 
-    private fun boundedCopy(inputStream: java.io.InputStream, outputStream: java.io.OutputStream) {
+    private fun boundedCopy(inputStream: java.io.InputStream, outputStream: java.io.OutputStream, runningTotal: LongArray? = null) {
         val buffer = ByteArray(8192)
         var totalRead = 0L
         while (true) {
             val read = inputStream.read(buffer)
             if (read == -1) break
             totalRead += read
+            runningTotal?.let {
+                it[0] += read
+                if (it[0] > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_INPUT_BYTES) {
+                    throw SecurityException("Aggregate input exceeds maximum allowed size of 5GB")
+                }
+            }
             if (totalRead > MAX_INPUT_SIZE_BYTES) {
                 throw SecurityException("Input file exceeds maximum allowed size of 2GB")
             }
@@ -55,13 +61,18 @@ object PdfGateway {
 
                 try {
                     val tempFile = File.createTempFile("jail_snapshot_analyze_", ".pdf", context.cacheDir)
-                    context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                        FileOutputStream(tempFile).use { outputStream ->
-                            boundedCopy(inputStream, outputStream)
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(sourceUri)
+                            ?: throw java.io.IOException("Unable to open source URI")
+                        inputStream.use { input ->
+                            FileOutputStream(tempFile).use { outputStream ->
+                                boundedCopy(input, outputStream)
+                            }
                         }
+                        sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                    } finally {
+                        tempFile.delete()
                     }
-                    sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                    tempFile.delete()
 
                     jail.analyzePdf(sourceFd, object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) {
@@ -126,13 +137,18 @@ object PdfGateway {
                     // TOCTOU Snapshot for Source
                     if (sourceUri != null) {
                         val tempFile = File.createTempFile("jail_snapshot_", ".pdf", context.cacheDir)
-                        context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                boundedCopy(inputStream, outputStream)
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(sourceUri)
+                                ?: throw java.io.IOException("Unable to open source URI")
+                            inputStream.use { input ->
+                                FileOutputStream(tempFile).use { outputStream ->
+                                    boundedCopy(input, outputStream)
+                                }
                             }
+                            sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        } finally {
+                            tempFile.delete()
                         }
-                        sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        tempFile.delete()
                     }
 
                     if (destUri != null) {
@@ -206,13 +222,18 @@ object PdfGateway {
                 try {
                     if (sourceUri != null) {
                         val tempFile = File.createTempFile("jail_snapshot_", ".pdf", context.cacheDir)
-                        context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                boundedCopy(inputStream, outputStream)
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(sourceUri)
+                                ?: throw java.io.IOException("Unable to open source URI")
+                            inputStream.use { input ->
+                                FileOutputStream(tempFile).use { outputStream ->
+                                    boundedCopy(input, outputStream)
+                                }
                             }
+                            sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        } finally {
+                            tempFile.delete()
                         }
-                        sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        tempFile.delete()
                     }
 
                     if (destUri != null) {
@@ -221,13 +242,18 @@ object PdfGateway {
                     
                     if (extraUri != null) {
                         val tempFile = File.createTempFile("jail_snapshot_extra_", ".pdf", context.cacheDir)
-                        context.contentResolver.openInputStream(extraUri)?.use { inputStream ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                boundedCopy(inputStream, outputStream)
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(extraUri)
+                                ?: throw java.io.IOException("Unable to open extra URI")
+                            inputStream.use { input ->
+                                FileOutputStream(tempFile).use { outputStream ->
+                                    boundedCopy(input, outputStream)
+                                }
                             }
+                            extraFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        } finally {
+                            tempFile.delete()
                         }
-                        extraFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        tempFile.delete()
                     }
 
                     jail.executeEngineExtra(engineName, sourceFd, destFd, extraFd, paramsJson, object : IPdfJailStringCallback.Stub() {
@@ -296,16 +322,27 @@ object PdfGateway {
                 val destFds = mutableListOf<ParcelFileDescriptor>()
 
                 try {
+                    if (sourceUris.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_FDS || destUris.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_FDS) {
+                        throw SecurityException("Too many file descriptors requested in batch")
+                    }
+
+                    val runningTotal = LongArray(1)
+
                     for (uri in sourceUris) {
                         val tempFile = File.createTempFile("jail_snapshot_src_", ".pdf", context.cacheDir)
-                        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                boundedCopy(inputStream, outputStream)
+                        try {
+                            val inputStream = context.contentResolver.openInputStream(uri)
+                                ?: throw java.io.IOException("Unable to open source URI")
+                            inputStream.use { input ->
+                                FileOutputStream(tempFile).use { outputStream ->
+                                    boundedCopy(input, outputStream, runningTotal)
+                                }
                             }
+                            val pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                            sourceFds.add(pfd)
+                        } finally {
+                            tempFile.delete()
                         }
-                        val pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        tempFile.delete()
-                        sourceFds.add(pfd)
                     }
 
                     for (uri in destUris) {

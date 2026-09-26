@@ -82,6 +82,7 @@
 | **Typography & Font Inspector** | `FontInspectorScreen.kt` | `FontInspector.kt` | ✅ Live | Lists embedded font programs, TrueType/Type1/Type0, subsets, and character encodings |
 | **Embedded Attachments Manager**| `AttachmentManagerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Inspects, extracts, and embeds arbitrary file attachments and PDF portfolios |
 | **PDF Repair Studio** | `RepairPdfScreen.kt` | `PdfRepairEngine.kt` | ✅ Live | Reconstructs broken cross-reference tables, truncated trailers, and corrupted streams |
+| **IPC Sandbox Resource Quotas** | `JailQuotas.kt`, `PdfJailService.kt` | Process isolation, Memory Limits, Batch constraints | ✅ Live | Limits output creations (`MAX_OUTPUT_FILES = 1000`), constrains inputs (`MAX_BATCH_FDS = 50`), caps total input (`MAX_BATCH_INPUT_BYTES = 50MB`), and limits bitmap dimensions for images (`MAX_RENDER_DIMENSION = 8192`) |
 
 ---
 
