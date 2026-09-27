@@ -79,4 +79,6 @@ desktop/src/main/cpp/hello.cpp
 
 # Secrets
 keystore.properties
-/app/release.jks
+*.jks
+*.keystore
+*.pem

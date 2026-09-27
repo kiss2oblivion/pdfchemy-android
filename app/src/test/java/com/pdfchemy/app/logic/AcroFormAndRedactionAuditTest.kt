@@ -135,7 +135,7 @@ class AcroFormAndRedactionAuditTest {
         // 1. Test multi-word query with space
         val multiWordResult = PdfRedactionEngine.searchRedactionTargets(
             context = context,
-            inputStream = FileInputStream(srcFile),
+            pdfUri = uri,
             query = "Emergency contact",
             isRegex = false
         )
@@ -147,7 +147,7 @@ class AcroFormAndRedactionAuditTest {
         // 2. Test phone number pattern with spaces
         val phoneResult = PdfRedactionEngine.searchRedactionTargets(
             context = context,
-            inputStream = FileInputStream(srcFile),
+            pdfUri = uri,
             query = RedactPattern.PHONE_NUMBERS.regex,
             isRegex = true
         )
@@ -158,7 +158,7 @@ class AcroFormAndRedactionAuditTest {
         // 3. Test credit card pattern with spaces
         val cardResult = PdfRedactionEngine.searchRedactionTargets(
             context = context,
-            inputStream = FileInputStream(srcFile),
+            pdfUri = uri,
             query = RedactPattern.CREDIT_CARD.regex,
             isRegex = true
         )

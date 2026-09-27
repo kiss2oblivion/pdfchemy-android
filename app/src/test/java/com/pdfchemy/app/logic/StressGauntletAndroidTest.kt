@@ -65,7 +65,7 @@ class StressGauntletAndroidTest {
         doc.close()
 
         val sourceUri = Uri.fromFile(testFile)
-        val searchResult = PdfRedactionEngine.searchRedactionTargets(context, FileInputStream(testFile), "987-65-4321")
+        val searchResult = PdfRedactionEngine.searchRedactionTargets(context, Uri.fromFile(testFile), "987-65-4321")
         assertTrue("Must locate sensitive token", searchResult.isSuccess)
         val targets = searchResult.getOrThrow()
         assertTrue("Found at least 1 target box", targets.isNotEmpty())
@@ -74,9 +74,9 @@ class StressGauntletAndroidTest {
         val destUri = Uri.fromFile(outFile)
         val applyResult = PdfRedactionEngine.applyRedactions(
             context = context,
-            inputStream = FileInputStream(testFile),
-            outputStream = FileOutputStream(outFile),
-            boxes = targets,
+            sourceUri = Uri.fromFile(testFile),
+            destUri = Uri.fromFile(outFile),
+            redactions = targets,
             config = RedactionConfig(isBlackout = true, defaultOverlayText = "CENSORED")
         )
 

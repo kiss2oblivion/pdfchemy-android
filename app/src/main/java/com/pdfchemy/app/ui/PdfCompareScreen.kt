@@ -257,9 +257,10 @@ fun PdfCompareScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (viewMode == CompareViewMode.VISUAL_OVERLAY) {
-                        if (currentDiff?.diffBitmap != null) {
+                        val dbmp = currentDiff?.diffBitmap
+                        if (dbmp != null) {
                             Image(
-                                bitmap = currentDiff.diffBitmap.asImageBitmap(),
+                                bitmap = dbmp.asImageBitmap(),
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Fit

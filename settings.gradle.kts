@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Shrinkpdf"
 include(":app")
+include(":pdfjail")
+include(":native-renderer")

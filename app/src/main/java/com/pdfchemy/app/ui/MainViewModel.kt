@@ -23,13 +23,14 @@ import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.pdfchemy.app.utils.AppLogger
-import android.graphics.BitmapFactory
+
 import android.graphics.Bitmap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject
+import java.io.File
+import java.io.FileInputStream
+import java.util.zip.ZipInputStream
 import androidx.compose.ui.res.stringResource
 import androidx.documentfile.provider.DocumentFile
 import com.pdfchemy.app.logic.ImageCompressor
@@ -410,74 +411,59 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = UiState.Processing
             try {
                 withContext(Dispatchers.IO) {
-                    val document = com.tom_roush.pdfbox.pdmodel.PDDocument(com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                    val pdfDocument = android.graphics.pdf.PdfDocument()
+                    val loader = coil.Coil.imageLoader(context)
                     try {
                         for (uri in imageUris) {
-                            // Decode bounds first to compute sample size and prevent OOM
-                            val boundsOptions = BitmapFactory.Options().apply {
-                                inJustDecodeBounds = true
-                            }
-                            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                BitmapFactory.decodeStream(inputStream, null, boundsOptions)
-                            }
-                            if (boundsOptions.outWidth <= 0 || boundsOptions.outHeight <= 0) continue
-
-                            // Cap maximum dimension to 2048px for standard high-res document output
-                            val maxDim = 2048
-                            var sampleSize = 1
-                            val maxOriginalDim = maxOf(boundsOptions.outWidth, boundsOptions.outHeight)
-                            while ((maxOriginalDim / (sampleSize * 2)) >= maxDim) {
-                                sampleSize *= 2
-                            }
-
-                            val decodeOptions = BitmapFactory.Options().apply {
-                                inSampleSize = sampleSize
-                                inPreferredConfig = Bitmap.Config.RGB_565 // Low RAM footprint
-                            }
-
-                            val bitmap = context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                BitmapFactory.decodeStream(inputStream, null, decodeOptions)
+                            val request = coil.request.ImageRequest.Builder(context)
+                                .data(uri)
+                                .allowHardware(false)
+                                .size(2048) // Cap maximum dimension
+                                .build()
+                            
+                            val imgResult = loader.execute(request)
+                            val bitmap = (imgResult as? coil.request.SuccessResult)?.drawable?.let {
+                                (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
                             }
 
                             if (bitmap != null) {
                                 try {
-                                    val page = com.tom_roush.pdfbox.pdmodel.PDPage(com.tom_roush.pdfbox.pdmodel.common.PDRectangle.A4)
-                                    document.addPage(page)
+                                    val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, pdfDocument.pages.size + 1).create()
+                                    val page = pdfDocument.startPage(pageInfo)
+                                    val canvas = page.canvas
 
-                                    val pdImage = com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory.createFromImage(document, bitmap, 0.85f)
-                                    val contentStream = com.tom_roush.pdfbox.pdmodel.PDPageContentStream(document, page)
-                                    try {
-                                        val pageWidth = page.mediaBox.width
-                                        val pageHeight = page.mediaBox.height
-                                        val margin = 20f
-                                        val maxWidth = pageWidth - margin * 2
-                                        val maxHeight = pageHeight - margin * 2
+                                    val pageWidth = 595f
+                                    val pageHeight = 842f
+                                    val margin = 20f
+                                    val maxWidth = pageWidth - margin * 2
+                                    val maxHeight = pageHeight - margin * 2
 
-                                        val imgWidth = bitmap.width.toFloat()
-                                        val imgHeight = bitmap.height.toFloat()
+                                    val imgWidth = bitmap.width.toFloat()
+                                    val imgHeight = bitmap.height.toFloat()
 
-                                        val scale = minOf(maxWidth / imgWidth, maxHeight / imgHeight)
-                                        val drawWidth = imgWidth * scale
-                                        val drawHeight = imgHeight * scale
+                                    val scale = minOf(maxWidth / imgWidth, maxHeight / imgHeight)
+                                    val drawWidth = imgWidth * scale
+                                    val drawHeight = imgHeight * scale
 
-                                        val startX = (pageWidth - drawWidth) / 2
-                                        val startY = (pageHeight - drawHeight) / 2
+                                    val startX = (pageWidth - drawWidth) / 2f
+                                    val startY = (pageHeight - drawHeight) / 2f
 
-                                        contentStream.drawImage(pdImage, startX, startY, drawWidth, drawHeight)
-                                    } finally {
-                                        contentStream.close()
-                                    }
-                                } finally {
-                                    bitmap.recycle()
+                                    val srcRect = android.graphics.Rect(0, 0, bitmap.width, bitmap.height)
+                                    val dstRect = android.graphics.RectF(startX, startY, startX + drawWidth, startY + drawHeight)
+
+                                    canvas.drawBitmap(bitmap, srcRect, dstRect, null)
+                                    pdfDocument.finishPage(page)
+                                } catch (e: Exception) {
+                                    AppLogger.e("Exception adding image to native PDF", e)
                                 }
                             }
                         }
 
                         context.contentResolver.openOutputStream(destUri)?.use { out ->
-                            document.save(out)
+                            pdfDocument.writeTo(out)
                         }
                     } finally {
-                        document.close()
+                        pdfDocument.close()
                     }
                 }
                 _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted))
@@ -891,37 +877,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var extractedCount = 0
             var errorCount = 0
             try {
-                context.contentResolver.openInputStream(pdfUri)?.use { inputStream ->
-                    val document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                    for (pageIndex in 0 until document.numberOfPages) {
-                        val page = document.getPage(pageIndex)
-                        val resources = page.resources
-                        if (resources != null) {
-                            val xObjectNames = resources.xObjectNames
-                            for (xObjectName in xObjectNames) {
-                                val xObject = resources.getXObject(xObjectName)
-                                if (xObject is PDImageXObject) {
-                                    try {
-                                        val bitmap = xObject.image
-                                        if (bitmap != null) {
-                                            val newFile = outputDirectory.createFile("image/jpeg", "extracted_image_${System.currentTimeMillis()}.jpg")
-                                            newFile?.uri?.let { newUri ->
-                                                context.contentResolver.openOutputStream(newUri)?.use { out ->
-                                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                                                    extractedCount++
-                                                }
-                                            }
-                                        }
-                                    } catch (e: Exception) {
-                                        AppLogger.e("Exception in MainViewModel", e)
-                                        errorCount++
-                                    }
-                                }
+                val tempZip = File(context.cacheDir, "temp_images.zip")
+                val resultJson = com.pdfchemy.app.logic.PdfGateway.executeEngine(
+                    context, "IMAGE_EXTRACT", pdfUri, Uri.fromFile(tempZip), "{}"
+                )
+                
+                ZipInputStream(FileInputStream(tempZip)).use { zis ->
+                    var entry = zis.nextEntry
+                    while (entry != null) {
+                        val newFile = outputDirectory.createFile("image/jpeg", entry.name)
+                        newFile?.uri?.let { newUri ->
+                            context.contentResolver.openOutputStream(newUri)?.use { out ->
+                                zis.copyTo(out)
+                                extractedCount++
                             }
                         }
+                        zis.closeEntry()
+                        entry = zis.nextEntry
                     }
-                    document.close()
                 }
+                tempZip.delete()
                 
                 withContext(Dispatchers.Main) {
                     historyRepository.addHistoryItem(outputDirectory.uri, context.getString(R.string.history_extracted_images_folder), context.getString(R.string.history_extract_images))

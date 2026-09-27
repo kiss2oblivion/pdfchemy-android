@@ -2,9 +2,9 @@ package com.pdfchemy.app.ui
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+
 import android.net.Uri
-import android.graphics.pdf.PdfRenderer
+
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -292,8 +292,21 @@ fun SignPdfScreen(
                             // Render Placed Signatures on Current Page
                             val pageSignatures = placedSignatures.filter { it.pageIndex == currentPageIndex }
                             for (sig in pageSignatures) {
-                                val sigBmp = remember(sig) { BitmapFactory.decodeByteArray(sig.bitmapBytes, 0, sig.bitmapBytes.size) }
-                                if (sigBmp != null && pagePixelSize.width > 0 && pagePixelSize.height > 0) {
+                            var sigBmp by remember(sig) { mutableStateOf<Bitmap?>(null) }
+                            val context = LocalContext.current
+                            LaunchedEffect(sig) {
+                                val loader = coil.Coil.imageLoader(context)
+                                val req = coil.request.ImageRequest.Builder(context)
+                                    .data(sig.bitmapBytes)
+                                    .allowHardware(false)
+                                    .build()
+                                val result = loader.execute(req)
+                                sigBmp = (result as? coil.request.SuccessResult)?.drawable?.let {
+                                    (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                                }
+                            }
+                            val currentSigBmp = sigBmp
+                            if (currentSigBmp != null && pagePixelSize.width > 0 && pagePixelSize.height > 0) {
                                     val isSelected = sig.id == selectedSignatureId
 
                                     val sigW = (sig.widthRatio * pagePixelSize.width).coerceAtLeast(40f)
@@ -346,7 +359,7 @@ fun SignPdfScreen(
                                     ) {
                                         Column(modifier = Modifier.fillMaxSize()) {
                                             Image(
-                                                bitmap = sigBmp.asImageBitmap(),
+                                                bitmap = currentSigBmp.asImageBitmap(),
                                                 contentDescription = null,
                                                 modifier = Modifier.weight(1f).fillMaxWidth(),
                                                 contentScale = ContentScale.Fit

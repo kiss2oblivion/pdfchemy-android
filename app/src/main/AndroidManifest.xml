@@ -25,13 +25,7 @@
             android:isolatedProcess="true"
             android:exported="false" />
 
-        <!-- PdfBox worker = Java parser isolation + bounded scratch -->
-        <!-- Native renderer worker = isolated native-code boundary -->
-        <!-- Do not merge these responsibilities unless native rendering is removed. -->
-        <service
-            android:name=".sandbox.PdfWorkerService"
-            android:isolatedProcess="true"
-            android:exported="false" />
+
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

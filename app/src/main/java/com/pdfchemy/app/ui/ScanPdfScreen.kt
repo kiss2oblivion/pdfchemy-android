@@ -3,7 +3,6 @@ package com.pdfchemy.app.ui
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -42,11 +41,7 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.pdfchemy.app.R
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
-import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -153,20 +148,18 @@ fun ScanPdfScreen(
         if (destUri != null && scannedBitmaps.isNotEmpty()) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {
-                var doc: PDDocument? = null
+                val doc = android.graphics.pdf.PdfDocument()
                 try {
-                    doc = PDDocument()
                     for (rawBmp in scannedBitmaps) {
                         val filteredBmp = applyScanFilter(rawBmp, currentFilter)
                         try {
-                            val pageRect = PDRectangle(filteredBmp.width.toFloat(), filteredBmp.height.toFloat())
-                            val page = PDPage(pageRect)
-                            doc.addPage(page)
-
-                            PDPageContentStream(doc, page).use { cs ->
-                                val pdImage = JPEGFactory.createFromImage(doc, filteredBmp, 0.88f)
-                                cs.drawImage(pdImage, 0f, 0f, pageRect.width, pageRect.height)
-                            }
+                            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
+                                filteredBmp.width, filteredBmp.height, doc.pages.size + 1
+                            ).create()
+                            val page = doc.startPage(pageInfo)
+                            val canvas = page.canvas
+                            canvas.drawBitmap(filteredBmp, 0f, 0f, null)
+                            doc.finishPage(page)
                         } finally {
                             if (filteredBmp != rawBmp && !filteredBmp.isRecycled) {
                                 filteredBmp.recycle()
@@ -175,7 +168,7 @@ fun ScanPdfScreen(
                     }
 
                     context.contentResolver.openOutputStream(destUri)?.use { out ->
-                        doc.save(out)
+                        doc.writeTo(out)
                     }
 
                     withContext(Dispatchers.Main) {
@@ -193,7 +186,7 @@ fun ScanPdfScreen(
                         viewModel.notifyError(context.getString(R.string.error_scan_failed))
                     }
                 } finally {
-                    try { doc?.close() } catch (_: Exception) {}
+                    try { doc.close() } catch (_: Exception) {}
                 }
             }
         }
@@ -505,20 +498,19 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
 
 private fun decodeBoundedBitmap(context: Context, uri: Uri, maxDim: Int = 2048): Bitmap? {
     return try {
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(uri)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, options)
-        }
-        var sampleSize = 1
-        while ((options.outWidth / sampleSize) > maxDim || (options.outHeight / sampleSize) > maxDim) {
-            sampleSize *= 2
-        }
-        val decodeOptions = BitmapFactory.Options().apply {
-            inSampleSize = sampleSize
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        }
-        context.contentResolver.openInputStream(uri)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, decodeOptions)
+        if (android.os.Build.VERSION.SDK_INT >= 28) {
+            val source = android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
+            android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                var sampleSize = 1
+                while ((info.size.width / sampleSize) > maxDim || (info.size.height / sampleSize) > maxDim) {
+                    sampleSize *= 2
+                }
+                decoder.setTargetSampleSize(sampleSize)
+                decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
         }
     } catch (_: Throwable) {
         null

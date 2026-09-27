@@ -2,7 +2,7 @@ package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
 import android.net.Uri
-import android.graphics.pdf.PdfRenderer
+
 import android.os.ParcelFileDescriptor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

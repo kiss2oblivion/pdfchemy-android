@@ -51,7 +51,7 @@ class ComicBookEngineTest {
         val destPdfFile = File(context.cacheDir, "comic_out.pdf")
         val destPdfUri = Uri.fromFile(destPdfFile)
 
-        val result = ComicBookEngine.cbzToPdf(
+        val result = ComicBookEngine.convertCbzToPdf(
             context = context,
             sourceCbzUri = Uri.fromFile(sampleCbzFile),
             destPdfUri = destPdfUri

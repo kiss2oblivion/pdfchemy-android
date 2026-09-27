@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.FileUtil
-import com.pdfchemy.app.sandbox.SandboxCoordinator
+
 import com.pdfchemy.app.logic.SanitizerAuditReport
 import com.pdfchemy.app.logic.SanitizerResult
 import com.pdfchemy.app.utils.AppLogger
@@ -62,7 +62,7 @@ fun DocumentSanitizerScreen(
         sanitizeResult = null
         scope.launch {
             try {
-                val report = SandboxCoordinator.auditDocumentThreats(context, uri)
+                val report = com.pdfchemy.app.logic.PdfSanitizerEngine.auditDocumentThreats(context, uri)
                 auditReport = report
             } catch (e: Exception) {
                 AppLogger.e("Audit failed", e)
@@ -94,7 +94,7 @@ fun DocumentSanitizerScreen(
             isSanitizing = true
             scope.launch {
                 try {
-                    val result = SandboxCoordinator.sanitizeDocument(
+                    val result = com.pdfchemy.app.logic.PdfSanitizerEngine.sanitizeDocument(
                         context, srcUri, destUri,
                         purgeJs, purgeActions, purgeMetadata
                     )

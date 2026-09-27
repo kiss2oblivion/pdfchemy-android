@@ -221,7 +221,7 @@ fun PdfEditorScreen(
                 isVanguardScanning = true
                 vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
                 try {
-                    val threat = com.pdfchemy.app.sandbox.SandboxCoordinator.checkVanguardThreat(context, uri)
+                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                     when (threat) {
                         is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
                             totalPages = PdfEditor.getPageCount(context, uri)

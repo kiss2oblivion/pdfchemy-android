@@ -54,7 +54,7 @@ class PdfRedactionEngineTest {
     fun testSearchRedactionTargets() = runBlocking {
         val searchResult = PdfRedactionEngine.searchRedactionTargets(
             context = context,
-            inputStream = FileInputStream(samplePdfFile),
+            pdfUri = samplePdfUri,
             query = "Confidential"
         )
         assertTrue(searchResult.isSuccess)
@@ -73,9 +73,9 @@ class PdfRedactionEngineTest {
 
         val result = PdfRedactionEngine.applyRedactions(
             context = context,
-            inputStream = FileInputStream(samplePdfFile),
-            outputStream = FileOutputStream(destFile),
-            boxes = listOf(manualBox),
+            sourceUri = samplePdfUri,
+            destUri = destUri,
+            redactions = listOf(manualBox),
             config = config
         )
 

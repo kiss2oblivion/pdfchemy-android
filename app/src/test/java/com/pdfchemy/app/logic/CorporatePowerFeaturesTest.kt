@@ -182,8 +182,8 @@ class CorporatePowerFeaturesTest {
             context = context,
             sourceUri = Uri.fromFile(testPdf),
             destUri = Uri.fromFile(outputPdf),
-            fieldValues = updatedValues,
-            flattenForm = true
+            fieldData = updatedValues,
+            flatten = true
         )
 
         assertTrue(success)

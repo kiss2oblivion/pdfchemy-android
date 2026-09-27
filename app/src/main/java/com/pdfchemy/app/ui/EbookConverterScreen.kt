@@ -85,24 +85,49 @@ fun EbookConverterScreen(
                 isProcessing = true
                 val result: Result<Boolean> = when (selectedMode) {
                     EbookMode.PDF_TO_EPUB -> {
-                        com.pdfchemy.app.sandbox.SandboxCoordinator.pdfToEpub(
-                            context = context,
-                            sourcePdfUri = selectedSourceUri!!,
-                            destEpubUri = destUri,
-                            bookTitle = bookTitle.ifBlank { "Untitled E-Book" },
-                            authorName = authorName.ifBlank { "Unknown Author" }
-                        )
+                        try {
+                            val params = org.json.JSONObject().apply {
+                                put("bookTitle", bookTitle.ifBlank { "Untitled E-Book" })
+                                put("authorName", authorName.ifBlank { "Unknown Author" })
+                            }
+                            val resultStr = com.pdfchemy.app.logic.PdfGateway.executeEngine(context, "PDF_TO_EPUB", selectedSourceUri!!, destUri, params.toString())
+                            val json = org.json.JSONObject(resultStr)
+                            if (json.optBoolean("isSuccess", false)) {
+                                val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
+                                historyRepo.addHistoryItem(
+                                    destUri,
+                                    com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: "book.epub",
+                                    "PDF to EPUB 3.0"
+                                )
+                                Result.success(true)
+                            } else {
+                                Result.failure(Exception("Conversion failed"))
+                            }
+                        } catch (e: Exception) {
+                            Result.failure(e)
+                        }
                     }
                     EbookMode.EPUB_TO_PDF -> {
-                        com.pdfchemy.app.sandbox.SandboxCoordinator.epubToPdf(
-                            context = context,
-                            sourceEpubUri = selectedSourceUri!!,
-                            destPdfUri = destUri,
-                            onProgress = { c, t ->
-                                progressCurrent = c
-                                progressTotal = t
+                        try {
+                            progressCurrent = 0
+                            progressTotal = 100
+                            val resultStr = com.pdfchemy.app.logic.PdfGateway.executeEngine(context, "EPUB_TO_PDF", selectedSourceUri!!, destUri, "{}")
+                            val json = org.json.JSONObject(resultStr)
+                            if (json.optBoolean("isSuccess", false)) {
+                                progressCurrent = 100
+                                val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
+                                historyRepo.addHistoryItem(
+                                    destUri,
+                                    com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: "book.pdf",
+                                    "EPUB to PDF"
+                                )
+                                Result.success(true)
+                            } else {
+                                Result.failure(Exception("Conversion failed"))
                             }
-                        )
+                        } catch (e: Exception) {
+                            Result.failure(e)
+                        }
                     }
                     EbookMode.PDF_TO_CBZ -> {
                         ComicBookEngine.convertPdfToCbz(

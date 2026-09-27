@@ -120,7 +120,7 @@ import com.pdfchemy.app.ui.TableExtractorScreen
 import com.pdfchemy.app.ui.DocumentSanitizerScreen
 import com.pdfchemy.app.ui.QuickFillSignScreen
 import com.pdfchemy.app.ui.FormBuilderScreen
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import androidx.compose.material.icons.filled.Check
@@ -368,9 +368,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch(Dispatchers.Default) {
-            PDFBoxResourceLoader.init(applicationContext)
-        }
         lifecycleScope.launch(Dispatchers.IO) {
             cleanupOrphanedCacheFiles(applicationContext)
         }
@@ -568,7 +565,7 @@ fun MainApp(
                     isVanguardScanning = true
                     vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
                     try {
-                        val threatResult = com.pdfchemy.app.sandbox.SandboxCoordinator.checkVanguardThreat(context, uri)
+                        val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                         when (threatResult) {
                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
                                 currentScreen = Screen.PdfEditor(initialPdfUri = uri)
@@ -4006,7 +4003,7 @@ fun RecentFilesSection(
                                                 isVanguardScanning = true
                                                 vanguardScanningFileName = item.name
                                                 try {
-                                                    val threat = com.pdfchemy.app.sandbox.SandboxCoordinator.checkVanguardThreat(context, uri)
+                                                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                                                     when (threat) {
                                                         is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
                                                             onNavigate(Screen.PdfEditor(initialPdfUri = uri))

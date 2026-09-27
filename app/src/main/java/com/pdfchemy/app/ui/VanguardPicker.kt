@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
-import com.pdfchemy.app.sandbox.SandboxCoordinator
+
 import com.pdfchemy.app.logic.VanguardThreatResult
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -198,7 +198,7 @@ fun rememberVanguardPdfPicker(
                         val stagedUri = withContext(Dispatchers.IO) {
                             com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
                         }
-                        val threat = SandboxCoordinator.checkVanguardThreat(context, stagedUri)
+                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                         withContext(Dispatchers.Main) {
                             when (threat) {
                                 is VanguardThreatResult.Clean -> {
@@ -389,7 +389,7 @@ fun rememberVanguardMultiplePdfPicker(
                                 com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
                             }
                             stagedUris.add(stagedUri)
-                            val threat = SandboxCoordinator.checkVanguardThreat(context, stagedUri)
+                            val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                             var stopBatch = false
                             withContext(Dispatchers.Main) {
                                 when (threat) {

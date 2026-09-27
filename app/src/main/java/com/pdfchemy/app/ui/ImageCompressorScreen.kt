@@ -720,10 +720,11 @@ fun ValidationAlertCard(analysis: ImageAnalysis) {
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.9f)
                 )
-                if (analysis.alternativeSuggestion != null) {
+                val suggestion = analysis.alternativeSuggestion
+                if (suggestion != null) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = analysis.alternativeSuggestion,
+                        text = suggestion,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
                         color = contentColor

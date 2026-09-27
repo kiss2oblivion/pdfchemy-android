@@ -9,7 +9,7 @@ import org.junit.Test
 class ArchitectureBoundaryTest {
 
     @Test
-    fun host process must not use PDDocument or PdfRenderer() {
+    fun `host process must not use PDDocument or PdfRenderer`() {
         val importedClasses: JavaClasses = ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
             .importPackages("com.pdfchemy.app")

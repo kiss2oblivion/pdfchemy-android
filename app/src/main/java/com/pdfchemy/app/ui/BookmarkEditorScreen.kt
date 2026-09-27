@@ -1,7 +1,7 @@
 package com.pdfchemy.app.ui
 
 import android.net.Uri
-import android.graphics.pdf.PdfRenderer
+
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts

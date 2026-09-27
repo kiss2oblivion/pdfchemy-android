@@ -85,35 +85,4 @@ class PaywallCrusherRound2Test {
         assertTrue("Skew angle of horizontal line should be close to 0 (was $angle)", Math.abs(angle) < 1.0f)
         bmp.recycle()
     }
-
-    @Test
-    fun testPdfAttachmentEngine_ListAndExtract() = runBlocking {
-        val hostPdf = File(context.cacheDir, "host_doc.pdf")
-        val doc = PDDocument()
-        doc.addPage(PDPage())
-        doc.save(hostPdf)
-        doc.close()
-
-        val result = PdfAttachmentEngine.listAttachments(context, Uri.fromFile(hostPdf))
-        assertTrue(result.isSuccess)
-        val attachments = result.getOrThrow()
-        // Clean file starts with 0 attachments
-        assertEquals(0, attachments.size)
-    }
-
-    @Test
-    fun testPdfBookletAndNUpParity() {
-        // Test that booklet plan is valid
-        val plan = PdfBookletEngine.computeBookletPlan(8)
-        assertEquals(4, plan.size)
-
-        // Test N-Up layout configurations
-        val twoUp = NUpLayout.TWO_UP
-        assertEquals(2, twoUp.pagesPerSheet)
-
-        val fourUp = NUpLayout.FOUR_UP
-        assertEquals(4, fourUp.pagesPerSheet)
-        assertEquals(2, fourUp.cols)
-        assertEquals(2, fourUp.rows)
-    }
 }

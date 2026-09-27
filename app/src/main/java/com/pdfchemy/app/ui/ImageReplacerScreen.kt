@@ -1,7 +1,7 @@
 package com.pdfchemy.app.ui
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,6 +16,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -73,25 +76,26 @@ fun ImageReplacerScreen(
     ) { uri ->
         if (uri != null) {
             replacementImageUri = uri
-            try {
-                val maxDim = 2048
-                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    BitmapFactory.decodeStream(stream, null, options)
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val loader = coil.Coil.imageLoader(context)
+                    val req = coil.request.ImageRequest.Builder(context)
+                        .data(uri)
+                        .allowHardware(false)
+                        .size(2048)
+                        .build()
+                    val result = loader.execute(req)
+                    val bmp = (result as? coil.request.SuccessResult)?.drawable?.let {
+                        (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    }
+                    withContext(Dispatchers.Main) {
+                        replacementBitmap = bmp
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        replacementBitmap = null
+                    }
                 }
-                var sampleSize = 1
-                while ((options.outWidth / sampleSize) > maxDim || (options.outHeight / sampleSize) > maxDim) {
-                    sampleSize *= 2
-                }
-                val decodeOptions = BitmapFactory.Options().apply {
-                    inSampleSize = sampleSize
-                    inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
-                }
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    replacementBitmap = BitmapFactory.decodeStream(stream, null, decodeOptions)
-                }
-            } catch (e: Exception) {
-                replacementBitmap = null
             }
         }
     }
@@ -328,9 +332,10 @@ fun ImageReplacerScreen(
                                         .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (imageInfo.thumbnailBitmap != null) {
+                                    val tbmp = imageInfo.thumbnailBitmap
+                                    if (tbmp != null) {
                                         Image(
-                                            bitmap = imageInfo.thumbnailBitmap.asImageBitmap(),
+                                            bitmap = tbmp.asImageBitmap(),
                                             contentDescription = null,
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()

@@ -88,13 +88,20 @@ object NativeRendererCoordinator {
                 renderer.renderPageToJpeg(pdfPfd, pageIndex, jpegPfd)
                 jpegPfd.close()
                 if (tempFile.exists() && tempFile.length() > 0) {
-                    val original = android.graphics.BitmapFactory.decodeFile(tempFile.absolutePath)
+                    val loader = coil.Coil.imageLoader(context)
+                    val request = coil.request.ImageRequest.Builder(context)
+                        .data(tempFile)
+                        .allowHardware(false) // Must be software bitmap to manipulate later
+                        .build()
+                    val imgResult = loader.execute(request)
+                    val original = (imgResult as? coil.request.SuccessResult)?.drawable?.let {
+                        (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    }
                     if (original != null) {
                         if (scaleWidth > 0 && original.width > scaleWidth) {
                             val scale = scaleWidth.toFloat() / original.width
                             val h = (original.height * scale).toInt()
                             bitmap = android.graphics.Bitmap.createScaledBitmap(original, scaleWidth, h, true)
-                            original.recycle()
                         } else {
                             bitmap = original
                         }

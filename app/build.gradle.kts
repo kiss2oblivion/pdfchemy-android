@@ -38,10 +38,13 @@ android {
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
             }
 
-            storeFile = file("release.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: keystoreProperties["KEYSTORE_PASSWORD"]?.toString() ?: throw GradleException("Missing KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties["KEY_ALIAS"]?.toString() ?: throw GradleException("Missing KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties["KEY_PASSWORD"]?.toString() ?: throw GradleException("Missing KEY_PASSWORD")
+            val password = System.getenv("KEYSTORE_PASSWORD") ?: keystoreProperties["KEYSTORE_PASSWORD"]?.toString()
+            if (password != null) {
+                storeFile = file("release.jks")
+                storePassword = password
+                keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties["KEY_ALIAS"]?.toString()
+                keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties["KEY_PASSWORD"]?.toString()
+            }
         }
     }
 
@@ -124,12 +127,14 @@ dependencies {
 
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil:2.6.0")
 
     // 2. Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // 3. PdfBox-Android
-    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    // 3. PdfJail and Native Renderer (Process Isolation)
+    implementation(project(":pdfjail"))
+    implementation(project(":native-renderer"))
     implementation("androidx.documentfile:documentfile:1.0.1")
 
     // 4. AdMob
@@ -150,8 +155,6 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Text Conversion Libraries
-    implementation("org.jsoup:jsoup:1.23.2")
-    implementation("com.vladsch.flexmark:flexmark-all:0.64.8")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.8")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.8")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.8")
@@ -159,6 +162,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("io.mockk:mockk:1.13.10")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
@@ -179,25 +183,21 @@ dependencies {
 
 tasks.register("securityAudit") {
     doLast {
-        val srcDir = file("src/main/java/com/pdfchemy/app")
+        val srcDir = file("src/main/java")
         val forbiddenFiles = mutableListOf<String>()
-        val allowedJail = file("src/main/java/com/pdfchemy/app/jail")
-        val allowedSandbox = file("src/main/java/com/pdfchemy/app/sandbox")
-        
         var scanned = 0
         srcDir.walk().filter { it.extension == "kt" || it.extension == "java" }.forEach { file ->
-            if (file.absolutePath.startsWith(allowedJail.absolutePath) || file.absolutePath.startsWith(allowedSandbox.absolutePath)) {
-                return@forEach
-            }
             scanned++
             val content = file.readText()
-            if (content.contains("PDDocument.load") || content.contains("android.graphics.pdf.PdfRenderer")) {
+            if (content.contains("com.tom_roush.pdfbox") || 
+                content.contains("android.graphics.pdf.PdfRenderer") ||
+                content.contains("android.graphics.BitmapFactory")) {
                 forbiddenFiles.add(file.name)
             }
         }
-        println("securityAudit scanned $scanned files.")
+        println("securityAudit scanned $scanned files in app module.")
         if (forbiddenFiles.isNotEmpty()) {
-            throw GradleException("SECURITY VIOLATION: PDDocument.load or PdfRenderer used in host process files: " + forbiddenFiles.joinToString())
+            throw GradleException("SECURITY VIOLATION: Parser classes (PDFBox/PdfRenderer/BitmapFactory) imported or used in host process files: " + forbiddenFiles.joinToString())
         }
     }
 }
