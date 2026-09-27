@@ -64,6 +64,7 @@ fun ReflowReaderScreen(
     initialUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -208,7 +209,7 @@ fun ReflowReaderScreen(
                             reflowSections = docData.sections
                             bookmarks = docData.bookmarks
                             isScannedOnly = docData.isScannedOnly
-                            uriHash = initialUri.toString().hashCode().toString()
+                            uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
                             isLoading = false
                         }
                         is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
@@ -229,7 +230,7 @@ fun ReflowReaderScreen(
                 reflowSections = docData.sections
                 bookmarks = docData.bookmarks
                 isScannedOnly = docData.isScannedOnly
-                uriHash = initialUri.toString().hashCode().toString()
+                uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
                 isLoading = false
             }
         }
@@ -399,7 +400,7 @@ fun ReflowReaderScreen(
                                 reflowSections = docData.sections
                                 bookmarks = docData.bookmarks
                                 isScannedOnly = docData.isScannedOnly
-                                uriHash = uri.toString().hashCode().toString()
+                                uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
                                 isLoading = false
                             }
                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
@@ -422,7 +423,7 @@ fun ReflowReaderScreen(
                     reflowSections = docData.sections
                     bookmarks = docData.bookmarks
                     isScannedOnly = docData.isScannedOnly
-                    uriHash = uri.toString().hashCode().toString()
+                    uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
                     isLoading = false
                 }
             }

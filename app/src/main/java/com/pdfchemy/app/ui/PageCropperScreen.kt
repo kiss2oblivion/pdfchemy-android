@@ -62,6 +62,7 @@ fun PageCropperScreen(
     initialPdfUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()

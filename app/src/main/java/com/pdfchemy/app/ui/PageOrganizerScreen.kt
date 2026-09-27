@@ -62,6 +62,7 @@ fun PageOrganizerScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current

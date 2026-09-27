@@ -374,7 +374,7 @@ class MainActivity : AppCompatActivity() {
         handleIncomingIntent(intent)
         
         val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val isScreenshotRun = intent.getBooleanExtra("isScreenshotRun", false)
+        val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)
         val hasConsentedInitial = if (isScreenshotRun) true else prefs.getBoolean("has_consented", false)
         val hasCompletedOnboardingInitial = if (isScreenshotRun) true else prefs.getBoolean("has_completed_onboarding", false)
         val themeModeInitial = if (isScreenshotRun) "DARK" else {

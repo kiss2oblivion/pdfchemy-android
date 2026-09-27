@@ -60,6 +60,7 @@ private fun getFileDisplaySize(context: Context, uri: Uri): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -281,6 +282,7 @@ fun UnlockPdfScreen(
     initialUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current

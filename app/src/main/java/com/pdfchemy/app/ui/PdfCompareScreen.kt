@@ -48,6 +48,7 @@ fun PdfCompareScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

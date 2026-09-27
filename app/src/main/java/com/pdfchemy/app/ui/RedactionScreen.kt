@@ -42,6 +42,7 @@ fun RedactionScreen(
     initialUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }

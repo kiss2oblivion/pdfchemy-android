@@ -40,6 +40,7 @@ fun DocumentSanitizerScreen(
     initialPdfUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

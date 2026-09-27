@@ -67,6 +67,7 @@ fun PdfEditorScreen(
     initialPdfUri: Uri? = null,
     onBack: () -> Unit
 ) {
+    SecureScreenContent()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     BackHandler { onBack() }
