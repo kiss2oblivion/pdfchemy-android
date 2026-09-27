@@ -6,6 +6,8 @@
 /build
 /app/build
 /desktop/build
+**/build/
+build.log
 *.apk
 /captures
 .externalNativeBuild
