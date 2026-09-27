@@ -116,8 +116,22 @@ object PdfGateway {
         sourceUri: Uri?,
         destUri: Uri?,
         paramsJson: String
-    ): String = suspendCancellableCoroutine { continuation ->
-        var isBound = false
+    ): String = kotlinx.coroutines.coroutineScope {
+        var rendererConnection: ServiceConnection? = null
+        var rendererBinder: IBinder? = null
+        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
+            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
+            rendererConnection = object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
+                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
+            }
+            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
+            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
+        }
+
+        try {
+            suspendCancellableCoroutine { continuation ->
+                var isBound = false
         var connection: ServiceConnection? = null
 
         fun cleanup() {
@@ -155,7 +169,7 @@ object PdfGateway {
                         destFd = context.contentResolver.openFileDescriptor(destUri, "w")
                     }
 
-                    jail.executeEngine(engineName, sourceFd, destFd, paramsJson, object : IPdfJailStringCallback.Stub() {
+                    jail.executeEngine(engineName, sourceFd, destFd, paramsJson, rendererBinder, object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) {
                             sourceFd?.close()
                             destFd?.close()
@@ -192,6 +206,12 @@ object PdfGateway {
         }
 
         continuation.invokeOnCancellation { cleanup() }
+            }
+        } finally {
+            if (rendererConnection != null) {
+                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
+            }
+        }
     }
 
     suspend fun executeEngineExtra(
@@ -201,8 +221,22 @@ object PdfGateway {
         destUri: Uri?,
         extraUri: Uri?,
         paramsJson: String
-    ): String = suspendCancellableCoroutine { continuation ->
-        var isBound = false
+    ): String = kotlinx.coroutines.coroutineScope {
+        var rendererConnection: ServiceConnection? = null
+        var rendererBinder: IBinder? = null
+        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
+            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
+            rendererConnection = object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
+                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
+            }
+            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
+            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
+        }
+
+        try {
+            suspendCancellableCoroutine { continuation ->
+                var isBound = false
         var connection: ServiceConnection? = null
 
         fun cleanup() {
@@ -256,7 +290,7 @@ object PdfGateway {
                         }
                     }
 
-                    jail.executeEngineExtra(engineName, sourceFd, destFd, extraFd, paramsJson, object : IPdfJailStringCallback.Stub() {
+                    jail.executeEngineExtra(engineName, sourceFd, destFd, extraFd, paramsJson, rendererBinder, object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) {
                             sourceFd?.close()
                             destFd?.close()
@@ -296,6 +330,12 @@ object PdfGateway {
         }
 
         continuation.invokeOnCancellation { cleanup() }
+            }
+        } finally {
+            if (rendererConnection != null) {
+                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
+            }
+        }
     }
 
     suspend fun executeEngineBatch(
@@ -304,8 +344,22 @@ object PdfGateway {
         sourceUris: List<Uri>,
         destUris: List<Uri>,
         paramsJson: String
-    ): String = suspendCancellableCoroutine { continuation ->
-        var isBound = false
+    ): String = kotlinx.coroutines.coroutineScope {
+        var rendererConnection: ServiceConnection? = null
+        var rendererBinder: IBinder? = null
+        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
+            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
+            rendererConnection = object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
+                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
+            }
+            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
+            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
+        }
+
+        try {
+            suspendCancellableCoroutine { continuation ->
+                var isBound = false
         var connection: ServiceConnection? = null
 
         fun cleanup() {
@@ -355,6 +409,7 @@ object PdfGateway {
                         sourceFds.toTypedArray(),
                         destFds.toTypedArray(),
                         paramsJson,
+                        rendererBinder,
                         object : IPdfJailStringCallback.Stub() {
                             override fun onSuccess(resultJson: String) {
                                 sourceFds.forEach { try { it.close() } catch (e: Exception) {} }
@@ -393,5 +448,11 @@ object PdfGateway {
         }
 
         continuation.invokeOnCancellation { cleanup() }
+            }
+        } finally {
+            if (rendererConnection != null) {
+                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
+            }
+        }
     }
 }

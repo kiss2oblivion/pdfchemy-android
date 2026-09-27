@@ -21,8 +21,12 @@ object PdfJailClient {
     ): Boolean = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
-
+        var sourceFdRef: ParcelFileDescriptor? = null
+        var targetFdRef: ParcelFileDescriptor? = null
+        
         fun cleanup() {
+            try { sourceFdRef?.close() } catch (e: Exception) {}
+            try { targetFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
                 try {
                     context.unbindService(connection!!)
@@ -38,11 +42,11 @@ object PdfJailClient {
                     val contentResolver = context.contentResolver
                     val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
                     val targetFd = contentResolver.openFileDescriptor(destUri, "w")
+                    sourceFdRef = sourceFd
+                    targetFdRef = targetFd
 
                     if (sourceFd == null || targetFd == null) {
                         continuation.resumeWithException(Exception("Failed to open file descriptors"))
-                        sourceFd?.close()
-                        targetFd?.close()
                         cleanup()
                         return
                     }
@@ -58,9 +62,8 @@ object PdfJailClient {
                             cleanup()
                         }
                     })
+
                     
-                    sourceFd.close()
-                    targetFd.close()
                 } catch (e: Exception) {
                     if (continuation.isActive) continuation.resumeWithException(e)
                     cleanup()
@@ -97,8 +100,12 @@ object PdfJailClient {
     ): Long = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
-
+        var sourceFdRef: ParcelFileDescriptor? = null
+        var destFdRef: ParcelFileDescriptor? = null
+        
         fun cleanup() {
+            try { sourceFdRef?.close() } catch (e: Exception) {}
+            try { destFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
                 try {
                     context.unbindService(connection!!)
@@ -122,10 +129,10 @@ object PdfJailClient {
                     val contentResolver = context.contentResolver
                     val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
                     val destFd = contentResolver.openFileDescriptor(destUri, "w")
+                    sourceFdRef = sourceFd
+                    destFdRef = destFd
 
                     if (sourceFd == null || destFd == null) {
-                        sourceFd?.close()
-                        destFd?.close()
                         cleanup()
                         continuation.resumeWithException(IllegalStateException("Failed to open file descriptors"))
                         return
@@ -133,8 +140,6 @@ object PdfJailClient {
 
                     val callback = object : IPdfJailCallback.Stub() {
                         override fun onSuccess(outputSizeBytes: Long) {
-                            sourceFd.close()
-                            destFd.close()
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resume(outputSizeBytes)
@@ -142,8 +147,6 @@ object PdfJailClient {
                         }
 
                         override fun onFailure(errorCode: Int, errorMessage: String) {
-                            sourceFd.close()
-                            destFd.close()
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resumeWithException(RuntimeException("Jail Error $errorCode: $errorMessage"))
@@ -188,8 +191,10 @@ object PdfJailClient {
     ): String = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
-
+        var sourceFdRef: ParcelFileDescriptor? = null
+        
         fun cleanup() {
+            try { sourceFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
                 try {
                     context.unbindService(connection!!)
@@ -212,6 +217,7 @@ object PdfJailClient {
                 try {
                     val contentResolver = context.contentResolver
                     val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
+                    sourceFdRef = sourceFd
 
                     if (sourceFd == null) {
                         cleanup()
@@ -221,7 +227,6 @@ object PdfJailClient {
 
                     val callback = object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) {
-                            sourceFd.close()
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resume(resultJson)
@@ -229,7 +234,6 @@ object PdfJailClient {
                         }
 
                         override fun onFailure(errorCode: Int, errorMessage: String) {
-                            sourceFd.close()
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resumeWithException(RuntimeException("Jail Error $errorCode: $errorMessage"))

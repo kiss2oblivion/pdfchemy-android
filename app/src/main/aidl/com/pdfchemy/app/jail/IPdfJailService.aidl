@@ -1,6 +1,7 @@
 package com.pdfchemy.app.jail;
 
 import android.os.ParcelFileDescriptor;
+import android.os.IBinder;
 import com.pdfchemy.app.jail.IPdfJailCallback;
 
 /**
@@ -51,6 +52,7 @@ oneway interface IPdfJailService {
         in ParcelFileDescriptor sourceFd,
         in ParcelFileDescriptor targetFd,
         String paramsJson,
+        IBinder rendererBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
@@ -63,6 +65,7 @@ oneway interface IPdfJailService {
         in ParcelFileDescriptor targetFd,
         in ParcelFileDescriptor extraFd,
         String paramsJson,
+        IBinder rendererBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
@@ -71,7 +74,7 @@ oneway interface IPdfJailService {
         in ParcelFileDescriptor[] sourceFds,
         in ParcelFileDescriptor[] targetFds,
         String paramsJson,
+        IBinder rendererBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 }
-

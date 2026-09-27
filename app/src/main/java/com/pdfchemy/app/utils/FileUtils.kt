@@ -104,33 +104,7 @@ object FileUtils {
 
     fun openParcelFileDescriptor(context: Context, uri: Uri): android.os.ParcelFileDescriptor? {
         return try {
-            val maxBytes = 2L * 1024 * 1024 * 1024 // 2 GB limit
-            val randomId = java.util.UUID.randomUUID().toString()
-            val tempFile = java.io.File(context.cacheDir, "pdf_sandbox_cache_$randomId.pdf")
-            
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                java.io.FileOutputStream(tempFile).use { output ->
-                    val buffer = ByteArray(8192)
-                    var bytesCopied = 0L
-                    var read: Int
-                    while (input.read(buffer).also { read = it } != -1) {
-                        bytesCopied += read
-                        if (bytesCopied > maxBytes) {
-                            throw Exception("Input document exceeds hard size limit of 2GB")
-                        }
-                        output.write(buffer, 0, read)
-                    }
-                }
-            }
-            
-            if (tempFile.exists() && tempFile.length() > 0) {
-                // Ensure file is deleted on exit if possible, though we can't fully guarantee it without tracking.
-                tempFile.deleteOnExit()
-                android.os.ParcelFileDescriptor.open(tempFile, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
-            } else {
-                tempFile.delete()
-                null
-            }
+            context.contentResolver.openFileDescriptor(uri, "r")
         } catch (e: Exception) {
             com.pdfchemy.app.utils.AppLogger.e("FileUtils: failed to open parcel file descriptor", e)
             null

@@ -188,23 +188,24 @@ fun rememberVanguardPdfPicker(
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            val isPdf = uri.toString().lowercase().endsWith(".pdf") || 
-                (FileUtils.getFileName(context, uri)?.lowercase()?.endsWith(".pdf") == true)
-            if (isPdf && isVanguardEnabled) {
+    ) { originalUri: Uri? ->
+        if (originalUri != null) {
+            if (isVanguardEnabled) {
                 isScanning = true
-                scanningFileName = FileUtils.getFileName(context, uri)
+                scanningFileName = FileUtils.getFileName(context, originalUri)
                 scope.launch {
                     try {
-                        val threat = SandboxCoordinator.checkVanguardThreat(context, uri)
+                        val stagedUri = withContext(Dispatchers.IO) {
+                            com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                        }
+                        val threat = SandboxCoordinator.checkVanguardThreat(context, stagedUri)
                         withContext(Dispatchers.Main) {
                             when (threat) {
                                 is VanguardThreatResult.Clean -> {
-                                    onPdfSelected(uri)
+                                    onPdfSelected(stagedUri)
                                 }
                                 is VanguardThreatResult.EncryptedCannotVerify -> {
-                                    encryptedPendingUri = uri
+                                    encryptedPendingUri = stagedUri
                                     showEncryptedDialog = true
                                 }
                                 is VanguardThreatResult.ExecutableThreat,
@@ -213,13 +214,17 @@ fun rememberVanguardPdfPicker(
                                 }
                             }
                         }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            showBlockedDialog = true
+                        }
                     } finally {
                         isScanning = false
                         scanningFileName = null
                     }
                 }
             } else {
-                onPdfSelected(uri)
+                onPdfSelected(originalUri)
             }
         }
     }
@@ -375,15 +380,16 @@ fun rememberVanguardMultiplePdfPicker(
             if (isVanguardEnabled) {
                 scope.launch {
                     var allClean = true
-                    for (uri in uris) {
-                        val isPdf = uri.toString().lowercase().endsWith(".pdf") || 
-                            (FileUtils.getFileName(context, uri)?.lowercase()?.endsWith(".pdf") == true)
-                        if (!isPdf) continue
-
+                    val stagedUris = mutableListOf<Uri>()
+                    for (originalUri in uris) {
                         isScanning = true
-                        scanningFileName = FileUtils.getFileName(context, uri)
+                        scanningFileName = FileUtils.getFileName(context, originalUri)
                         try {
-                            val threat = SandboxCoordinator.checkVanguardThreat(context, uri)
+                            val stagedUri = withContext(Dispatchers.IO) {
+                                com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                            }
+                            stagedUris.add(stagedUri)
+                            val threat = SandboxCoordinator.checkVanguardThreat(context, stagedUri)
                             var stopBatch = false
                             withContext(Dispatchers.Main) {
                                 when (threat) {
@@ -391,7 +397,7 @@ fun rememberVanguardMultiplePdfPicker(
                                         // verified clean, proceed to next
                                     }
                                     is VanguardThreatResult.EncryptedCannotVerify -> {
-                                        encryptedPendingUri = uri
+                                        encryptedPendingUri = stagedUri
                                         showEncryptedDialog = true
                                         allClean = false
                                         stopBatch = true
@@ -405,6 +411,12 @@ fun rememberVanguardMultiplePdfPicker(
                                 }
                             }
                             if (stopBatch) break
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                showBlockedDialog = true
+                                allClean = false
+                            }
+                            break
                         } finally {
                             isScanning = false
                             scanningFileName = null
@@ -412,7 +424,7 @@ fun rememberVanguardMultiplePdfPicker(
                     }
                     if (allClean) {
                         withContext(Dispatchers.Main) {
-                            onPdfsSelected(uris)
+                            onPdfsSelected(stagedUris)
                         }
                     }
                 }

@@ -14,6 +14,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
+import com.tom_roush.pdfbox.text.PDFTextStripper
+import com.tom_roush.pdfbox.text.TextPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -23,7 +25,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 
 object PdfRedactionEngineWorker {
-    fun execute(context: Context, sourceFd: ParcelFileDescriptor?, destFd: ParcelFileDescriptor?, paramsJson: String): String {
+    fun execute(context: Context, sourceFd: ParcelFileDescriptor?, destFd: ParcelFileDescriptor?, paramsJson: String, rendererBinder: android.os.IBinder? = null): String {
         return try {
             val params = JSONObject(paramsJson)
             val configObj = params.getJSONObject("config")
@@ -47,9 +49,134 @@ object PdfRedactionEngineWorker {
             }
 
             val redactedCount = runBlocking {
-                applyRedactions(context, sourceFd!!, destFd!!, boxes, config)
+                applyRedactions(context, sourceFd!!, destFd!!, boxes, config, rendererBinder)
             }
             JSONObject().put("success", true).put("count", redactedCount).toString()
+        } catch (e: Exception) {
+            JSONObject().put("error", e.message).toString()
+        }
+    }
+
+    private class PositionalSearchStripper(
+        private val query: String,
+        private val isRegex: Boolean
+    ) : PDFTextStripper() {
+
+        val matches = mutableListOf<JSONObject>()
+
+        override fun writeString(text: String, textPositions: MutableList<TextPosition>) {
+            val currentPage = (currentPageNo - 1).coerceAtLeast(0)
+            
+            if (isRegex) {
+                val regex = Regex(query)
+                val results = regex.findAll(text)
+                for (match in results) {
+                    val foundIndex = match.range.first
+                    val endIndex = match.range.last + 1
+                    if (endIndex <= textPositions.size) {
+                        addMatch(currentPage, textPositions, foundIndex, endIndex)
+                    }
+                }
+            } else {
+                var startIndex = 0
+                val target = query.lowercase()
+                val source = text.lowercase()
+                while (startIndex < source.length) {
+                    val foundIndex = source.indexOf(target, startIndex)
+                    if (foundIndex == -1) break
+                    val endIndex = foundIndex + target.length
+                    if (endIndex <= textPositions.size) {
+                        addMatch(currentPage, textPositions, foundIndex, endIndex)
+                    }
+                    startIndex = foundIndex + 1
+                }
+            }
+        }
+        
+        private fun addMatch(currentPage: Int, textPositions: List<TextPosition>, foundIndex: Int, endIndex: Int) {
+            val matchPositions = textPositions.subList(foundIndex, endIndex)
+            if (matchPositions.isNotEmpty()) {
+                val firstPos = matchPositions.first()
+                val lastPos = matchPositions.last()
+
+                val minX = firstPos.xDirAdj
+                val maxX = lastPos.xDirAdj + lastPos.widthDirAdj
+                val width = (maxX - minX).coerceAtLeast(1f)
+                val avgHeight = matchPositions.map { it.heightDir }.average().toFloat().coerceAtLeast(8f)
+
+                val topY = firstPos.yDirAdj
+                
+                val boxObj = JSONObject()
+                boxObj.put("pageIndex", currentPage)
+                boxObj.put("rawLeft", minX.toDouble())
+                boxObj.put("rawTop", topY.toDouble())
+                boxObj.put("rawRight", (minX + width).toDouble())
+                boxObj.put("rawBottom", (topY + avgHeight).toDouble())
+                matches.add(boxObj)
+            }
+        }
+    }
+
+    fun searchTargets(context: Context, sourceFd: ParcelFileDescriptor, paramsJson: String): String {
+        return try {
+            val params = JSONObject(paramsJson)
+            val query = params.getString("query")
+            val isRegex = params.optBoolean("isRegex", false)
+
+            PDFBoxResourceLoader.init(context)
+            var document: PDDocument? = null
+
+            val resultMatches = mutableListOf<JSONObject>()
+            try {
+                FileInputStream(sourceFd.fileDescriptor).use { inStream ->
+                    document = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                }
+
+                val stripper = PositionalSearchStripper(query, isRegex)
+                val nullWriter = java.io.OutputStreamWriter(java.io.ByteArrayOutputStream())
+                stripper.startPage = 1
+                stripper.endPage = document!!.numberOfPages
+                stripper.writeText(document, nullWriter)
+                
+                for (match in stripper.matches) {
+                    val pageIndex = match.getInt("pageIndex")
+                    val page = document!!.getPage(pageIndex)
+                    val cropBox = page.cropBox ?: page.mediaBox
+                    val pw = cropBox.width
+                    val ph = cropBox.height
+                    
+                    val rawLeft = match.getDouble("rawLeft").toFloat()
+                    val rawTop = match.getDouble("rawTop").toFloat()
+                    val rawRight = match.getDouble("rawRight").toFloat()
+                    val rawBottom = match.getDouble("rawBottom").toFloat()
+                    
+                    val normLeft = rawLeft / pw
+                    val normTop = rawTop / ph
+                    val normRight = rawRight / pw
+                    val normBottom = rawBottom / ph
+                    
+                    val boxObj = JSONObject()
+                    boxObj.put("pageIndex", pageIndex)
+                    boxObj.put("left", normLeft.toDouble())
+                    boxObj.put("top", normTop.toDouble())
+                    boxObj.put("right", normRight.toDouble())
+                    boxObj.put("bottom", normBottom.toDouble())
+                    boxObj.put("overlayLabel", "REDACTED")
+                    
+                    resultMatches.add(boxObj)
+                }
+
+            } finally {
+                try { document?.close() } catch (e: Exception) {}
+            }
+
+            val resultObj = JSONObject()
+            resultObj.put("success", true)
+            val boxesArr = org.json.JSONArray()
+            for (m in resultMatches) boxesArr.put(m)
+            resultObj.put("boxes", boxesArr)
+            
+            resultObj.toString()
         } catch (e: Exception) {
             JSONObject().put("error", e.message).toString()
         }
@@ -60,7 +187,8 @@ object PdfRedactionEngineWorker {
         sourceFd: ParcelFileDescriptor,
         destFd: ParcelFileDescriptor,
         boxes: List<RedactionBox>,
-        config: RedactionConfig
+        config: RedactionConfig,
+        rendererBinder: android.os.IBinder?
     ): Int {
         if (boxes.isEmpty()) {
             FileInputStream(sourceFd.fileDescriptor).use { input ->
@@ -177,7 +305,7 @@ object PdfRedactionEngineWorker {
                 val finalFile = if (config.forensicSanitize) {
                     rasterFile = File(context.cacheDir, "rasterized_" + System.currentTimeMillis() + ".pdf")
                     pfd = try { ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY) } catch (_: Exception) { null }
-                    val renderedPageCount = if (pfd != null) NativeRendererCoordinator.getPageCount(context, pfd) else null
+                    val renderedPageCount = if (pfd != null) NativeRendererCoordinator.getPageCount(context, pfd, rendererBinder) else null
                     val memSettings = com.tom_roush.pdfbox.io.MemoryUsageSetting.setupMixed(10 * 1024 * 1024, 250 * 1024 * 1024)
                     val baseDoc = PDDocument.load(tempFile, memSettings)
                     
@@ -192,7 +320,11 @@ object PdfRedactionEngineWorker {
                                     var pdImage: com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject? = null
                                     
                                     val renderJob = kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
-                                        NativeRendererCoordinator.renderPageToJpeg(context, pfd!!, i, writeFd)
+                                        try {
+                                            NativeRendererCoordinator.renderPageToJpeg(context, pfd!!, i, writeFd, rendererBinder)
+                                        } finally {
+                                            try { writeFd.close() } catch (e: Exception) {}
+                                        }
                                     }
                                     
                                     try {

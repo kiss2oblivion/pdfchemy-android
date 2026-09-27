@@ -23,89 +23,12 @@ object SandboxCoordinator {
     private const val HARD_TIMEOUT_MS = 60_000L // 60 seconds
 
     suspend fun auditDocumentThreats(context: Context, sourceUri: Uri): SanitizerAuditReport? = withContext(Dispatchers.IO) {
-        val channel = Channel<SanitizerAuditReport?>()
-        var workerPid = -1
-        
-        val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val sandbox = IPdfSandboxService.Stub.asInterface(service)
-                var pfd: ParcelFileDescriptor? = null
-                try {
-                    workerPid = sandbox.workerPid
-                    pfd = context.contentResolver.openFileDescriptor(sourceUri, "r")
-                    if (pfd == null) {
-                        channel.trySend(null)
-                        return
-                    }
-                    sandbox.auditDocument(pfd, object : IPdfSandboxCallback.Stub() {
-                        override fun onSuccess(resultJson: String?) {
-                            try {
-                                val json = JSONObject(resultJson ?: "{}")
-                                val report = SanitizerAuditReport(
-                                    threatsFound = json.optInt("threatsFound", 0),
-                                    jsCount = json.optInt("jsCount", 0),
-                                    launchActionsCount = json.optInt("launchActionsCount", 0),
-                                    attachmentCount = json.optInt("attachmentCount", 0),
-                                    uriCount = json.optInt("uriCount", 0),
-                                    hasMetadata = json.optBoolean("hasMetadata", false),
-                                    isClean = json.optBoolean("isClean", true),
-                                    isEncrypted = json.optBoolean("isEncrypted", false),
-                                    parseFailed = json.optBoolean("parseFailed", false)
-                                )
-                                channel.trySend(report)
-                            } catch (e: Exception) {
-                                channel.trySend(null)
-                            }
-                        }
-
-                        override fun onError(errorMessage: String?) {
-                            AppLogger.e("SandboxCoordinator audit error: $errorMessage")
-                            channel.trySend(null)
-                        }
-
-                        override fun onProgress(progress: Int, message: String?) {}
-                    })
-                } catch (e: Exception) {
-                    channel.trySend(null)
-                } finally {
-                    try { pfd?.close() } catch (e: Exception) {}
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                channel.trySend(null)
-            }
+        return@withContext try {
+            com.pdfchemy.app.logic.PdfSanitizerEngine.auditDocumentThreats(context, sourceUri)
+        } catch (e: Exception) {
+            AppLogger.e("SandboxCoordinator audit error", e)
+            null
         }
-
-        val intent = Intent(context, PdfWorkerService::class.java)
-        val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        
-        if (!bound) {
-            return@withContext null
-        }
-
-        var timeoutOrCancel = true
-        val result = try {
-            val res = withTimeoutOrNull(HARD_TIMEOUT_MS) {
-                channel.receive()
-            }
-            if (res != null) {
-                timeoutOrCancel = false
-            }
-            res
-        } finally {
-            try {
-                context.unbindService(connection)
-            } catch (e: Exception) {}
-        
-            if (timeoutOrCancel && workerPid != -1) {
-                // Hard timeout or death. Treat as hostile and kill the worker boundary.
-                            AppLogger.e("SandboxCoordinator: Audit timed out or disconnected. Killing worker process PID $workerPid")
-                Process.killProcess(workerPid)
-            }
-        }
-        
-        result
     }
 
     suspend fun sanitizeDocument(
@@ -116,109 +39,20 @@ object SandboxCoordinator {
         purgeActions: Boolean = true,
         purgeMetadata: Boolean = true
     ): SanitizerResult? = withContext(Dispatchers.IO) {
-        val channel = Channel<SanitizerResult?>()
-        var workerPid = -1
-
-        val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val sandbox = IPdfSandboxService.Stub.asInterface(service)
-                var inputPfd: ParcelFileDescriptor? = null
-                var outputPfd: ParcelFileDescriptor? = null
-                try {
-                    workerPid = sandbox.workerPid
-                    inputPfd = context.contentResolver.openFileDescriptor(sourceUri, "r")
-                    outputPfd = context.contentResolver.openFileDescriptor(destUri, "w")
-                    
-                    if (inputPfd == null || outputPfd == null) {
-                        channel.trySend(null)
-                        return
-                    }
-
-                    sandbox.sanitizeDocument(inputPfd, outputPfd, purgeJs, purgeActions, purgeMetadata, object : IPdfSandboxCallback.Stub() {
-                        override fun onSuccess(resultJson: String?) {
-                            try {
-                                val json = JSONObject(resultJson ?: "{}")
-                                val res = SanitizerResult(
-                                    isSuccess = json.optBoolean("isSuccess", false),
-                                    threatsRemoved = json.optInt("threatsRemoved", 0),
-                                    jsRemoved = json.optInt("jsRemoved", 0),
-                                    actionsRemoved = json.optInt("actionsRemoved", 0),
-                                    metadataRemoved = json.optBoolean("metadataRemoved", false),
-                                    attachmentsRemoved = json.optInt("attachmentsRemoved", 0)
-                                )
-                                channel.trySend(res)
-                            } catch (e: Exception) {
-                                channel.trySend(null)
-                            }
-                        }
-
-                        override fun onError(errorMessage: String?) {
-                            AppLogger.e("SandboxCoordinator sanitize error: $errorMessage")
-                            channel.trySend(null)
-                        }
-
-                        override fun onProgress(progress: Int, message: String?) {}
-                    })
-                } catch (e: Exception) {
-                    channel.trySend(null)
-                } finally {
-                    try { inputPfd?.close() } catch (e: Exception) {}
-                    try { outputPfd?.close() } catch (e: Exception) {}
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                channel.trySend(null)
-            }
+        return@withContext try {
+            com.pdfchemy.app.logic.PdfSanitizerEngine.sanitizeDocument(context, sourceUri, destUri, purgeJs, purgeActions, purgeMetadata)
+        } catch (e: Exception) {
+            AppLogger.e("SandboxCoordinator sanitize error", e)
+            null
         }
-
-        val intent = Intent(context, PdfWorkerService::class.java)
-        val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        
-        if (!bound) {
-            return@withContext null
-        }
-
-        var timeoutOrCancel = true
-        val result = try {
-            val res = withTimeoutOrNull(HARD_TIMEOUT_MS) {
-                channel.receive()
-            }
-            if (res != null) {
-                timeoutOrCancel = false
-            }
-            res
-        } finally {
-            try {
-                context.unbindService(connection)
-            } catch (e: Exception) {}
-        
-            if (timeoutOrCancel && workerPid != -1) {
-                AppLogger.e("SandboxCoordinator: Sanitize timed out or disconnected. Killing worker process PID $workerPid")
-                Process.killProcess(workerPid)
-            }
-        }
-        
-        result
     }
 
     suspend fun hasExecutableThreats(context: Context, pdfUri: Uri): Boolean = withContext(Dispatchers.IO) {
-        val report = auditDocumentThreats(context, pdfUri) ?: return@withContext true // true = blocked if crashed
-        report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.isEncrypted || report.parseFailed
+        return@withContext com.pdfchemy.app.logic.PdfSanitizerEngine.hasExecutableThreats(context, pdfUri)
     }
 
     suspend fun checkVanguardThreat(context: Context, pdfUri: Uri): com.pdfchemy.app.logic.VanguardThreatResult = withContext(Dispatchers.IO) {
-        val report = auditDocumentThreats(context, pdfUri)
-        if (report == null || report.parseFailed) {
-            return@withContext com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed(pdfUri)
-        }
-        if (report.isEncrypted) {
-            return@withContext com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify(pdfUri)
-        }
-        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0) {
-            return@withContext com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat(report)
-        }
-        com.pdfchemy.app.logic.VanguardThreatResult.Clean
+        return@withContext com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, pdfUri)
     }
 
     suspend fun smartRedact(
@@ -228,17 +62,18 @@ object SandboxCoordinator {
         patterns: List<com.pdfchemy.app.logic.RedactPattern>,
         config: com.pdfchemy.app.logic.RedactionConfig = com.pdfchemy.app.logic.RedactionConfig(isBlackout = true, defaultOverlayText = "REDACTED", forensicSanitize = true)
     ): Result<Int> {
-        val combinedRegex = patterns.joinToString(separator = "|") { it.regex }
-        val searchResult = searchRedactionTargets(context, pdfUri, combinedRegex, isRegex = true)
-        if (searchResult.isFailure) return Result.failure(searchResult.exceptionOrNull() ?: Exception("Unknown error"))
-        
-        val boxes = searchResult.getOrNull() ?: emptyList()
-        if (boxes.isEmpty()) return Result.success(0)
-        
-        return applyRedactions(context, pdfUri, destUri, boxes, config)
+        val result = com.pdfchemy.app.logic.PdfRedactionEngine.smartRedact(context, pdfUri, destUri, patterns, config)
+        if (result.isSuccess) {
+            val count = result.getOrNull() ?: 0
+            val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
+            historyRepo.addHistoryItem(
+                destUri,
+                com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: "redacted.pdf",
+                "Sanitized & Redacted PDF (\ elements)"
+            )
+        }
+        return result
     }
-
-
 
     suspend fun pdfToEpub(
         context: Context,
@@ -434,101 +269,7 @@ if (result?.isSuccess == true) {
         query: String,
         isRegex: Boolean = false
     ): Result<List<com.pdfchemy.app.logic.RedactionBox>> = withContext(Dispatchers.IO) {
-        val channel = Channel<Result<List<com.pdfchemy.app.logic.RedactionBox>>?>()
-        var workerPid = -1
-
-        val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val sandbox = IPdfSandboxService.Stub.asInterface(service)
-                var inputPfd: ParcelFileDescriptor? = null
-                try {
-                    workerPid = sandbox.workerPid
-                    inputPfd = context.contentResolver.openFileDescriptor(pdfUri, "r")
-                    if (inputPfd == null) {
-                        channel.trySend(Result.failure(IllegalArgumentException("Cannot open file")))
-                        return
-                    }
-
-                    sandbox.searchRedactionTargets(inputPfd, query, isRegex, object : IPdfSandboxCallback.Stub() {
-                        override fun onSuccess(resultJson: String?) {
-                            try {
-                                val json = JSONObject(resultJson ?: "{}")
-                                val boxesArray = json.optJSONArray("boxes")
-                                val boxes = mutableListOf<com.pdfchemy.app.logic.RedactionBox>()
-                                if (boxesArray != null) {
-                                    for (i in 0 until boxesArray.length()) {
-                                        val obj = boxesArray.getJSONObject(i)
-                                        boxes.add(
-                                            com.pdfchemy.app.logic.RedactionBox(
-                                                pageIndex = obj.getInt("pageIndex"),
-                                                normalizedRect = android.graphics.RectF(
-                                                    obj.getDouble("left").toFloat(),
-                                                    obj.getDouble("top").toFloat(),
-                                                    obj.getDouble("right").toFloat(),
-                                                    obj.getDouble("bottom").toFloat()
-                                                ),
-                                                overlayLabel = obj.optString("overlayLabel", "")
-                                            )
-                                        )
-                                    }
-                                }
-                                channel.trySend(Result.success(boxes))
-                            } catch (e: Exception) {
-                                channel.trySend(Result.failure(e))
-                            }
-                        }
-
-                        override fun onError(errorMessage: String?) {
-                            AppLogger.e("SandboxCoordinator search error: $errorMessage")
-                            channel.trySend(Result.failure(Exception(errorMessage)))
-                        }
-
-                        override fun onProgress(progress: Int, message: String?) {}
-                    })
-                } catch (e: Exception) {
-                    channel.trySend(Result.failure(e))
-                } finally {
-                    try { inputPfd?.close() } catch (e: Exception) {}
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                channel.trySend(Result.failure(Exception("Service disconnected")))
-            }
-        }
-
-        val intent = Intent(context, PdfWorkerService::class.java)
-        val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        
-        if (!bound) {
-            return@withContext Result.failure(Exception("Failed to bind service"))
-        }
-
-        var timeoutOrCancel = true
-        val result = try {
-            val res = withTimeoutOrNull(HARD_TIMEOUT_MS) {
-                channel.receive()
-            }
-            if (res != null) {
-                timeoutOrCancel = false
-            }
-            res
-        } finally {
-            try {
-                context.unbindService(connection)
-            } catch (e: Exception) {}
-        
-            if (timeoutOrCancel && workerPid != -1) {
-                AppLogger.e("SandboxCoordinator: Search timed out or disconnected. Killing worker process PID $workerPid")
-                Process.killProcess(workerPid)
-            }
-        }
-
-        if (result == null) {
-            return@withContext Result.failure(Exception("Search timed out or cancelled"))
-        }
-
-result ?: Result.failure(Exception("Unknown search error"))
+        return@withContext com.pdfchemy.app.logic.PdfRedactionEngine.searchRedactionTargets(context, pdfUri, query, isRegex)
     }
 
     suspend fun applyRedactions(
@@ -538,115 +279,16 @@ result ?: Result.failure(Exception("Unknown search error"))
         boxes: List<com.pdfchemy.app.logic.RedactionBox>,
         config: com.pdfchemy.app.logic.RedactionConfig
     ): Result<Int> = withContext(Dispatchers.IO) {
-        val channel = Channel<Result<Int>?>()
-        var workerPid = -1
-
-        val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val sandbox = IPdfSandboxService.Stub.asInterface(service)
-                var inputPfd: ParcelFileDescriptor? = null
-                var outputPfd: ParcelFileDescriptor? = null
-                try {
-                    workerPid = sandbox.workerPid
-                    inputPfd = context.contentResolver.openFileDescriptor(sourcePdfUri, "r")
-                    outputPfd = context.contentResolver.openFileDescriptor(destPdfUri, "w")
-                    
-                    if (inputPfd == null || outputPfd == null) {
-                        channel.trySend(Result.failure(IllegalArgumentException("Cannot open file descriptors")))
-                        return
-                    }
-
-                    val configJson = JSONObject().apply {
-                        put("isBlackout", config.isBlackout)
-                        put("forensicSanitize", config.forensicSanitize)
-                        put("defaultOverlayText", config.defaultOverlayText)
-                        
-                        val boxesArray = org.json.JSONArray()
-                        boxes.forEach { box ->
-                            val obj = JSONObject()
-                            obj.put("pageIndex", box.pageIndex)
-                            obj.put("left", box.normalizedRect.left.toDouble())
-                            obj.put("top", box.normalizedRect.top.toDouble())
-                            obj.put("right", box.normalizedRect.right.toDouble())
-                            obj.put("bottom", box.normalizedRect.bottom.toDouble())
-                            obj.put("overlayLabel", box.overlayLabel)
-                            boxesArray.put(obj)
-                        }
-                        put("boxes", boxesArray)
-                    }
-
-                    sandbox.redactDocument(inputPfd, outputPfd, configJson.toString(), object : IPdfSandboxCallback.Stub() {
-                        override fun onSuccess(resultJson: String?) {
-                            try {
-                                val json = JSONObject(resultJson ?: "{}")
-                                channel.trySend(Result.success(json.optInt("redactedCount", 0)))
-                            } catch (e: Exception) {
-                                channel.trySend(Result.failure(e))
-                            }
-                        }
-
-                        override fun onError(errorMessage: String?) {
-                            AppLogger.e("SandboxCoordinator redact error: $errorMessage")
-                            channel.trySend(Result.failure(Exception(errorMessage)))
-                        }
-
-                        override fun onProgress(progress: Int, message: String?) {}
-                    })
-                } catch (e: Exception) {
-                    channel.trySend(Result.failure(e))
-                } finally {
-                    try { inputPfd?.close() } catch (e: Exception) {}
-                    try { outputPfd?.close() } catch (e: Exception) {}
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                channel.trySend(Result.failure(Exception("Service disconnected")))
-            }
-        }
-
-        val intent = Intent(context, PdfWorkerService::class.java)
-        val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        
-        if (!bound) {
-            return@withContext Result.failure(Exception("Failed to bind service"))
-        }
-
-        // Redaction is slow, give it more time (3 minutes max)
-        var timeoutOrCancel = true
-        val result = try {
-            val res = withTimeoutOrNull(180_000L) {
-                channel.receive()
-            }
-            if (res != null) {
-                timeoutOrCancel = false
-            }
-            res
-        } finally {
-            try {
-                context.unbindService(connection)
-            } catch (e: Exception) {}
-        
-            if (timeoutOrCancel && workerPid != -1) {
-                AppLogger.e("SandboxCoordinator: Redaction timed out or disconnected. Killing worker process PID $workerPid")
-                Process.killProcess(workerPid)
-            }
-        }
-
-        if (result == null) {
-            return@withContext Result.failure(Exception("Redaction timed out or cancelled"))
-        }
-
-if (result?.isSuccess == true) {
+        val result = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(context, sourcePdfUri, destPdfUri, boxes, config)
+        if (result.isSuccess) {
             val count = result.getOrNull() ?: 0
             val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
             historyRepo.addHistoryItem(
                 destPdfUri,
                 com.pdfchemy.app.utils.FileUtils.getFileName(context, destPdfUri) ?: "redacted.pdf",
-                "Sanitized & Redacted PDF ($count elements)"
+                "Sanitized & Redacted PDF (\ elements)"
             )
         }
-
-        result ?: Result.failure(Exception("Unknown redaction error"))
+        return@withContext result
     }
 }

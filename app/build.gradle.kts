@@ -176,3 +176,32 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
 }
+
+tasks.register("securityAudit") {
+    doLast {
+        val srcDir = file("src/main/java/com/pdfchemy/app")
+        val forbiddenFiles = mutableListOf<String>()
+        val allowedJail = file("src/main/java/com/pdfchemy/app/jail")
+        val allowedSandbox = file("src/main/java/com/pdfchemy/app/sandbox")
+        
+        var scanned = 0
+        srcDir.walk().filter { it.extension == "kt" || it.extension == "java" }.forEach { file ->
+            if (file.absolutePath.startsWith(allowedJail.absolutePath) || file.absolutePath.startsWith(allowedSandbox.absolutePath)) {
+                return@forEach
+            }
+            scanned++
+            val content = file.readText()
+            if (content.contains("PDDocument.load") || content.contains("android.graphics.pdf.PdfRenderer")) {
+                forbiddenFiles.add(file.name)
+            }
+        }
+        println("securityAudit scanned $scanned files.")
+        if (forbiddenFiles.isNotEmpty()) {
+            throw GradleException("SECURITY VIOLATION: PDDocument.load or PdfRenderer used in host process files: " + forbiddenFiles.joinToString())
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("securityAudit")
+}

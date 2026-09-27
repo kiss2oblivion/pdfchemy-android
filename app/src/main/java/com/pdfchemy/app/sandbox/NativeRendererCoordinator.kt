@@ -70,8 +70,12 @@ object NativeRendererCoordinator {
         result
     }
 
-    suspend fun getPageCount(context: Context, pdfPfd: ParcelFileDescriptor): Int? = withRenderer(context) { renderer ->
-        renderer.getPageCount(pdfPfd)
+    suspend fun getPageCount(context: Context, pdfPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Int? = withContext(Dispatchers.IO) {
+        if (rendererBinder != null) {
+            val renderer = IPdfNativeRendererService.Stub.asInterface(rendererBinder)
+            try { return@withContext renderer.getPageCount(pdfPfd) } catch(e: Exception) { return@withContext null }
+        }
+        withRenderer(context) { renderer -> renderer.getPageCount(pdfPfd) }
     }
 
     suspend fun renderPageToBitmap(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, scaleWidth: Int = 0): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
@@ -106,8 +110,19 @@ object NativeRendererCoordinator {
         }
     }
 
-    suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor): Boolean? = withRenderer(context) { renderer ->
-        renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
-        true
+    suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Boolean? = withContext(Dispatchers.IO) {
+        if (rendererBinder != null) {
+            val renderer = IPdfNativeRendererService.Stub.asInterface(rendererBinder)
+            try {
+                renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
+                return@withContext true
+            } catch(e: Exception) {
+                return@withContext null
+            }
+        }
+        withRenderer(context) { renderer ->
+            renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
+            true
+        }
     }
 }
