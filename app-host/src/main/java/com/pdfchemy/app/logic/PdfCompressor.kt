@@ -8,6 +8,7 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
+import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -73,7 +74,7 @@ object PdfCompressor {
                         true
                     } ?: false
                 }
-                
+
                 if (success) {
                     Result.success(bestReport)
                 } else {
@@ -88,7 +89,7 @@ object PdfCompressor {
         }
     }
 
-    private suspend fun compressSinglePass(
+private suspend fun compressSinglePass(
         context: Context,
         sourceUri: Uri,
         destUri: Uri,
@@ -101,13 +102,18 @@ object PdfCompressor {
             val contentResolver = context.contentResolver
             val pfd = try { contentResolver.openFileDescriptor(sourceUri, "r") } catch (e: Exception) { null }
             val fileSize = pfd?.use { it.statSize } ?: -1L
-            
+
             val targetDpi = 150f
-            
+
+            val stagedUri = DocumentStager.stageDocument(context, sourceUri)
+            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
+            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
+            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
+
             com.pdfchemy.app.jail.PdfJailClient.compressPdf(
-                context, sourceUri, destUri, targetDpi, quality, false
+                context, stagedPdf, destUri, targetDpi, quality, false
             )
-            
+
             val report = CompressionReport(
                 originalSize = fileSize,
                 imagesProcessed = 1,
@@ -134,7 +140,12 @@ object PdfCompressor {
         uri: Uri
     ): Result<PdfAnalysis> = withContext(Dispatchers.IO) {
         try {
-            val jsonString = com.pdfchemy.app.jail.PdfJailClient.analyzePdf(context, uri)
+            val stagedUri = DocumentStager.stageDocument(context, uri)
+            val contentResolver = context.contentResolver
+            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
+            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
+            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
+            val jsonString = com.pdfchemy.app.jail.PdfJailClient.analyzePdf(context, stagedPdf)
             val json = org.json.JSONObject(jsonString)
 
             val pageCount = json.getInt("pageCount")

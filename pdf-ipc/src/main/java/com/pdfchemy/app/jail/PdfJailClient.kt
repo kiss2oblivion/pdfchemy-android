@@ -7,25 +7,25 @@ import android.content.ServiceConnection
 import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.logic.StagedPdf
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object PdfJailClient {
+
     suspend fun exportModifiedPdf(
         context: Context,
-        sourceUri: Uri,
+        source: StagedPdf,
         destUri: Uri,
-        modificationsJson: String,
-        expectedSha256: String = "",
-        expectedSize: Long = -1L
+        modificationsJson: String
     ): Boolean = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
         var sourceFdRef: ParcelFileDescriptor? = null
         var targetFdRef: ParcelFileDescriptor? = null
-        
+
         fun cleanup() {
             try { sourceFdRef?.close() } catch (e: Exception) {}
             try { targetFdRef?.close() } catch (e: Exception) {}
@@ -42,7 +42,7 @@ object PdfJailClient {
                 val jail = IPdfJailService.Stub.asInterface(service)
                 try {
                     val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
+                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
                     val targetFd = contentResolver.openFileDescriptor(destUri, "w")
                     sourceFdRef = sourceFd
                     targetFdRef = targetFd
@@ -53,7 +53,7 @@ object PdfJailClient {
                         return
                     }
 
-                    jail.exportModifiedPdf(sourceFd, targetFd, modificationsJson, expectedSha256, expectedSize, object : IPdfJailCallback.Stub() {
+                    jail.exportModifiedPdf(sourceFd, targetFd, modificationsJson, source.sha256, source.size, object : IPdfJailCallback.Stub() {
                         override fun onSuccess(outputSizeBytes: Long) {
                             if (continuation.isActive) continuation.resume(true)
                             cleanup()
@@ -65,7 +65,6 @@ object PdfJailClient {
                         }
                     })
 
-                    
                 } catch (e: Exception) {
                     if (continuation.isActive) continuation.resumeWithException(e)
                     cleanup()
@@ -80,7 +79,7 @@ object PdfJailClient {
 
         val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
         isBound = context.bindService(intent, connection!!, Context.BIND_AUTO_CREATE)
-        
+
         if (!isBound) {
             cleanup()
             continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
@@ -94,19 +93,17 @@ object PdfJailClient {
 
     suspend fun compressPdf(
         context: Context,
-        sourceUri: Uri,
+        source: StagedPdf,
         destUri: Uri,
         targetDpi: Float = 140f,
         quality: Float = 0.5f,
-        rasterizePages: Boolean = false,
-        expectedSha256: String = "",
-        expectedSize: Long = -1L
+        rasterizePages: Boolean = false
     ): Long = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
         var sourceFdRef: ParcelFileDescriptor? = null
         var destFdRef: ParcelFileDescriptor? = null
-        
+
         fun cleanup() {
             try { sourceFdRef?.close() } catch (e: Exception) {}
             try { destFdRef?.close() } catch (e: Exception) {}
@@ -131,7 +128,7 @@ object PdfJailClient {
 
                 try {
                     val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
+                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
                     val destFd = contentResolver.openFileDescriptor(destUri, "w")
                     sourceFdRef = sourceFd
                     destFdRef = destFd
@@ -158,7 +155,7 @@ object PdfJailClient {
                         }
                     }
 
-                    jailService.compressPdf(sourceFd, destFd, targetDpi, quality, rasterizePages, expectedSha256, expectedSize, callback)
+                    jailService.compressPdf(sourceFd, destFd, targetDpi, quality, rasterizePages, source.sha256, source.size, callback)
 
                 } catch (e: Exception) {
                     cleanup()
@@ -191,14 +188,12 @@ object PdfJailClient {
 
     suspend fun analyzePdf(
         context: Context,
-        sourceUri: Uri,
-        expectedSha256: String = "",
-        expectedSize: Long = -1L
+        source: StagedPdf
     ): String = suspendCancellableCoroutine { continuation ->
         var isBound = false
         var connection: ServiceConnection? = null
         var sourceFdRef: ParcelFileDescriptor? = null
-        
+
         fun cleanup() {
             try { sourceFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
@@ -222,7 +217,7 @@ object PdfJailClient {
 
                 try {
                     val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(sourceUri, "r")
+                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
                     sourceFdRef = sourceFd
 
                     if (sourceFd == null) {
@@ -247,7 +242,7 @@ object PdfJailClient {
                         }
                     }
 
-                    jailService.analyzePdf(sourceFd, expectedSha256, expectedSize, callback)
+                    jailService.analyzePdf(sourceFd, source.sha256, source.size, callback)
 
                 } catch (e: Exception) {
                     cleanup()

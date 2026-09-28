@@ -462,26 +462,30 @@ class PdfJailService : Service() {
     }
 
     private fun verifyAndRewind(fd: ParcelFileDescriptor, expectedSha256: String, expectedSize: Long) {
-        if (expectedSize > 0) {
-            val actualSize = fd.statSize
-            if (actualSize != expectedSize) {
-                throw SecurityException("Size mismatch. Expected $expectedSize but got $actualSize")
-            }
-            val digest = java.security.MessageDigest.getInstance("SHA-256")
-            val stream = ParcelFileDescriptor.AutoCloseInputStream(fd.dup())
-            val buffer = ByteArray(8192)
-            var read: Int
-            while (stream.read(buffer).also { read = it } != -1) {
-                digest.update(buffer, 0, read)
-            }
-            stream.close()
-            val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
-            if (actualSha256 != expectedSha256) {
-                throw SecurityException("SHA-256 mismatch. Expected $expectedSha256 but got $actualSha256")
-            }
-            // Rewind
-            android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+        if (expectedSize <= 0) {
+            throw SecurityException("Missing expected file size. Staged document required.")
         }
+        if (expectedSha256.length != 64) {
+            throw SecurityException("Missing or invalid expected SHA-256. Staged document required.")
+        }
+        val actualSize = fd.statSize
+        if (actualSize != expectedSize) {
+            throw SecurityException("Size mismatch. Expected $expectedSize but got $actualSize")
+        }
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val stream = ParcelFileDescriptor.AutoCloseInputStream(fd.dup())
+        val buffer = ByteArray(8192)
+        var read: Int
+        while (stream.read(buffer).also { read = it } != -1) {
+            digest.update(buffer, 0, read)
+        }
+        stream.close()
+        val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
+        if (actualSha256 != expectedSha256) {
+            throw SecurityException("SHA-256 mismatch. Expected $expectedSha256 but got $actualSha256")
+        }
+        // Rewind
+        android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
     }
 }
 

@@ -112,7 +112,12 @@ object PdfEditor {
         try {
             val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
             val json = mapper.writeValueAsString(modifications)
-            val success = com.pdfchemy.app.jail.PdfJailClient.exportModifiedPdf(context, sourceUri, destUri, json)
+            val stagedUri = DocumentStager.stageDocument(context, sourceUri)
+            val contentResolver = context.contentResolver
+            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
+            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
+            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
+            val success = com.pdfchemy.app.jail.PdfJailClient.exportModifiedPdf(context, stagedPdf, destUri, json)
             if (success) {
                 Result.success(true)
             } else {

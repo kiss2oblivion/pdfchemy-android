@@ -1,6 +1,13 @@
 package com.pdfchemy.app.logic
 
 import android.graphics.RectF
+import android.net.Uri
+
+data class StagedPdf(
+    val uri: Uri,
+    val sha256: String,
+    val size: Long
+)
 
 data class RedactionBox(
     val pageIndex: Int,
