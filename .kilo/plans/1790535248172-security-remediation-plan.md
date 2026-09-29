@@ -1,211 +1,315 @@
-# Security Remediation Plan — PDFchemy Android
+# Security Remediation Plan — pdfchemy-android
 
-Derived from the Deep Dive Audit (C1–C4, H1–H7, M1–M11, L1–L12). Sequence differs from the
-draft in two places: a **Phase 0** is inserted before all other work, and the **redaction
-toggle deletion is moved after the IPC isolation fix**. Rationale in "Key decisions".
-
-Target: `app/src/main` (147 Kotlin files), `app/src/test` (44 files), `app/build.gradle.kts`,
-`gradle.properties`, `AndroidManifest.xml`, root docs, repo hygiene.
+**Target:** `origin/repo-android` @ `cbafb998666219862b64e8d3d8dd1c172217b4e6`
+**Lineage:** `557d334` → `13810ac` (tag `v2.0.6`, module rename + `pdf-ipc` extraction) → `cbafb998` (staging invariant)
+**Phase 1 verdict:** REJECTED — 3 blocking criticals. **All three still open at `cbafb998`; one has regressed.**
+**Ledger of record:** `KILO_SECURITY_LEDGER.md` (repo root, committed) — created by R1
 
 ---
 
-## Key decisions
+## Module layout (verified from the `cbafb998` tree)
 
-1. **Phase 0 is a hard gate.** The unit test source set does not currently compile, and
-   `signingConfigs` throws at configuration time without secrets. Neither the XFA sanitizer
-   rewrite nor the redaction work can be validated until both are fixed. No Phase 1–5 change
-   should land before Phase 0 is green.
+| Symbol | Gradle module | Role | Package |
+|---|---|---|---|
+| `M_HOST` | `:app-host` | Android app, UI, orchestration | `com.pdfchemy.app` |
+| `M_JAIL` | `:pdf-jail` | Isolated parser/crypto process | `com.pdfchemy.pdfjail` |
+| `M_RENDER` | `:pdf-renderer` | Native renderer | — |
+| `M_CONTRACT` | `:pdf-ipc` | AIDL + DTOs | `com.pdfchemy.app.jail`, **`com.pdfchemy.app.logic`** |
 
-2. **Redaction is the one open architectural risk (see Open Question 1).** Deleting the
-   `forensicSanitize` toggle makes the forensic raster path mandatory, and that path depends
-   on a bind that likely fails. The plan therefore splits C3 into two tasks: resolve the IPC
-   bind (Phase 2.3) *first*, then delete the toggle (Phase 2.4). **Do not merge these into the
-   same commit** — if the bind turns out to work, the toggle deletion is a 1-file change; if it
-   doesn't, you need to fall back to Open Question 1's alternative.
-
-3. **"Protect PDF" gets a UI, not just a hardcoded policy.** Setting restrictive
-   `AccessPermission` bits by default (C4) silently changes behavior for existing users who
-   expect to print their own protected PDF. Requires a decision (Open Question 2).
+These names are confirmed, not provisional. `pdf-ipc` **exists** — the contracts-only extraction landed at `13810ac`.
 
 ---
 
-## Phase 0 — Build and test infrastructure (gate)
+## State correction
 
-*Nothing else proceeds until this is complete.*
+Earlier drafts targeted `557d334` and treated a 119/112 branch divergence as the dominant process risk. Both are obsolete.
 
-| # | Task | Files |
-|---|---|---|
-| 0.1 | Make `signingConfigs` lazy so a missing `keystore.properties` no longer breaks every task. Wrap the `create("release") { }` body in `if (project.hasProperty("..."))`-style guard, or move the `throw GradleException` into a `release` buildType branch that only resolves when assembling release. | `app/build.gradle.kts:33-46` |
-| 0.2 | Remove the four properties AGP 9 rejects: `android.defaults.buildfeatures.resvalues`, `android.sdk.defaultTargetSdkToCompileSdkIfUnset`, `android.enableAppCompileTimeRClass`, `android.r8.strictFullModeForKeepRules`. Reassess `android.newDsl=false` + `android.builtInKotlin=false` (documented AGP 9 failure mode) — remove both if the Kotlin plugin applies cleanly. | `gradle.properties:4,5,6,10,12,13` |
-| 0.3 | Raise `org.gradle.jvmargs` to `-Xmx4g` — `ResourceLeakStressTest` allocates ~50 × 16 MB bitmaps and Robolectric forks its own JVM. | `gradle.properties:1` |
-| 0.4 | **Fix the shadowed-parameter bug.** `var inputStream: InputStream? = null` at `:60` and `:150` shadows the non-null `inputStream: InputStream` parameter from `:55` and `:144`; `PDDocument.load` at `:69` and `:159` therefore always receives `null`. Delete both shadowing locals so the parameters are used. | `logic/PdfRedactionEngine.kt:60,150` |
-| 0.5 | **Fix the compression fail-always bug.** `targetFd` is closed by the `use` block ending at `:74`; `:78` then calls `targetFd.statSize` → `IllegalStateException` → `onFailure`. Use `streamOut`'s byte count, or query size before the `use` closes, or have the host stat the destination. | `jail/PdfJailService.kt:78` |
-| 0.6 | Fix the 4 test files calling `PdfRedactionEngine` with `Uri` where the signature takes `InputStream`; they must construct streams. Same for `PdfToEpubEngine.pdfToEpub` in `PdfToEpubEngineTest.kt:67`. | `PdfRedactionEngineTest.kt:53,72`; `StressGauntletAndroidTest.kt:67,74`; `AcroFormAndRedactionAuditTest.kt:136,148,159`; `PdfToEpubEngineTest.kt:67` |
-| 0.7 | Delete the two CI no-op tests that hardcode `C:\Users\cucos\...` paths and assert nothing. | `PdfCompressorTest.kt:123-207, 245-324` |
-| 0.8 | Re-enable lint as a gate (`abortOnError = true`, `checkReleaseBuilds = true`) after a baseline, so Phase 1–5 don't add new violations silently. | `app/build.gradle.kts:28-31` |
-| 0.9 | Add CI: `.github/workflows/android.yml` running `assembleDebug` and `testDebugUnitTest` on push/PR. No signing secrets required. | new file |
+- The divergence is gone. `6119652` and `ddd2624` are in `repo-android`'s history. Local `3449081`/`914e3d0` are local duplicates of those upstream commits under different hashes — the "merge the lines" work described previously is unnecessary.
+- `main` is **stale at `557d334`**, two commits behind `repo-android`. It lacks the `pdf-ipc` extraction *and* the staging fix. See SEC-028.
+- Findings below are re-baseleted against `cbafb998` by reading `app-host/build.gradle.kts`, `pdf-jail/build.gradle.kts`, the `cbafb998` tree, and `ArchitectureBoundaryTest.kt` directly.
 
-**Exit criteria:** `./gradlew :app:assembleDebug` and `./gradlew :app:testDebugUnitTest` both
-succeed on a clean checkout with no local secrets. Redaction and compression have at least one
-passing behavioural test each.
+**Evidence honesty:** verified this session — SEC-001/002/003/005/007/008/009/010/026 are file-level `CONFIRMED` against `cbafb998`. SEC-006 and SEC-014 were not re-checked and remain `SUPPORTED` from Phase 1. SEC-016…025 are inherited and `UNVERIFIED`.
 
 ---
 
-## Phase 1 — Truth, consent, and access control
+## Locked decisions
 
-Fixes C1, C4, M3, H6, and the H7 documentation/manifest half. All low-ambiguity, no
-dependencies on Phase 2.
-
-| # | Task | Files |
-|---|---|---|
-| 1.1 | **Close the premium + consent bypass (C1).** Two parts, both required: (a) gate the intent extra — `val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)`; (b) remove the compiled-in `IS_PREMIUM` debug field, which is a second, source-independent bypass. | `MainActivity.kt:380,703,1139`; `app/build.gradle.kts:54,67` |
-| 1.2 | **Secure the clipboard (M3).** Set `EXTRA_IS_SENSITIVE` on the error-trace clip so the platform marks it sensitive and the paste toast behaves. | `MainActivity.kt:1102-1104` |
-| 1.3 | **Apply `FLAG_SECURE` (H6).** Apply per-document-rendering window rather than globally, so settings/marketing screens still appear in Play listing screenshots. Add a `preview_mode` escape used only by `androidTest`. Affects ~10 render sites. | `ui/PdfEditorScreen.kt`, `SignPdfScreen.kt`, `RedactionScreen.kt`, `ReflowReaderScreen.kt`, `PageCropperScreen.kt`, `WatermarkScreen.kt`, `DeskewScreen.kt`, `GrayscaleOptimizerScreen.kt`, `QuickFillSignScreen.kt`, `FormBuilderScreen.kt` |
-| 1.4 | **Make "Protect PDF" actually restrict (C4)** — see Open Question 2 for the default policy. | `logic/PdfManipulator.kt:326-341` |
-| 1.5 | **Delete the destructive API (M10).** Remove `clearMetadataOverwrite` outright. It has no callers; the in-place `"wt"` truncate has no safe future use. | `logic/PdfMetadataManager.kt:139-190` |
-| 1.6 | **Validate incoming intent URIs (M2).** Allowlist `content://` only; reject `file://`, `android.resource://`, `javascript:`; verify MIME type or extension suffix before handing to the render path. | `MainActivity.kt:316-339` |
-
----
-
-## Phase 2 — Threat boundary and redaction integrity
-
-Fixes C2, H2, H3, H1, M1, M8, and the C3 toggle. **C2 is the highest-value fix in the audit —
-a PDF with a scripted XFA form is currently reported clean and passes through sanitized.**
-
-| # | Task | Files |
-|---|---|---|
-| 2.1 | **XFA detection in the audit (C2).** Add an explicit check of the AcroForm `/XFA` entry. The audit currently walks only `/AA` on the catalog, the form, and each field (`:109-115`). A document carrying XFA must report `threatsFound > 0`. | `logic/PdfSanitizerEngine.kt:88-156` |
-| 2.2 | **XFA stripping in the purge (C2).** Remove the `/XFA` key from the AcroForm COS dictionary and reset default resources. Then re-run the audit on the *output* document and assert zero threats — the purge path is currently never verified against its own output. | `logic/PdfSanitizerEngine.kt:234-309` |
-| 2.3 | **Complete the action blocklist (C2).** Add `ResetForm`, `Named`, `Rendition`, `RichMediaExecute`, `GoTo3DView` to both the audit's `processAction` and the purge's `hasMaliciousAction`. These two lists are currently maintained separately and have drifted. Consolidate into one shared set so they cannot diverge again. | `logic/PdfSanitizerEngine.kt:102,381` |
-| 2.4 | **Vanguard fails closed on URIs (M8).** The audit counts `uriCount` (`:103`) and folds it into `isClean` (`:132`), but the Coordinator's block decision ignores it. Add the check. | `sandbox/SandboxCoordinator.kt:218` |
-| 2.5 | **Resolve the cross-UID bind (H3).** *Blocked on Open Question 1.* If device verification confirms the bind fails, merge the native renderer into `PdfWorkerService` as a same-UID in-process call and delete `PdfNativeRendererService` + its AIDL + `NativeRendererCoordinator`. This also closes the H1 duplication: the ~28 host-process `PdfRenderer` sites (including the seekability probe at `utils/FileUtils.kt:116` and `logic/PdfEditor.kt:581`) remain the larger half of H1 and are tracked separately. | `sandbox/PdfNativeRendererService.kt`, `sandbox/NativeRendererCoordinator.kt`, `sandbox/PdfWorkerService.kt` |
-| 2.6 | **Replace the cross-UID kill (H2).** `Process.killProcess(workerPid)` targets an isolated-UID process and silently fails. Move the timeout inside the worker as a cooperative watchdog that calls `stopSelf()`; the host detects a dead binder and falls back. Also close the never-closed `Channel`s. | `sandbox/SandboxCoordinator.kt:104,198,314,411,523,632` + `:26,119,250,340,437,541`; `sandbox/NativeRendererCoordinator.kt:58,64` |
-| 2.7 | **Binder defense in depth (M1).** Add `enforceCallingOrSelfPermission` against a new `signature`-level permission on all three service binders. Currently the *only* control is `exported="false"`. | all three `Service` classes + `AndroidManifest.xml` |
-| 2.8 | **Delete the `forensicSanitize` toggle (C3).** *Only after 2.5 lands and the raster path is confirmed working.* Remove the `Switch` from the screen, remove the `forensicSanitize` field from `RedactionConfig`, delete the `else` branch at `:343-345` that returns the visual-only document, and hardcode the raster path. | `ui/RedactionScreen.kt:54,323-336`; `logic/PdfRedactionEngine.kt:280-345`; `logic/PdfRedactor.kt:35`; `sandbox/SandboxCoordinator.kt:229` |
-| 2.9 | **Correct the redaction messaging (C3).** Remove "permanently" from the success strings now that the visual-only path no longer exists; align with the actual behaviour. | `res/values/strings.xml:516,901` (and all 20 locales) |
-| 2.10 | **Fix the forensic raster (M6).** `RGB_565` + JPEG q90 quantises the blackout boundary and destroys accessibility. Use `ARGB_8888` + `LosslessFactory`. | `sandbox/PdfNativeRendererService.kt:46-58` (or its post-2.5 merged equivalent) |
+| # | Decision |
+|---|---|
+| D1 | Ledger at repo root as `KILO_SECURITY_LEDGER.md`, committed. |
+| D2 | `SEC-###` grouped by severity band, sequential within band, ordered by first observation. IDs permanent: reuse for the same invariant, attack surface, flow, or defect. Never re-mint. |
+| D3 | Each ledger carries a `## Provenance` header. IDs are **never** cross-referenced between agent ledgers. |
+| D4 | `FIXED` requires all five: (a) change landed, (b) in a production build path, (c) structural prevention, (d) regression test exists **and executes**, (e) independently verified. |
+| D5 | Inherited older-tree findings seed at `UNVERIFIED` with **no severity** until revalidated. |
+| D6 | This plan is authoritative for *what to do*; the ledger is authoritative for *what is true*. |
+| D7 | The `13810ac` refactor is **not** evidence of remediation. A move that relocates a defect without closing it keeps its ID and moves it to `REGRESSED` under a new `REG-###`. |
+| D8 | Boundary rules are rewritten as **allowlists**, not denylists. A denylist of two FQNs cannot constrain a parser surface. |
+| D9 | Audit target is `repo-android@cbafb998`. `main` staleness is a tracked finding, not a prerequisite. |
 
 ---
 
-## Phase 3 — Cryptography and claims
+## Task list
 
-| # | Task | Files |
-|---|---|---|
-| 3.1 | **Escape RFC-4514 characters in the DN (H5).** A signer name containing `,` produces a certificate claiming a third-party identity. Escape `,+"\<>;`, leading/trailing space, and `#`. | `logic/AndroidPdfCryptoSigner.kt:263` |
-| 3.2 | **Add certificate extensions (H5).** Add `keyUsage` (digitalSignature, nonRepudiation) and `basicConstraints` (CA:false). Currently the certificate carries no extensions at all. | `logic/AndroidPdfCryptoSigner.kt:93-95` |
-| 3.3 | **Stop writing signed bytes to `java.io.tmpdir` (M11).** Use the already-imported `CMSProcessableByteArray` over a bounded `ByteArrayOutputStream`. | `logic/AndroidPdfCryptoSigner.kt:52,57` |
-| 3.4 | **Correct the signing claims (H5).** Remove "integrity verification" from `README.md` and the equivalent claim in the shipped store copy. State plainly that a self-signed certificate with an ephemeral, unpersisted key proves no identity, and that the app cannot verify signatures. The in-app dialog already says "self-signed" — align the rest. | `README.md:122`; `PLAYSTORE_RELEASE_NOTES_v2.0.0.md` |
-| 3.5 | *(Optional, separate scope)* **Add PKCS#12 import + a real verification path.** The only structural fix for H5's trust problem. Explicitly out of scope for this plan unless requested. | — |
+### R1 — Create the ledger
+
+Write `KILO_SECURITY_LEDGER.md` per the schema below, seeding SEC-001…SEC-028 with the states in the register, plus provenance, invariant register, ID-reuse rules, status-transition rules, the REG-### register, and the phase-acceptance block.
+
+Verify by: committed; every seeded ID present exactly once; no ID cross-referenced into another agent's ledger.
+
+### R2 — SEC-001: delete `DummyPDFBox.kt` *(highest priority; REGRESSED)*
+
+Delete `app-host/src/main/java/com/pdfchemy/app/logic/DummyPDFBox.kt`.
+
+It has moved *into the Host module* since Phase 1 — it was in `pdfjail`, it is now in `app-host` in the main source set, in package `com.pdfchemy.app.logic`, alongside ~40 Host engine files. `app-host` has no PDFBox on its main classpath (only `testImplementation`), so this file is now the *only* `PDDocument`/`PDPage`/`PdfRenderer` the Host can resolve — and it returns `0`/`{}`/`false` instead of failing.
+
+Before deleting, enumerate every `app-host` file that references these types and confirm none does. If any do, they are silently producing empty output today.
+
+Verify by: file absent; `grep` for `com.pdfchemy.app.logic.PD` across `app-host` returns nothing; build green; regression test asserts no `com.pdfchemy.app.logic.PD*` type exists in any module.
+
+### R3 — SEC-002, SEC-026: move BouncyCastle into the jail
+
+`pdf-jail/build.gradle.kts` declares **no** BouncyCastle, and `pdf-jail` has **no** `configurations.all` excluding `jdk15to18`. `AndroidPdfCryptoSigner.kt` (at `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/`) imports `org.bouncycastle.*` and resolves it transitively through `pdfbox-android`. The `jdk15to18` exclusions exist only in `app-host`.
+
+Actions: declare `bcprov-jdk18on:1.86` + `bcpkix-jdk18on:1.86` as `implementation` in `pdf-jail`; add `pdf-jail`'s own `configurations.all` excluding `bcprov-jdk15to18`, `bcpkix-jdk15to18`, `bcutil-jdk15to18`; remove both BC `implementation` lines from `app-host`.
+
+SEC-026 is the general form: the exclusion is scoped to one module, so any future module inherits the excluded transitive. Close it structurally, not per-module.
+
+Verify by: `pdf-jail` resolves 1.86; no `org.bouncycastle` on `app-host` compile or runtime classpath; signing tests pass.
+
+### R4 — SEC-003: replace the `securityAudit` text grep
+
+The task is unchanged from `557d334`: walks `src/main/java` for three literal strings, wired to `preBuild`. It is blind to `DummyPDFBox.kt` — that file sits in the very directory it scans and is not flagged. It also cannot see `pdf-jail`, `pdf-renderer`, `pdf-ipc`, or any future module, and reflection defeats it.
+
+Actions:
+1. Resolve `app-host` `releaseRuntimeClasspath`; fail on any `com.tom-roush` or `org.bouncycastle` artifact.
+2. Scan **`app-host`'s own compiled classes** for constant-pool references to `com/tom_roush/`, `org/bouncycastle/`, and `android/graphics/pdf/PdfRenderer` — not the merged APK, which can never be green.
+3. Repeat (1) and (2) for every module that is not `pdf-jail`/`pdf-renderer`, and add new modules automatically rather than by hand.
+4. Drop the blanket `BitmapFactory` ban; scope it to parser-adjacent use.
+5. Add a rule that fails on any class named `Dummy*` under `com.pdfchemy.app.logic` — the specific shape of this defect, so a future stub cannot be added silently.
+
+Verify by: each gate **observed failing once** before it is trusted. An unexercised gate is not evidence.
+
+### R5 — SEC-027: eliminate the split package *(new)*
+
+`pdf-ipc/src/main/java/com/pdfchemy/app/logic/PdfContracts.kt` declares package `com.pdfchemy.app.logic` — the same package `app-host` uses for its engine layer. Java and Kotlin resolve same-package types without imports, across module boundaries. This is the exact mechanism that lets a Host file bind to a type it did not intend to.
+
+Action: move `pdf-ipc`'s contracts to their own package (e.g. `com.pdfchemy.app.contract`), update `PdfJailClient.kt` and all consumers. Keep `M_HOST` depending on `M_CONTRACT` via `implementation` and `M_JAIL`/`M_RENDER` via `runtimeOnly` as they now are.
+
+Related: SEC-001. The two are distinct defects with distinct fixes — deleting the stub does not fix the package, and renaming the package does not delete the stub. Their *combination* is what makes silent-empty-output reachable.
+
+Verify by: `grep` shows `com.pdfchemy.app.logic` declared in exactly one module; build green.
+
+### R6 — SEC-005: close the contracts boundary properly *(currently PARTIAL)*
+
+The structure landed and is correct: `app-host` has `implementation(project(":pdf-ipc"))` and `runtimeOnly` for `pdf-jail` and `pdf-renderer`. Real PDFBox stays on `pdf-jail` only. **Preserve this.**
+
+It is `PARTIAL` because D4 requires structural prevention and an executing regression test, and neither exists. Nothing asserts that `app-host` has no `pdf-jail`/`pdf-renderer` on its compile classpath, so a future `implementation(project(":pdf-jail"))` would silently pass.
+
+Action: add a build-time gate resolving `app-host`'s `compileClasspath` and failing on any `pdf-jail`/`pdf-renderer`/parser artifact. See D8 — this is a classpath allowlist, not a source grep.
+
+Verify by: gate fails when a `pdf-jail` dependency is temporarily added to `app-host`.
+
+### R7 — SEC-009: make the boundary test an allowlist
+
+`ArchitectureBoundaryTest.kt` is in `src/test` and does execute, so the earlier "declared but never run" concern is resolved. The rule is still ineffective: it matches only two exact FQNs (`com.tom_roush.pdfbox.pdmodel.PDDocument`, `android.graphics.pdf.PdfRenderer`), so `PDPageContentStream`, `PDFont`, `COSDocument`, `Loader` and the rest are unconstrained — and, decisively, the fake stub's FQN is `com.pdfchemy.app.logic.PDDocument`, so **a Host file calling the fake passes this rule**. It never references `pdf-ipc`.
+
+Actions: invert to an allowlist (`app-host` may depend on a defined set of packages; anything else is a violation); import from `pdf-ipc` and assert the contract surface; add a rule rejecting any Host dependency on a type named `com.pdfchemy.app.logic.PD*`; drop the `..jail.engines..` and `NativeRendererCoordinator` blanket exemptions in favour of explicit, enumerated exceptions.
+
+Verify by: the rule fails against (a) a planted `PDPageContentStream` reference and (b) a planted `com.pdfchemy.app.logic.PDDocument` reference, and passes on the clean tree.
+
+### R8 — SEC-007, SEC-008, SEC-010: dependency rulings
+
+- SEC-007 `androidx.security:security-crypto:1.1.0-alpha06` — still in `app-host`. Deprecated artifact pinned to an alpha in a security product. Justify in writing or remove.
+- SEC-008 `com.google.code.gson:gson:2.10.1` — still in `pdf-jail`, replacing framework `org.json` on a boundary-parsing path. Review for unsafe deserialization; revert to `org.json` or constrain to a typed schema.
+- SEC-010 `com.google.mlkit:text-recognition:16.0.1` — still in **both** `app-host` and `pdf-jail`. Remove from `app-host`; the Host must not run OCR over document-derived bytes. Keep `play-services-mlkit-document-scanner` in the Host (benign-camera case).
+
+Verify by: dependencies absent, or a written justification; `:app-host` has no `com.google.mlkit:text-recognition`.
+
+### R9 — SEC-006: revert `uriHash`
+
+Revert to a non-reversible digest (SHA-256 truncated) or drop persistence. Base64 currently stores the full document URI — provider, path, usually filename — in reversible form in the persisted scroll key, where a 32-bit int used to be. 4 sites. Not re-checked at `cbafb998`; confirm before editing.
+
+Verify by: no full URI in `SharedPreferences`; reader position still restores.
+
+### R10 — SEC-014: `SecureScreenContent` coverage and teardown
+
+Applied to ≥10 screens. Audit coverage against every document-rendering screen; confirm `DisposableEffect` clears the flag on dispose. **Partial application does not close this** — a `FLAG_SECURE` set and never cleared locks the whole app permanently.
+
+Verify by: flag set and cleared; no document content renders unprotected.
+
+### R11 — SEC-012: `IS_PREMIUM` sweep
+
+`IS_PREMIUM` `buildConfigField` is confirmed absent from `app-host/build.gradle.kts`. Grep for remaining consumers.
+
+Verify by: zero hits outside build-config history.
+
+### R12 — SEC-028: reconcile `main` with `repo-android`
+
+`main` is at `557d334`; `repo-android` is at `cbafb998`. Anything released from `main` today ships without the `pdf-ipc` extraction **and** without the staging fix, while still carrying all three open criticals.
+
+Action: decide the release branch. Either fast-forward `main` to `cbafb998` once the criticals are closed, or declare `repo-android` the release branch and record that decision. Do not release from `main` while SEC-001/002/003 are open.
+
+Local `3449081`/`914e3d0` are local duplicates of upstream `6119652`/`ddd2624`; they carry no unique work and may be dropped once confirmed.
+
+Verify by: `git log main` and `git log repo-android` agree, or the release branch is documented.
+
+### R13 — SEC-016…SEC-025: revalidate the inherited set
+
+Revalidate against `cbafb998`; assign severity and status, or mark `FALSE_POSITIVE` / `SUPERSEDED`. Each must leave `UNVERIFIED`.
+
+Seeded: broken redaction/compression (016), uncompilable tests (017), XFA sanitizer gaps (018), false claims in `PRIVACY.md`/`MANTRA.md` (019), ineffective process isolation (020), insecure signatures (021), intent-URI allowlist gaps (022), predictable temp files (023), resource exhaustion (024), incomplete backup protection (025).
+
+### R14 — audit the unassessed surface → SEC-029+
+
+`PdfGateway.kt` as single choke point (INV-06); all `pdf-jail/.../jail/engines/*Worker.kt` for quota gating and reachability; `JailQuotas.kt` coverage of every AIDL entry point; `AdversarialPdfTest.kt` for whether it asserts anything; the staging/digest/atomic-commit work begun in `cbafb998` (`StagedPdf`, `verifyAndRewind`) for completeness — "Step 2" implies further steps, and the invariant is only `PARTIAL` until the whole path is covered; `pdf-renderer` process config and whether the jail→renderer bind is real; `AndroidManifest.xml` for `allowBackup` / `dataExtractionRules` / `AdServices` / exported components (INV-11, INV-13).
+
+Verify by: every AIDL entry point traced to a gateway call and a quota check.
+
+### R15 — INV-15: reconcile user-facing claims
+
+Reconcile `PRIVACY.md`, `MANTRA.md`, `FEATURES.md`, `KILO_SESSION_CONTEXT.md` against implemented behaviour. The context file asserts "Zero-Trust Hardening" and "IPC Sandbox Resource Quotas" as shipped features while three criticals are open — check specifically for claims describing protections that do not exist.
+
+Verify by: no claim in shipping docs describes unimplemented protection.
 
 ---
 
-## Phase 4 — Data hygiene and input hardening
+## Invariant register
 
-| # | Task | Files |
-|---|---|---|
-| 4.1 | **Guaranteed temp cleanup (H4).** The unredacted intermediate is written at `:276` and deleted only in the `finally` at `:355`; a process death leaves the pre-redaction document on disk. Restructure so the unredacted file is opened unlinked or written to a directory that is wiped on next launch regardless of startup path. | `logic/PdfRedactionEngine.kt:269-276,335,355` |
-| 4.2 | **Randomise temp names (M4).** Replace `System.currentTimeMillis()` naming with `File.createTempFile` random suffixes. | `PdfRedactionEngine.kt:269,281`; `PdfToEpubEngine.kt:57,247`; `ComicBookEngine.kt:36`; `PdfCompressor.kt:89,109`; `SignatureEngine.kt:254-255`; `PdfAttachmentEngine.kt:180,248` |
-| 4.3 | **Fix the cache key and add locking (M5).** Replace the 32-bit `uri.toString().hashCode()` key with SHA-256 — collisions currently cause one document to be rendered in place of another. Add exclusive locking around the cache write; two concurrent renders currently truncate each other's file and a third can open it mid-write. **Two divergent copies of this code exist — fix both or consolidate first.** | `utils/FileUtils.kt:126-133`; `logic/PdfEditor.kt:591-598` |
-| 4.4 | **Add a `cacheDir` sweep for `pdf_seekable_*` (M5).** Full document copies currently persist indefinitely; `cleanupOrphanedCacheFiles` only prunes by extension and 1-hour staleness, and `pdf_seekable_` has no TTL. | `MainActivity.kt:341-365` |
-| 4.5 | **Bound adversarial regex (M7).** Cap `query` length and add a match timeout around `matcher.find()`. Combined with the broken kill (H2), an unterminated backtrack currently wedges the worker permanently. | `logic/PdfRedactionEngine.kt:73-77,89-90` |
-| 4.6 | **Bound page ranges (M7).** `pages.addAll((start..end).toList())` materialises the range *before* the bounds check, and `OutOfMemoryError` escapes every `catch (e: Exception)`. Validate first, and cap the range span. | `logic/PdfManipulator.kt:463-483` |
-| 4.7 | **Clamp bitmap allocations (M7).** Clamp `targetWidth`; fix the inverted `coerceIn(1.5f, 2.5f)`, which force-upscales exactly the large pages the `maxDim` cap exists to protect (a 5000 pt page → ~225 MB ARGB). | `logic/PdfManipulator.kt:390,423`; `logic/PdfEditor.kt:285-288`; `logic/PdfFindAndReplaceEngine.kt:190-193` |
-| 4.8 | **Data extraction rules (M9).** `allowBackup="false"` governs cloud backup but not device-to-device transfer on Android 12+. Add `android:dataExtractionRules` excluding `cache`, `files`, and `sharedpref` from both. | `AndroidManifest.xml:8`; new `res/xml/data_extraction_rules.xml` |
-| 4.9 | **History: document *and* change the default (H7).** Disclosure alone leaves plaintext filenames on disk. Hash or truncate stored names, add a TTL, and flip `history_enabled` to default `false`. | `logic/HistoryRepository.kt:46-78` |
-| 4.10 | **Mark the sensitive clip path (M3 follow-up).** Ensure no document path or name reaches logcat in release; `AppLogger` is already DEBUG-gated — verify the two raw `Log.w` calls at `MainActivity.kt:417,427` log only UMP error codes. | `MainActivity.kt:417,427` |
+| ID | Invariant |
+|---|---|
+| INV-01 | The PDF parser surface is confined to the isolated jail process. The Host never resolves, compiles against, or calls a parser. |
+| INV-02 | Cryptographic primitives and signing key material are resident only in the jail. |
+| INV-03 | Boundary enforcement is structural (classpath / bytecode / architecture test), never text-grep based. |
+| INV-04 | Untrusted document bytes are re-validated (digest, size, structure) after every process and thread hop. |
+| INV-05 | Output is committed atomically: staged artifacts validated before publish; no partial output ever visible. |
+| INV-06 | Every engine entry point is reachable only through a single gateway and is quota-gated (time, memory, pages, recursion). |
+| INV-07 | IPC contracts live in a contracts-only module; the Host does not compile against implementation modules, and contract types do not share packages with the Host. |
+| INV-08 | Screen capture is blocked on every document-rendering surface, and the flag is cleared on dispose. |
+| INV-09 | Persisted state contains no reversible document identifier (URI, filename, path). |
+| INV-10 | Document-derived content (OCR, text, thumbnails) is produced inside the jail, never in the Host. |
+| INV-11 | Backup and exfiltration surfaces are closed (`allowBackup`, `dataExtractionRules`, `AdServices`). |
+| INV-12 | Dependencies are declared where used, pinned to non-deprecated non-alpha versions, CVE-free, never relied on transitively. |
+| INV-13 | Components (services, receivers, providers) unexported unless required, permission-guarded when exported. |
+| INV-14 | Signing and release configuration deterministic, non-failing at configure time, verifiable. |
+| INV-15 | User-facing security and privacy claims match implemented behaviour. |
+
+INV-07 was extended at this revision to cover package separation, because `13810ac` showed the contracts-only structure is necessary but not sufficient.
 
 ---
 
-## Phase 5 — Documentation, manifest truth, and repo hygiene
+## Ledger schema
 
-Ordering matters: **each removal below is coupled to the code change that stops depending on it.**
+Sections: provenance → invariant register → severity bands → ID-reuse rules → status-transition rules → finding records → regression-event register → phase acceptance.
 
-| # | Task | Files |
-|---|---|---|
-| 5.1 | **Remove the inert Firebase meta-data (H7).** These flags govern Firebase/GA, which are not dependencies of this app — they are no-ops that read to a reviewer as an active control. | `AndroidManifest.xml:50-58` |
-| 5.2 | **Add the AdServices config.** The manifest references `@xml/gma_ad_services_config` but `res/xml/` contains only `file_paths.xml` and `locales_config.xml`. Author a config that disables measurement and custom fragments, so the declared property resolves to a real, restrictive file. | `AndroidManifest.xml:60-63`; new `res/xml/gma_ad_services_config.xml` |
-| 5.3 | **Rewrite `PRIVACY.md` (H7).** Correct: the "Zero Telemetry" claim (AdMob + UMP + Play Services ML Kit are live and initialise on every cold start), the "does not log document names" claim (plaintext history), the "never overwrites source files" claim (the destructive API is removed in 1.5, so the claim becomes true — keep them consistent), the "AES-128 and AES-256" claim (128 is unreachable), the "True Redaction" claim (true only after 2.8/2.10), and the camera-permission claim (no camera permission exists). Add the ad-stack disclosure required by `MANTRA.md:50`. | `PRIVACY.md` |
-| 5.4 | **Remove the `google-services.json` dependency (L10), in this order:** remove the plugin and root `buildscript` classpath entry, verify the build, *then* `git rm --cached app/google-services.json` and add it to `.gitignore`. Reversing this order breaks every build. | `app/build.gradle.kts:8`; `build.gradle.kts:10-17`; `.gitignore` |
-| 5.5 | **Move the screenshot fixture (L11).** Relocate `Annual_Report_2026.pdf` from `app/src/main/assets/` to `androidTest/assets/`, repoint the `isScreenshotRun` load sites, verify the Play screenshot harness still works, then `git rm` the main-source-set copy and root-level PDFs. Confirm the root sample PDFs are synthetic before purging history. | `MainActivity.kt:2283,2349`; `app/src/main/assets/`; repo root |
-| 5.6 | **Purge the 53 MB AAB and repo junk (L12).** `git rm --cached` the release AAB, the one-off Python codemods, the UI-dump XMLs, `__pycache__`, `.kotlin/errors`, and the stale desktop `test_manifest.txt`. Note `.agents/` is already in `.gitignore` but fully tracked — needs `git rm --cached`. | `app/release/`, repo root, `.gitignore` |
-| 5.7 | **License compliance (L9).** Stop stripping `META-INF/LICENSE*` / `NOTICE*` from the packaged APK — Apache-2.0 §4(a)/(b) requires them to travel with the work. Correct `THIRD_PARTY_CREDITS.md`, which lists Tess4J and Picocolo, neither of which is a dependency. Verify the build still succeeds after the exclusion removal (this exclusion was presumably added to fix a packaging conflict — check for a re-conflict). | `app/build.gradle.kts:79-93`; `THIRD_PARTY_CREDITS.md` |
+```
+### SEC-### — <title>
+Severity:      CRITICAL | HIGH | MEDIUM | LOW | INFO
+Type:          BOUNDARY PARSER INPUT TOCTOU RESOURCE INTEGRITY CONFIDENTIALITY
+               CRYPTO SANITIZATION AUTH PRIVACY BUILD TEST UI DEPENDENCY RELIABILITY
+Status:        NEW OPEN PARTIAL FIXED REGRESSED REOPENED SUPERSEDED
+               FALSE_POSITIVE WONT_FIX UNVERIFIED
+Evidence:      CONFIRMED | SUPPORTED | SUSPECTED | DISPROVEN
+Components:    <module / file:line>
+Invariant:     INV-##
+Flow:          <untrusted input -> transform -> sink>
+Preconditions: <what the attacker needs>
+Impact:        <concrete outcome>
+Evidence:      <what proves it>
+Remediation:   <fix, and the structural prevention>
+Regression:    <test name, and confirmation that it EXECUTES>
+Related:       <other SEC-### / REG-### / older-tree label>
+```
+
+### Finding register as of `cbafb998`
+
+| ID | Sev | Type | Inv | Status | Evidence | Summary |
+|---|---|---|---|---|---|---|
+| SEC-001 | CRITICAL | PARSER | 01 | **REGRESSED** | CONFIRMED | `DummyPDFBox.kt` moved `pdfjail` → `app-host/src/main/java/com/pdfchemy/app/logic/`. Now the Host's only resolvable `PDDocument`, returning `0`/`{}`/`false`. |
+| SEC-002 | CRITICAL | DEPENDENCY | 02, 12 | OPEN | CONFIRMED | `pdf-jail` declares no BouncyCastle and no `jdk15to18` exclusion; `AndroidPdfCryptoSigner.kt` resolves it transitively. Exclusions exist only in `app-host`. |
+| SEC-003 | CRITICAL | BUILD | 03 | OPEN | CONFIRMED | `securityAudit` unchanged: single-module text grep over `app-host/src/main/java`, wired to `preBuild`. Scans the directory containing `DummyPDFBox.kt` without flagging it. |
+| SEC-004 | HIGH | BOUNDARY | 01 | OPEN | SUPPORTED | Host `PdfRenderer`/`BitmapFactory` exposure, ~28 sites. **One finding with a path count.** Interacts with SEC-001 and SEC-027. |
+| SEC-005 | HIGH | BOUNDARY | 07 | **PARTIAL** | CONFIRMED | `pdf-ipc` landed; `app-host` uses `implementation(:pdf-ipc)` + `runtimeOnly` for jail/renderer. Structure correct; no gate or test prevents regression. |
+| SEC-006 | HIGH | PRIVACY | 09 | OPEN | SUPPORTED | `uriHash` = full document URI in reversible Base64, persisted as scroll key, 4 sites. Not re-checked at `cbafb998`. |
+| SEC-007 | HIGH | DEPENDENCY | 12 | OPEN | CONFIRMED | `security-crypto:1.1.0-alpha06` still in `app-host`. |
+| SEC-008 | HIGH | DEPENDENCY | 12 | OPEN | CONFIRMED | `gson:2.10.1` still in `pdf-jail`. |
+| SEC-027 | HIGH | BOUNDARY | 07, 03 | **NEW** | CONFIRMED | `pdf-ipc` declares package `com.pdfchemy.app.logic`, shared with `app-host`. Same-package types resolve without import across the module boundary. |
+| SEC-028 | HIGH | BUILD | 12, 14 | **NEW** | CONFIRMED | `main` at `557d334`, two commits behind `repo-android@cbafb998`. A release from `main` ships all three open criticals and neither the `pdf-ipc` nor staging fix. |
+| SEC-009 | MEDIUM | TEST | 03 | **PARTIAL** | CONFIRMED | `ArchitectureBoundaryTest` exists in `src/test` and executes, but matches only two FQNs. **Cannot detect the fake stub** — a Host call to `com.pdfchemy.app.logic.PDDocument` passes. Never references `pdf-ipc`. |
+| SEC-010 | MEDIUM | PRIVACY | 10 | OPEN | CONFIRMED | `text-recognition:16.0.1` in both `app-host` and `pdf-jail`. |
+| SEC-014 | MEDIUM | UI | 08 | **PARTIAL** | SUPPORTED | `SecureScreenContent` on ≥10 screens; coverage and teardown unverified. |
+| SEC-026 | MEDIUM | DEPENDENCY | 12 | OPEN | CONFIRMED | `jdk15to18` exclusion scoped to `app-host` only; any future module inherits the excluded transitive. |
+| SEC-011 | — | UI | 08 | **FIXED** | CONFIRMED | `isScreenshotRun` gated by `BuildConfig.DEBUG`. |
+| SEC-012 | — | AUTH | 08 | **FIXED** | CONFIRMED | `IS_PREMIUM` `buildConfigField` absent from `app-host/build.gradle.kts`. |
+| SEC-013 | — | BUILD | 14 | **FIXED** | CONFIRMED | Release signing guarded by `if (password != null)`; no configure-time throw. |
+| SEC-015 | — | BUILD | 12 | **SUPERSEDED** | CONFIRMED | Divergence resolved — `6119652` and `ddd2624` are in `repo-android` history. Superseded by R12/SEC-028. |
+| SEC-016…025 | *none* | *various* | — | **UNVERIFIED** | — | Inherited older-tree set, no severity per D5. R13. |
+
+### ID-reuse rules
+
+- Reuse the existing `SEC-###` when invariant, attack surface, flow, or defect matches.
+- **SEC-001 stayed SEC-001 across the module move.** Relocating a defect is not remediating it; it moves to `REGRESSED` under REG-004. It does not become a new ID, and it is not re-reported as a new critical.
+- **SEC-003 absorbed the `DummyPDFBox` blindness.** "The audit does not flag the file it scans" is evidence within the audit-gate defect, not a new finding. It becomes a new ID only if fixing the gate would not fix the blindness.
+- **SEC-005 covers the missing boundary gate, not the landed extraction.** The extraction closed half the finding; the other half keeps the ID.
+- **SEC-004 is one finding with a path count.** The ~28 call sites are its evidence.
+- **SEC-001 and SEC-027 are two IDs, not one.** Distinct defects, distinct fixes. Their interaction is recorded in both records' `Related` fields.
+
+### Status-transition rules
+
+- `FIXED` requires all five in D4. Missing any one keeps it `PARTIAL` — this is why SEC-005 and SEC-009 are `PARTIAL`, not `FIXED`.
+- **Partial reduction in scope or exploitability does not close a finding.** Applies to SEC-014 and SEC-005.
+- Re-broken by a later commit → `REGRESSED` plus a `REG-###` referencing the original ID. Never a new `SEC-###`.
+- `UNVERIFIED` carries no severity and is not counted in phase acceptance.
+- `SUPERSEDED` requires a stated reason and retains the ID permanently.
+
+### Regression-event register
+
+```
+### REG-### — <event>   | date | commit range | triggered by
+Re-tested: SEC-###, SEC-###  ->  status transition per finding
+```
+
+- **REG-001** — `557d334` phase-6 event.
+- **REG-002** — `6119652`/`ddd2624` Android split + build fixes (the local `3449081`/`914e3d0` duplicates).
+- **REG-003** — first full re-verification sweep. Every `SEC-###` retested, every transition recorded.
+- **REG-004** — `13810ac` module rename + `pdf-ipc` extraction. **SEC-001 → `REGRESSED`** (stub moved into the Host). SEC-005 → `PARTIAL` (structure landed, no gate). SEC-027 opened.
+- **REG-005** — `cbafb998` staging invariant (`StagedPdf`, `verifyAndRewind` fails closed). INV-04/INV-05 in progress; no `SEC-###` closed. SEC-028 opened (`main` stale).
 
 ---
 
 ## Validation
 
-Per phase, in addition to the Phase 0 gate:
+**Phase acceptance gate:** zero open `CRITICAL`, and every `HIGH` either `FIXED` (all five in D4) or explicitly accepted in writing by the project owner with a rationale.
 
-- **Phase 1:** add a test asserting a non-debug build ignores the `isScreenshotRun` extra.
-  Verify 1.1(b) actually removes the premium path — grep for `IS_PREMIUM` consumers afterwards.
-- **Phase 2:** this is the phase that most needs real tests, since the test suite was
-  non-compiling until 0.6.
-  - Fixture PDFs (generated at runtime, following the existing pattern in
-    `ImageCompressorTest.kt:146-167`): one with a scripted XFA form, one with a `/URI`-only
-    action, one with an `/OpenAction` JavaScript chain.
-  - Assert the audit reports threats for each; assert the sanitizer's **output** re-audits to
-    zero threats. That second assertion is new and currently missing.
-  - Redaction: assert the output contains no extractable text in the redacted region
-    (`PDFTextStripper` on the output), and that the raster path produces a non-empty file.
-  - M8: assert a URI-only document is blocked by the Vanguard gate.
-- **Phase 3:** assert the generated certificate parses, carries the expected extensions, and
-  that a signer name containing `,` and `O=` produces a subject DN that does **not** contain
-  those as separate RDNs.
-- **Phase 4:** add regression tests for page-range bounds (`1-2000000000` must not throw
-  `OutOfMemoryError`) and for a large-MediaBox page staying under a memory ceiling.
-- **Phase 5:** confirm a release build succeeds and inspect the APK for the retained
-  `META-INF` license files.
-
-**Device verification required** (no emulator available in the planning environment) — confirm
-before committing to task 2.5:
-1. Does `PdfWorkerService` → `PdfNativeRendererService` `bindService` throw `SecurityException`
-   across isolated UIDs? (`adb logcat` + `dumpsys package`, or `adb shell ps -A -o USER,NAME`
-   to see the isolated UIDs.)
-2. Does `Process.killProcess(workerPid)` return false across isolated UIDs?
-3. Can an isolated-UID process read APK assets for `PDFBoxResourceLoader.init`?
+1. `git rev-parse HEAD` = `cbafb998`; `origin/repo-android` is the audited ref.
+2. `:app-host` release and `:pdf-jail` build clean.
+3. `:app-host` `compileClasspath` contains no `pdf-jail`, `pdf-renderer`, or `com.tom-roush`; `releaseRuntimeClasspath` contains no `com.tom-roush`, `org.bouncycastle`, or `com.google.mlkit:text-recognition`.
+4. `:app-host` compiled classes contain no constant-pool reference to `com/tom_roush/`, `org/bouncycastle/`, `android/graphics/pdf/PdfRenderer`, or any `com/pdfchemy/app/logic/PD*` type.
+5. `com.pdfchemy.app.logic` is declared in exactly one module.
+6. Each R4 gate observed **failing** once before acceptance.
+7. R7's ArchUnit rule fails against both a planted real-PDFBox reference and a planted fake-stub reference.
+8. No full document URI in any `SharedPreferences` key or value.
+9. Every AIDL entry point traced to a `PdfGateway` call and a `JailQuotas` check.
+10. `REG-003` completed; no finding left `UNVERIFIED`; every `REGRESSED` finding has an open `REG-###`.
 
 ---
 
 ## Risks
 
-- **Task 2.5 is architectural.** Merging the native renderer into the worker changes the
-  process model the manifest comments at `AndroidManifest.xml:29-31` describe. Those comments
-  must be updated in the same commit, or the codebase will carry a second false claim.
-- **Task 1.3 (`FLAG_SECURE`) breaks Play screenshot capture** unless the `preview_mode`
-  escape lands in the same commit. Coordinate with 5.5.
-- **Task 1.4 changes user-visible behaviour** for anyone relying on the current open-password-
-  only behaviour. See Open Question 2.
-- **Task 5.7 may re-trigger the packaging conflict** that motivated the `META-INF` exclusion
-  in the first place. The BouncyCastle `jdk15to18` exclusion at `app/build.gradle.kts:102-106`
-  is a separate, global, unpinned `exclude` — do not disturb it in the same commit.
-- **5.4 and 5.5 both touch the build.** Sequence them in separate commits, each verified.
+- **SEC-001 may already be silently active.** `DummyPDFBox.kt` is in the Host alongside ~40 engine files. If any of them binds to the fake types, the app is producing empty PDFs in release with no error. R2 enumerates references before deleting — do that first.
+- **A structural fix is not a behavioural one.** The `pdf-ipc` extraction is real progress, but the split package it introduced (SEC-027) is the same class of hazard the architecture was built to prevent. Renaming the package is not cosmetic.
+- **The existing gates give false confidence.** `securityAudit` runs on every build and passes. `ArchitectureBoundaryTest` runs and passes. Both pass *because of the exact defects they should catch*. Treat a green gate as unproven until it has been observed red.
+- **R14's staging work is in progress.** `cbafb998` is "Step 2" with "verifyAndRewind fails closed" — partial by its own framing. Do not record INV-04/INV-05 as satisfied until the full path is covered.
+- **Declared-but-unexecuted tests remain the most likely silent failure** (SEC-009 was declared and ran for the first time at `13810ac`). D4(d) and validation steps 6–7 exist for this class.
+- **R13 may close most of SEC-016…025 as `SUPERSEDED`.** That is success, not wasted work.
+- **Another agent may push further commits.** `cbafb998` is a moving target. R0 of any follow-up pass must re-read `origin/repo-android` and re-baseline touched findings rather than trusting this document.
 
----
+## Out of scope
+
+- Desktop (`pdfchemy` / `pdfchemy-linux` / `pdfchemy-windows`) repositories.
+- Play Console key material; store-console action, not a code change.
+- Performance work not tied to a quota or resource-exhaustion finding.
 
 ## Open questions
 
-1. **Redaction sequencing — blocking task 2.8.** If the H3 bind is confirmed broken, deleting
-   the `forensicSanitize` toggle makes redaction abort on *every* use (`:341`), converting a
-   dishonest feature into a non-functional one. Options: (a) resolve 2.5 first, then delete the
-   toggle — plan's default; (b) hide the redaction tool from navigation for one release, then
-   restore it; (c) delete the toggle now and accept fail-closed aborts. **Recommendation: (a)**
-   — it is the only option that ships a working, honest feature in a single release. Deferred by
-   the user pending this plan; resolve before starting Phase 2.
-2. **"Protect PDF" default permission policy (task 1.4).** Restricting print/extract by default
-   is more honest but changes behaviour for users who protect a PDF and then print it
-   themselves. Options: (a) restrictive by default with checkboxes to re-enable; (b)
-   restrictive only when the owner password differs from the user password; (c) add a UI
-   without changing the current default. **Recommendation: (a)** — it matches
-   `strings.xml:453`'s existing promise.
-3. **Ad stack: disclose or remove (task 5.3).** The privacy policy rewrite depends on this.
-   Options: (a) keep AdMob/UMP, disclose fully in `PRIVACY.md`; (b) drop the ad stack, remove
-   `INTERNET` and `BILLING` handling, and make the existing "offline/zero-trust" positioning
-   literally true. **Recommendation: (b)** — it is the only option where the product claims and
-   the code agree without qualification, and it removes an entire class of compliance exposure
-   for a document-handling app. This is a business decision, not a technical one.
-4. **H1 remainder.** Tasks 2.5–2.7 address the worker-side isolation story. The ~28 host-process
-   `PdfRenderer` sites — including the seekability probe — are a separate, larger body of work
-   to route all rendering through the sandbox. Recommend a follow-up plan; out of scope here.
-5. **Ephemeral signing keys (H5).** Task 3.2 hardens the certificate but the key is still
-   generated per-signature and discarded, so signatures remain unverifiable by the signer.
-   Out of scope unless a PKCS#12 import path is wanted (3.5).
+1. **Nemotron reconciliation.** No nemotron ledger exists in this workspace, on any ref, or in `KILO_SESSION_CONTEXT.md` (read at `cbafb998` — it is a project briefing, not a finding register). D3 governs: separate ID spaces, no silent absorption, human-performed unions with both provenance headers retained. Nothing else depends on it.
+2. **Is `cbafb998` an audit point or a stepping stone?** It is self-described "Step 2". If steps 3+ are landing, the ledger should be re-baselined per commit rather than per session. Confirm whether more steps are expected before R13 and R14, so revalidation is not repeated against a moving tree.
