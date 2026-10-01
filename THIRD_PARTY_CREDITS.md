@@ -143,6 +143,12 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ## 🧪 7. Quality Assurance & Testing Frameworks
 
+### [TruffleHog](https://github.com/trufflesecurity/trufflehog)
+* **Authors:** Truffle Security Co. & Contributors
+* **Version:** `3.97.9`; official Linux/Windows release archives are SHA-256 pinned.
+* **License:** AGPL-3.0; used as a separate CI scanner, not distributed in the app.
+* **Usage in PDFchemy:** Full reachable-history secret scanning. Only exact reviewed historical fingerprints can pass; verified findings, verification errors, new findings and incomplete scans fail. Review provenance is recorded in `.github/secret-scan-reviewed.json`.
+
 ### [ArchUnit](https://www.archunit.org/)
 * **Authors:** TNG Technology Consulting GmbH & Contributors
 * **Version:** `1.3.0`
