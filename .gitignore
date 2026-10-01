@@ -84,3 +84,7 @@ keystore.properties
 *.jks
 *.keystore
 *.pem
+/.security-runtime/
+/.security-*.log
+.kotlin/
+tools/__pycache__/
