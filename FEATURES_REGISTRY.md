@@ -47,7 +47,7 @@
 | **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents |
 | **Table Extractor to CSV** | `TableExtractorScreen.kt` | `PdfTableExtractorEngine.kt` | ✅ Live | Spatial 2D column clustering: page-by-page extraction prevents cross-page Y coordinate collisions; exports to RFC 4180 CSV / Excel spreadsheets |
 | **Office Export (Word / Excel / PPTX)** | `OfficeExportScreen.kt` | `OfficeExportEngine.kt` | ✅ Live | Pure OpenXML archive generators: exports PDF to `.docx`, `.xlsx`, and `.pptx` (with XML 1.0 control character sanitization) |
-| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` | ✅ Live | 100% offline optical character recognition, creating searchable text layers |
+| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` / isolated worker | ⚠️ Release blocked | Offline searchable PDFs pass on API 24. API 36's NNAPI initialization crashes under the isolated UID; API 30 must be rechecked after the process-local SDK metadata fix. The parser boundary remains enforced. See `SECURITY_REMEDIATION_STATUS.md`. |
 
 ---
 
