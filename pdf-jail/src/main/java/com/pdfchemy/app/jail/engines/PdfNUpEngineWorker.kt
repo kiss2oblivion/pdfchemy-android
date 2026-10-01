@@ -8,8 +8,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.util.Matrix
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -34,13 +34,13 @@ object PdfNUpEngineWorker {
             val marginPt = params.optDouble("marginPt", 24.0).toFloat()
             val spacingPt = params.optDouble("spacingPt", 12.0).toFloat()
 
-            srcDoc = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            srcDoc = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val origPageCount = srcDoc.numberOfPages
             if (origPageCount == 0) {
                 return JSONObject().put("success", false).put("error", "PDF contains no pages").toString()
             }
 
-            outDoc = PDDocument()
+            outDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             val layerUtil = LayerUtility(outDoc)
 
             val totalSheets = ceil(origPageCount.toDouble() / pagesPerSheet.toDouble()).toInt()

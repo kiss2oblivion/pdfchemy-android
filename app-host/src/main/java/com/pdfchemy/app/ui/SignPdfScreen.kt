@@ -296,15 +296,7 @@ fun SignPdfScreen(
                             var sigBmp by remember(sig) { mutableStateOf<Bitmap?>(null) }
                             val context = LocalContext.current
                             LaunchedEffect(sig) {
-                                val loader = coil.Coil.imageLoader(context)
-                                val req = coil.request.ImageRequest.Builder(context)
-                                    .data(sig.bitmapBytes)
-                                    .allowHardware(false)
-                                    .build()
-                                val result = loader.execute(req)
-                                sigBmp = (result as? coil.request.SuccessResult)?.drawable?.let {
-                                    (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                                }
+                                sigBmp = com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, sig.bitmapBytes)
                             }
                             val currentSigBmp = sigBmp
                             if (currentSigBmp != null && pagePixelSize.width > 0 && pagePixelSize.height > 0) {

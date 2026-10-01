@@ -9,8 +9,8 @@ import com.tom_roush.pdfbox.multipdf.PDFMergerUtility
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfManipulatorWorker {
 
@@ -21,7 +21,7 @@ object PdfManipulatorWorker {
 
         try {
             val merger = PDFMergerUtility()
-            val inputStreams = mutableListOf<FileInputStream>()
+            val inputStreams = mutableListOf<java.io.InputStream>()
 
             for (fd in sourceFds) {
                 val stream = FileInputStream(fd.fileDescriptor)
@@ -31,7 +31,7 @@ object PdfManipulatorWorker {
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
                 merger.destinationStream = out
-                merger.mergeDocuments(null)
+                merger.mergeDocuments(com.pdfchemy.app.jail.JailMemory.settings())
             }
 
             inputStreams.forEach { try { it.close() } catch (e: Exception) {} }
@@ -54,7 +54,7 @@ object PdfManipulatorWorker {
             val multiGroupsStr = params.optString("multiGroups", "")
             
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 
                 if (multiGroupsStr.isNotBlank()) {
                     // It's a multi-group split (like bookmarks or blank pages)
@@ -64,7 +64,7 @@ object PdfManipulatorWorker {
                     }
                     for (i in 0 until groupsArray.length()) {
                         val group = groupsArray.getJSONArray(i)
-                        PDDocument().use { subDoc ->
+                        PDDocument(com.pdfchemy.app.jail.JailMemory.settings()).use { subDoc ->
                             for (j in 0 until group.length()) {
                                 val pageNumber = group.getInt(j)
                                 if (pageNumber < 0 || pageNumber >= document!!.numberOfPages) {
@@ -88,7 +88,7 @@ object PdfManipulatorWorker {
                         if (pageNumber < 1 || pageNumber > document!!.numberOfPages) {
                             return JSONObject().put("success", false).put("error", "Invalid page index").toString()
                         }
-                        PDDocument().use { singleDoc ->
+                        PDDocument(com.pdfchemy.app.jail.JailMemory.settings()).use { singleDoc ->
                             val page = document!!.getPage(pageNumber - 1)
                             singleDoc.importPage(page)
                             FileOutputStream(targetFds[i].fileDescriptor).use { outStream ->
@@ -121,7 +121,7 @@ object PdfManipulatorWorker {
             var currentGroup = mutableListOf<Int>()
             val sampleW = 72
             val sampleH = 96
-            val sampleBmp = Bitmap.createBitmap(sampleW, sampleH, Bitmap.Config.ARGB_8888)
+            val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); Bitmap.createBitmap(sampleW, sampleH, Bitmap.Config.ARGB_8888) }
             val pixels = IntArray(sampleW * sampleH)
 
             try {
@@ -187,7 +187,7 @@ object PdfManipulatorWorker {
         var document: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val outline = document!!.documentCatalog.documentOutline
                 if (outline == null || outline.firstChild == null) {
                     return JSONObject().put("success", false).put("error", "No bookmarks found").toString()
@@ -265,12 +265,12 @@ object PdfManipulatorWorker {
             val pagesToDelete = params.optString("pagesToDelete", "").split(",").mapNotNull { it.toIntOrNull() }
             
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val totalPages = document!!.numberOfPages
                 
                 val pagesToKeep = (1..totalPages).filter { it !in pagesToDelete }
                 
-                PDDocument().use { newDoc ->
+                PDDocument(com.pdfchemy.app.jail.JailMemory.settings()).use { newDoc ->
                     for (p in pagesToKeep) {
                         newDoc.importPage(document!!.getPage(p - 1))
                     }
@@ -296,7 +296,7 @@ object PdfManipulatorWorker {
             val pagesToRotate = params.optString("pagesToRotate", "").split(",").mapNotNull { it.toIntOrNull() }
 
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 
                 for (i in 0 until document!!.numberOfPages) {
                     if (pagesToRotate.isEmpty() || (i + 1) in pagesToRotate) {
@@ -332,7 +332,7 @@ object PdfManipulatorWorker {
             }
             
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 
                 val accessPermission = com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission()
                 accessPermission.setCanPrint(params.optBoolean("canPrint", true))
@@ -370,7 +370,7 @@ object PdfManipulatorWorker {
             val password = params.optString("password", "")
             
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, password, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, password, com.pdfchemy.app.jail.JailMemory.settings())
                 document!!.isAllSecurityToBeRemoved = true
                 
                 FileOutputStream(targetFd.fileDescriptor).use { out ->
@@ -389,7 +389,7 @@ object PdfManipulatorWorker {
         if (sourceFd == null) return JSONObject().put("success", false).put("error", "Missing source Fd").toString()
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                PDDocument.load(inputStream, "", com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly()).use { doc ->
+                PDDocument.load(inputStream, "", com.pdfchemy.app.jail.JailMemory.settings()).use { doc ->
                     return JSONObject().put("success", true).put("isEncrypted", doc.isEncrypted).toString()
                 }
             }
@@ -439,7 +439,7 @@ object PdfManipulatorWorker {
                     
                     val w = expectedW.toInt()
                     val h = expectedH.toInt()
-                    bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888) }
                     bitmap.eraseColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     

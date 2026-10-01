@@ -22,6 +22,7 @@ class HistoryRepositoryTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
+        context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE).edit().putBoolean("history_enabled", true).commit()
         historyRepository = HistoryRepository(context)
         historyRepository.clearHistory() // start fresh
     }
@@ -29,6 +30,20 @@ class HistoryRepositoryTest {
     @After
     fun tearDown() {
         historyRepository.clearHistory()
+    }
+
+    @Test
+    fun historyIsDisabledUntilUserOptsIn() {
+        context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE).edit().remove("history_enabled").commit()
+        historyRepository.addHistoryItem(Uri.parse("content://dummy/private.pdf"), "Private.pdf", "Opened")
+        assertTrue(historyRepository.getHistory().isEmpty())
+    }
+    @Test
+    fun optingOutRemovesPreviouslyStoredHistory() {
+        historyRepository.addHistoryItem(Uri.parse("content://dummy/private.pdf"), "Private.pdf", "Opened")
+        context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE).edit().putBoolean("history_enabled", false).commit()
+        assertTrue(historyRepository.getHistory().isEmpty())
+        assertEquals("[]", context.getSharedPreferences("pdfchemy_history", Context.MODE_PRIVATE).getString("recent_files", "[]"))
     }
 
     @Test

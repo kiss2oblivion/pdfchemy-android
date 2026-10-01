@@ -20,13 +20,16 @@ object PdfJailClient {
         source: StagedPdf,
         destUri: Uri,
         modificationsJson: String
-    ): Boolean = suspendCancellableCoroutine { continuation ->
+    ): Boolean = kotlinx.coroutines.withTimeout(com.pdfchemy.app.security.SecurityLimits.WORKER_DEADLINE_MS + 5000) { suspendCancellableCoroutine { continuation ->
+        val scratch = OperationScratchBroker(context)
         var isBound = false
         var connection: ServiceConnection? = null
+        var jailRef: IPdfJailService? = null
         var sourceFdRef: ParcelFileDescriptor? = null
         var targetFdRef: ParcelFileDescriptor? = null
 
         fun cleanup() {
+            scratch.close()
             try { sourceFdRef?.close() } catch (e: Exception) {}
             try { targetFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
@@ -40,6 +43,7 @@ object PdfJailClient {
         connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 val jail = IPdfJailService.Stub.asInterface(service)
+                jailRef = jail
                 try {
                     val contentResolver = context.contentResolver
                     val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
@@ -53,7 +57,7 @@ object PdfJailClient {
                         return
                     }
 
-                    jail.exportModifiedPdf(sourceFd, targetFd, modificationsJson, source.sha256, source.size, object : IPdfJailCallback.Stub() {
+                    jail.exportModifiedPdf(sourceFd, targetFd, modificationsJson, source.sha256, source.size, scratch, object : IPdfJailCallback.Stub() {
                         override fun onSuccess(outputSizeBytes: Long) {
                             if (continuation.isActive) continuation.resume(true)
                             cleanup()
@@ -86,9 +90,10 @@ object PdfJailClient {
         }
 
         continuation.invokeOnCancellation {
+            runCatching { jailRef?.abortWorker() }
             cleanup()
         }
-    }
+    } }
 
 
     suspend fun compressPdf(
@@ -98,13 +103,16 @@ object PdfJailClient {
         targetDpi: Float = 140f,
         quality: Float = 0.5f,
         rasterizePages: Boolean = false
-    ): Long = suspendCancellableCoroutine { continuation ->
+    ): Long = kotlinx.coroutines.withTimeout(com.pdfchemy.app.security.SecurityLimits.WORKER_DEADLINE_MS + 5000) { suspendCancellableCoroutine { continuation ->
+        val scratch = OperationScratchBroker(context)
         var isBound = false
         var connection: ServiceConnection? = null
+        var jailRef: IPdfJailService? = null
         var sourceFdRef: ParcelFileDescriptor? = null
         var destFdRef: ParcelFileDescriptor? = null
 
         fun cleanup() {
+            scratch.close()
             try { sourceFdRef?.close() } catch (e: Exception) {}
             try { destFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
@@ -120,6 +128,7 @@ object PdfJailClient {
         connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 val jailService = IPdfJailService.Stub.asInterface(service)
+                jailRef = jailService
                 if (jailService == null) {
                     cleanup()
                     continuation.resumeWithException(IllegalStateException("Failed to bind to PdfJailService"))
@@ -155,7 +164,7 @@ object PdfJailClient {
                         }
                     }
 
-                    jailService.compressPdf(sourceFd, destFd, targetDpi, quality, rasterizePages, source.sha256, source.size, callback)
+                    jailService.compressPdf(sourceFd, destFd, targetDpi, quality, rasterizePages, source.sha256, source.size, scratch, callback)
 
                 } catch (e: Exception) {
                     cleanup()
@@ -182,19 +191,23 @@ object PdfJailClient {
         }
 
         continuation.invokeOnCancellation {
+            runCatching { jailRef?.abortWorker() }
             cleanup()
         }
-    }
+    } }
 
     suspend fun analyzePdf(
         context: Context,
         source: StagedPdf
-    ): String = suspendCancellableCoroutine { continuation ->
+    ): String = kotlinx.coroutines.withTimeout(com.pdfchemy.app.security.SecurityLimits.WORKER_DEADLINE_MS + 5000) { suspendCancellableCoroutine { continuation ->
+        val scratch = OperationScratchBroker(context)
         var isBound = false
         var connection: ServiceConnection? = null
+        var jailRef: IPdfJailService? = null
         var sourceFdRef: ParcelFileDescriptor? = null
 
         fun cleanup() {
+            scratch.close()
             try { sourceFdRef?.close() } catch (e: Exception) {}
             if (isBound && connection != null) {
                 try {
@@ -209,6 +222,7 @@ object PdfJailClient {
         connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 val jailService = IPdfJailService.Stub.asInterface(service)
+                jailRef = jailService
                 if (jailService == null) {
                     cleanup()
                     continuation.resumeWithException(IllegalStateException("Failed to bind to PdfJailService"))
@@ -242,7 +256,7 @@ object PdfJailClient {
                         }
                     }
 
-                    jailService.analyzePdf(sourceFd, source.sha256, source.size, callback)
+                    jailService.analyzePdf(sourceFd, source.sha256, source.size, scratch, callback)
 
                 } catch (e: Exception) {
                     cleanup()
@@ -269,7 +283,8 @@ object PdfJailClient {
         }
 
         continuation.invokeOnCancellation {
+            runCatching { jailRef?.abortWorker() }
             cleanup()
         }
-    }
+    } }
 }

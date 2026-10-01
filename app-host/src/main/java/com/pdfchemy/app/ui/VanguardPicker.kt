@@ -196,7 +196,7 @@ fun rememberVanguardPdfPicker(
                 scope.launch {
                     try {
                         val stagedUri = withContext(Dispatchers.IO) {
-                            com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                            com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
                         }
                         val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                         withContext(Dispatchers.Main) {
@@ -210,6 +210,7 @@ fun rememberVanguardPdfPicker(
                                 }
                                 is VanguardThreatResult.ExecutableThreat,
                                 is VanguardThreatResult.ParseFailed -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
                                     showBlockedDialog = true
                                 }
                             }
@@ -224,7 +225,7 @@ fun rememberVanguardPdfPicker(
                     }
                 }
             } else {
-                onPdfSelected(originalUri)
+                scope.launch { try { onPdfSelected(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }) } catch (e: Exception) { showBlockedDialog = true } }
             }
         }
     }
@@ -386,7 +387,7 @@ fun rememberVanguardMultiplePdfPicker(
                         scanningFileName = FileUtils.getFileName(context, originalUri)
                         try {
                             val stagedUri = withContext(Dispatchers.IO) {
-                                com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                                com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
                             }
                             stagedUris.add(stagedUri)
                             val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
@@ -426,10 +427,24 @@ fun rememberVanguardMultiplePdfPicker(
                         withContext(Dispatchers.Main) {
                             onPdfsSelected(stagedUris)
                         }
+                    } else {
+                        stagedUris.filter { it != encryptedPendingUri }.forEach(com.pdfchemy.app.utils.DocumentStager::release)
                     }
                 }
             } else {
-                onPdfsSelected(uris)
+                scope.launch {
+                    val stagedUris = mutableListOf<Uri>()
+                    try {
+                        for (uri in uris) stagedUris.add(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri })
+                        onPdfsSelected(stagedUris)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
+                        throw cancelled
+                    } catch (_: Exception) {
+                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
+                        showBlockedDialog = true
+                    }
+                }
             }
         }
     }

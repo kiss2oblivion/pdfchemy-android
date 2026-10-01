@@ -36,7 +36,7 @@ class AndroidBouncyCastleSignature(
         var tempFile: File? = null
         try {
             val certList = listOf(certificate)
-            val certStore = org.bouncycastle.util.Store { certList }
+            val certStore = org.bouncycastle.cert.jcajce.JcaCertStore(certList)
 
             val signer = CMSSignedDataGenerator()
             val signerInfoBuilder = JcaSignerInfoGeneratorBuilder(
@@ -49,12 +49,18 @@ class AndroidBouncyCastleSignature(
             )
             signer.addCertificates(certStore)
 
-            tempFile = File.createTempFile("pdf_sign_", ".tmp")
-            tempFile.outputStream().use { os ->
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("pdf_sign_", ".tmp")
+            com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { os ->
                 content.copyTo(os)
             }
 
-            val msg: CMSTypedData = org.bouncycastle.cms.CMSProcessableFile(tempFile)
+            val msg: CMSTypedData = object : CMSTypedData {
+                override fun getContentType() = org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.data
+                override fun getContent(): Any = requireNotNull(tempFile)
+                override fun write(output: java.io.OutputStream) {
+                    com.pdfchemy.app.jail.CapabilityIo.input(requireNotNull(tempFile)).use { it.copyTo(output) }
+                }
+            }
             val signedData = signer.generate(msg, false)
 
             return signedData.encoded
@@ -74,14 +80,18 @@ object AndroidPdfCryptoSigner {
     )
 
     /**
-     * Generates a self-signed RSA-2048 certificate for the given subject (e.g. "CN=John Doe, O=PDFchemy").
+     * Generates an ephemeral self-signed RSA-2048 certificate. The supplied name
+     * is one literal CN value; this certificate establishes no trusted identity.
      */
     fun generateSelfSignedCertificate(subjectName: String): KeyPairInfo {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
         keyPairGenerator.initialize(2048, SecureRandom())
         val keyPair = keyPairGenerator.generateKeyPair()
 
-        val issuer = X500Name(subjectName)
+        val issuer = org.bouncycastle.asn1.x500.X500NameBuilder(org.bouncycastle.asn1.x500.style.BCStyle.INSTANCE)
+            .addRDN(org.bouncycastle.asn1.x500.style.BCStyle.CN, subjectName)
+            .addRDN(org.bouncycastle.asn1.x500.style.BCStyle.O, "PDFchemy")
+            .addRDN(org.bouncycastle.asn1.x500.style.BCStyle.C, "US").build()
         val subject = issuer
         val serial = BigInteger.valueOf(System.currentTimeMillis())
 
@@ -105,7 +115,7 @@ object AndroidPdfCryptoSigner {
      * Digitally signs the PDF file using the provided private key and certificate.
      */
     fun signPdf(sourceFile: File, destFile: File, keyPairInfo: KeyPairInfo, reason: String = "Signed by PDFchemy", location: String = "Local Device") {
-        PDDocument.load(sourceFile, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly()).use { document ->
+        com.pdfchemy.app.jail.CapabilityIo.input(sourceFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
             val signature = PDSignature()
             signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE)
             signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED)
@@ -119,7 +129,7 @@ object AndroidPdfCryptoSigner {
 
             // Register signature and write to destination
             document.addSignature(signature, signatureInterface)
-            destFile.outputStream().use { os ->
+            com.pdfchemy.app.jail.boundedFileOutput(destFile).use { os ->
                 document.saveIncremental(os)
             }
         }

@@ -21,6 +21,10 @@ class HistoryRepository(context: Context) {
     private val settingsPrefs: SharedPreferences = context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
 
     fun getHistory(): List<HistoryItem> {
+        if (!settingsPrefs.getBoolean("history_enabled", false)) {
+            clearHistory()
+            return emptyList()
+        }
         val jsonString = prefs.getString(KEY_HISTORY, "[]") ?: "[]"
         val list = mutableListOf<HistoryItem>()
         try {
@@ -43,7 +47,7 @@ class HistoryRepository(context: Context) {
     }
 
     fun addHistoryItem(uri: Uri, name: String, action: String) {
-        val isHistoryEnabled = settingsPrefs.getBoolean("history_enabled", true)
+        val isHistoryEnabled = settingsPrefs.getBoolean("history_enabled", false)
         if (!isHistoryEnabled) return
 
         val currentList = getHistory().toMutableList()

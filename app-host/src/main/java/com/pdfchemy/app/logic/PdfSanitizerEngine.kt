@@ -71,14 +71,11 @@ object PdfSanitizerEngine {
         context: Context,
         inputStream: InputStream
     ): SanitizerAuditReport {
-        val tempFile = File.createTempFile("audit_tmp", ".pdf", context.cacheDir)
+        val snapshot = com.pdfchemy.app.utils.DocumentStager.stageStreamCancellable(context, inputStream)
         try {
-            FileOutputStream(tempFile).use { out ->
-                inputStream.copyTo(out)
-            }
-            return auditDocumentThreats(context, Uri.fromFile(tempFile))
+            return auditDocumentThreats(context, snapshot.uri)
         } finally {
-            tempFile.delete()
+            com.pdfchemy.app.utils.DocumentStager.release(snapshot)
         }
     }
 
@@ -87,7 +84,7 @@ object PdfSanitizerEngine {
         pdfUri: Uri
     ): Boolean {
         val report = auditDocumentThreats(context, pdfUri)
-        return report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.uriCount > 0 || report.isEncrypted || report.parseFailed
+        return report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.isEncrypted || report.parseFailed
     }
 
     suspend fun checkVanguardThreat(
@@ -98,7 +95,7 @@ object PdfSanitizerEngine {
         if (report.isEncrypted) {
             return VanguardThreatResult.EncryptedCannotVerify(pdfUri)
         }
-        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.uriCount > 0) {
+        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0) {
             return VanguardThreatResult.ExecutableThreat(report)
         }
         if (report.parseFailed) {
@@ -154,22 +151,21 @@ object PdfSanitizerEngine {
         purgeMetadata: Boolean = true,
         purgeAttachments: Boolean = true
     ): SanitizerResult {
-        val tempSource = File.createTempFile("sanitize_src", ".pdf", context.cacheDir)
-        val tempDest = File.createTempFile("sanitize_dest", ".pdf", context.cacheDir)
+        val snapshot = com.pdfchemy.app.utils.DocumentStager.stageStreamCancellable(context, inputStream)
+        var tempDest: File? = null
         try {
-            FileOutputStream(tempSource).use { out ->
-                inputStream.copyTo(out)
-            }
-            val res = sanitizeDocument(context, Uri.fromFile(tempSource), Uri.fromFile(tempDest), purgeJs, purgeActions, purgeMetadata, purgeAttachments)
+            val destination = File.createTempFile("sanitize_dest", ".pdf", context.cacheDir)
+            tempDest = destination
+            val res = sanitizeDocument(context, snapshot.uri, Uri.fromFile(destination), purgeJs, purgeActions, purgeMetadata, purgeAttachments)
             if (res.isSuccess) {
-                tempDest.inputStream().use { inp ->
+                destination.inputStream().use { inp ->
                     inp.copyTo(outStream)
                 }
             }
             return res
         } finally {
-            tempSource.delete()
-            tempDest.delete()
+            com.pdfchemy.app.utils.DocumentStager.release(snapshot)
+            tempDest?.delete()
         }
     }
 }

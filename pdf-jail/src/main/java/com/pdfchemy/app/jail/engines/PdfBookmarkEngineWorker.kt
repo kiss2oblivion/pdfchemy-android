@@ -7,15 +7,15 @@ import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDoc
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfBookmarkEngineWorker {
 
     fun readBookmarks(sourceFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val outline = document.documentCatalog.documentOutline
             val arr = JSONArray()
             if (outline != null) {
@@ -53,7 +53,7 @@ object PdfBookmarkEngineWorker {
     fun writeBookmarks(sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor, paramsJson: String): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val totalPages = document.numberOfPages
             if (totalPages == 0) throw IllegalStateException("PDF contains no pages")
             
@@ -84,7 +84,7 @@ object PdfBookmarkEngineWorker {
                 outline.openNode()
             }
             
-            document.save(FileOutputStream(destFd.fileDescriptor))
+            FileOutputStream(destFd.fileDescriptor).use { document.save(it) }
             return "{}"
         } finally {
             try { document?.close() } catch(_: Exception){}

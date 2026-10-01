@@ -42,7 +42,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.documentfile.provider.DocumentFile
-import coil.compose.AsyncImage
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.BatchImageCompressionResult
 import com.pdfchemy.app.logic.FileUtil
@@ -103,9 +102,11 @@ fun ImageCompressorScreen(
         } else null
     }
 
-    val singleAnalysis: ImageAnalysis? = remember(selectedSingleUri, quality, outputFormat, currentTargetSizeBytes) {
+    var singleAnalysisState by remember { mutableStateOf<ImageAnalysis?>(null) }
+    LaunchedEffect(selectedSingleUri, quality, outputFormat, currentTargetSizeBytes) {
+        singleAnalysisState = null
         selectedSingleUri?.let { uri ->
-            ImageCompressor.analyzeImage(
+            singleAnalysisState = ImageCompressor.analyzeImage(
                 context = context,
                 uri = uri,
                 quality = (quality * 100).roundToInt(),
@@ -114,6 +115,8 @@ fun ImageCompressorScreen(
             )
         }
     }
+
+    val singleAnalysis = singleAnalysisState
 
     // Pickers
     val singlePickerLauncher = rememberLauncherForActivityResult(
@@ -798,7 +801,8 @@ fun SingleImageSelectCard(
         } else {
             val fileName = FileUtils.getFileName(context, selectedUri) ?: stringResource(R.string.image_selected_label)
             val fileSize = ImageCompressor.getUriFileSize(context, selectedUri)
-            val bounds = remember(selectedUri) { ImageCompressor.decodeImageBounds(context, selectedUri) }
+            var bounds by remember(selectedUri) { mutableStateOf<ImageCompressor.ImageBounds?>(null) }
+            LaunchedEffect(selectedUri) { bounds = ImageCompressor.decodeImageBounds(context, selectedUri) }
 
             Row(
                 modifier = Modifier
@@ -807,7 +811,7 @@ fun SingleImageSelectCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                AsyncImage(
+                IsolatedImage(
                     model = selectedUri,
                     contentDescription = null,
                     modifier = Modifier
@@ -826,7 +830,7 @@ fun SingleImageSelectCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "${FileUtils.formatFileSize(fileSize)} ${if (bounds != null) "• ${bounds.outWidth}×${bounds.outHeight} px" else ""}",
+                        text = "${FileUtils.formatFileSize(fileSize)} ${bounds?.let { "• ${it.outWidth}×${it.outHeight} px" } ?: ""}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -916,7 +920,7 @@ fun BatchImagesSelectCard(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(selectedUris, key = { it.toString() }, contentType = { "imageThumb" }) { uri ->
-                        AsyncImage(
+                        IsolatedImage(
                             model = uri,
                             contentDescription = null,
                             modifier = Modifier

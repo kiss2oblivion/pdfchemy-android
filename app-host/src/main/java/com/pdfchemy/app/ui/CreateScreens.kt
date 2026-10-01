@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
 
 import java.io.File
 import androidx.core.content.FileProvider
@@ -179,7 +178,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 modifier = Modifier.padding(12.dp).fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                AsyncImage(
+                                IsolatedImage(
                                     model = uri,
                                     contentDescription = "Selected Image",
                                     contentScale = ContentScale.Crop,

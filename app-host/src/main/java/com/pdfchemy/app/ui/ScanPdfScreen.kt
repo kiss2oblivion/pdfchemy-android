@@ -149,18 +149,14 @@ fun ScanPdfScreen(
         if (destUri != null && scannedBitmaps.isNotEmpty()) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {
-                val doc = android.graphics.pdf.PdfDocument()
+                val images = mutableListOf<java.io.File>()
                 try {
                     for (rawBmp in scannedBitmaps) {
                         val filteredBmp = applyScanFilter(rawBmp, currentFilter)
                         try {
-                            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
-                                filteredBmp.width, filteredBmp.height, doc.pages.size + 1
-                            ).create()
-                            val page = doc.startPage(pageInfo)
-                            val canvas = page.canvas
-                            canvas.drawBitmap(filteredBmp, 0f, 0f, null)
-                            doc.finishPage(page)
+                            val image = java.io.File.createTempFile("scan_", ".png", context.cacheDir)
+                            images.add(image)
+                            com.pdfchemy.app.security.BoundedOutputStream(image.outputStream(), com.pdfchemy.app.security.SecurityLimits.MAX_PDF_FILESIZE).use { check(filteredBmp.compress(Bitmap.CompressFormat.PNG, 100, it)) }
                         } finally {
                             if (filteredBmp != rawBmp && !filteredBmp.isRecycled) {
                                 filteredBmp.recycle()
@@ -168,9 +164,7 @@ fun ScanPdfScreen(
                         }
                     }
 
-                    context.contentResolver.openOutputStream(destUri)?.use { out ->
-                        doc.writeTo(out)
-                    }
+                    com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", images.map(android.net.Uri::fromFile), listOf(destUri), "{}")
 
                     withContext(Dispatchers.Main) {
                         isProcessing = false
@@ -187,7 +181,7 @@ fun ScanPdfScreen(
                         viewModel.notifyError(context.getString(R.string.error_scan_failed))
                     }
                 } finally {
-                    try { doc.close() } catch (_: Exception) {}
+                    images.forEach { it.delete() }
                 }
             }
         }
@@ -497,23 +491,5 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
     }
 }
 
-private fun decodeBoundedBitmap(context: Context, uri: Uri, maxDim: Int = 2048): Bitmap? {
-    return try {
-        if (android.os.Build.VERSION.SDK_INT >= 28) {
-            val source = android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-            android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-                var sampleSize = 1
-                while ((info.size.width / sampleSize) > maxDim || (info.size.height / sampleSize) > maxDim) {
-                    sampleSize *= 2
-                }
-                decoder.setTargetSampleSize(sampleSize)
-                decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-        }
-    } catch (_: Throwable) {
-        null
-    }
-}
+private suspend fun decodeBoundedBitmap(context: Context, uri: Uri, maxDim: Int = 2048): Bitmap? =
+    com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, uri)

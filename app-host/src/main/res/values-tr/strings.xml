@@ -228,7 +228,7 @@
 <string name="msg_compress_settings_used">Kullanılan Ayarlar:\n</string>
 <string name="msg_compress_target_size">- Hedef Boyut: %1$s MB\n</string>
 <string name="msg_compress_auto_optimized">- Otomatik Optimizasyon: Evet\n</string>
-<string name="msg_compress_quality_preset">- Kalite Ayarı: %%1$d\n</string>
+<string name="msg_compress_quality_preset">- Kalite Ayarı: %1$d%%\n</string>
 <string name="msg_compress_grayscale">- Gri Tonlama: %1$s\n</string>
 <string name="msg_compress_lossless_zip">- Kayıpsız ZIP: %1$s\n</string>
 <string name="msg_compress_metadata_removed">- Meta Veri Kaldırma: %1$s</string>

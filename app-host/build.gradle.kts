@@ -26,8 +26,10 @@ android {
     }
 
     lint {
-        abortOnError = false
-        checkReleaseBuilds = false
+        abortOnError = true
+        checkReleaseBuilds = true
+        // Exact inherited translation omissions; security/correctness errors remain fatal.
+        baseline = file("lint-localization-baseline.xml")
     }
 
     signingConfigs {
@@ -89,6 +91,7 @@ android {
             excludes += "/META-INF/LICENSE"
             excludes += "/META-INF/NOTICE"
             excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
             excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/DEPENDENCIES"
             excludes += "/META-INF/LICENSE-W3C-TEST"
@@ -126,8 +129,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
     // Image Loading
-    implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.coil-kt:coil:2.6.0")
 
     // 2. Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -156,10 +157,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Text Conversion Libraries
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.8")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.8")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.8")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.8")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.11")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     testImplementation("junit:junit:4.13.2")
@@ -171,15 +169,17 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("com.tngtech.archunit:archunit:1.3.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("io.mockk:mockk-android:1.13.10")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    androidTestImplementation("org.bouncycastle:bcpkix-jdk18on:1.86")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    // PKI Digital Signatures (BouncyCastle)
-    implementation("org.bouncycastle:bcprov-jdk18on:1.86")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.86")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 tasks.register("securityAudit") {
@@ -205,4 +205,11 @@ tasks.register("securityAudit") {
 
 tasks.named("preBuild") {
     dependsOn("securityAudit")
+    dependsOn(rootProject.tasks.named("securityArchitecture"))
+}
+
+tasks.withType<Test>().configureEach {
+    doFirst {
+        systemProperty("hostProductionClasses", tasks.named("compileDebugKotlin").get().outputs.files.asPath)
+    }
 }

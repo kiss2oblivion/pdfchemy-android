@@ -5,14 +5,14 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.font.PDFont
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileInputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 
 object PdfFontInspectorEngineWorker {
 
     fun inspectFonts(sourceFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val fontMap = mutableMapOf<String, MutableFontEntry>()
 
             for ((pageIdx, page) in document.pages.withIndex()) {

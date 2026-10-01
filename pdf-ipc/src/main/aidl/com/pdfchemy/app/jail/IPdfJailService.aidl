@@ -8,6 +8,7 @@ import com.pdfchemy.app.jail.IPdfJailCallback;
  * IPC Interface for the isolated PDF Jail Worker.
  */
 oneway interface IPdfJailService {
+    oneway void abortWorker();
     /**
      * Executes the COMPRESS operation in the isolated service.
      * 
@@ -26,6 +27,7 @@ oneway interface IPdfJailService {
         boolean rasterizePages,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         IPdfJailCallback callback
     );
 
@@ -36,6 +38,7 @@ oneway interface IPdfJailService {
         in ParcelFileDescriptor sourceFd,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
@@ -48,6 +51,7 @@ oneway interface IPdfJailService {
         String modificationsJson,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         IPdfJailCallback callback
     );
     /**
@@ -61,6 +65,7 @@ oneway interface IPdfJailService {
         IBinder rendererBinder,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
@@ -78,6 +83,7 @@ oneway interface IPdfJailService {
         long expectedSize,
         String extraExpectedSha256,
         long extraExpectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
@@ -89,6 +95,7 @@ oneway interface IPdfJailService {
         IBinder rendererBinder,
         in String[] expectedSha256s,
         in long[] expectedSizes,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 }

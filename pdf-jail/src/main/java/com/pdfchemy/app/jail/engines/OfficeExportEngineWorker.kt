@@ -12,8 +12,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.util.zip.ZipEntry
@@ -28,7 +28,7 @@ object OfficeExportEngineWorker {
             var pageCount = 0
             try {
                 FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                    doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                    doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 }
                 
                 pageCount = doc!!.numberOfPages
@@ -60,7 +60,7 @@ object OfficeExportEngineWorker {
             var pageCount = 0
             try {
                 FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                    doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                    doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 }
                 
                 pageCount = doc!!.numberOfPages
@@ -95,7 +95,7 @@ object OfficeExportEngineWorker {
             
             try {
                 FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                    doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                    doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 }
                 
                 pageCount = doc!!.numberOfPages
@@ -109,12 +109,12 @@ object OfficeExportEngineWorker {
                     val renderedPageCount = JailNativeRendererCoordinator.getPageCount(sourceFd, rendererBinder)
                     if (renderedPageCount != null) {
                         for (i in 0 until renderedPageCount) {
-                            val tempImgFile = File(context.cacheDir, "slide_${System.currentTimeMillis()}_$i.jpg")
+                            val tempImgFile = com.pdfchemy.app.jail.JailScratch.namedFile("slide_${System.currentTimeMillis()}_$i.jpg")
                             val pipe = ParcelFileDescriptor.createPipe()
                             val readFd = pipe[0]
                             val writeFd = pipe[1]
                             
-                            val renderJob = kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
+                            val renderJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).async(Dispatchers.IO) {
                                 try {
                                     JailNativeRendererCoordinator.renderPageToJpeg(sourceFd, i, writeFd, rendererBinder)
                                 } finally {
@@ -355,17 +355,17 @@ object OfficeExportEngineWorker {
         for (pageRows in pagesRows) {
             for (rowTokens in pageRows) {
                 if (rowTokens.isEmpty()) continue
-                sheetSb.append("<row r=\"${"$"}rowIndex\">")
+                sheetSb.append("<row r=\"$rowIndex\">")
                 for ((colIdx, token) in rowTokens.withIndex()) {
                     val colLetter = getColumnLetter(colIdx)
-                    val cellRef = "${"$"}colLetter${"$"}rowIndex"
+                    val cellRef = "$colLetter$rowIndex"
                     val cleanText = escapeXml(token)
                     
                     val isNumber = token.toDoubleOrNull() != null
                     if (isNumber) {
-                        sheetSb.append("<c r=\"${"$"}cellRef\" t=\"n\"><v>${"$"}token</v></c>")
+                        sheetSb.append("<c r=\"$cellRef\" t=\"n\"><v>$token</v></c>")
                     } else {
-                        sheetSb.append("<c r=\"${"$"}cellRef\" t=\"inlineStr\"><is><t>${"$"}cleanText</t></is></c>")
+                        sheetSb.append("<c r=\"$cellRef\" t=\"inlineStr\"><is><t>$cleanText</t></is></c>")
                     }
                     totalCells++
                 }
@@ -419,7 +419,7 @@ object OfficeExportEngineWorker {
     <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>""")
         
         for (i in 1..slideCount) {
-            ctSb.append("<Override PartName=\"/ppt/slides/slide${"$"}i.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>")
+            ctSb.append("<Override PartName=\"/ppt/slides/slide$i.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>")
         }
         ctSb.append("</Types>")
         zip.write(ctSb.toString().toByteArray(StandardCharsets.UTF_8))
@@ -440,7 +440,7 @@ object OfficeExportEngineWorker {
         presRelsSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">""")
         for (i in 1..slideCount) {
-            presRelsSb.append("<Relationship Id=\"rId${"$"}i\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide${"$"}i.xml\"/>")
+            presRelsSb.append("<Relationship Id=\"rId$i\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide$i.xml\"/>")
         }
         presRelsSb.append("</Relationships>")
         zip.write(presRelsSb.toString().toByteArray(StandardCharsets.UTF_8))
@@ -454,7 +454,7 @@ object OfficeExportEngineWorker {
     <p:sldIdLst>""")
         for (i in 1..slideCount) {
             val id = 255 + i
-            presSb.append("<p:sldId id=\"${"$"}id\" r:id=\"rId${"$"}i\"/>")
+            presSb.append("<p:sldId id=\"$id\" r:id=\"rId$i\"/>")
         }
         presSb.append("""</p:sldIdLst>
     <p:sldSz cx="12192000" cy="6858000"/>
@@ -466,7 +466,7 @@ object OfficeExportEngineWorker {
         // 5. Individual Slides: ppt/slides/slideN.xml
         for (i in 1..slideCount) {
             val lines = if (i - 1 < slideTexts.size) slideTexts[i - 1] else emptyList()
-            val titleText = if (lines.isNotEmpty()) escapeXml(lines[0]) else "Slide ${"$"}i"
+            val titleText = if (lines.isNotEmpty()) escapeXml(lines[0]) else "Slide $i"
             val bodyLines = if (lines.size > 1) lines.drop(1).take(8) else emptyList()
 
             // Save slide image backdrop if present
@@ -474,22 +474,22 @@ object OfficeExportEngineWorker {
             if (hasImage) {
                 val imgFile = slideImages[i - 1]
                 if (imgFile.exists()) {
-                    zip.putNextEntry(ZipEntry("ppt/media/image${"$"}i.jpeg"))
-                    imgFile.inputStream().use { it.copyTo(zip) }
+                    zip.putNextEntry(ZipEntry("ppt/media/image$i.jpeg"))
+                    com.pdfchemy.app.jail.CapabilityIo.input(imgFile).use { it.copyTo(zip) }
                     zip.closeEntry()
                 }
 
                 // Relationship for slide image
-                zip.putNextEntry(ZipEntry("ppt/slides/_rels/slide${"$"}i.xml.rels"))
+                zip.putNextEntry(ZipEntry("ppt/slides/_rels/slide$i.xml.rels"))
                 val slideRel = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${"$"}i.jpeg"/>
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image$i.jpeg"/>
 </Relationships>"""
                 zip.write(slideRel.toByteArray(StandardCharsets.UTF_8))
                 zip.closeEntry()
             }
 
-            zip.putNextEntry(ZipEntry("ppt/slides/slide${"$"}i.xml"))
+            zip.putNextEntry(ZipEntry("ppt/slides/slide$i.xml"))
             val slideSb = StringBuilder()
             slideSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
@@ -506,7 +506,7 @@ object OfficeExportEngineWorker {
             slideSb.append("""
             <p:sp>
                 <p:nvSpPr>
-                    <p:cNvPr id="2" name="Title ${"$"}i"/>
+                    <p:cNvPr id="2" name="Title $i"/>
                     <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
                     <p:nvPr/>
                 </p:nvSpPr>
@@ -520,7 +520,7 @@ object OfficeExportEngineWorker {
                         <a:pPr algn="l"/>
                         <a:r>
                             <a:rPr lang="en-US" sz="2800" b="1"><a:solidFill><a:srgbClr val="1A237E"/></a:solidFill></a:rPr>
-                            <a:t>${"$"}titleText</a:t>
+                            <a:t>$titleText</a:t>
                         </a:r>
                     </a:p>
                 </p:txBody>
@@ -530,7 +530,7 @@ object OfficeExportEngineWorker {
             slideSb.append("""
             <p:sp>
                 <p:nvSpPr>
-                    <p:cNvPr id="3" name="Content ${"$"}i"/>
+                    <p:cNvPr id="3" name="Content $i"/>
                     <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
                     <p:nvPr/>
                 </p:nvSpPr>
@@ -549,7 +549,7 @@ object OfficeExportEngineWorker {
                         <a:pPr lvl="0"/>
                         <a:r>
                             <a:rPr lang="en-US" sz="1800"><a:solidFill><a:srgbClr val="333333"/></a:solidFill></a:rPr>
-                            <a:t>${"$"}cleanBody</a:t>
+                            <a:t>$cleanBody</a:t>
                         </a:r>
                     </a:p>""")
                 }
@@ -558,7 +558,7 @@ object OfficeExportEngineWorker {
                     <a:p>
                         <a:r>
                             <a:rPr lang="en-US" sz="1600" i="1"><a:solidFill><a:srgbClr val="888888"/></a:solidFill></a:rPr>
-                            <a:t>Content from PDF Page ${"$"}i</a:t>
+                            <a:t>Content from PDF Page $i</a:t>
                         </a:r>
                     </a:p>""")
             }

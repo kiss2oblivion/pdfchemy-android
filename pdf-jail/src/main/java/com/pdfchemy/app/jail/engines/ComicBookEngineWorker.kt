@@ -11,9 +11,9 @@ import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.zip.ZipFile
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
+import com.pdfchemy.app.jail.FdZipFile as ZipFile
 import java.util.zip.ZipEntry
 
 object ComicBookEngineWorker {
@@ -39,7 +39,7 @@ object ComicBookEngineWorker {
         var document: PDDocument? = null
         
         try {
-            tempFile = File.createTempFile("cbz_worker_", ".cbz", context.cacheDir)
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("cbz_worker_", ".cbz", context.cacheDir)
             FileInputStream(sourceFd.fileDescriptor).use { input ->
                 FileOutputStream(tempFile).use { output ->
                     var totalRead = 0L
@@ -56,7 +56,7 @@ object ComicBookEngineWorker {
             }
 
             zip = ZipFile(tempFile)
-            document = PDDocument()
+            document = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             
             val validExtensions = setOf(".jpg", ".jpeg", ".png", ".webp")
             
@@ -82,7 +82,7 @@ object ComicBookEngineWorker {
                     options.inJustDecodeBounds = true
                     
                     // We must buffer the stream because decoding bounds consumes it if not mark-supported
-                    val tempImgFile = File.createTempFile("cbz_img_", ".tmp", context.cacheDir)
+                    val tempImgFile = com.pdfchemy.app.jail.JailScratch.createTempFile("cbz_img_", ".tmp", context.cacheDir)
                     try {
                         FileOutputStream(tempImgFile).use { output ->
                             var entryRead = 0L
@@ -98,14 +98,14 @@ object ComicBookEngineWorker {
                             }
                         }
                         
-                        BitmapFactory.decodeFile(tempImgFile.absolutePath, options)
+                        com.pdfchemy.app.jail.CapabilityIo.fd(tempImgFile).use { android.system.Os.lseek(it.fileDescriptor, 0, android.system.OsConstants.SEEK_SET); BitmapFactory.decodeFileDescriptor(it.fileDescriptor, null, options) }
                         
                         if (options.outWidth > 8192 || options.outHeight > 8192) {
                             throw SecurityException("Image dimensions (${options.outWidth}x${options.outHeight}) exceed safe maximums in CBZ.")
                         }
                         
                         // Parse actual image
-                        val bitmap = BitmapFactory.decodeFile(tempImgFile.absolutePath) ?: return@use
+                        val bitmap = com.pdfchemy.app.jail.CapabilityIo.fd(tempImgFile).use(SafeImageDecoder::decode)
                         try {
                             val pdImage = if (options.outMimeType == "image/jpeg") {
                                 JPEGFactory.createFromImage(document, bitmap)
@@ -128,7 +128,7 @@ object ComicBookEngineWorker {
                 }
             }
 
-            document.save(FileOutputStream(destFd.fileDescriptor))
+            FileOutputStream(destFd.fileDescriptor).use { document.save(it) }
             return JSONObject().put("success", true).put("pages", imageEntries.size).toString()
         } finally {
             try { document?.close() } catch (_: Exception) {}

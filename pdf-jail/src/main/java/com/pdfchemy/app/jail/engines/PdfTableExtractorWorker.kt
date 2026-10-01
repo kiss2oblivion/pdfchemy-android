@@ -5,8 +5,8 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.tom_roush.pdfbox.text.TextPosition
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.io.OutputStreamWriter
 import java.io.File
 
@@ -28,14 +28,14 @@ object PdfTableExtractorWorker {
         var document: PDDocument? = null
         var tempFile: File? = null
         try {
-            tempFile = File.createTempFile("table_extract", ".pdf")
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("table_extract", ".pdf")
             FileOutputStream(tempFile).use { out ->
                 FileInputStream(sourceFd.fileDescriptor).use { inp ->
                     inp.copyTo(out)
                 }
             }
 
-            document = PDDocument.load(tempFile, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val csv = extractFromDocument(document, pageIndex, safeMode)
 
             if (targetFd != null) {

@@ -1,128 +1,52 @@
 package com.pdfchemy.app.jail.engines
 
 import android.os.ParcelFileDescriptor
+import android.system.Os
+import android.system.OsConstants
 import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import java.io.File
+import com.pdfchemy.app.jail.boundedFileOutput
 
 object PdfRepairEngineWorker {
-
+    private fun readAt(fd: ParcelFileDescriptor, offset: Long, size: Int): ByteArray {
+        Os.lseek(fd.fileDescriptor, offset, OsConstants.SEEK_SET)
+        val bytes = ByteArray(size)
+        val count = Os.read(fd.fileDescriptor, bytes, 0, size)
+        return bytes.copyOf(count.coerceAtLeast(0))
+    }
     fun diagnose(sourceFd: ParcelFileDescriptor): String {
+        JailQuotas.enforceFileSize(sourceFd)
+        val prefix = String(readAt(sourceFd, 0, 1024), Charsets.US_ASCII)
+        val suffix = String(readAt(sourceFd, (sourceFd.statSize - 1024).coerceAtLeast(0), 1024), Charsets.US_ASCII)
+        Os.lseek(sourceFd.fileDescriptor, 0, OsConstants.SEEK_SET)
+        var pages = 0; var encrypted = false
+        var issue = "Standard PDF structure"
         try {
-            val buffer = ByteArrayOutputStream()
-            FileInputStream(sourceFd.fileDescriptor).use { inp ->
-                inp.copyTo(buffer)
-            }
-            val bytes = buffer.toByteArray()
-
-            if (bytes.size < 10) {
-                return JSONObject().apply {
-                    put("hasValidHeader", false)
-                    put("hasValidEof", false)
-                    put("recoveredPages", 0)
-                    put("isEncrypted", false)
-                    put("issueSummary", "File is empty or too small")
-                }.toString()
-            }
-
-            val headerStr = String(bytes.take(20).toByteArray(), Charsets.US_ASCII)
-            val hasValidHeader = headerStr.contains("%PDF-")
-
-            val tailStr = String(bytes.takeLast(100).toByteArray(), Charsets.US_ASCII)
-            val hasValidEof = tailStr.contains("%%EOF")
-
-            var pageCount = 0
-            var isEncrypted = false
-            val issueSummary = mutableListOf<String>()
-
-            if (!hasValidHeader) issueSummary.add("Corrupted or missing %PDF header")
-            if (!hasValidEof) issueSummary.add("Missing or truncated %%EOF marker")
-
-            try {
-                val doc = PDDocument.load(java.io.ByteArrayInputStream(bytes), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                pageCount = doc.numberOfPages
-                isEncrypted = doc.isEncrypted
-                doc.close()
-            } catch (e: Exception) {
-                issueSummary.add("Syntax or XRef table corruption: ${e.message?.take(60)}")
-            }
-
-            val summaryText = if (issueSummary.isEmpty()) "Standard PDF structure" else issueSummary.joinToString("; ")
-            
-            return JSONObject().apply {
-                put("hasValidHeader", hasValidHeader)
-                put("hasValidEof", hasValidEof)
-                put("recoveredPages", pageCount)
-                put("isEncrypted", isEncrypted)
-                put("issueSummary", summaryText)
-            }.toString()
-        } catch (e: Exception) {
-            return JSONObject().apply {
-                put("error", e.message)
-            }.toString()
-        }
+            FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { pages = it.numberOfPages; encrypted = it.isEncrypted }
+        } catch (e: Exception) { issue = "Syntax or XRef table corruption" }
+        return JSONObject().put("hasValidHeader", prefix.contains("%PDF-")).put("hasValidEof", suffix.contains("%%EOF"))
+            .put("recoveredPages", pages).put("isEncrypted", encrypted).put("issueSummary", issue).toString()
     }
-
     fun repair(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor): String {
+        JailQuotas.enforceFileSize(sourceFd)
+        val prefix = String(readAt(sourceFd, 0, 64 * 1024), Charsets.ISO_8859_1)
+        val suffix = String(readAt(sourceFd, (sourceFd.statSize - 1024).coerceAtLeast(0), 1024), Charsets.US_ASCII)
+        val headerIndex = prefix.indexOf("%PDF-")
+        val file = com.pdfchemy.app.jail.JailScratch.createTempFile("repair_", ".pdf")
         try {
-            val buffer = ByteArrayOutputStream()
-            FileInputStream(sourceFd.fileDescriptor).use { inp ->
-                inp.copyTo(buffer)
+            boundedFileOutput(file).use { output ->
+                if (headerIndex < 0) output.write("%PDF-1.7\n".toByteArray())
+                Os.lseek(sourceFd.fileDescriptor, headerIndex.coerceAtLeast(0).toLong(), OsConstants.SEEK_SET)
+                ParcelFileDescriptor.AutoCloseInputStream(sourceFd.dup()).use { it.copyTo(output) }
+                if (!suffix.contains("%%EOF")) output.write("\n%%EOF\n".toByteArray())
             }
-            var bytes = buffer.toByteArray()
-
-            if (bytes.isEmpty()) {
-                return JSONObject().put("error", "Source file is empty").toString()
+            com.pdfchemy.app.jail.CapabilityIo.input(file).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
+                boundedFileOutput(targetFd.fileDescriptor).use { document.save(it) }
+                return JSONObject().put("success", true).put("recoveredPages", document.numberOfPages).toString()
             }
-
-            val headerIndex = indexOfBytes(bytes, "%PDF-".toByteArray(Charsets.US_ASCII))
-            if (headerIndex > 0) {
-                bytes = bytes.copyOfRange(headerIndex, bytes.size)
-            } else if (headerIndex < 0) {
-                val header = "%PDF-1.7\n".toByteArray(Charsets.US_ASCII)
-                bytes = header + bytes
-            }
-
-            val tailStr = String(bytes.takeLast(60).toByteArray(), Charsets.US_ASCII)
-            if (!tailStr.contains("%%EOF")) {
-                val eofBytes = "\n%%EOF\n".toByteArray(Charsets.US_ASCII)
-                bytes = bytes + eofBytes
-            }
-
-            val doc = PDDocument.load(java.io.ByteArrayInputStream(bytes), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-            val recoveredPageCount = doc.numberOfPages
-
-            FileOutputStream(targetFd.fileDescriptor).use { outStream ->
-                doc.save(outStream)
-            }
-            doc.close()
-
-            return JSONObject().apply {
-                put("success", true)
-                put("recoveredPages", recoveredPageCount)
-            }.toString()
-        } catch (e: Exception) {
-            return JSONObject().apply {
-                put("success", false)
-                put("error", e.message)
-            }.toString()
-        }
-    }
-
-    private fun indexOfBytes(source: ByteArray, target: ByteArray): Int {
-        if (target.isEmpty() || source.size < target.size) return -1
-        for (i in 0..source.size - target.size) {
-            var found = true
-            for (j in target.indices) {
-                if (source[i + j] != target[j]) {
-                    found = false
-                    break
-                }
-            }
-            if (found) return i
-        }
-        return -1
+        } finally { file.delete() }
     }
 }

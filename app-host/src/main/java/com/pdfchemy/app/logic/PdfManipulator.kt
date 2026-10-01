@@ -1,5 +1,5 @@
 // =================================================================================================
-// [FEATURE: Page Studio & PDF Manipulation Engine] (FEATURES_REGISTRY Android §2 & §5)
+// [FEATURE: Page Studio & PDF Manipulation Engine] (FEATURES_REGISTRY Android Â§2 & Â§5)
 // Merge, split, delete, rotate, reorder, blank-page split, bookmark split, protect, and unlock.
 // =================================================================================================
 
@@ -11,12 +11,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.documentfile.provider.DocumentFile
-import com.tom_roush.pdfbox.multipdf.PDFMergerUtility
-import com.tom_roush.pdfbox.multipdf.Splitter
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission
-import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
-import com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -52,8 +46,8 @@ object PdfManipulator {
             pagesToKeep = parsePageRange(pageRange, totalPages)
             if (pagesToKeep.isEmpty()) return@withContext
 
-            if (pagesToKeep.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            if (pagesToKeep.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
             val destUris = mutableListOf<Uri>()
@@ -107,8 +101,8 @@ object PdfManipulator {
             }
 
             val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
-            if (groupsArray.length() > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            if (groupsArray.length() > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
             val createdOutputs = mutableListOf<DocumentFile>()
@@ -154,8 +148,8 @@ object PdfManipulator {
             }
 
             val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
-            if (groupsArray.length() > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            if (groupsArray.length() > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
             val createdOutputs = mutableListOf<DocumentFile>()
@@ -292,8 +286,8 @@ object PdfManipulator {
         try {
             var totalPages = getPageCountFromGateway(context, sourceUri)
             if (totalPages == 0) return@withContext emptyList()
-            if (totalPages > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES}")
+            if (totalPages > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
             
             val isPng = formatName.equals("PNG", ignoreCase = true)

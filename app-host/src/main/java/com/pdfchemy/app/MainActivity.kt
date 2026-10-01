@@ -297,6 +297,10 @@ fun playFeedback(view: android.view.View, isHaptic: Boolean, isSfx: Boolean) {
 }
 
 class MainActivity : AppCompatActivity() {
+    override fun onDestroy() {
+        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        super.onDestroy()
+    }
 
     private val incomingPdfUriState = MutableStateFlow<Uri?>(null)
 
@@ -554,40 +558,48 @@ fun MainApp(
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(incomingPdfUri) {
-        incomingPdfUri?.let { uri ->
-            val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.lowercase() ?: ""
-            if (name.endsWith(".epub")) {
-                currentScreen = Screen.ReflowReader(initialUri = uri)
-            } else if (name.endsWith(".cbz") || name.endsWith(".cbr")) {
-                currentScreen = Screen.EbookConverter
-            } else {
-                if (isVanguardEnabled) {
-                    isVanguardScanning = true
-                    vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
-                    try {
-                        val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
-                        when (threatResult) {
-                            is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                currentScreen = Screen.PdfEditor(initialPdfUri = uri)
-                            }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
-                                vanguardPendingEncryptedUri = uri
-                                showVanguardEncryptedDialog = true
-                            }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                                showVanguardBlockedDialog = true
-                            }
-                        }
-                    } finally {
-                        isVanguardScanning = false
-                        vanguardScanningFileName = null
-                    }
-                } else {
-                    currentScreen = Screen.PdfEditor(initialPdfUri = uri)
-                }
-            }
+        com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
+            showVanguardBlockedDialog = true
+            isVanguardScanning = false
+            vanguardScanningFileName = null
             incomingPdfUriState?.value = null
+        }) {
+            incomingPdfUri?.let { originalUri ->
+                val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.lowercase() ?: ""
+                if (name.endsWith(".epub")) {
+                    currentScreen = Screen.ReflowReader(initialUri = uri)
+                } else if (name.endsWith(".cbz") || name.endsWith(".cbr")) {
+                    currentScreen = Screen.EbookConverter
+                } else {
+                    if (isVanguardEnabled) {
+                        isVanguardScanning = true
+                        vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
+                        try {
+                            val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
+                            when (threatResult) {
+                                is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
+                                    currentScreen = Screen.PdfEditor(initialPdfUri = uri)
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
+                                    vanguardPendingEncryptedUri = uri
+                                    showVanguardEncryptedDialog = true
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                    showVanguardBlockedDialog = true
+                                }
+                            }
+                        } finally {
+                            isVanguardScanning = false
+                            vanguardScanningFileName = null
+                        }
+                    } else {
+                        currentScreen = Screen.PdfEditor(initialPdfUri = uri)
+                    }
+                }
+                incomingPdfUriState?.value = null
+            }
         }
     }
 
@@ -3999,30 +4011,37 @@ fun RecentFilesSection(
                                         onNavigate(Screen.ReflowReader(uri))
                                     } else if (ext == "pdf" && onNavigate != null) {
                                         scope.launch {
-                                            if (isVanguardEnabled) {
-                                                isVanguardScanning = true
-                                                vanguardScanningFileName = item.name
-                                                try {
-                                                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
-                                                    when (threat) {
-                                                        is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                                            onNavigate(Screen.PdfEditor(initialPdfUri = uri))
+                                            com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
+                                                showVanguardBlockedDialog = true
+                                                isVanguardScanning = false
+                                                vanguardScanningFileName = null
+                                            }) {
+                                                val stagedUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri }
+                                                if (isVanguardEnabled) {
+                                                    isVanguardScanning = true
+                                                    vanguardScanningFileName = item.name
+                                                    try {
+                                                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
+                                                        when (threat) {
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
+                                                                onNavigate(Screen.PdfEditor(initialPdfUri = stagedUri))
+                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
+                                                                vanguardPendingEncryptedUri = stagedUri
+                                                                showVanguardEncryptedDialog = true
+                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                                showVanguardBlockedDialog = true
+                                                            }
                                                         }
-                                                        is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
-                                                            vanguardPendingEncryptedUri = uri
-                                                            showVanguardEncryptedDialog = true
-                                                        }
-                                                        is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                                        is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                                                            showVanguardBlockedDialog = true
-                                                        }
+                                                    } finally {
+                                                        isVanguardScanning = false
+                                                        vanguardScanningFileName = null
                                                     }
-                                                } finally {
-                                                    isVanguardScanning = false
-                                                    vanguardScanningFileName = null
+                                                } else {
+                                                    onNavigate(Screen.PdfEditor(initialPdfUri = stagedUri))
                                                 }
-                                            } else {
-                                                onNavigate(Screen.PdfEditor(initialPdfUri = uri))
                                             }
                                         }
                                     } else {
