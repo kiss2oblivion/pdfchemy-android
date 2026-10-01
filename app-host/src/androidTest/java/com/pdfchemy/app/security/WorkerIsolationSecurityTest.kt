@@ -64,6 +64,37 @@ class WorkerIsolationSecurityTest {
             bind().use { assertTrue(call(it.jail, "DEBUG_SCRATCH").getBoolean("scratchCapability")) }
         } finally { target.delete() }
     }
+    @Test fun workerDeathAndCancellationTruncateAlreadyWrittenOutput() = runBlocking {
+        val hostPid = Process.myPid()
+        for (cancel in listOf(false, true)) {
+            val target = File.createTempFile("partial_output_", ".bin", context.cacheDir)
+            try {
+                bind().use { binding ->
+                    val death = CompletableDeferred<Unit>()
+                    binding.jail.asBinder().linkToDeath({ death.complete(Unit) }, 0)
+                    val request = async(Dispatchers.IO) {
+                        runCatching { PdfGateway.executeEngine(context, "DEBUG_OUTPUT_BLOCK", null, android.net.Uri.fromFile(target), "{}") }
+                    }
+                    try {
+                        withTimeout(15_000) { while (target.length() == 0L) delay(25) }
+                        assertEquals("The real worker must write before failure", 7, target.length())
+                        if (cancel) request.cancelAndJoin()
+                        else {
+                            binding.jail.abortWorker()
+                            assertTrue(withTimeout(15_000) { request.await() }.isFailure)
+                        }
+                        withTimeout(15_000) { death.await() }
+                        assertEquals("Partial output must not survive worker failure", 0, target.length())
+                    } finally {
+                        if (binding.jail.asBinder().isBinderAlive) runCatching { binding.jail.abortWorker() }
+                        request.cancelAndJoin()
+                    }
+                }
+                assertEquals(hostPid, Process.myPid())
+                bind().use { assertTrue(call(it.jail, "DEBUG_SCRATCH").getBoolean("scratchCapability")) }
+            } finally { target.delete() }
+        }
+    }
     @Test fun batchMissingAndMismatchedMetadataRejectBeforeParsing() = runBlocking {
         val file = File.createTempFile("not_pdf_", ".pdf", context.cacheDir).apply { writeText("not a PDF") }
         val target = File.createTempFile("batch_output_", ".pdf", context.cacheDir)

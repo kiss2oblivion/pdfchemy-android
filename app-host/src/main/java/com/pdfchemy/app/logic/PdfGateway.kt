@@ -28,6 +28,7 @@ object PdfGateway {
         val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
         val inputLeases = mutableListOf<java.io.Closeable>()
         val descriptors = mutableListOf<ParcelFileDescriptor>()
+        val outputDescriptors = mutableListOf<ParcelFileDescriptor>()
         val connections = mutableListOf<ServiceConnection>()
         var jail: IPdfJailService? = null
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
@@ -39,7 +40,9 @@ object PdfGateway {
             }
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
             val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
-            val outputs = targets.map { requireNotNull(context.contentResolver.openFileDescriptor(it, "rwt")).also(descriptors::add) }
+            val outputs = targets.map { requireNotNull(context.contentResolver.openFileDescriptor(it, "rwt")).also { fd ->
+                descriptors.add(fd); outputDescriptors.add(fd)
+            } }
             suspend fun bind(className: String): IBinder {
                 val channel = Channel<IBinder>(1)
                 val connection = object : ServiceConnection {
@@ -75,6 +78,12 @@ object PdfGateway {
                     catch (e: Exception) { unlink(); if (continuation.isActive) continuation.resumeWithException(e) }
                 }
             }
+        } catch (error: Throwable) {
+            // A killed native process cannot run its own failure cleanup. Keep
+            // the host's destination capabilities open until partial output is
+            // truncated, including coroutine cancellation and Binder death.
+            outputDescriptors.forEach { runCatching { android.system.Os.ftruncate(it.fileDescriptor, 0) } }
+            throw error
         } finally {
             scratch.close()
             descriptors.forEach { runCatching { it.close() } }

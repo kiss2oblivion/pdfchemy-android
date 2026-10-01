@@ -127,6 +127,12 @@ return when (engineName) {
                             }
                             "DEBUG_IDENTITY" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); org.json.JSONObject().put("pid", Process.myPid()).put("uid", Process.myUid()).toString() }
                             "DEBUG_BLOCK" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); while (true) Thread.sleep(1000); error("unreachable") }
+                            "DEBUG_OUTPUT_BLOCK" -> {
+                                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                                boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("partial".toByteArray()) }
+                                while (true) Thread.sleep(1000)
+                                error("unreachable")
+                            }
                             "DEBUG_OUTPUT_OVERFLOW" -> {
                                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
                                 boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { output ->
