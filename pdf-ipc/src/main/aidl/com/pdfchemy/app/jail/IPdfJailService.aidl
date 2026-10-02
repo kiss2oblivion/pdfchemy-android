@@ -98,4 +98,6 @@ oneway interface IPdfJailService {
         IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
+    // Debug builds only: observe/overwrite the retained temporary output fixture.
+    void debugOutputProbe(boolean rewrite, com.pdfchemy.app.jail.IPdfJailCallback callback);
 }

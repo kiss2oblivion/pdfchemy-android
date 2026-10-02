@@ -3,7 +3,7 @@
 > **Single Source of Truth for Implemented Capabilities**
 > **Core Invariant:** 100% Local-First & Private. Zero Cloud. Zero AI/LLMs. Zero Telemetry. Original-Safe.
 > **Performance Architecture:** Linear-Time O(N) Document Traversal. Single-pass custom TextStripper architecture eliminates quadratic O(N^2) page-tree lookups across all text search, redaction, reflow reading, visual diffing, EPUB conversion, and Office export modules.
-> **Last Updated:** September 2026
+> **Last Updated:** October 2026
 
 ---
 
@@ -85,6 +85,7 @@
 | **IPC Sandbox Resource Quotas** | Cross-cutting | `SecurityLimits`, `PdfJailService`, `PdfNativeRendererService` | ✅ Implemented; release verification pending | 32 batch input/output descriptors; 250 MiB aggregate input and output; 500 output files; 64 scratch descriptors and 500 MiB operation writes. Single-flight admission rejects overlap with BUSY; independent 120 s parser and 30 s renderer deadlines kill the worker process. Exact SHA-256 and size metadata is mandatory for every input. |
 | **Immutable Document Staging** | All document tools | `DocumentStager`, `PdfGateway`, `OperationScratchBroker` | ✅ Implemented; release verification pending | Private sealed snapshots are reused across analysis, render, and processing; bounded streaming handles unknown provider lengths; failed staging and operation cleanup reclaim owned snapshots and anonymous scratch. Filename resemblance never grants staged provenance. |
 | **Private History Controls** | Settings / history | `HistoryRepository`, `MainViewModel` | ✅ Implemented | History is disabled by default. Opting out clears existing records; release logging omits document paths. |
+| **Host-Owned Output Publication** | All worker-backed saves | `HostOutputTransaction`, `PdfGateway`, `PdfJailClient` | ✅ Implemented; release verification pending | Workers receive only unlinked temporary output FDs. The host validates successful results, count and the 250 MiB aggregate size, then snapshots the whole batch into private FDs before opening SAF destinations for a bounded commit. Worker death/cancellation/overflow before commit preserve destination bytes; generic provider failures during publication cannot be rolled back atomically. |
 
 ---
 

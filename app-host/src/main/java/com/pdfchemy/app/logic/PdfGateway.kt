@@ -7,19 +7,19 @@ import android.content.ServiceConnection
 import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.jail.HostOutputTransaction
 import com.pdfchemy.app.jail.IPdfJailService
 import com.pdfchemy.app.jail.IPdfJailStringCallback
 import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 object PdfGateway {
+    private class WorkerFailure(message: String) : IllegalStateException(message)
     private suspend fun request(context: Context, sources: List<Uri>, targets: List<Uri>, paramsJson: String,
         invoke: (IPdfJailService, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
     ): String = withContext(Dispatchers.IO) {
@@ -28,10 +28,10 @@ object PdfGateway {
         val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
         val inputLeases = mutableListOf<java.io.Closeable>()
         val descriptors = mutableListOf<ParcelFileDescriptor>()
-        val outputDescriptors = mutableListOf<ParcelFileDescriptor>()
         val connections = mutableListOf<ServiceConnection>()
         var jail: IPdfJailService? = null
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
+        val outputTransaction = HostOutputTransaction(context, targets)
         try {
             sources.forEach {
                 val snapshot = DocumentStager.stageDocumentCancellable(context, it)
@@ -40,9 +40,7 @@ object PdfGateway {
             }
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
             val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
-            val outputs = targets.map { requireNotNull(context.contentResolver.openFileDescriptor(it, "rwt")).also { fd ->
-                descriptors.add(fd); outputDescriptors.add(fd)
-            } }
+            val outputs = outputTransaction.workerDescriptors
             suspend fun bind(className: String): IBinder {
                 val channel = Channel<IBinder>(1)
                 val connection = object : ServiceConnection {
@@ -58,33 +56,33 @@ object PdfGateway {
             val renderer = bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
             val binder = bind("com.pdfchemy.app.jail.PdfJailService")
             jail = IPdfJailService.Stub.asInterface(binder)
-            withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
-                suspendCancellableCoroutine { continuation ->
-                    val death = IBinder.DeathRecipient {
-                        if (continuation.isActive) continuation.resumeWithException(IllegalStateException("Isolated worker died"))
-                    }
-                    binder.linkToDeath(death, 0)
-                    fun unlink() { runCatching { binder.unlinkToDeath(death, 0) } }
-                    continuation.invokeOnCancellation { unlink(); runCatching { jail?.abortWorker() } }
-                    val callback = object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            unlink()
-                            try { scratch.verifyBudget(); if (continuation.isActive) continuation.resume(resultJson) }
-                            catch (error: Exception) { if (continuation.isActive) continuation.resumeWithException(error) }
-                        }
-                        override fun onFailure(errorCode: Int, errorMessage: String) { unlink(); if (continuation.isActive) continuation.resumeWithException(IllegalStateException("Jail $errorCode: $errorMessage")) }
-                    }
-                    try { invoke(jail!!, staged, inputs, outputs, renderer, scratch, callback) }
-                    catch (e: Exception) { unlink(); if (continuation.isActive) continuation.resumeWithException(e) }
+            val response = CompletableDeferred<String>()
+            val death = IBinder.DeathRecipient { response.completeExceptionally(IllegalStateException("Isolated worker died")) }
+            binder.linkToDeath(death, 0)
+            val callback = object : IPdfJailStringCallback.Stub() {
+                override fun onSuccess(resultJson: String) { response.complete(resultJson) }
+                override fun onFailure(errorCode: Int, errorMessage: String) {
+                    response.completeExceptionally(WorkerFailure("Jail $errorCode: $errorMessage"))
                 }
             }
+            val result = try {
+                withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                    invoke(jail!!, staged, inputs, outputs, renderer, scratch, callback)
+                    response.await()
+                }
+            } finally { runCatching { binder.unlinkToDeath(death, 0) } }
+            scratch.verifyBudget()
+            if (targets.isNotEmpty()) {
+                outputTransaction.validateAndSnapshot(result)
+                outputTransaction.commit()
+            }
+            result
         } catch (error: Throwable) {
-            // A killed native process cannot run its own failure cleanup. Keep
-            // the host's destination capabilities open until partial output is
-            // truncated, including coroutine cancellation and Binder death.
-            outputDescriptors.forEach { runCatching { android.system.Os.ftruncate(it.fileDescriptor, 0) } }
+            // Rejected/completed requests do not own another admitted job.
+            if (error !is WorkerFailure) runCatching { jail?.abortWorker() }
             throw error
         } finally {
+            outputTransaction.close()
             scratch.close()
             descriptors.forEach { runCatching { it.close() } }
             connections.forEach { runCatching { context.unbindService(it) } }

@@ -41,6 +41,14 @@ class WorkerIsolationSecurityTest {
             return JSONObject(withTimeout(10_000) { result.await() })
         }
     }
+    private suspend fun outputBytes(jail: IPdfJailService): Long {
+        val size = CompletableDeferred<Long>()
+        jail.debugOutputProbe(false, object : IPdfJailCallback.Stub() {
+            override fun onSuccess(outputSizeBytes: Long) { size.complete(outputSizeBytes) }
+            override fun onFailure(errorCode: Int, errorMessage: String) { size.completeExceptionally(IllegalStateException(errorMessage)) }
+        })
+        return withTimeout(5_000) { size.await() }
+    }
     @Test fun isolatedUidAndAnonymousScratchAreUsable() = runBlocking {
         bind().use { binding ->
             val identity = call(binding.jail, "DEBUG_IDENTITY")
@@ -49,8 +57,8 @@ class WorkerIsolationSecurityTest {
             assertTrue(call(binding.jail, "DEBUG_SCRATCH").getBoolean("scratchCapability"))
         }
     }
-    @Test fun outputQuotaPlusOneByteFailsAndTruncatesTheRealDestination() = runBlocking {
-        val target = File.createTempFile("quota_output_", ".bin", context.cacheDir)
+    @Test fun outputQuotaPlusOneByteLeavesTheRealDestinationUnchanged() = runBlocking {
+        val target = File.createTempFile("quota_output_", ".bin", context.cacheDir).apply { writeText("existing destination") }
         val hostPid = Process.myPid()
         try {
             try {
@@ -59,15 +67,15 @@ class WorkerIsolationSecurityTest {
             } catch (error: Exception) {
                 assertTrue(error.message.orEmpty(), error.message.orEmpty().contains("quota", true))
             }
-            assertEquals(0, target.length())
+            assertEquals("existing destination", target.readText())
             assertEquals(hostPid, Process.myPid())
             bind().use { assertTrue(call(it.jail, "DEBUG_SCRATCH").getBoolean("scratchCapability")) }
         } finally { target.delete() }
     }
-    @Test fun workerDeathAndCancellationTruncateAlreadyWrittenOutput() = runBlocking {
+    @Test fun workerDeathAndCancellationLeaveTheRealDestinationUnchanged() = runBlocking {
         val hostPid = Process.myPid()
         for (cancel in listOf(false, true)) {
-            val target = File.createTempFile("partial_output_", ".bin", context.cacheDir)
+            val target = File.createTempFile("partial_output_", ".bin", context.cacheDir).apply { writeText("existing destination") }
             try {
                 bind().use { binding ->
                     val death = CompletableDeferred<Unit>()
@@ -76,15 +84,16 @@ class WorkerIsolationSecurityTest {
                         runCatching { PdfGateway.executeEngine(context, "DEBUG_OUTPUT_BLOCK", null, android.net.Uri.fromFile(target), "{}") }
                     }
                     try {
-                        withTimeout(15_000) { while (target.length() == 0L) delay(25) }
-                        assertEquals("The real worker must write before failure", 7, target.length())
+                        withTimeout(15_000) { while (outputBytes(binding.jail) == 0L) delay(25) }
+                        assertEquals("The real worker must write its temporary FD before failure", 7, outputBytes(binding.jail))
+                        assertEquals("existing destination", target.readText())
                         if (cancel) request.cancelAndJoin()
                         else {
                             binding.jail.abortWorker()
                             assertTrue(withTimeout(15_000) { request.await() }.isFailure)
                         }
                         withTimeout(15_000) { death.await() }
-                        assertEquals("Partial output must not survive worker failure", 0, target.length())
+                        assertEquals("Worker failure must not modify the real destination", "existing destination", target.readText())
                     } finally {
                         if (binding.jail.asBinder().isBinderAlive) runCatching { binding.jail.abortWorker() }
                         request.cancelAndJoin()

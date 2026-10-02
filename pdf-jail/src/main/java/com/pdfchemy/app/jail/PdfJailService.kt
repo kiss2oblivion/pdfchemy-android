@@ -13,6 +13,7 @@ import kotlinx.coroutines.*
 class PdfJailService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val gate = WorkerGate { Process.killProcess(Process.myPid()) }
+    @Volatile private var debugOutput: ParcelFileDescriptor? = null
 
     private fun submit(sources: List<ParcelFileDescriptor>, targets: List<ParcelFileDescriptor>, hashes: List<String>, sizes: List<Long>, params: String,
         callback: IPdfJailStringCallback, scratchBinder: IBinder?, task: suspend () -> String) {
@@ -63,6 +64,18 @@ class PdfJailService : Service() {
         override fun onFailure(errorCode: Int, errorMessage: String) { callback?.onFailure(errorCode, errorMessage) }
     }
     private val binder = object : IPdfJailService.Stub() {
+        override fun debugOutputProbe(rewrite: Boolean, callback: IPdfJailCallback) {
+            check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+            val fd = debugOutput
+            if (fd == null) { callback.onSuccess(0); return }
+            if (rewrite) {
+                android.system.Os.ftruncate(fd.fileDescriptor, 0)
+                android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+                val bytes = "late worker mutation".toByteArray()
+                android.system.Os.write(fd.fileDescriptor, bytes, 0, bytes.size)
+            }
+            callback.onSuccess(fd.statSize)
+        }
         override fun abortWorker() { Process.killProcess(Process.myPid()) }
         override fun compressPdf(sourceFd: ParcelFileDescriptor?, targetFd: ParcelFileDescriptor?, targetDpi: Float, quality: Float, rasterizePages: Boolean, expectedSha256: String, expectedSize: Long, scratchBinder: IBinder?, callback: IPdfJailCallback?) {
             submit(listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256), listOf(expectedSize), "{}", numeric(callback), scratchBinder) {
@@ -77,6 +90,18 @@ class PdfJailService : Service() {
         }
         override fun executeEngine(engineName: String, sourceFd: ParcelFileDescriptor?, targetFd: ParcelFileDescriptor?, paramsJson: String, rendererBinder: IBinder?, expectedSha256: String, expectedSize: Long, scratchBinder: IBinder?, callback: IPdfJailStringCallback) {
             submit(listOfNotNull(sourceFd), listOfNotNull(targetFd), if (sourceFd == null) emptyList() else listOf(expectedSha256), if (sourceFd == null) emptyList() else listOf(expectedSize), paramsJson, callback, scratchBinder) {
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_DUPLICATE_OUTPUT_SUCCESS") {
+                    boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
+                    repeat(2) { callback.onSuccess("{\"success\":true}") }
+                    return@submit "{\"success\":true}"
+                }
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_UNTRUSTED_OUTPUT_OVERFLOW") {
+                    // Simulate a compromised worker bypassing both wrappers and
+                    // its normal result validation. The host must reject this.
+                    android.system.Os.ftruncate(requireNotNull(targetFd).fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES + 1)
+                    callback.onSuccess("{\"success\":true}")
+                    while (true) Thread.sleep(1000)
+                }
                 dispatch(engineName, sourceFd, targetFd, paramsJson, rendererBinder)
             }
         }
@@ -130,8 +155,15 @@ return when (engineName) {
                             "DEBUG_OUTPUT_BLOCK" -> {
                                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
                                 boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("partial".toByteArray()) }
+                                debugOutput?.close(); debugOutput = targetFd.dup()
                                 while (true) Thread.sleep(1000)
                                 error("unreachable")
+                            }
+                            "DEBUG_RETAIN_OUTPUT" -> {
+                                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                                boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
+                                debugOutput?.close(); debugOutput = targetFd.dup()
+                                "{\"success\":true}"
                             }
                             "DEBUG_OUTPUT_OVERFLOW" -> {
                                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
@@ -220,5 +252,5 @@ return when (engineName) {
     }
     override fun onCreate() { super.onCreate(); com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(this) }
     override fun onBind(intent: Intent?): IBinder = binder
-    override fun onDestroy() { serviceScope.cancel(); gate.close(); super.onDestroy() }
+    override fun onDestroy() { debugOutput?.close(); serviceScope.cancel(); gate.close(); super.onDestroy() }
 }
