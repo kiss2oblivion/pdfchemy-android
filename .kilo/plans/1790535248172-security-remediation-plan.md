@@ -1,6 +1,6 @@
 # Security Remediation Plan — pdfchemy-android
 
-**Target:** `security/audit-remediation-2026-10-01` @ `9b6dd9cd2ff4b057a56b6cc4d17e42be71fd986f` (draft PR #1, 8 commits, 202 files, +7693/−6524)
+**Target:** `security/audit-remediation-2026-10-01` @ `1bf2af87ec15485a83ac8076d580c9b6edf84366` (draft PR #1, 9 commits; chunks 0–2 landed, universal response contracts / renderer binding / legacy deletion / OCR still planned)
 **Baseline:** `repo-android` @ `cbafb998`
 **Ledger of record:** `KILO_SECURITY_LEDGER.md` (repo root, committed)
 **Companion:** `SECURITY_REMEDIATION_STATUS.md` — authoritative for PR #1's own `SEC-001`…`SEC-018` / `RISK-001`
@@ -15,23 +15,38 @@ PR #1's register mints `SEC-001`…`SEC-018`. Between two pushes it grew by one 
 
 Verified adoptions: their `SEC-012` (Bouncy Castle belongs to jail) is the finding previously numbered for the crypto dependency misplacement — `FIXED`. Their `SEC-006`/`SEC-007`/`SEC-018` (worker admission, watchdog threads, process death) address what earlier drafts called process-isolation and resource-exhaustion defects.
 
+## Per-push delta check
+
+The branch moves several times a day and is a moving draft. On each push, re-read four signals and nothing else. They are sufficient to decide whether `SEC-901`…`SEC-919` change, and they have caught three consecutive regressions the security chunks missed.
+
+1. **Remote refs** — `git ls-remote origin`. Establishes the new head and whether `main` or `repo-android` moved.
+2. **`app-host/build.gradle.kts`** — the single highest-value file. If absent from the commit's file list, `SEC-901` (`securityAudit`), `SEC-903` (`gson`), `SEC-905` (`security-crypto`), and `SEC-906` (`text-recognition`) are all unchanged by definition. It has been absent for three consecutive pushes.
+3. **`pdf-ipc/src/main/java/com/pdfchemy/app/logic/` tree** — file count against `app-host`'s package of the same name. Governs `SEC-904`.
+4. **`SECURITY_REMEDIATION_STATUS.md` diff** — new `SEC-###` rows mean their range grew (cross-reference only; never allocate against it), and new "Observed verification" blocks mean claims changed.
+
+Anything else in a push — jail lifecycle, output transactions, staging — is informational until the merge commit, except where a new Host-side dependency or file placement appears in signals 2 and 3. Record what was skipped; do not re-derive the full register per push.
+
 ## Evidence basis
 
-Read at `9b6dd9c`: `app-host/build.gradle.kts`, `pdf-jail/build.gradle.kts`, the recursive tree, the `SECURITY_REMEDIATION_STATUS.md` diff, and the commit file list. No fetch, no build, no device run — network and mutating commands are blocked in plan mode. Nothing below is compile-verified.
+Read at `1bf2af8` and `9b6dd9c`: `app-host/build.gradle.kts`, `pdf-jail/build.gradle.kts`, the recursive tree, `ArchitectureBoundaryTest.kt`, the `SECURITY_REMEDIATION_STATUS.md` diffs, and the commit file lists. No fetch, no build, no device run — network and mutating commands are blocked in plan mode. **Nothing below is compile- or runtime-verified.**
 
-## State at `9b6dd9c`
+## State at `1bf2af8`
 
 **Closed by PR #1:** the fake PDFBox API is gone from every module; BouncyCastle moved to the jail with its own `jdk15to18` exclusions; Coil dropped from Host; Jackson narrowed to `jackson-module-kotlin`; jsoup strictly pinned; `lint { abortOnError = true }`; a `securityArchitecture` gate on `preBuild`; 47 JVM tests.
 
-**New in `9b6dd9c` — output authority (genuine).** Workers now pass only unlinked temporary FDs. The host re-validates result, target count and the 250 MiB aggregate budget, snapshots outputs into private FDs, then commits once per destination. Best-effort provider truncation is gone. Real Binder regressions for death, cancellation, deadline, quota bypass, retained-FD mutation, duplicate callbacks and batch output.
+**Chunk 1 (`9b6dd9c`) — output authority.** Workers pass only unlinked temporary FDs; the host re-validates result, target count and the 250 MiB aggregate budget, snapshots outputs into private FDs, commits once per destination. Best-effort provider truncation removed.
 
-**Unchanged by either chunk.** `app-host/build.gradle.kts` is absent from the `9b6dd9c` change list, so every Host-side finding below carries over verbatim: the `securityAudit` grep, `gson` on the Host, `text-recognition` on the Host, `security-crypto:1.1.0-alpha06`. `ReflowReaderScreen` and `ArchitectureBoundaryTest` untouched. The split package is still 8 files — the new `HostOutputTransaction.kt` went into `com.pdfchemy.app.jail`, not `.logic`.
+**Chunk 2 (`1bf2af8`) — worker failure lifecycle.** Only 429 BUSY preserves a live worker; other post-submission failures abort it. A failed admitted operation keeps its gate until the 120 s watchdog fires. Batch metadata validation moved behind gate acquisition — see `SEC-919`.
+
+**Unchanged across all three chunks.** `app-host/build.gradle.kts` absent from every change list, so every Host-side finding carries over verbatim: the `securityAudit` grep, `gson` on the Host, `text-recognition` on the Host, `security-crypto:1.1.0-alpha06`. `ReflowReaderScreen` and `ArchitectureBoundaryTest` untouched. Split package still 8 files.
+
+**Verification at `1bf2af8`:** 20/20 focused instrumentation on API 24 and 20/20 on API 36, real Binder and isolated-process execution, same APKs. API 30, the complete matrix, release lint/build, and final-candidate CI remain pending. `securityAudit` is cited as passing in two consecutive verification blocks despite never having been observed red.
 
 ## Tasks
 
 ### R1 — Create the ledger
 
-`KILO_SECURITY_LEDGER.md`: provenance, invariant register, severity bands, ID-reuse rules, status-transition rules, `SEC-901`…`SEC-918`, the `REG-###` register, phase acceptance. Record the adopted `SEC-001`…`SEC-018` with a pointer noting they are owned by the companion record.
+`KILO_SECURITY_LEDGER.md`: provenance, invariant register, severity bands, ID-reuse rules, status-transition rules, `SEC-901`…`SEC-919`, the `REG-###` register, phase acceptance. Record the adopted `SEC-001`…`SEC-018` with a pointer noting they are owned by the companion record.
 
 Verify by: committed; no ID appears twice; no `SEC-901`-band ID referenced by PR #1.
 
@@ -113,7 +128,21 @@ Applied to ≥10 screens. Audit coverage against every document-rendering screen
 
 Verify by: flag set and cleared; no document content renders unprotected.
 
-### R12 — revalidate the inherited queue *(no IDs until checked)*
+### R12 — SEC-919: restore pre-admission rejection of malformed batches
+
+Chunk 2 moved batch metadata validation behind gate acquisition so that invalid overlap returns 429 BUSY rather than a pre-admission 400 that could kill a live worker. That trades a worker-lifecycle hazard for an availability one: a malformed batch now acquires the jail's single admission slot, returns BUSY, and holds that slot until the 120 s watchdog fires, because a failed admitted operation no longer releases its gate.
+
+It also conflicts with the companion register's own `SEC-003` ("full verification before dispatch"), and BUSY is a retryable code — a client with a BUSY retry policy cannot distinguish "busy, retry" from "your input is invalid" and will spin on permanently-invalid input.
+
+Split the check by cost, keeping Chunk 2's protection intact:
+1. **Before admission** — cheap structural bounds only: array lengths, hex format, count limits, null checks. These cannot kill a worker because they never reach it.
+2. **After admission** — hash/size identity verification, which requires staging and is the part that must not abort a live worker.
+
+Keep 429 for genuinely-overlapping submissions and restore a distinct non-retryable code for structural rejection.
+
+Verify by: a malformed batch is rejected without acquiring the admission slot (assert the gate is immediately reusable by a subsequent valid request); a BUSY response is never produced for structural errors; a real overlap still returns BUSY and preserves the running worker.
+
+### R13 — revalidate the inherited queue *(no IDs until checked)*
 
 Check each at the merge commit, then adopt the matching existing ID if PR #1 raised it, else allocate from `SEC-919+`.
 
@@ -189,6 +218,8 @@ Their `SEC-001`…`SEC-018` and `RISK-001` are not restated here.
 | SEC-917 | — | BUILD | 14 | **FIXED** | CONFIRMED | Release signing guarded by `if (password != null)`. |
 | SEC-918 | — | BUILD | 12 | **SUPERSEDED** | CONFIRMED | Branch divergence resolved; `6119652`/`ddd2624` are in `repo-android` history. Superseded by SEC-909. |
 
+| SEC-919 | MEDIUM | RESOURCE | 06 | **OPEN** | CONFIRMED | Chunk 2 moved batch metadata validation **behind** gate acquisition; invalid overlap now returns 429 BUSY instead of a pre-admission 400. A malformed batch occupies the jail's single admission slot for up to 120 s. Contradicts the companion `SEC-003` requirement of "full verification before dispatch." |
+
 ### Status-transition rules
 
 - `FIXED` requires all five: change landed, in a production path, structural prevention, regression test that **executes**, independently verified.
@@ -205,12 +236,13 @@ Their `SEC-001`…`SEC-018` and `RISK-001` are not restated here.
 - **REG-005** `cbafb998` staging invariant (`StagedPdf`, `verifyAndRewind`).
 - **REG-006** `f6b6f7d` PR #1 chunk 0. SEC-902 → `FIXED`; their `SEC-012` → `FIXED`; SEC-903 → `REGRESSED`.
 - **REG-007** `9b6dd9c` PR #1 chunk 1, host-owned output publication. SEC-910, SEC-911, SEC-914 opened. SEC-901, SEC-903, SEC-904, SEC-905, SEC-906 unchanged — `app-host/build.gradle.kts` absent from the change list.
+- **REG-008** `1bf2af8` PR #1 chunk 2, worker failure classification and recycling. SEC-919 opened. Verification improved to 20/20 API 24 and 20/20 API 36 focused runs. SEC-901, SEC-903, SEC-904, SEC-905, SEC-906 unchanged — third consecutive push without `app-host/build.gradle.kts`. Their register still `SEC-001`…`SEC-018`; no collision.
 
 ## Validation
 
 **Phase acceptance:** zero open `CRITICAL`, and every `HIGH` either `FIXED` (all five conditions) or explicitly accepted in writing with a rationale.
 
-1. `git rev-parse HEAD` = `9b6dd9c` or its successor.
+1. `git rev-parse HEAD` = `1bf2af8` or its successor.
 2. `:app-host` release and `:pdf-jail` build clean.
 3. `:app-host` `compileClasspath` free of `pdf-jail`, `pdf-renderer`, `com.tom-roush`, `org.bouncycastle`. `releaseRuntimeClasspath` free of `com.tom-roush`, `org.bouncycastle`, `com.google.mlkit:text-recognition`.
 4. `:app-host` compiled classes contain no constant-pool reference to `com/tom_roush/`, `org/bouncycastle/`, `android/graphics/pdf/PdfRenderer`, or `com/pdfchemy/app/logic/PD*`.
@@ -219,15 +251,18 @@ Their `SEC-001`…`SEC-018` and `RISK-001` are not restated here.
 7. `ArchitectureBoundaryTest` fails against a planted real-PDFBox ref and a planted fake-stub ref.
 8. No full document URI in any `SharedPreferences` key or value.
 9. `INV-05` states the actual publication guarantee; the UI does not promise more.
-10. `REG-003` complete; nothing `UNVERIFIED`; every `REGRESSED` finding has an open `REG-###`.
+10. A malformed batch never acquires the jail admission slot, and structural rejection never returns 429.
+11. `REG-003` complete; nothing `UNVERIFIED`; every `REGRESSED` finding has an open `REG-###`.
 
 ### PR #1 verification gaps to close before credit
 
-From its own status doc: release lint "ended during host lint analysis without a result"; five device guard tests unexecuted; API 36 publication verification and the full 24/30/36 matrix not run for chunk 1; API 36 OCR `getAllHalInstanceNames` null deref under isolated UID unresolved. No closure is creditable until the final-merge-commit CI run is green.
+From its own status doc, as of `1bf2af8`: 20/20 focused instrumentation on API 24 and API 36, 47 JVM tests, `securityArchitecture`, `assembleDebug`, `assembleDebugAndroidTest` all passing. Still pending: API 30, the complete 24/30/36 matrix, release lint, release build, and final-candidate CI revalidation. API 36 OCR `getAllHalInstanceNames` null deref under isolated UID and the legacy Jackson export blocker (`SEC-911`) both remain unresolved — neither was in the focused runs. **No closure is creditable until the final-merge-commit CI run is green.**
 
 ## Risks
 
-- **A green build certifies less than it appears.** Two of the open defects (`SEC-903` gson on the Host, `SEC-904` split package) arrived *during* the hardening, and the gate that should have caught structural regressions was left unchanged while a new one was added beside it.
+- **A green build certifies less than it appears.** Two of the open defects (`SEC-903` gson on the Host, `SEC-904` split package) arrived *during* the hardening, and the gate that should have caught structural regressions was left unchanged while a new one was added beside it. Three consecutive pushes have now left `app-host/build.gradle.kts` untouched while adding thousands of lines of jail code.
+- **`securityAudit` is being cited as passing evidence.** It appears in two consecutive verification blocks as a check that succeeded. It has never once been observed red, and it is the same gate that missed `DummyPDFBox.kt` in the directory it scans. A passing result from it carries no information.
+- **`SEC-919` trades a lifecycle hazard for an availability one.** Chunk 2's fix prevents a malformed overlap from killing a live worker, but does so by placing unvalidated input behind the single admission gate. Both the old and new failure modes are real; the fix belongs in the validation split, not in the ordering.
 - **`securityAudit` has passed through five audits**, including one that found the stub in the directory it scans. Treat any green gate as unproven until observed red.
 - **The ID space is shared and theirs is still growing.** It gained `SEC-018` in the last push. The `SEC-901+` band removes the collision; it does not remove the need to re-read their register at each re-baseline.
 - **Narrowing `INV-05`/`INV-06` risks reading as closure.** They were narrowed to what PR #1 actually enforces. `SEC-910` and `SEC-914` stay open on that basis.
@@ -241,4 +276,4 @@ From its own status doc: release lint "ended during host lint analysis without a
 ## Open questions
 
 1. **PR #1 is an input, not the target.** It closes two criticals, regresses one HIGH, and opens three. Re-derive the register on its merge commit before crediting any closure — `9b6dd9c` is still a draft branch head.
-2. **Should the revalidation queue adopt their IDs or allocate fresh?** R12 assumes fresh from `SEC-919+` unless their register already covers the defect. If their range keeps growing, some queue items may land above `SEC-919` by then.
+2. **Should the revalidation queue adopt their IDs or allocate fresh?** R13 assumes fresh from `SEC-920+` unless their register already covers the defect. If their range keeps growing, some queue items may land above that point by then.
