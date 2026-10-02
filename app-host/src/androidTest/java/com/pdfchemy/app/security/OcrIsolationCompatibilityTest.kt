@@ -41,11 +41,15 @@ class OcrIsolationCompatibilityTest {
             suspend fun identity(): Int {
                 val response = CompletableDeferred<String>()
                 OperationScratchBroker(context).use { scratch ->
-                    worker.executeEngine("DEBUG_IDENTITY", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
+                    val token = worker.beginOperation(scratch)
+                    check(token > 0L)
+                    worker.executeEngine(token, "DEBUG_IDENTITY", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) { response.complete(resultJson) }
                         override fun onFailure(errorCode: Int, errorMessage: String) { response.completeExceptionally(IllegalStateException(errorMessage)) }
                     })
-                    return JSONObject(withTimeout(10_000) { response.await() }).getInt("pid")
+                    val out = withTimeout(10_000) { response.await() }
+                    worker.completeOperation(token)
+                    return JSONObject(out).getInt("pid")
                 }
             }
             val workerPid = identity()

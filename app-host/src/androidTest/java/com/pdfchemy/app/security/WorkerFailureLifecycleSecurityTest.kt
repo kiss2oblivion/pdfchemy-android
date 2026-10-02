@@ -39,14 +39,18 @@ class WorkerFailureLifecycleSecurityTest {
     private suspend fun debug(worker: IPdfJailService, engine: String): String {
         val result = CompletableDeferred<String>()
         OperationScratchBroker(context).use { scratch ->
-            worker.executeEngine(engine, null, null, "{}", null, "", 0, scratch,
+            val token = worker.beginOperation(scratch)
+            if (token == 0L) throw IllegalStateException("Jail 429: BUSY")
+            worker.executeEngine(token, engine, null, null, "{}", null, "", 0, scratch,
                 object : IPdfJailStringCallback.Stub() {
                     override fun onSuccess(resultJson: String) { result.complete(resultJson) }
                     override fun onFailure(errorCode: Int, errorMessage: String) {
                         result.completeExceptionally(IllegalStateException("Jail $errorCode: $errorMessage"))
                     }
                 })
-            return withTimeout(10_000) { result.await() }
+            val out = withTimeout(10_000) { result.await() }
+            worker.completeOperation(token)
+            return out
         }
     }
 
@@ -129,7 +133,10 @@ class WorkerFailureLifecycleSecurityTest {
                 assertTrue(runCatching { debug(worker, "DEBUG_FAIL") }.exceptionOrNull()?.message.orEmpty().contains("Jail 400:"))
                 assertTrue(runCatching { debug(worker, "DEBUG_IDENTITY") }.exceptionOrNull()?.message.orEmpty().contains("Jail 429: BUSY"))
                 assertTrue(worker.asBinder().isBinderAlive)
-            } finally { worker.abortWorker(); withTimeout(15_000) { death.await() } }
+            } finally {
+                if (worker.asBinder().isBinderAlive) runCatching { worker.abortWorker() }
+                withTimeout(15_000) { death.await() }
+            }
         }
     }
 
@@ -143,7 +150,9 @@ class WorkerFailureLifecycleSecurityTest {
                 val death = CompletableDeferred<Unit>()
                 worker.asBinder().linkToDeath({ death.complete(Unit) }, 0)
                 OperationScratchBroker(context).use { scratch ->
-                    worker.executeEngine("DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch,
+                    val blockToken = worker.beginOperation(scratch)
+                    check(blockToken > 0L)
+                    worker.executeEngine(blockToken, "DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch,
                         object : IPdfJailStringCallback.Stub() {
                             override fun onSuccess(resultJson: String) { fail("Blocking operation completed") }
                             override fun onFailure(errorCode: Int, errorMessage: String) { fail(errorMessage) }
@@ -161,7 +170,7 @@ class WorkerFailureLifecycleSecurityTest {
                             assertTrue(worker.asBinder().isBinderAlive)
                         }
                         val batchCode = CompletableDeferred<Int>()
-                        worker.executeEngineBatch("MERGE", null, null, "{}", null, null, null, scratch,
+                        worker.executeEngineBatch(0L, "MERGE", null, null, "{}", null, null, null, scratch,
                             object : IPdfJailStringCallback.Stub() {
                                 override fun onSuccess(resultJson: String) { batchCode.complete(0) }
                                 override fun onFailure(errorCode: Int, errorMessage: String) { batchCode.complete(errorCode) }
@@ -172,7 +181,7 @@ class WorkerFailureLifecycleSecurityTest {
                         withWorker { assertEquals(worker.asBinder(), it.asBinder()) }
                         assertFalse(death.isCompleted)
                         assertEquals("existing destination", target.readText())
-                    } finally { worker.abortWorker(); withTimeout(15_000) { death.await() } }
+                    } finally { worker.abortOperation(blockToken); withTimeout(15_000) { death.await() } }
                 }
             }
         } finally { DocumentStager.release(staged); source.delete(); target.delete() }

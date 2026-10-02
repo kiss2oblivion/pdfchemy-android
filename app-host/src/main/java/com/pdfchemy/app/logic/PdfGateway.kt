@@ -20,8 +20,13 @@ import kotlinx.coroutines.withTimeout
 
 object PdfGateway {
     private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
-    private suspend fun request(context: Context, sources: List<Uri>, targets: List<Uri>, paramsJson: String,
-        invoke: (IPdfJailService, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
+
+    private suspend fun request(
+        context: Context,
+        sources: List<Uri>,
+        targets: List<Uri>,
+        paramsJson: String,
+        invoke: (IPdfJailService, Long, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
     ): String = withContext(Dispatchers.IO) {
         SecurityLimits.enforceStringLength(paramsJson, SecurityLimits.MAX_PARAMS_JSON_BYTES, "Request")
         require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
@@ -30,7 +35,7 @@ object PdfGateway {
         val descriptors = mutableListOf<ParcelFileDescriptor>()
         val connections = mutableListOf<ServiceConnection>()
         var jail: IPdfJailService? = null
-        var requestSubmitted = false
+        var operationToken: Long = 0L
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
         val outputTransaction = HostOutputTransaction(context, targets)
         try {
@@ -42,6 +47,7 @@ object PdfGateway {
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
             val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
             val outputs = outputTransaction.workerDescriptors
+
             suspend fun bind(className: String): IBinder {
                 val channel = Channel<IBinder>(1)
                 val connection = object : ServiceConnection {
@@ -54,9 +60,17 @@ object PdfGateway {
                 connections.add(connection)
                 return withTimeout(10_000L) { channel.receive() }
             }
+
             val renderer = bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
             val binder = bind("com.pdfchemy.app.jail.PdfJailService")
             jail = IPdfJailService.Stub.asInterface(binder)
+
+            // Synchronous admission handshake: obtain exclusive token or detect BUSY
+            operationToken = jail.beginOperation(scratch)
+            if (operationToken == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+
             val response = CompletableDeferred<String>()
             val death = IBinder.DeathRecipient { response.completeExceptionally(IllegalStateException("Isolated worker died")) }
             binder.linkToDeath(death, 0)
@@ -66,23 +80,36 @@ object PdfGateway {
                     response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
+
             val result = try {
                 withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
-                    requestSubmitted = true
-                    invoke(jail!!, staged, inputs, outputs, renderer, scratch, callback)
+                    invoke(jail!!, operationToken, staged, inputs, outputs, renderer, scratch, callback)
                     response.await()
                 }
             } finally { runCatching { binder.unlinkToDeath(death, 0) } }
+
             scratch.verifyBudget()
+
+            // Acceptance handshake:
+            // For output operations: validate and snapshot into private FDs, then ACK before committing to SAF.
             if (targets.isNotEmpty()) {
                 outputTransaction.validateAndSnapshot(result)
+                jail.completeOperation(operationToken)
+                operationToken = 0L // Successfully completed/released
                 outputTransaction.commit()
+            } else {
+                // Non-output operation: Host accepts result
+                jail.completeOperation(operationToken)
+                operationToken = 0L // Successfully completed/released
             }
             result
         } catch (error: Throwable) {
-            // Only BUSY identifies a request that did not acquire the worker.
-            if (requestSubmitted && (error !is WorkerFailure || error.errorCode != 429)) {
-                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+            // Terminate worker ONLY if this operation holds a valid, active token.
+            // Never abort if token == 0L (e.g. BUSY or pre-admission failure).
+            if (operationToken > 0L) {
+                runCatching {
+                    jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken)
+                }
             }
             throw error
         } finally {
@@ -94,19 +121,23 @@ object PdfGateway {
             inputLeases.forEach { it.close() }
         }
     }
-    suspend fun analyzePdf(context: Context, sourceUri: Uri): String = request(context, listOf(sourceUri), emptyList(), "{}") { jail, staged, inputs, _, _, scratch, callback ->
-        jail.analyzePdf(inputs[0], staged[0].sha256, staged[0].size, scratch, callback)
+
+    suspend fun analyzePdf(context: Context, sourceUri: Uri): String = request(context, listOf(sourceUri), emptyList(), "{}") { jail, token, staged, inputs, _, _, scratch, callback ->
+        jail.analyzePdf(token, inputs[0], staged[0].sha256, staged[0].size, scratch, callback)
     }
+
     suspend fun executeEngine(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): String =
-        request(context, listOfNotNull(sourceUri), listOfNotNull(destUri), paramsJson) { jail, staged, inputs, outputs, renderer, scratch, callback ->
-            jail.executeEngine(engineName, inputs.firstOrNull(), outputs.firstOrNull(), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0, scratch, callback)
+        request(context, listOfNotNull(sourceUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngine(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, scratch, callback)
         }
+
     suspend fun executeEngineExtra(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): String =
-        request(context, listOfNotNull(sourceUri, extraUri), listOfNotNull(destUri), paramsJson) { jail, staged, inputs, outputs, renderer, scratch, callback ->
-            jail.executeEngineExtra(engineName, inputs.firstOrNull(), outputs.firstOrNull(), inputs.getOrNull(1), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0, staged.getOrNull(1)?.sha256 ?: "", staged.getOrNull(1)?.size ?: 0, scratch, callback)
+        request(context, listOfNotNull(sourceUri, extraUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngineExtra(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), inputs.getOrNull(1), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, staged.getOrNull(1)?.sha256 ?: "", staged.getOrNull(1)?.size ?: 0L, scratch, callback)
         }
+
     suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): String =
-        request(context, sourceUris, destUris, paramsJson) { jail, staged, inputs, outputs, renderer, scratch, callback ->
-            jail.executeEngineBatch(engineName, inputs.toTypedArray(), outputs.toTypedArray(), paramsJson, renderer, staged.map { it.sha256 }.toTypedArray(), staged.map { it.size }.toLongArray(), scratch, callback)
+        request(context, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngineBatch(token, engineName, inputs.toTypedArray(), outputs.toTypedArray(), paramsJson, renderer, staged.map { it.sha256 }.toTypedArray(), staged.map { it.size }.toLongArray(), scratch, callback)
         }
 }

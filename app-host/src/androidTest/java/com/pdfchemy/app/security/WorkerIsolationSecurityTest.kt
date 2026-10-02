@@ -34,11 +34,20 @@ class WorkerIsolationSecurityTest {
     private suspend fun call(jail: IPdfJailService, name: String): JSONObject {
         val result = CompletableDeferred<String>()
         OperationScratchBroker(context).use { scratch ->
-            jail.executeEngine(name, null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
-                override fun onSuccess(resultJson: String) { result.complete(resultJson) }
-                override fun onFailure(errorCode: Int, errorMessage: String) { result.completeExceptionally(IllegalStateException("$errorCode $errorMessage")) }
-            })
-            return JSONObject(withTimeout(10_000) { result.await() })
+            val token = jail.beginOperation(scratch)
+            if (token == 0L) throw IllegalStateException("429 BUSY")
+            try {
+                jail.executeEngine(token, name, null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
+                    override fun onSuccess(resultJson: String) { result.complete(resultJson) }
+                    override fun onFailure(errorCode: Int, errorMessage: String) { result.completeExceptionally(IllegalStateException("$errorCode $errorMessage")) }
+                })
+                val jsonStr = withTimeout(10_000) { result.await() }
+                jail.completeOperation(token)
+                return JSONObject(jsonStr)
+            } catch (t: Throwable) {
+                runCatching { jail.abortOperation(token) }
+                throw t
+            }
         }
     }
     private suspend fun outputBytes(jail: IPdfJailService): Long {
@@ -130,7 +139,9 @@ class WorkerIsolationSecurityTest {
                     OperationScratchBroker(context).use { scratch ->
                         ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { source ->
                             ParcelFileDescriptor.open(target, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
-                                binding.jail.executeEngineBatch("MERGE", arrayOf(source), arrayOf(dest), "{}", null, hashes, sizes, scratch, object : IPdfJailStringCallback.Stub() {
+                                val token = binding.jail.beginOperation(scratch)
+                                check(token > 0L)
+                                binding.jail.executeEngineBatch(token, "MERGE", arrayOf(source), arrayOf(dest), "{}", null, hashes, sizes, scratch, object : IPdfJailStringCallback.Stub() {
                                     override fun onSuccess(resultJson: String) { result.complete("ACCEPTED") }
                                     override fun onFailure(errorCode: Int, errorMessage: String) { result.complete(errorMessage) }
                                 })
@@ -154,7 +165,9 @@ class WorkerIsolationSecurityTest {
                             ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { second ->
                                 ParcelFileDescriptor.open(target, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
                                     val hashes = arrayOf(hash, hash).apply { this[invalidPosition] = "0".repeat(64) }
-                                    binding.jail.executeEngineBatch("MERGE", arrayOf(first, second), arrayOf(dest), "{}", null, hashes, longArrayOf(file.length(), file.length()), scratch, object : IPdfJailStringCallback.Stub() {
+                                    val token = binding.jail.beginOperation(scratch)
+                                    check(token > 0L)
+                                    binding.jail.executeEngineBatch(token, "MERGE", arrayOf(first, second), arrayOf(dest), "{}", null, hashes, longArrayOf(file.length(), file.length()), scratch, object : IPdfJailStringCallback.Stub() {
                                         override fun onSuccess(resultJson: String) { result.complete("ACCEPTED") }
                                         override fun onFailure(errorCode: Int, errorMessage: String) { result.complete(errorMessage) }
                                     })
@@ -179,7 +192,9 @@ class WorkerIsolationSecurityTest {
             binding.jail.asBinder().linkToDeath({ death.complete(Unit) }, 0)
             OperationScratchBroker(context).use { scratch ->
                 val start = SystemClock.elapsedRealtime()
-                binding.jail.executeEngine("DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
+                val token = binding.jail.beginOperation(scratch)
+                check(token > 0L)
+                binding.jail.executeEngine(token, "DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
                     override fun onSuccess(resultJson: String) { fail("Blocking operation unexpectedly completed") }
                     override fun onFailure(errorCode: Int, errorMessage: String) {}
                 })
@@ -199,7 +214,9 @@ class WorkerIsolationSecurityTest {
             val death = CompletableDeferred<Unit>()
             binding.jail.asBinder().linkToDeath({ death.complete(Unit) }, 0)
             OperationScratchBroker(context).use { scratch ->
-                binding.jail.executeEngine("DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
+                val token = binding.jail.beginOperation(scratch)
+                check(token > 0L)
+                binding.jail.executeEngine(token, "DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch, object : IPdfJailStringCallback.Stub() {
                     override fun onSuccess(resultJson: String) { fail("Blocked job unexpectedly completed") }
                     override fun onFailure(errorCode: Int, errorMessage: String) {}
                 })
@@ -208,7 +225,7 @@ class WorkerIsolationSecurityTest {
                         try { call(binding.jail, "DEBUG_IDENTITY"); fail("An overlapping job was admitted") }
                         catch (error: IllegalStateException) { assertTrue(error.message.orEmpty().contains("429 BUSY")) }
                     }
-                } finally { binding.jail.abortWorker() }
+                } finally { binding.jail.abortOperation(token) }
                 withTimeout(10_000) { death.await() }
             }
         }

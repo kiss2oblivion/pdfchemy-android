@@ -34,6 +34,7 @@ object SecurityLimits {
     const val MAX_SIGNATURES = 100
     const val WORKER_DEADLINE_MS = 120_000L
     const val RENDER_DEADLINE_MS = 30_000L
+    const val HOST_ACCEPT_DEADLINE_MS = 30_000L
 
     fun requireIdentity(hash: String?, size: Long) {
         require(size in 1..MAX_PDF_FILESIZE) { "Missing or excessive staged size" }

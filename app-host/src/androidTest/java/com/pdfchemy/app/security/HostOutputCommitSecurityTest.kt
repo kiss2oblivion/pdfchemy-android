@@ -74,7 +74,9 @@ class HostOutputCommitSecurityTest {
         try {
             withWorker { worker ->
                 OperationScratchBroker(context).use { scratch ->
-                    worker.executeEngine("DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch,
+                    val blockToken = worker.beginOperation(scratch)
+                    check(blockToken > 0L)
+                    worker.executeEngine(blockToken, "DEBUG_BLOCK", null, null, "{}", null, "", 0, scratch,
                         object : IPdfJailStringCallback.Stub() {
                             override fun onSuccess(resultJson: String) { fail("Blocking job completed") }
                             override fun onFailure(errorCode: Int, errorMessage: String) { fail(errorMessage) }
@@ -87,7 +89,7 @@ class HostOutputCommitSecurityTest {
                         assertTrue(legacy.exceptionOrNull()?.message.orEmpty().contains("BUSY"))
                         targets.forEach(::untouched)
                         assertTrue(worker.asBinder().isBinderAlive)
-                    } finally { runCatching { worker.abortWorker() } }
+                    } finally { runCatching { worker.abortOperation(blockToken) } }
                 }
             }
         } finally { DocumentStager.release(staged); source.delete() }

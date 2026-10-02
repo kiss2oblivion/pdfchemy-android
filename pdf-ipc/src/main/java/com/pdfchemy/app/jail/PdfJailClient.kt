@@ -26,8 +26,8 @@ object PdfJailClient {
         destUri: Uri,
         modificationsJson: String
     ): Boolean {
-        publish(context, source, destUri) { jail, input, output, scratch, callback ->
-            jail.exportModifiedPdf(input, output, modificationsJson, source.sha256, source.size, scratch, callback)
+        publish(context, source, destUri) { jail, token, input, output, scratch, callback ->
+            jail.exportModifiedPdf(token, input, output, modificationsJson, source.sha256, source.size, scratch, callback)
         }
         return true
     }
@@ -39,8 +39,8 @@ object PdfJailClient {
         targetDpi: Float = 140f,
         quality: Float = 0.5f,
         rasterizePages: Boolean = false
-    ): Long = publish(context, source, destUri) { jail, input, output, scratch, callback ->
-        jail.compressPdf(input, output, targetDpi, quality, rasterizePages, source.sha256, source.size, scratch, callback)
+    ): Long = publish(context, source, destUri) { jail, token, input, output, scratch, callback ->
+        jail.compressPdf(token, input, output, targetDpi, quality, rasterizePages, source.sha256, source.size, scratch, callback)
     }
 
     /** Legacy writer entry points obey the same host-only publication boundary. */
@@ -48,7 +48,7 @@ object PdfJailClient {
         context: Context,
         source: StagedPdf,
         destUri: Uri,
-        invoke: (IPdfJailService, ParcelFileDescriptor, ParcelFileDescriptor, IBinder, IPdfJailCallback) -> Unit
+        invoke: (IPdfJailService, Long, ParcelFileDescriptor, ParcelFileDescriptor, IBinder, IPdfJailCallback) -> Unit
     ): Long = withContext(Dispatchers.IO) {
         val scratch = OperationScratchBroker(context)
         val output = HostOutputTransaction(context, listOf(destUri))
@@ -56,7 +56,7 @@ object PdfJailClient {
         val response = CompletableDeferred<Unit>()
         var isBound = false
         var jail: IPdfJailService? = null
-        var requestSubmitted = false
+        var operationToken = 0L
         var input: ParcelFileDescriptor? = null
         var binder: IBinder? = null
         val death = IBinder.DeathRecipient {
@@ -83,6 +83,13 @@ object PdfJailClient {
             check(isBound) { "Failed to bind to PdfJailService" }
             binder = withTimeout(10_000L) { bound.await() }
             jail = IPdfJailService.Stub.asInterface(binder)
+
+            // Synchronous admission handshake
+            operationToken = jail.beginOperation(scratch)
+            if (operationToken == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+
             binder.linkToDeath(death, 0)
             val callback = object : IPdfJailCallback.Stub() {
                 override fun onSuccess(outputSizeBytes: Long) { response.complete(Unit) }
@@ -91,19 +98,19 @@ object PdfJailClient {
                 }
             }
             withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
-                requestSubmitted = true
-                invoke(jail!!, sourceFd, output.workerDescriptors.single(), scratch, callback)
+                invoke(jail!!, operationToken, sourceFd, output.workerDescriptors.single(), scratch, callback)
                 response.await()
             }
             scratch.verifyBudget()
             output.validateAndSnapshot("{\"success\":true}")
             val size = output.validatedBytes // Never trust the worker's reported byte count.
+            jail.completeOperation(operationToken)
+            operationToken = 0L // Successfully completed/released
             output.commit()
             size
         } catch (error: Throwable) {
-            // Only BUSY identifies a request that did not acquire the worker.
-            if (requestSubmitted && (error !is WorkerFailure || error.errorCode != 429)) {
-                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+            if (operationToken > 0L) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken) }
             }
             throw error
         } finally {
@@ -124,10 +131,14 @@ object PdfJailClient {
         var connection: ServiceConnection? = null
         var jailRef: IPdfJailService? = null
         var sourceFdRef: ParcelFileDescriptor? = null
-        var requestSubmitted = false
+        var operationToken = 0L
 
-        fun abortSubmittedWorker() {
-            if (requestSubmitted) runCatching { jailRef?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+        fun abortActiveToken() {
+            if (operationToken > 0L) {
+                val token = operationToken
+                operationToken = 0L
+                runCatching { jailRef?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(token) }
+            }
         }
 
         fun cleanup() {
@@ -154,11 +165,21 @@ object PdfJailClient {
                 }
 
                 try {
+                    // Synchronous admission handshake
+                    val token = jailService.beginOperation(scratch)
+                    if (token == 0L) {
+                        cleanup()
+                        continuation.resumeWithException(WorkerFailure(429, "Jail 429: BUSY"))
+                        return
+                    }
+                    operationToken = token
+
                     val contentResolver = context.contentResolver
                     val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
                     sourceFdRef = sourceFd
 
                     if (sourceFd == null) {
+                        abortActiveToken()
                         cleanup()
                         continuation.resumeWithException(IllegalStateException("Failed to open file descriptor"))
                         return
@@ -166,6 +187,10 @@ object PdfJailClient {
 
                     val callback = object : IPdfJailStringCallback.Stub() {
                         override fun onSuccess(resultJson: String) {
+                            if (operationToken > 0L) {
+                                runCatching { jailRef?.completeOperation(operationToken) }
+                                operationToken = 0L
+                            }
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resume(resultJson)
@@ -174,7 +199,7 @@ object PdfJailClient {
 
                         override fun onFailure(errorCode: Int, errorMessage: String) {
                             if (!continuation.isActive) return
-                            if (errorCode != 429) abortSubmittedWorker()
+                            abortActiveToken()
                             cleanup()
                             if (continuation.isActive) {
                                 continuation.resumeWithException(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
@@ -182,11 +207,10 @@ object PdfJailClient {
                         }
                     }
 
-                    requestSubmitted = true
-                    jailService.analyzePdf(sourceFd, source.sha256, source.size, scratch, callback)
+                    jailService.analyzePdf(token, sourceFd, source.sha256, source.size, scratch, callback)
 
                 } catch (e: Exception) {
-                    abortSubmittedWorker()
+                    abortActiveToken()
                     cleanup()
                     if (continuation.isActive) {
                         continuation.resumeWithException(e)
@@ -211,7 +235,7 @@ object PdfJailClient {
         }
 
         continuation.invokeOnCancellation {
-            abortSubmittedWorker()
+            abortActiveToken()
             cleanup()
         }
     } }
