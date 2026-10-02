@@ -94,12 +94,12 @@ object PdfGateway {
             // For output operations: validate and snapshot into private FDs, then ACK before committing to SAF.
             if (targets.isNotEmpty()) {
                 outputTransaction.validateAndSnapshot(result)
-                jail.completeOperation(operationToken)
+                check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released
                 outputTransaction.commit()
             } else {
                 // Non-output operation: Host accepts result
-                jail.completeOperation(operationToken)
+                check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released
             }
             result

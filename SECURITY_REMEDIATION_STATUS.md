@@ -61,29 +61,33 @@ Observed Chunk 2 verification on October 2, 2026:
 
 ## Review Chunk 2.5 — tokenized worker ownership and host acceptance handshake
 
-Review base: `1bf2af87ec15485a83ac8076d580c9b6edf84366`. This chunk introduces tokenized worker ownership and Host acceptance lifecycle, resolving asynchronous admission, stale cancellation, and post-execution ownership races before Chunk 3's Host-side response validation.
+Review base: `1bf2af87ec15485a83ac8076d580c9b6edf84366`. Corrective review commit: `4950f4850631a88865c774822b39a39d6d7d4388`. This chunk introduces tokenized worker ownership and Host acceptance lifecycle, resolving asynchronous admission, stale cancellation, and post-execution ownership races before Chunk 3's Host-side response validation.
 
 - Removed interface-level `oneway` from `IPdfJailService.aidl`. Heavy operations remain individually `oneway`, preceded by a synchronous admission handshake: `beginOperation(ownerBinder): Long`, `completeOperation(token): Boolean`, and `abortOperation(token): void`. Execution methods take the admitted `operationId` token.
-- `WorkerGate` refactored into a full tokenized state machine: `IDLE` -> `RESERVED(token)` -> `RUNNING(token)` -> `AWAITING_HOST_ACCEPT(token)` -> `IDLE` (or `FAILED_POISONED(token)` -> PID death). Atomic stale-token isolation guarantees that stale `complete` or `abort` calls cannot release or terminate a different operation's PID.
-- Dual watchdogs decouple execution from Host validation: `WORKER_DEADLINE_MS` (120 s) for task execution and `HOST_ACCEPT_DEADLINE_MS` (30 s) for Host acceptance ACK.
-- Worker task completion no longer releases the gate. The gate remains locked in `AWAITING_HOST_ACCEPT` until the Host accepts or rejects the result. For output operations, the Host snapshots validated bytes into private FDs before calling `completeOperation(token)`, strictly before committing to real SAF destinations.
+- `WorkerGate` refactored into a full tokenized state machine: `IDLE` -> `RESERVED(token)` -> `RUNNING(token)` -> `AWAITING_HOST_ACCEPT(token)` -> `completeOperation()` -> `IDLE` (or `FAILED_POISONED(token)` -> PID death). Atomic stale-token isolation guarantees that stale `complete` or `abort` calls cannot release or terminate a different operation's PID.
+- `WorkerGate.complete(token)` strictly enforces that completion is valid ONLY when `token == currentToken && currentState == State.AWAITING_HOST_ACCEPT`. Attempting to complete while `RESERVED` or `RUNNING` strictly returns `false`.
+- `WorkerGate.acquire()` compatibility helper utilizes private internal release semantics, avoiding any dilution or bypass of public `complete()` state requirements.
+- Host acceptance checks are mandatory and fail-closed: every `completeOperation(operationToken)` call across `PdfGateway` (output and non-output) and `PdfJailClient` (publish and analyzePdf) checks the returned boolean (`check(jail.completeOperation(operationToken))`). Failed acceptance aborts the worker token, suppresses result/output commit, and fails closed.
+- `PdfJailClient.analyzePdf` captures response via `CompletableDeferred` without releasing ownership in the Binder callback. Validation and budget checks execute while the token is owned, and `completeOperation(token)` is checked before returning the result.
+- Watchdog phase and generation identity: dual watchdogs (`WatchdogPhase.EXECUTION` at 120 s and `WatchdogPhase.HOST_ACCEPT` at 30 s) advance `watchdogGeneration++`. Cancelled execution watchdog executions are ignored and cannot kill a worker that transitioned to `AWAITING_HOST_ACCEPT`.
+- Output publication and serialization: `exportModifiedPdf` uses Gson deserialization, and duplicate success callback instrumentation fires only after transitioning to `AWAITING_HOST_ACCEPT`.
 - Removed ambiguous boolean `requestSubmitted` from Host logic (`PdfGateway`, `PdfJailClient`). Cancellation only aborts when an active token exists (`token > 0L`). Cancelled BUSY requests cannot kill leaseholders.
 - Production Host classes are statically forbidden from invoking raw PID-wide `abortWorker()` (enforced by ArchUnit in `ArchitectureBoundaryTest`).
 - Fatal `Throwable`s (non-`Exception` runtime/linkage errors) in worker execution poison the gate and immediately kill the worker process, guaranteeing a failed worker never returns to the pool.
 
 Observed Chunk 2.5 verification on October 2, 2026:
 
-- Local JVM & Static Gates: `securityArchitecture` passed (2/2 rules, including `noProductionHostCallsRawAbortWorker`); all 13 `pdf-ipc` unit tests (`WorkerGateTest` 11/11, `SecurityLimitsTest` 2/2) passed cleanly with `--rerun-tasks`.
-- Focused API 24 instrumentation:
-  - `OperationOwnershipSecurityTest`: **10/10 passed** (Scenarios A through J: BUSY tokenless, cancelled BUSY leaseholder preservation, stale abort isolation, stale completion isolation, success exclusivity until Host ACK, Host rejection exact PID kill, no cross-request kill after success, stale cancellation after acceptance, fatal worker Throwable containment, and owner Binder death recovery).
+- Local JVM & Static Gates: `securityArchitecture` passed (2/2 rules, including `noProductionHostCallsRawAbortWorker`); all 14 `pdf-ipc` unit tests (`WorkerGateTest` 14/14, including `completeStrictlyRequiresAwaitingHostAcceptState`, `cancelledExecutionWatchdogDoesNotTerminateAwaitingHostAcceptWorker`, and `acquireHelperUsesPrivateReleaseWithoutViolatingStateSemantics`, `SecurityLimitsTest` 2/2) passed cleanly.
+- Focused API 24 instrumentation (**37/37 passed**):
+  - `OperationOwnershipSecurityTest`: **12/12 passed** (Scenarios A through K: BUSY tokenless, cancelled BUSY leaseholder preservation, stale abort isolation, stale completion isolation, success exclusivity until Host ACK, Host rejection exact PID kill, no cross-request kill after success, real complete sequence in Scenario H, fatal worker Throwable containment, owner Binder death recovery, and adversarial early success rejection in Scenario K).
   - `WorkerFailureLifecycleSecurityTest`: **6/6 passed** (failure recycling, BUSY preservation, pending recycle readmission lock).
   - `WorkerIsolationSecurityTest`: **7/7 passed** (isolated UID/PID, scratch capability, 120 s watchdog deadline death/recovery, batch metadata pre-rejection, output quota bounds).
-  - `HostOutputCommitSecurityTest`: **11/12 passed** (the single failure is the pre-existing, unchanged `API 24 Jackson / BootstrapMethodError legacy export` blocker documented in Section 2.5.15).
-- Focused API 36 instrumentation:
-  - `OperationOwnershipSecurityTest`: **10/10 passed**.
+  - `HostOutputCommitSecurityTest`: **12/12 passed** (all 12 passed, including `legacyWritersCommitThroughHostSnapshotsAndLeaveFailuresUntouched` and `duplicateSuccessCallbacksCommitExactlyOnce`).
+- Focused API 36 instrumentation (**37/37 passed**):
+  - `OperationOwnershipSecurityTest`: **12/12 passed**.
   - `WorkerFailureLifecycleSecurityTest`: **6/6 passed**.
   - `WorkerIsolationSecurityTest`: **7/7 passed**.
-  - `HostOutputCommitSecurityTest`: **12/12 passed** (all 12 passed, including `legacyWritersCommitThroughHostSnapshotsAndLeaveFailuresUntouched` and the live 120 s `realWorkerDeadlineLeavesProviderUntouched`).
+  - `HostOutputCommitSecurityTest`: **12/12 passed** (all 12 passed, including `realWorkerDeadlineLeavesProviderUntouched` live 120 s watchdog).
   - `OcrIsolationCompatibilityTest`: observed existing known blocker (`API 36 isolated OCR / NNAPI failure`).
 
 ## Limits and product behavior

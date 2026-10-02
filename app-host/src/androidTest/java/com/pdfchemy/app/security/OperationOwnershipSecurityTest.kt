@@ -221,7 +221,16 @@ class OperationOwnershipSecurityTest {
                     // Now Operation B can be admitted:
                     val tokenBSecond = worker.beginOperation(scratchB)
                     assertTrue("After Host acceptance, B can be admitted", tokenBSecond > 0L)
-                    worker.completeOperation(tokenBSecond)
+                    val successBSecond = CompletableDeferred<String>()
+                    worker.executeEngine(tokenBSecond, "DEBUG_IDENTITY", null, null, "{}", null, "", 0, scratchB,
+                        object : IPdfJailStringCallback.Stub() {
+                            override fun onSuccess(resultJson: String) { successBSecond.complete(resultJson) }
+                            override fun onFailure(errorCode: Int, errorMessage: String) {
+                                successBSecond.completeExceptionally(IllegalStateException(errorMessage))
+                            }
+                        })
+                    withTimeout(10_000) { successBSecond.await() }
+                    assertTrue(worker.completeOperation(tokenBSecond))
                 }
             }
         }
@@ -300,25 +309,101 @@ class OperationOwnershipSecurityTest {
         withWorker { worker ->
             OperationScratchBroker(context).use { scratchA ->
                 OperationScratchBroker(context).use { scratchB ->
+                    // 1. Admit A
                     val tokenA = worker.beginOperation(scratchA)
                     check(tokenA > 0L)
 
-                    // Complete A
-                    assertTrue(worker.completeOperation(tokenA))
+                    // 2. Execute A to completion -> transitions to AWAITING_HOST_ACCEPT
+                    val responseA = CompletableDeferred<String>()
+                    worker.executeEngine(tokenA, "DEBUG_IDENTITY", null, null, "{}", null, "", 0, scratchA,
+                        object : IPdfJailStringCallback.Stub() {
+                            override fun onSuccess(resultJson: String) { responseA.complete(resultJson) }
+                            override fun onFailure(errorCode: Int, errorMessage: String) {
+                                responseA.completeExceptionally(IllegalStateException(errorMessage))
+                            }
+                        })
+                    withTimeout(10_000) { responseA.await() }
 
-                    // Admit B
+                    // 3. Complete A
+                    assertTrue("completeOperation(tokenA) must succeed from AWAITING_HOST_ACCEPT", worker.completeOperation(tokenA))
+
+                    // 4. Admit B
                     val tokenB = worker.beginOperation(scratchB)
-                    assertTrue(tokenB > 0L)
+                    assertTrue("tokenB admitted after A completed", tokenB > 0L)
 
-                    // Delayed cancellation for operation A arrives
+                    // 5. Delayed cancellation for operation A arrives
                     worker.abortOperation(tokenA)
 
-                    // Operation B must remain alive!
+                    // 6. Operation B must remain alive!
                     assertTrue("Operation B must NOT be killed by stale cancellation from A", worker.asBinder().isBinderAlive)
 
-                    worker.completeOperation(tokenB)
+                    // 7. Operation B executes cleanly and completes
+                    val responseB = CompletableDeferred<String>()
+                    worker.executeEngine(tokenB, "DEBUG_IDENTITY", null, null, "{}", null, "", 0, scratchB,
+                        object : IPdfJailStringCallback.Stub() {
+                            override fun onSuccess(resultJson: String) { responseB.complete(resultJson) }
+                            override fun onFailure(errorCode: Int, errorMessage: String) {
+                                responseB.completeExceptionally(IllegalStateException(errorMessage))
+                            }
+                        })
+                    withTimeout(10_000) { responseB.await() }
+                    assertTrue(worker.completeOperation(tokenB))
                 }
             }
+        }
+    }
+
+    // K. Adversarial early success rejected by Host and terminates worker
+    @Test fun adversarialEarlySuccessRejectedAndTerminatesWorker(): Unit = runBlocking {
+        val hostPid = Process.myPid()
+        withWorker { worker ->
+            val death = CompletableDeferred<Unit>()
+            worker.asBinder().linkToDeath({ death.complete(Unit) }, 0)
+            OperationScratchBroker(context).use { scratchA ->
+                val tokenA = worker.beginOperation(scratchA)
+                assertTrue("tokenA admitted", tokenA > 0L)
+
+                val earlySuccessReceived = CompletableDeferred<String>()
+                worker.executeEngine(tokenA, "DEBUG_EARLY_SUCCESS", null, null, "{}", null, "", 0, scratchA,
+                    object : IPdfJailStringCallback.Stub() {
+                        override fun onSuccess(resultJson: String) { earlySuccessReceived.complete(resultJson) }
+                        override fun onFailure(errorCode: Int, errorMessage: String) {
+                            earlySuccessReceived.completeExceptionally(RuntimeException(errorMessage))
+                        }
+                    })
+
+                // 1. Rogue worker emitted success while still in RUNNING state
+                val result = withTimeout(10_000) { earlySuccessReceived.await() }
+                assertEquals("{\"success\":true}", result)
+
+                // 2. Host tries to completeOperation(tokenA) -> MUST FAIL because state is still RUNNING!
+                assertFalse("completeOperation must return false because worker is still in RUNNING state", worker.completeOperation(tokenA))
+
+                // 3. Concurrent B must still receive BUSY (gate was NOT released!)
+                OperationScratchBroker(context).use { scratchB ->
+                    val tokenB = worker.beginOperation(scratchB)
+                    assertEquals("B must receive BUSY because A still occupies the gate", 0L, tokenB)
+                }
+
+                // 4. Host aborts suspect operation A
+                worker.abortOperation(tokenA)
+                withTimeout(15_000) { death.await() }
+                assertFalse(worker.asBinder().isBinderAlive)
+            }
+        }
+        assertEquals("Host process must survive rogue worker kill", hostPid, Process.myPid())
+    }
+
+    @Test fun gatewayRejectsEarlySuccessAndLeavesDestinationUntouched(): Unit = runBlocking {
+        val target = File.createTempFile("early_success_", ".bin", context.cacheDir).apply { writeText("original destination") }
+        try {
+            val result = runCatching {
+                PdfGateway.executeEngine(context, "DEBUG_EARLY_SUCCESS", null, Uri.fromFile(target), "{}")
+            }
+            assertTrue("Gateway must fail closed on early success rejection", result.isFailure)
+            assertEquals("Destination must remain untouched", "original destination", target.readText())
+        } finally {
+            target.delete()
         }
     }
 

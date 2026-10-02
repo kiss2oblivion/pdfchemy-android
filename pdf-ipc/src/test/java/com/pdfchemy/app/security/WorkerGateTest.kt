@@ -106,9 +106,60 @@ class WorkerGateTest {
     }
 
     @Test
+    fun completeStrictlyRequiresAwaitingHostAcceptState() {
+        WorkerGate {}.use { gate ->
+            val token = gate.begin(null, 10_000)
+            // 1. In RESERVED state: complete must fail
+            assertFalse("complete while in RESERVED state must return false", gate.complete(token))
+            assertTrue(gate.isOwner(token))
+
+            // 2. In RUNNING state: complete must fail
+            assertTrue(gate.startExecution(token))
+            assertFalse("complete while in RUNNING state must return false", gate.complete(token))
+            assertTrue(gate.isOwner(token))
+
+            // 3. In AWAITING_HOST_ACCEPT state: complete must succeed
+            assertTrue(gate.markAwaitingHostAccept(token))
+            assertTrue("complete while in AWAITING_HOST_ACCEPT must succeed", gate.complete(token))
+            assertFalse(gate.isOwner(token))
+            assertFalse(gate.isBusy())
+        }
+    }
+
+    @Test
+    fun cancelledExecutionWatchdogDoesNotTerminateAwaitingHostAcceptWorker() {
+        val terminated = CountDownLatch(1)
+        WorkerGate { terminated.countDown() }.use { gate ->
+            val token = gate.begin(null, 150) // 150ms execution deadline
+            gate.startExecution(token)
+            // Transition to AWAITING_HOST_ACCEPT with a long deadline
+            gate.markAwaitingHostAccept(token, 60_000)
+
+            // Wait 300ms for old 150ms execution watchdog deadline to pass
+            assertFalse("Stale execution watchdog must NOT terminate worker in AWAITING_HOST_ACCEPT", terminated.await(300, TimeUnit.MILLISECONDS))
+            assertTrue(gate.isOwner(token))
+            assertTrue(gate.complete(token))
+        }
+    }
+
+    @Test
+    fun acquireHelperUsesPrivateReleaseWithoutViolatingStateSemantics() {
+        WorkerGate {}.use { gate ->
+            val resource = gate.acquire(10_000)
+            assertNotNull(resource)
+            assertTrue(gate.isBusy())
+            resource!!.close()
+            assertFalse(gate.isBusy())
+        }
+    }
+
+    @Test
     fun staleCompleteCannotReleaseCurrentOwner() {
         WorkerGate {}.use { gate ->
             val tokenA = gate.begin(null, 10_000)
+            gate.startExecution(tokenA)
+            gate.markAwaitingHostAccept(tokenA)
+
             assertFalse("Stale complete must return false", gate.complete(tokenA + 1234))
             assertFalse("Zero complete must return false", gate.complete(0L))
 

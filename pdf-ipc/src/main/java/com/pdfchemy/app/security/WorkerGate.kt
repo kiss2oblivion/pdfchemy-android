@@ -27,6 +27,8 @@ class WorkerGate(private val terminate: () -> Unit) : Closeable {
 
     private var currentToken: Long = 0L
     private var currentState: State = State.IDLE
+    private enum class WatchdogPhase { EXECUTION, HOST_ACCEPT }
+    private var watchdogGeneration: Long = 0L
     private var activeWatchdog: ScheduledFuture<*>? = null
     private var currentOwner: IBinder? = null
     private var deathRecipient: IBinder.DeathRecipient? = null
@@ -42,7 +44,7 @@ class WorkerGate(private val terminate: () -> Unit) : Closeable {
         currentToken = token
         currentState = State.RESERVED
 
-        armWatchdogLocked(deadlineMillis)
+        armWatchdogLocked(deadlineMillis, WatchdogPhase.EXECUTION)
 
         if (ownerBinder != null) {
             val recipient = IBinder.DeathRecipient {
@@ -79,7 +81,7 @@ class WorkerGate(private val terminate: () -> Unit) : Closeable {
 
     /**
      * Transitions from RUNNING to AWAITING_HOST_ACCEPT for the matching token,
-     * re-arming the watchdog with the Host acceptance deadline.
+     * re-arming the watchdog with the Host acceptance deadline and advancing generation.
      */
     fun markAwaitingHostAccept(
         operationId: Long,
@@ -89,18 +91,16 @@ class WorkerGate(private val terminate: () -> Unit) : Closeable {
             return false
         }
         currentState = State.AWAITING_HOST_ACCEPT
-        armWatchdogLocked(hostDeadlineMillis)
+        armWatchdogLocked(hostDeadlineMillis, WatchdogPhase.HOST_ACCEPT)
         return true
     }
 
     /**
-     * Completes and releases the gate if the exact token matches and is not poisoned.
+     * Completes and releases the gate ONLY if the exact token matches and the operation
+     * has finished worker-side execution and is awaiting Host acceptance.
      */
     fun complete(operationId: Long): Boolean = synchronized(lock) {
-        if (operationId != currentToken) {
-            return false
-        }
-        if (currentState == State.FAILED_POISONED) {
+        if (operationId != currentToken || currentState != State.AWAITING_HOST_ACCEPT) {
             return false
         }
         disarmWatchdogLocked()
@@ -151,27 +151,47 @@ class WorkerGate(private val terminate: () -> Unit) : Closeable {
 
     /**
      * Compatibility helper for simple single-process workers (e.g. NativeRenderer).
+     * Uses private internal release logic to avoid weakening public complete() semantics.
      */
-    fun acquire(deadlineMillis: Long): Closeable? {
+    fun acquire(deadlineMillis: Long): Closeable? = synchronized(lock) {
         val token = begin(null, deadlineMillis)
         if (token == 0L) return null
         if (!startExecution(token)) return null
-        return Closeable { complete(token) }
+        return Closeable {
+            synchronized(lock) {
+                if (token == currentToken && currentState != State.FAILED_POISONED) {
+                    disarmWatchdogLocked()
+                    unlinkOwnerLocked()
+                    currentToken = 0L
+                    currentState = State.IDLE
+                }
+            }
+        }
     }
 
-    private fun armWatchdogLocked(millis: Long) {
+    private fun armWatchdogLocked(millis: Long, phase: WatchdogPhase) {
         activeWatchdog?.cancel(false)
+        watchdogGeneration++
+        val gen = watchdogGeneration
+        val expectedToken = currentToken
         activeWatchdog = scheduler.schedule({
             synchronized(lock) {
-                if (currentToken != 0L && currentState != State.IDLE) {
-                    currentState = State.FAILED_POISONED
-                    terminate()
+                if (gen == watchdogGeneration && currentToken != 0L && currentToken == expectedToken) {
+                    val matchesPhase = when (phase) {
+                        WatchdogPhase.EXECUTION -> currentState == State.RESERVED || currentState == State.RUNNING
+                        WatchdogPhase.HOST_ACCEPT -> currentState == State.AWAITING_HOST_ACCEPT
+                    }
+                    if (matchesPhase) {
+                        currentState = State.FAILED_POISONED
+                        terminate()
+                    }
                 }
             }
         }, millis, TimeUnit.MILLISECONDS)
     }
 
     private fun disarmWatchdogLocked() {
+        watchdogGeneration++
         activeWatchdog?.cancel(false)
         activeWatchdog = null
     }

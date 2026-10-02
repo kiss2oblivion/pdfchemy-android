@@ -104,7 +104,7 @@ object PdfJailClient {
             scratch.verifyBudget()
             output.validateAndSnapshot("{\"success\":true}")
             val size = output.validatedBytes // Never trust the worker's reported byte count.
-            jail.completeOperation(operationToken)
+            check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
             operationToken = 0L // Successfully completed/released
             output.commit()
             size
@@ -125,118 +125,72 @@ object PdfJailClient {
     suspend fun analyzePdf(
         context: Context,
         source: StagedPdf
-    ): String = kotlinx.coroutines.withTimeout(com.pdfchemy.app.security.SecurityLimits.WORKER_DEADLINE_MS + 5000) { suspendCancellableCoroutine { continuation ->
-        val scratch = OperationScratchBroker(context)
+    ): String {
+        val bound = CompletableDeferred<IPdfJailService>()
         var isBound = false
-        var connection: ServiceConnection? = null
-        var jailRef: IPdfJailService? = null
-        var sourceFdRef: ParcelFileDescriptor? = null
-        var operationToken = 0L
-
-        fun abortActiveToken() {
-            if (operationToken > 0L) {
-                val token = operationToken
-                operationToken = 0L
-                runCatching { jailRef?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(token) }
-            }
-        }
-
-        fun cleanup() {
-            scratch.close()
-            try { sourceFdRef?.close() } catch (e: Exception) {}
-            if (isBound && connection != null) {
-                try {
-                    context.unbindService(connection!!)
-                } catch (e: Exception) {
-                    // Ignore
-                }
-                isBound = false
-            }
-        }
-
-        connection = object : ServiceConnection {
+        val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jailService = IPdfJailService.Stub.asInterface(service)
-                jailRef = jailService
-                if (jailService == null) {
-                    cleanup()
-                    continuation.resumeWithException(IllegalStateException("Failed to bind to PdfJailService"))
-                    return
+                bound.complete(IPdfJailService.Stub.asInterface(service))
+            }
+            override fun onServiceDisconnected(name: ComponentName?) {}
+        }
+        val scratch = OperationScratchBroker(context)
+        var sourceFd: ParcelFileDescriptor? = null
+        var operationToken = 0L
+        var jail: IPdfJailService? = null
+        var binder: IBinder? = null
+        val response = CompletableDeferred<String>()
+        val death = IBinder.DeathRecipient {
+            response.completeExceptionally(IllegalStateException("Isolated worker died"))
+        }
+
+        return try {
+            val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
+            isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            check(isBound) { "Could not bind to PdfJailService" }
+
+            jail = withTimeout(15_000) { bound.await() }
+            binder = jail.asBinder()
+
+            val token = jail.beginOperation(scratch)
+            if (token == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+            operationToken = token
+
+            sourceFd = context.contentResolver.openFileDescriptor(source.uri, "r")
+                ?: throw IllegalStateException("Failed to open file descriptor")
+
+            binder.linkToDeath(death, 0)
+            val callback = object : IPdfJailStringCallback.Stub() {
+                override fun onSuccess(resultJson: String) {
+                    response.complete(resultJson)
                 }
 
-                try {
-                    // Synchronous admission handshake
-                    val token = jailService.beginOperation(scratch)
-                    if (token == 0L) {
-                        cleanup()
-                        continuation.resumeWithException(WorkerFailure(429, "Jail 429: BUSY"))
-                        return
-                    }
-                    operationToken = token
-
-                    val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
-                    sourceFdRef = sourceFd
-
-                    if (sourceFd == null) {
-                        abortActiveToken()
-                        cleanup()
-                        continuation.resumeWithException(IllegalStateException("Failed to open file descriptor"))
-                        return
-                    }
-
-                    val callback = object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            if (operationToken > 0L) {
-                                runCatching { jailRef?.completeOperation(operationToken) }
-                                operationToken = 0L
-                            }
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resume(resultJson)
-                            }
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            if (!continuation.isActive) return
-                            abortActiveToken()
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resumeWithException(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
-                            }
-                        }
-                    }
-
-                    jailService.analyzePdf(token, sourceFd, source.sha256, source.size, scratch, callback)
-
-                } catch (e: Exception) {
-                    abortActiveToken()
-                    cleanup()
-                    if (continuation.isActive) {
-                        continuation.resumeWithException(e)
-                    }
+                override fun onFailure(errorCode: Int, errorMessage: String) {
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
 
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) {
-                    continuation.resumeWithException(RuntimeException("PdfJailService disconnected unexpectedly"))
-                }
+            val result = withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                jail.analyzePdf(operationToken, sourceFd, source.sha256, source.size, scratch, callback)
+                response.await()
             }
-        }
 
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection!!, Context.BIND_AUTO_CREATE)
-
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(IllegalStateException("Could not bind to PdfJailService"))
+            scratch.verifyBudget()
+            check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
+            operationToken = 0L // Successfully completed/released
+            result
+        } catch (error: Throwable) {
+            if (operationToken > 0L) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken) }
+            }
+            throw error
+        } finally {
+            runCatching { binder?.unlinkToDeath(death, 0) }
+            scratch.close()
+            runCatching { sourceFd?.close() }
+            if (isBound) runCatching { context.unbindService(connection) }
         }
-
-        continuation.invokeOnCancellation {
-            abortActiveToken()
-            cleanup()
-        }
-    } }
+    }
 }

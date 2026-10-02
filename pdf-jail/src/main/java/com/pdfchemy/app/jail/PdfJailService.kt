@@ -79,7 +79,12 @@ class PdfJailService : Service() {
             }
             runCatching {
                 if (failure != null) callback.onFailure(400, failure.message ?: "Worker failed")
-                else callback.onSuccess(requireNotNull(result))
+                else {
+                    callback.onSuccess(requireNotNull(result))
+                    if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && result.contains("\"duplicateSuccess\":true")) {
+                        callback.onSuccess(requireNotNull(result))
+                    }
+                }
             }
         }
     }
@@ -168,9 +173,8 @@ class PdfJailService : Service() {
         ) {
             submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256), listOf(expectedSize), modificationsJson ?: "{}", numeric(operationId, callback), scratchBinder) {
                 require(sourceFd != null && targetFd != null && modificationsJson != null && callback != null)
-                val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
-                val type = object : com.fasterxml.jackson.core.type.TypeReference<Map<Int, PageModification>>() {}
-                val modifications = mapper.readValue(modificationsJson, type)
+                val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
+                val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(modificationsJson, type) ?: emptyMap()
                 check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, sourceFd, targetFd, modifications))
                 org.json.JSONObject().put("size", targetFd.statSize).toString()
             }
@@ -191,8 +195,7 @@ class PdfJailService : Service() {
             submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), if (sourceFd == null) emptyList() else listOf(expectedSha256), if (sourceFd == null) emptyList() else listOf(expectedSize), paramsJson, callback, scratchBinder) {
                 if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_DUPLICATE_OUTPUT_SUCCESS") {
                     boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
-                    repeat(2) { callback.onSuccess("{\"success\":true}") }
-                    return@submit "{\"success\":true}"
+                    return@submit "{\"success\":true,\"duplicateSuccess\":true}"
                 }
                 if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_UNTRUSTED_OUTPUT_OVERFLOW") {
                     android.system.Os.ftruncate(requireNotNull(targetFd).fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES + 1)
@@ -201,6 +204,10 @@ class PdfJailService : Service() {
                 }
                 if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_THROW_FATAL") {
                     throw AssertionError("Deliberate fatal Error in worker")
+                }
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_EARLY_SUCCESS") {
+                    callback.onSuccess("{\"success\":true}")
+                    while (true) Thread.sleep(1000)
                 }
                 dispatch(engineName, sourceFd, targetFd, paramsJson, rendererBinder)
             }
