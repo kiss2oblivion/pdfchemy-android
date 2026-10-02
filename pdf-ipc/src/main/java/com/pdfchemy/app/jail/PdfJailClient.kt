@@ -18,7 +18,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object PdfJailClient {
-    private class WorkerFailure(message: String) : IllegalStateException(message)
+    private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
 
     suspend fun exportModifiedPdf(
         context: Context,
@@ -56,6 +56,7 @@ object PdfJailClient {
         val response = CompletableDeferred<Unit>()
         var isBound = false
         var jail: IPdfJailService? = null
+        var requestSubmitted = false
         var input: ParcelFileDescriptor? = null
         var binder: IBinder? = null
         val death = IBinder.DeathRecipient {
@@ -86,10 +87,11 @@ object PdfJailClient {
             val callback = object : IPdfJailCallback.Stub() {
                 override fun onSuccess(outputSizeBytes: Long) { response.complete(Unit) }
                 override fun onFailure(errorCode: Int, errorMessage: String?) {
-                    response.completeExceptionally(WorkerFailure("Jail $errorCode: $errorMessage"))
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
             withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                requestSubmitted = true
                 invoke(jail!!, sourceFd, output.workerDescriptors.single(), scratch, callback)
                 response.await()
             }
@@ -99,8 +101,10 @@ object PdfJailClient {
             output.commit()
             size
         } catch (error: Throwable) {
-            // Rejected/completed requests do not own another admitted job.
-            if (error !is WorkerFailure) runCatching { jail?.abortWorker() }
+            // Only BUSY identifies a request that did not acquire the worker.
+            if (requestSubmitted && (error !is WorkerFailure || error.errorCode != 429)) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+            }
             throw error
         } finally {
             runCatching { binder?.unlinkToDeath(death, 0) }
@@ -120,6 +124,11 @@ object PdfJailClient {
         var connection: ServiceConnection? = null
         var jailRef: IPdfJailService? = null
         var sourceFdRef: ParcelFileDescriptor? = null
+        var requestSubmitted = false
+
+        fun abortSubmittedWorker() {
+            if (requestSubmitted) runCatching { jailRef?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+        }
 
         fun cleanup() {
             scratch.close()
@@ -164,16 +173,20 @@ object PdfJailClient {
                         }
 
                         override fun onFailure(errorCode: Int, errorMessage: String) {
+                            if (!continuation.isActive) return
+                            if (errorCode != 429) abortSubmittedWorker()
                             cleanup()
                             if (continuation.isActive) {
-                                continuation.resumeWithException(RuntimeException("Jail Error $errorCode: $errorMessage"))
+                                continuation.resumeWithException(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                             }
                         }
                     }
 
+                    requestSubmitted = true
                     jailService.analyzePdf(sourceFd, source.sha256, source.size, scratch, callback)
 
                 } catch (e: Exception) {
+                    abortSubmittedWorker()
                     cleanup()
                     if (continuation.isActive) {
                         continuation.resumeWithException(e)
@@ -198,7 +211,7 @@ object PdfJailClient {
         }
 
         continuation.invokeOnCancellation {
-            runCatching { jailRef?.abortWorker() }
+            abortSubmittedWorker()
             cleanup()
         }
     } }

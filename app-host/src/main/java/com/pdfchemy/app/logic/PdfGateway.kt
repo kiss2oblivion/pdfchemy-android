@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 object PdfGateway {
-    private class WorkerFailure(message: String) : IllegalStateException(message)
+    private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
     private suspend fun request(context: Context, sources: List<Uri>, targets: List<Uri>, paramsJson: String,
         invoke: (IPdfJailService, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
     ): String = withContext(Dispatchers.IO) {
@@ -30,6 +30,7 @@ object PdfGateway {
         val descriptors = mutableListOf<ParcelFileDescriptor>()
         val connections = mutableListOf<ServiceConnection>()
         var jail: IPdfJailService? = null
+        var requestSubmitted = false
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
         val outputTransaction = HostOutputTransaction(context, targets)
         try {
@@ -62,11 +63,12 @@ object PdfGateway {
             val callback = object : IPdfJailStringCallback.Stub() {
                 override fun onSuccess(resultJson: String) { response.complete(resultJson) }
                 override fun onFailure(errorCode: Int, errorMessage: String) {
-                    response.completeExceptionally(WorkerFailure("Jail $errorCode: $errorMessage"))
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
             val result = try {
                 withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                    requestSubmitted = true
                     invoke(jail!!, staged, inputs, outputs, renderer, scratch, callback)
                     response.await()
                 }
@@ -78,8 +80,10 @@ object PdfGateway {
             }
             result
         } catch (error: Throwable) {
-            // Rejected/completed requests do not own another admitted job.
-            if (error !is WorkerFailure) runCatching { jail?.abortWorker() }
+            // Only BUSY identifies a request that did not acquire the worker.
+            if (requestSubmitted && (error !is WorkerFailure || error.errorCode != 429)) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortWorker() }
+            }
             throw error
         } finally {
             outputTransaction.close()

@@ -16,7 +16,7 @@ class PdfJailService : Service() {
     @Volatile private var debugOutput: ParcelFileDescriptor? = null
 
     private fun submit(sources: List<ParcelFileDescriptor>, targets: List<ParcelFileDescriptor>, hashes: List<String>, sizes: List<Long>, params: String,
-        callback: IPdfJailStringCallback, scratchBinder: IBinder?, task: suspend () -> String) {
+        callback: IPdfJailStringCallback, scratchBinder: IBinder?, validateMetadata: () -> Unit = {}, task: suspend () -> String) {
         val all = sources + targets
         val lease = gate.acquire(SecurityLimits.WORKER_DEADLINE_MS)
         if (lease == null) {
@@ -28,9 +28,11 @@ class PdfJailService : Service() {
         serviceScope.launch {
             var result: String? = null
             var failure: Exception? = null
+            var completedSuccessfully = false
             val owner = scratchBinder ?: callback.asBinder()
             try {
                 owner.linkToDeath(death, 0)
+                validateMetadata()
                 require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
                 require(hashes.size == sources.size && sizes.size == sources.size)
                 require(sizes.sum() <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
@@ -43,6 +45,7 @@ class PdfJailService : Service() {
                     val response = org.json.JSONObject(result)
                     check(!response.has("error") && (!response.has("success") || response.optBoolean("success")) && (!response.has("isSuccess") || response.optBoolean("isSuccess"))) { response.optString("error", "Operation failed") }
                 }
+                completedSuccessfully = true
             } catch (e: Exception) {
                 failure = e
                 // Best effort truncation for seekable destinations; a provider may prohibit it.
@@ -51,7 +54,9 @@ class PdfJailService : Service() {
                 runCatching { owner.unlinkToDeath(death, 0) }
                 all.forEach { runCatching { it.close() } }
                 JailScratch.close()
-                lease.close()
+                // A failed process must not admit another document while the host
+                // recycles it. Keep its independent watchdog armed as a backstop.
+                if (completedSuccessfully) lease.close()
             }
             runCatching {
                 if (failure != null) callback.onFailure(400, failure!!.message ?: "Worker failed")
@@ -125,12 +130,10 @@ class PdfJailService : Service() {
         }
         override fun executeEngineBatch(engineName: String, sourceFds: Array<out ParcelFileDescriptor>?, targetFds: Array<out ParcelFileDescriptor>?, paramsJson: String?, rendererBinder: IBinder?, expectedSha256s: Array<String>?, expectedSizes: LongArray?, scratchBinder: IBinder?, callback: IPdfJailStringCallback) {
             val sources = sourceFds?.toList().orEmpty(); val targets = targetFds?.toList().orEmpty()
-            try { SecurityLimits.requireBatch(sources.size, targets.size, expectedSha256s, expectedSizes) }
-            catch (e: Exception) {
-                (sources + targets).forEach { runCatching { it.close() } }
-                runCatching { callback.onFailure(400, e.message ?: "Invalid batch metadata") }; return
-            }
-            submit(sources, targets, expectedSha256s!!.toList(), expectedSizes!!.toList(), paramsJson ?: "{}", callback, scratchBinder) {
+            // Admission precedes validation: an overlapping malformed batch is
+            // BUSY, never a 400 that could retire another request's worker.
+            submit(sources, targets, expectedSha256s?.toList().orEmpty(), expectedSizes?.toList().orEmpty(), paramsJson ?: "{}", callback, scratchBinder,
+                validateMetadata = { SecurityLimits.requireBatch(sources.size, targets.size, expectedSha256s, expectedSizes) }) {
                 when (engineName) {
                     "IMAGES_TO_PDF" -> ImagePdfWorker.convert(sources, targets.single())
                     "MERGE" -> PdfManipulatorWorker.mergePdfs(this@PdfJailService, sourceFds!!, targets.first())
@@ -151,6 +154,7 @@ return when (engineName) {
                                 org.json.JSONObject().put("size", requireNotNull(targetFd).statSize).toString()
                             }
                             "DEBUG_IDENTITY" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); org.json.JSONObject().put("pid", Process.myPid()).put("uid", Process.myUid()).toString() }
+                            "DEBUG_FAIL" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); error("Deliberate admitted engine failure") }
                             "DEBUG_BLOCK" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); while (true) Thread.sleep(1000); error("unreachable") }
                             "DEBUG_OUTPUT_BLOCK" -> {
                                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)

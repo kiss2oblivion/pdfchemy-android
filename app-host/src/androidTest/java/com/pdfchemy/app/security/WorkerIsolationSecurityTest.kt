@@ -49,6 +49,12 @@ class WorkerIsolationSecurityTest {
         })
         return withTimeout(5_000) { size.await() }
     }
+    private suspend fun retire(jail: IPdfJailService) {
+        val death = CompletableDeferred<Unit>()
+        jail.asBinder().linkToDeath({ death.complete(Unit) }, 0)
+        jail.abortWorker()
+        withTimeout(15_000) { death.await() }
+    }
     @Test fun isolatedUidAndAnonymousScratchAreUsable() = runBlocking {
         bind().use { binding ->
             val identity = call(binding.jail, "DEBUG_IDENTITY")
@@ -116,8 +122,10 @@ class WorkerIsolationSecurityTest {
             arrayOf("0".repeat(64)) to longArrayOf(file.length()), arrayOf(hash) to longArrayOf(file.length() + 1)
         )
         try {
-            bind().use { binding ->
-                for ((hashes, sizes) in invalid) {
+            // Rejected admitted requests retire their process; never reuse it
+            // to test the next malformed document.
+            for ((hashes, sizes) in invalid) {
+                bind().use { binding ->
                     val result = CompletableDeferred<String>()
                     OperationScratchBroker(context).use { scratch ->
                         ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { source ->
@@ -130,13 +138,16 @@ class WorkerIsolationSecurityTest {
                                 assertFalse(message, message == "ACCEPTED")
                                 assertTrue(message, message.contains("metadata", true) || message.contains("SHA-256", true) || message.contains("size", true))
                                 assertEquals(0, target.length())
+                                retire(binding.jail)
                             }
                         }
                     }
                 }
-                // Both positions must fail before even the valid member parses.
-                // The non-PDF fixture makes accidental early parsing observable.
-                repeat(2) { invalidPosition ->
+            }
+            // Both positions must fail before even the valid member parses.
+            // The non-PDF fixture makes accidental early parsing observable.
+            repeat(2) { invalidPosition ->
+                bind().use { binding ->
                     val result = CompletableDeferred<String>()
                     OperationScratchBroker(context).use { scratch ->
                         ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { first ->
@@ -150,6 +161,7 @@ class WorkerIsolationSecurityTest {
                                     val message = withTimeout(10_000) { result.await() }
                                     assertTrue(message, message.contains("SHA-256", true))
                                     assertEquals(0, target.length())
+                                    retire(binding.jail)
                                 }
                             }
                         }
