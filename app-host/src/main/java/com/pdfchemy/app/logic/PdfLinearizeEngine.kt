@@ -18,13 +18,12 @@ object PdfLinearizeEngine {
 
     suspend fun checkLinearized(context: Context, pdfUri: Uri): Result<LinearizeStatus> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "LINEARIZE_CHECK", pdfUri, null, "{}")
-            val obj = JSONObject(jsonResult)
+            val contract = PdfGateway.executeEngineTyped<LinearizeCheckContract>(context, "LINEARIZE_CHECK", pdfUri, null, "{}")
             val size = FileUtils.getFileSize(context, pdfUri)
             Result.success(LinearizeStatus(
-                isLinearized = obj.getBoolean("isLinearized"),
+                isLinearized = contract.isLinearized,
                 fileSizeOriginal = size,
-                pageCount = obj.getInt("pageCount")
+                pageCount = contract.pageCount
             ))
         } catch (e: Exception) {
             AppLogger.e("PdfLinearizeEngine: Error checking linearization", e)
@@ -34,13 +33,12 @@ object PdfLinearizeEngine {
 
     suspend fun optimizeFastWebView(context: Context, sourcePdfUri: Uri, destPdfUri: Uri): Result<Long> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "LINEARIZE_OPTIMIZE", sourcePdfUri, destPdfUri, "{}")
-            val obj = JSONObject(jsonResult)
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "LINEARIZE_OPTIMIZE", sourcePdfUri, destPdfUri, "{}")
             
             val historyRepo = HistoryRepository(context)
             historyRepo.addHistoryItem(destPdfUri, FileUtils.getFileName(context, destPdfUri) ?: "web_optimized.pdf", "Fast Web View Stream Optimizer")
             
-            Result.success(obj.getLong("outBytes"))
+            Result.success(contract.size)
         } catch (e: Exception) {
             AppLogger.e("PdfLinearizeEngine: Error optimizing stream", e)
             Result.failure(e)

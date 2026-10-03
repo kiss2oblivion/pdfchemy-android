@@ -19,7 +19,7 @@ object PdfTableExtractorEngine {
             val destUri = Uri.fromFile(tempFile)
             val success = extractTablesToCsvFile(context, sourceUri, destUri, pageIndex, safeMode)
             if (success && tempFile.exists()) {
-                return tempFile.readText(Charsets.UTF_8)
+                return com.pdfchemy.app.jail.WorkerResponseValidator.parseCsvTableFile(tempFile)
             }
         } finally {
             if (tempFile.exists()) tempFile.delete()
@@ -34,15 +34,15 @@ object PdfTableExtractorEngine {
             params.put("pageIndex", pageIndex)
         }
 
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "TABLE_EXTRACT",
-            sourceUri,
-            destUri,
-            params.toString()
-        )
         return try {
-            JSONObject(resultStr).optBoolean("success", false)
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
+                context,
+                "TABLE_EXTRACT",
+                sourceUri,
+                destUri,
+                params.toString()
+            )
+            contract.success
         } catch (e: Exception) {
             false
         }

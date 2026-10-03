@@ -14,10 +14,8 @@ object ComicBookEngine {
             val params = JSONObject()
             params.put("action", "pdf2cbz")
             
-            val resultStr = PdfGateway.executeEngine(context, "COMIC_BOOK", sourcePdfUri, destCbzUri, params.toString())
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "COMIC_BOOK", sourcePdfUri, destCbzUri, params.toString())
+            if (!contract.success) return@withContext Result.failure(Exception("Comic book conversion failed"))
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e("ComicBookEngine", e)
@@ -30,10 +28,8 @@ object ComicBookEngine {
             val params = JSONObject()
             params.put("action", "cbz2pdf")
             
-            val resultStr = PdfGateway.executeEngine(context, "COMIC_BOOK", sourceCbzUri, destPdfUri, params.toString())
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "COMIC_BOOK", sourceCbzUri, destPdfUri, params.toString())
+            if (!contract.success) return@withContext Result.failure(Exception("Comic book conversion failed"))
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e("ComicBookEngine", e)

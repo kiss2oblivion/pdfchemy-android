@@ -90,6 +90,33 @@ Observed Chunk 2.5 verification on October 2, 2026:
   - `HostOutputCommitSecurityTest`: **12/12 passed** (all 12 passed, including `realWorkerDeadlineLeavesProviderUntouched` live 120 s watchdog).
   - `OcrIsolationCompatibilityTest`: observed existing known blocker (`API 36 isolated OCR / NNAPI failure`).
 
+## Review Chunk 3 — universal worker response validation
+
+Review base: `f36a92c` (Chunk 2.5 hardened). This chunk addresses host-side worker response parsing and result file ingestion (F01 / F02).
+
+- All worker output is treated as hostile. Eliminated all 12 ad-hoc `.fromJson(` call sites in Host engines and removed raw JSONObject/JSONArray parsing across Host callers.
+- Centralized wire parsing in `WorkerResponseValidator.kt` within `pdf-ipc`. All known operations (all 82 operations) return strongly typed `OperationContract` instances. No raw validated-JSON escape hatch exists.
+- Operation validator is exhaustive and fails closed on unknown or unsupported operations (`SecurityException`).
+- Enforces transport framing, maximum response depth (`MAX_RESPONSE_DEPTH = 8`), node count budgets (<= 5,000 nodes), UTF-8 response limits (`MAX_JSON_RESPONSE_SIZE = 1 MiB`), and rejects any trailing non-whitespace after the single JSON root value (`nextClean() == '\u0000'`).
+- Ingestion of result files (`parseOutlineFile` and `parseCsvTableFile`) strictly bounds file size to 2 MiB, outline depth to 8, outline nodes to 2,000, and CSV tables to 5,000 rows, 128 columns, and 1,024 characters per cell.
+- Chunk 1 (host publication & private snapshots) and Chunk 2 / 2.5 (tokenized ownership, BUSY preservation, host acceptance handshake, and suspect process abort lifecycle) semantics remain strictly preserved.
+- Local JVM & Static Gates:
+  - `securityArchitecture`: passed.
+  - `:pdf-ipc:testDebugUnitTest`: **17/17 passed** (including `WorkerResponseValidatorTest` and `WorkerGateTest`).
+  - `:app-host:testDebugUnitTest`: **8/8 passed** (`HostResponseContractSecurityTest`).
+- Focused API 24 instrumentation (**40/40 passed**):
+  - `WorkerResponseValidationSecurityTest`: **3/3 passed** (typed contract returns, fail-closed unknown operation & recycling, BUSY preservation).
+  - `OperationOwnershipSecurityTest`: **12/12 passed**.
+  - `WorkerFailureLifecycleSecurityTest`: **6/6 passed**.
+  - `WorkerIsolationSecurityTest`: **7/7 passed**.
+  - `HostOutputCommitSecurityTest`: **12/12 passed**.
+- Focused API 36 instrumentation (**40/40 passed**):
+  - `WorkerResponseValidationSecurityTest`: **3/3 passed**.
+  - `OperationOwnershipSecurityTest`: **12/12 passed**.
+  - `WorkerFailureLifecycleSecurityTest`: **6/6 passed**.
+  - `WorkerIsolationSecurityTest`: **7/7 passed**.
+  - `HostOutputCommitSecurityTest`: **12/12 passed**.
+
 ## Limits and product behavior
 
 - 100 MiB per staged input; 250 MiB aggregate staged input; 64 staged documents.

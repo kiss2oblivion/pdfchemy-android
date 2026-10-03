@@ -93,20 +93,18 @@ object PdfManipulator {
             val paramsJson = org.json.JSONObject().apply {
                 put("whiteThreshold", whiteThreshold.toDouble())
             }.toString()
-            val planJson = PdfGateway.executeEngine(context, "PLAN_SPLIT_BLANK", sourceUri, null, paramsJson)
-            
-            val plan = org.json.JSONObject(planJson)
-            if (!plan.optBoolean("success")) {
-                throw Exception(plan.optString("error", "Unknown error in PLAN_SPLIT_BLANK"))
+            val plan = PdfGateway.executeEngineTyped<PlanSplitBlankContract>(context, "PLAN_SPLIT_BLANK", sourceUri, null, paramsJson)
+            if (!plan.success) {
+                throw Exception("PLAN_SPLIT_BLANK reported failure")
             }
 
-            val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
-            if (groupsArray.length() > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+            val groups = plan.groups
+            if (groups.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
             val createdOutputs = mutableListOf<DocumentFile>()
-            for (i in 0 until groupsArray.length()) {
+            for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
                     ?: throw java.io.IOException("Failed to create output $fileName")
@@ -115,6 +113,12 @@ object PdfManipulator {
             }
 
             if (outputUris.isNotEmpty()) {
+                val groupsArray = org.json.JSONArray()
+                for (g in groups) {
+                    val gArr = org.json.JSONArray()
+                    for (item in g) gArr.put(item)
+                    groupsArray.put(gArr)
+                }
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
@@ -140,20 +144,18 @@ object PdfManipulator {
     ): List<Uri> = withContext(Dispatchers.IO) {
         val outputUris = mutableListOf<Uri>()
         try {
-            val planJson = PdfGateway.executeEngine(context, "PLAN_SPLIT_BOOKMARKS", sourceUri, null, "{}")
-            
-            val plan = org.json.JSONObject(planJson)
-            if (!plan.optBoolean("success")) {
-                throw Exception(plan.optString("error", "Unknown error in PLAN_SPLIT_BOOKMARKS"))
+            val plan = PdfGateway.executeEngineTyped<PlanSplitBookmarksContract>(context, "PLAN_SPLIT_BOOKMARKS", sourceUri, null, "{}")
+            if (!plan.success) {
+                throw Exception("PLAN_SPLIT_BOOKMARKS reported failure")
             }
 
-            val groupsArray = plan.optJSONArray("groups") ?: return@withContext emptyList()
-            if (groupsArray.length() > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
+            val groups = plan.groups
+            if (groups.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
             val createdOutputs = mutableListOf<DocumentFile>()
-            for (i in 0 until groupsArray.length()) {
+            for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
                     ?: throw java.io.IOException("Failed to create output $fileName")
@@ -162,6 +164,12 @@ object PdfManipulator {
             }
 
             if (outputUris.isNotEmpty()) {
+                val groupsArray = org.json.JSONArray()
+                for (g in groups) {
+                    val gArr = org.json.JSONArray()
+                    for (item in g) gArr.put(item)
+                    groupsArray.put(gArr)
+                }
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
@@ -265,9 +273,8 @@ object PdfManipulator {
 
     suspend fun isPdfPasswordProtected(context: Context, sourceUri: Uri): Boolean = withContext(Dispatchers.IO) {
         try {
-            val resultJson = PdfGateway.executeEngine(context, "CHECK_ENCRYPTION", sourceUri, null, "{}")
-            val json = org.json.JSONObject(resultJson)
-            json.optBoolean("isEncrypted", false)
+            val contract = PdfGateway.executeEngineTyped<CheckEncryptionContract>(context, "CHECK_ENCRYPTION", sourceUri, null, "{}")
+            contract.isEncrypted
         } catch (e: Exception) {
             false
         }
@@ -327,9 +334,8 @@ object PdfManipulator {
 
     private suspend fun getPageCountFromGateway(context: Context, sourceUri: Uri): Int {
         return try {
-            val resultJson = PdfGateway.executeEngine(context, "GET_PAGE_COUNT", sourceUri, null, "{}")
-            val json = org.json.JSONObject(resultJson)
-            json.optInt("pageCount", 0)
+            val contract = PdfGateway.executeEngineTyped<PageCountContract>(context, "GET_PAGE_COUNT", sourceUri, null, "{}")
+            contract.pageCount
         } catch (e: Exception) {
             0
         }

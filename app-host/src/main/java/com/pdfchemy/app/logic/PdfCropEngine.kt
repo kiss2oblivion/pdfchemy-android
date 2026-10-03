@@ -91,12 +91,8 @@ object PdfCropEngine {
                 params.put("targetPageIndex", JSONObject.NULL)
             }
 
-            val resultStr = PdfGateway.executeEngine(context, "CROP", sourcePdfUri, destPdfUri, params.toString())
-            val json = JSONObject(resultStr)
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-            
-            val success = json.optBoolean("success", false)
-            if (success) {
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "CROP", sourcePdfUri, destPdfUri, params.toString())
+            if (contract.success) {
                 val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
                 historyRepo.addHistoryItem(
                     destPdfUri,

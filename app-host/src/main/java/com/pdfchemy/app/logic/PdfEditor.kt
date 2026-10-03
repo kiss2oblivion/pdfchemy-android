@@ -25,7 +25,7 @@ data class DualPageBitmaps(val leftPage: Bitmap?, val rightPage: Bitmap?)
 
 object PdfEditor {
     suspend fun getPageCount(context: Context, uri: Uri): Int = withContext(Dispatchers.IO) {
-        org.json.JSONObject(PdfGateway.executeEngine(context, "GET_PAGE_COUNT", uri, null, "{}")).getInt("pageCount")
+        PdfGateway.executeEngineTyped<PageCountContract>(context, "GET_PAGE_COUNT", uri, null, "{}").pageCount
     }
     suspend fun renderPageBitmap(context: Context, uri: Uri, pageIndex: Int, targetWidth: Int = 1080): Bitmap? =
         com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)

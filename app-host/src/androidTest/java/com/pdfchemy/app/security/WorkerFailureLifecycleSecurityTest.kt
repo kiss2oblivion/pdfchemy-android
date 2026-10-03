@@ -82,8 +82,8 @@ class WorkerFailureLifecycleSecurityTest {
         assertEquals("The host must survive recycling", hostPid, Process.myPid())
         withWorker { fresh ->
             assertNotEquals("The next document requires a new process", oldPid, pid(fresh))
-            val metadata = JSONObject(PdfGateway.executeEngine(context, "METADATA_READ", Uri.fromFile(source), null, "{}"))
-            assertEquals(2, metadata.getInt("pageCount"))
+            val metadata = PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.MetadataReadContract>(context, "METADATA_READ", Uri.fromFile(source), null, "{}")
+            assertEquals(2, metadata.pageCount)
         }
     }
 

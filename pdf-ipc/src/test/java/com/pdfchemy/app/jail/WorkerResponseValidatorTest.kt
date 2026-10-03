@@ -1,0 +1,259 @@
+package com.pdfchemy.app.jail
+
+import com.pdfchemy.app.logic.*
+import com.pdfchemy.app.security.SecurityLimits
+import org.junit.Assert.*
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import java.io.File
+
+@RunWith(RobolectricTestRunner::class)
+class WorkerResponseValidatorTest {
+
+    private fun assertRejected(block: () -> Unit) {
+        try {
+            block()
+            fail("Expected rejection but succeeded")
+        } catch (_: IllegalArgumentException) {
+            // expected
+        } catch (_: SecurityException) {
+            // expected
+        }
+    }
+
+    @Test
+    fun oversizedPayloadThrows() {
+        val large = "{\"test\":\"" + "a".repeat(1024 * 1024 + 10) + "\"}"
+        assertRejected { WorkerResponseValidator.validate("DEBUG_IDENTITY", large) }
+    }
+
+    @Test
+    fun nestingQuotaEnforced() {
+        // Depth 9 exceeds MAX_REQUEST_DEPTH (8)
+        val deep = "[[[[[[[[[\"deep\"]]]]]]]]]"
+        assertRejected { WorkerResponseValidator.validate("TEXT_PAGES", deep) }
+
+        // Depth 1 is valid
+        val valid = "[\"page1\", \"page2\"]"
+        val contract = WorkerResponseValidator.validate("TEXT_PAGES", valid)
+        assertTrue(contract is TextPagesContract)
+        assertEquals(2, (contract as TextPagesContract).pages.size)
+    }
+
+    @Test
+    fun unbalancedDelimitersThrow() {
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5}}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": \"5}") }
+    }
+
+    @Test
+    fun singleRootEnforcedAndTrailingNonWhitespaceRejected() {
+        // Trailing ASCII whitespace is permitted
+        val validWithWhitespace = "{\"pageCount\": 5}   \n\t  "
+        val c1 = WorkerResponseValidator.validate("GET_PAGE_COUNT", validWithWhitespace)
+        assertEquals(5, (c1 as PageCountContract).pageCount)
+
+        // Trailing non-whitespace rejected
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5} extra") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5};") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5}{\"pageCount\": 6}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5},") }
+    }
+
+    @Test
+    fun nodeLimitEnforced() {
+        // Exceed MAX_TOTAL_NODES (5000)
+        val sb = StringBuilder("[")
+        for (i in 0..5005) {
+            if (i > 0) sb.append(",")
+            sb.append("\"item$i\"")
+        }
+        sb.append("]")
+        assertRejected { WorkerResponseValidator.validate("TEXT_PAGES", sb.toString()) }
+    }
+
+    @Test
+    fun errorPresenceRejected() {
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"error\": \"Worker crashed\"}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 5, \"error\": \"bad\"}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"success\": false}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"isSuccess\": false}") }
+    }
+
+    @Test
+    fun unknownOperationFailsClosed() {
+        assertRejected { WorkerResponseValidator.validate("UNRECOGNIZED_ENGINE", "{\"success\": true}") }
+        assertRejected { WorkerResponseValidator.validate("ESCAPE_HATCH", "{}") }
+    }
+
+    @Test
+    fun sanitizeAuditRejectsInsecureDefaults() {
+        // Empty JSON defaulting to clean rejected
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", "{}") }
+
+        // threatsFound > 0 reporting isClean=true rejected
+        val badThreat = """{
+            "threatsFound": 2, "isClean": true, "jsCount": 2, "launchActionsCount": 0,
+            "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": false, "parseFailed": false
+        }"""
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", badThreat) }
+
+        // parseFailed=true reporting isClean=true rejected
+        val badParse = """{
+            "threatsFound": 1, "isClean": true, "isEncrypted": false, "parseFailed": true
+        }"""
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", badParse) }
+
+        // Valid clean audit
+        val clean = """{
+            "threatsFound": 0, "isClean": true, "jsCount": 0, "launchActionsCount": 0,
+            "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": false, "parseFailed": false
+        }"""
+        val c = WorkerResponseValidator.validate("SANITIZE_AUDIT", clean) as SanitizeAuditContract
+        assertTrue(c.isClean)
+        assertEquals(0, c.threatsFound)
+    }
+
+    @Test
+    fun metadataReadValidatedStrictly() {
+        val json = """{
+            "title": "Report", "author": "Alice", "subject": "Quarterly", "keywords": "audit",
+            "creator": "Host", "producer": "PDFchemy", "creationDate": "2026-10-01",
+            "modificationDate": "2026-10-02", "pageCount": 42, "hasXmpMetadata": true, "isEncrypted": false
+        }"""
+        val contract = WorkerResponseValidator.validate("METADATA_READ", json) as MetadataReadContract
+        assertEquals("Report", contract.title)
+        assertEquals(42, contract.pageCount)
+        assertTrue(contract.hasXmpMetadata)
+        assertFalse(contract.isEncrypted)
+    }
+
+    @Test
+    fun pageCountEnforcesLimits() {
+        val valid = "{\"pageCount\": 10}"
+        val c = WorkerResponseValidator.validate("GET_PAGE_COUNT", valid) as PageCountContract
+        assertEquals(10, c.pageCount)
+
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": -1}") }
+        assertRejected { WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": ${SecurityLimits.MAX_PAGE_COUNT + 1}}") }
+    }
+
+    @Test
+    fun searchRedactValidatesBoundingBoxes() {
+        // Valid box
+        val valid = """{
+            "boxes": [
+                {"pageIndex": 0, "left": 0.1, "top": 0.2, "right": 0.5, "bottom": 0.6, "overlayLabel": "REDACTED"}
+            ]
+        }"""
+        val c = WorkerResponseValidator.validate("SEARCH_REDACT", valid) as SearchRedactContract
+        assertEquals(1, c.boxes.size)
+        assertEquals(0.4f, c.boxes[0].widthRatio, 0.001f)
+        assertEquals(0.4f, c.boxes[0].heightRatio, 0.001f)
+
+        // Invalid bounds (right < left)
+        val inverted = """{
+            "boxes": [
+                {"pageIndex": 0, "left": 0.8, "top": 0.2, "right": 0.5, "bottom": 0.6, "overlayLabel": "REDACTED"}
+            ]
+        }"""
+        assertRejected { WorkerResponseValidator.validate("SEARCH_REDACT", inverted) }
+    }
+
+    @Test
+    fun deskewContractParsed() {
+        val valid = "{\"success\": true, \"straightenedCount\": 3}"
+        val c = WorkerResponseValidator.validate("DESKEW", valid) as DeskewContract
+        assertTrue(c.success)
+        assertEquals(3, c.straightenedCount)
+    }
+
+    @Test
+    fun repairApplyContractParsed() {
+        val valid = "{\"success\": true, \"recoveredPages\": 12}"
+        val c = WorkerResponseValidator.validate("REPAIR_APPLY", valid) as RepairApplyContract
+        assertTrue(c.success)
+        assertEquals(12, c.recoveredPages)
+    }
+
+    @Test
+    fun officeExportContractParsed() {
+        val valid = "{\"success\": true, \"pageCount\": 5, \"outputSizeBytes\": 10240, \"itemsExtracted\": 50}"
+        val c = WorkerResponseValidator.validate("OFFICE_WORD", valid) as OfficeExportContract
+        assertTrue(c.success)
+        assertEquals(5, c.pageCount)
+        assertEquals(10240L, c.outputSizeBytes)
+        assertEquals(50, c.itemsExtracted)
+    }
+
+    @Test
+    fun standardOutputRespectsTargetCount() {
+        val valid = "{\"success\": true, \"renderedCount\": 2, \"size\": 1234}"
+        val c = WorkerResponseValidator.validate("ROTATE", valid, targetCount = 2) as StandardOutputContract
+        assertTrue(c.success)
+        assertEquals(1234L, c.size)
+
+        // Count mismatch throws
+        assertRejected { WorkerResponseValidator.validate("ROTATE", valid, targetCount = 3) }
+    }
+
+    @Test
+    fun outlineFileEnforcesLimits() {
+        val temp = File.createTempFile("test_outline_", ".json")
+        try {
+            // Valid outline
+            val valid = """{
+                "sections": [
+                    {"pageNumber": 1, "title": "Intro", "paragraphs": ["First line", "Second line"]}
+                ],
+                "bookmarks": [
+                    {"title": "Chapter 1", "pageNumber": 1, "children": []}
+                ],
+                "isScannedOnly": false,
+                "totalPages": 1
+            }"""
+            temp.writeText(valid)
+            val contract = WorkerResponseValidator.parseOutlineFile(temp)
+            assertEquals(1, contract.sections.size)
+            assertEquals("Intro", contract.sections[0].title)
+            assertEquals(1, contract.bookmarks.size)
+
+            // Trailing garbage
+            temp.writeText(valid + " extra_garbage")
+            assertRejected { WorkerResponseValidator.parseOutlineFile(temp) }
+
+            // Deeply nested bookmarks exceeding quota
+            val deep = StringBuilder("{\"title\":\"root\",\"pageNumber\":1,\"children\":[")
+            repeat(10) { deep.append("{\"title\":\"child\",\"pageNumber\":1,\"children\":[") }
+            repeat(10) { deep.append("]}") }
+            deep.append("]}")
+            val invalidDeepOutline = "{\"sections\":[],\"bookmarks\":[$deep],\"isScannedOnly\":false,\"totalPages\":1}"
+            temp.writeText(invalidDeepOutline)
+            assertRejected { WorkerResponseValidator.parseOutlineFile(temp) }
+        } finally {
+            temp.delete()
+        }
+    }
+
+    @Test
+    fun csvTableEnforcesBounds() {
+        // Valid CSV
+        val valid = "Header1,Header2,Header3\nVal1,Val2,Val3\n"
+        assertEquals(valid, WorkerResponseValidator.validateCsvTable(valid))
+
+        // Exceeds column limit (128)
+        val wideRow = (0..130).joinToString(",") { "col$it" }
+        assertRejected { WorkerResponseValidator.validateCsvTable(wideRow) }
+
+        // Exceeds cell character limit (1024)
+        val longCell = "a".repeat(1025)
+        assertRejected { WorkerResponseValidator.validateCsvTable("H1,H2\nval,$longCell\n") }
+
+        // Exceeds row limit (5000)
+        val sb = StringBuilder("H1,H2\n")
+        repeat(5005) { sb.append("a,b\n") }
+        assertRejected { WorkerResponseValidator.validateCsvTable(sb.toString()) }
+    }
+}

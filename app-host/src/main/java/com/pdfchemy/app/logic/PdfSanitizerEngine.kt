@@ -42,25 +42,24 @@ object PdfSanitizerEngine {
         context: Context,
         pdfUri: Uri
     ): SanitizerAuditReport {
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "SANITIZE_AUDIT",
-            pdfUri,
-            null,
-            "{}"
-        )
         return try {
-            val json = JSONObject(resultStr)
+            val contract = PdfGateway.executeEngineTyped<SanitizeAuditContract>(
+                context,
+                "SANITIZE_AUDIT",
+                pdfUri,
+                null,
+                "{}"
+            )
             SanitizerAuditReport(
-                threatsFound = json.optInt("threatsFound", 0),
-                jsCount = json.optInt("jsCount", 0),
-                launchActionsCount = json.optInt("launchActionsCount", 0),
-                attachmentCount = json.optInt("attachmentCount", 0),
-                uriCount = json.optInt("uriCount", 0),
-                hasMetadata = json.optBoolean("hasMetadata", false),
-                isClean = json.optBoolean("isClean", true),
-                isEncrypted = json.optBoolean("isEncrypted", false),
-                parseFailed = json.optBoolean("parseFailed", false)
+                threatsFound = contract.threatsFound,
+                jsCount = contract.jsCount,
+                launchActionsCount = contract.launchActionsCount,
+                attachmentCount = contract.attachmentCount,
+                uriCount = contract.uriCount,
+                hasMetadata = contract.hasMetadata,
+                isClean = contract.isClean,
+                isEncrypted = contract.isEncrypted,
+                parseFailed = contract.parseFailed
             )
         } catch (e: Exception) {
             SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true)
@@ -120,22 +119,21 @@ object PdfSanitizerEngine {
             put("purgeAttachments", purgeAttachments)
         }
 
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "SANITIZE_CLEAN",
-            sourceUri,
-            destUri,
-            params.toString()
-        )
         return try {
-            val json = JSONObject(resultStr)
+            val contract = PdfGateway.executeEngineTyped<SanitizerCleanContract>(
+                context,
+                "SANITIZE_CLEAN",
+                sourceUri,
+                destUri,
+                params.toString()
+            )
             SanitizerResult(
-                isSuccess = json.optBoolean("isSuccess", false),
-                threatsRemoved = json.optInt("threatsRemoved", 0),
-                jsRemoved = json.optInt("jsRemoved", 0),
-                actionsRemoved = json.optInt("actionsRemoved", 0),
-                metadataRemoved = json.optBoolean("metadataRemoved", false),
-                attachmentsRemoved = json.optInt("attachmentsRemoved", 0)
+                isSuccess = contract.isSuccess,
+                threatsRemoved = contract.threatsRemoved,
+                jsRemoved = contract.jsRemoved,
+                actionsRemoved = contract.actionsRemoved,
+                metadataRemoved = contract.metadataRemoved,
+                attachmentsRemoved = contract.attachmentsRemoved
             )
         } catch (e: Exception) {
             SanitizerResult(false, 0, 0, 0, false, 0)

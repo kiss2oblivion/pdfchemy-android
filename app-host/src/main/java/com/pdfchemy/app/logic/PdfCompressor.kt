@@ -114,14 +114,14 @@ private suspend fun compressSinglePass(
 
             val targetDpi = 150f
 
-            val json = org.json.JSONObject(PdfGateway.executeEngine(context, "COMPRESS", sourceUri, destUri,
+            val contract = PdfGateway.executeEngineTyped<CompressContract>(context, "COMPRESS", sourceUri, destUri,
                 org.json.JSONObject().put("targetDpi", targetDpi).put("quality", quality)
-                    .put("useGrayscale", useGrayscale).put("useLossless", useLossless).put("stripMetadata", stripMetadata).toString()))
+                    .put("useGrayscale", useGrayscale).put("useLossless", useLossless).put("stripMetadata", stripMetadata).toString())
 
             val report = CompressionReport(
                 originalSize = fileSize,
-                imagesProcessed = json.getInt("imagesProcessed"),
-                hasSignatures = json.getBoolean("hasSignatures"),
+                imagesProcessed = contract.imagesProcessed,
+                hasSignatures = contract.hasSignatures,
                 targetMissed = false
             )
 
@@ -144,17 +144,9 @@ private suspend fun compressSinglePass(
         uri: Uri
     ): Result<PdfAnalysis> = withContext(Dispatchers.IO) {
         try {
-            val jsonString = PdfGateway.analyzePdf(context, uri)
-            val json = org.json.JSONObject(jsonString)
+            val analysis = PdfGateway.analyzePdf(context, uri)
 
-            val pageCount = json.getInt("pageCount")
-            val imageCount = json.getInt("imageCount")
-            val hasSignatures = json.getBoolean("hasSignatures")
-            val scenarioName = json.getString("scenario")
-            val recommendedQuality = json.getDouble("recommendedQuality").toFloat()
-            val recommendationReason = json.getString("recommendationReason")
-
-            val scenario = when (scenarioName) {
+            val scenario = when (analysis.scenario) {
                 "SIGNED_OFFICIAL" -> PdfScenario.SIGNED_OFFICIAL
                 "TEXT_VECTOR" -> PdfScenario.TEXT_VECTOR
                 "SCANNED_IMAGE_HEAVY" -> PdfScenario.SCANNED_IMAGE_HEAVY
@@ -162,12 +154,12 @@ private suspend fun compressSinglePass(
             }
 
             Result.success(PdfAnalysis(
-                pageCount = pageCount,
-                imageCount = imageCount,
-                hasSignatures = hasSignatures,
+                pageCount = analysis.pageCount,
+                imageCount = analysis.imageCount,
+                hasSignatures = analysis.hasSignatures,
                 scenario = scenario,
-                recommendedQuality = recommendedQuality,
-                recommendationReason = recommendationReason
+                recommendedQuality = analysis.recommendedQuality,
+                recommendationReason = analysis.recommendationReason
             ))
         } catch (e: Exception) {
             Result.failure(e)

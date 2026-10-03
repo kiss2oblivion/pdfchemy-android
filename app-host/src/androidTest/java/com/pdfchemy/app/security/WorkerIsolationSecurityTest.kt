@@ -240,8 +240,8 @@ class WorkerIsolationSecurityTest {
             val snapshot = DocumentStager.stageDocument(context, android.net.Uri.fromFile(source))
             try {
                 source.writeText("different malicious bytes")
-                val json = JSONObject(PdfGateway.executeEngine(context, "GET_PAGE_COUNT", snapshot.uri, null, "{}"))
-                assertEquals(1, json.getInt("pageCount"))
+                val contract = PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.PageCountContract>(context, "GET_PAGE_COUNT", snapshot.uri, null, "{}")
+                assertEquals(1, contract.pageCount)
                 val bitmap = com.pdfchemy.app.logic.PdfEditor.renderPageBitmap(context, snapshot.uri, 0)
                 assertNotNull(bitmap)
                 SecurityLimits.requirePixels(bitmap!!.width, bitmap.height)

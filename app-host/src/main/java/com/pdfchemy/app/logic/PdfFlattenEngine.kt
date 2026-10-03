@@ -27,8 +27,12 @@ object PdfFlattenEngine {
         pdfUri: Uri
     ): Result<FlattenDiagnostic> = withContext(Dispatchers.IO) {
         try {
-            val json = PdfGateway.executeEngine(context, "FLATTEN_INSPECT", pdfUri, null, "{}")
-            val diag = com.google.gson.Gson().fromJson(json, FlattenDiagnostic::class.java)
+            val contract = PdfGateway.executeEngineTyped<FlattenInspectContract>(context, "FLATTEN_INSPECT", pdfUri, null, "{}")
+            val diag = FlattenDiagnostic(
+                fieldCount = contract.fieldCount,
+                annotationCount = contract.annotationCount,
+                hasSignatures = contract.hasSignatures
+            )
             Result.success(diag)
         } catch (e: Exception) {
             AppLogger.e("PdfFlattenEngine: Error inspecting elements", e)

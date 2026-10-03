@@ -115,7 +115,7 @@ object SignatureEngine {
                 put("signatures", sigsArray)
             }
 
-            val resultStr = PdfGateway.executeEngineExtra(
+            val contract = PdfGateway.executeEngineExtraTyped<StandardOutputContract>(
                 context,
                 "SIGNATURE_APPLY",
                 sourceUri,
@@ -123,8 +123,7 @@ object SignatureEngine {
                 Uri.fromFile(imagesFile),
                 params.toString()
             )
-            val json = JSONObject(resultStr)
-            json.optBoolean("success", false)
+            contract.success
             } finally { imagesFile.delete() }
         } catch (e: Exception) {
             AppLogger.e("Failed to apply signatures to PDF: ${e.message}", e)
@@ -218,15 +217,14 @@ object SignatureEngine {
                 put("location", location)
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
                 context,
                 "SIGNATURE_DIGITAL",
                 sourceUri,
                 destUri,
                 params.toString()
             )
-            val json = JSONObject(resultStr)
-            json.optBoolean("success", false)
+            contract.success
         } catch (e: Exception) {
             AppLogger.e("Failed to apply digital signature: ${e.message}", e)
             false

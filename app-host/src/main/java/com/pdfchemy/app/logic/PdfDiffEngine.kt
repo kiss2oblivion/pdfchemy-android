@@ -3,8 +3,6 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import android.graphics.Bitmap
-import com.google.gson.Gson
-
 import android.graphics.Color
 
 data class PageDiffResult(
@@ -33,8 +31,8 @@ object PdfDiffEngine {
         try {
             val first = stager.stageDocumentCancellable(context, uri1).also { snapshots.add(it); leases.add(stager.retain(it)) }
             val second = stager.stageDocumentCancellable(context, uri2).also { snapshots.add(it); leases.add(stager.retain(it)) }
-            val texts1 = Gson().fromJson(JailEngineBridge.call(context, "TEXT_PAGES", first.uri, null), Array<String>::class.java)
-            val texts2 = Gson().fromJson(JailEngineBridge.call(context, "TEXT_PAGES", second.uri, null), Array<String>::class.java)
+            val texts1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null).pages
+            val texts2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null).pages
             for (page in 0 until maxOf(texts1.size, texts2.size)) {
                 var bmp1: Bitmap? = null
                 var bmp2: Bitmap? = null

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.PdfAttachment
 import com.pdfchemy.app.logic.PdfGateway
+import com.pdfchemy.app.logic.AttachmentListContract
 import org.json.JSONArray
 import org.json.JSONObject
 import com.pdfchemy.app.utils.FileUtils
@@ -54,18 +55,14 @@ fun AttachmentManagerScreen(
         coroutineScope.launch {
             isLoading = true
             try {
-                val jsonResult = PdfGateway.executeEngine(context, "ATTACHMENT_LIST", uri, null, "{}")
-                val jsonArray = JSONArray(jsonResult)
-                val newList = mutableListOf<PdfAttachment>()
-                for (i in 0 until jsonArray.length()) {
-                    val item = jsonArray.getJSONObject(i)
-                    newList.add(PdfAttachment(
-                        name = item.optString("name"),
-                        sizeBytes = item.optLong("sizeBytes"),
-                        mimeType = item.optString("mimeType")
-                    ))
+                val contract = PdfGateway.executeEngineTyped<AttachmentListContract>(context, "ATTACHMENT_LIST", uri, null, "{}")
+                attachments = contract.attachments.map {
+                    PdfAttachment(
+                        name = it.name,
+                        sizeBytes = it.sizeBytes,
+                        mimeType = it.mimeType
+                    )
                 }
-                attachments = newList
             } catch (e: Exception) {
                 // handle error
             } finally {

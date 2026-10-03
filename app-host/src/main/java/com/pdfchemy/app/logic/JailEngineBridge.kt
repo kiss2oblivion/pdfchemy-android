@@ -11,9 +11,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 internal object JailEngineBridge {
-    suspend fun call(context: Context, name: String, source: Uri?, dest: Uri?, params: Any = emptyMap<String, Any>(), extra: Uri? = null): String =
+    suspend fun call(context: Context, name: String, source: Uri?, dest: Uri?, params: Any = emptyMap<String, Any>(), extra: Uri? = null): OperationContract =
         if (extra == null) PdfGateway.executeEngine(context, name, source, dest, Gson().toJson(params))
         else PdfGateway.executeEngineExtra(context, name, source, dest, extra, Gson().toJson(params))
+
+    suspend inline fun <reified T : OperationContract> callTyped(context: Context, name: String, source: Uri?, dest: Uri?, params: Any = emptyMap<String, Any>(), extra: Uri? = null): T =
+        call(context, name, source, dest, params, extra) as T
 
     suspend fun bitmap(context: Context, name: String, source: Uri, params: Any = emptyMap<String, Any>()): Bitmap? {
         val file = File.createTempFile("pixels_", ".argb", context.cacheDir)

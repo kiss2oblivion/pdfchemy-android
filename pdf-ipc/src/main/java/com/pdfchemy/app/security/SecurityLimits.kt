@@ -22,12 +22,14 @@ object SecurityLimits {
     const val MAX_PARAMS_JSON_BYTES = 256 * 1024
     const val MAX_REQUEST_ITEMS = 2000
     const val MAX_REQUEST_DEPTH = 32
+    const val MAX_RESPONSE_DEPTH = 8
     const val MAX_REQUEST_NODES = 20_000
     const val MAX_QUERY_LENGTH = 4096
     const val MAX_METADATA_LENGTH = 4096
     const val MAX_ARCHIVE_FILE_COUNT = 5000
     const val MAX_ARCHIVE_BYTES_READ = 250L * 1024 * 1024
     const val MAX_OUTPUT_FILES = 500
+    const val MAX_PAGE_COUNT = 10_000
     const val MAX_RENDER_DIMENSION = 2048
     const val MAX_RENDER_PIXELS = 4_194_304L
     const val MAX_SIGNATURE_BYTES = 2 * 1024 * 1024

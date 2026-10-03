@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.jail.HostOutputTransaction
 import com.pdfchemy.app.jail.IPdfJailService
 import com.pdfchemy.app.jail.IPdfJailStringCallback
+import com.pdfchemy.app.jail.WorkerResponseValidator
 import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.Dispatchers
@@ -23,11 +24,12 @@ object PdfGateway {
 
     private suspend fun request(
         context: Context,
+        operation: String,
         sources: List<Uri>,
         targets: List<Uri>,
         paramsJson: String,
         invoke: (IPdfJailService, Long, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
-    ): String = withContext(Dispatchers.IO) {
+    ): OperationContract = withContext(Dispatchers.IO) {
         SecurityLimits.enforceStringLength(paramsJson, SecurityLimits.MAX_PARAMS_JSON_BYTES, "Request")
         require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
         val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
@@ -70,6 +72,7 @@ object PdfGateway {
             if (operationToken == 0L) {
                 throw WorkerFailure(429, "Jail 429: BUSY")
             }
+            WorkerResponseValidator.validateOperation(operation)
 
             val response = CompletableDeferred<String>()
             val death = IBinder.DeathRecipient { response.completeExceptionally(IllegalStateException("Isolated worker died")) }
@@ -81,7 +84,7 @@ object PdfGateway {
                 }
             }
 
-            val result = try {
+            val rawResult = try {
                 withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
                     invoke(jail!!, operationToken, staged, inputs, outputs, renderer, scratch, callback)
                     response.await()
@@ -91,18 +94,21 @@ object PdfGateway {
             scratch.verifyBudget()
 
             // Acceptance handshake:
-            // For output operations: validate and snapshot into private FDs, then ACK before committing to SAF.
+            // For output operations: validate and snapshot into private FDs, validate typed response, then ACK before committing to SAF.
             if (targets.isNotEmpty()) {
-                outputTransaction.validateAndSnapshot(result)
+                outputTransaction.validateAndSnapshot(rawResult)
+                val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
                 check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released
                 outputTransaction.commit()
+                contract
             } else {
-                // Non-output operation: Host accepts result
+                // Non-output operation: Host validates typed response before accepting result
+                val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
                 check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released
+                contract
             }
-            result
         } catch (error: Throwable) {
             // Terminate worker ONLY if this operation holds a valid, active token.
             // Never abort if token == 0L (e.g. BUSY or pre-admission failure).
@@ -122,22 +128,32 @@ object PdfGateway {
         }
     }
 
-    suspend fun analyzePdf(context: Context, sourceUri: Uri): String = request(context, listOf(sourceUri), emptyList(), "{}") { jail, token, staged, inputs, _, _, scratch, callback ->
-        jail.analyzePdf(token, inputs[0], staged[0].sha256, staged[0].size, scratch, callback)
-    }
+    suspend fun analyzePdf(context: Context, sourceUri: Uri): PdfAnalysisContract =
+        request(context, "ANALYZE_PDF", listOf(sourceUri), emptyList(), "{}") { jail, token, staged, inputs, _, _, scratch, callback ->
+            jail.analyzePdf(token, inputs[0], staged[0].sha256, staged[0].size, scratch, callback)
+        } as PdfAnalysisContract
 
-    suspend fun executeEngine(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): String =
-        request(context, listOfNotNull(sourceUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+    suspend fun executeEngine(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): OperationContract =
+        request(context, engineName, listOfNotNull(sourceUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
             jail.executeEngine(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, scratch, callback)
         }
 
-    suspend fun executeEngineExtra(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): String =
-        request(context, listOfNotNull(sourceUri, extraUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+    suspend inline fun <reified T : OperationContract> executeEngineTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): T =
+        executeEngine(context, engineName, sourceUri, destUri, paramsJson) as T
+
+    suspend fun executeEngineExtra(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): OperationContract =
+        request(context, engineName, listOfNotNull(sourceUri, extraUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
             jail.executeEngineExtra(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), inputs.getOrNull(1), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, staged.getOrNull(1)?.sha256 ?: "", staged.getOrNull(1)?.size ?: 0L, scratch, callback)
         }
 
-    suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): String =
-        request(context, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+    suspend inline fun <reified T : OperationContract> executeEngineExtraTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): T =
+        executeEngineExtra(context, engineName, sourceUri, destUri, extraUri, paramsJson) as T
+
+    suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): OperationContract =
+        request(context, engineName, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
             jail.executeEngineBatch(token, engineName, inputs.toTypedArray(), outputs.toTypedArray(), paramsJson, renderer, staged.map { it.sha256 }.toTypedArray(), staged.map { it.size }.toLongArray(), scratch, callback)
         }
+
+    suspend inline fun <reified T : OperationContract> executeEngineBatchTyped(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): T =
+        executeEngineBatch(context, engineName, sourceUris, destUris, paramsJson) as T
 }

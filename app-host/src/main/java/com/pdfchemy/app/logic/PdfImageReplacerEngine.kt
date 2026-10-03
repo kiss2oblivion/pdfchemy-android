@@ -5,7 +5,6 @@ import android.net.Uri
 import android.graphics.Bitmap
 import com.pdfchemy.app.security.PixelWire
 import com.pdfchemy.app.security.SecurityLimits
-import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -14,8 +13,8 @@ object PdfImageReplacerEngine {
     suspend fun listEmbeddedImages(context: Context, pdfUri: Uri): List<EmbeddedImageInfo> {
         val file = File.createTempFile("image_list_", ".argb", context.cacheDir)
         try {
-            val json = JailEngineBridge.call(context, "IMAGE_LIST", pdfUri, Uri.fromFile(file))
-            val entries = Gson().fromJson(json, Array<EmbeddedImageInfo>::class.java).toList()
+            val contract = JailEngineBridge.callTyped<ImageListContract>(context, "IMAGE_LIST", pdfUri, Uri.fromFile(file))
+            val entries = contract.images
             return file.inputStream().buffered().use { stream -> entries.map { it.copy(thumbnailBitmap = PixelWire.read(stream)) } }
         } finally { file.delete() }
     }
