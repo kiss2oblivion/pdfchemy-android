@@ -27,7 +27,7 @@ object PdfRepairEngine {
                 return Result.failure(IllegalStateException("File is too large to repair (exceeds 100MB limit)"))
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<RepairDiagnoseContract>(
                 context,
                 "REPAIR_DIAGNOSE",
                 pdfUri,
@@ -35,18 +35,13 @@ object PdfRepairEngine {
                 "{}"
             )
 
-            val json = JSONObject(resultStr)
-            if (json.has("error")) {
-                return Result.failure(Exception(json.getString("error")))
-            }
-
             return Result.success(
                 RepairDiagnostic(
-                    hasValidHeader = json.optBoolean("hasValidHeader", false),
-                    hasValidEof = json.optBoolean("hasValidEof", false),
-                    recoveredPages = json.optInt("recoveredPages", 0),
-                    isEncrypted = json.optBoolean("isEncrypted", false),
-                    issueSummary = json.optString("issueSummary", "")
+                    hasValidHeader = contract.hasValidHeader,
+                    hasValidEof = contract.hasValidEof,
+                    recoveredPages = contract.recoveredPages,
+                    isEncrypted = contract.isEncrypted,
+                    issueSummary = contract.issueSummary
                 )
             )
         } catch (e: Exception) {
@@ -66,18 +61,13 @@ object PdfRepairEngine {
                 return Result.failure(IllegalStateException("File is too large to repair (exceeds 100MB limit)"))
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<RepairApplyContract>(
                 context,
                 "REPAIR_APPLY",
                 sourcePdfUri,
                 destPdfUri,
                 "{}"
             )
-
-            val json = JSONObject(resultStr)
-            if (!json.optBoolean("success", false)) {
-                return Result.failure(Exception(json.optString("error", "Unknown repair error")))
-            }
 
             val historyRepo = HistoryRepository(context)
             historyRepo.addHistoryItem(
@@ -86,7 +76,7 @@ object PdfRepairEngine {
                 "Repaired Corrupted PDF"
             )
 
-            return Result.success(json.optInt("recoveredPages", 0))
+            return Result.success(contract.recoveredPages)
         } catch (e: Exception) {
             AppLogger.e("PdfRepairEngine: Error repairing PDF", e)
             return Result.failure(e)

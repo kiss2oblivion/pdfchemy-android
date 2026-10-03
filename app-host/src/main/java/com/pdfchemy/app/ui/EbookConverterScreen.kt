@@ -90,9 +90,8 @@ fun EbookConverterScreen(
                                 put("bookTitle", bookTitle.ifBlank { "Untitled E-Book" })
                                 put("authorName", authorName.ifBlank { "Unknown Author" })
                             }
-                            val resultStr = com.pdfchemy.app.logic.PdfGateway.executeEngine(context, "PDF_TO_EPUB", selectedSourceUri!!, destUri, params.toString())
-                            val json = org.json.JSONObject(resultStr)
-                            if (json.optBoolean("isSuccess", false)) {
+                            val contract = com.pdfchemy.app.logic.PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.StandardOutputContract>(context, "PDF_TO_EPUB", selectedSourceUri!!, destUri, params.toString())
+                            if (contract.success) {
                                 val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
                                 historyRepo.addHistoryItem(
                                     destUri,
@@ -111,9 +110,8 @@ fun EbookConverterScreen(
                         try {
                             progressCurrent = 0
                             progressTotal = 100
-                            val resultStr = com.pdfchemy.app.logic.PdfGateway.executeEngine(context, "EPUB_TO_PDF", selectedSourceUri!!, destUri, "{}")
-                            val json = org.json.JSONObject(resultStr)
-                            if (json.optBoolean("isSuccess", false)) {
+                            val contract = com.pdfchemy.app.logic.PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.StandardOutputContract>(context, "EPUB_TO_PDF", selectedSourceUri!!, destUri, "{}")
+                            if (contract.success) {
                                 progressCurrent = 100
                                 val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
                                 historyRepo.addHistoryItem(

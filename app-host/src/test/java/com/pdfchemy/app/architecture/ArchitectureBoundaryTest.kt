@@ -24,4 +24,19 @@ class ArchitectureBoundaryTest {
 
         rule.check(importedClasses)
     }
+
+    @Test
+    fun `no production host class may call IPdfJailService abortWorker`() {
+        val importedClasses: JavaClasses = ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("com.pdfchemy.app")
+
+        val rule = noClasses()
+            .that().haveNameNotMatching(".*PdfJailService.*")
+            .and().haveNameNotMatching(".*Test.*")
+            .should().callMethod("com.pdfchemy.app.jail.IPdfJailService", "abortWorker")
+            .because("Production classes must not call unscoped abortWorker(). All termination must be token-scoped via abortOperation(token).")
+
+        rule.check(importedClasses)
+    }
 }

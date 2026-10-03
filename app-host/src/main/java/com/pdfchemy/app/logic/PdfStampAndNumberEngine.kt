@@ -64,18 +64,14 @@ object PdfStampAndNumberEngine {
             put("isTiled", options.isTiled)
         }
 
-        val resultStr = PdfGateway.executeEngine(
+        val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
             context,
             "WATERMARK",
             sourceUri,
             destUri,
             params.toString()
         )
-        return try {
-            JSONObject(resultStr).optBoolean("success", false)
-        } catch (e: Exception) {
-            false
-        }
+        return contract.success
     }
 
     suspend fun addPageNumbers(
@@ -92,18 +88,14 @@ object PdfStampAndNumberEngine {
             put("marginPts", options.marginPts.toDouble())
         }
 
-        val resultStr = PdfGateway.executeEngine(
+        val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
             context,
             "PAGE_NUMBERS",
             sourceUri,
             destUri,
             params.toString()
         )
-        return try {
-            JSONObject(resultStr).optBoolean("success", false)
-        } catch (e: Exception) {
-            false
-        }
+        return contract.success
     }
 
     suspend fun applyBatesStamping(
@@ -122,17 +114,13 @@ object PdfStampAndNumberEngine {
             put("marginPts", options.marginPts.toDouble())
         }
 
-        val resultStr = PdfGateway.executeEngine(
+        val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
             context,
             "BATES_STAMP",
             sourceUri,
             destUri,
             params.toString()
         )
-        return try {
-            JSONObject(resultStr).optBoolean("success", false)
-        } catch (e: Exception) {
-            false
-        }
+        return contract.success
     }
 }

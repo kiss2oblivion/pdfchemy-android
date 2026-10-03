@@ -103,6 +103,7 @@ class TextConverterViewModel : ViewModel() {
             _uiState.value = UiState.Processing
             
             val result = TextFormatConverter.convert(
+                context,
                 _inputText.value, 
                 _inputFormat.value, 
                 _outputFormat.value

@@ -33,29 +33,8 @@ object PdfRedactionEngine {
             params.put("query", query)
             params.put("isRegex", isRegex)
 
-            val resultStr = PdfGateway.executeEngine(context, "SEARCH_REDACT", pdfUri, null, params.toString())
-            val json = JSONObject(resultStr)
-
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-
-            val boxesArr = json.optJSONArray("boxes")
-            val boxes = mutableListOf<RedactionBox>()
-            if (boxesArr != null) {
-                for (i in 0 until boxesArr.length()) {
-                    val b = boxesArr.optJSONObject(i) ?: continue
-                    boxes.add(
-                        RedactionBox(
-                            pageIndex = b.optInt("pageIndex", 0),
-                            xRatio = b.optDouble("left", 0.0).toFloat(),
-                            yRatio = b.optDouble("top", 0.0).toFloat(),
-                            widthRatio = b.optDouble("right", 0.0).toFloat() - b.optDouble("left", 0.0).toFloat(),
-                            heightRatio = b.optDouble("bottom", 0.0).toFloat() - b.optDouble("top", 0.0).toFloat(),
-                            overlayLabel = b.optString("overlayLabel", "REDACTED")
-                        )
-                    )
-                }
-            }
-            Result.success(boxes)
+            val contract = PdfGateway.executeEngineTyped<SearchRedactContract>(context, "SEARCH_REDACT", pdfUri, null, params.toString())
+            Result.success(contract.boxes)
         } catch (e: Exception) {
             AppLogger.e("PdfRedactionEngine: Error searching targets", e)
             Result.failure(e)
@@ -106,14 +85,9 @@ object PdfRedactionEngine {
             }
             params.put("boxes", boxesArr)
 
-            val resultStr = com.pdfchemy.app.logic.PdfGateway.executeEngine(context, "REDACT", sourceUri, destUri, params.toString())
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-            
-            val success = json.optBoolean("success", false)
-            if (success) {
-                Result.success(json.optInt("count", redactions.size))
+            val contract = com.pdfchemy.app.logic.PdfGateway.executeEngineTyped<StandardOutputContract>(context, "REDACT", sourceUri, destUri, params.toString())
+            if (contract.success) {
+                Result.success(if (contract.count > 0) contract.count else redactions.size)
             } else {
                 Result.failure(Exception("Unknown redaction failure"))
             }

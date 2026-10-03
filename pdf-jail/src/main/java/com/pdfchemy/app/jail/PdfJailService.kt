@@ -4,25 +4,134 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-import android.os.RemoteException
-import com.tom_roush.pdfbox.io.MemoryUsageSetting
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
-import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import android.os.Process
+import com.pdfchemy.app.security.*
+import com.pdfchemy.app.jail.engines.*
+import com.pdfchemy.app.logic.PageModification
+import com.pdfchemy.app.jail.boundedFileOutput
+import com.pdfchemy.app.jail.capabilityInput
+import kotlinx.coroutines.*
 
-/**
- * Isolated process service for processing PDF documents securely.
- */
 class PdfJailService : Service() {
-
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val gate = WorkerGate { Process.killProcess(Process.myPid()) }
+    @Volatile private var debugOutput: ParcelFileDescriptor? = null
+
+    private fun submit(
+        operationId: Long,
+        sources: List<ParcelFileDescriptor>,
+        targets: List<ParcelFileDescriptor>,
+        hashes: List<String>,
+        sizes: List<Long>,
+        params: String,
+        callback: IPdfJailStringCallback,
+        scratchBinder: IBinder?,
+        validateMetadata: () -> Unit = {},
+        task: suspend () -> String
+    ) {
+        val all = sources + targets
+        if (!gate.startExecution(operationId)) {
+            all.forEach { runCatching { it.close() } }
+            val errorCode = if (gate.isBusy()) 429 else 400
+            val errorMsg = if (errorCode == 429) "BUSY" else "Invalid or stale operation token"
+            runCatching { callback.onFailure(errorCode, errorMsg) }
+            return
+        }
+        val death = IBinder.DeathRecipient {
+            gate.poison(operationId)
+            Process.killProcess(Process.myPid())
+        }
+        serviceScope.launch {
+            var result: String? = null
+            var failure: Throwable? = null
+            val owner = scratchBinder ?: callback.asBinder()
+            try {
+                owner.linkToDeath(death, 0)
+                validateMetadata()
+                require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
+                require(hashes.size == sources.size && sizes.size == sources.size)
+                require(sizes.sum() <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
+                RequestValidator.validate(params)
+                JailScratch.begin(scratchBinder, targets)
+                sources.indices.forEach { StagedIdentity.verifyAndRewind(sources[it], hashes[it], sizes[it]) }
+                result = SecurityLimits.enforceResultSize(task())
+                require(targets.sumOf { it.statSize.coerceAtLeast(0) } <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate output storage quota exceeded" }
+                if (result.trimStart().startsWith("{")) {
+                    val response = org.json.JSONObject(result)
+                    check(!response.has("error") && (!response.has("success") || response.optBoolean("success")) && (!response.has("isSuccess") || response.optBoolean("isSuccess"))) { response.optString("error", "Operation failed") }
+                }
+                check(gate.markAwaitingHostAccept(operationId)) { "Failed to transition to AWAITING_HOST_ACCEPT" }
+            } catch (t: Throwable) {
+                failure = t
+                gate.poison(operationId)
+                // Best effort truncation for seekable destinations; a provider may prohibit it.
+                targets.forEach { runCatching { android.system.Os.ftruncate(it.fileDescriptor, 0) } }
+                if (t !is Exception) {
+                    all.forEach { runCatching { it.close() } }
+                    JailScratch.close()
+                    Process.killProcess(Process.myPid())
+                    return@launch
+                }
+            } finally {
+                runCatching { owner.unlinkToDeath(death, 0) }
+                all.forEach { runCatching { it.close() } }
+                JailScratch.close()
+            }
+            runCatching {
+                if (failure != null) callback.onFailure(400, failure.message ?: "Worker failed")
+                else {
+                    callback.onSuccess(requireNotNull(result))
+                    if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && result.contains("\"duplicateSuccess\":true")) {
+                        callback.onSuccess(requireNotNull(result))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun numeric(operationId: Long, callback: IPdfJailCallback?) = object : IPdfJailStringCallback.Stub() {
+        override fun onSuccess(resultJson: String) {
+            try {
+                val size = org.json.JSONObject(resultJson).optLong("size", 0L)
+                callback?.onSuccess(size)
+            } catch (t: Throwable) {
+                gate.poison(operationId)
+                callback?.onFailure(400, "Protocol error parsing numeric result: ${t.message}")
+            }
+        }
+        override fun onFailure(errorCode: Int, errorMessage: String) {
+            callback?.onFailure(errorCode, errorMessage)
+        }
+    }
 
     private val binder = object : IPdfJailService.Stub() {
+        override fun beginOperation(ownerBinder: IBinder?): Long = gate.begin(ownerBinder)
+
+        override fun completeOperation(operationId: Long): Boolean = gate.complete(operationId)
+
+        override fun abortOperation(operationId: Long) {
+            gate.terminateIfOwner(operationId)
+        }
+
+        override fun abortWorker() {
+            Process.killProcess(Process.myPid())
+        }
+
+        override fun debugOutputProbe(rewrite: Boolean, callback: IPdfJailCallback) {
+            check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+            val fd = debugOutput
+            if (fd == null) { callback.onSuccess(0); return }
+            if (rewrite) {
+                android.system.Os.ftruncate(fd.fileDescriptor, 0)
+                android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+                val bytes = "late worker mutation".toByteArray()
+                android.system.Os.write(fd.fileDescriptor, bytes, 0, bytes.size)
+            }
+            callback.onSuccess(fd.statSize)
+        }
+
         override fun compressPdf(
+            operationId: Long,
             sourceFd: ParcelFileDescriptor?,
             targetFd: ParcelFileDescriptor?,
             targetDpi: Float,
@@ -30,164 +139,49 @@ class PdfJailService : Service() {
             rasterizePages: Boolean,
             expectedSha256: String,
             expectedSize: Long,
+            scratchBinder: IBinder?,
             callback: IPdfJailCallback?
         ) {
-            if (sourceFd == null || targetFd == null || callback == null) {
-                callback?.onFailure(-1, "Invalid null arguments")
-                return
-            }
-            try {
-                verifyAndRewind(sourceFd, expectedSha256, expectedSize)
-                com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(sourceFd)
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-
-            serviceScope.launch {
-                var success = false
-                var outputSize = 0L
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val inputStream = ParcelFileDescriptor.AutoCloseInputStream(sourceFd)
-                        val outputStream = ParcelFileDescriptor.AutoCloseOutputStream(targetFd)
-
-                        inputStream.use { streamIn ->
-                            outputStream.use { streamOut ->
-                                PDDocument.load(streamIn, MemoryUsageSetting.setupTempFileOnly()).use { document ->
-                                    var compressedCount = 0
-                                    for (page in document.pages) {
-                                        val resources = page.resources ?: continue
-                                        for (name in resources.xObjectNames) {
-                                            if (resources.isImageXObject(name)) {
-                                                val xObject = resources.getXObject(name) as? PDImageXObject ?: continue
-                                                try {
-                                                    val image = xObject.image ?: continue
-                                                    val newImage = JPEGFactory.createFromImage(document, image, quality, targetDpi.toInt())
-                                                    resources.put(name, newImage)
-                                                    compressedCount++
-                                                } catch (e: Exception) {}
-                                            }
-                                        }
-                                    }
-                                    document.save(streamOut)
-                                }
-                            }
-                        }
-                        outputSize = targetFd.statSize
-                        success = true
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    try { callback.onFailure(1, "Task timed out after 2 minutes") } catch (re: RemoteException) {}
-                } catch (e: Exception) {
-                    try { callback.onFailure(1, e.message ?: "Unknown compression error") } catch (re: RemoteException) {}
-                } finally {
-                    if (success) {
-                        try { callback.onSuccess(outputSize) } catch (re: RemoteException) {}
-                    }
-                    stopSelf()
-                }
+            submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256), listOf(expectedSize), "{}", numeric(operationId, callback), scratchBinder) {
+                PdfServiceEngineWorker.compress(sourceFd, targetFd, targetDpi, quality, rasterizePages)
             }
         }
-        
+
         override fun analyzePdf(
+            operationId: Long,
             sourceFd: ParcelFileDescriptor?,
             expectedSha256: String,
             expectedSize: Long,
+            scratchBinder: IBinder?,
             callback: IPdfJailStringCallback?
         ) {
-            if (sourceFd == null || callback == null) {
-                callback?.onFailure(-1, "Invalid null arguments")
-                return
-            }
-            try {
-                verifyAndRewind(sourceFd, expectedSha256, expectedSize)
-                com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(sourceFd)
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-
-            serviceScope.launch {
-                var jsonResult: String? = null
-                var errorMsg: String? = null
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val inputStream = ParcelFileDescriptor.AutoCloseInputStream(sourceFd)
-                        inputStream.use { streamIn ->
-                            val doc = try {
-                                PDDocument.load(streamIn, MemoryUsageSetting.setupTempFileOnly())
-                            } catch (e: Exception) {
-                                errorMsg = "Not a valid PDF file."
-                                return@withTimeout
-                            }
-
-                            doc.use { document ->
-                                val pageCount = document.numberOfPages
-                                var imageCount = 0
-                                val hasSignatures = document.signatureDictionaries.isNotEmpty()
-
-                                for (page in document.pages) {
-                                    val resources = page.resources ?: continue
-                                    val processedNames = mutableSetOf<String>()
-
-                                    for (name in resources.xObjectNames) {
-                                        val isImage = try { resources.isImageXObject(name) } catch (e: Exception) { false }
-                                        if (isImage && processedNames.add(name.name)) {
-                                            imageCount++
-                                        }
-                                    }
-                                }
-
-                                val scenarioName = when {
-                                    hasSignatures -> "SIGNED_OFFICIAL"
-                                    imageCount == 0 -> "TEXT_VECTOR"
-                                    imageCount >= pageCount -> "SCANNED_IMAGE_HEAVY"
-                                    else -> "MIXED"
-                                }
-
-                                val recommendedQuality = when (scenarioName) {
-                                    "SIGNED_OFFICIAL" -> 0.75f
-                                    "TEXT_VECTOR" -> 0.75f
-                                    "SCANNED_IMAGE_HEAVY" -> 0.25f
-                                    else -> 0.50f
-                                }
-
-                                val reason = when (scenarioName) {
-                                    "SIGNED_OFFICIAL" -> "This document is digitally signed or official. High-quality compression is recommended to prevent invalidating signatures or losing document integrity."
-                                    "TEXT_VECTOR" -> "This document is primarily text-based. Using a better quality profile is recommended as it's already well-compressed by vector graphics."
-                                    "SCANNED_IMAGE_HEAVY" -> "This document appears to be a scanned copy (high image count). Using maximum compression will significantly reduce file size without excessive readable quality loss."
-                                    else -> "This document contains a mix of text and images. Balanced compression is the safest default."
-                                }
-
-                                jsonResult = org.json.JSONObject().apply {
-                                    put("pageCount", pageCount)
-                                    put("imageCount", imageCount)
-                                    put("hasSignatures", hasSignatures)
-                                    put("scenario", scenarioName)
-                                    put("recommendedQuality", recommendedQuality.toDouble())
-                                    put("recommendationReason", reason)
-                                }.toString()
-                            }
-                        }
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    errorMsg = "Task timed out after 2 minutes"
-                } catch (e: Exception) {
-                    errorMsg = e.message ?: "Unknown error"
-                } finally {
-                    try { sourceFd.close() } catch (e: Exception) {}
-                    if (errorMsg != null) {
-                        try { callback.onFailure(-1, errorMsg) } catch (re: Exception) {}
-                    } else if (jsonResult != null) {
-                        try { callback.onSuccess(jsonResult) } catch (re: Exception) {}
-                    }
-                }
+            if (callback == null) { sourceFd?.close(); return }
+            submit(operationId, listOfNotNull(sourceFd), emptyList(), listOf(expectedSha256), listOf(expectedSize), "{}", callback, scratchBinder) {
+                PdfServiceEngineWorker.analyze(sourceFd)
             }
         }
 
-        
+        override fun exportModifiedPdf(
+            operationId: Long,
+            sourceFd: ParcelFileDescriptor?,
+            targetFd: ParcelFileDescriptor?,
+            modificationsJson: String?,
+            expectedSha256: String,
+            expectedSize: Long,
+            scratchBinder: IBinder?,
+            callback: IPdfJailCallback?
+        ) {
+            submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256), listOf(expectedSize), modificationsJson ?: "{}", numeric(operationId, callback), scratchBinder) {
+                require(sourceFd != null && targetFd != null && modificationsJson != null && callback != null)
+                val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
+                val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(modificationsJson, type) ?: emptyMap()
+                check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, sourceFd, targetFd, modifications))
+                org.json.JSONObject().put("size", targetFd.statSize).toString()
+            }
+        }
+
         override fun executeEngine(
+            operationId: Long,
             engineName: String,
             sourceFd: ParcelFileDescriptor?,
             targetFd: ParcelFileDescriptor?,
@@ -195,104 +189,32 @@ class PdfJailService : Service() {
             rendererBinder: IBinder?,
             expectedSha256: String,
             expectedSize: Long,
+            scratchBinder: IBinder?,
             callback: IPdfJailStringCallback
         ) {
-            try {
-                if (sourceFd != null) {
-                    verifyAndRewind(sourceFd, expectedSha256, expectedSize)
-                    com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(sourceFd)
+            submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), if (sourceFd == null) emptyList() else listOf(expectedSha256), if (sourceFd == null) emptyList() else listOf(expectedSize), paramsJson, callback, scratchBinder) {
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_DUPLICATE_OUTPUT_SUCCESS") {
+                    boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
+                    return@submit "{\"success\":true,\"duplicateSuccess\":true}"
                 }
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-            serviceScope.launch {
-                var finalResult: String? = null
-                var errorMsg: String? = null
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val resultJson = when (engineName) {
-                            "METADATA_READ" -> com.pdfchemy.app.jail.engines.PdfMetadataEngineWorker.readMetadata(sourceFd!!)
-                            "METADATA_WRITE" -> com.pdfchemy.app.jail.engines.PdfMetadataEngineWorker.writeOrSanitizeMetadata(sourceFd!!, targetFd!!, paramsJson)
-                            "DELETE_PAGES" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.deletePages(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "ROTATE" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.rotatePdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "PROTECT" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.protectPdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "UNLOCK" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.unlockPdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "CHECK_ENCRYPTION" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.checkEncryption(this@PdfJailService, sourceFd)
-                            "GET_PAGE_COUNT" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.getPageCount(this@PdfJailService, sourceFd!!)
-                            "PLAN_SPLIT_BLANK" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.planSplitByBlankPages(this@PdfJailService, sourceFd, paramsJson)
-                            "PLAN_SPLIT_BOOKMARKS" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.planSplitByBookmarks(this@PdfJailService, sourceFd)
-                            "BOOKMARK_READ" -> com.pdfchemy.app.jail.engines.PdfBookmarkEngineWorker.readBookmarks(sourceFd!!)
-                            "BOOKMARK_WRITE" -> com.pdfchemy.app.jail.engines.PdfBookmarkEngineWorker.writeBookmarks(sourceFd!!, targetFd!!, paramsJson)
-                            "TEXT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfTextExtractorWorker.extractText(this@PdfJailService, sourceFd!!, targetFd!!, paramsJson)
-                            "IMAGE_EXTRACT" -> com.pdfchemy.app.logic.PdfImageExtractorEngine.extractImagesToZip(sourceFd!!, targetFd!!)
-                            "FONT_INSPECT" -> com.pdfchemy.app.jail.engines.PdfFontInspectorEngineWorker.inspectFonts(sourceFd!!)
-                            "ARCHIVE_INSPECT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.inspectPdfACompliance(sourceFd!!)
-                            "ARCHIVE_CONVERT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.convertToPdfA(sourceFd!!, targetFd!!)
-                            "LINEARIZE_CHECK" -> com.pdfchemy.app.jail.engines.PdfLinearizeEngineWorker.checkLinearized(sourceFd!!)
-                            "LINEARIZE_OPTIMIZE" -> com.pdfchemy.app.jail.engines.PdfLinearizeEngineWorker.optimizeFastWebView(sourceFd!!, targetFd!!)
-                            "OUTLINE_READ" -> com.pdfchemy.app.jail.engines.PdfOutlineReaderWorker.readOutline(this@PdfJailService, sourceFd!!, targetFd, paramsJson)
-                            "PAGE_ORGANIZE" -> com.pdfchemy.app.jail.engines.PdfPageOrganizerWorker.reorganizePages(sourceFd!!, targetFd!!, paramsJson)
-                            "COMIC_BOOK" -> com.pdfchemy.app.jail.engines.ComicBookEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "ACRO_FORM" -> com.pdfchemy.app.jail.engines.AcroFormEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "CROP" -> com.pdfchemy.app.jail.engines.PdfCropEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
-                            "FLATTEN_INSPECT" -> com.pdfchemy.app.jail.engines.PdfFlattenEngineWorker.inspect(this@PdfJailService, sourceFd!!)
-                            "FLATTEN_APPLY" -> com.pdfchemy.app.jail.engines.PdfFlattenEngineWorker.flatten(this@PdfJailService, sourceFd!!, targetFd!!, paramsJson)
-                            "REDACT" -> com.pdfchemy.app.jail.engines.PdfRedactionEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson, rendererBinder)
-                            "SEARCH_REDACT" -> com.pdfchemy.app.jail.engines.PdfRedactionEngineWorker.searchTargets(this@PdfJailService, sourceFd!!, paramsJson)
-                            "OFFICE_WORD" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToWord(this@PdfJailService, sourceFd!!, targetFd!!)
-                            "OFFICE_EXCEL" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToExcel(this@PdfJailService, sourceFd!!, targetFd!!)
-                            "OFFICE_PPT" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToPowerPoint(this@PdfJailService, sourceFd!!, targetFd!!, rendererBinder)
-                            "ATTACHMENT_LIST" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.listAttachments(sourceFd!!)
-                            "ATTACHMENT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.extractAttachment(sourceFd!!, targetFd!!, paramsJson)
-                            "ATTACHMENT_REMOVE" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.removeAttachment(sourceFd!!, targetFd!!, paramsJson)
-                            "BOOKLET_GENERATE" -> com.pdfchemy.app.jail.engines.PdfBookletEngineWorker.generateBooklet(sourceFd!!, targetFd!!, paramsJson)
-                            "DESKEW" -> com.pdfchemy.app.jail.engines.PdfDeskewEngineWorker.deskew(sourceFd!!, targetFd!!, paramsJson)
-                            "TABLE_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfTableExtractorWorker.extractText(sourceFd!!, targetFd, paramsJson)
-                            "WATERMARK" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyWatermark(sourceFd!!, targetFd!!, paramsJson)
-                            "PAGE_NUMBERS" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyPageNumbers(sourceFd!!, targetFd!!, paramsJson)
-                            "BATES_STAMP" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyBatesStamping(sourceFd!!, targetFd!!, paramsJson)
-                            "SANITIZE_AUDIT" -> com.pdfchemy.app.jail.engines.PdfSanitizerEngineWorker.audit(sourceFd!!)
-                            "SANITIZE_CLEAN" -> com.pdfchemy.app.jail.engines.PdfSanitizerEngineWorker.sanitize(sourceFd!!, targetFd!!, paramsJson)
-                            "REPAIR_DIAGNOSE" -> com.pdfchemy.app.jail.engines.PdfRepairEngineWorker.diagnose(sourceFd!!)
-                            "REPAIR_APPLY" -> com.pdfchemy.app.jail.engines.PdfRepairEngineWorker.repair(sourceFd!!, targetFd!!)
-                            "NUP_GENERATE" -> com.pdfchemy.app.jail.engines.PdfNUpEngineWorker.generateNUpPdf(sourceFd!!, targetFd!!, paramsJson)
-                            "OCR_PROCESS" -> com.pdfchemy.app.jail.engines.PdfOcrEngineWorker.createSearchablePdf(this@PdfJailService, sourceFd!!, targetFd!!)
-                            "SIGNATURE_APPLY" -> com.pdfchemy.app.jail.engines.SignatureEngineWorker.applySignatures(sourceFd!!, targetFd!!, paramsJson)
-                            "SIGNATURE_DIGITAL" -> com.pdfchemy.app.jail.engines.SignatureEngineWorker.applyDigitalSignature(sourceFd!!, targetFd!!, paramsJson)
-                            "PDF_TO_EPUB" -> {
-                                val json = org.json.JSONObject(paramsJson)
-                                val bookTitle = json.optString("bookTitle", "Untitled E-Book")
-                                val authorName = json.optString("authorName", "Unknown Author")
-                                val success = com.pdfchemy.app.logic.PdfToEpubEngine.pdfToEpub(this@PdfJailService, java.io.FileInputStream(sourceFd!!.fileDescriptor), java.io.FileOutputStream(targetFd!!.fileDescriptor), bookTitle, authorName).getOrThrow()
-                                org.json.JSONObject().put("isSuccess", success).toString()
-                            }
-                            "EPUB_TO_PDF" -> {
-                                val success = com.pdfchemy.app.logic.PdfToEpubEngine.epubToPdf(this@PdfJailService, java.io.FileInputStream(sourceFd!!.fileDescriptor), java.io.FileOutputStream(targetFd!!.fileDescriptor)).getOrThrow()
-                                org.json.JSONObject().put("isSuccess", success).toString()
-                            }
-                            else -> throw IllegalArgumentException("Unknown engine: " + engineName)
-                        }
-                        finalResult = com.pdfchemy.app.jail.engines.JailQuotas.enforceResultSize(resultJson)
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    errorMsg = "Task timed out after 2 minutes"
-                } catch (e: Exception) {
-                    errorMsg = e.message ?: "Unknown error in engine " + engineName
-                } finally {
-                    try { sourceFd?.close() } catch (e: Exception) {}
-                    try { targetFd?.close() } catch (e: Exception) {}
-                    if (errorMsg != null) {
-                        try { callback.onFailure(500, errorMsg) } catch (e: Exception) {}
-                    } else if (finalResult != null) {
-                        try { callback.onSuccess(finalResult) } catch (e: Exception) {}
-                    }
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_UNTRUSTED_OUTPUT_OVERFLOW") {
+                    android.system.Os.ftruncate(requireNotNull(targetFd).fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES + 1)
+                    callback.onSuccess("{\"success\":true}")
+                    while (true) Thread.sleep(1000)
                 }
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_THROW_FATAL") {
+                    throw AssertionError("Deliberate fatal Error in worker")
+                }
+                if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_EARLY_SUCCESS") {
+                    callback.onSuccess("{\"success\":true}")
+                    while (true) Thread.sleep(1000)
+                }
+                dispatch(engineName, sourceFd, targetFd, paramsJson, rendererBinder)
             }
         }
 
-
         override fun executeEngineExtra(
+            operationId: Long,
             engineName: String,
             sourceFd: ParcelFileDescriptor?,
             targetFd: ParcelFileDescriptor?,
@@ -303,100 +225,19 @@ class PdfJailService : Service() {
             expectedSize: Long,
             extraExpectedSha256: String,
             extraExpectedSize: Long,
+            scratchBinder: IBinder?,
             callback: IPdfJailStringCallback
         ) {
-            try {
-                if (sourceFd != null) {
-                    verifyAndRewind(sourceFd, expectedSha256, expectedSize)
-                    com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(sourceFd)
-                }
-                if (extraFd != null) {
-                    verifyAndRewind(extraFd, extraExpectedSha256, extraExpectedSize)
-                    com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(extraFd, "Extra File")
-                }
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-            serviceScope.launch {
-                var finalResult: String? = null
-                var errorMsg: String? = null
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val resultJson = when (engineName) {
-                            "ATTACHMENT_EMBED" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.embedAttachment(sourceFd!!, targetFd!!, extraFd!!, paramsJson)
-                            else -> throw IllegalArgumentException("Unknown engine for extra Fd: " + engineName)
-                        }
-                        finalResult = com.pdfchemy.app.jail.engines.JailQuotas.enforceResultSize(resultJson)
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    errorMsg = "Task timed out after 2 minutes"
-                } catch (e: Exception) {
-                    errorMsg = e.message ?: "Unknown error in engine " + engineName
-                } finally {
-                    try { sourceFd?.close() } catch (e: Exception) {}
-                    try { targetFd?.close() } catch (e: Exception) {}
-                    try { extraFd?.close() } catch (e: Exception) {}
-                    if (errorMsg != null) {
-                        try { callback.onFailure(500, errorMsg) } catch (e: Exception) {}
-                    } else if (finalResult != null) {
-                        try { callback.onSuccess(finalResult) } catch (e: Exception) {}
-                    }
-                }
-            }
-        }
-
-        override fun exportModifiedPdf(
-
-            sourceFd: ParcelFileDescriptor?,
-            targetFd: ParcelFileDescriptor?,
-            modificationsJson: String?,
-            expectedSha256: String,
-            expectedSize: Long,
-            callback: IPdfJailCallback?
-        ) {
-            if (sourceFd == null || targetFd == null || modificationsJson == null || callback == null) {
-                callback?.onFailure(-1, "Invalid null arguments")
-                return
-            }
-            try {
-                verifyAndRewind(sourceFd, expectedSha256, expectedSize)
-                com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(sourceFd)
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-            serviceScope.launch {
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
-                        val typeRef = object : com.fasterxml.jackson.core.type.TypeReference<Map<Int, com.pdfchemy.app.logic.PageModification>>() {}
-                        val modifications = mapper.readValue(modificationsJson, typeRef)
-
-                        val success = PdfEditorWorker.exportModifiedPdf(this@PdfJailService, sourceFd, targetFd, modifications)
-                        if (success) {
-                            val outputSize = targetFd.statSize
-                            callback.onSuccess(outputSize)
-                        } else {
-                            callback.onFailure(-1, "PdfEditorWorker failed to export modified PDF")
-                        }
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    try {
-                        callback.onFailure(-1, "Task timed out after 2 minutes")
-                    } catch (re: RemoteException) {}
-                } catch (e: Exception) {
-                    try {
-                        callback.onFailure(-1, e.message ?: "Unknown error in export")
-                    } catch (re: RemoteException) {}
-                } finally {
-                    try { sourceFd.close() } catch (e: Exception) {}
-                    try { targetFd.close() } catch (e: Exception) {}
-                }
+            submit(operationId, listOfNotNull(sourceFd, extraFd), listOfNotNull(targetFd), listOf(expectedSha256, extraExpectedSha256), listOf(expectedSize, extraExpectedSize), paramsJson, callback, scratchBinder) {
+                require(sourceFd != null && extraFd != null && targetFd != null)
+                if (engineName == "SIGNATURE_APPLY") SignatureEngineWorker.applySignatures(sourceFd, targetFd, extraFd, paramsJson)
+                else if (engineName == "ATTACHMENT_EMBED") PdfAttachmentEngineWorker.embedAttachment(sourceFd, targetFd, extraFd, paramsJson)
+                else MigratedEngineDispatch.execute(this@PdfJailService, engineName, sourceFd, targetFd, extraFd, paramsJson)
             }
         }
 
         override fun executeEngineBatch(
+            operationId: Long,
             engineName: String,
             sourceFds: Array<out ParcelFileDescriptor>?,
             targetFds: Array<out ParcelFileDescriptor>?,
@@ -404,88 +245,136 @@ class PdfJailService : Service() {
             rendererBinder: IBinder?,
             expectedSha256s: Array<String>?,
             expectedSizes: LongArray?,
-            callback: com.pdfchemy.app.jail.IPdfJailStringCallback
+            scratchBinder: IBinder?,
+            callback: IPdfJailStringCallback
         ) {
-            val nonNullSource = sourceFds ?: emptyArray()
-            val nonNullTarget = targetFds ?: emptyArray()
-            val jsonParams = paramsJson ?: "{}"
-            
-            try {
-                var totalSize = 0L
-                for ((index, fd) in nonNullSource.withIndex()) {
-                    if (expectedSha256s != null && expectedSizes != null && index < expectedSha256s.size && index < expectedSizes.size) {
-                        verifyAndRewind(fd, expectedSha256s[index], expectedSizes[index])
-                    }
-                    com.pdfchemy.app.jail.engines.JailQuotas.enforceFileSize(fd, "Batch File")
-                    totalSize += fd.statSize
-                }
-                if (totalSize > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_INPUT_BYTES) {
-                    throw SecurityException("Total batch size of $totalSize exceeded quota limit of ${com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_INPUT_BYTES} bytes.")
-                }
-            } catch (e: Exception) {
-                callback.onFailure(-1, e.message ?: "Filesize quota exceeded or verification failed")
-                return
-            }
-
-            serviceScope.launch {
-                var finalResult: String? = null
-                var errorMsg: String? = null
-                try {
-                    kotlinx.coroutines.withTimeout(120_000L) {
-                        val result = when (engineName) {
-                            "MERGE" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.mergePdfs(this@PdfJailService, nonNullSource, nonNullTarget.firstOrNull())
-                            "SPLIT" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.splitPdf(this@PdfJailService, nonNullSource.firstOrNull(), nonNullTarget, jsonParams)
-                            "PDF_TO_IMAGES" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.pdfToImages(this@PdfJailService, nonNullSource.firstOrNull(), nonNullTarget, jsonParams)
-                            else -> org.json.JSONObject().put("success", false).put("error", "Unknown batch engine: $engineName").toString()
-                        }
-                        finalResult = com.pdfchemy.app.jail.engines.JailQuotas.enforceResultSize(result)
-                    }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    errorMsg = "Task timed out after 2 minutes"
-                } catch (e: Exception) {
-                    errorMsg = e.message ?: "Unknown batch error"
-                } finally {
-                    nonNullSource.forEach { try { it.close() } catch (e: Exception) {} }
-                    nonNullTarget.forEach { try { it.close() } catch (e: Exception) {} }
-                    if (errorMsg != null) {
-                        try { callback.onFailure(-1, errorMsg) } catch (e: Exception) {}
-                    } else if (finalResult != null) {
-                        try { callback.onSuccess(finalResult) } catch (e: Exception) {}
-                    }
+            val sources = sourceFds?.toList().orEmpty()
+            val targets = targetFds?.toList().orEmpty()
+            submit(operationId, sources, targets, expectedSha256s?.toList().orEmpty(), expectedSizes?.toList().orEmpty(), paramsJson ?: "{}", callback, scratchBinder,
+                validateMetadata = { SecurityLimits.requireBatch(sources.size, targets.size, expectedSha256s, expectedSizes) }) {
+                when (engineName) {
+                    "IMAGES_TO_PDF" -> ImagePdfWorker.convert(sources, targets.single())
+                    "MERGE" -> PdfManipulatorWorker.mergePdfs(this@PdfJailService, sourceFds!!, targets.first())
+                    "SPLIT" -> PdfManipulatorWorker.splitPdf(this@PdfJailService, sources.first(), targetFds!!, paramsJson ?: "{}")
+                    "PDF_TO_IMAGES" -> PdfManipulatorWorker.pdfToImages(this@PdfJailService, sources.first(), targetFds!!, paramsJson ?: "{}")
+                    else -> error("Unknown batch engine")
                 }
             }
         }
     }
-    
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
 
-    private fun verifyAndRewind(fd: ParcelFileDescriptor, expectedSha256: String, expectedSize: Long) {
-        if (expectedSize <= 0) {
-            throw SecurityException("Missing expected file size. Staged document required.")
+    private suspend fun dispatch(engineName: String, sourceFd: ParcelFileDescriptor?, targetFd: ParcelFileDescriptor?, paramsJson: String, rendererBinder: IBinder?): String {
+        return when (engineName) {
+            "COMPRESS" -> JailCompressionWorker.compress(requireNotNull(sourceFd), requireNotNull(targetFd), org.json.JSONObject(paramsJson))
+            "EDITOR_EXPORT" -> {
+                val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
+                val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(paramsJson, type)
+                check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, requireNotNull(sourceFd), requireNotNull(targetFd), modifications))
+                org.json.JSONObject().put("size", requireNotNull(targetFd).statSize).toString()
+            }
+            "DEBUG_IDENTITY" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); org.json.JSONObject().put("pid", Process.myPid()).put("uid", Process.myUid()).toString() }
+            "DEBUG_FAIL" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); error("Deliberate admitted engine failure") }
+            "DEBUG_THROW_FATAL" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); throw LinkageError("Deliberate fatal worker LinkageError") }
+            "DEBUG_BLOCK" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); while (true) Thread.sleep(1000); error("unreachable") }
+            "DEBUG_OUTPUT_BLOCK" -> {
+                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("partial".toByteArray()) }
+                debugOutput?.close(); debugOutput = targetFd.dup()
+                while (true) Thread.sleep(1000)
+                error("unreachable")
+            }
+            "DEBUG_RETAIN_OUTPUT" -> {
+                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
+                debugOutput?.close(); debugOutput = targetFd.dup()
+                "{\"success\":true}"
+            }
+            "DEBUG_OUTPUT_OVERFLOW" -> {
+                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { output ->
+                    val bytes = ByteArray(64 * 1024)
+                    repeat((SecurityLimits.MAX_OUTPUT_BYTES / bytes.size).toInt()) { output.write(bytes) }
+                    output.write(0)
+                }
+                error("Output quota was bypassed")
+            }
+            "DEBUG_SCRATCH" -> {
+                check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                val file = JailScratch.createTempFile("probe_", ".tmp")
+                com.pdfchemy.app.jail.CapabilityIo.fd(file).use { fd ->
+                    com.pdfchemy.app.jail.boundedFileOutput(fd.fileDescriptor).use { it.write("scratch".toByteArray()) }
+                    android.system.Os.fsync(fd.fileDescriptor)
+                    android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+                    val read = ByteArray(7)
+                    check(android.system.Os.read(fd.fileDescriptor, read, 0, 7) == 7 && String(read) == "scratch")
+                }
+                org.json.JSONObject().put("scratchCapability", true).toString()
+            }
+
+            "METADATA_READ" -> com.pdfchemy.app.jail.engines.PdfMetadataEngineWorker.readMetadata(sourceFd!!)
+            "METADATA_WRITE" -> com.pdfchemy.app.jail.engines.PdfMetadataEngineWorker.writeOrSanitizeMetadata(sourceFd!!, targetFd!!, paramsJson)
+            "DELETE_PAGES" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.deletePages(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "ROTATE" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.rotatePdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "PROTECT" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.protectPdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "UNLOCK" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.unlockPdf(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "CHECK_ENCRYPTION" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.checkEncryption(this@PdfJailService, sourceFd)
+            "GET_PAGE_COUNT" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.getPageCount(this@PdfJailService, sourceFd!!)
+            "PLAN_SPLIT_BLANK" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.planSplitByBlankPages(this@PdfJailService, sourceFd, paramsJson)
+            "PLAN_SPLIT_BOOKMARKS" -> com.pdfchemy.app.jail.engines.PdfManipulatorWorker.planSplitByBookmarks(this@PdfJailService, sourceFd)
+            "BOOKMARK_READ" -> com.pdfchemy.app.jail.engines.PdfBookmarkEngineWorker.readBookmarks(sourceFd!!)
+            "BOOKMARK_WRITE" -> com.pdfchemy.app.jail.engines.PdfBookmarkEngineWorker.writeBookmarks(sourceFd!!, targetFd!!, paramsJson)
+            "TEXT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfTextExtractorWorker.extractText(this@PdfJailService, sourceFd!!, targetFd!!, paramsJson)
+            "IMAGE_EXTRACT_FRAMED" -> com.pdfchemy.app.jail.engines.PdfImageExtractorEngine.extractImagesFramed(sourceFd!!, targetFd!!)
+            "IMAGE_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfImageExtractorEngine.extractImagesToZip(sourceFd!!, targetFd!!)
+            "FONT_INSPECT" -> com.pdfchemy.app.jail.engines.PdfFontInspectorEngineWorker.inspectFonts(sourceFd!!)
+            "ARCHIVE_INSPECT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.inspectPdfACompliance(sourceFd!!)
+            "ARCHIVE_CONVERT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.convertToPdfA(sourceFd!!, targetFd!!)
+            "LINEARIZE_CHECK" -> com.pdfchemy.app.jail.engines.PdfLinearizeEngineWorker.checkLinearized(sourceFd!!)
+            "LINEARIZE_OPTIMIZE" -> com.pdfchemy.app.jail.engines.PdfLinearizeEngineWorker.optimizeFastWebView(sourceFd!!, targetFd!!)
+            "OUTLINE_READ" -> com.pdfchemy.app.jail.engines.PdfOutlineReaderWorker.readOutline(this@PdfJailService, sourceFd!!, targetFd, paramsJson)
+            "PAGE_ORGANIZE" -> com.pdfchemy.app.jail.engines.PdfPageOrganizerWorker.reorganizePages(sourceFd!!, targetFd!!, paramsJson)
+            "COMIC_BOOK" -> com.pdfchemy.app.jail.engines.ComicBookEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "ACRO_FORM" -> com.pdfchemy.app.jail.engines.AcroFormEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "CROP" -> com.pdfchemy.app.jail.engines.PdfCropEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson)
+            "FLATTEN_INSPECT" -> com.pdfchemy.app.jail.engines.PdfFlattenEngineWorker.inspect(this@PdfJailService, sourceFd!!)
+            "FLATTEN_APPLY" -> com.pdfchemy.app.jail.engines.PdfFlattenEngineWorker.flatten(this@PdfJailService, sourceFd!!, targetFd!!, paramsJson)
+            "REDACT" -> com.pdfchemy.app.jail.engines.PdfRedactionEngineWorker.execute(this@PdfJailService, sourceFd, targetFd, paramsJson, rendererBinder)
+            "SEARCH_REDACT" -> com.pdfchemy.app.jail.engines.PdfRedactionEngineWorker.searchTargets(this@PdfJailService, sourceFd!!, paramsJson)
+            "OFFICE_WORD" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToWord(this@PdfJailService, sourceFd!!, targetFd!!)
+            "OFFICE_EXCEL" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToExcel(this@PdfJailService, sourceFd!!, targetFd!!)
+            "OFFICE_PPT" -> com.pdfchemy.app.jail.engines.OfficeExportEngineWorker.exportToPowerPoint(this@PdfJailService, sourceFd!!, targetFd!!, rendererBinder)
+            "ATTACHMENT_LIST" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.listAttachments(sourceFd!!)
+            "ATTACHMENT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.extractAttachment(sourceFd!!, targetFd!!, paramsJson)
+            "ATTACHMENT_REMOVE" -> com.pdfchemy.app.jail.engines.PdfAttachmentEngineWorker.removeAttachment(sourceFd!!, targetFd!!, paramsJson)
+            "BOOKLET_GENERATE" -> com.pdfchemy.app.jail.engines.PdfBookletEngineWorker.generateBooklet(sourceFd!!, targetFd!!, paramsJson)
+            "DESKEW" -> com.pdfchemy.app.jail.engines.PdfDeskewEngineWorker.deskew(sourceFd!!, targetFd!!, paramsJson)
+            "TABLE_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfTableExtractorWorker.extractText(sourceFd!!, targetFd, paramsJson)
+            "WATERMARK" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyWatermark(sourceFd!!, targetFd!!, paramsJson)
+            "PAGE_NUMBERS" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyPageNumbers(sourceFd!!, targetFd!!, paramsJson)
+            "BATES_STAMP" -> com.pdfchemy.app.jail.engines.PdfStampAndNumberWorker.applyBatesStamping(sourceFd!!, targetFd!!, paramsJson)
+            "SANITIZE_AUDIT" -> com.pdfchemy.app.jail.engines.PdfSanitizerEngineWorker.audit(sourceFd!!)
+            "SANITIZE_CLEAN" -> com.pdfchemy.app.jail.engines.PdfSanitizerEngineWorker.sanitize(sourceFd!!, targetFd!!, paramsJson)
+            "REPAIR_DIAGNOSE" -> com.pdfchemy.app.jail.engines.PdfRepairEngineWorker.diagnose(sourceFd!!)
+            "REPAIR_APPLY" -> com.pdfchemy.app.jail.engines.PdfRepairEngineWorker.repair(sourceFd!!, targetFd!!)
+            "NUP_GENERATE" -> com.pdfchemy.app.jail.engines.PdfNUpEngineWorker.generateNUpPdf(sourceFd!!, targetFd!!, paramsJson)
+            "OCR_PROCESS" -> com.pdfchemy.app.jail.engines.PdfOcrEngineWorker.createSearchablePdf(this@PdfJailService, sourceFd!!, targetFd!!)
+            "SIGNATURE_APPLY" -> error("Signature images require a verified extra descriptor")
+            "SIGNATURE_DIGITAL" -> com.pdfchemy.app.jail.engines.SignatureEngineWorker.applyDigitalSignature(sourceFd!!, targetFd!!, paramsJson)
+            "PDF_TO_EPUB" -> {
+                val json = org.json.JSONObject(paramsJson)
+                val bookTitle = json.optString("bookTitle", "Untitled E-Book")
+                val authorName = json.optString("authorName", "Unknown Author")
+                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.pdfToEpub(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor), bookTitle, authorName).getOrThrow()
+                org.json.JSONObject().put("isSuccess", success).toString()
+            }
+            "EPUB_TO_PDF" -> {
+                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.epubToPdf(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor)).getOrThrow()
+                org.json.JSONObject().put("isSuccess", success).toString()
+            }
+            else -> com.pdfchemy.app.jail.engines.MigratedEngineDispatch.execute(this@PdfJailService, engineName, sourceFd, targetFd, null, paramsJson)
         }
-        if (expectedSha256.length != 64) {
-            throw SecurityException("Missing or invalid expected SHA-256. Staged document required.")
-        }
-        val actualSize = fd.statSize
-        if (actualSize != expectedSize) {
-            throw SecurityException("Size mismatch. Expected $expectedSize but got $actualSize")
-        }
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val stream = ParcelFileDescriptor.AutoCloseInputStream(fd.dup())
-        val buffer = ByteArray(8192)
-        var read: Int
-        while (stream.read(buffer).also { read = it } != -1) {
-            digest.update(buffer, 0, read)
-        }
-        stream.close()
-        val actualSha256 = digest.digest().joinToString("") { "%02x".format(it) }
-        if (actualSha256 != expectedSha256) {
-            throw SecurityException("SHA-256 mismatch. Expected $expectedSha256 but got $actualSha256")
-        }
-        // Rewind
-        android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
     }
+    override fun onCreate() { super.onCreate(); com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(this) }
+    override fun onBind(intent: Intent?): IBinder = binder
+    override fun onDestroy() { debugOutput?.close(); serviceScope.cancel(); gate.close(); super.onDestroy() }
 }
-

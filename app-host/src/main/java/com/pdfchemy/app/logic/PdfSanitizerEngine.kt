@@ -42,25 +42,24 @@ object PdfSanitizerEngine {
         context: Context,
         pdfUri: Uri
     ): SanitizerAuditReport {
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "SANITIZE_AUDIT",
-            pdfUri,
-            null,
-            "{}"
-        )
         return try {
-            val json = JSONObject(resultStr)
+            val contract = PdfGateway.executeEngineTyped<SanitizeAuditContract>(
+                context,
+                "SANITIZE_AUDIT",
+                pdfUri,
+                null,
+                "{}"
+            )
             SanitizerAuditReport(
-                threatsFound = json.optInt("threatsFound", 0),
-                jsCount = json.optInt("jsCount", 0),
-                launchActionsCount = json.optInt("launchActionsCount", 0),
-                attachmentCount = json.optInt("attachmentCount", 0),
-                uriCount = json.optInt("uriCount", 0),
-                hasMetadata = json.optBoolean("hasMetadata", false),
-                isClean = json.optBoolean("isClean", true),
-                isEncrypted = json.optBoolean("isEncrypted", false),
-                parseFailed = json.optBoolean("parseFailed", false)
+                threatsFound = contract.threatsFound,
+                jsCount = contract.jsCount,
+                launchActionsCount = contract.launchActionsCount,
+                attachmentCount = contract.attachmentCount,
+                uriCount = contract.uriCount,
+                hasMetadata = contract.hasMetadata,
+                isClean = contract.isClean,
+                isEncrypted = contract.isEncrypted,
+                parseFailed = contract.parseFailed
             )
         } catch (e: Exception) {
             SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true)
@@ -71,14 +70,11 @@ object PdfSanitizerEngine {
         context: Context,
         inputStream: InputStream
     ): SanitizerAuditReport {
-        val tempFile = File.createTempFile("audit_tmp", ".pdf", context.cacheDir)
+        val snapshot = com.pdfchemy.app.utils.DocumentStager.stageStreamCancellable(context, inputStream)
         try {
-            FileOutputStream(tempFile).use { out ->
-                inputStream.copyTo(out)
-            }
-            return auditDocumentThreats(context, Uri.fromFile(tempFile))
+            return auditDocumentThreats(context, snapshot.uri)
         } finally {
-            tempFile.delete()
+            com.pdfchemy.app.utils.DocumentStager.release(snapshot)
         }
     }
 
@@ -87,7 +83,7 @@ object PdfSanitizerEngine {
         pdfUri: Uri
     ): Boolean {
         val report = auditDocumentThreats(context, pdfUri)
-        return report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.uriCount > 0 || report.isEncrypted || report.parseFailed
+        return report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.isEncrypted || report.parseFailed
     }
 
     suspend fun checkVanguardThreat(
@@ -98,7 +94,7 @@ object PdfSanitizerEngine {
         if (report.isEncrypted) {
             return VanguardThreatResult.EncryptedCannotVerify(pdfUri)
         }
-        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.uriCount > 0) {
+        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0) {
             return VanguardThreatResult.ExecutableThreat(report)
         }
         if (report.parseFailed) {
@@ -123,22 +119,21 @@ object PdfSanitizerEngine {
             put("purgeAttachments", purgeAttachments)
         }
 
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "SANITIZE_CLEAN",
-            sourceUri,
-            destUri,
-            params.toString()
-        )
         return try {
-            val json = JSONObject(resultStr)
+            val contract = PdfGateway.executeEngineTyped<SanitizerCleanContract>(
+                context,
+                "SANITIZE_CLEAN",
+                sourceUri,
+                destUri,
+                params.toString()
+            )
             SanitizerResult(
-                isSuccess = json.optBoolean("isSuccess", false),
-                threatsRemoved = json.optInt("threatsRemoved", 0),
-                jsRemoved = json.optInt("jsRemoved", 0),
-                actionsRemoved = json.optInt("actionsRemoved", 0),
-                metadataRemoved = json.optBoolean("metadataRemoved", false),
-                attachmentsRemoved = json.optInt("attachmentsRemoved", 0)
+                isSuccess = contract.isSuccess,
+                threatsRemoved = contract.threatsRemoved,
+                jsRemoved = contract.jsRemoved,
+                actionsRemoved = contract.actionsRemoved,
+                metadataRemoved = contract.metadataRemoved,
+                attachmentsRemoved = contract.attachmentsRemoved
             )
         } catch (e: Exception) {
             SanitizerResult(false, 0, 0, 0, false, 0)
@@ -154,22 +149,21 @@ object PdfSanitizerEngine {
         purgeMetadata: Boolean = true,
         purgeAttachments: Boolean = true
     ): SanitizerResult {
-        val tempSource = File.createTempFile("sanitize_src", ".pdf", context.cacheDir)
-        val tempDest = File.createTempFile("sanitize_dest", ".pdf", context.cacheDir)
+        val snapshot = com.pdfchemy.app.utils.DocumentStager.stageStreamCancellable(context, inputStream)
+        var tempDest: File? = null
         try {
-            FileOutputStream(tempSource).use { out ->
-                inputStream.copyTo(out)
-            }
-            val res = sanitizeDocument(context, Uri.fromFile(tempSource), Uri.fromFile(tempDest), purgeJs, purgeActions, purgeMetadata, purgeAttachments)
+            val destination = File.createTempFile("sanitize_dest", ".pdf", context.cacheDir)
+            tempDest = destination
+            val res = sanitizeDocument(context, snapshot.uri, Uri.fromFile(destination), purgeJs, purgeActions, purgeMetadata, purgeAttachments)
             if (res.isSuccess) {
-                tempDest.inputStream().use { inp ->
+                destination.inputStream().use { inp ->
                     inp.copyTo(outStream)
                 }
             }
             return res
         } finally {
-            tempSource.delete()
-            tempDest.delete()
+            com.pdfchemy.app.utils.DocumentStager.release(snapshot)
+            tempDest?.delete()
         }
     }
 }

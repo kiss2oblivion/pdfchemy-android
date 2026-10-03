@@ -8,10 +8,10 @@ import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOut
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
+import com.pdfchemy.app.jail.FdZipFile as ZipFile
 
 object PdfOutlineReaderWorker {
 
@@ -19,6 +19,9 @@ object PdfOutlineReaderWorker {
         val params = JSONObject(paramsJson)
         val isEpub = params.optBoolean("isEpub", false)
 
+        val sections = JSONArray()
+        var totalPages = 0
+        var scannedOnly = false
         val resultArr = if (isEpub) {
             val chapters = extractEpubChapters(context, sourceFd)
             val arr = JSONArray()
@@ -29,12 +32,14 @@ object PdfOutlineReaderWorker {
                 for (p in chapter.second) pArr.put(p)
                 chapObj.put("paragraphs", pArr)
                 arr.put(chapObj)
+                sections.put(JSONObject().put("title", chapter.first).put("pageNumber", sections.length() + 1).put("paragraphs", pArr))
             }
+            totalPages = sections.length()
             arr
         } else {
             var document: PDDocument? = null
             try {
-                document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
                 val outline = document.documentCatalog.documentOutline
                 val pageIndexMap = buildPageIndexMap(document)
                 val visitedNodes = mutableSetOf<Int>()
@@ -45,20 +50,26 @@ object PdfOutlineReaderWorker {
                         arr.put(node)
                     }
                 }
+                val textPages = PdfTextExtractorWorker.extractAllPagesText(document)
+                totalPages = document.numberOfPages
+                scannedOnly = textPages.all { it.isBlank() }
+                textPages.forEachIndexed { index, text ->
+                    val paragraphs = JSONArray()
+                    text.split(Regex("\\n\\s*\\n")).map(String::trim).filter(String::isNotEmpty).forEach(paragraphs::put)
+                    sections.put(JSONObject().put("pageNumber", index + 1).put("title", JSONObject.NULL).put("paragraphs", paragraphs))
+                }
                 arr
             } finally {
                 try { document?.close() } catch(_: Exception){}
             }
         }
         
-        val resultString = resultArr.toString()
+        val resultString = JSONObject().put("sections", sections).put("bookmarks", if (isEpub) JSONArray() else resultArr)
+            .put("isScannedOnly", scannedOnly).put("totalPages", totalPages).toString()
+        JailQuotas.enforceStringLength(resultString, JailQuotas.MAX_TEXT_BYTES, "Reflow document")
         if (destFd != null) {
-            try {
-                java.io.FileOutputStream(destFd.fileDescriptor).use { output ->
-                    output.write(resultString.toByteArray(Charsets.UTF_8))
-                }
-            } catch (e: Exception) {
-                // fallback
+            com.pdfchemy.app.jail.boundedFileOutput(destFd.fileDescriptor).use { output ->
+                output.write(resultString.toByteArray(Charsets.UTF_8))
             }
             return "{}" // return dummy success string via Binder to save memory
         }
@@ -136,7 +147,7 @@ object PdfOutlineReaderWorker {
         var totalChapters = 0
 
         try {
-            tempFile = File.createTempFile("epub_worker_", ".epub", context.cacheDir)
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("epub_worker_", ".epub", context.cacheDir)
             FileInputStream(sourceFd.fileDescriptor).use { input ->
                 FileOutputStream(tempFile).use { output -> input.copyTo(output) }
             }

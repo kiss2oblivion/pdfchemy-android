@@ -9,22 +9,24 @@ import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import com.tom_roush.pdfbox.util.Matrix
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.io.File
 import android.util.Base64
 
 object SignatureEngineWorker {
 
-    fun applySignatures(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
+    fun applySignatures(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, imagesFd: ParcelFileDescriptor, paramsJson: String): String {
         var doc: PDDocument? = null
         try {
             val params = JSONObject(paramsJson)
             val signaturesArr = params.optJSONArray("signatures") ?: org.json.JSONArray()
             
-            doc = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            doc = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val totalPages = doc.numberOfPages
 
+            JailQuotas.enforceItemCount(signaturesArr.length(), com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURES)
+            java.io.DataInputStream(FileInputStream(imagesFd.fileDescriptor)).use { images ->
             for (i in 0 until signaturesArr.length()) {
                 val sigObj = signaturesArr.getJSONObject(i)
                 val pageIdx = sigObj.getInt("pageIndex")
@@ -33,8 +35,13 @@ object SignatureEngineWorker {
                 val widthRatio = sigObj.getDouble("widthRatio").toFloat()
                 val heightRatio = sigObj.getDouble("heightRatio").toFloat()
                 val dateStamp = sigObj.optString("dateStamp", null)
-                val bitmapBase64 = sigObj.getString("bitmapBase64")
-                val bitmapBytes = Base64.decode(bitmapBase64, Base64.DEFAULT)
+                val imageSize = images.readInt()
+                require(imageSize in 1..com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURE_BYTES)
+                val bitmapBytes = ByteArray(imageSize)
+                images.readFully(bitmapBytes)
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.size, bounds)
+                com.pdfchemy.app.security.SecurityLimits.requirePixels(bounds.outWidth, bounds.outHeight)
 
                 if (pageIdx in 0 until totalPages) {
                     val page = doc.getPage(pageIdx)
@@ -77,11 +84,14 @@ object SignatureEngineWorker {
                             }
 
                             cs.restoreGraphicsState()
+                            sigBmp.recycle()
                         }
                     }
                 }
             }
 
+            require(images.read() == -1) { "Trailing signature image payload" }
+            }
             FileOutputStream(targetFd.fileDescriptor).use { outStream ->
                 doc.save(outStream)
             }
@@ -103,16 +113,16 @@ object SignatureEngineWorker {
             val location = params.getString("location")
 
             val cacheDir = File(System.getProperty("java.io.tmpdir"))
-            sourceFile = File.createTempFile("temp_sign_in", ".pdf", cacheDir)
-            destFile = File.createTempFile("temp_sign_out", ".pdf", cacheDir)
+            sourceFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_in", ".pdf", cacheDir)
+            destFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_out", ".pdf", cacheDir)
             
             FileInputStream(sourceFd.fileDescriptor).use { ins ->
-                sourceFile.outputStream().use { fos ->
+                com.pdfchemy.app.jail.boundedFileOutput(sourceFile).use { fos ->
                     ins.copyTo(fos)
                 }
             }
 
-            val subjectStr = "CN=$signerName, O=PDFchemy, C=US"
+            val subjectStr = signerName
             val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
 
             AndroidPdfCryptoSigner.signPdf(
@@ -124,7 +134,7 @@ object SignatureEngineWorker {
             )
 
             FileOutputStream(targetFd.fileDescriptor).use { outs ->
-                destFile.inputStream().use { fis ->
+                com.pdfchemy.app.jail.CapabilityIo.input(destFile).use { fis ->
                     fis.copyTo(outs)
                 }
             }

@@ -52,7 +52,7 @@ object PdfNUpEngine {
                 put("spacingPt", config.spacingPt.toDouble())
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
                 context,
                 "NUP_GENERATE",
                 sourcePdfUri,
@@ -60,8 +60,7 @@ object PdfNUpEngine {
                 params.toString()
             )
 
-            val json = JSONObject(resultStr)
-            if (json.optBoolean("success", false)) {
+            if (contract.success) {
                 val historyRepo = HistoryRepository(context)
                 historyRepo.addHistoryItem(
                     destPdfUri,
@@ -70,7 +69,7 @@ object PdfNUpEngine {
                 )
                 Result.success(true)
             } else {
-                Result.failure(Exception(json.optString("error", "Failed to generate N-Up")))
+                Result.failure(Exception("Failed to generate N-Up"))
             }
         } catch (e: Exception) {
             AppLogger.e("PdfNUpEngine: Error generating N-Up grid", e)

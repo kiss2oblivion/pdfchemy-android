@@ -21,75 +21,14 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 
-enum class EditorTool { VIEW, PEN, HIGHLIGHTER, TEXT, STAMP, REDACT }
-enum class StampType(val text: String, val colorHex: Long) {
-    APPROVED("APPROVED", 0xFF2E7D32),
-    CONFIDENTIAL("CONFIDENTIAL", 0xFFC62828),
-    DRAFT("DRAFT", 0xFFEF6C00),
-    PAID("PAID", 0xFF1565C0),
-    REJECTED("REJECTED", 0xFFB71C1C),
-    FINAL("FINAL", 0xFF4527A0),
-    URGENT("URGENT", 0xFFD84315)
-}
-data class DrawingPoint(val x: Float, val y: Float)
-data class DrawingPath(val id: String = UUID.randomUUID().toString(), val points: List<DrawingPoint>, val color: Int, val strokeWidth: Float, val isHighlighter: Boolean = false)
-data class TextAnnotation(val id: String = UUID.randomUUID().toString(), val text: String, val xRatio: Float, val yRatio: Float, val fontSize: Float = 16f, val textColor: Int = android.graphics.Color.BLACK, val backgroundColor: Int = android.graphics.Color.TRANSPARENT)
-data class StampAnnotation(val id: String = UUID.randomUUID().toString(), val type: StampType, val xRatio: Float, val yRatio: Float, val scale: Float = 1.0f, val rotation: Float = -15f)
-data class PageModification(val pageIndex: Int, val rotationDegrees: Int = 0, val isDeleted: Boolean = false, val drawings: List<DrawingPath> = emptyList(), val textAnnotations: List<TextAnnotation> = emptyList(), val stamps: List<StampAnnotation> = emptyList(), val redactions: List<com.pdfchemy.app.logic.RedactionBox> = emptyList()) {
-    val hasChanges: Boolean get() = rotationDegrees != 0 || isDeleted || drawings.isNotEmpty() || textAnnotations.isNotEmpty() || stamps.isNotEmpty() || redactions.isNotEmpty()
-}
 data class DualPageBitmaps(val leftPage: Bitmap?, val rightPage: Bitmap?)
 
 object PdfEditor {
-    fun getPageCount(context: Context, uri: Uri): Int {
-        return kotlinx.coroutines.runBlocking {
-            var pfd: ParcelFileDescriptor? = null
-            try {
-                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@runBlocking 0
-                com.pdfchemy.app.sandbox.JailNativeRendererCoordinator.getPageCount(context, pfd) ?: 0
-            } catch (e: Exception) {
-                AppLogger.e("PdfEditor: failed to get page count", e)
-                0
-            } finally {
-                try { pfd?.close() } catch (e: Exception) {}
-            }
-        }
+    suspend fun getPageCount(context: Context, uri: Uri): Int = withContext(Dispatchers.IO) {
+        PdfGateway.executeEngineTyped<PageCountContract>(context, "GET_PAGE_COUNT", uri, null, "{}").pageCount
     }
-
-    suspend fun renderPageBitmap(
-        context: Context,
-        uri: Uri,
-        pageIndex: Int,
-        targetWidth: Int = 1080
-    ): Bitmap? = withContext(Dispatchers.IO) {
-        var pfd: ParcelFileDescriptor? = null
-        var jpegPfd: ParcelFileDescriptor? = null
-        var tempJpeg: File? = null
-        try {
-            pfd = context.contentResolver.openFileDescriptor(uri, "r")
-            if (pfd == null) return@withContext null
-
-            tempJpeg = File.createTempFile("page_${pageIndex}_", ".jpg", context.cacheDir)
-            jpegPfd = ParcelFileDescriptor.open(tempJpeg, ParcelFileDescriptor.MODE_READ_WRITE)
-
-            val success = com.pdfchemy.app.sandbox.JailNativeRendererCoordinator.renderPageToJpeg(
-                context, pfd, pageIndex, jpegPfd
-            )
-
-            if (success == true) {
-                android.graphics.BitmapFactory.decodeFile(tempJpeg.absolutePath)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            AppLogger.e("PdfEditor: renderPageBitmap failed for page $pageIndex", e)
-            null
-        } finally {
-            try { pfd?.close() } catch (e: Exception) {}
-            try { jpegPfd?.close() } catch (e: Exception) {}
-            tempJpeg?.delete()
-        }
-    }
+    suspend fun renderPageBitmap(context: Context, uri: Uri, pageIndex: Int, targetWidth: Int = 1080): Bitmap? =
+        com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
 
     suspend fun renderDualPageBitmaps(
         context: Context,
@@ -110,19 +49,9 @@ object PdfEditor {
         modifications: Map<Int, PageModification>
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            val mapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
-            val json = mapper.writeValueAsString(modifications)
-            val stagedUri = DocumentStager.stageDocument(context, sourceUri)
-            val contentResolver = context.contentResolver
-            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
-            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
-            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
-            val success = com.pdfchemy.app.jail.PdfJailClient.exportModifiedPdf(context, stagedPdf, destUri, json)
-            if (success) {
-                Result.success(true)
-            } else {
-                Result.failure(Exception("Jail Client returned false"))
-            }
+            val json = com.google.gson.Gson().toJson(modifications)
+            PdfGateway.executeEngine(context, "EDITOR_EXPORT", sourceUri, destUri, json)
+            Result.success(true)
         } catch (e: Exception) {
             AppLogger.e("PdfEditor: failed to export modified PDF", e)
             Result.failure(e)

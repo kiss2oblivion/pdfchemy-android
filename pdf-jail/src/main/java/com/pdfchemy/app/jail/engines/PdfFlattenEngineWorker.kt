@@ -14,8 +14,8 @@ import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfFlattenEngineWorker {
 
@@ -24,7 +24,7 @@ object PdfFlattenEngineWorker {
         var document: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val acroForm = document!!.documentCatalog.acroForm
                 val fieldCount = acroForm?.fields?.size ?: 0
                 val hasSignatures = document!!.signatureDictionaries.isNotEmpty()
@@ -58,7 +58,7 @@ object PdfFlattenEngineWorker {
 
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val acroForm = document!!.documentCatalog.acroForm
 
                 if (flattenForms && acroForm != null) {
@@ -85,18 +85,18 @@ object PdfFlattenEngineWorker {
                 }
 
                 if (pagesToFlatten.isNotEmpty()) {
-                    intermediateFile = File.createTempFile("intermediate_flatten_", ".pdf", context.cacheDir)
-                    document!!.save(intermediateFile)
+                    intermediateFile = com.pdfchemy.app.jail.JailScratch.createTempFile("intermediate_flatten_", ".pdf", context.cacheDir)
+                    com.pdfchemy.app.jail.boundedFileOutput(intermediateFile).use { document!!.save(it) }
                     document!!.close()
                     document = null
 
                     var pfd: ParcelFileDescriptor? = null
                     var renderer: PdfRenderer? = null
                     try {
-                        pfd = ParcelFileDescriptor.open(intermediateFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                        pfd = com.pdfchemy.app.jail.CapabilityIo.fd(intermediateFile)
                         renderer = PdfRenderer(pfd)
-                        val baseDoc = PDDocument.load(intermediateFile, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-                        val bakedDoc = PDDocument()
+                        val baseDoc = com.pdfchemy.app.jail.CapabilityIo.input(intermediateFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
+                        val bakedDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
 
                         for (i in 0 until renderer.pageCount) {
                             if (pagesToFlatten.contains(i)) {
@@ -108,7 +108,7 @@ object PdfFlattenEngineWorker {
                                     val scale = minOf(2f, maxDim.toFloat() / maxOf(renderPage.width, renderPage.height).coerceAtLeast(1))
                                     val targetW = (renderPage.width * scale).toInt().coerceAtLeast(1)
                                     val targetH = (renderPage.height * scale).toInt().coerceAtLeast(1)
-                                    bmp = Bitmap.createBitmap(targetW, targetH, Bitmap.Config.RGB_565)
+                                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH); Bitmap.createBitmap(targetW, targetH, Bitmap.Config.RGB_565) }
                                     val canvas = android.graphics.Canvas(bmp)
                                     canvas.drawColor(android.graphics.Color.WHITE)
 
@@ -134,7 +134,7 @@ object PdfFlattenEngineWorker {
                         baseDoc.close()
                         document = bakedDoc
                     } catch (e: Exception) {
-                        document = PDDocument.load(intermediateFile, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                        document = com.pdfchemy.app.jail.CapabilityIo.input(intermediateFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
                     } finally {
                         try { renderer?.close() } catch (_: Exception) {}
                         try { pfd?.close() } catch (_: Exception) {}

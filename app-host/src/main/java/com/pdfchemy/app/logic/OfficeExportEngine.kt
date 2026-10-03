@@ -20,19 +20,14 @@ object OfficeExportEngine {
         destUri: Uri
     ): Result<OfficeExportReport> = withContext(Dispatchers.IO) {
         try {
-            val resultStr = PdfGateway.executeEngine(context, "OFFICE_WORD", sourceUri, destUri, "{}")
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-            
-            val success = json.optBoolean("success", false)
-            if (success) {
+            val contract = PdfGateway.executeEngineTyped<OfficeExportContract>(context, "OFFICE_WORD", sourceUri, destUri, "{}")
+            if (contract.success) {
                 Result.success(
                     OfficeExportReport(
                         format = OfficeFormat.WORD,
-                        pageCount = json.optInt("pageCount"),
-                        outputSizeBytes = json.optLong("outputSizeBytes"),
-                        itemsExtracted = json.optInt("itemsExtracted")
+                        pageCount = contract.pageCount,
+                        outputSizeBytes = contract.outputSizeBytes,
+                        itemsExtracted = contract.itemsExtracted
                     )
                 )
             } else {
@@ -53,19 +48,14 @@ object OfficeExportEngine {
         destUri: Uri
     ): Result<OfficeExportReport> = withContext(Dispatchers.IO) {
         try {
-            val resultStr = PdfGateway.executeEngine(context, "OFFICE_EXCEL", sourceUri, destUri, "{}")
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-            
-            val success = json.optBoolean("success", false)
-            if (success) {
+            val contract = PdfGateway.executeEngineTyped<OfficeExportContract>(context, "OFFICE_EXCEL", sourceUri, destUri, "{}")
+            if (contract.success) {
                 Result.success(
                     OfficeExportReport(
                         format = OfficeFormat.EXCEL,
-                        pageCount = json.optInt("pageCount"),
-                        outputSizeBytes = json.optLong("outputSizeBytes"),
-                        itemsExtracted = json.optInt("itemsExtracted")
+                        pageCount = contract.pageCount,
+                        outputSizeBytes = contract.outputSizeBytes,
+                        itemsExtracted = contract.itemsExtracted
                     )
                 )
             } else {
@@ -86,19 +76,14 @@ object OfficeExportEngine {
         destUri: Uri
     ): Result<OfficeExportReport> = withContext(Dispatchers.IO) {
         try {
-            val resultStr = PdfGateway.executeEngine(context, "OFFICE_PPT", sourceUri, destUri, "{}")
-            val json = JSONObject(resultStr)
-            
-            if (json.has("error")) return@withContext Result.failure(Exception(json.getString("error")))
-            
-            val success = json.optBoolean("success", false)
-            if (success) {
+            val contract = PdfGateway.executeEngineTyped<OfficeExportContract>(context, "OFFICE_PPT", sourceUri, destUri, "{}")
+            if (contract.success) {
                 Result.success(
                     OfficeExportReport(
                         format = OfficeFormat.POWERPOINT,
-                        pageCount = json.optInt("pageCount"),
-                        outputSizeBytes = json.optLong("outputSizeBytes"),
-                        itemsExtracted = json.optInt("itemsExtracted")
+                        pageCount = contract.pageCount,
+                        outputSizeBytes = contract.outputSizeBytes,
+                        itemsExtracted = contract.itemsExtracted
                     )
                 )
             } else {

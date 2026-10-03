@@ -3,7 +3,7 @@
 > **Single Source of Truth for Implemented Capabilities**
 > **Core Invariant:** 100% Local-First & Private. Zero Cloud. Zero AI/LLMs. Zero Telemetry. Original-Safe.
 > **Performance Architecture:** Linear-Time O(N) Document Traversal. Single-pass custom TextStripper architecture eliminates quadratic O(N^2) page-tree lookups across all text search, redaction, reflow reading, visual diffing, EPUB conversion, and Office export modules.
-> **Last Updated:** September 2026
+> **Last Updated:** October 2026
 
 ---
 
@@ -47,7 +47,7 @@
 | **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents |
 | **Table Extractor to CSV** | `TableExtractorScreen.kt` | `PdfTableExtractorEngine.kt` | ✅ Live | Spatial 2D column clustering: page-by-page extraction prevents cross-page Y coordinate collisions; exports to RFC 4180 CSV / Excel spreadsheets |
 | **Office Export (Word / Excel / PPTX)** | `OfficeExportScreen.kt` | `OfficeExportEngine.kt` | ✅ Live | Pure OpenXML archive generators: exports PDF to `.docx`, `.xlsx`, and `.pptx` (with XML 1.0 control character sanitization) |
-| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` | ✅ Live | 100% offline optical character recognition, creating searchable text layers |
+| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` / isolated worker | ⚠️ Release blocked | Offline searchable PDFs pass on API 24. API 36's NNAPI initialization crashes under the isolated UID; API 30 must be rechecked after the process-local SDK metadata fix. The parser boundary remains enforced. See `SECURITY_REMEDIATION_STATUS.md`. |
 
 ---
 
@@ -74,15 +74,21 @@
 | **Encrypt / Password Protect** | `EncryptPdfScreen.kt` | `PdfSecurity.kt` | ✅ Live | AES-128 / AES-256 standard PDF encryption with user and owner passwords |
 | **Decrypt / Unlock PDF** | `DecryptPdfScreen.kt` | `PdfSecurity.kt` | ✅ Live | Strips passwords and permissions restrictions permanently |
 | **Permanent Smart Redaction** | `RedactionScreen.kt` | `PdfRedactionEngine.kt` | ✅ Live | Regex PII auto-detection (emails, phone numbers, credit cards, IBAN) with inter-word whitespace preservation via `writeString()` capturing multi-word patterns and spaced sequences; selective page rasterization purges underlying plaintext while untouched pages retain vector text; inverted bounding box normalization prevents negative-width inverted boxes across line wraps |
-| **Deep Threat Sanitizer** | `DocumentSanitizerScreen.kt` | `PdfSanitizerEngine.kt` | ✅ Live | Audits and strips embedded JavaScript triggers, launch actions, URI tracking beacons |
-| **Zero-Trust Hardening & OOM Guard** | Cross-cutting (Android & Desktop) | `MemoryUsageSetting.setupTempFileOnly()`, `readZipEntrySafely`, `readImageSafely`, streaming attachments | ✅ Live | 31+ PDF loading sites hardened to disk-backed buffering; Zip bomb safe guards (2M char limit for EPUBs); dynamic image downsampling (max 2048x2048 / 4096x4096); streaming I/O (`copyTo`) for attachments; repair file caps (100MB Android / 150MB Desktop); strict 256-bit AES encryption default |
+| **Deep Threat Sanitizer** | `DocumentSanitizerScreen.kt` | `PdfSanitizerEngine.kt`, `ActiveContentScrubber.kt` | ✅ Implemented; release verification pending | Bounded graph traversal removes JavaScript, chained actions, associated/embedded files, XFA, and rich media; serialized output is audited again before publication. Ordinary clicked web links and page destinations remain distinct from executable or automatic actions during preflight. |
+| **Zero-Trust Hardening & OOM Guard** | Cross-cutting | `SecurityLimits`, `JailMemory`, `SafeImageDecoder`, `JailOutput` (Android); existing desktop safeguards | ✅ Implemented; release verification pending | Android parsers and image decoders run in isolated services with a 32 MiB PDFBox buffer limit, bounded FD scratch, 100 MiB per input, bounded archive expansion, and 2048-pixel / 4,194,304-pixel raster limits. Desktop buffering and limits are separate and unchanged by the Android remediation. |
 | **Vanguard Zero-Trust Shield** | Universal across entire app (`VanguardPicker.kt`, `MainActivity.kt`, `PdfEditorScreen.kt`, `ReflowReaderScreen.kt`, `SecurityScreens.kt`, and 30+ standalone tool screens) | `PdfSanitizerEngine.checkVanguardThreat`, `VanguardScanningOverlay`, `rememberVanguardPdfPicker`, `rememberVanguardMultiplePdfPicker` | ✅ Live | Pre-flight zero-trust gatekeeper with animated non-dismissible Material 3 overlay; differentiated threat detection allows standard web hyperlinks (`/S /URI`) and document destinations while strictly blocking malicious `/Launch`, `/JavaScript`, and auto-run `/OpenAction` executables; unified `shrinkpdf_settings` SharedPreferences with live listeners |
 | **Metadata Sanitizer** | `MetadataSanitizerScreen.kt` | `PdfMetadataSanitizer.kt` | ✅ Live | Inspects and purges author name, software creator, GPS coordinates, editing history |
 | **PDF/A Preflight Validator** | `PdfAValidatorScreen.kt` | `PdfAValidator.kt` | ✅ Live | Audits ISO 19005 compliance (OutputIntents, DeviceRGB/CMYK, font subsets, XMP) |
 | **Typography & Font Inspector** | `FontInspectorScreen.kt` | `FontInspector.kt` | ✅ Live | Lists embedded font programs, TrueType/Type1/Type0, subsets, and character encodings |
 | **Embedded Attachments Manager**| `AttachmentManagerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Inspects, extracts, and embeds arbitrary file attachments and PDF portfolios |
 | **PDF Repair Studio** | `RepairPdfScreen.kt` | `PdfRepairEngine.kt` | ✅ Live | Reconstructs broken cross-reference tables, truncated trailers, and corrupted streams |
-| **IPC Sandbox Resource Quotas** | `JailQuotas.kt`, `PdfJailService.kt` | Process isolation, Memory Limits, Batch constraints | ✅ Live | Limits output creations (`MAX_OUTPUT_FILES = 1000`), constrains inputs (`MAX_BATCH_FDS = 50`), caps total input (`MAX_BATCH_INPUT_BYTES = 50MB`), and limits bitmap dimensions for images (`MAX_RENDER_DIMENSION = 8192`) |
+| **IPC Sandbox Resource Quotas** | Cross-cutting | `SecurityLimits`, `PdfJailService`, `PdfNativeRendererService` | ✅ Implemented; release verification pending | 32 batch input/output descriptors; 250 MiB aggregate input and output; 500 output files; 64 scratch descriptors and 500 MiB operation writes. Single-flight admission rejects overlap with BUSY; independent 120 s parser and 30 s renderer deadlines kill the worker process. Exact SHA-256 and size metadata is mandatory for every input. |
+| **Immutable Document Staging** | All document tools | `DocumentStager`, `PdfGateway`, `OperationScratchBroker` | ✅ Implemented; release verification pending | Private sealed snapshots are reused across analysis, render, and processing; bounded streaming handles unknown provider lengths; failed staging and operation cleanup reclaim owned snapshots and anonymous scratch. Filename resemblance never grants staged provenance. |
+| **Private History Controls** | Settings / history | `HistoryRepository`, `MainViewModel` | ✅ Implemented | History is disabled by default. Opting out clears existing records; release logging omits document paths. |
+| **Host-Owned Output Publication** | All worker-backed saves | `HostOutputTransaction`, `PdfGateway`, `PdfJailClient` | ✅ Implemented; release verification pending | Workers receive only unlinked temporary output FDs. The host validates successful results, count and the 250 MiB aggregate size, then snapshots the whole batch into private FDs before opening SAF destinations for a bounded commit. Worker death/cancellation/overflow before commit preserve destination bytes; generic provider failures during publication cannot be rolled back atomically. |
+| **Worker Failure Recycling** | Worker-backed operations | `PdfGateway`, `PdfJailClient`, `PdfJailService` | ✅ Implemented; release verification pending | Only 429 BUSY preserves the current worker. Other failure callbacks, suspect host validation failures, timeout and cancellation after submission request termination. Failed workers keep their admission gate occupied and watchdog armed until recycling; batch metadata validation follows admission so malformed overlap cannot retire another operation. Focused 20-test runtime runs pass on API 24 and 36, including old-PID death, new-PID recovery and successful parsing of the next document. |
+| **Tokenized Worker Ownership & Host Acceptance Handshake** | Worker-backed operations | `WorkerGate`, `IPdfJailService`, `PdfGateway`, `PdfJailClient` | ✅ Implemented; release verification pending | Replaced ambiguous boolean flags with explicit, non-reusable 64-bit operation tokens. Synchronous `beginOperation(ownerBinder)` eliminates asynchronous cancellation/BUSY races. Worker remains exclusively reserved in `AWAITING_HOST_ACCEPT` until Host acceptance or rejection; Host ACKs output after private snapshotting and before real SAF publication. Stale cancellations and completions cannot kill or release another operation's PID. Fatal Throwables poison gate and kill worker immediately. ArchUnit enforces that production Host classes never invoke raw `abortWorker()`. |
+| **Universal Worker Response Validation** | Worker-backed operations | `WorkerResponseValidator`, `WorkerResponseContracts`, `PdfGateway` | ✅ Implemented; release verification pending | All worker output is treated as hostile. Host eliminates raw JSONObject/fromJson parsing across engines; WorkerResponseValidator centralizes parsing into strongly typed contracts for all 82 operations. Rejects trailing non-whitespace after single JSON root value, enforces <= 8 depth and <= 5000 node quotas, fails closed on unknown operations, and bounds outline/CSV files to 2 MiB. |
 
 ---
 
@@ -122,7 +128,7 @@
 ---
 
 ## 🌍 Supported Locales (20 Languages / 21 Locales)
-All user strings are 100% localized and AAPT format-escaped across:
+The application supports the following locales. Android release lint tracks 38 inherited `MissingTranslation` findings in the exact `app-host/lint-localization-baseline.xml`; those entries currently fall back to English. Security and correctness lint errors remain fatal. Full translation coverage is still pending.
 1. `en` (English)
 2. `ro` (Română)
 3. `de` (Deutsch)

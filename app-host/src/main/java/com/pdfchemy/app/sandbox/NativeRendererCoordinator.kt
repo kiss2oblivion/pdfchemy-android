@@ -1,135 +1,65 @@
 package com.pdfchemy.app.sandbox
 
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
+import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-import android.os.Process
-import com.pdfchemy.app.utils.AppLogger
-import kotlinx.coroutines.Dispatchers
+import com.pdfchemy.app.security.*
+import com.pdfchemy.app.utils.DocumentStager
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 
 object NativeRendererCoordinator {
-
-    private const val HARD_TIMEOUT_MS = 30_000L // 30 seconds per page render
-
-    private suspend fun <T> withRenderer(context: Context, block: suspend (IPdfNativeRendererService) -> T): T? = withContext(Dispatchers.IO) {
-        val channel = Channel<IPdfNativeRendererService?>()
-        var workerPid = -1
-        
+    private suspend fun <T> withRenderer(context: Context, block: (IPdfNativeRendererService) -> T): T = withContext(Dispatchers.IO) {
+        val channel = Channel<IPdfNativeRendererService>(1)
         val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val renderer = IPdfNativeRendererService.Stub.asInterface(service)
-                try {
-                    workerPid = renderer.workerPid
-                } catch (e: Exception) {
-                    AppLogger.e("NativeRendererCoordinator: Failed to get PID", e)
-                }
-                channel.trySend(renderer)
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                AppLogger.w("NativeRendererCoordinator: Service disconnected unexpectedly.")
-                channel.trySend(null)
-            }
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(IPdfNativeRendererService.Stub.asInterface(service)) }
+            override fun onServiceDisconnected(name: ComponentName?) { channel.close(IllegalStateException("Renderer died")) }
+            override fun onNullBinding(name: ComponentName?) { channel.close(IllegalStateException("Null renderer")) }
         }
-
-        val intent = Intent(context, PdfNativeRendererService::class.java)
-        val bound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        
-        if (!bound) {
-            AppLogger.e("NativeRendererCoordinator: Failed to bind to PdfNativeRendererService")
-            return@withContext null
-        }
-
-        var result: T? = null
+        check(context.bindService(Intent().setClassName(context, "com.pdfchemy.app.sandbox.PdfNativeRendererService"), connection, Context.BIND_AUTO_CREATE))
+        try { block(withTimeout(10_000) { channel.receive() }) }
+        finally { context.unbindService(connection) }
+    }
+    suspend fun renderUriToBitmap(context: Context, uri: Uri, pageIndex: Int, width: Int): android.graphics.Bitmap? {
+        val staged = DocumentStager.stageDocumentCancellable(context, uri)
+        val inputLease = DocumentStager.retain(staged)
+        var file: File? = null
         try {
-            val renderer = channel.receive()
-            if (renderer != null) {
-                result = withTimeoutOrNull(HARD_TIMEOUT_MS) {
-                    block(renderer)
-                }
-                if (result == null && workerPid != -1) {
-                    AppLogger.e("NativeRendererCoordinator: Native render timed out. Killing native worker PID $workerPid")
-                    Process.killProcess(workerPid)
+            val pixels = File.createTempFile("pixels_", ".argb", context.cacheDir)
+            file = pixels
+            context.contentResolver.openFileDescriptor(staged.uri, "r")!!.use { source ->
+                ParcelFileDescriptor.open(pixels, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
+                    withRenderer(context) { it.renderPageToPixels(source, pageIndex, dest, staged.sha256, staged.size, width) }
                 }
             }
-        } catch (e: Exception) {
-            AppLogger.e("NativeRendererCoordinator: Error communicating with native renderer", e)
-            if (workerPid != -1) {
-                Process.killProcess(workerPid)
-            }
+            return pixels.inputStream().use(PixelWire::read)
         } finally {
-            context.unbindService(connection)
+            file?.delete()
+            if (staged.uri != uri) DocumentStager.release(staged)
+            inputLease.close()
         }
-        
-        result
     }
-
     suspend fun getPageCount(context: Context, pdfPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Int? = withContext(Dispatchers.IO) {
-        if (rendererBinder != null) {
-            val renderer = IPdfNativeRendererService.Stub.asInterface(rendererBinder)
-            try { return@withContext renderer.getPageCount(pdfPfd) } catch(e: Exception) { return@withContext null }
-        }
-        withRenderer(context) { renderer -> renderer.getPageCount(pdfPfd) }
+        val (hash, size) = StagedIdentity.identity(pdfPfd)
+        if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).getPageCount(pdfPfd, hash, size)
+        else withRenderer(context) { it.getPageCount(pdfPfd, hash, size) }
     }
-
     suspend fun renderPageToBitmap(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, scaleWidth: Int = 0): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
-        withRenderer(context) { renderer ->
-            val tempFile = java.io.File(context.cacheDir, "thumb_.jpg")
-            var jpegPfd: ParcelFileDescriptor? = null
-            var bitmap: android.graphics.Bitmap? = null
-            try {
-                jpegPfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_CREATE or ParcelFileDescriptor.MODE_READ_WRITE)
-                renderer.renderPageToJpeg(pdfPfd, pageIndex, jpegPfd)
-                jpegPfd.close()
-                if (tempFile.exists() && tempFile.length() > 0) {
-                    val loader = coil.Coil.imageLoader(context)
-                    val request = coil.request.ImageRequest.Builder(context)
-                        .data(tempFile)
-                        .allowHardware(false) // Must be software bitmap to manipulate later
-                        .build()
-                    val imgResult = loader.execute(request)
-                    val original = (imgResult as? coil.request.SuccessResult)?.drawable?.let {
-                        (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                    }
-                    if (original != null) {
-                        if (scaleWidth > 0 && original.width > scaleWidth) {
-                            val scale = scaleWidth.toFloat() / original.width
-                            val h = (original.height * scale).toInt()
-                            bitmap = android.graphics.Bitmap.createScaledBitmap(original, scaleWidth, h, true)
-                        } else {
-                            bitmap = original
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("NativeRendererCoordinator: Failed to render bitmap", e)
-            } finally {
-                try { jpegPfd?.close() } catch (e: Exception) {}
-                tempFile.delete()
+        val (hash, size) = StagedIdentity.identity(pdfPfd)
+        val file = File.createTempFile("pixels_", ".argb", context.cacheDir)
+        try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE).use { target ->
+                withRenderer(context) { it.renderPageToPixels(pdfPfd, pageIndex, target, hash, size, if (scaleWidth > 0) scaleWidth else SecurityLimits.MAX_RENDER_DIMENSION) }
             }
-            bitmap
-        }
+            file.inputStream().use(PixelWire::read)
+        } finally { file.delete() }
     }
-
     suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Boolean? = withContext(Dispatchers.IO) {
-        if (rendererBinder != null) {
-            val renderer = IPdfNativeRendererService.Stub.asInterface(rendererBinder)
-            try {
-                renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
-                return@withContext true
-            } catch(e: Exception) {
-                return@withContext null
-            }
-        }
-        withRenderer(context) { renderer ->
-            renderer.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd)
-            true
-        }
+        val (hash, size) = StagedIdentity.identity(pdfPfd)
+        if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd, hash, size)
+        else withRenderer(context) { it.renderPageToJpeg(pdfPfd, pageIndex, outputJpegPfd, hash, size) }
+        true
     }
 }

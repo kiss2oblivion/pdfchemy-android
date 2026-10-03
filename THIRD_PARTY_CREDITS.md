@@ -60,7 +60,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [The Legion of the Bouncy Castle](https://www.bouncycastle.org/)
 * **Authors:** The Legion of the Bouncy Castle Inc.
-* **Libraries:** `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (v1.78)
+* **Libraries:** `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (`1.86` Android; `1.78` Desktop)
 * **License:** [Bouncy Castle Licence](https://www.bouncycastle.org/licence.html) (Permissive MIT/BSD-style license)
 * **Usage in PDFchemy (Android & Desktop):**
   * Industrial-grade cryptographic provider.
@@ -96,7 +96,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [jsoup: Java HTML Parser](https://jsoup.org/)
 * **Authors:** Jonathan Hedley
-* **Version:** `1.17.2`
+* **Version:** `1.23.2` (Android; strictly constrained) / `1.17.2` (Desktop)
 * **License:** [MIT License](https://jsoup.org/license)
 * **Usage in PDFchemy:**
   * HTML and EPUB eBook DOM parsing, tag stripping, entity unescaping, and structured text extraction for the EPUB-to-PDF and Web-to-PDF engines.
@@ -110,7 +110,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [FasterXML Jackson](https://github.com/FasterXML/jackson)
 * **Authors:** FasterXML, LLC & Tatu Saloranta
-* **Libraries:** `jackson-module-kotlin`, `jackson-dataformat-csv`, `jackson-dataformat-yaml`, `jackson-dataformat-xml` (v2.17.0)
+* **Libraries:** `jackson-module-kotlin`, `jackson-dataformat-csv`, `jackson-dataformat-yaml`, `jackson-dataformat-xml` (`2.18.11` Android; `2.17.0` Desktop)
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * **Usage in PDFchemy:**
   * Structured data streaming and formatting for CSV spreadsheet tables, XML, and YAML document export tools.
@@ -119,12 +119,18 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ## 🖼️ 6. Media, Assets & Typography
 
-### [Coil (Coroutine Image Loader)](https://coil-kt.github.io/coil/)
+### [Guava](https://github.com/google/guava) & [Gson](https://github.com/google/gson)
+* **Authors:** Google & Contributors
+* **Versions:** Guava `33.7.2-android`; Gson `2.10.1` (Android)
+* **License:** Apache License 2.0
+* **Usage in PDFchemy:** Worker collection utilities and serialization of bounded IPC document-operation contracts.
+
+### [Coil (Coroutine Image Loader)](https://coil-kt.github.io/coil/) — Historical Android Dependency
 * **Authors:** Colin White & Coil Contributors
 * **Version:** `2.6.0`
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-* **Usage in PDFchemy (Android):**
-  * Asynchronous image loading and memory caching for page previews and UI graphics.
+* **Former usage in PDFchemy (Android):**
+  * Asynchronous image loading and memory caching for page previews and UI graphics. Removed from the current Android production graph; document previews now use bounded decoding in an isolated worker and raw pixel transport.
 
 ### [Google Material Design Icons & Symbols](https://fonts.google.com/icons)
 * **Authors:** Google LLC
@@ -136,6 +142,18 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 ---
 
 ## 🧪 7. Quality Assurance & Testing Frameworks
+
+### [TruffleHog](https://github.com/trufflesecurity/trufflehog)
+* **Authors:** Truffle Security Co. & Contributors
+* **Version:** `3.97.9`; official Linux/Windows release archives are SHA-256 pinned.
+* **License:** AGPL-3.0; used as a separate CI scanner, not distributed in the app.
+* **Usage in PDFchemy:** Full reachable-history secret scanning. Only exact reviewed historical fingerprints can pass; verified findings, verification errors, new findings and incomplete scans fail. Review provenance is recorded in `.github/secret-scan-reviewed.json`.
+
+### [ArchUnit](https://www.archunit.org/)
+* **Authors:** TNG Technology Consulting GmbH & Contributors
+* **Version:** `1.3.0`
+* **License:** Apache License 2.0
+* **Usage in PDFchemy:** Compiled host bytecode checks that reject document parser and decoder dependencies outside isolated services.
 
 ### [JUnit 4](https://junit.org/junit4/)
 * **Authors:** Kent Beck, Erich Gamma & JUnit team

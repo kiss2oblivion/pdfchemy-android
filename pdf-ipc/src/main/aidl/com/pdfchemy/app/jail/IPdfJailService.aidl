@@ -6,19 +6,20 @@ import com.pdfchemy.app.jail.IPdfJailCallback;
 
 /**
  * IPC Interface for the isolated PDF Jail Worker.
+ * Synchronous admission handshake with tokenized ownership.
+ * Heavy execution methods are individually oneway.
  */
-oneway interface IPdfJailService {
+interface IPdfJailService {
+    long beginOperation(IBinder ownerBinder);
+    boolean completeOperation(long operationId);
+    oneway void abortOperation(long operationId);
+    oneway void abortWorker();
+
     /**
      * Executes the COMPRESS operation in the isolated service.
-     * 
-     * @param sourceFd The ParcelFileDescriptor containing the untrusted source PDF.
-     * @param targetFd The ParcelFileDescriptor where the processed output should be written.
-     * @param targetDpi Target DPI for image downsampling.
-     * @param quality JPEG quality factor (0.0 to 1.0).
-     * @param rasterizePages True to flatten pages entirely.
-     * @param callback Callback to receive the result asynchronously.
      */
-    void compressPdf(
+    oneway void compressPdf(
+        long operationId,
         in ParcelFileDescriptor sourceFd, 
         in ParcelFileDescriptor targetFd, 
         float targetDpi, 
@@ -26,34 +27,41 @@ oneway interface IPdfJailService {
         boolean rasterizePages,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         IPdfJailCallback callback
     );
 
     /**
      * Analyzes the PDF and returns a JSON string containing the analysis results.
      */
-    void analyzePdf(
+    oneway void analyzePdf(
+        long operationId,
         in ParcelFileDescriptor sourceFd,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
     /**
      * Exports a modified PDF given the source, destination, and a JSON string representing modifications.
      */
-    void exportModifiedPdf(
+    oneway void exportModifiedPdf(
+        long operationId,
         in ParcelFileDescriptor sourceFd,
         in ParcelFileDescriptor targetFd,
         String modificationsJson,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         IPdfJailCallback callback
     );
+
     /**
      * Executes a generic engine operation.
      */
-    void executeEngine(
+    oneway void executeEngine(
+        long operationId,
         String engineName,
         in ParcelFileDescriptor sourceFd,
         in ParcelFileDescriptor targetFd,
@@ -61,13 +69,15 @@ oneway interface IPdfJailService {
         IBinder rendererBinder,
         String expectedSha256,
         long expectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
     /**
      * Executes a generic engine operation with an extra file descriptor.
      */
-    void executeEngineExtra(
+    oneway void executeEngineExtra(
+        long operationId,
         String engineName,
         in ParcelFileDescriptor sourceFd,
         in ParcelFileDescriptor targetFd,
@@ -78,10 +88,12 @@ oneway interface IPdfJailService {
         long expectedSize,
         String extraExpectedSha256,
         long extraExpectedSize,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
 
-    void executeEngineBatch(
+    oneway void executeEngineBatch(
+        long operationId,
         String engineName,
         in ParcelFileDescriptor[] sourceFds,
         in ParcelFileDescriptor[] targetFds,
@@ -89,6 +101,10 @@ oneway interface IPdfJailService {
         IBinder rendererBinder,
         in String[] expectedSha256s,
         in long[] expectedSizes,
+        IBinder scratchBinder,
         com.pdfchemy.app.jail.IPdfJailStringCallback callback
     );
+
+    // Debug builds only: observe/overwrite the retained temporary output fixture.
+    oneway void debugOutputProbe(boolean rewrite, com.pdfchemy.app.jail.IPdfJailCallback callback);
 }

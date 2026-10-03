@@ -217,67 +217,83 @@ fun PdfEditorScreen(
 
     // Load initial PDF bounds / page count
     LaunchedEffect(selectedPdfUri, reloadTrigger) {
-        selectedPdfUri?.let { uri ->
-            if (isVanguardEnabled) {
-                isVanguardScanning = true
-                vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
-                try {
-                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
-                    when (threat) {
-                        is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                            totalPages = PdfEditor.getPageCount(context, uri)
-                            currentPageIndex = 0
-                            pageModifications.clear()
+        guardDocumentLoad(onFailure = {
+            showVanguardBlockedDialog = true
+            selectedPdfUri = null
+            totalPages = 0
+            isVanguardScanning = false
+        }) {
+            selectedPdfUri?.let { originalUri ->
+                val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                if (uri != originalUri) { selectedPdfUri = uri; return@LaunchedEffect }
+                if (isVanguardEnabled) {
+                    isVanguardScanning = true
+                    vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
+                    try {
+                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
+                        when (threat) {
+                            is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
+                                totalPages = PdfEditor.getPageCount(context, uri)
+                                currentPageIndex = 0
+                                pageModifications.clear()
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
+                                showVanguardEncryptedDialog = true
+                                selectedPdfUri = null
+                                totalPages = 0
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                showVanguardBlockedDialog = true
+                                selectedPdfUri = null
+                                totalPages = 0
+                            }
                         }
-                        is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
-                            showVanguardEncryptedDialog = true
-                            selectedPdfUri = null
-                            totalPages = 0
-                        }
-                        is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                        is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                            showVanguardBlockedDialog = true
-                            selectedPdfUri = null
-                            totalPages = 0
-                        }
+                    } finally {
+                        isVanguardScanning = false
+                        vanguardScanningFileName = null
                     }
-                } finally {
-                    isVanguardScanning = false
-                    vanguardScanningFileName = null
+                } else {
+                    totalPages = PdfEditor.getPageCount(context, uri)
+                    currentPageIndex = 0
+                    pageModifications.clear()
                 }
-            } else {
-                totalPages = PdfEditor.getPageCount(context, uri)
-                currentPageIndex = 0
-                pageModifications.clear()
             }
         }
+
     }
 
     // Render current page(s) with immediate recycling
     LaunchedEffect(selectedPdfUri, currentPageIndex, totalPages, isDualPageMode) {
-        selectedPdfUri?.let { uri ->
-            if (totalPages > 0 && currentPageIndex in 0 until totalPages) {
-                isRenderingPage = true
-                if (isDualPageMode && currentPageIndex + 1 < totalPages) {
-                    val dual = PdfEditor.renderDualPageBitmaps(context, uri, currentPageIndex, currentPageIndex + 1, targetWidth = 720)
-                    val oldLeft = currentPageBitmap
-                    val oldRight = secondaryPageBitmap
-                    currentPageBitmap = dual.leftPage
-                    secondaryPageBitmap = dual.rightPage
-                    if (oldLeft != null && oldLeft != dual.leftPage && !oldLeft.isRecycled) oldLeft.recycle()
-                    if (oldRight != null && oldRight != dual.rightPage && !oldRight.isRecycled) oldRight.recycle()
-                } else {
-                    val newBmp = PdfEditor.renderPageBitmap(context, uri, currentPageIndex, targetWidth = 1080)
-                    val oldLeft = currentPageBitmap
-                    val oldRight = secondaryPageBitmap
-                    currentPageBitmap = newBmp
-                    secondaryPageBitmap = null
-                    if (oldLeft != null && oldLeft != newBmp && !oldLeft.isRecycled) oldLeft.recycle()
-                    if (oldRight != null && !oldRight.isRecycled) oldRight.recycle()
+        guardDocumentLoad(onFailure = {
+            isRenderingPage = false
+            showVanguardBlockedDialog = true
+        }) {
+            selectedPdfUri?.let { uri ->
+                if (totalPages > 0 && currentPageIndex in 0 until totalPages) {
+                    isRenderingPage = true
+                    if (isDualPageMode && currentPageIndex + 1 < totalPages) {
+                        val dual = PdfEditor.renderDualPageBitmaps(context, uri, currentPageIndex, currentPageIndex + 1, targetWidth = 720)
+                        val oldLeft = currentPageBitmap
+                        val oldRight = secondaryPageBitmap
+                        currentPageBitmap = dual.leftPage
+                        secondaryPageBitmap = dual.rightPage
+                        if (oldLeft != null && oldLeft != dual.leftPage && !oldLeft.isRecycled) oldLeft.recycle()
+                        if (oldRight != null && oldRight != dual.rightPage && !oldRight.isRecycled) oldRight.recycle()
+                    } else {
+                        val newBmp = PdfEditor.renderPageBitmap(context, uri, currentPageIndex, targetWidth = 1080)
+                        val oldLeft = currentPageBitmap
+                        val oldRight = secondaryPageBitmap
+                        currentPageBitmap = newBmp
+                        secondaryPageBitmap = null
+                        if (oldLeft != null && oldLeft != newBmp && !oldLeft.isRecycled) oldLeft.recycle()
+                        if (oldRight != null && !oldRight.isRecycled) oldRight.recycle()
+                    }
+                    isRenderingPage = false
                 }
-                isRenderingPage = false
             }
         }
+
     }
 
     val currentMod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)

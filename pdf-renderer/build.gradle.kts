@@ -20,6 +20,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        buildConfig = true
         aidl = true
     }
 }

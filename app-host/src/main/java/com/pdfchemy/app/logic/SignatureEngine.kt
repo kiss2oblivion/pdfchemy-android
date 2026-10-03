@@ -61,7 +61,7 @@ object SignatureEngine {
         val files = dir.listFiles { file -> file.isFile && file.name.endsWith(".png") }?.toList() ?: emptyList()
         files.mapNotNull { file ->
             try {
-                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                val bitmap = JailEngineBridge.bitmap(context, "IMAGE_DECODE", Uri.fromFile(file))
                 if (bitmap != null) Pair(file.nameWithoutExtension, bitmap) else null
             } catch (e: Exception) {
                 null
@@ -89,7 +89,17 @@ object SignatureEngine {
         signatures: List<PlacedSignature>
     ): Boolean = withContext(Dispatchers.IO) {
         try {
+            com.pdfchemy.app.security.SecurityLimits.enforceItemCount(signatures.size, com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURES)
             val sigsArray = JSONArray()
+            val imagesFile = File.createTempFile("signatures_", ".images", context.cacheDir)
+            try {
+            java.io.DataOutputStream(com.pdfchemy.app.security.BoundedOutputStream(imagesFile.outputStream(), com.pdfchemy.app.security.SecurityLimits.MAX_PDF_FILESIZE)).use { output ->
+                for (signature in signatures) {
+                    require(signature.bitmapBytes.size in 1..com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURE_BYTES)
+                    output.writeInt(signature.bitmapBytes.size)
+                    output.write(signature.bitmapBytes)
+                }
+            }
             for (sig in signatures) {
                 val sigObj = JSONObject()
                 sigObj.put("pageIndex", sig.pageIndex)
@@ -98,7 +108,6 @@ object SignatureEngine {
                 sigObj.put("widthRatio", sig.widthRatio.toDouble())
                 sigObj.put("heightRatio", sig.heightRatio.toDouble())
                 sigObj.put("dateStamp", sig.dateStamp)
-                sigObj.put("bitmapBase64", Base64.encodeToString(sig.bitmapBytes, Base64.DEFAULT))
                 sigsArray.put(sigObj)
             }
 
@@ -106,15 +115,16 @@ object SignatureEngine {
                 put("signatures", sigsArray)
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineExtraTyped<StandardOutputContract>(
                 context,
                 "SIGNATURE_APPLY",
                 sourceUri,
                 destUri,
+                Uri.fromFile(imagesFile),
                 params.toString()
             )
-            val json = JSONObject(resultStr)
-            json.optBoolean("success", false)
+            contract.success
+            } finally { imagesFile.delete() }
         } catch (e: Exception) {
             AppLogger.e("Failed to apply signatures to PDF: ${e.message}", e)
             false
@@ -207,15 +217,14 @@ object SignatureEngine {
                 put("location", location)
             }
 
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
                 context,
                 "SIGNATURE_DIGITAL",
                 sourceUri,
                 destUri,
                 params.toString()
             )
-            val json = JSONObject(resultStr)
-            json.optBoolean("success", false)
+            contract.success
         } catch (e: Exception) {
             AppLogger.e("Failed to apply digital signature: ${e.message}", e)
             false

@@ -37,60 +37,44 @@ object PdfOutlineReader {
     }
 
     suspend fun loadReflowDocument(context: Context, sourceUri: Uri): ReflowDocumentData = withContext(Dispatchers.IO) {
+        val tempFile = java.io.File.createTempFile("outline_", ".json", context.cacheDir)
         try {
             val isEpubDoc = isEpub(context, sourceUri)
             val params = JSONObject().apply {
                 put("isEpub", isEpubDoc)
             }.toString()
             
-            val tempFile = java.io.File.createTempFile("outline_", ".json", context.cacheDir)
             val destUri = Uri.fromFile(tempFile)
             PdfGateway.executeEngine(context, "OUTLINE_READ", sourceUri, destUri, params)
             
-            val jsonResult = if (tempFile.exists()) tempFile.readText() else "{}"
-            tempFile.delete()
-            val obj = JSONObject(if (jsonResult.isBlank()) "{}" else jsonResult)
+            val contract = com.pdfchemy.app.jail.WorkerResponseValidator.parseOutlineFile(tempFile)
             
-            val sectionsArr = obj.getJSONArray("sections")
-            val sections = mutableListOf<ReflowSection>()
-            for (i in 0 until sectionsArr.length()) {
-                val secObj = sectionsArr.getJSONObject(i)
-                val pArr = secObj.getJSONArray("paragraphs")
-                val pars = mutableListOf<String>()
-                for (j in 0 until pArr.length()) pars.add(pArr.getString(j))
-                sections.add(ReflowSection(
-                    pageNumber = secObj.getInt("pageNumber"),
-                    title = if (secObj.isNull("title")) null else secObj.getString("title"),
-                    paragraphs = pars
-                ))
+            fun mapBookmark(b: OutlineBookmarkContract): OutlineBookmark {
+                return OutlineBookmark(
+                    title = b.title,
+                    pageNumber = b.pageNumber,
+                    children = b.children.map(::mapBookmark)
+                )
             }
             
-            val bookmarksArr = obj.getJSONArray("bookmarks")
-            val bookmarks = parseBookmarksArray(bookmarksArr)
-            
             ReflowDocumentData(
-                sections = sections,
-                bookmarks = bookmarks,
-                isScannedOnly = obj.getBoolean("isScannedOnly"),
-                totalPages = obj.getInt("totalPages")
+                sections = contract.sections.map { s ->
+                    ReflowSection(
+                        pageNumber = s.pageNumber,
+                        title = s.title,
+                        paragraphs = s.paragraphs
+                    )
+                },
+                bookmarks = contract.bookmarks.map(::mapBookmark),
+                isScannedOnly = contract.isScannedOnly,
+                totalPages = contract.totalPages
             )
         } catch (e: Exception) {
             AppLogger.e("PdfOutlineReader: Failed to extract reflow document", e)
             ReflowDocumentData(emptyList(), emptyList(), false, 0)
+        } finally {
+            tempFile.delete()
         }
-    }
-
-    private fun parseBookmarksArray(arr: JSONArray): List<OutlineBookmark> {
-        val list = mutableListOf<OutlineBookmark>()
-        for (i in 0 until arr.length()) {
-            val obj = arr.getJSONObject(i)
-            list.add(OutlineBookmark(
-                title = obj.getString("title"),
-                pageNumber = obj.getInt("pageNumber"),
-                children = if (obj.has("children")) parseBookmarksArray(obj.getJSONArray("children")) else emptyList()
-            ))
-        }
-        return list
     }
 
     suspend fun extractOutline(context: Context, sourceUri: Uri): List<OutlineBookmark> = loadReflowDocument(context, sourceUri).bookmarks

@@ -2,19 +2,10 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.cos.COSName
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
-import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
-import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,8 +27,12 @@ object PdfFlattenEngine {
         pdfUri: Uri
     ): Result<FlattenDiagnostic> = withContext(Dispatchers.IO) {
         try {
-            val json = PdfGateway.executeEngine(context, "FLATTEN_INSPECT", pdfUri, null, "{}")
-            val diag = com.google.gson.Gson().fromJson(json, FlattenDiagnostic::class.java)
+            val contract = PdfGateway.executeEngineTyped<FlattenInspectContract>(context, "FLATTEN_INSPECT", pdfUri, null, "{}")
+            val diag = FlattenDiagnostic(
+                fieldCount = contract.fieldCount,
+                annotationCount = contract.annotationCount,
+                hasSignatures = contract.hasSignatures
+            )
             Result.success(diag)
         } catch (e: Exception) {
             AppLogger.e("PdfFlattenEngine: Error inspecting elements", e)

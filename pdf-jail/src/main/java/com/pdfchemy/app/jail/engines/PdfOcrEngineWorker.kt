@@ -18,11 +18,12 @@ import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
 import org.json.JSONObject
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfOcrEngineWorker {
 
     fun createSearchablePdf(context: Context, sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor): String {
+        IsolatedOcrRuntime.initialize(context)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         var renderer: PdfRenderer? = null
         var outputDoc: PDDocument? = null
@@ -33,8 +34,9 @@ object PdfOcrEngineWorker {
             if (pageCount <= 0) {
                 return JSONObject().put("success", false).put("error", "No pages to OCR").toString()
             }
+            require(pageCount <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) { "Page count quota exceeded" }
 
-            outputDoc = PDDocument()
+            outputDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
 
             for (i in 0 until pageCount) {
                 val page = renderer.openPage(i)
@@ -50,17 +52,13 @@ object PdfOcrEngineWorker {
                     val bmpWidth = (pageWidth * renderScale).toInt().coerceIn(1, 2048)
                     val bmpHeight = (pageHeight * renderScale).toInt().coerceIn(1, 2048)
 
-                    bitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888)
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpWidth, bmpHeight); Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888) }
                     val canvas = android.graphics.Canvas(bitmap)
                     canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
                     val inputImage = InputImage.fromBitmap(bitmap, 0)
-                    val visionText: Text = try {
-                        Tasks.await(recognizer.process(inputImage))
-                    } catch (e: Exception) {
-                        null
-                    } ?: Tasks.await(TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS).process(inputImage))
+                    val visionText: Text = Tasks.await(recognizer.process(inputImage))
 
                     val pdPage = PDPage(PDRectangle(pageWidth, pageHeight))
                     outputDoc.addPage(pdPage)

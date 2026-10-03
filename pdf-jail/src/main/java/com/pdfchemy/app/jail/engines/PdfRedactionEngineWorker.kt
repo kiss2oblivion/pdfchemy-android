@@ -6,7 +6,7 @@ import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.sandbox.JailNativeRendererCoordinator
 import com.pdfchemy.app.logic.RedactionBox
 import com.pdfchemy.app.logic.RedactionConfig
-import com.pdfchemy.app.utils.AppLogger
+import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
@@ -21,8 +21,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfRedactionEngineWorker {
     fun execute(context: Context, sourceFd: ParcelFileDescriptor?, destFd: ParcelFileDescriptor?, paramsJson: String, rendererBinder: android.os.IBinder? = null): String {
@@ -129,7 +129,7 @@ object PdfRedactionEngineWorker {
             val resultMatches = mutableListOf<JSONObject>()
             try {
                 FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                    document = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                    document = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 }
 
                 val stripper = PositionalSearchStripper(query, isRegex)
@@ -204,7 +204,7 @@ object PdfRedactionEngineWorker {
 
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                document = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
             }
             val pageCount = document!!.numberOfPages
             if (pageCount == 0) return 0
@@ -292,25 +292,25 @@ object PdfRedactionEngineWorker {
                 }
             }
 
-            val tempFile = File(context.cacheDir, "redacted_" + System.currentTimeMillis() + ".pdf")
+            val tempFile = com.pdfchemy.app.jail.JailScratch.namedFile("redacted_" + System.currentTimeMillis() + ".pdf")
             var rasterFile: File? = null
             var pfd: ParcelFileDescriptor? = null
             var newDoc: PDDocument? = null
 
             try {
-                document!!.save(tempFile)
+                com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { document!!.save(it) }
                 document!!.close()
                 document = null
 
                 val finalFile = if (config.forensicSanitize) {
-                    rasterFile = File(context.cacheDir, "rasterized_" + System.currentTimeMillis() + ".pdf")
-                    pfd = try { ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY) } catch (_: Exception) { null }
+                    rasterFile = com.pdfchemy.app.jail.JailScratch.namedFile("rasterized_" + System.currentTimeMillis() + ".pdf")
+                    pfd = try { com.pdfchemy.app.jail.CapabilityIo.fd(tempFile) } catch (_: Exception) { null }
                     val renderedPageCount = if (pfd != null) JailNativeRendererCoordinator.getPageCount(pfd, rendererBinder) else null
-                    val memSettings = com.tom_roush.pdfbox.io.MemoryUsageSetting.setupMixed(10 * 1024 * 1024, 250 * 1024 * 1024)
-                    val baseDoc = PDDocument.load(tempFile, memSettings)
+                    val memSettings = com.pdfchemy.app.jail.JailMemory.settings()
+                    val baseDoc = com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { PDDocument.load(it, memSettings) }
                     
                     if (renderedPageCount != null) {
-                        newDoc = PDDocument()
+                        newDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
                         try {
                             for (i in 0 until renderedPageCount) {
                                 if (boxesByPage.containsKey(i)) {
@@ -319,7 +319,7 @@ object PdfRedactionEngineWorker {
                                     val writeFd = pipe[1]
                                     var pdImage: com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject? = null
                                     
-                                    val renderJob = kotlinx.coroutines.GlobalScope.async(Dispatchers.IO) {
+                                    val renderJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).async(Dispatchers.IO) {
                                         try {
                                             JailNativeRendererCoordinator.renderPageToJpeg(pfd!!, i, writeFd, rendererBinder)
                                         } finally {
@@ -356,7 +356,7 @@ object PdfRedactionEngineWorker {
                         try { pfd?.close() } catch (_: Exception) {}
                         pfd = null
                         
-                        newDoc!!.save(rasterFile)
+                        com.pdfchemy.app.jail.boundedFileOutput(rasterFile).use { newDoc!!.save(it) }
                         newDoc!!.close()
                         newDoc = null
                         tempFile.delete()
@@ -371,7 +371,7 @@ object PdfRedactionEngineWorker {
                     tempFile
                 }
 
-                finalFile.inputStream().use { inp ->
+                com.pdfchemy.app.jail.CapabilityIo.input(finalFile).use { inp ->
                     FileOutputStream(destFd.fileDescriptor).use { output ->
                         inp.copyTo(output)
                     }

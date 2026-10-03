@@ -15,15 +15,14 @@ object PdfOcrEngine {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }
     ): Boolean {
         return try {
-            val resultStr = PdfGateway.executeEngine(
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
                 context,
                 "OCR_PROCESS",
                 sourceUri,
                 destUri,
                 "{}"
             )
-            val json = JSONObject(resultStr)
-            json.optBoolean("success", false)
+            contract.success
         } catch (e: Exception) {
             AppLogger.e("Failed to create searchable OCR PDF: ${e.message}", e)
             false

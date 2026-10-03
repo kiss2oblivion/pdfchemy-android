@@ -20,16 +20,8 @@ object PdfBookmarkEngine {
 
     suspend fun readBookmarks(context: Context, pdfUri: Uri): Result<List<BookmarkItem>> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "BOOKMARK_READ", pdfUri, null, "{}")
-            val arr = JSONArray(jsonResult)
-            val result = mutableListOf<BookmarkItem>()
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                result.add(BookmarkItem(
-                    title = obj.getString("title"),
-                    pageIndex = obj.getInt("pageIndex")
-                ))
-            }
+            val contract = PdfGateway.executeEngineTyped<BookmarkReadContract>(context, "BOOKMARK_READ", pdfUri, null, "{}")
+            val result = contract.bookmarks.map { BookmarkItem(title = it.title, pageIndex = it.pageIndex) }
             Result.success(result)
         } catch (e: Exception) {
             AppLogger.e("PdfBookmarkEngine: Error reading bookmarks", e)

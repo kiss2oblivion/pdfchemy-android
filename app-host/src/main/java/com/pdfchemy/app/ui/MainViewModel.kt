@@ -30,7 +30,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
-import java.util.zip.ZipInputStream
 import androidx.compose.ui.res.stringResource
 import androidx.documentfile.provider.DocumentFile
 import com.pdfchemy.app.logic.ImageCompressor
@@ -79,7 +78,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.edit().putBoolean("sfx", enabled).apply()
     }
 
-    private val _isHistoryEnabled = MutableStateFlow(prefs.getBoolean("history_enabled", true))
+    private val _isHistoryEnabled = MutableStateFlow(prefs.getBoolean("history_enabled", false))
     val isHistoryEnabled: StateFlow<Boolean> = _isHistoryEnabled.asStateFlow()
 
     fun setHistoryEnabled(enabled: Boolean) {
@@ -410,62 +409,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.value = UiState.Processing
             try {
-                withContext(Dispatchers.IO) {
-                    val pdfDocument = android.graphics.pdf.PdfDocument()
-                    val loader = coil.Coil.imageLoader(context)
-                    try {
-                        for (uri in imageUris) {
-                            val request = coil.request.ImageRequest.Builder(context)
-                                .data(uri)
-                                .allowHardware(false)
-                                .size(2048) // Cap maximum dimension
-                                .build()
-                            
-                            val imgResult = loader.execute(request)
-                            val bitmap = (imgResult as? coil.request.SuccessResult)?.drawable?.let {
-                                (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                            }
-
-                            if (bitmap != null) {
-                                try {
-                                    val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, pdfDocument.pages.size + 1).create()
-                                    val page = pdfDocument.startPage(pageInfo)
-                                    val canvas = page.canvas
-
-                                    val pageWidth = 595f
-                                    val pageHeight = 842f
-                                    val margin = 20f
-                                    val maxWidth = pageWidth - margin * 2
-                                    val maxHeight = pageHeight - margin * 2
-
-                                    val imgWidth = bitmap.width.toFloat()
-                                    val imgHeight = bitmap.height.toFloat()
-
-                                    val scale = minOf(maxWidth / imgWidth, maxHeight / imgHeight)
-                                    val drawWidth = imgWidth * scale
-                                    val drawHeight = imgHeight * scale
-
-                                    val startX = (pageWidth - drawWidth) / 2f
-                                    val startY = (pageHeight - drawHeight) / 2f
-
-                                    val srcRect = android.graphics.Rect(0, 0, bitmap.width, bitmap.height)
-                                    val dstRect = android.graphics.RectF(startX, startY, startX + drawWidth, startY + drawHeight)
-
-                                    canvas.drawBitmap(bitmap, srcRect, dstRect, null)
-                                    pdfDocument.finishPage(page)
-                                } catch (e: Exception) {
-                                    AppLogger.e("Exception adding image to native PDF", e)
-                                }
-                            }
-                        }
-
-                        context.contentResolver.openOutputStream(destUri)?.use { out ->
-                            pdfDocument.writeTo(out)
-                        }
-                    } finally {
-                        pdfDocument.close()
-                    }
-                }
+                com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", imageUris, listOf(destUri), "{}")
                 _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted))
             } catch (e: Exception) {
                 AppLogger.e("Exception in MainViewModel", e)
@@ -877,23 +821,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var extractedCount = 0
             var errorCount = 0
             try {
-                val tempZip = File(context.cacheDir, "temp_images.zip")
+                val tempZip = File.createTempFile("images_", ".frames", context.cacheDir)
                 val resultJson = com.pdfchemy.app.logic.PdfGateway.executeEngine(
-                    context, "IMAGE_EXTRACT", pdfUri, Uri.fromFile(tempZip), "{}"
+                    context, "IMAGE_EXTRACT_FRAMED", pdfUri, Uri.fromFile(tempZip), "{}"
                 )
                 
-                ZipInputStream(FileInputStream(tempZip)).use { zis ->
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        val newFile = outputDirectory.createFile("image/jpeg", entry.name)
-                        newFile?.uri?.let { newUri ->
-                            context.contentResolver.openOutputStream(newUri)?.use { out ->
-                                zis.copyTo(out)
-                                extractedCount++
+                java.io.DataInputStream(FileInputStream(tempZip)).use { input ->
+                    var total = 0L
+                    while (true) {
+                        val size = input.readInt()
+                        if (size == -1) break
+                        require(size in 1..16 * 1024 * 1024 && extractedCount < com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES)
+                        total += size
+                        require(total <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_BYTES)
+                        val newFile = outputDirectory.createFile("image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
+                        context.contentResolver.openOutputStream(newFile.uri)!!.use { output ->
+                            val buffer = ByteArray(8192)
+                            var remaining = size
+                            while (remaining > 0) {
+                                val read = minOf(remaining, buffer.size)
+                                input.readFully(buffer, 0, read)
+                                output.write(buffer, 0, read)
+                                remaining -= read
                             }
                         }
-                        zis.closeEntry()
-                        entry = zis.nextEntry
+                        extractedCount++
                     }
                 }
                 tempZip.delete()

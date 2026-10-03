@@ -20,7 +20,7 @@ object PdfTextExtractor {
 
     suspend fun extractUsingOcr(context: Context, sourceUri: Uri): String = withContext(Dispatchers.IO) {
         try {
-            val tempFile = java.io.File(context.cacheDir, "ocr_temp.txt")
+            val tempFile = java.io.File.createTempFile("ocr_", ".txt", context.cacheDir)
             val destUri = Uri.fromFile(tempFile)
             val params = org.json.JSONObject().apply { put("forceOcr", true) }.toString()
             PdfGateway.executeEngine(context, "TEXT_EXTRACT", sourceUri, destUri, params)
@@ -37,30 +37,4 @@ object PdfTextExtractor {
         }
     }
 
-    // Temporary shim to fix build errors for unmigrated engines (will be removed in Batch B/C)
-    fun extractAllPagesText(document: com.tom_roush.pdfbox.pdmodel.PDDocument): List<String> {
-        val totalPages = document.numberOfPages
-        if (totalPages == 0) return emptyList()
-
-        val pagesText = ArrayList<String>(totalPages)
-        var currentWriter = java.io.StringWriter()
-
-        val stripper = object : com.tom_roush.pdfbox.text.PDFTextStripper() {
-            override fun startPage(page: com.tom_roush.pdfbox.pdmodel.PDPage) {
-                currentWriter = java.io.StringWriter()
-                output = currentWriter
-            }
-            override fun endPage(page: com.tom_roush.pdfbox.pdmodel.PDPage) {
-                output.flush()
-                pagesText.add(currentWriter.toString())
-            }
-        }
-
-        stripper.startPage = 1
-        stripper.endPage = totalPages
-        try {
-            stripper.writeText(document, java.io.StringWriter())
-        } catch (e: Exception) {}
-        return pagesText
-    }
 }

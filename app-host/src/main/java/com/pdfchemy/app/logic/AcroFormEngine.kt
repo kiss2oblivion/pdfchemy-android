@@ -14,9 +14,8 @@ object AcroFormEngine {
         try {
             val params = JSONObject()
             params.put("method", "hasAcroForm")
-            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, null, params.toString())
-            val json = JSONObject(result)
-            json.optBoolean("hasAcroForm", false)
+            val contract = PdfGateway.executeEngineTyped<AcroFormHasFormContract>(context, "ACRO_FORM", sourceUri, null, params.toString())
+            contract.hasAcroForm
         } catch (e: Exception) {
             false
         }
@@ -26,32 +25,8 @@ object AcroFormEngine {
         try {
             val params = JSONObject()
             params.put("method", "extractFields")
-            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, null, params.toString())
-            val json = JSONObject(result)
-            if (!json.optBoolean("success", false)) return@withContext emptyList()
-            
-            val fieldsArr = json.optJSONArray("fields") ?: return@withContext emptyList()
-            val list = mutableListOf<FormFieldInfo>()
-            for (i in 0 until fieldsArr.length()) {
-                val obj = fieldsArr.getJSONObject(i)
-                val optsArr = obj.optJSONArray("possibleOptions")
-                val opts = mutableListOf<String>()
-                if (optsArr != null) {
-                    for (j in 0 until optsArr.length()) opts.add(optsArr.getString(j))
-                }
-                list.add(
-                    FormFieldInfo(
-                        name = obj.getString("name"),
-                        fullyQualifiedName = obj.getString("fullyQualifiedName"),
-                        type = FormFieldType.valueOf(obj.getString("type")),
-                        value = obj.getString("value"),
-                        possibleOptions = opts,
-                        isReadOnly = obj.optBoolean("isReadOnly", false),
-                        isRequired = obj.optBoolean("isRequired", false)
-                    )
-                )
-            }
-            list
+            val contract = PdfGateway.executeEngineTyped<AcroFormFieldsContract>(context, "ACRO_FORM", sourceUri, null, params.toString())
+            contract.fields
         } catch (e: Exception) {
             emptyList()
         }
@@ -71,8 +46,8 @@ object AcroFormEngine {
             for ((k, v) in fieldData) dataObj.put(k, v)
             params.put("fieldData", dataObj)
             params.put("flatten", flatten)
-            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, destUri, params.toString())
-            JSONObject(result).optBoolean("success", false)
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "ACRO_FORM", sourceUri, destUri, params.toString())
+            contract.success
         } catch (e: Exception) {
             false
         }
@@ -104,8 +79,8 @@ object AcroFormEngine {
                 arr.put(obj)
             }
             params.put("fields", arr)
-            val result = PdfGateway.executeEngine(context, "ACRO_FORM", sourceUri, destUri, params.toString())
-            JSONObject(result).optBoolean("success", false)
+            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "ACRO_FORM", sourceUri, destUri, params.toString())
+            contract.success
         } catch (e: Exception) {
             false
         }

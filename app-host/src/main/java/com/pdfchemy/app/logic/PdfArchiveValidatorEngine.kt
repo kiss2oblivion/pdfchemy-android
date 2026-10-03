@@ -27,26 +27,20 @@ object PdfArchiveValidatorEngine {
 
     suspend fun inspectPdfACompliance(context: Context, pdfUri: Uri): Result<PdfAReport> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "ARCHIVE_INSPECT", pdfUri, null, "{}")
-            val obj = JSONObject(jsonResult)
-            
-            val checksArray = obj.getJSONArray("checks")
-            val checks = mutableListOf<ComplianceCheckItem>()
-            for (i in 0 until checksArray.length()) {
-                val checkObj = checksArray.getJSONObject(i)
-                checks.add(ComplianceCheckItem(
-                    rule = checkObj.getString("rule"),
-                    isPassed = checkObj.getBoolean("isPassed"),
-                    details = checkObj.getString("details"),
-                    severity = CheckSeverity.valueOf(checkObj.getString("severity"))
-                ))
+            val contract = PdfGateway.executeEngineTyped<ArchiveInspectContract>(context, "ARCHIVE_INSPECT", pdfUri, null, "{}")
+            val checks = contract.checks.map {
+                ComplianceCheckItem(
+                    rule = it.rule,
+                    isPassed = it.isPassed,
+                    details = it.details,
+                    severity = try { CheckSeverity.valueOf(it.severity) } catch (_: Exception) { CheckSeverity.INFO }
+                )
             }
-            
             val report = PdfAReport(
-                pdfaVersionDetected = obj.getString("pdfaVersionDetected"),
-                complianceScore = obj.getInt("complianceScore"),
+                pdfaVersionDetected = contract.pdfaVersionDetected,
+                complianceScore = contract.complianceScore,
                 checks = checks,
-                isCompliant = obj.getBoolean("isCompliant")
+                isCompliant = contract.isCompliant
             )
             Result.success(report)
         } catch (e: Exception) {

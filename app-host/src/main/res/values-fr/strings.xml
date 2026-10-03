@@ -335,7 +335,6 @@
 <string name="history_extracted_text">Texte extrait</string>
 <string name="history_pdf_to_text">PDF en texte</string>
 <string name="history_converted_text">texte_converti</string>
-<string name="title_settings">Paramètres</string>
     
 <string name="settings_about_legal">À propos et mentions légales</string>
 <string name="settings_theme">Thème de l\'application</string>
