@@ -114,6 +114,112 @@ class WorkerResponseValidatorTest {
         val c = WorkerResponseValidator.validate("SANITIZE_AUDIT", clean) as SanitizeAuditContract
         assertTrue(c.isClean)
         assertEquals(0, c.threatsFound)
+        assertFalse(c.isEncrypted)
+        assertFalse(c.parseFailed)
+
+        // Valid canonical encrypted audit
+        val encrypted = """{
+            "threatsFound": 1, "isClean": false, "jsCount": 0, "launchActionsCount": 0,
+            "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": true, "parseFailed": false
+        }"""
+        val cEncrypted = WorkerResponseValidator.validate("SANITIZE_AUDIT", encrypted) as SanitizeAuditContract
+        assertFalse(cEncrypted.isClean)
+        assertTrue(cEncrypted.isEncrypted)
+        assertFalse(cEncrypted.parseFailed)
+        assertEquals(1, cEncrypted.threatsFound)
+
+        // isEncrypted=true reporting isClean=true rejected fail-closed
+        val badEncryptedClean = """{
+            "threatsFound": 1, "isClean": true, "jsCount": 0, "launchActionsCount": 0,
+            "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": true, "parseFailed": false
+        }"""
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", badEncryptedClean) }
+
+        // Missing required field in canonical schema rejected
+        val missingField = """{
+            "threatsFound": 1, "isClean": false, "isEncrypted": true, "parseFailed": false
+        }"""
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", missingField) }
+    }
+
+    @Test
+    fun imageAnalyzeEnforcesCanonicalSchemaAndBounds() {
+        // Valid supported allowed image with canonical enum-string qualityLoss
+        val validSupported = """{
+            "width": 1600, "height": 1200, "originalSizeBytes": 500000,
+            "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+            "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50,
+            "qualityLoss": "MINIMAL"
+        }"""
+        val c = WorkerResponseValidator.validate("IMAGE_ANALYZE", validSupported) as ImageAnalysisContract
+        assertTrue(c.analysis.isSupported)
+        assertEquals(1600, c.analysis.width)
+        assertEquals(1200, c.analysis.height)
+        assertEquals(PerceivedQualityLoss.MINIMAL, c.analysis.qualityLoss)
+
+        // Supported allowed image with 0x0 dimensions rejected
+        val badZeroDimensionSupported = """{
+            "width": 0, "height": 0, "originalSizeBytes": 500000,
+            "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+            "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50,
+            "qualityLoss": "MINIMAL"
+        }"""
+        assertRejected { WorkerResponseValidator.validate("IMAGE_ANALYZE", badZeroDimensionSupported) }
+
+        // Denied/corrupt/unsupported image permits 0x0 dimensions
+        val validDeniedCorrupt = """{
+            "width": 0, "height": 0, "originalSizeBytes": 100,
+            "mimeType": "unknown", "formatName": "Corrupt/Unknown", "isSupported": false,
+            "validationStatus": "DENIED_CORRUPT", "validationMessage": "corrupt", "alternativeSuggestion": "use jpg",
+            "estimatedCompressedBytes": 100, "estimatedSavingsPercent": 0,
+            "qualityLoss": "NEGLIGIBLE"
+        }"""
+        val cDenied = WorkerResponseValidator.validate("IMAGE_ANALYZE", validDeniedCorrupt) as ImageAnalysisContract
+        assertFalse(cDenied.analysis.isSupported)
+        assertEquals(0, cDenied.analysis.width)
+        assertEquals(0, cDenied.analysis.height)
+        assertEquals(ImageValidationStatus.DENIED_CORRUPT, cDenied.analysis.validationStatus)
+
+        // Non-enum string or object-based qualityLoss rejected (only canonical enum string accepted)
+        val badObjectQl = """{
+            "width": 1600, "height": 1200, "originalSizeBytes": 500000,
+            "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+            "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50,
+            "qualityLoss": {"level": "Minimal", "stars": 4}
+        }"""
+        assertRejected { WorkerResponseValidator.validate("IMAGE_ANALYZE", badObjectQl) }
+
+        val badInvalidStringQl = """{
+            "width": 1600, "height": 1200, "originalSizeBytes": 500000,
+            "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+            "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50,
+            "qualityLoss": "INVALID_QUALITY_STRING"
+        }"""
+        assertRejected { WorkerResponseValidator.validate("IMAGE_ANALYZE", badInvalidStringQl) }
+    }
+
+    @Test
+    fun standardOutputRejectsUnsupportedRootShapes() {
+        // Valid root shapes
+        val cObj = WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": 1024}") as StandardOutputContract
+        assertTrue(cObj.success)
+        assertEquals(1024L, cObj.size)
+
+        val cBool = WorkerResponseValidator.validate("ROTATE", "true") as StandardOutputContract
+        assertTrue(cBool.success)
+
+        val cNum = WorkerResponseValidator.validate("ROTATE", "2048") as StandardOutputContract
+        assertTrue(cNum.success)
+        assertEquals(2048L, cNum.size)
+
+        // Unexpected root shapes must be rejected
+        assertRejected { WorkerResponseValidator.validate("ROTATE", "\"unexpected_root_string\"") }
+        assertRejected { WorkerResponseValidator.validate("ROTATE", "[\"unexpected\", \"array\"]") }
+        assertRejected { WorkerResponseValidator.validate("ROTATE", "null") }
     }
 
     @Test

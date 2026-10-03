@@ -14,13 +14,24 @@ object PdfSanitizerEngineWorker {
         FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, "", com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
             val f = ActiveContentScrubber.inspect(document)
             val info = document.documentInformation
-            val metadata = !info.author.isNullOrBlank() || !info.title.isNullOrBlank() || !info.creator.isNullOrBlank()
+            val metadata = info != null && (!info.author.isNullOrBlank() || !info.title.isNullOrBlank() || !info.creator.isNullOrBlank())
             JSONObject().put("threatsFound", f.total + if (metadata) 1 else 0).put("isClean", f.total == 0 && !metadata)
                 .put("jsCount", f.javascript).put("launchActionsCount", f.actions).put("attachmentCount", f.attachments).put("uriCount", f.uris)
                 .put("hasMetadata", metadata).put("isEncrypted", document.isEncrypted).put("parseFailed", false).toString()
         }
     } catch (e: Exception) {
-        JSONObject().put("threatsFound", 1).put("isClean", false).put("isEncrypted", e is InvalidPasswordException).put("parseFailed", e !is InvalidPasswordException).toString()
+        val isEncrypted = e is InvalidPasswordException
+        JSONObject()
+            .put("threatsFound", 1)
+            .put("isClean", false)
+            .put("jsCount", 0)
+            .put("launchActionsCount", 0)
+            .put("attachmentCount", 0)
+            .put("uriCount", 0)
+            .put("hasMetadata", false)
+            .put("isEncrypted", isEncrypted)
+            .put("parseFailed", !isEncrypted)
+            .toString()
     }
     fun sanitize(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
         val p = JSONObject(paramsJson)

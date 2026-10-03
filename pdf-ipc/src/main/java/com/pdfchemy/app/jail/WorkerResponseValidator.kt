@@ -228,22 +228,13 @@ object WorkerResponseValidator {
         val isEncrypted = obj.requireBoolean("isEncrypted")
         val parseFailed = obj.requireBoolean("parseFailed")
 
-        if (parseFailed) {
-            require(!isClean) { "parseFailed=true must not report isClean=true" }
-            return SanitizeAuditContract(
-                threatsFound = threatsFound,
-                isClean = false,
-                jsCount = 0,
-                launchActionsCount = 0,
-                attachmentCount = 0,
-                uriCount = 0,
-                hasMetadata = false,
-                isEncrypted = isEncrypted,
-                parseFailed = true
-            )
+        // Fail-closed invariant: (isEncrypted || parseFailed) => !isClean
+        if (isEncrypted || parseFailed) {
+            require(!isClean) { "Encrypted or failed parse must never report isClean=true" }
+            require(threatsFound >= 1) { "Encrypted or failed parse must report at least 1 threat" }
         }
 
-        // When parseFailed is false, full detailed counts are mandatory
+        // Canonical schema requires all detailed fields explicitly
         val jsCount = obj.requireInt("jsCount", min = 0)
         val launchActionsCount = obj.requireInt("launchActionsCount", min = 0)
         val attachmentCount = obj.requireInt("attachmentCount", min = 0)
@@ -254,6 +245,7 @@ object WorkerResponseValidator {
             require(!isClean) { "Audit reporting threatsFound=$threatsFound cannot report isClean=true" }
         } else {
             require(isClean) { "Audit reporting zero threats must report isClean=true" }
+            require(!isEncrypted && !parseFailed) { "isClean=true cannot be encrypted or failed parse" }
         }
 
         return SanitizeAuditContract(
@@ -265,7 +257,7 @@ object WorkerResponseValidator {
             uriCount = uriCount,
             hasMetadata = hasMetadata,
             isEncrypted = isEncrypted,
-            parseFailed = false
+            parseFailed = parseFailed
         )
     }
 
@@ -518,22 +510,32 @@ object WorkerResponseValidator {
 
     private fun parseImageAnalyze(root: Any?): ImageAnalysisContract {
         val obj = requireObject(root)
-        val width = obj.requireInt("width", min = 1, max = 8192)
-        val height = obj.requireInt("height", min = 1, max = 8192)
         val size = obj.requireLong("originalSizeBytes", min = 0)
         val mime = obj.requireString("mimeType", maxLength = 128)
         val formatName = obj.requireString("formatName", maxLength = 64)
         val isSupported = obj.requireBoolean("isSupported")
         val statusName = obj.requireString("validationStatus", maxLength = 64)
         val status = ImageValidationStatus.valueOf(statusName)
-        val valMsg = if (obj.has("validationMessage") && !obj.isNull("validationMessage")) obj.requireString("validationMessage", maxLength = 256) else null
-        val altSug = if (obj.has("alternativeSuggestion") && !obj.isNull("alternativeSuggestion")) obj.requireString("alternativeSuggestion", maxLength = 256) else null
+
+        val width = obj.requireInt("width", min = 0, max = 8192)
+        val height = obj.requireInt("height", min = 0, max = 8192)
+
+        if (isSupported && (status == ImageValidationStatus.ALLOWED || status == ImageValidationStatus.WARNING_ALREADY_COMPRESSED)) {
+            require(width > 0 && height > 0) { "Supported allowed image must have positive dimensions: width=$width, height=$height" }
+        } else {
+            require(!isSupported || status != ImageValidationStatus.ALLOWED) {
+                "0x0 dimensions only permitted for explicit unsupported/corrupt/denied analysis states"
+            }
+        }
+
+        val valMsg = if (obj.has("validationMessage") && !obj.isNull("validationMessage")) obj.requireString("validationMessage", maxLength = 1024) else null
+        val altSug = if (obj.has("alternativeSuggestion") && !obj.isNull("alternativeSuggestion")) obj.requireString("alternativeSuggestion", maxLength = 1024) else null
         val estBytes = obj.requireLong("estimatedCompressedBytes", min = 0)
         val estSavings = obj.requireInt("estimatedSavingsPercent", min = 0, max = 100)
-        val qlObj = obj.requireObject("qualityLoss")
-        val qlLevel = qlObj.requireString("level", maxLength = 64)
-        val qlStars = qlObj.requireInt("stars", min = 1, max = 5)
-        val qualityLoss = PerceivedQualityLoss.values().find { it.level == qlLevel } ?: PerceivedQualityLoss.MODERATE
+
+        // Canonical wire format: enum-string representation
+        val qlStr = obj.requireString("qualityLoss", maxLength = 64)
+        val qualityLoss = PerceivedQualityLoss.valueOf(qlStr)
 
         val analysis = ImageAnalysis(
             width = width,
@@ -723,7 +725,7 @@ object WorkerResponseValidator {
             is Number -> {
                 return StandardOutputContract(success = true, size = root.toLong())
             }
-            else -> return StandardOutputContract(success = true)
+            else -> throw IllegalArgumentException("Unsupported or invalid standard output payload shape: ${root?.javaClass?.name}")
         }
     }
 
