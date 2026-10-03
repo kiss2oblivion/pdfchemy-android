@@ -12,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.pdfchemy.app.jail.*
 import com.pdfchemy.app.logic.MetadataReadContract
 import com.pdfchemy.app.logic.PageCountContract
+import com.pdfchemy.app.logic.SanitizeAuditContract
 import com.pdfchemy.app.logic.PdfGateway
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
@@ -157,6 +158,67 @@ class WorkerResponseValidationSecurityTest {
             }
         } finally {
             source.delete()
+        }
+    }
+
+    @Test
+    fun realSanitizerWorkerAuditMatchesValidatorContract() = runBlocking {
+        val tempDir = File.createTempFile("producer_test_", "", context.cacheDir).apply { delete(); mkdirs() }
+        try {
+            // 1. Clean PDF real worker audit execution & validation
+            val cleanPdf = File(tempDir, "clean.pdf")
+            PDDocument().use { doc ->
+                doc.addPage(PDPage())
+                doc.save(cleanPdf)
+            }
+            val cleanContract = PdfGateway.executeEngineTyped<SanitizeAuditContract>(
+                context, "SANITIZE_AUDIT", Uri.fromFile(cleanPdf), null, "{}"
+            )
+            assertTrue(cleanContract.isClean)
+            assertEquals(0, cleanContract.threatsFound)
+            assertFalse(cleanContract.isEncrypted)
+            assertFalse(cleanContract.parseFailed)
+            assertEquals(0, cleanContract.jsCount)
+            assertEquals(0, cleanContract.launchActionsCount)
+            assertEquals(0, cleanContract.attachmentCount)
+            assertEquals(0, cleanContract.uriCount)
+            assertFalse(cleanContract.hasMetadata)
+
+            // 2. Encrypted PDF real worker audit execution & validation
+            val encryptedPdf = File(tempDir, "encrypted.pdf")
+            PDDocument().use { doc ->
+                doc.addPage(PDPage())
+                val ap = com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission()
+                val spp = com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy("owner123", "user123", ap)
+                spp.encryptionKeyLength = 128
+                doc.protect(spp)
+                doc.save(encryptedPdf)
+            }
+            val encryptedContract = PdfGateway.executeEngineTyped<SanitizeAuditContract>(
+                context, "SANITIZE_AUDIT", Uri.fromFile(encryptedPdf), null, "{}"
+            )
+            assertFalse("Encrypted document must not be clean", encryptedContract.isClean)
+            assertTrue("Encrypted document must report isEncrypted=true", encryptedContract.isEncrypted)
+            assertFalse("Encrypted document must report parseFailed=false", encryptedContract.parseFailed)
+            assertEquals(1, encryptedContract.threatsFound)
+            assertEquals(0, encryptedContract.jsCount)
+            assertEquals(0, encryptedContract.launchActionsCount)
+            assertEquals(0, encryptedContract.attachmentCount)
+            assertEquals(0, encryptedContract.uriCount)
+            assertFalse(encryptedContract.hasMetadata)
+
+            // 3. Corrupt file real worker audit execution & validation
+            val corruptPdf = File(tempDir, "corrupt.pdf").apply { writeText("not a real pdf file") }
+            val corruptContract = PdfGateway.executeEngineTyped<SanitizeAuditContract>(
+                context, "SANITIZE_AUDIT", Uri.fromFile(corruptPdf), null, "{}"
+            )
+            assertFalse("Corrupt document must not be clean", corruptContract.isClean)
+            assertFalse("Corrupt document must report isEncrypted=false", corruptContract.isEncrypted)
+            assertTrue("Corrupt document must report parseFailed=true", corruptContract.parseFailed)
+            assertEquals(1, corruptContract.threatsFound)
+            assertEquals(0, corruptContract.jsCount)
+        } finally {
+            tempDir.deleteRecursively()
         }
     }
 }

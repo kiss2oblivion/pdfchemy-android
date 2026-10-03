@@ -520,11 +520,20 @@ object WorkerResponseValidator {
         val width = obj.requireInt("width", min = 0, max = 8192)
         val height = obj.requireInt("height", min = 0, max = 8192)
 
-        if (isSupported && (status == ImageValidationStatus.ALLOWED || status == ImageValidationStatus.WARNING_ALREADY_COMPRESSED)) {
-            require(width > 0 && height > 0) { "Supported allowed image must have positive dimensions: width=$width, height=$height" }
-        } else {
-            require(!isSupported || status != ImageValidationStatus.ALLOWED) {
-                "0x0 dimensions only permitted for explicit unsupported/corrupt/denied analysis states"
+        when (status) {
+            ImageValidationStatus.ALLOWED,
+            ImageValidationStatus.WARNING_ALREADY_COMPRESSED -> {
+                require(isSupported) { "isSupported must be true for status $status" }
+                require(width > 0 && height > 0) { "Dimensions must be positive for status $status: ${width}x${height}" }
+            }
+            ImageValidationStatus.DENIED_UNSUPPORTED_FORMAT,
+            ImageValidationStatus.DENIED_CORRUPT -> {
+                require(!isSupported) { "isSupported must be false for status $status" }
+                require(width == 0 && height == 0) { "Dimensions must be 0x0 for status $status: ${width}x${height}" }
+            }
+            ImageValidationStatus.DENIED_TOO_SMALL -> {
+                require(!isSupported) { "isSupported must be false for status $status" }
+                require(width > 0 && height > 0) { "Dimensions must be positive for status $status: ${width}x${height}" }
             }
         }
 
@@ -712,10 +721,16 @@ object WorkerResponseValidator {
             is JSONObject -> {
                 require(!root.has("error")) { "Worker reported error" }
                 if (root.has("renderedCount")) {
-                    val count = root.getInt("renderedCount")
+                    val count = root.requireInt("renderedCount", min = 0)
                     require(count == targetCount) { "Output count mismatch: expected $targetCount, got $count" }
                 }
-                val size = root.optLong("size", root.optLong("outBytes", 0L))
+                val size = if (root.has("size") && !root.isNull("size")) {
+                    root.requireLong("size", min = 0)
+                } else if (root.has("outBytes") && !root.isNull("outBytes")) {
+                    root.requireLong("outBytes", min = 0)
+                } else {
+                    0L
+                }
                 return StandardOutputContract(success = true, size = size)
             }
             is Boolean -> {
@@ -723,7 +738,9 @@ object WorkerResponseValidator {
                 return StandardOutputContract(success = true)
             }
             is Number -> {
-                return StandardOutputContract(success = true, size = root.toLong())
+                val size = assertIntegral(root, "size")
+                require(size >= 0) { "Output size must be non-negative: $size" }
+                return StandardOutputContract(success = true, size = size)
             }
             else -> throw IllegalArgumentException("Unsupported or invalid standard output payload shape: ${root?.javaClass?.name}")
         }
@@ -883,20 +900,54 @@ object WorkerResponseValidator {
         return v
     }
 
+    private fun assertIntegral(v: Number, key: String): Long {
+        when (v) {
+            is Int -> return v.toLong()
+            is Long -> return v
+            is Short -> return v.toLong()
+            is Byte -> return v.toLong()
+            is Double -> {
+                require(v.isFinite() && !v.isNaN() && v == Math.floor(v)) {
+                    "Property '$key' must be an exact integer, got fractional or non-finite double: $v"
+                }
+                val l = v.toLong()
+                require(l.toDouble() == v) { "Property '$key' with value $v exceeds exact integer representation" }
+                return l
+            }
+            is Float -> {
+                require(v.isFinite() && !v.isNaN() && v == Math.floor(v.toDouble()).toFloat()) {
+                    "Property '$key' must be an exact integer, got fractional or non-finite float: $v"
+                }
+                val l = v.toLong()
+                require(l.toFloat() == v) { "Property '$key' with value $v exceeds exact integer representation" }
+                return l
+            }
+            else -> {
+                val d = v.toDouble()
+                require(d.isFinite() && !d.isNaN() && d == Math.floor(d)) {
+                    "Property '$key' must be an exact integer, got $v"
+                }
+                val l = v.toLong()
+                require(l.toDouble() == d) { "Property '$key' with value $v exceeds exact integer representation" }
+                return l
+            }
+        }
+    }
+
     private fun JSONObject.requireInt(key: String, min: Int = Int.MIN_VALUE, max: Int = Int.MAX_VALUE): Int {
         require(has(key) && !isNull(key)) { "Missing required int property '$key'" }
         val v = get(key)
         require(v is Number) { "Property '$key' must be number, got ${v.javaClass.name}" }
-        val intVal = v.toInt()
-        require(intVal in min..max) { "Property '$key' with value $intVal out of range $min..$max" }
-        return intVal
+        val longVal = assertIntegral(v, key)
+        require(longVal in min.toLong()..max.toLong()) { "Property '$key' with value $longVal out of range $min..$max" }
+        return longVal.toInt()
     }
 
     private fun JSONObject.requireLong(key: String, min: Long = Long.MIN_VALUE, max: Long = Long.MAX_VALUE): Long {
         require(has(key) && !isNull(key)) { "Missing required long property '$key'" }
         val v = get(key)
         require(v is Number) { "Property '$key' must be number, got ${v.javaClass.name}" }
-        val longVal = v.toLong()
+        val longVal = assertIntegral(v, key)
         require(longVal in min..max) { "Property '$key' with value $longVal out of range $min..$max" }
         return longVal
     }

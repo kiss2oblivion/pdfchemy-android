@@ -99,28 +99,40 @@ Review base: `f36a92c` (Chunk 2.5 hardened). Corrective commit head: `6b7dcd5` -
 - Operation validator is exhaustive and fails closed on unknown or unsupported operations (`SecurityException`).
 - Enforces transport framing, maximum response depth (`MAX_RESPONSE_DEPTH = 8`), node count budgets (<= 5,000 nodes), UTF-8 response limits (`MAX_JSON_RESPONSE_SIZE = 1 MiB`), and rejects any trailing non-whitespace after the single JSON root value (`nextClean() == '\u0000'`).
 - Ingestion of result files (`parseOutlineFile` and `parseCsvTableFile`) strictly bounds file size to 2 MiB, outline depth to 8, outline nodes to 2,000, and CSV tables to 5,000 rows, 128 columns, and 1,024 characters per cell.
-- Standard Output validation: Removed permissive catch-all success branch. Unexpected String, Array, null, or unsupported root shapes fail immediately with `IllegalArgumentException`.
-- Canonical `IMAGE_ANALYZE` Wire Contract:
+- Standard Output validation: Removed permissive catch-all success branch. Unexpected String, Array, null, or unsupported root shapes fail immediately with `IllegalArgumentException`. Exact integral checks (`assertIntegral`) ensure integer and long fields (`renderedCount`, `size`) are strictly integral before conversion.
+- Canonical `IMAGE_ANALYZE` Wire Contract & Semantic Matrix:
   - Enforces single canonical enum-string representation matching Gson serialization (`qualityLoss`: `"MINIMAL"`, etc.).
-  - Permits 0x0 dimensions only for explicit unsupported/corrupt/denied states (`DENIED_*`, `UNSUPPORTED`).
-  - Supported and successful image analyses strictly require positive dimensions (`width > 0 && height > 0`). String fields expanded to 1,024 characters.
+  - Strictly encodes the exact producer semantic state matrix:
+    - `ALLOWED` / `WARNING_ALREADY_COMPRESSED` -> `isSupported = true` + `width > 0 && height > 0`
+    - `DENIED_UNSUPPORTED_FORMAT` / `DENIED_CORRUPT` -> `isSupported = false` + `width == 0 && height == 0`
+    - `DENIED_TOO_SMALL` -> `isSupported = false` + `width > 0 && height > 0`
+  - Contradictory states (e.g. `isSupported = false + ALLOWED` or `isSupported = true + DENIED_CORRUPT`) are rejected fail-closed.
+  - Strict integer validation: `width`, `height`, `originalSizeBytes`, `estimatedCompressedBytes`, and `estimatedSavingsPercent` reject fractional values.
 - Canonical `SANITIZE_AUDIT` Schema:
   - Worker `PdfSanitizerEngineWorker.audit` emits complete canonical encrypted-response schema on encryption or parse exceptions (`isEncrypted = true, parseFailed = false, isClean = false, threatsFound = 1`) with all detailed fields explicitly populated with safe zero/false values (`jsCount: 0, launchActionsCount: 0, attachmentCount: 0, uriCount: 0, hasMetadata: false`).
   - Strict fail-closed invariant enforced in validator: `(isEncrypted || parseFailed) => !isClean` and `isClean => (!isEncrypted && !parseFailed && threatsFound == 0)`.
+  - Rejects fractional numbers for `threatsFound`, `jsCount`, and other count fields.
   - Added safe null-handling for `document.documentInformation` in `PdfSanitizerEngineWorker`.
-- `CapabilityIo.input(fd)`: Added defensive host JVM/Robolectric fallback when platform `Os.dup` is stubbed and returns null on non-Linux hosts.
+- `CapabilityIo.input(fd)` Fail-Closed Semantics:
+  - Restored strict fail-closed `ParcelFileDescriptor.dup()` semantics without `catch (Throwable)` or `FileInputStream` fallback.
+  - Removed host JVM/Robolectric testing fallback from production code; on-device Linux kernel descriptor duplication is validated via `WorkerResponseValidationSecurityTest` on device instrumentation.
 - Chunk 1 (host publication & private snapshots) and Chunk 2 / 2.5 (tokenized ownership, BUSY preservation, host acceptance handshake, and suspect process abort lifecycle) semantics remain strictly preserved.
 - Local JVM & Static Gates:
   - `securityArchitecture`: **PASSED** (all rules satisfied).
   - `:app-host:securityAudit`: **PASSED** (100 files scanned, 0 violations).
   - `:pdf-ipc:testDebugUnitTest`: **38/38 passed** (`WorkerResponseValidatorTest` 22/22, `WorkerGateTest` 14/14, `SecurityLimitsTest` 2/2).
-  - `:pdf-jail:testDebugUnitTest`: **21/21 passed** (including `WorkerProducerContractTest` 2/2 producer -> real serialization -> validator tests, `ActiveContentScrubberTest` 7/7, `RequestValidatorTest` 7/7, `TextFormatConverterTest` 5/5).
+  - `:pdf-jail:testDebugUnitTest`: **21/21 passed** (including `WorkerProducerContractTest` 2/2 producer -> real serialization -> validator tests across all 5 validation states, `ActiveContentScrubberTest` 7/7, `RequestValidatorTest` 7/7, `TextFormatConverterTest` 5/5).
   - `:app-host:testDebugUnitTest`: **32/32 passed** (including `HostResponseContractSecurityTest` 8/8).
-- Complete Device Instrumentation Matrix:
-  - Targeted API 24: `ImageCompressorTest` (7/7) + `PdfSanitizerAndBatesTest` (8/8) = **15/15 passed** (Time: 5.036s).
-  - Complete API 24 Suite: **168/168 passed**, 0 failures, 0 errors (Time: 692.929s).
-  - Targeted API 36: `ImageCompressorTest` (7/7) + `PdfSanitizerAndBatesTest` (8/8) = **15/15 passed** (Time: 67.996s).
-  - Complete API 36 Suite: **167/168 passed**, 1 failure (Time: 891.896s). The single failure is `scannedTextRemainsSearchableThroughTheIsolatedOcrWorker` (the known isolated OCR NNAPI platform crash on API 36, separately documented as a release blocker). All 167 other tests passed.
+- Device Instrumentation Evidence:
+  - **Local Device Instrumentation Matrix (AVDs SecurityApi24 & SecurityApi36):**
+    - API 24 Local: **169/169 passed**, 0 failures, 0 errors (Time: 691.897s), including `WorkerResponseValidationSecurityTest` 4/4 verifying real worker audit producer contract.
+    - API 36 Local: **168/169 passed**, 1 failure (Time: 1,011.145s). The single failure is `scannedTextRemainsSearchableThroughTheIsolatedOcrWorker` (the known isolated OCR NNAPI platform crash on API 36, separately documented as a release blocker). All 168 other tests passed.
+  - **Remote GitHub Actions CI Matrix (Workflow Run 37133541849 / Commit 55a5b9d):**
+    - API 30 CI: **168/168 PASS** (100% green).
+    - API 36 CI: **167/168 PASS** (only known OCR failure).
+    - API 24 CI: **INFRA FAILURE** (emulator became unresponsive during `app-host-debug.apk` install-write / `ShellCommandUnresponsiveException`; tests never ran on that remote runner).
+    - Secrets, Dependency Security, Architecture, JVM tests: **ALL PASS**.
+    - Final build: **SKIPPED** due to API 24 runner infra failure.
 
 ## Limits and product behavior
 

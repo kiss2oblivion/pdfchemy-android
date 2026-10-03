@@ -17,18 +17,11 @@ object CapabilityIo {
     fun input(file: File): InputStream = fd(file).use { input(it.fileDescriptor) }
     fun input(path: String): InputStream = input(File(path))
     fun input(descriptor: FileDescriptor): InputStream {
-        val duplicate = try {
-            ParcelFileDescriptor.dup(descriptor)
-        } catch (_: Throwable) {
-            null
-        }
-        if (duplicate != null) {
-            try {
-                android.system.Os.lseek(duplicate.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
-                return ParcelFileDescriptor.AutoCloseInputStream(duplicate)
-            } catch (error: Exception) { duplicate.close(); throw error }
-        }
-        return java.io.FileInputStream(descriptor)
+        val duplicate = ParcelFileDescriptor.dup(descriptor)
+        try {
+            android.system.Os.lseek(duplicate.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+            return ParcelFileDescriptor.AutoCloseInputStream(duplicate)
+        } catch (error: Exception) { duplicate.close(); throw error }
     }
     fun output(file: File): OutputStream = fd(file).use { boundedFileOutput(it.fileDescriptor) }
     fun input(context: Context, uri: Uri): InputStream = input(File(requireNotNull(uri.path)))

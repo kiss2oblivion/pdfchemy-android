@@ -182,6 +182,83 @@ class WorkerResponseValidatorTest {
         assertEquals(0, cDenied.analysis.height)
         assertEquals(ImageValidationStatus.DENIED_CORRUPT, cDenied.analysis.validationStatus)
 
+        // Contradictory states in ImageAnalysis semantic matrix must be rejected
+        // 1. isSupported=false + ALLOWED
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 1600, "height": 1200, "originalSizeBytes": 500000,
+                "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": false,
+                "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+                "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50, "qualityLoss": "MINIMAL"
+            }""")
+        }
+
+        // 2. isSupported=true + DENIED_CORRUPT
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 0, "height": 0, "originalSizeBytes": 100,
+                "mimeType": "unknown", "formatName": "Corrupt/Unknown", "isSupported": true,
+                "validationStatus": "DENIED_CORRUPT", "validationMessage": "corrupt", "alternativeSuggestion": "use jpg",
+                "estimatedCompressedBytes": 100, "estimatedSavingsPercent": 0, "qualityLoss": "NEGLIGIBLE"
+            }""")
+        }
+
+        // 3. isSupported=true + DENIED_UNSUPPORTED_FORMAT
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 0, "height": 0, "originalSizeBytes": 100,
+                "mimeType": "image/svg+xml", "formatName": "SVG", "isSupported": true,
+                "validationStatus": "DENIED_UNSUPPORTED_FORMAT", "validationMessage": "vector", "alternativeSuggestion": null,
+                "estimatedCompressedBytes": 100, "estimatedSavingsPercent": 0, "qualityLoss": "NEGLIGIBLE"
+            }""")
+        }
+
+        // 4. DENIED_UNSUPPORTED_FORMAT with positive dimensions (must be 0x0)
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 100, "height": 100, "originalSizeBytes": 100,
+                "mimeType": "image/svg+xml", "formatName": "SVG", "isSupported": false,
+                "validationStatus": "DENIED_UNSUPPORTED_FORMAT", "validationMessage": "vector", "alternativeSuggestion": null,
+                "estimatedCompressedBytes": 100, "estimatedSavingsPercent": 0, "qualityLoss": "NEGLIGIBLE"
+            }""")
+        }
+
+        // 5. DENIED_TOO_SMALL with 0x0 dimensions (must have positive dimensions)
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 0, "height": 0, "originalSizeBytes": 100,
+                "mimeType": "image/png", "formatName": "PNG", "isSupported": false,
+                "validationStatus": "DENIED_TOO_SMALL", "validationMessage": "too small", "alternativeSuggestion": null,
+                "estimatedCompressedBytes": 100, "estimatedSavingsPercent": 0, "qualityLoss": "NEGLIGIBLE"
+            }""")
+        }
+
+        // 6. DENIED_TOO_SMALL valid combination (isSupported=false + positive dimensions)
+        val validTooSmall = """{
+            "width": 64, "height": 64, "originalSizeBytes": 800,
+            "mimeType": "image/png", "formatName": "PNG", "isSupported": false,
+            "validationStatus": "DENIED_TOO_SMALL", "validationMessage": "too small", "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 800, "estimatedSavingsPercent": 0, "qualityLoss": "NEGLIGIBLE"
+        }"""
+        val cTooSmall = WorkerResponseValidator.validate("IMAGE_ANALYZE", validTooSmall) as ImageAnalysisContract
+        assertFalse(cTooSmall.analysis.isSupported)
+        assertEquals(64, cTooSmall.analysis.width)
+        assertEquals(64, cTooSmall.analysis.height)
+        assertEquals(ImageValidationStatus.DENIED_TOO_SMALL, cTooSmall.analysis.validationStatus)
+
+        // 7. WARNING_ALREADY_COMPRESSED valid combination (isSupported=true + positive dimensions)
+        val validWarning = """{
+            "width": 1920, "height": 1080, "originalSizeBytes": 120000,
+            "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+            "validationStatus": "WARNING_ALREADY_COMPRESSED", "validationMessage": "already compressed", "alternativeSuggestion": null,
+            "estimatedCompressedBytes": 115000, "estimatedSavingsPercent": 4, "qualityLoss": "NEGLIGIBLE"
+        }"""
+        val cWarning = WorkerResponseValidator.validate("IMAGE_ANALYZE", validWarning) as ImageAnalysisContract
+        assertTrue(cWarning.analysis.isSupported)
+        assertEquals(1920, cWarning.analysis.width)
+        assertEquals(1080, cWarning.analysis.height)
+        assertEquals(ImageValidationStatus.WARNING_ALREADY_COMPRESSED, cWarning.analysis.validationStatus)
+
         // Non-enum string or object-based qualityLoss rejected (only canonical enum string accepted)
         val badObjectQl = """{
             "width": 1600, "height": 1200, "originalSizeBytes": 500000,
@@ -200,6 +277,52 @@ class WorkerResponseValidatorTest {
             "qualityLoss": "INVALID_QUALITY_STRING"
         }"""
         assertRejected { WorkerResponseValidator.validate("IMAGE_ANALYZE", badInvalidStringQl) }
+    }
+
+    @Test
+    fun integerValidationRejectsFractionalNumbers() {
+        // 1. Fractional width/height in IMAGE_ANALYZE
+        assertRejected {
+            WorkerResponseValidator.validate("IMAGE_ANALYZE", """{
+                "width": 1600.9, "height": 1200, "originalSizeBytes": 500000,
+                "mimeType": "image/jpeg", "formatName": "JPEG", "isSupported": true,
+                "validationStatus": "ALLOWED", "validationMessage": null, "alternativeSuggestion": null,
+                "estimatedCompressedBytes": 250000, "estimatedSavingsPercent": 50, "qualityLoss": "MINIMAL"
+            }""")
+        }
+
+        // 2. Fractional pageCount in GET_PAGE_COUNT
+        assertRejected {
+            WorkerResponseValidator.validate("GET_PAGE_COUNT", "{\"pageCount\": 3.14}")
+        }
+
+        // 3. Fractional threatsFound in SANITIZE_AUDIT
+        assertRejected {
+            WorkerResponseValidator.validate("SANITIZE_AUDIT", """{
+                "threatsFound": 1.5, "isClean": false, "isEncrypted": false, "parseFailed": false,
+                "jsCount": 0, "launchActionsCount": 0, "attachmentCount": 0, "uriCount": 0, "hasMetadata": false
+            }""")
+        }
+
+        // 4. Fractional renderedCount in ROTATE
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"renderedCount\": 1.5}")
+        }
+
+        // 5. Fractional size in ROTATE object
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": 1024.5}")
+        }
+
+        // 6. Fractional root Number in ROTATE
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "1.9")
+        }
+
+        // 7. Non-fractional integers must pass cleanly
+        val c = WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": 2048, \"renderedCount\": 2}", targetCount = 2) as StandardOutputContract
+        assertTrue(c.success)
+        assertEquals(2048L, c.size)
     }
 
     @Test

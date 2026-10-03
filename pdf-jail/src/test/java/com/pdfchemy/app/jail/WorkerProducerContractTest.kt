@@ -1,16 +1,11 @@
 package com.pdfchemy.app.jail
 
 import com.google.gson.Gson
-import com.pdfchemy.app.jail.engines.PdfSanitizerEngineWorker
 import com.pdfchemy.app.logic.*
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission
-import com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class WorkerProducerContractTest {
@@ -35,7 +30,6 @@ class WorkerProducerContractTest {
             qualityLoss = PerceivedQualityLoss.MINIMAL
         )
 
-        // Real serialization through production Gson instance used in MigratedEngineDispatch
         val serializedSupported = gson.toJson(supportedAnalysis)
         val contractSupported = WorkerResponseValidator.validate("IMAGE_ANALYZE", serializedSupported)
         assertTrue(contractSupported is ImageAnalysisContract)
@@ -46,7 +40,31 @@ class WorkerProducerContractTest {
         assertEquals(ImageValidationStatus.ALLOWED, verifiedSupported.validationStatus)
         assertTrue(verifiedSupported.isSupported)
 
-        // 2. Unsupported format ImageAnalysis producer instance (0x0 dimensions)
+        // 2. Warning already compressed instance (supported = true, positive dimensions)
+        val warningAnalysis = ImageAnalysis(
+            width = 1920,
+            height = 1080,
+            originalSizeBytes = 120_000L,
+            mimeType = "image/jpeg",
+            formatName = "JPEG",
+            isSupported = true,
+            validationStatus = ImageValidationStatus.WARNING_ALREADY_COMPRESSED,
+            validationMessage = "Image is already highly compressed.",
+            alternativeSuggestion = null,
+            estimatedCompressedBytes = 115_000L,
+            estimatedSavingsPercent = 4,
+            qualityLoss = PerceivedQualityLoss.NEGLIGIBLE
+        )
+        val serializedWarning = gson.toJson(warningAnalysis)
+        val contractWarning = WorkerResponseValidator.validate("IMAGE_ANALYZE", serializedWarning)
+        assertTrue(contractWarning is ImageAnalysisContract)
+        val verifiedWarning = (contractWarning as ImageAnalysisContract).analysis
+        assertEquals(1920, verifiedWarning.width)
+        assertEquals(1080, verifiedWarning.height)
+        assertEquals(ImageValidationStatus.WARNING_ALREADY_COMPRESSED, verifiedWarning.validationStatus)
+        assertTrue(verifiedWarning.isSupported)
+
+        // 3. Unsupported format ImageAnalysis producer instance (supported = false, 0x0 dimensions)
         val unsupportedAnalysis = ImageAnalysis(
             width = 0,
             height = 0,
@@ -71,7 +89,7 @@ class WorkerProducerContractTest {
         assertEquals(ImageValidationStatus.DENIED_UNSUPPORTED_FORMAT, verifiedUnsupported.validationStatus)
         assertFalse(verifiedUnsupported.isSupported)
 
-        // 3. Corrupt image analysis (0x0 dimensions)
+        // 4. Corrupt image analysis (supported = false, 0x0 dimensions)
         val corruptAnalysis = ImageAnalysis(
             width = 0,
             height = 0,
@@ -93,75 +111,30 @@ class WorkerProducerContractTest {
         assertEquals(0, verifiedCorrupt.width)
         assertEquals(0, verifiedCorrupt.height)
         assertEquals(ImageValidationStatus.DENIED_CORRUPT, verifiedCorrupt.validationStatus)
-    }
+        assertFalse(verifiedCorrupt.isSupported)
 
-    @Test
-    fun sanitizerWorkerProducerRealSerializationMatchesValidatorContract() {
-        val tempDir = File.createTempFile("producer_test_", "").apply { delete(); mkdirs() }
-        try {
-            // 1. Clean PDF real worker audit execution & validation
-            val cleanPdf = File(tempDir, "clean.pdf")
-            PDDocument().use { doc ->
-                doc.addPage(com.tom_roush.pdfbox.pdmodel.PDPage())
-                doc.save(cleanPdf)
-            }
-            val cleanResultJson = android.os.ParcelFileDescriptor.open(cleanPdf, android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-                PdfSanitizerEngineWorker.audit(pfd)
-            }
-            val cleanContract = WorkerResponseValidator.validate("SANITIZE_AUDIT", cleanResultJson) as SanitizeAuditContract
-            assertTrue("cleanResultJson was: $cleanResultJson", cleanContract.isClean)
-            assertEquals(0, cleanContract.threatsFound)
-            assertFalse(cleanContract.isEncrypted)
-            assertFalse(cleanContract.parseFailed)
-            assertEquals(0, cleanContract.jsCount)
-            assertEquals(0, cleanContract.launchActionsCount)
-            assertEquals(0, cleanContract.attachmentCount)
-            assertEquals(0, cleanContract.uriCount)
-            assertFalse(cleanContract.hasMetadata)
-
-            // 2. Encrypted PDF real worker audit execution & validation
-            val encryptedPdf = File(tempDir, "encrypted.pdf")
-            PDDocument().use { doc ->
-                doc.addPage(com.tom_roush.pdfbox.pdmodel.PDPage())
-                val ap = AccessPermission()
-                val spp = StandardProtectionPolicy("owner123", "user123", ap)
-                spp.encryptionKeyLength = 128
-                doc.protect(spp)
-                doc.save(encryptedPdf)
-            }
-            val encryptedPfd = android.os.ParcelFileDescriptor.open(encryptedPdf, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
-            val encryptedResultJson = try {
-                PdfSanitizerEngineWorker.audit(encryptedPfd)
-            } finally {
-                encryptedPfd.close()
-            }
-            val encryptedContract = WorkerResponseValidator.validate("SANITIZE_AUDIT", encryptedResultJson) as SanitizeAuditContract
-            assertFalse("Encrypted document must not be clean", encryptedContract.isClean)
-            assertTrue("Encrypted document must report isEncrypted=true", encryptedContract.isEncrypted)
-            assertFalse("Encrypted document must report parseFailed=false", encryptedContract.parseFailed)
-            assertEquals(1, encryptedContract.threatsFound)
-            assertEquals(0, encryptedContract.jsCount)
-            assertEquals(0, encryptedContract.launchActionsCount)
-            assertEquals(0, encryptedContract.attachmentCount)
-            assertEquals(0, encryptedContract.uriCount)
-            assertFalse(encryptedContract.hasMetadata)
-
-            // 3. Corrupt file real worker audit execution & validation
-            val corruptPdf = File(tempDir, "corrupt.pdf").apply { writeText("not a real pdf file") }
-            val corruptPfd = android.os.ParcelFileDescriptor.open(corruptPdf, android.os.ParcelFileDescriptor.MODE_READ_ONLY)
-            val corruptResultJson = try {
-                PdfSanitizerEngineWorker.audit(corruptPfd)
-            } finally {
-                corruptPfd.close()
-            }
-            val corruptContract = WorkerResponseValidator.validate("SANITIZE_AUDIT", corruptResultJson) as SanitizeAuditContract
-            assertFalse("Corrupt document must not be clean", corruptContract.isClean)
-            assertFalse("Corrupt document must report isEncrypted=false", corruptContract.isEncrypted)
-            assertTrue("Corrupt document must report parseFailed=true", corruptContract.parseFailed)
-            assertEquals(1, corruptContract.threatsFound)
-            assertEquals(0, corruptContract.jsCount)
-        } finally {
-            tempDir.deleteRecursively()
-        }
+        // 5. Denied too small instance (supported = false, positive dimensions)
+        val tooSmallAnalysis = ImageAnalysis(
+            width = 64,
+            height = 64,
+            originalSizeBytes = 800L,
+            mimeType = "image/png",
+            formatName = "PNG",
+            isSupported = false,
+            validationStatus = ImageValidationStatus.DENIED_TOO_SMALL,
+            validationMessage = "Image is too small to compress effectively.",
+            alternativeSuggestion = null,
+            estimatedCompressedBytes = 800L,
+            estimatedSavingsPercent = 0,
+            qualityLoss = PerceivedQualityLoss.NEGLIGIBLE
+        )
+        val serializedTooSmall = gson.toJson(tooSmallAnalysis)
+        val contractTooSmall = WorkerResponseValidator.validate("IMAGE_ANALYZE", serializedTooSmall)
+        assertTrue(contractTooSmall is ImageAnalysisContract)
+        val verifiedTooSmall = (contractTooSmall as ImageAnalysisContract).analysis
+        assertEquals(64, verifiedTooSmall.width)
+        assertEquals(64, verifiedTooSmall.height)
+        assertEquals(ImageValidationStatus.DENIED_TOO_SMALL, verifiedTooSmall.validationStatus)
+        assertFalse(verifiedTooSmall.isSupported)
     }
 }
