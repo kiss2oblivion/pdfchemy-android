@@ -100,6 +100,15 @@ Review base: `f36a92c` (Chunk 2.5 hardened). Corrective commit head: `6b7dcd5` -
 - Enforces transport framing, maximum response depth (`MAX_RESPONSE_DEPTH = 8`), node count budgets (<= 5,000 nodes), UTF-8 response limits (`MAX_JSON_RESPONSE_SIZE = 1 MiB`), and rejects any trailing non-whitespace after the single JSON root value (`nextClean() == '\u0000'`).
 - Ingestion of result files (`parseOutlineFile` and `parseCsvTableFile`) strictly bounds file size to 2 MiB, outline depth to 8, outline nodes to 2,000, and CSV tables to 5,000 rows, 128 columns, and 1,024 characters per cell.
 - Standard Output validation: Removed permissive catch-all success branch. Unexpected String, Array, null, or unsupported root shapes fail immediately with `IllegalArgumentException`. Exact integral checks (`assertIntegral`) ensure integer and long fields (`renderedCount`, `size`) are strictly integral before conversion.
+- `REPLACE_ALL` Wire Validation:
+  - Eliminated raw `root.toInt()` truncation.
+  - Raw root number path routes through `assertIntegral(root, "replacementsCount")` and strictly validates `value in 0L..Int.MAX_VALUE.toLong()`.
+  - Rejects fractional numbers (`1.9`), negative numbers (`-1`), and numbers exceeding `Int.MAX_VALUE`.
+- Exact Numeric Domain & Boundary Validation (`assertIntegral`):
+  - Strictly validates that floating-point numbers (`Double`, `Float`) are finite, mathematically integral (`v == Math.floor(v)`), and reside strictly within the representable 64-bit signed integer range (`v >= -9223372036854775808.0 && v < 9223372036854775808.0`).
+  - Values $\ge 2^{63}$ (`9223372036854775808.0`) or $< -2^{63}$ are rejected fail-closed, preventing double-to-long clamping bypasses.
+  - Exact round-trip representation check (`l.toDouble() == v` / `l.toFloat() == v`) ensures no precision loss.
+  - Dedicated handling for `BigInteger` and `BigDecimal` enforces exact integer conversion and bounds within `Long.MIN_VALUE..Long.MAX_VALUE`.
 - Canonical `IMAGE_ANALYZE` Wire Contract & Semantic Matrix:
   - Enforces single canonical enum-string representation matching Gson serialization (`qualityLoss`: `"MINIMAL"`, etc.).
   - Strictly encodes the exact producer semantic state matrix:
@@ -120,19 +129,19 @@ Review base: `f36a92c` (Chunk 2.5 hardened). Corrective commit head: `6b7dcd5` -
 - Local JVM & Static Gates:
   - `securityArchitecture`: **PASSED** (all rules satisfied).
   - `:app-host:securityAudit`: **PASSED** (100 files scanned, 0 violations).
-  - `:pdf-ipc:testDebugUnitTest`: **38/38 passed** (`WorkerResponseValidatorTest` 22/22, `WorkerGateTest` 14/14, `SecurityLimitsTest` 2/2).
+  - `:pdf-ipc:testDebugUnitTest`: **38/38 passed** (`WorkerResponseValidatorTest` 23/23, `WorkerGateTest` 14/14, `SecurityLimitsTest` 2/2).
   - `:pdf-jail:testDebugUnitTest`: **21/21 passed** (including `WorkerProducerContractTest` 2/2 producer -> real serialization -> validator tests across all 5 validation states, `ActiveContentScrubberTest` 7/7, `RequestValidatorTest` 7/7, `TextFormatConverterTest` 5/5).
   - `:app-host:testDebugUnitTest`: **32/32 passed** (including `HostResponseContractSecurityTest` 8/8).
 - Device Instrumentation Evidence:
   - **Local Device Instrumentation Matrix (AVDs SecurityApi24 & SecurityApi36):**
     - API 24 Local: **169/169 passed**, 0 failures, 0 errors (Time: 691.897s), including `WorkerResponseValidationSecurityTest` 4/4 verifying real worker audit producer contract.
     - API 36 Local: **168/169 passed**, 1 failure (Time: 1,011.145s). The single failure is `scannedTextRemainsSearchableThroughTheIsolatedOcrWorker` (the known isolated OCR NNAPI platform crash on API 36, separately documented as a release blocker). All 168 other tests passed.
-  - **Remote GitHub Actions CI Matrix (Workflow Run 37133541849 / Commit 55a5b9d):**
-    - API 30 CI: **168/168 PASS** (100% green).
-    - API 36 CI: **167/168 PASS** (only known OCR failure).
-    - API 24 CI: **INFRA FAILURE** (emulator became unresponsive during `app-host-debug.apk` install-write / `ShellCommandUnresponsiveException`; tests never ran on that remote runner).
+  - **Remote GitHub Actions CI Matrix (Workflow Run 37147182386 / Commit bde10e2fb594dd9e22940c8eb9036ab107f567b9):**
+    - API 24 CI: **169/169 PASS** (100% green).
+    - API 30 CI: **169/169 PASS** (100% green).
+    - API 36 CI: **168/169 PASS** (only known isolated OCR worker crash).
     - Secrets, Dependency Security, Architecture, JVM tests: **ALL PASS**.
-    - Final build: **SKIPPED** due to API 24 runner infra failure.
+    - Final build: **SKIPPED** (due to API 36 isolated OCR failure).
 
 ## Limits and product behavior
 

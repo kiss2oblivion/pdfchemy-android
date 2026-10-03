@@ -655,11 +655,14 @@ object WorkerResponseValidator {
 
     private fun parseReplaceAll(root: Any?): ReplaceAllContract {
         val count = when (root) {
-            is Number -> root.toInt()
+            is Number -> {
+                val value = assertIntegral(root, "replacementsCount")
+                require(value in 0L..Int.MAX_VALUE.toLong()) { "replacementsCount out of integer range: $value" }
+                value.toInt()
+            }
             is JSONObject -> root.requireInt("count", min = 0)
             else -> throw IllegalArgumentException("Expected integer for REPLACE_ALL result")
         }
-        require(count >= 0) { "Replacement count must be non-negative" }
         return ReplaceAllContract(replacementsCount = count)
     }
 
@@ -910,26 +913,67 @@ object WorkerResponseValidator {
                 require(v.isFinite() && !v.isNaN() && v == Math.floor(v)) {
                     "Property '$key' must be an exact integer, got fractional or non-finite double: $v"
                 }
+                require(v >= -9223372036854775808.0 && v < 9223372036854775808.0) {
+                    "Property '$key' with value $v is outside representable Long range"
+                }
                 val l = v.toLong()
                 require(l.toDouble() == v) { "Property '$key' with value $v exceeds exact integer representation" }
                 return l
             }
             is Float -> {
-                require(v.isFinite() && !v.isNaN() && v == Math.floor(v.toDouble()).toFloat()) {
+                val d = v.toDouble()
+                require(v.isFinite() && !v.isNaN() && d == Math.floor(d)) {
                     "Property '$key' must be an exact integer, got fractional or non-finite float: $v"
+                }
+                require(d >= -9223372036854775808.0 && d < 9223372036854775808.0) {
+                    "Property '$key' with value $v is outside representable Long range"
                 }
                 val l = v.toLong()
                 require(l.toFloat() == v) { "Property '$key' with value $v exceeds exact integer representation" }
                 return l
             }
-            else -> {
-                val d = v.toDouble()
-                require(d.isFinite() && !d.isNaN() && d == Math.floor(d)) {
-                    "Property '$key' must be an exact integer, got $v"
+            is java.math.BigInteger -> {
+                require(v >= java.math.BigInteger.valueOf(Long.MIN_VALUE) && v <= java.math.BigInteger.valueOf(Long.MAX_VALUE)) {
+                    "Property '$key' with value $v is outside representable Long range"
                 }
-                val l = v.toLong()
-                require(l.toDouble() == d) { "Property '$key' with value $v exceeds exact integer representation" }
-                return l
+                return v.toLong()
+            }
+            is java.math.BigDecimal -> {
+                try {
+                    val bi = v.toBigIntegerExact()
+                    require(bi >= java.math.BigInteger.valueOf(Long.MIN_VALUE) && bi <= java.math.BigInteger.valueOf(Long.MAX_VALUE)) {
+                        "Property '$key' with value $v is outside representable Long range"
+                    }
+                    return bi.toLong()
+                } catch (_: ArithmeticException) {
+                    throw IllegalArgumentException("Property '$key' must be an exact integer, got fractional decimal: $v")
+                }
+            }
+            else -> {
+                val s = v.toString()
+                try {
+                    val bd = java.math.BigDecimal(s)
+                    val bi = bd.toBigIntegerExact()
+                    require(bi >= java.math.BigInteger.valueOf(Long.MIN_VALUE) && bi <= java.math.BigInteger.valueOf(Long.MAX_VALUE)) {
+                        "Property '$key' with value $v is outside representable Long range"
+                    }
+                    return bi.toLong()
+                } catch (e: IllegalArgumentException) {
+                    throw e
+                } catch (_: ArithmeticException) {
+                    throw IllegalArgumentException("Property '$key' must be an exact integer, got fractional value: $v")
+                } catch (_: Exception) {
+                    val d = v.toDouble()
+                    require(d.isFinite() && !d.isNaN() && d == Math.floor(d)) {
+                        "Property '$key' must be an exact integer, got $v"
+                    }
+                    require(d >= -9223372036854775808.0 && d < 9223372036854775808.0) {
+                        "Property '$key' with value $v is outside representable Long range"
+                    }
+                    val l = d.toLong()
+                    require(l.toDouble() == d) { "Property '$key' with value $v exceeds exact integer representation" }
+                    return l
+                }
             }
         }
     }

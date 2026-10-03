@@ -319,10 +319,71 @@ class WorkerResponseValidatorTest {
             WorkerResponseValidator.validate("ROTATE", "1.9")
         }
 
-        // 7. Non-fractional integers must pass cleanly
+        // 7. Fractional root Number in REPLACE_ALL
+        assertRejected {
+            WorkerResponseValidator.validate("REPLACE_ALL", "1.9")
+        }
+
+        // 8. Negative root Number in REPLACE_ALL
+        assertRejected {
+            WorkerResponseValidator.validate("REPLACE_ALL", "-1")
+        }
+
+        // 9. Root Number exceeding Int.MAX_VALUE in REPLACE_ALL
+        assertRejected {
+            WorkerResponseValidator.validate("REPLACE_ALL", "${Int.MAX_VALUE.toLong() + 1L}")
+        }
+
+        // 10. Valid non-fractional integers in REPLACE_ALL
+        val cReplace0 = WorkerResponseValidator.validate("REPLACE_ALL", "0") as ReplaceAllContract
+        assertEquals(0, cReplace0.replacementsCount)
+
+        val cReplace1 = WorkerResponseValidator.validate("REPLACE_ALL", "1") as ReplaceAllContract
+        assertEquals(1, cReplace1.replacementsCount)
+
+        val cReplaceMax = WorkerResponseValidator.validate("REPLACE_ALL", "${Int.MAX_VALUE}") as ReplaceAllContract
+        assertEquals(Int.MAX_VALUE, cReplaceMax.replacementsCount)
+
+        val cReplaceObj = WorkerResponseValidator.validate("REPLACE_ALL", "{\"count\": 42}") as ReplaceAllContract
+        assertEquals(42, cReplaceObj.replacementsCount)
+
+        // 11. Non-fractional integers must pass cleanly in ROTATE
         val c = WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": 2048, \"renderedCount\": 2}", targetCount = 2) as StandardOutputContract
         assertTrue(c.success)
         assertEquals(2048L, c.size)
+    }
+
+    @Test
+    fun numericLongBoundaryValidationEnforced() {
+        // Long.MAX_VALUE represented safely as Long in object field
+        val validMaxLong = "{\"success\": true, \"size\": ${Long.MAX_VALUE}}"
+        val cMax = WorkerResponseValidator.validate("ROTATE", validMaxLong) as StandardOutputContract
+        assertEquals(Long.MAX_VALUE, cMax.size)
+
+        // Double with 2^63 (9223372036854775808.0) > Long.MAX_VALUE rejected
+        val overflowDouble = "{\"success\": true, \"size\": 9223372036854775808.0}"
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", overflowDouble)
+        }
+
+        // Large Double > Long.MAX_VALUE rejected in root number
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "9223372036854775808.0")
+        }
+
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "1e20")
+        }
+
+        // Negative value in non-negative Long field (size) rejected
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": -1}")
+        }
+
+        // Double with value < Long.MIN_VALUE rejected
+        assertRejected {
+            WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": -9223372036854775809.0}")
+        }
     }
 
     @Test
