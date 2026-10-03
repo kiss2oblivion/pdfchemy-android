@@ -129,7 +129,7 @@ Review base: `f36a92c` (Chunk 2.5 hardened). Corrective commit head: `6b7dcd5` -
 - Local JVM & Static Gates:
   - `securityArchitecture`: **PASSED** (all rules satisfied).
   - `:app-host:securityAudit`: **PASSED** (100 files scanned, 0 violations).
-  - `:pdf-ipc:testDebugUnitTest`: **38/38 passed** (`WorkerResponseValidatorTest` 23/23, `WorkerGateTest` 14/14, `SecurityLimitsTest` 2/2).
+  - `:pdf-ipc:testDebugUnitTest`: **40/40 passed** (`WorkerResponseValidatorTest` 21/21, `WorkerGateTest` 14/14, `SecurityLimitsTest` 5/5).
   - `:pdf-jail:testDebugUnitTest`: **21/21 passed** (including `WorkerProducerContractTest` 2/2 producer -> real serialization -> validator tests across all 5 validation states, `ActiveContentScrubberTest` 7/7, `RequestValidatorTest` 7/7, `TextFormatConverterTest` 5/5).
   - `:app-host:testDebugUnitTest`: **32/32 passed** (including `HostResponseContractSecurityTest` 8/8).
 - Device Instrumentation Evidence:
