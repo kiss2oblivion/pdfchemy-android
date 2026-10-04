@@ -1059,4 +1059,30 @@
     <string name="vanguard_verifying_title">Vanguard 安全驗證</string>
     <string name="vanguard_verifying_desc">正在檢查文件中的腳本與安全威脅...</string>
     <string name="vanguard_zero_trust_badge">100%% 離線 • 零信任</string>
+
+    <string name="action_redo">重做</string>
+    <string name="action_reset">重設</string>
+    <string name="action_reverse">反轉順序</string>
+    <string name="action_rotate_all">旋轉全部</string>
+    <string name="label_preview_unavailable">預覽無法使用</string>
+    <string name="dialog_unsaved_title">未儲存的變更</string>
+    <string name="dialog_unsaved_message">您有未儲存的變更。離開前是否要儲存或放棄？</string>
+    <string name="dialog_unsaved_save">儲存 / 匯出</string>
+    <string name="dialog_unsaved_discard">捨棄</string>
+    <string name="dialog_unsaved_continue">繼續編輯</string>
+    <string name="vanguard_damaged_title">損毀的 PDF</string>
+    <string name="vanguard_damaged_message">此 PDF 似乎已損毀或不完整，無法安全讀取。請嘗試執行修復或選取其他複本。</string>
+    <string name="vanguard_provider_error_title">檔案無法存取</string>
+    <string name="vanguard_provider_error_message">無法存取所選檔案。儲存空間提供者可能無法使用或權限已被撤銷。</string>
+    <string name="error_invalid_page_range">頁碼範圍無效。請核對頁碼後重試。</string>
+    <string name="consent_dialog_decline">不進行個人化設定繼續</string>
+
+    <string name="generating_previews">正在產生預覽…</string>
+    <string name="label_preview_loading">載入中…</string>
+    <string name="premium_status_loading">正在檢查商店…</string>
+    <string name="premium_status_unavailable">商店無法使用。輕點以重試。</string>
+    <string name="action_retry">重試</string>
+    <string name="redaction_review_title">審查塗黑</string>
+    <string name="redaction_review_message">將永久套用 %1$d 處塗黑。塗黑的內容將無法復原。</string>
+    <string name="redaction_review_confirm">套用塗黑</string>
 </resources>

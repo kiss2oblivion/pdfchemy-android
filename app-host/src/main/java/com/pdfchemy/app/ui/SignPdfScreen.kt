@@ -71,10 +71,13 @@ fun SignPdfScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isRenderingPage by remember { mutableStateOf(false) }
+    var pageRenderFailed by remember { mutableStateOf(false) }
 
     var savedSignatures by remember { mutableStateOf<List<Pair<String, Bitmap>>>(emptyList()) }
     var showSignaturePad by remember { mutableStateOf(false) }
@@ -119,7 +122,10 @@ fun SignPdfScreen(
                     showPkiDialog = false
                     onBack()
                 } else {
-                    // Show error, handled silently for now or via Toast
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_signing_failed),
+                        context.getString(R.string.pki_signature_failed_desc)
+                    )
                 }
             }
         }
@@ -136,22 +142,45 @@ fun SignPdfScreen(
 
     // PDF Page Renderer
     fun renderPage(uri: Uri, index: Int) {
+        isRenderingPage = true
+        pageRenderFailed = false
+        currentPageBitmap?.recycle()
+        currentPageBitmap = null
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
             try {
-                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
+                pfd = context.contentResolver.openFileDescriptor(uri, "r")
+                if (pfd == null) {
+                    withContext(Dispatchers.Main) {
+                        isRenderingPage = false
+                        pageRenderFailed = true
+                    }
+                    return@launch
+                }
                 totalPages = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
                 if (index in 0 until totalPages) {
                     val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, index, 1080)
-                    if (bmp != null) {
-                        withContext(Dispatchers.Main) {
-                            currentPageBitmap?.recycle()
+                    withContext(Dispatchers.Main) {
+                        if (bmp != null) {
                             currentPageBitmap = bmp
+                            pageRenderFailed = false
+                        } else {
+                            pageRenderFailed = true
                         }
+                        isRenderingPage = false
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        isRenderingPage = false
+                        pageRenderFailed = true
                     }
                 }
             } catch (e: Exception) {
                 com.pdfchemy.app.utils.AppLogger.e("Failed to render PDF page: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    isRenderingPage = false
+                    pageRenderFailed = true
+                }
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
             }
@@ -174,6 +203,11 @@ fun SignPdfScreen(
                 isSaving = false
                 if (success) {
                     onBack()
+                } else {
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_signing_failed),
+                        context.getString(R.string.pki_signature_failed_desc)
+                    )
                 }
             }
         }
@@ -265,7 +299,30 @@ fun SignPdfScreen(
                         .shadow(8.dp, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (currentPageBitmap != null) {
+                    if (isRenderingPage && currentPageBitmap == null) {
+                        CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                    } else if (pageRenderFailed && currentPageBitmap == null) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.BrokenImage,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                stringResource(R.string.page_render_failed),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Button(onClick = { selectedPdfUri?.let { renderPage(it, currentPageIndex) } }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                    } else if (currentPageBitmap != null) {
                         val bmp = currentPageBitmap!!
                         val pageAspect = bmp.width.toFloat() / bmp.height.toFloat().coerceAtLeast(1f)
                         var pagePixelSize by remember { mutableStateOf(IntSize.Zero) }

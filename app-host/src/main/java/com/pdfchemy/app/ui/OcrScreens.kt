@@ -49,7 +49,8 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var isProcessing by remember { mutableStateOf(false) }
     var currentProgressPage by remember { mutableStateOf(0) }
     var totalProgressPages by remember { mutableStateOf(0) }

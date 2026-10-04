@@ -1066,4 +1066,30 @@
     <string name="vanguard_verifying_title">Verificação de Segurança Vanguard</string>
     <string name="vanguard_verifying_desc">A verificar scripts e ameaças de segurança no documento...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Refazer</string>
+    <string name="action_reset">Redefinir</string>
+    <string name="action_reverse">Inverter</string>
+    <string name="action_rotate_all">Girar Tudo</string>
+    <string name="label_preview_unavailable">Pré-visualização indisponível</string>
+    <string name="dialog_unsaved_title">Alterações Não Salvas</string>
+    <string name="dialog_unsaved_message">Você tem alterações não salvas. Deseja salvá-las ou descartá-las antes de sair?</string>
+    <string name="dialog_unsaved_save">Salvar / Exportar</string>
+    <string name="dialog_unsaved_discard">Descartar</string>
+    <string name="dialog_unsaved_continue">Continuar Editando</string>
+    <string name="vanguard_damaged_title">PDF Danificado</string>
+    <string name="vanguard_damaged_message">Este PDF parece estar danificado ou corrompido e não pôde ser lido com segurança. Tente executar a Reparação ou selecione outra cópia.</string>
+    <string name="vanguard_provider_error_title">Arquivo Inacessível</string>
+    <string name="vanguard_provider_error_message">O arquivo selecionado não pôde ser acessado. O provedor de armazenamento pode estar indisponível ou as permissões foram revogadas.</string>
+    <string name="error_invalid_page_range">Intervalo de páginas inválido. Verifique os números de página e tente novamente.</string>
+    <string name="consent_dialog_decline">Continuar sem Personalização</string>
+
+    <string name="generating_previews">A gerar pré-visualizações…</string>
+    <string name="label_preview_loading">A carregar…</string>
+    <string name="premium_status_loading">A verificar loja…</string>
+    <string name="premium_status_unavailable">Loja indisponível. Toque para tentar novamente.</string>
+    <string name="action_retry">Tentar novamente</string>
+    <string name="redaction_review_title">Rever redações</string>
+    <string name="redaction_review_message">%1$d redação(ões) serão aplicadas permanentemente. O conteúdo ocultado não pode ser recuperado.</string>
+    <string name="redaction_review_confirm">Aplicar redações</string>
 </resources>

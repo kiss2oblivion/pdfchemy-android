@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Vanguard 보안 검증</string>
     <string name="vanguard_verifying_desc">스크립트 및 보안 위협을 검사하는 중...</string>
     <string name="vanguard_zero_trust_badge">100%% 오프라인 • 제로 트러스트</string>
+
+    <string name="action_redo">다시 실행</string>
+    <string name="action_reset">재설정</string>
+    <string name="action_reverse">순서 뒤집기</string>
+    <string name="action_rotate_all">모두 회전</string>
+    <string name="label_preview_unavailable">미리보기를 사용할 수 없음</string>
+    <string name="dialog_unsaved_title">저장되지 않은 변경 사항</string>
+    <string name="dialog_unsaved_message">저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까, 아니면 취소하시겠습니까?</string>
+    <string name="dialog_unsaved_save">저장 / 내보내기</string>
+    <string name="dialog_unsaved_discard">삭제</string>
+    <string name="dialog_unsaved_continue">편집 계속</string>
+    <string name="vanguard_damaged_title">손상된 PDF</string>
+    <string name="vanguard_damaged_message">이 PDF는 손상되었거나 불완전하여 안전하게 읽을 수 없습니다. 복구를 실행하거나 다른 사본을 선택해 보세요.</string>
+    <string name="vanguard_provider_error_title">파일에 액세스할 수 없음</string>
+    <string name="vanguard_provider_error_message">선택한 파일에 액세스할 수 없습니다. 저장소 공급자를 사용할 수 없거나 권한이 취소되었을 수 있습니다.</string>
+    <string name="error_invalid_page_range">잘못된 페이지 범위입니다. 페이지 번호를 확인하고 다시 시도하세요.</string>
+    <string name="consent_dialog_decline">맞춤 설정 없이 계속</string>
+
+    <string name="generating_previews">미리보기 생성 중…</string>
+    <string name="label_preview_loading">로딩 중…</string>
+    <string name="premium_status_loading">스토어 확인 중…</string>
+    <string name="premium_status_unavailable">스토어를 사용할 수 없습니다. 다시 시도하려면 탭하세요.</string>
+    <string name="action_retry">다시 시도</string>
+    <string name="redaction_review_title">수정 사항 검토</string>
+    <string name="redaction_review_message">%1$d개의 수정 사항이 영구적으로 적용됩니다. 수정된 내용은 복구할 수 없습니다.</string>
+    <string name="redaction_review_confirm">수정 사항 적용</string>
 </resources>

@@ -90,6 +90,15 @@ object PdfEditorWorker {
                                 isFakeBoldText = true
                             }
 
+                            // If the page also has drawings, text annotations, or stamps, draw them onto the base raster
+                            if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
+                                val overlayBmp = renderAnnotationOverlayBitmap(mod, finalW, finalH)
+                                if (overlayBmp != null) {
+                                    canvas.drawBitmap(overlayBmp, 0f, 0f, null)
+                                    try { overlayBmp.recycle() } catch (ignored: Exception) {}
+                                }
+                            }
+
                             for (rBox in mod.redactions) {
                                 val rectF = rBox.normalizedRect
                                 val left = rectF.left * finalW
@@ -112,7 +121,7 @@ object PdfEditorWorker {
                             }
 
                             val pdImage = LosslessFactory.createFromImage(document, baseBmp)
-                            page.rotation = 0
+                            page.rotation = if (mod.rotationDegrees != 0) (mod.rotationDegrees % 360 + 360) % 360 else 0
                             page.cropBox = null
                             page.mediaBox = PDRectangle(finalW.toFloat(), finalH.toFloat())
                             page.cosObject.removeItem(com.tom_roush.pdfbox.cos.COSName.ANNOTS)
@@ -131,10 +140,8 @@ object PdfEditorWorker {
                     if (!rasterized) {
                         throw SecurityException("Cannot forensically rasterize the PDF page because PdfRenderer is unavailable. Aborting redaction to ensure maximum security without data loss.")
                     }
-                    continue
-                }
-
-                if (mod.rotationDegrees != 0) {
+                } else {
+                    if (mod.rotationDegrees != 0) {
                     val currentRotation = page.rotation
                     page.rotation = (currentRotation + mod.rotationDegrees) % 360
                 }
@@ -191,6 +198,7 @@ object PdfEditorWorker {
                             overlayBmp.recycle()
                         }
                     }
+                }
                 }
             }
 

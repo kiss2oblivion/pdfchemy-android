@@ -47,6 +47,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
+import com.pdfchemy.app.logic.EditorSession
+import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.automirrored.rounded.Redo
+import androidx.compose.material.icons.automirrored.rounded.RotateRight
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import com.pdfchemy.app.logic.DrawingPath
 import com.pdfchemy.app.logic.DrawingPoint
 import com.pdfchemy.app.logic.EditorTool
@@ -70,7 +77,9 @@ fun PdfEditorScreen(
     SecureScreenContent()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    BackHandler { onBack() }
+    val session = remember { EditorSession() }
+    var sessionTick by remember { mutableIntStateOf(0) }
+    val pageModifications = remember(sessionTick) { session.getModifications() }
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
     var totalPages by remember { mutableIntStateOf(0) }
@@ -78,6 +87,18 @@ fun PdfEditorScreen(
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var secondaryPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isRenderingPage by remember { mutableStateOf(false) }
+
+    var showUnsavedDialog by remember { mutableStateOf(false) }
+
+    fun handleBack() {
+        if (session.isDirty) {
+            showUnsavedDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    BackHandler { handleBack() }
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isWideScreen = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
@@ -97,9 +118,6 @@ fun PdfEditorScreen(
         }
     }
 
-    // Page modifications map (PageIndex -> PageModification)
-    val pageModifications = remember { mutableStateMapOf<Int, PageModification>() }
-
     // Active Editor Tool & Tool Settings
     var activeTool by remember { mutableStateOf(EditorTool.VIEW) }
     var selectedColor by remember { mutableStateOf(Color(0xFFD32F2F)) } // Red default
@@ -110,6 +128,7 @@ fun PdfEditorScreen(
     var currentStrokePoints by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
     var redactDragStart by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
     var redactDragCurrent by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     // Dialogs & Sheets
     var showTextDialog by remember { mutableStateOf(false) }
@@ -122,6 +141,7 @@ fun PdfEditorScreen(
 
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
+    var showVanguardDamagedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
@@ -158,6 +178,50 @@ fun PdfEditorScreen(
                 Button(
                     onClick = {
                         showVanguardBlockedDialog = false
+                        if (initialPdfUri != null) onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showVanguardDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showVanguardDamagedDialog = false
+                if (initialPdfUri != null) onBack()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.BrokenImage,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showVanguardDamagedDialog = false
                         if (initialPdfUri != null) onBack()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -235,16 +299,20 @@ fun PdfEditorScreen(
                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
                                 totalPages = PdfEditor.getPageCount(context, uri)
                                 currentPageIndex = 0
-                                pageModifications.clear()
+                                session.reset(); sessionTick++
                             }
                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                 showVanguardEncryptedDialog = true
                                 selectedPdfUri = null
                                 totalPages = 0
                             }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
                                 showVanguardBlockedDialog = true
+                                selectedPdfUri = null
+                                totalPages = 0
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                showVanguardDamagedDialog = true
                                 selectedPdfUri = null
                                 totalPages = 0
                             }
@@ -256,7 +324,7 @@ fun PdfEditorScreen(
                 } else {
                     totalPages = PdfEditor.getPageCount(context, uri)
                     currentPageIndex = 0
-                    pageModifications.clear()
+                    session.reset(); sessionTick++
                 }
             }
         }
@@ -267,7 +335,7 @@ fun PdfEditorScreen(
     LaunchedEffect(selectedPdfUri, currentPageIndex, totalPages, isDualPageMode) {
         guardDocumentLoad(onFailure = {
             isRenderingPage = false
-            showVanguardBlockedDialog = true
+            showVanguardDamagedDialog = true
         }) {
             selectedPdfUri?.let { uri ->
                 if (totalPages > 0 && currentPageIndex in 0 until totalPages) {
@@ -296,7 +364,7 @@ fun PdfEditorScreen(
 
     }
 
-    val currentMod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
+    val currentMod = remember(sessionTick, currentPageIndex) { session.getModification(currentPageIndex) }
 
     // PDF File Picker
     val pdfPickerLauncher = rememberLauncherForActivityResult(
@@ -320,6 +388,8 @@ fun PdfEditorScreen(
                 modifications = pageModifications
             ) { success ->
                 if (success) {
+                    session.reset()
+                    sessionTick++
                     viewModel.notifySuccess(
                         context.getString(R.string.editor_export_success_title),
                         context.getString(R.string.editor_export_success_desc),
@@ -352,37 +422,50 @@ fun PdfEditorScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { handleBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
                 actions = {
                     if (selectedPdfUri != null && totalPages > 0) {
-                        // Undo Last Stroke / Annotation
+                        // Chronological Undo
                         IconButton(
                             onClick = {
-                                val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                                if (mod.drawings.isNotEmpty()) {
-                                    pageModifications[currentPageIndex] = mod.copy(drawings = mod.drawings.dropLast(1))
-                                } else if (mod.textAnnotations.isNotEmpty()) {
-                                    pageModifications[currentPageIndex] = mod.copy(textAnnotations = mod.textAnnotations.dropLast(1))
-                                } else if (mod.stamps.isNotEmpty()) {
-                                    pageModifications[currentPageIndex] = mod.copy(stamps = mod.stamps.dropLast(1))
+                                session.undo()?.let { affectedPage ->
+                                    if (affectedPage in 0 until totalPages && affectedPage != currentPageIndex) {
+                                        currentPageIndex = affectedPage
+                                    }
                                 }
+                                sessionTick++
                             },
-                            enabled = currentMod.drawings.isNotEmpty() || currentMod.textAnnotations.isNotEmpty() || currentMod.stamps.isNotEmpty()
+                            enabled = session.canUndo
                         ) {
-                            Icon(Icons.Rounded.Undo, contentDescription = stringResource(R.string.action_undo))
+                            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.action_undo))
                         }
 
-                        // Rotate Current Page
+                        // Chronological Redo
                         IconButton(
                             onClick = {
-                                val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                                pageModifications[currentPageIndex] = mod.copy(rotationDegrees = (mod.rotationDegrees + 90) % 360)
+                                session.redo()?.let { affectedPage ->
+                                    if (affectedPage in 0 until totalPages && affectedPage != currentPageIndex) {
+                                        currentPageIndex = affectedPage
+                                    }
+                                }
+                                sessionTick++
+                            },
+                            enabled = session.canRedo
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.Redo, contentDescription = stringResource(R.string.action_redo))
+                        }
+
+                        // Rotate Current Page (tracked chronologically)
+                        IconButton(
+                            onClick = {
+                                session.rotatePage(currentPageIndex, 90)
+                                sessionTick++
                             }
                         ) {
-                            Icon(Icons.Rounded.RotateRight, contentDescription = stringResource(R.string.action_rotate))
+                            Icon(Icons.AutoMirrored.Rounded.RotateRight, contentDescription = stringResource(R.string.action_rotate))
                         }
 
                         // Dual Page Spread Toggle (Fold & Tablet)
@@ -665,7 +748,6 @@ fun PdfEditorScreen(
                 }
             } else {
                 // Interactive PDF Canvas
-                var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
                 Box(
                     modifier = Modifier
@@ -711,8 +793,8 @@ fun PdfEditorScreen(
                                                         strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
                                                         isHighlighter = activeTool == EditorTool.HIGHLIGHTER
                                                     )
-                                                    val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                                                    pageModifications[currentPageIndex] = mod.copy(drawings = mod.drawings + newPath)
+                                                    session.addDrawing(currentPageIndex, newPath)
+                                                    sessionTick++
                                                 }
                                                 currentStrokePoints = emptyList()
                                             }
@@ -736,8 +818,8 @@ fun PdfEditorScreen(
                                                     xRatio = xR,
                                                     yRatio = yR
                                                 )
-                                                val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                                                pageModifications[currentPageIndex] = mod.copy(stamps = mod.stamps + newStamp)
+                                                session.addStamp(currentPageIndex, newStamp)
+                                                sessionTick++
                                             }
                                         }
                                     }
@@ -766,8 +848,8 @@ fun PdfEditorScreen(
                                                             normalizedRect = android.graphics.RectF(leftNorm, topNorm, rightNorm, bottomNorm),
                                                             overlayLabel = "REDACTED"
                                                         )
-                                                        val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                                                        pageModifications[currentPageIndex] = mod.copy(redactions = mod.redactions + newRedaction)
+                                                        session.addRedaction(currentPageIndex, newRedaction)
+                                                        sessionTick++
                                                     }
                                                 }
                                                 redactDragStart = null
@@ -834,10 +916,12 @@ fun PdfEditorScreen(
                         for (textAnn in currentMod.textAnnotations) {
                             Box(
                                 modifier = Modifier
-                                    .offset(
-                                        x = (canvasSize.width * textAnn.xRatio).dp,
-                                        y = (canvasSize.height * textAnn.yRatio).dp
-                                    )
+                                    .offset {
+                                        IntOffset(
+                                            (canvasSize.width * textAnn.xRatio).roundToInt(),
+                                            (canvasSize.height * textAnn.yRatio).roundToInt()
+                                        )
+                                    }
                                     .background(Color(textAnn.backgroundColor), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 4.dp, vertical = 2.dp)
                             ) {
@@ -851,14 +935,19 @@ fun PdfEditorScreen(
                         }
 
                         // Render Stamps
+                        val density = LocalDensity.current
+                        val stampWidthPx = with(density) { 90.dp.toPx() }
+                        val stampHeightPx = with(density) { 36.dp.toPx() }
                         for (stamp in currentMod.stamps) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .offset(
-                                        x = (canvasSize.width * stamp.xRatio - 45).dp,
-                                        y = (canvasSize.height * stamp.yRatio - 18).dp
-                                    )
+                                    .offset {
+                                        IntOffset(
+                                            (canvasSize.width * stamp.xRatio - stampWidthPx / 2f).roundToInt(),
+                                            (canvasSize.height * stamp.yRatio - stampHeightPx / 2f).roundToInt()
+                                        )
+                                    }
                                     .rotate(stamp.rotation)
                                     .border(2.5.dp, Color(stamp.type.colorHex), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -899,15 +988,17 @@ fun PdfEditorScreen(
                 Button(
                     onClick = {
                         if (textInputContent.isNotBlank() && pendingTextPosition != null) {
+                            val xRatio = if (canvasSize.width > 0) (pendingTextPosition!!.x / canvasSize.width.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
+                            val yRatio = if (canvasSize.height > 0) (pendingTextPosition!!.y / canvasSize.height.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
                             val newTextAnn = TextAnnotation(
                                 text = textInputContent.trim(),
-                                xRatio = (pendingTextPosition!!.x / 1000f).coerceIn(0.05f, 0.85f),
-                                yRatio = (pendingTextPosition!!.y / 1000f).coerceIn(0.05f, 0.85f),
+                                xRatio = xRatio,
+                                yRatio = yRatio,
                                 fontSize = 16f,
                                 textColor = selectedColor.hashCode()
                             )
-                            val mod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
-                            pageModifications[currentPageIndex] = mod.copy(textAnnotations = mod.textAnnotations + newTextAnn)
+                            session.addTextAnnotation(currentPageIndex, newTextAnn)
+                            sessionTick++
                         }
                         textInputContent = ""
                         showTextDialog = false
@@ -1020,6 +1111,40 @@ fun PdfEditorScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showUnsavedDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnsavedDialog = false },
+            title = { Text(stringResource(R.string.dialog_unsaved_title)) },
+            text = { Text(stringResource(R.string.dialog_unsaved_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showUnsavedDialog = false
+                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "edited", "Document", "pdf")
+                        savePdfLauncher.launch(suggestedName)
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_unsaved_save))
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            showUnsavedDialog = false
+                            onBack()
+                        }
+                    ) {
+                        Text(stringResource(R.string.dialog_unsaved_discard), color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showUnsavedDialog = false }) {
+                        Text(stringResource(R.string.dialog_unsaved_continue))
+                    }
+                }
+            }
+        )
     }
 }
 

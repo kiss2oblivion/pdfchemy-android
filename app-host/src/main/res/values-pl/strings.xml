@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Weryfikacja Bezpieczeństwa Vanguard</string>
     <string name="vanguard_verifying_desc">Sprawdzanie dokumentu pod kątem skryptów i zagrożeń...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Ponów</string>
+    <string name="action_reset">Resetuj</string>
+    <string name="action_reverse">Odwróć</string>
+    <string name="action_rotate_all">Obróć wszystko</string>
+    <string name="label_preview_unavailable">Podgląd niedostępny</string>
+    <string name="dialog_unsaved_title">Niezapisane zmiany</string>
+    <string name="dialog_unsaved_message">Masz niezapisane zmiany. Czy chcesz je zapisać lub odrzucić przed wyjściem?</string>
+    <string name="dialog_unsaved_save">Zapisz / Eksportuj</string>
+    <string name="dialog_unsaved_discard">Odrzuć</string>
+    <string name="dialog_unsaved_continue">Kontynuuj edycję</string>
+    <string name="vanguard_damaged_title">Uszkodzony plik PDF</string>
+    <string name="vanguard_damaged_message">Ten plik PDF wydaje się uszkodzony lub obcięty i nie można go bezpiecznie odczytać. Spróbuj uruchomić Napraw lub wybierz inną kopię.</string>
+    <string name="vanguard_provider_error_title">Plik niedostępny</string>
+    <string name="vanguard_provider_error_message">Nie można uzyskać dostępu do wybranego pliku. Dostawca pamięci może być niedostępny lub uprawnienia zostały cofnięte.</string>
+    <string name="error_invalid_page_range">Nieprawidłowy zakres stron. Sprawdź numery stron i spróbuj ponownie.</string>
+    <string name="consent_dialog_decline">Kontynuuj bez personalizacji</string>
+
+    <string name="generating_previews">Generowanie podglądów…</string>
+    <string name="label_preview_loading">Ładowanie…</string>
+    <string name="premium_status_loading">Sprawdzanie sklepu…</string>
+    <string name="premium_status_unavailable">Sklep niedostępny. Dotknij, aby ponowić.</string>
+    <string name="action_retry">Ponów</string>
+    <string name="redaction_review_title">Przejrzyj zaczernienia</string>
+    <string name="redaction_review_message">%1$d zaczernień zostanie zastosowanych na stałe. Zaczernionej zawartości nie można odzyskać.</string>
+    <string name="redaction_review_confirm">Zastosuj zaczernienia</string>
 </resources>

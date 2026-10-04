@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Xác minh bảo mật Vanguard</string>
     <string name="vanguard_verifying_desc">Đang kiểm tra tài liệu tìm tập lệnh và mối đe dọa...</string>
     <string name="vanguard_zero_trust_badge">100%% Ngoại tuyến • Zero-Trust</string>
+
+    <string name="action_redo">Làm lại</string>
+    <string name="action_reset">Đặt lại</string>
+    <string name="action_reverse">Đảo ngược</string>
+    <string name="action_rotate_all">Xoay tất cả</string>
+    <string name="label_preview_unavailable">Không có bản xem trước</string>
+    <string name="dialog_unsaved_title">Thay đổi chưa lưu</string>
+    <string name="dialog_unsaved_message">Bạn có thay đổi chưa lưu. Bạn có muốn lưu hoặc hủy chúng trước khi thoát không?</string>
+    <string name="dialog_unsaved_save">Lưu / Xuất</string>
+    <string name="dialog_unsaved_discard">Hủy bỏ</string>
+    <string name="dialog_unsaved_continue">Tiếp tục chỉnh sửa</string>
+    <string name="vanguard_damaged_title">PDF bị hỏng</string>
+    <string name="vanguard_damaged_message">Tệp PDF này có vẻ bị hỏng hoặc không đầy đủ và không thể đọc an toàn. Hãy thử chạy Sửa chữa hoặc chọn bản sao khác.</string>
+    <string name="vanguard_provider_error_title">Không thể truy cập tệp</string>
+    <string name="vanguard_provider_error_message">Không thể truy cập tệp đã chọn. Nhà cung cấp bộ nhớ có thể không khả dụng hoặc quyền đã bị thu hồi.</string>
+    <string name="error_invalid_page_range">Phạm vi trang không hợp lệ. Vui lòng kiểm tra lại số trang và thử lại.</string>
+    <string name="consent_dialog_decline">Tiếp tục mà không cá nhân hóa</string>
+
+    <string name="generating_previews">Đang tạo bản xem trước…</string>
+    <string name="label_preview_loading">Đang tải…</string>
+    <string name="premium_status_loading">Đang kiểm tra cửa hàng…</string>
+    <string name="premium_status_unavailable">Cửa hàng không khả dụng. Nhấn để thử lại.</string>
+    <string name="action_retry">Thử lại</string>
+    <string name="redaction_review_title">Xem lại chỉnh sửa</string>
+    <string name="redaction_review_message">%1$d chỉnh sửa sẽ được áp dụng vĩnh viễn. Nội dung đã chỉnh sửa không thể phục hồi.</string>
+    <string name="redaction_review_confirm">Áp dụng chỉnh sửa</string>
 </resources>

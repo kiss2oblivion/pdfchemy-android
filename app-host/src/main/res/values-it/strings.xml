@@ -1066,4 +1066,30 @@
     <string name="vanguard_verifying_title">Verifica di Sicurezza Vanguard</string>
     <string name="vanguard_verifying_desc">Controllo del documento per script e minacce di sicurezza...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Ripeti</string>
+    <string name="action_reset">Ripristina</string>
+    <string name="action_reverse">Inverti</string>
+    <string name="action_rotate_all">Ruota tutto</string>
+    <string name="label_preview_unavailable">Anteprima non disponibile</string>
+    <string name="dialog_unsaved_title">Modifiche non salvate</string>
+    <string name="dialog_unsaved_message">Ci sono modifiche non salvate. Vuoi salvarle o scartarle prima di uscire\?</string>
+    <string name="dialog_unsaved_save">Salva / Esporta</string>
+    <string name="dialog_unsaved_discard">Scarta</string>
+    <string name="dialog_unsaved_continue">Continua a modificare</string>
+    <string name="vanguard_damaged_title">PDF danneggiato</string>
+    <string name="vanguard_damaged_message">Questo PDF sembra essere danneggiato o incompleto e non è stato possibile leggerlo in modo sicuro. Prova a eseguire Ripara o seleziona un\'altra copia.</string>
+    <string name="vanguard_provider_error_title">File inaccessibile</string>
+    <string name="vanguard_provider_error_message">Impossibile accedere al file selezionato. Il provider di archiviazione potrebbe non essere disponibile o le autorizzazioni sono state revocate.</string>
+    <string name="error_invalid_page_range">Intervallo di pagine non valido. Verifica i numeri di pagina e riprova.</string>
+    <string name="consent_dialog_decline">Continua senza personalizzazione</string>
+
+    <string name="generating_previews">Generazione anteprime…</string>
+    <string name="label_preview_loading">Caricamento…</string>
+    <string name="premium_status_loading">Verifica negozio…</string>
+    <string name="premium_status_unavailable">Negozio non disponibile. Tocca per riprovare.</string>
+    <string name="action_retry">Riprova</string>
+    <string name="redaction_review_title">Controlla redazioni</string>
+    <string name="redaction_review_message">%1$d redazione/i verranno applicate in modo permanente. Il contenuto oscurato non può essere recuperato.</string>
+    <string name="redaction_review_confirm">Applica redazioni</string>
 </resources>

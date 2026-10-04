@@ -46,6 +46,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
+import com.pdfchemy.app.logic.EditorSession
+import androidx.compose.material.icons.automirrored.rounded.Redo
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import com.pdfchemy.app.logic.DrawingPath
 import com.pdfchemy.app.logic.DrawingPoint
 import com.pdfchemy.app.logic.FileUtil
@@ -77,7 +81,6 @@ fun QuickFillSignScreen(
     initialPdfUri: Uri? = null,
     onBack: () -> Unit
 ) {
-    BackHandler { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -94,8 +97,21 @@ fun QuickFillSignScreen(
     var showSignDialog by remember { mutableStateOf(false) }
     var savedSignaturePoints by remember { mutableStateOf<List<DrawingPoint>?>(null) }
 
-    // Page modifications map (PageIndex -> PageModification)
-    val pageModifications = remember { mutableStateMapOf<Int, PageModification>() }
+    val session = remember { EditorSession() }
+    var sessionTick by remember { mutableIntStateOf(0) }
+    val pageModifications = remember(sessionTick) { session.getModifications() }
+    val currentMod = remember(sessionTick, currentPageIndex) { session.getModification(currentPageIndex) }
+    var showUnsavedDialog by remember { mutableStateOf(false) }
+
+    fun handleBack() {
+        if (session.isDirty) {
+            showUnsavedDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    BackHandler { handleBack() }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     fun renderCurrentPage(uri: Uri, pageIdx: Int) {
@@ -144,7 +160,7 @@ fun QuickFillSignScreen(
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         currentPageIndex = 0
-        pageModifications.clear()
+        session.reset(); sessionTick++
     }
 
     val saveFileLauncher = rememberLauncherForActivityResult(
@@ -165,7 +181,7 @@ fun QuickFillSignScreen(
     }
 
     fun addAnnotationAt(xRatio: Float, yRatio: Float) {
-        val currentMod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
+        // currentMod resolved from session
 
         if (selectedTool == QuickFillTool.SIGNATURE) {
             val sigPoints = savedSignaturePoints
@@ -178,9 +194,8 @@ fun QuickFillSignScreen(
                     color = AndroidColor.BLACK,
                     strokeWidth = 3f
                 )
-                pageModifications[currentPageIndex] = currentMod.copy(
-                    drawings = currentMod.drawings + drawing
-                )
+                session.addDrawing(currentPageIndex, drawing)
+                sessionTick++
             }
             return
         }
@@ -218,9 +233,8 @@ fun QuickFillSignScreen(
         }
 
         if (textItem != null) {
-            pageModifications[currentPageIndex] = currentMod.copy(
-                textAnnotations = currentMod.textAnnotations + textItem
-            )
+            session.addTextAnnotation(currentPageIndex, textItem)
+            sessionTick++
         }
     }
 
@@ -299,16 +313,14 @@ fun QuickFillSignScreen(
                     onClick = {
                         if (signaturePoints.isNotEmpty()) {
                             savedSignaturePoints = signaturePoints
-                            val currentMod = pageModifications[currentPageIndex] ?: PageModification(pageIndex = currentPageIndex)
                             val localizedPoints = scaleSignatureToPage(signaturePoints, 0.5f, 0.7f)
                             val drawing = DrawingPath(
                                 points = localizedPoints,
                                 color = AndroidColor.BLACK,
                                 strokeWidth = 3f
                             )
-                            pageModifications[currentPageIndex] = currentMod.copy(
-                                drawings = currentMod.drawings + drawing
-                            )
+                            session.addDrawing(currentPageIndex, drawing)
+                            sessionTick++
                         }
                         showSignDialog = false
                     }
@@ -329,29 +341,37 @@ fun QuickFillSignScreen(
                 title = { Text(stringResource(R.string.quick_fill_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { handleBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
                 actions = {
                     if (selectedPdfUri != null) {
-                        val currentMod = pageModifications[currentPageIndex]
-                        if (currentMod != null && (currentMod.drawings.isNotEmpty() || currentMod.textAnnotations.isNotEmpty())) {
-                            IconButton(
-                                onClick = {
-                                    if (currentMod.drawings.isNotEmpty()) {
-                                        pageModifications[currentPageIndex] = currentMod.copy(
-                                            drawings = currentMod.drawings.dropLast(1)
-                                        )
-                                    } else if (currentMod.textAnnotations.isNotEmpty()) {
-                                        pageModifications[currentPageIndex] = currentMod.copy(
-                                            textAnnotations = currentMod.textAnnotations.dropLast(1)
-                                        )
+                        IconButton(
+                            onClick = {
+                                session.undo()?.let { affectedPage ->
+                                    if (affectedPage in 0 until totalPages && affectedPage != currentPageIndex) {
+                                        currentPageIndex = affectedPage
                                     }
                                 }
-                            ) {
-                                Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = "Undo")
-                            }
+                                sessionTick++
+                            },
+                            enabled = session.canUndo
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.action_undo))
+                        }
+                        IconButton(
+                            onClick = {
+                                session.redo()?.let { affectedPage ->
+                                    if (affectedPage in 0 until totalPages && affectedPage != currentPageIndex) {
+                                        currentPageIndex = affectedPage
+                                    }
+                                }
+                                sessionTick++
+                            },
+                            enabled = session.canRedo
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.Redo, contentDescription = stringResource(R.string.action_redo))
                         }
                         Button(
                             onClick = {
@@ -502,17 +522,18 @@ fun QuickFillSignScreen(
 
                                 // Overlay Text Items as interactive chips
                                 for (annot in currentMod.textAnnotations) {
-                                    val leftOffset = (annot.xRatio * canvasSize.width).dp / (LocalContext.current.resources.displayMetrics.density)
-                                    val topOffset = (annot.yRatio * canvasSize.height).dp / (LocalContext.current.resources.displayMetrics.density)
-
                                     Surface(
                                         modifier = Modifier
-                                            .offset(x = leftOffset, y = topOffset)
+                                            .offset {
+                                                IntOffset(
+                                                    (annot.xRatio * canvasSize.width).roundToInt(),
+                                                    (annot.yRatio * canvasSize.height).roundToInt()
+                                                )
+                                            }
                                             .clickable {
                                                 // Remove on tap
-                                                pageModifications[currentPageIndex] = currentMod.copy(
-                                                    textAnnotations = currentMod.textAnnotations.filter { it.id != annot.id }
-                                                )
+                                                session.removeTextAnnotation(currentPageIndex, annot.id)
+                                                sessionTick++
                                             },
                                         shape = RoundedCornerShape(4.dp),
                                         color = Color(annot.textColor).copy(alpha = 0.1f),
@@ -564,6 +585,40 @@ fun QuickFillSignScreen(
                 }
             }
         }
+    }
+
+    if (showUnsavedDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnsavedDialog = false },
+            title = { Text(stringResource(R.string.dialog_unsaved_title)) },
+            text = { Text(stringResource(R.string.dialog_unsaved_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showUnsavedDialog = false
+                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "filled")
+                        saveFileLauncher.launch(suggestedName)
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_unsaved_save))
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            showUnsavedDialog = false
+                            onBack()
+                        }
+                    ) {
+                        Text(stringResource(R.string.dialog_unsaved_discard), color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showUnsavedDialog = false }) {
+                        Text(stringResource(R.string.dialog_unsaved_continue))
+                    }
+                }
+            }
+        )
     }
 }
 

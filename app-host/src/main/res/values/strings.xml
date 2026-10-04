@@ -1112,4 +1112,37 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+
+    <string name="action_redo">Redo</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_reverse">Reverse</string>
+    <string name="action_rotate_all">Rotate All</string>
+    <string name="label_preview_unavailable">Preview unavailable</string>
+    <string name="dialog_unsaved_title">Unsaved Changes</string>
+    <string name="dialog_unsaved_message">You have unsaved changes. Do you want to save or discard them before leaving?</string>
+    <string name="dialog_unsaved_save">Save / Export</string>
+    <string name="dialog_unsaved_discard">Discard</string>
+    <string name="dialog_unsaved_continue">Continue Editing</string>
+    <string name="vanguard_damaged_title">Damaged PDF</string>
+    <string name="vanguard_damaged_message">This PDF appears to be damaged or truncated and could not be read safely. Try running Repair or selecting another copy.</string>
+    <string name="vanguard_provider_error_title">File Inaccessible</string>
+    <string name="vanguard_provider_error_message">The selected file could not be accessed. The storage provider may be unavailable or permissions were revoked.</string>
+    <string name="error_invalid_page_range">Invalid page range. Please verify the page numbers and try again.</string>
+    <string name="consent_dialog_decline">Continue without Personalization</string>
+
+    <string name="generating_previews">Generating previews…</string>
+    <string name="label_preview_loading">Loading…</string>
+    <string name="premium_status_loading">Checking store…</string>
+    <string name="premium_status_unavailable">Store unavailable. Tap to retry.</string>
+    <string name="action_retry">Retry</string>
+    <string name="redaction_review_title">Review Redactions</string>
+    <string name="redaction_review_message">%1$d redaction(s) will be permanently applied. Redacted content cannot be recovered.</string>
+    <string name="redaction_review_confirm">Apply Redactions</string>
+    <string name="diagnosing_document">Diagnosing document...</string>
+    <string name="diagnosis_failed_title">Diagnosis Failed</string>
+    <string name="diagnosis_failed_desc">Could not diagnose the document.</string>
+    <string name="error_signing_failed">Signing Failed</string>
+    <string name="pki_signature_failed_desc">The PKI signature could not be applied.</string>
+    <string name="page_render_failed">Page Render Failed</string>
+    <string name="retry">Retry</string>
 </resources>

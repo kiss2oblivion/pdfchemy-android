@@ -6,7 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -74,6 +74,8 @@ fun rememberVanguardPdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var showDamagedDialog by remember { mutableStateOf(false) }
+    var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -109,6 +111,82 @@ fun rememberVanguardPdfPicker(
             confirmButton = {
                 Button(
                     onClick = { showBlockedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDamagedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showProviderErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showProviderErrorDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showProviderErrorDialog = false },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -208,16 +286,19 @@ fun rememberVanguardPdfPicker(
                                     encryptedPendingUri = stagedUri
                                     showEncryptedDialog = true
                                 }
-                                is VanguardThreatResult.ExecutableThreat,
-                                is VanguardThreatResult.ParseFailed -> {
+                                is VanguardThreatResult.ExecutableThreat -> {
                                     com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
                                     showBlockedDialog = true
+                                }
+                                is VanguardThreatResult.ParseFailed -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                    showDamagedDialog = true
                                 }
                             }
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
-                            showBlockedDialog = true
+                            showProviderErrorDialog = true
                         }
                     } finally {
                         isScanning = false
@@ -262,6 +343,8 @@ fun rememberVanguardMultiplePdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var showDamagedDialog by remember { mutableStateOf(false) }
+    var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -297,6 +380,82 @@ fun rememberVanguardMultiplePdfPicker(
             confirmButton = {
                 Button(
                     onClick = { showBlockedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDamagedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showProviderErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showProviderErrorDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showProviderErrorDialog = false },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -403,9 +562,13 @@ fun rememberVanguardMultiplePdfPicker(
                                         allClean = false
                                         stopBatch = true
                                     }
-                                    is VanguardThreatResult.ExecutableThreat,
-                                    is VanguardThreatResult.ParseFailed -> {
+                                    is VanguardThreatResult.ExecutableThreat -> {
                                         showBlockedDialog = true
+                                        allClean = false
+                                        stopBatch = true
+                                    }
+                                    is VanguardThreatResult.ParseFailed -> {
+                                        showDamagedDialog = true
                                         allClean = false
                                         stopBatch = true
                                     }
@@ -414,7 +577,7 @@ fun rememberVanguardMultiplePdfPicker(
                             if (stopBatch) break
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                showBlockedDialog = true
+                                showProviderErrorDialog = true
                                 allClean = false
                             }
                             break

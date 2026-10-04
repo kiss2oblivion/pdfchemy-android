@@ -42,14 +42,22 @@ fun RepairPdfScreen(
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var diagnostic by remember { mutableStateOf<RepairDiagnostic?>(null) }
+    var isDiagnosing by remember { mutableStateOf(false) }
+    var diagnosisFailed by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedPdfUri) {
         val uri = selectedPdfUri
+        diagnostic = null
+        diagnosisFailed = false
         if (uri != null) {
+            isDiagnosing = true
             val result = PdfRepairEngine.diagnosePdf(context, uri)
+            isDiagnosing = false
             if (result.isSuccess) {
                 diagnostic = result.getOrThrow()
+            } else {
+                diagnosisFailed = true
             }
         }
     }
@@ -58,6 +66,8 @@ fun RepairPdfScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
+            diagnostic = null
+            diagnosisFailed = false
             selectedPdfUri = uri
         }
     }
@@ -177,7 +187,40 @@ fun RepairPdfScreen(
             }
 
             // Diagnostic Results
-            if (diagnostic != null) {
+            if (isDiagnosing) {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(stringResource(R.string.diagnosing_document), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else if (diagnosisFailed) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            stringResource(R.string.diagnosis_failed_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.diagnosis_failed_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            } else if (diagnostic != null) {
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(R.string.label_diagnostic_report), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -227,7 +270,7 @@ fun RepairPdfScreen(
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 52.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                enabled = !isProcessing && selectedPdfUri != null
+                enabled = !isProcessing && !isDiagnosing && selectedPdfUri != null && diagnostic != null
             ) {
                 if (isProcessing) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)

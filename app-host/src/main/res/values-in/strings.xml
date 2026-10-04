@@ -1069,4 +1069,30 @@
     <string name="vanguard_verifying_title">Verifikasi Keamanan Vanguard</string>
     <string name="vanguard_verifying_desc">Memeriksa dokumen untuk skrip dan ancaman keamanan...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Ulangi</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_reverse">Balikkan</string>
+    <string name="action_rotate_all">Putar Semua</string>
+    <string name="label_preview_unavailable">Pratinjau tidak tersedia</string>
+    <string name="dialog_unsaved_title">Perubahan Belum Disimpan</string>
+    <string name="dialog_unsaved_message">Anda memiliki perubahan yang belum disimpan. Apakah Anda ingin menyimpan atau membuangnya sebelum keluar?</string>
+    <string name="dialog_unsaved_save">Simpan / Ekspor</string>
+    <string name="dialog_unsaved_discard">Buang</string>
+    <string name="dialog_unsaved_continue">Lanjutkan Mengedit</string>
+    <string name="vanguard_damaged_title">PDF Rusak</string>
+    <string name="vanguard_damaged_message">PDF ini tampaknya rusak atau terpotong dan tidak dapat dibaca dengan aman. Coba jalankan Perbaikan atau pilih salinan lain.</string>
+    <string name="vanguard_provider_error_title">File Tidak Dapat Diakses</string>
+    <string name="vanguard_provider_error_message">File yang dipilih tidak dapat diakses. Penyedia penyimpanan mungkin tidak tersedia atau izin telah dicabut.</string>
+    <string name="error_invalid_page_range">Rentang halaman tidak valid. Harap verifikasi nomor halaman dan coba lagi.</string>
+    <string name="consent_dialog_decline">Lanjutkan Tanpa Personalisasi</string>
+
+    <string name="generating_previews">Menghasilkan pratinjau…</string>
+    <string name="label_preview_loading">Memuat…</string>
+    <string name="premium_status_loading">Memeriksa toko…</string>
+    <string name="premium_status_unavailable">Toko tidak tersedia. Ketuk untuk mencoba lagi.</string>
+    <string name="action_retry">Coba Lagi</string>
+    <string name="redaction_review_title">Tinjau Redaksi</string>
+    <string name="redaction_review_message">%1$d redaksi akan diterapkan secara permanen. Konten yang disunting tidak dapat dipulihkan.</string>
+    <string name="redaction_review_confirm">Terapkan Redaksi</string>
 </resources>

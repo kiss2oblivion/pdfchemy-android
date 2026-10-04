@@ -50,6 +50,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
+    val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
+
+    fun setContinuityUri(uri: Uri?) {
+        _continuityDocumentUri.value = uri
+    }
+
     private val prefs = application.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
 
     private val historyRepository = com.pdfchemy.app.logic.HistoryRepository(application)

@@ -101,6 +101,7 @@ fun ReflowReaderScreen(
         }
     }
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
+    var showVanguardDamagedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
@@ -136,6 +137,50 @@ fun ReflowReaderScreen(
                 Button(
                     onClick = {
                         showVanguardBlockedDialog = false
+                        if (initialUri != null) onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showVanguardDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showVanguardDamagedDialog = false
+                if (initialUri != null) onBack()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.BrokenImage,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showVanguardDamagedDialog = false
                         if (initialUri != null) onBack()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -222,9 +267,11 @@ fun ReflowReaderScreen(
                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                 showVanguardEncryptedDialog = true
                             }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
                                 showVanguardBlockedDialog = true
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                showVanguardDamagedDialog = true
                             }
                         }
                     } finally {
@@ -245,6 +292,10 @@ fun ReflowReaderScreen(
 
     }
 
+    val hasReadableContent = remember(reflowSections) {
+        reflowSections.any { section -> section.paragraphs.any { it.isNotBlank() } }
+    }
+
     var selectedTheme by remember { mutableStateOf(ReaderTheme.LIGHT) }
     var fontSizeSp by remember { mutableStateOf(16f) }
     var useSerifFont by remember { mutableStateOf(false) }
@@ -252,7 +303,7 @@ fun ReflowReaderScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(reflowSections, uriHash) {
-        if (reflowSections.isNotEmpty() && !isScannedOnly) {
+        if (reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
             val savedIndex = prefs.getInt("reader_scroll_index_$uriHash", 0)
             val savedOffset = prefs.getInt("reader_scroll_offset_$uriHash", 0)
             if (savedIndex < reflowSections.size) {
@@ -264,7 +315,7 @@ fun ReflowReaderScreen(
     LaunchedEffect(listState, uriHash, reflowSections) {
         androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
-                if (reflowSections.isNotEmpty() && !isScannedOnly) {
+                if (reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
                     prefs.edit()
                         .putInt("reader_scroll_index_$uriHash", index)
                         .putInt("reader_scroll_offset_$uriHash", offset)
@@ -421,9 +472,11 @@ fun ReflowReaderScreen(
                                 is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                     showVanguardEncryptedDialog = true
                                 }
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
                                     showVanguardBlockedDialog = true
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                    showVanguardDamagedDialog = true
                                 }
                             }
                         } finally {
@@ -801,7 +854,7 @@ fun ReflowReaderScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else if (selectedPdfUri != null && isScannedOnly && reflowSections.isEmpty()) {
+                } else if (selectedPdfUri != null && (isScannedOnly || !hasReadableContent)) {
                     Column(
                         modifier = Modifier
                             .widthIn(max = 500.dp)

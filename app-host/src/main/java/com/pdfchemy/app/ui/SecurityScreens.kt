@@ -64,7 +64,8 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
