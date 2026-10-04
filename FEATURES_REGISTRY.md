@@ -41,7 +41,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Images to PDF** | `ImageToPdfScreen.kt` | `ImageToPdfConverter.kt` | ✅ Live | Converts camera photos, receipts, and gallery images into standardized PDF |
 | **PDF to High-Res Images** | `PdfToImageScreen.kt` | `PdfRenderer` | ✅ Live | Exports all pages as PNG or JPEG image files |
-| **Scan to PDF** | `ScanPdfScreen.kt` | `CameraCaptureHelper.kt` | ✅ Live | Hardware camera scan with edge auto-detection and perspective correction |
+| **Scan to PDF** | `ScanPdfScreen.kt` | `GmsDocumentScanning` | ✅ Live | Hardware camera scan with edge auto-detection, filters, and post-capture continuity (Save & Open, OCR, Compress) |
 | **EPUB to PDF Converter** | `EbookConverterScreen.kt` | `EpubConverter.kt` | ✅ Live | Parses standard EPUB ebooks, styles fonts/margins, and exports paginated PDF |
 | **Markdown to PDF Studio** | `MarkdownStudioScreen.kt` | `MarkdownParser.kt` | ✅ Live | Rich Markdown text editor with instant live HTML/PDF rendering |
 | **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents |

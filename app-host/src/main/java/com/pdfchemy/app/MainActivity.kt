@@ -579,7 +579,7 @@ fun MainApp(
                             val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                             when (threatResult) {
                                 is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                    currentScreen = Screen.PdfEditor(initialPdfUri = uri)
+                                    currentScreen = Screen.PdfReader(initialPdfUri = uri)
                                 }
                                 is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                     vanguardPendingEncryptedUri = uri
@@ -595,7 +595,7 @@ fun MainApp(
                             vanguardScanningFileName = null
                         }
                     } else {
-                        currentScreen = Screen.PdfEditor(initialPdfUri = uri)
+                        currentScreen = Screen.PdfReader(initialPdfUri = uri)
                     }
                 }
                 incomingPdfUriState?.value = null
@@ -849,7 +849,7 @@ fun MainApp(
                 // [FEATURE: PDF to High-Res Images] — Exports pages as PNG or JPEG image files
                 Screen.PdfToImages -> PdfToImagesScreen(viewModel) { currentScreen = Screen.CreateCategory }
                 // [FEATURE: Scan to PDF] — Hardware camera scan with edge auto-detection and perspective correction
-                Screen.ScanPdf -> ScanPdfScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.ScanPdf -> ScanPdfScreen(viewModel, onNavigateToTool = { currentScreen = it }) { currentScreen = Screen.CreateCategory }
                 // [FEATURE: EPUB to PDF Converter] — Standard EPUB parsing with fonts/margins to paginated PDF
                 Screen.EbookConverter -> EbookConverterScreen(viewModel) { currentScreen = Screen.CreateCategory }
                 // [FEATURE: Markdown to PDF Studio] — Rich Markdown editor with live preview
@@ -877,6 +877,15 @@ fun MainApp(
                     PdfEditorScreen(viewModel, editorScreen.initialPdfUri) {
                         currentScreen = if (editorScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
                     }
+                }
+                is Screen.PdfReader -> {
+                    val readerScreen = targetScreen as Screen.PdfReader
+                    com.pdfchemy.app.ui.PdfReaderScreen(
+                        viewModel = viewModel,
+                        initialUri = readerScreen.initialPdfUri ?: Uri.EMPTY,
+                        onBack = { currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory },
+                        onNavigateToTool = { screen -> currentScreen = screen }
+                    )
                 }
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)
                 Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { currentScreen = Screen.CreateCategory }
@@ -1254,6 +1263,7 @@ sealed class Screen {
     // 4. ✍️ FORM FILLING & DOCUMENT EDITING (FEATURES_REGISTRY Section 4)
     // [FEATURE: Visual PDF Editor] — Pen, highlighter, text, shapes, stamp
     data class PdfEditor(val initialPdfUri: Uri? = null) : Screen()
+    data class PdfReader(val initialPdfUri: Uri? = null) : Screen()
     // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place marks (Text, ✓, ✗, Date, Signatures)
     object QuickFillSign : Screen()
     // [FEATURE: Interactive Form Builder] — PDAcroForm widget authoring (Text, Checkbox, Dropdown)
@@ -1309,6 +1319,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
     save = { screen ->
         when (screen) {
             is Screen.PdfEditor -> "PdfEditor:${screen.initialPdfUri?.toString() ?: ""}"
+            is Screen.PdfReader -> "PdfReader:${screen.initialPdfUri?.toString() ?: ""}"
             is Screen.ReflowReader -> "ReflowReader:${screen.initialUri?.toString() ?: ""}"
             is Screen.UnlockPdf -> "UnlockPdf:${screen.initialUri?.toString() ?: ""}"
             is Screen.OfficeExport -> "OfficeExport:${screen.initialFormat.name}"
@@ -1320,6 +1331,10 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str.startsWith("PdfEditor:") -> {
                 val uriStr = str.removePrefix("PdfEditor:")
                 Screen.PdfEditor(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+            }
+            str.startsWith("PdfReader:") -> {
+                val uriStr = str.removePrefix("PdfReader:")
+                Screen.PdfReader(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
             }
             str.startsWith("ReflowReader:") -> {
                 val uriStr = str.removePrefix("ReflowReader:")
@@ -2202,8 +2217,16 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
     val coroutineScope = rememberCoroutineScope()
     val selectedTab = pagerState.currentPage
 
-    var sourceUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var sourceName by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && sourceUri == continuityUri) {
+            sourceName = com.pdfchemy.app.utils.FileUtils.getFileName(context, continuityUri!!) ?: context.getString(R.string.label_selected_pdf)
+            viewModel.onFileSelected(context, continuityUri!!)
+        }
+    }
 
     val pickPdfLauncher = rememberVanguardPdfPicker { uri ->
         sourceUri = uri
@@ -4040,7 +4063,7 @@ fun RecentFilesSection(
                                                         vanguardScanningFileName = null
                                                     }
                                                 } else {
-                                                    onNavigate(Screen.PdfEditor(initialPdfUri = stagedUri))
+                                                    onNavigate(Screen.PdfReader(initialPdfUri = stagedUri))
                                                 }
                                             }
                                         }
@@ -4062,7 +4085,7 @@ fun RecentFilesSection(
                                                 context.startActivity(chooser)
                                             } catch (e2: Exception) {
                                                 if (ext == "pdf" && onNavigate != null) {
-                                                    onNavigate(Screen.PdfEditor(initialPdfUri = uri))
+                                                    onNavigate(Screen.PdfReader(initialPdfUri = uri))
                                                 } else {
                                                     AppLogger.e("Cannot open file from recent activity: ${item.name}", e2)
                                                     Toast.makeText(context, "No app available to open ${item.name}", Toast.LENGTH_SHORT).show()
