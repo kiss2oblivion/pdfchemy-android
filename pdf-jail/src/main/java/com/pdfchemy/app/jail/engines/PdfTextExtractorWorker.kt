@@ -8,7 +8,6 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.pdfchemy.app.security.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.tasks.await
 
 object PdfTextExtractorWorker {
     private class LimitedWriter : java.io.Writer() {
@@ -49,9 +48,8 @@ object PdfTextExtractorWorker {
         return org.json.JSONObject().put("success", true).put("textLength", result.length).toString()
     }
     fun extractUsingOcr(context: Context, fd: ParcelFileDescriptor): String = runBlocking {
-        IsolatedOcrRuntime.initialize(context)
         android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
-        val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
+        val ocrBackend = com.pdfchemy.app.jail.ocr.OcrBackendFactory.create(context)
         val result = StringBuilder()
         try {
             PdfRenderer(fd.dup()).use { renderer ->
@@ -62,13 +60,13 @@ object PdfTextExtractorWorker {
                     try {
                         android.graphics.Canvas(bitmap).drawColor(android.graphics.Color.WHITE)
                         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        val text = recognizer.process(com.google.mlkit.vision.common.InputImage.fromBitmap(bitmap, 0)).await().text
+                        val text = ocrBackend.recognize(bitmap).text
                         require(text.length + result.length <= SecurityLimits.MAX_TEXT_BYTES)
                         result.append(text).append("\n")
                     } finally { bitmap.recycle() }
                 }
             }
             result.toString().also { SecurityLimits.enforceStringLength(it) }
-        } finally { recognizer.close() }
+        } finally { ocrBackend.close() }
     }
 }

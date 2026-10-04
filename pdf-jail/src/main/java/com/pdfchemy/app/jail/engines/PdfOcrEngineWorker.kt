@@ -2,14 +2,13 @@ package com.pdfchemy.app.jail.engines
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.Text
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.google.android.gms.tasks.Tasks
+import com.pdfchemy.app.jail.ocr.OcrBackendFactory
+import com.pdfchemy.app.jail.ocr.OcrResultBounds
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
@@ -23,8 +22,7 @@ import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 object PdfOcrEngineWorker {
 
     fun createSearchablePdf(context: Context, sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor): String {
-        IsolatedOcrRuntime.initialize(context)
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val ocrBackend = OcrBackendFactory.create(context)
         var renderer: PdfRenderer? = null
         var outputDoc: PDDocument? = null
 
@@ -57,8 +55,8 @@ object PdfOcrEngineWorker {
                     canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-                    val inputImage = InputImage.fromBitmap(bitmap, 0)
-                    val visionText: Text = Tasks.await(recognizer.process(inputImage))
+                    val rawResult = ocrBackend.recognize(bitmap)
+                    val ocrResult = OcrResultBounds.enforce(rawResult, pageWidth, pageHeight)
 
                     val pdPage = PDPage(PDRectangle(pageWidth, pageHeight))
                     outputDoc.addPage(pdPage)
@@ -67,13 +65,13 @@ object PdfOcrEngineWorker {
                     contentStream = PDPageContentStream(outputDoc, pdPage)
                     contentStream.drawImage(pdImage, 0f, 0f, pageWidth, pageHeight)
 
-                    if (visionText.textBlocks.isNotEmpty()) {
+                    if (ocrResult.blocks.isNotEmpty()) {
                         val extGState = PDExtendedGraphicsState().apply {
                             nonStrokingAlphaConstant = 0.0f
                         }
                         contentStream.setGraphicsStateParameters(extGState)
 
-                        for (block in visionText.textBlocks) {
+                        for (block in ocrResult.blocks) {
                             for (line in block.lines) {
                                 for (element in line.elements) {
                                     val box = element.boundingBox ?: continue
@@ -117,7 +115,7 @@ object PdfOcrEngineWorker {
         } finally {
             try { outputDoc?.close() } catch (e: Exception) {}
             try { renderer?.close() } catch (e: Exception) {}
-            recognizer.close()
+            ocrBackend.close()
         }
     }
 }

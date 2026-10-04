@@ -77,18 +77,25 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 * **Usage in PDFchemy (Desktop):**
   * Local, offline Optical Character Recognition (OCR) engine for converting scanned PDFs and bitmap pages into searchable text.
 
+### [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android) & [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
+* **Authors:** Zdenko Podobný, Adaptech s.r.o., Ray Smith, Google Inc. & Tesseract OCR Contributors
+* **Version:** `4.9.0` (packaging Tesseract `5.5.1` and Leptonica `1.84.1`)
+* **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+* **Usage in PDFchemy (Android):**
+  * Production optical character recognition engine executed inside the isolated worker process (`pdf-jail`). Uses an audited in-memory native JNI bridge directly invoking upstream `TessBaseAPI::Init(const char *data, int data_size, ...)` from a bounded byte buffer, achieving 100% offline, local-first OCR without requiring filesystem access (`filesDir`/`cacheDir`/`fopen`) under the Android isolated UID.
+
 ### [Tesseract OCR English Trained Data Model (`eng.traineddata`)](https://github.com/tesseract-ocr/tessdata)
 * **Authors:** Ray Smith & The Tesseract OCR Open Source Community
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-* **Usage in PDFchemy (Desktop):**
-  * Bundled offline neural OCR model enabling instantaneous character recognition without needing an internet connection or external downloads.
+* **Usage in PDFchemy (Android & Desktop):**
+  * Bundled offline neural OCR model enabling instantaneous character recognition without needing an internet connection or external downloads. In Android, model data is strictly bounded in memory and loaded once per isolated worker process.
 
-### [Google ML Kit (On-Device Vision)](https://developers.google.com/ml-kit)
+### [Google ML Kit (Document Scanner)](https://developers.google.com/ml-kit)
 * **Authors:** Google LLC
-* **Libraries:** `play-services-mlkit-document-scanner`, `com.google.mlkit:text-recognition`
+* **Libraries:** `play-services-mlkit-document-scanner`
 * **License:** Android Software Development Kit License
 * **Usage in PDFchemy (Android):**
-  * High-speed on-device document camera perspective warping, boundary detection, and offline mobile text recognition.
+  * Host UI-side camera capture, perspective warping, and page boundary detection. Standard text recognition in isolated processing is handled by Tesseract.
 
 ---
 
