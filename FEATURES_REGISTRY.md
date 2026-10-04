@@ -26,7 +26,7 @@
 | **Split PDFs (Range / All)** | `OrganizeScreens.kt` | `PdfManipulator.kt` | ✅ Live | Split into individual pages or arbitrary page ranges (e.g. `1-3, 5, 8-10`) |
 | **Split by Blank Pages** | `OrganizeScreens.kt` | `MainViewModel.splitByBlankPages` | ✅ Live | Auto-detects blank separator sheets in batch scanner feeds and splits into individual documents |
 | **Split by Bookmarks / Chapters** | `OrganizeScreens.kt` | `MainViewModel.splitByBookmarks` | ✅ Live | Auto-splits multi-chapter books or court bundles based on PDF document outlines |
-| **Page Organizer** | `PageOrganizerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Visual thumbnail grid: reorder, delete, duplicate, rotate individual pages |
+| **Page Organizer** | `PageOrganizerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Visual thumbnail grid: reorder, delete, duplicate, rotate individual pages. Integrated bounded chronological history for safe Undo/Redo |
 | **Rotate Pages** | `OrganizeScreens.kt` | `PdfManipulator.kt` | ✅ Live | Lossless 90°, 180°, 270° orientation correction |
 | **Auto-Deskew & Straighten** | `DeskewScreen.kt` | `PdfDeskewEngine.kt` | ✅ Live | Hough transform scan tilt auto-detection, manual angle slider, live rotation preview |
 | **Page Cropper & Margin Trimmer** | `PageCropperScreen.kt` | `PdfManipulator.kt` | ✅ Live | CropBox adjustment to remove scanner borders and margins |
