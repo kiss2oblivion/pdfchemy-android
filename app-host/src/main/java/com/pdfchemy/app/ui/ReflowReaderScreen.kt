@@ -62,11 +62,13 @@ enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
 @Composable
 fun ReflowReaderScreen(
     initialUri: Uri? = null,
+    viewModel: com.pdfchemy.app.ui.MainViewModel,
     onBack: () -> Unit
 ) {
     SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
+    val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
@@ -303,7 +305,7 @@ fun ReflowReaderScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(reflowSections, uriHash) {
-        if (reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
+        if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
             val savedIndex = prefs.getInt("reader_scroll_index_$uriHash", 0)
             val savedOffset = prefs.getInt("reader_scroll_offset_$uriHash", 0)
             if (savedIndex < reflowSections.size) {
@@ -312,10 +314,10 @@ fun ReflowReaderScreen(
         }
     }
 
-    LaunchedEffect(listState, uriHash, reflowSections) {
+    LaunchedEffect(listState, uriHash, reflowSections, isRememberPositionEnabled) {
         androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
-                if (reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
+                if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
                     prefs.edit()
                         .putInt("reader_scroll_index_$uriHash", index)
                         .putInt("reader_scroll_offset_$uriHash", offset)

@@ -72,6 +72,15 @@ fun PdfReaderScreen(
     // Command Centre state
     var showControls by remember { mutableStateOf(true) }
     
+    // Search and TOC state
+    val drawerState = androidx.compose.material3.rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
+    var bookmarks by remember { mutableStateOf<List<com.pdfchemy.app.logic.OutlineBookmark>>(emptyList()) }
+    var isSearchMode by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchMatches by remember { mutableStateOf<List<com.pdfchemy.app.logic.TextMatchOccurrence>>(emptyList()) }
+    var currentMatchIndex by remember { mutableStateOf(0) }
+    var isSearching by remember { mutableStateOf(false) }
+    
     // Vanguard Threat state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -89,13 +98,25 @@ fun PdfReaderScreen(
         }
     }
     
+    val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
+    
     LaunchedEffect(initialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
             isVanguardScanning = false
         }) {
+            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
             val stagedUri = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri).uri }
             selectedPdfUri = stagedUri
+            
+            // Fetch bookmarks asynchronously
+            coroutineScope.launch {
+                try {
+                    bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, initialUri)
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
             fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
             
             if (isVanguardEnabled) {
@@ -122,6 +143,24 @@ fun PdfReaderScreen(
             } else {
                 totalPages = PdfEditor.getPageCount(context, stagedUri)
             }
+            
+            if (isRememberPositionEnabled && totalPages > 0) {
+                val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
+                val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
+                val savedPage = prefs.getInt("page_$docId", 0)
+                if (savedPage in 0 until totalPages) {
+                    listState.scrollToItem(savedPage)
+                }
+            }
+        }
+    }
+    
+    // Save position continuously
+    LaunchedEffect(listState.firstVisibleItemIndex, isRememberPositionEnabled) {
+        if (isRememberPositionEnabled && totalPages > 0) {
+            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
+            val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
+            prefs.edit().putInt("page_$docId", listState.firstVisibleItemIndex).apply()
         }
     }
 
@@ -211,6 +250,7 @@ fun PdfReaderScreen(
             exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)
         ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
             TopAppBar(
                 title = { 
                     Text(
@@ -226,6 +266,14 @@ fun PdfReaderScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { isSearchMode = !isSearchMode }) {
+                        Icon(Icons.Rounded.Search, contentDescription = "Search")
+                    }
+                    if (bookmarks.isNotEmpty()) {
+                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                            Icon(Icons.Rounded.Menu, contentDescription = "Table of Contents")
+                        }
+                    }
                     IconButton(onClick = { onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri)) }) {
                         Icon(Icons.Rounded.Edit, contentDescription = "Edit")
                     }
@@ -234,6 +282,74 @@ fun PdfReaderScreen(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                 )
             )
+            AnimatedVisibility(visible = isSearchMode) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Search document...") },
+                            singleLine = true,
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = ""; searchMatches = emptyList() }) {
+                                        Icon(Icons.Rounded.Close, contentDescription = "Clear")
+                                    }
+                                }
+                            },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
+                                if (searchQuery.isNotBlank() && initialUri != null) {
+                                    isSearching = true
+                                    coroutineScope.launch {
+                                        try {
+                                            val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, initialUri, searchQuery)
+                                            searchMatches = summary.occurrences
+                                            currentMatchIndex = 0
+                                            if (searchMatches.isNotEmpty()) {
+                                                listState.animateScrollToItem(searchMatches[0].pageIndex)
+                                            }
+                                        } finally {
+                                            isSearching = false
+                                        }
+                                    }
+                                }
+                            })
+                        )
+                        if (isSearching) {
+                            CircularProgressIndicator(modifier = Modifier.padding(start = 12.dp).size(24.dp))
+                        } else if (searchMatches.isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${currentMatchIndex + 1}/${searchMatches.size}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                                IconButton(onClick = {
+                                    val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
+                                    currentMatchIndex = newIdx
+                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                }) { Icon(Icons.Rounded.KeyboardArrowUp, null) }
+                                IconButton(onClick = {
+                                    val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
+                                    currentMatchIndex = newIdx
+                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                }) { Icon(Icons.Rounded.KeyboardArrowDown, null) }
+                            }
+                        }
+                    }
+                }
+            }
+            }
         }
 
         // Bottom AppBar Command Centre (Document Continuity Tools)

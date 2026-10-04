@@ -96,6 +96,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _isRememberPositionEnabled = kotlinx.coroutines.flow.MutableStateFlow(prefs.getBoolean("remember_position", true))
+    val isRememberPositionEnabled: kotlinx.coroutines.flow.StateFlow<Boolean> = _isRememberPositionEnabled.asStateFlow()
+
+    fun setRememberPositionEnabled(enabled: Boolean) {
+        _isRememberPositionEnabled.value = enabled
+        prefs.edit().putBoolean("remember_position", enabled).apply()
+    }
+
     fun clearHistory() {
         historyRepository.clearHistory()
         refreshHistory()

@@ -39,6 +39,8 @@
 <string name="settings_sfx_desc">Play audio on button clicks</string>
 <string name="settings_history">Remember Recent Files</string>
 <string name="settings_history_desc">Keep a local history of recently used files. Files are never uploaded.</string>
+    <string name="settings_remember_position">Remember Reading Position</string>
+    <string name="settings_remember_position_desc">Automatically restores your last viewed page when reopening a document.</string>
 <string name="settings_language">Language</string>
 <string name="settings_language_desc">Change app display language</string>
 <string name="settings_clear_history">Clear Recent History</string>

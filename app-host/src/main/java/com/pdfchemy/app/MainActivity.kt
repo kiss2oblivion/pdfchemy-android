@@ -949,7 +949,7 @@ fun MainApp(
                 // [FEATURE: Reflow Reader Studio & Offline TTS] — E-reader reflow, themes, 100% offline TTS
                 is Screen.ReflowReader -> {
                     val reflowScreen = targetScreen as Screen.ReflowReader
-                    ReflowReaderScreen(initialUri = reflowScreen.initialUri) { currentScreen = Screen.OrganizeCategory }
+                    ReflowReaderScreen(viewModel = viewModel, initialUri = reflowScreen.initialUri) { currentScreen = Screen.OrganizeCategory }
                 }
             }
         }
@@ -1163,7 +1163,8 @@ fun MainApp(
             }
         }
         }
-            if (!isPremium && hasConsented && !isScreenshotRun) {
+            val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
+            if (!isPremium && hasConsented && !isScreenshotRun && !isReaderActive) {
                 BannerAdView()
             }
         }
@@ -3208,6 +3209,7 @@ fun SettingsScreen(
     val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
     val isSfxEnabled by viewModel.isSfxEnabled.collectAsState()
     val isHistoryEnabled by viewModel.isHistoryEnabled.collectAsState()
+    val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showPrivacyPolicyDialog by remember { mutableStateOf(false) }
     var showDefaultPdfDialog by remember { mutableStateOf(false) }
@@ -3463,6 +3465,24 @@ fun SettingsScreen(
                                 Switch(
                                     checked = isHistoryEnabled,
                                     onCheckedChange = { viewModel.setHistoryEnabled(it) },
+                                    colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+                                )
+                            }
+                            
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                    Text(stringResource(R.string.settings_remember_position), style = MaterialTheme.typography.bodyLarge)
+                                    Text(stringResource(R.string.settings_remember_position_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Switch(
+                                    checked = isRememberPositionEnabled,
+                                    onCheckedChange = { viewModel.setRememberPositionEnabled(it) },
                                     colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
                                 )
                             }
