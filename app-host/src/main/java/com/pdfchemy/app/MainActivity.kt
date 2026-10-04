@@ -451,7 +451,7 @@ class MainActivity : AppCompatActivity() {
             ShrinkPdfTheme(useDarkTheme = useDark) {
                 if (!hasConsented) {
                     AlertDialog(
-                        onDismissRequest = { /* Must accept to continue */ },
+                        onDismissRequest = { /* Must explicitly decide to continue */ },
                         title = { Text(stringResource(R.string.consent_dialog_title)) },
                         text = { Text(stringResource(R.string.consent_dialog_body)) },
                         confirmButton = {
@@ -460,6 +460,15 @@ class MainActivity : AppCompatActivity() {
                                 hasConsented = true
                             }) {
                                 Text(stringResource(R.string.consent_dialog_agree))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = {
+                                // They decline personalization/ads, but can still use the app locally
+                                prefs.edit().putBoolean("has_consented", true).apply()
+                                hasConsented = true
+                            }) {
+                                Text(stringResource(R.string.consent_dialog_decline))
                             }
                         },
                         properties = androidx.compose.ui.window.DialogProperties(
