@@ -47,7 +47,7 @@
 | **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents |
 | **Table Extractor to CSV** | `TableExtractorScreen.kt` | `PdfTableExtractorEngine.kt` | ✅ Live | Spatial 2D column clustering: page-by-page extraction prevents cross-page Y coordinate collisions; exports to RFC 4180 CSV / Excel spreadsheets |
 | **Office Export (Word / Excel / PPTX)** | `OfficeExportScreen.kt` | `OfficeExportEngine.kt` | ✅ Live | Pure OpenXML archive generators: exports PDF to `.docx`, `.xlsx`, and `.pptx` (with XML 1.0 control character sanitization) |
-| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` / `pdf-jail` isolated worker | ✅ Live | Bounded offline OCR decoupled via `OcrBackend` & `OcrResultBounds` abstraction. Upstream Tesseract 5.5.1 initialized strictly in-memory via JNI bridge to `TessBaseAPI::Init(data, data_size)` with 30 MB security ceiling. 100% operational across API 24, API 30, and API 36 with zero filesystem access (`filesDir`/`cacheDir`) and zero NNAPI crashes under isolated UID. |
+| **On-Device OCR** | `OcrScreens.kt` | `PdfOcrEngine.kt` / `pdf-jail` isolated worker | ✅ Live | Bounded offline OCR decoupled via `OcrBackend` & `OcrResultBounds` abstraction. Upstream Tesseract 5.5.1 initialized strictly in-memory via patched `TessBaseAPI.init(byte[], ...)` from a trusted privately-held buffer with streaming 30 MiB bound. Packaged as reproducibly built vendored AAR with build-time Gradle SHA-256 verification (`verifyTesseractAarHash`). 100% operational across API 24, API 30, and API 36 with zero filesystem access (`filesDir`/`cacheDir`) and zero NNAPI crashes under isolated UID. |
 
 ---
 

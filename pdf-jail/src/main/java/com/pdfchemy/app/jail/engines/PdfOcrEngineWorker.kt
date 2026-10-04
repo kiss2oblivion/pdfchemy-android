@@ -56,7 +56,7 @@ object PdfOcrEngineWorker {
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
                     val rawResult = ocrBackend.recognize(bitmap)
-                    val ocrResult = OcrResultBounds.enforce(rawResult, pageWidth, pageHeight)
+                    val ocrResult = OcrResultBounds.enforce(rawResult, bmpWidth.toFloat(), bmpHeight.toFloat())
 
                     val pdPage = PDPage(PDRectangle(pageWidth, pageHeight))
                     outputDoc.addPage(pdPage)
@@ -81,9 +81,9 @@ object PdfOcrEngineWorker {
                                     val scaleX = pageWidth / bmpWidth.toFloat()
                                     val scaleY = pageHeight / bmpHeight.toFloat()
 
-                                    val x = box.left * scaleX
-                                    val y = pageHeight - (box.bottom * scaleY)
-                                    val elementHeight = box.height() * scaleY
+                                    val x = (box.left * scaleX).coerceIn(0f, pageWidth)
+                                    val y = (pageHeight - (box.bottom * scaleY)).coerceIn(0f, pageHeight)
+                                    val elementHeight = (box.height() * scaleY).coerceIn(0f, pageHeight)
 
                                     val fontSize = elementHeight.coerceIn(4f, 72f)
                                     val font = PDType1Font.HELVETICA

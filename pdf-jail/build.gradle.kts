@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -22,11 +24,6 @@ android {
     buildFeatures {
         buildConfig = true
         aidl = true
-    }
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-        }
     }
     packaging {
         resources {
@@ -66,10 +63,8 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation("com.google.mlkit:text-recognition:16.0.1")
-    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
-    implementation("com.google.android.gms:play-services-tasks:18.0.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation(files("libs/tesseract4android-4.9.0-inmemory.aar"))
+    implementation("androidx.annotation:annotation:1.9.1")
     
     // Parser dependencies belong exclusively to pdfjail/
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
@@ -83,4 +78,39 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.11")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.11")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.11")
+}
+
+val pinnedTesseractSha256 = "d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa"
+
+val verifyTesseractAarHash = tasks.register("verifyTesseractAarHash") {
+    description = "Enforces executable policy: verifies the vendored Tesseract4Android AAR SHA-256 against pinned cryptographic hash."
+    val aarFile = file("libs/tesseract4android-4.9.0-inmemory.aar")
+    inputs.file(aarFile)
+    outputs.upToDateWhen { true }
+    doLast {
+        if (!aarFile.exists()) {
+            throw GradleException("Vendored Tesseract4Android AAR is missing at ${aarFile.absolutePath}")
+        }
+        val digest = MessageDigest.getInstance("SHA-256")
+        val bytes = aarFile.readBytes()
+        val hashBytes = digest.digest(bytes)
+        val sb = StringBuilder()
+        for (b in hashBytes) {
+            sb.append(String.format("%02x", b))
+        }
+        val actualHash = sb.toString()
+        if (!actualHash.equals(pinnedTesseractSha256, ignoreCase = true)) {
+            throw GradleException(
+                "Vendored Tesseract4Android AAR SHA-256 mismatch!\n" +
+                "Expected: $pinnedTesseractSha256\n" +
+                "Actual:   $actualHash\n" +
+                "Build aborted due to untrusted/modified vendored artifact."
+            )
+        }
+        logger.lifecycle("verifyTesseractAarHash: Verified tesseract4android-4.9.0-inmemory.aar SHA-256 ($actualHash) matches pinned policy.")
+    }
+}
+
+tasks.matching { it.name.startsWith("compile") || it.name.startsWith("preBuild") }.configureEach {
+    dependsOn(verifyTesseractAarHash)
 }

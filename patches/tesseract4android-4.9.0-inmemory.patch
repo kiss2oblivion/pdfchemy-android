@@ -1,0 +1,169 @@
+diff --git a/build.gradle b/build.gradle
+index cbd1a58..0f7dc96 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -7,7 +7,7 @@ buildscript {
+         
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:8.10.1'
++        classpath 'com.android.tools.build:gradle:9.2.1'
+         
+         // NOTE: Do not place your application dependencies here; they belong
+         // in the individual module build.gradle files
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index e4d82e3..96932fd 100644
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -3,4 +3,4 @@ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-8.11.1-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+diff --git a/tesseract4android/build.gradle b/tesseract4android/build.gradle
+index 7849353..52f053c 100644
+--- a/tesseract4android/build.gradle
++++ b/tesseract4android/build.gradle
+@@ -6,7 +6,7 @@ plugins {
+ android {
+ 	namespace 'cz.adaptech.tesseract4android'
+ 	compileSdk 35
+-	ndkVersion "27.2.12479018"
++	ndkVersion "28.2.13676358"
+ 
+ 	defaultConfig {
+ 		minSdk 21
+diff --git a/tesseract4android/src/main/cpp/tesseract/CMakeLists.txt b/tesseract4android/src/main/cpp/tesseract/CMakeLists.txt
+index e92f47b..a1f64e0 100644
+--- a/tesseract4android/src/main/cpp/tesseract/CMakeLists.txt
++++ b/tesseract4android/src/main/cpp/tesseract/CMakeLists.txt
+@@ -93,8 +93,8 @@ if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
+         PROPERTIES COMPILE_FLAGS -mfpu=neon)
+ 
+     # Include cpu-features for runtime detection of NEON support
+-    include(AndroidNdkModules)
+-    android_ndk_import_module_cpufeatures()
++    add_library(cpufeatures STATIC "${CMAKE_CURRENT_SOURCE_DIR}/cpufeatures/cpu-features.c")
++    target_include_directories(cpufeatures PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/cpufeatures")
+     set(LIBRARY_CPU_FEATURES cpufeatures)
+ endif()
+ 
+diff --git a/tesseract4android/src/main/cpp/tesseract/tessbaseapi.cpp b/tesseract4android/src/main/cpp/tesseract/tessbaseapi.cpp
+index 90acdb6..3055f6b 100644
+--- a/tesseract4android/src/main/cpp/tesseract/tessbaseapi.cpp
++++ b/tesseract4android/src/main/cpp/tesseract/tessbaseapi.cpp
+@@ -193,6 +193,59 @@ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitOem(JNIEnv
+   return res;
+ }
+ 
++jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitMemory(JNIEnv *env,
++                                                                           jobject thiz,
++                                                                           jlong mNativeData,
++                                                                           jbyteArray modelData,
++                                                                           jstring lang,
++                                                                           jint mode) {
++  native_data_t *nat = (native_data_t*) mNativeData;
++  if (!nat) {
++    LOGE("native_data_t pointer is null");
++    return JNI_FALSE;
++  }
++  if (!modelData) {
++    LOGE("modelData array is null");
++    return JNI_FALSE;
++  }
++  jsize size = env->GetArrayLength(modelData);
++  if (size <= 0) {
++    LOGE("modelData array length is <= 0");
++    return JNI_FALSE;
++  }
++  if (mode < 0 || mode > 3) {
++    LOGE("Invalid OCR engine mode: %d", mode);
++    return JNI_FALSE;
++  }
++  const char *c_lang = lang ? env->GetStringUTFChars(lang, NULL) : NULL;
++  if (lang && !c_lang) {
++    LOGE("Failed to extract language string");
++    return JNI_FALSE;
++  }
++  const char *lang_str = c_lang ? c_lang : "eng";
++
++  jbyte *bytes = env->GetByteArrayElements(modelData, NULL);
++  if (!bytes) {
++    LOGE("Failed to pin modelData byte array");
++    if (lang && c_lang) env->ReleaseStringUTFChars(lang, c_lang);
++    return JNI_FALSE;
++  }
++
++  jboolean res = JNI_TRUE;
++  if (nat->api.Init((const char*) bytes, (int) size, lang_str, (tesseract::OcrEngineMode) mode,
++                    nullptr, 0, nullptr, nullptr, false, nullptr)) {
++    LOGE("Could not initialize Tesseract API from memory buffer with language=%s!", lang_str);
++    res = JNI_FALSE;
++  } else {
++    LOGI("Initialized Tesseract API from memory buffer with language=%s", lang_str);
++  }
++
++  if (lang && c_lang) env->ReleaseStringUTFChars(lang, c_lang);
++  env->ReleaseByteArrayElements(modelData, bytes, JNI_ABORT);
++
++  return res;
++}
++
+ jboolean Java_com_googlecode_tesseract_android_TessBaseAPI_nativeInitParams(JNIEnv *env,
+                                                                             jobject thiz,
+                                                                             jlong mNativeData,
+diff --git a/tesseract4android/src/main/java/com/googlecode/tesseract/android/TessBaseAPI.java b/tesseract4android/src/main/java/com/googlecode/tesseract/android/TessBaseAPI.java
+index d549dd4..699716d 100644
+--- a/tesseract4android/src/main/java/com/googlecode/tesseract/android/TessBaseAPI.java
++++ b/tesseract4android/src/main/java/com/googlecode/tesseract/android/TessBaseAPI.java
+@@ -443,6 +443,40 @@ public class TessBaseAPI {
+ 		}
+ 	}
+ 
++	/**
++	 * Initializes the Tesseract engine directly from an in-memory traineddata model byte array.
++	 * Returns <code>true</code> on success.
++	 *
++	 * @param modelData     the raw bytes of the traineddata model file
++	 * @param language      an ISO 639-3 string representing the language(s)
++	 * @param ocrEngineMode the OCR engine mode to be set
++	 * @return <code>true</code> on success
++	 */
++	public boolean init(byte[] modelData, String language, @OcrEngineMode int ocrEngineMode) {
++		if (mRecycled) {
++			throw new IllegalStateException();
++		}
++		if (modelData == null || modelData.length == 0) {
++			throw new IllegalArgumentException("modelData must not be empty");
++		}
++		if (language == null) {
++			throw new IllegalArgumentException("language must not be null");
++		}
++		return nativeInitMemory(mNativeData, modelData, language, ocrEngineMode);
++	}
++
++	/**
++	 * Initializes the Tesseract engine directly from an in-memory traineddata model byte array
++	 * with default engine mode {@link #OEM_DEFAULT}. Returns <code>true</code> on success.
++	 *
++	 * @param modelData the raw bytes of the traineddata model file
++	 * @param language  an ISO 639-3 string representing the language(s)
++	 * @return <code>true</code> on success
++	 */
++	public boolean init(byte[] modelData, String language) {
++		return init(modelData, language, OEM_DEFAULT);
++	}
++
+ 	/**
+ 	 * Returns the languages string used in the last valid initialization.
+ 	 * If the last initialization specified "deu+hin" then that will be
+@@ -1154,6 +1188,8 @@ public class TessBaseAPI {
+ 
+ 	private native boolean nativeInitOem(long mNativeData, String datapath, String language, int mode);
+ 
++	private native boolean nativeInitMemory(long mNativeData, byte[] modelData, String language, int ocrEngineMode);
++
+ 	private native boolean nativeInitParams(long mNativeData, String datapath, String language,
+ 											int mode, String[] vars, String[] varsValues);
+ 

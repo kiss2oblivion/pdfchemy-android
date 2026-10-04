@@ -78,11 +78,13 @@ Below is the exhaustive, complete record of every open-source library, engine, m
   * Local, offline Optical Character Recognition (OCR) engine for converting scanned PDFs and bitmap pages into searchable text.
 
 ### [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android) & [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
-* **Authors:** Zdenko Podobný, Adaptech s.r.o., Ray Smith, Google Inc. & Tesseract OCR Contributors
+* **Authors:** Robert Pösel, Adaptech s.r.o., Ray Smith, Google Inc. & Tesseract OCR Contributors
 * **Version:** `4.9.0` (packaging Tesseract `5.5.1` and Leptonica `1.84.1`)
+* **Upstream Provenance:** Git tag `4.9.0`, commit `15c534717b1cb58261b58d4e4c1200c7f81f668c`
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * **Usage in PDFchemy (Android):**
-  * Production optical character recognition engine executed inside the isolated worker process (`pdf-jail`). Uses an audited in-memory native JNI bridge directly invoking upstream `TessBaseAPI::Init(const char *data, int data_size, ...)` from a bounded byte buffer, achieving 100% offline, local-first OCR without requiring filesystem access (`filesDir`/`cacheDir`/`fopen`) under the Android isolated UID.
+  * Production optical character recognition engine executed inside the isolated worker process (`pdf-jail`). Built reproducibly with an audited minimal source patch (`patches/tesseract4android-4.9.0-inmemory.patch`) adding in-memory model initialization directly to `TessBaseAPI` via JNI `nativeInitMemory`, invoking upstream `TessBaseAPI::Init(const char *data, int data_size, ...)` from a trusted, privately held byte buffer.
+  * Vendored as `pdf-jail/libs/tesseract4android-4.9.0-inmemory.aar` with build-time cryptographic policy enforcement: the Gradle task `verifyTesseractAarHash` cryptographically validates the AAR SHA-256 (`d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa`) before compilation, guaranteeing 100% offline, local-first OCR with zero filesystem requirements (`filesDir`/`cacheDir`/`fopen`) under the Android isolated UID and zero build-time supply chain dependencies.
 
 ### [Tesseract OCR English Trained Data Model (`eng.traineddata`)](https://github.com/tesseract-ocr/tessdata)
 * **Authors:** Ray Smith & The Tesseract OCR Open Source Community

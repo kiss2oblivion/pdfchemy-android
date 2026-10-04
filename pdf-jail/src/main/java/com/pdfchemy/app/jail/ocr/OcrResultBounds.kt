@@ -13,7 +13,11 @@ object OcrResultBounds {
     const val MAX_ELEMENT_CHARS = 500
     const val MAX_PAGE_TEXT_CHARS = 65_536
 
-    fun enforce(raw: OcrResult, pageWidth: Float, pageHeight: Float): OcrResult {
+    /**
+     * Clamps all OCR bounding boxes against the source bitmap dimensions ([0, bitmapWidth] x [0, bitmapHeight]),
+     * and bounds all text strings and collection sizes against quotas.
+     */
+    fun enforce(raw: OcrResult, bitmapWidth: Float, bitmapHeight: Float): OcrResult {
         var totalChars = 0
         val boundedBlocks = mutableListOf<OcrBlock>()
 
@@ -29,22 +33,30 @@ object OcrResultBounds {
 
                     val clampedBox = elem.boundingBox?.let { box ->
                         if (box.left.isFinite() && box.top.isFinite() && box.right.isFinite() && box.bottom.isFinite()) {
-                            RectF(
-                                box.left.coerceIn(0f, pageWidth),
-                                box.top.coerceIn(0f, pageHeight),
-                                box.right.coerceIn(0f, pageWidth),
-                                box.bottom.coerceIn(0f, pageHeight)
-                            )
+                            val left = minOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                            val right = maxOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                            val top = minOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                            val bottom = maxOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                            RectF(left, top, right, bottom)
                         } else null
                     }
                     val validConfidence = elem.confidence?.takeIf { it.isFinite() && it in 0f..1f }
                     boundedElements.add(OcrElement(sanitizedText, clampedBox, validConfidence))
                 }
                 if (boundedElements.isNotEmpty()) {
+                    val clampedLineBox = line.boundingBox?.let { box ->
+                        if (box.left.isFinite() && box.top.isFinite() && box.right.isFinite() && box.bottom.isFinite()) {
+                            val left = minOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                            val right = maxOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                            val top = minOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                            val bottom = maxOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                            RectF(left, top, right, bottom)
+                        } else null
+                    }
                     boundedLines.add(
                         OcrLine(
                             line.text.take(MAX_ELEMENT_CHARS * MAX_ELEMENTS_PER_LINE),
-                            line.boundingBox,
+                            clampedLineBox,
                             boundedElements
                         )
                     )
@@ -52,10 +64,19 @@ object OcrResultBounds {
                 if (totalChars >= MAX_PAGE_TEXT_CHARS) break
             }
             if (boundedLines.isNotEmpty()) {
+                val clampedBlockBox = block.boundingBox?.let { box ->
+                    if (box.left.isFinite() && box.top.isFinite() && box.right.isFinite() && box.bottom.isFinite()) {
+                        val left = minOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                        val right = maxOf(box.left, box.right).coerceIn(0f, bitmapWidth)
+                        val top = minOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                        val bottom = maxOf(box.top, box.bottom).coerceIn(0f, bitmapHeight)
+                        RectF(left, top, right, bottom)
+                    } else null
+                }
                 boundedBlocks.add(
                     OcrBlock(
                         block.text.take(MAX_PAGE_TEXT_CHARS),
-                        block.boundingBox,
+                        clampedBlockBox,
                         boundedLines
                     )
                 )
