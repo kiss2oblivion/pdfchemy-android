@@ -63,7 +63,7 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation(files("libs/tesseract4android-4.9.0-inmemory.aar"))
+    implementation(project(":tesseract-wrapper"))
     implementation("androidx.annotation:annotation:1.9.1")
     
     // Parser dependencies belong exclusively to pdfjail/

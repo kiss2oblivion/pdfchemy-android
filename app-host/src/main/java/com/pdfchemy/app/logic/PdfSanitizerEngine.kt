@@ -83,7 +83,7 @@ object PdfSanitizerEngine {
         pdfUri: Uri
     ): Boolean {
         val report = auditDocumentThreats(context, pdfUri)
-        return report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0 || report.isEncrypted || report.parseFailed
+        return report.jsCount > 0 || report.launchActionsCount > 0 || report.isEncrypted || report.parseFailed
     }
 
     suspend fun checkVanguardThreat(
@@ -94,7 +94,7 @@ object PdfSanitizerEngine {
         if (report.isEncrypted) {
             return VanguardThreatResult.EncryptedCannotVerify(pdfUri)
         }
-        if (report.jsCount > 0 || report.launchActionsCount > 0 || report.attachmentCount > 0) {
+        if (report.jsCount > 0 || report.launchActionsCount > 0) {
             return VanguardThreatResult.ExecutableThreat(report)
         }
         if (report.parseFailed) {

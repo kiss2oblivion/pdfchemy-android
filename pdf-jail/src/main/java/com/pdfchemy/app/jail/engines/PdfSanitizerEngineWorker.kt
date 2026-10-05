@@ -15,7 +15,8 @@ object PdfSanitizerEngineWorker {
             val f = ActiveContentScrubber.inspect(document)
             val info = document.documentInformation
             val metadata = info != null && (!info.author.isNullOrBlank() || !info.title.isNullOrBlank() || !info.creator.isNullOrBlank())
-            JSONObject().put("threatsFound", f.total + if (metadata) 1 else 0).put("isClean", f.total == 0 && !metadata)
+            val executableThreats = f.javascript + f.actions
+            JSONObject().put("threatsFound", executableThreats).put("isClean", executableThreats == 0)
                 .put("jsCount", f.javascript).put("launchActionsCount", f.actions).put("attachmentCount", f.attachments).put("uriCount", f.uris)
                 .put("hasMetadata", metadata).put("isEncrypted", document.isEncrypted).put("parseFailed", false).toString()
         }

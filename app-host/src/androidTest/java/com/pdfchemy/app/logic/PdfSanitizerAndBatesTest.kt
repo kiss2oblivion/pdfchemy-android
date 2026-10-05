@@ -298,5 +298,68 @@ class PdfSanitizerAndBatesTest {
         assertTrue("Export to Excel should succeed", excelResult.isSuccess)
         assertTrue("Destination Excel file should exist and have size", destExcelFile.exists() && destExcelFile.length() > 0)
     }
-}
 
+    @Test
+    fun testVanguardEmbeddedBenignFilePasses() = runBlocking {
+        val embedFile = File(context.cacheDir, "vanguard_embed_test.pdf")
+        val doc = PDDocument()
+        doc.addPage(PDPage(PDRectangle.A4))
+        
+        val efTree = com.tom_roush.pdfbox.pdmodel.PDDocumentNameDictionary(doc.documentCatalog)
+        val efMap = com.tom_roush.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode()
+        val fs = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification()
+        fs.file = "Credentials.txt"
+        
+        val ef = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile(doc, "Dummy C2PA Data".toByteArray())
+        ef.subtype = "text/plain"
+        fs.embeddedFile = ef
+        
+        efMap.names = mapOf("Content Credentials" to fs)
+        efTree.embeddedFiles = efMap
+        doc.documentCatalog.names = efTree
+        
+        doc.save(embedFile)
+        doc.close()
+        
+        val embedUri = Uri.fromFile(embedFile)
+        val auditReport = PdfSanitizerEngine.auditDocumentThreats(context, embedUri)
+        assertEquals("Attachment must be found", 1, auditReport.attachmentCount)
+        assertEquals("Executable threats must be zero", 0, auditReport.threatsFound)
+        
+        val hasThreats = PdfSanitizerEngine.hasExecutableThreats(context, embedUri)
+        assertFalse("Benign embedded files must not block PDF", hasThreats)
+        
+        val threatResult = PdfSanitizerEngine.checkVanguardThreat(context, embedUri)
+        assertTrue("Vanguard threat result must be Clean", threatResult is VanguardThreatResult.Clean)
+    }
+
+    @Test
+    fun testVanguardRealRegressionFixture() = runBlocking {
+        val regFile = File(context.cacheDir, "vanguard_regression_test.pdf")
+        val doc = PDDocument()
+        val page = PDPage(PDRectangle.A4)
+        doc.addPage(page)
+        
+        val dest = com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageXYZDestination().apply {
+            this.page = page
+            zoom = 0f
+        }
+        doc.documentCatalog.openAction = dest
+        
+        val linkAnnot = PDAnnotationLink().apply {
+            action = PDActionURI().apply { uri = "https://example.com" }
+        }
+        page.annotations = listOf(linkAnnot)
+        
+        doc.documentInformation = com.tom_roush.pdfbox.pdmodel.PDDocumentInformation().apply { title = "Raport" }
+        
+        doc.save(regFile)
+        doc.close()
+        
+        val regUri = Uri.fromFile(regFile)
+        val hasThreats = PdfSanitizerEngine.hasExecutableThreats(context, regUri)
+        assertFalse("Real regression fixture must not be blocked", hasThreats)
+        val threatResult = PdfSanitizerEngine.checkVanguardThreat(context, regUri)
+        assertTrue("Real regression fixture must return Clean", threatResult is VanguardThreatResult.Clean)
+    }
+}

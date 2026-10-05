@@ -22,7 +22,7 @@ tasks.register("securityArchitecture") {
     doLast {
         val allowed = mapOf(
             ":app-host" to mapOf("implementation" to setOf(":pdf-ipc"), "runtimeOnly" to setOf(":pdf-jail", ":pdf-renderer")),
-            ":pdf-jail" to mapOf("implementation" to setOf(":pdf-ipc")),
+            ":pdf-jail" to mapOf("implementation" to setOf(":pdf-ipc", ":tesseract-wrapper")),
             ":pdf-renderer" to mapOf("implementation" to setOf(":pdf-ipc")),
             ":pdf-ipc" to emptyMap()
         )

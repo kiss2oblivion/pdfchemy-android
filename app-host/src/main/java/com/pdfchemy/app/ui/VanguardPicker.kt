@@ -74,6 +74,7 @@ fun rememberVanguardPdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
@@ -104,7 +105,7 @@ fun rememberVanguardPdfPicker(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.vanguard_blocked_message),
+                    text = stringResource(blockedReasonResId),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -288,6 +289,11 @@ fun rememberVanguardPdfPicker(
                                 }
                                 is VanguardThreatResult.ExecutableThreat -> {
                                     com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                    blockedReasonResId = when {
+                                        threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
+                                        threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                        else -> R.string.vanguard_blocked_message_default
+                                    }
                                     showBlockedDialog = true
                                 }
                                 is VanguardThreatResult.ParseFailed -> {
@@ -343,6 +349,7 @@ fun rememberVanguardMultiplePdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
@@ -373,7 +380,7 @@ fun rememberVanguardMultiplePdfPicker(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.vanguard_blocked_message),
+                    text = stringResource(blockedReasonResId),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -563,6 +570,11 @@ fun rememberVanguardMultiplePdfPicker(
                                         stopBatch = true
                                     }
                                     is VanguardThreatResult.ExecutableThreat -> {
+                                        blockedReasonResId = when {
+                                            threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
+                                            threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                            else -> R.string.vanguard_blocked_message_default
+                                        }
                                         showBlockedDialog = true
                                         allClean = false
                                         stopBatch = true
