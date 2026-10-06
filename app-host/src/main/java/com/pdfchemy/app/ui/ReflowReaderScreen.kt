@@ -502,6 +502,87 @@ fun ReflowReaderScreen(
 
     }
 
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
+    var activeExportJobId by remember { mutableStateOf<java.util.UUID?>(null) }
+    val activeJobState by produceState<com.pdfchemy.app.logic.audio.AudioExportJob?>(initialValue = null, activeExportJobId) {
+        if (activeExportJobId != null) {
+            com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.getJobFlow(activeExportJobId!!)?.collect { value = it }
+        } else {
+            value = null
+        }
+    }
+
+    if (activeJobState != null && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.CANCELLED && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.FAILED) {
+        AlertDialog(
+            onDismissRequest = { /* Cannot dismiss by clicking outside */ },
+            title = { Text("Exporting Audio") },
+            text = {
+                Column {
+                    Text("State: ${activeJobState!!.state}")
+                    if (activeJobState!!.totalCharacters > 0) {
+                        val progress = activeJobState!!.processedCharacters.toFloat() / activeJobState!!.totalCharacters
+                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                        Text("${(progress * 100).toInt()}% (${activeJobState!!.projectedSizeBytes / (1024 * 1024)} MB projected)")
+                    } else {
+                        CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { 
+                    com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING) 
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED || activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) {
+        AlertDialog(
+            onDismissRequest = { activeExportJobId = null },
+            title = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) "Export Complete" else "Export Failed") },
+            text = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) "The audio file was saved successfully." else "Error: ${activeJobState!!.error?.message}") },
+            confirmButton = {
+                TextButton(onClick = { activeExportJobId = null }) { Text("OK") }
+            }
+        )
+    }
+
+    val audioExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("audio/wav")
+    ) { uri ->
+        if (uri != null && selectedPdfUri != null) {
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context.applicationContext)
+                val jobId = java.util.UUID.randomUUID()
+                activeExportJobId = jobId
+                val jobStore = com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore
+                val stagingManager = com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager
+                
+                jobStore.createJob(jobId)
+                
+                val textFile = stagingManager.getTextArtifactFile(jobId)
+                val sb = java.lang.StringBuilder()
+                for (section in reflowSections) {
+                    for (para in section.paragraphs) {
+                        sb.append(para).append("\n\n")
+                    }
+                }
+                textFile.writeText(sb.toString())
+                
+                val intent = android.content.Intent(context, com.pdfchemy.app.logic.audio.AudioExportService::class.java).apply {
+                    putExtra(com.pdfchemy.app.logic.audio.AudioExportService.EXTRA_JOB_ID, jobId.toString())
+                    putExtra(com.pdfchemy.app.logic.audio.AudioExportService.EXTRA_DESTINATION_URI, uri)
+                }
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = bookmarks.isNotEmpty(),
@@ -606,6 +687,27 @@ fun ReflowReaderScreen(
                             }
                             IconButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf", "application/epub+zip", "application/zip", "application/octet-stream")) }) {
                                 Icon(Icons.Rounded.FolderOpen, contentDescription = "Open Document", tint = selectedTheme.text)
+                            }
+                            if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
+                                Box {
+                                    IconButton(onClick = { showOverflowMenu = true }) {
+                                        Icon(Icons.Rounded.MoreVert, contentDescription = "More Options", tint = selectedTheme.text)
+                                    }
+                                    DropdownMenu(
+                                        expanded = showOverflowMenu,
+                                        onDismissRequest = { showOverflowMenu = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Export to Audio (WAV)") },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audio.wav") ?: "audio_export.wav"
+                                                audioExportLauncher.launch(suggestedName)
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     )

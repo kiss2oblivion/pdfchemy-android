@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="com.android.vending.BILLING" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
 
     <application
         android:allowBackup="false"
@@ -16,6 +18,10 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
 
+        <service
+            android:name=".logic.audio.AudioExportService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProcessing" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
