@@ -199,10 +199,10 @@ fun DocumentSanitizerScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        Text(stringResource(R.string.sanitizer_js_threats, report.jsCount), style = MaterialTheme.typography.bodyMedium)
-                        Text(stringResource(R.string.sanitizer_action_threats, report.launchActionsCount), style = MaterialTheme.typography.bodyMedium)
-                        Text(stringResource(R.string.sanitizer_other_action_threats, report.otherActionsCount), style = MaterialTheme.typography.bodyMedium)
-                        Text(stringResource(R.string.sanitizer_attachments, report.attachmentCount), style = MaterialTheme.typography.bodyMedium)
+                        if (report.jsCount > 0) Text(stringResource(R.string.sanitizer_js_threats, report.jsCount), style = MaterialTheme.typography.bodyMedium)
+                        if (report.launchActionsCount > 0) Text(stringResource(R.string.sanitizer_action_threats, report.launchActionsCount), style = MaterialTheme.typography.bodyMedium)
+                        if (report.otherActionsCount > 0) Text(stringResource(R.string.sanitizer_other_action_threats, report.otherActionsCount), style = MaterialTheme.typography.bodyMedium)
+                        if (report.attachmentCount > 0) Text(stringResource(R.string.sanitizer_attachments, report.attachmentCount), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
