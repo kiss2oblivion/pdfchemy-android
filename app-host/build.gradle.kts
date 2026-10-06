@@ -63,7 +63,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            // Explicit verification opt-in; ordinary release builds retain signing validation.
+            signingConfig = if (providers.gradleProperty("unsignedReleaseVerification").orNull == "true") {
+                null
+            } else {
+                signingConfigs.getByName("release")
+            }
             buildConfigField("String", "AD_UNIT_ID", "\"ca-app-pub-8945763551071628/9314012106\"")
             buildConfigField("String", "BANNER_AD_UNIT_ID", "\"ca-app-pub-8945763551071628/5697788038\"")
             manifestPlaceholders["adMobAppId"] = "ca-app-pub-8945763551071628~8206577473"
