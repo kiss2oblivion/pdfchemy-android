@@ -34,7 +34,50 @@ class ActiveContentScrubberTest {
         carrier("CustomObject", nested)
     }
     @Test fun attachmentAnnotationsAndFileSpecificationsAreScrubbed() {
-        carrier("Annots", COSArray().apply { add(COSDictionary().apply { setName(COSName.SUBTYPE, "FileAttachment"); setItem(name("FS"), COSDictionary()) }) })
+        carrier("Annots", COSArray().apply { add(COSDictionary().apply {
+            setName(COSName.SUBTYPE, "FileAttachment")
+            setItem(name("FS"), COSDictionary().apply { setItem(name("EF"), COSDictionary()) })
+        }) })
+    }
+    @Test fun attachmentIdentityIsTheResolvedFileSpecRatherThanItsCarriers() {
+        PDDocument().use { document ->
+            val fileSpec = COSDictionary().apply { setItem(name("EF"), COSDictionary()) }
+            val reference = COSObject(fileSpec)
+            val catalog = document.documentCatalog.cosObject
+            catalog.setItem(name("EmbeddedFiles"), COSDictionary().apply {
+                setItem(name("Names"), COSArray().apply { add(COSString("one")); add(reference) })
+            })
+            catalog.setItem(name("AF"), COSArray().apply { add(reference) })
+            catalog.setItem(name("Annots"), COSArray().apply { add(COSDictionary().apply {
+                setName(COSName.SUBTYPE, "FileAttachment"); setItem(name("FS"), reference)
+            }) })
+            assertEquals(1, ActiveContentScrubber.inspect(document).attachments)
+            // Distinct FileSpecs remain distinct even if their EF dictionary is shared.
+            catalog.setItem(name("Second"), COSDictionary().apply { setItem(name("EF"), fileSpec.getItem(name("EF"))) })
+            assertEquals(2, ActiveContentScrubber.inspect(document).attachments)
+            assertEquals(2, ActiveContentScrubber.inspect(document, scrub = true).attachments)
+            assertEquals(0, ActiveContentScrubber.inspect(document).attachments)
+            assertFalse(catalog.containsKey(name("EmbeddedFiles")))
+            assertFalse(catalog.containsKey(name("AF")))
+            assertFalse(fileSpec.containsKey(name("EF")))
+        }
+    }
+    @Test fun emptyAttachmentCarriersAreRemovedWithoutCountingAsFiles() {
+        PDDocument().use { document ->
+            val catalog = document.documentCatalog.cosObject
+            catalog.setItem(name("EmbeddedFiles"), COSDictionary())
+            catalog.setItem(name("AF"), COSArray())
+            val annotation = COSDictionary().apply {
+                setName(COSName.SUBTYPE, "FileAttachment"); setItem(name("FS"), COSDictionary())
+            }
+            catalog.setItem(name("Annots"), COSArray().apply { add(annotation) })
+            assertEquals(0, ActiveContentScrubber.inspect(document).attachments)
+            ActiveContentScrubber.inspect(document, scrub = true)
+            assertFalse(catalog.containsKey(name("EmbeddedFiles")))
+            assertFalse(catalog.containsKey(name("AF")))
+            assertFalse(annotation.containsKey(name("FS")))
+            assertEquals("Text", annotation.getNameAsString(COSName.SUBTYPE))
+        }
     }
     @Test fun xfaAndRichMediaAreScrubbed() {
         carrier("AcroForm", COSDictionary().apply { setItem(name("XFA"), COSString("hostile XML")) })
