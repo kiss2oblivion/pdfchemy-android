@@ -998,7 +998,7 @@ fun MainApp(
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { viewModel.cancelOperation() },
+                        onClick = { viewModel.cancelOperation(context) },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text(stringResource(R.string.cancel))

@@ -47,13 +47,31 @@ import java.util.concurrent.atomic.AtomicLong
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+    
     private var activeJob: kotlinx.coroutines.Job? = null
     
-    fun cancelOperation() {
+    private val pendingOutputUris = java.util.Collections.synchronizedList(mutableListOf<android.net.Uri>())
+
+    fun addPendingOutputUri(uri: android.net.Uri) {
+        pendingOutputUris.add(uri)
+    }
+
+    fun clearPendingOutputUris() {
+        pendingOutputUris.clear()
+    }
+
+    fun cancelOperation(context: android.content.Context) {
         activeJob?.cancel()
         activeJob = null
+        pendingOutputUris.toList().forEach { uri ->
+            try {
+                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete()
+            } catch(e: Exception) {}
+        }
+        pendingOutputUris.clear()
         _uiState.value = UiState.Idle
     }
+
 
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
@@ -307,6 +325,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun compressPdf(context: Context, sourceUri: Uri, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             
@@ -409,6 +428,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun convertTextToPdf(context: Context, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             
@@ -430,6 +450,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun convertImagesToPdf(context: Context, imageUris: List<Uri>, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             try {
@@ -533,6 +554,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (outputDoc == null) {
                     return@forEachIndexed
                 }
+                addPendingOutputUri(outputDoc.uri)
 
                 val compressResult = PdfCompressor.compressPdf(
                     context = context,
@@ -652,6 +674,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun mergePdfs(context: Context, sourceUris: List<Uri>, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             try {
@@ -690,6 +713,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateMetadata(context: Context, sourceUri: Uri, destUri: Uri, newMetadata: PdfMetadata) {
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             val result = metadataManager.updateMetadata(context, sourceUri, destUri, newMetadata)
@@ -704,6 +728,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearMetadata(context: Context, sourceUri: Uri, destUri: Uri) {
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             val result = metadataManager.clearMetadata(context, sourceUri, destUri)
@@ -823,6 +848,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deletePages(context: Context, sourceUri: Uri, destUri: Uri, pageRange: String) {
         if (_uiState.value is UiState.Processing) return
 
+        addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
             try {
