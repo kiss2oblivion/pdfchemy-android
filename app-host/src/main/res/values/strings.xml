@@ -70,7 +70,7 @@
 <string name="warning_quality_desc">Compression reduces quality. This may invalidate official documents, medical records, or digital signatures. Always keep your original file.</string>
 <string name="warning_understand">I Understand</string>
 <string name="compress_options_empty">Optimization options will appear here once you select a file.</string>
-<string name="check">Check</string>
+<string name="check">Security &amp; Inspect</string>
 <string name="inspect_edit_metadata">Inspect &amp; Edit Metadata</string>
 <string name="select_pdf">Select PDF</string>
 <string name="select_different_pdf">Select Different PDF</string>
@@ -95,7 +95,7 @@
 <string name="gallery">Gallery</string>
 <string name="camera">Camera</string>
 <string name="no_images_selected">No images selected.</string>
-<string name="organize">Organize</string>
+<string name="organize">Organize &amp; Edit</string>
 <string name="select_from_recent">Select from Recent</string>
 <string name="no_recent_files_found">No recent files found.</string>
 <string name="merge_pdfs">Merge PDFs</string>
@@ -133,8 +133,8 @@
 <string name="enter_content">Enter content...</string>
 <string name="import_btn">Import</string>
 <string name="compressing_pdf">Compressing PDF...</string>
-<string name="create">Create</string>
-<string name="compress">Compress</string>
+<string name="create">Create &amp; Convert</string>
+<string name="compress">Compress &amp; Optimize</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Select target size (MB):</string>
 <string name="exact_mb">Exact MB</string>

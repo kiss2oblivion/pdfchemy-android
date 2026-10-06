@@ -988,11 +988,20 @@ fun MainApp(
                             trackColor = Color.White.copy(alpha = 0.3f)
                         )
                     } else {
+                        val state = uiState as MainViewModel.UiState.Processing
+                        val label = if (state.taskNameResId != null) stringResource(state.taskNameResId) else stringResource(R.string.compressing_pdf)
                         Text(
-                            text = stringResource(R.string.compressing_pdf),
+                            text = label,
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium
                         )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { viewModel.cancelOperation() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             }
@@ -1002,36 +1011,50 @@ fun MainApp(
             is MainViewModel.UiState.Success -> {
                 val isPremium by viewModel.isPremium.collectAsState()
                 val activity = context as? android.app.Activity
-                AlertDialog(
-                    onDismissRequest = {
-                        if (activity != null) {
-                            AdManager.showInterstitialIfReady(activity, isPremium) { viewModel.resetState() }
-                        } else {
-                            viewModel.resetState()
-                        }
-                    },
-                    title = { Text(state.title) },
-                    text = { Text(state.message) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            if (activity != null) {
-                                AdManager.showInterstitialIfReady(activity, isPremium) { viewModel.resetState() }
-                            } else {
-                                viewModel.resetState()
-                            }
-                        }) {
-                            Text(stringResource(R.string.ok))
-                        }
-                    },
-                    dismissButton = {
-                        if (state.outputUris.isNotEmpty()) {
-                            TextButton(onClick = { 
-                                com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output))
-                            }) {
-                                Text(stringResource(R.string.share))
-                            }
-                        }
+                val resetAndShowAd = {
+                    if (activity != null) {
+                        AdManager.showInterstitialIfReady(activity, isPremium) { viewModel.resetState() }
+                    } else {
+                        viewModel.resetState()
                     }
+                }
+                AlertDialog(
+                    onDismissRequest = resetAndShowAd,
+                    title = { Text(state.title) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(state.message)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            if (state.outputUris.isNotEmpty()) {
+                                OutlinedButton(
+                                    onClick = { 
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                            setDataAndType(state.outputUris.first(), "application/pdf")
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        try { context.startActivity(intent) } catch (e: Exception) { }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text("Open PDF") }
+                                OutlinedButton(
+                                    onClick = { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output)) },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.share)) }
+                            }
+                            OutlinedButton(
+                                onClick = resetAndShowAd,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Another Operation") }
+                            Button(
+                                onClick = { 
+                                    resetAndShowAd()
+                                    currentScreen = Screen.Home
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("Home") }
+                        }
+                    },
+                    confirmButton = {}
                 )
             }
             is MainViewModel.UiState.Warning -> {
@@ -1644,9 +1667,14 @@ fun HomeScreen(
                                 letterSpacing = 2.sp
                             ),
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                            modifier = Modifier.padding(top = 8.dp, bottom = 28.dp)
+                            modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)
                         )
                     }
+                    
+                    com.pdfchemy.app.ui.ToolSearchBar(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        onToolSelected = onNavigate
+                    )
 
                     Column(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -1926,14 +1954,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.PdfToImages) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_fill_form),
-                    subtitle = stringResource(R.string.menu_fill_form_desc),
-                    icon = Icons.Rounded.DynamicForm,
-                    onClick = { onNavigate(Screen.FillForm) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_ocr_pdf),
@@ -1968,10 +1989,10 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             }
             item {
                 ToolCard(
-                    title = stringResource(R.string.menu_scan_document),
-                    subtitle = stringResource(R.string.menu_scan_document_desc),
-                    icon = Icons.Rounded.CameraAlt,
-                    onClick = { onNavigate(Screen.ScanPdf) }
+                    title = stringResource(R.string.menu_extract_images),
+                    subtitle = stringResource(R.string.menu_extract_images_desc),
+                    icon = Icons.Rounded.Image,
+                    onClick = { onNavigate(Screen.ExtractImages) }
                 )
             }
             item {
@@ -1990,14 +2011,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.EbookConverter) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_quick_fill_sign),
-                    subtitle = stringResource(R.string.menu_quick_fill_sign_desc),
-                    icon = Icons.Rounded.Draw,
-                    onClick = { onNavigate(Screen.QuickFillSign) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_table_extractor),
@@ -2006,14 +2020,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.TableExtractor) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_form_builder),
-                    subtitle = stringResource(R.string.menu_form_builder_desc),
-                    icon = Icons.Rounded.EditNote,
-                    onClick = { onNavigate(Screen.FormBuilder) }
-                )
-            }
+
         }
         }
     }
@@ -2064,6 +2071,22 @@ fun CompressCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     subtitle = stringResource(R.string.menu_compress_image_desc),
                     icon = Icons.Rounded.Image,
                     onClick = { onNavigate(Screen.ImageCompressor) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_grayscale_optimizer),
+                    subtitle = stringResource(R.string.menu_grayscale_optimizer_desc),
+                    icon = Icons.Rounded.Draw,
+                    onClick = { onNavigate(Screen.GrayscaleOptimizer) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_fast_web_view),
+                    subtitle = stringResource(R.string.menu_fast_web_view_desc),
+                    icon = Icons.Rounded.Dashboard,
+                    onClick = { onNavigate(Screen.LinearizePdf) }
                 )
             }
         }

@@ -47,6 +47,15 @@ import java.util.concurrent.atomic.AtomicLong
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var activeJob: kotlinx.coroutines.Job? = null
+    
+    fun cancelOperation() {
+        activeJob?.cancel()
+        activeJob = null
+        _uiState.value = UiState.Idle
+    }
+
+
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
@@ -181,7 +190,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     sealed class UiState {
         object Idle : UiState()
-        object Processing : UiState()
+        data class Processing(val taskNameResId: Int? = null) : UiState()
         data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String) : UiState()
         data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Warning(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
@@ -298,8 +307,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun compressPdf(context: Context, sourceUri: Uri, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             
             val result = PdfCompressor.compressPdf(
                 context = context,
@@ -400,8 +409,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun convertTextToPdf(context: Context, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             
             val result = TextToPdfConverter.convert(context, _inputText.value, destUri)
             
@@ -421,8 +430,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun convertImagesToPdf(context: Context, imageUris: List<Uri>, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", imageUris, listOf(destUri), "{}")
                 _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted))
@@ -643,8 +652,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun mergePdfs(context: Context, sourceUris: List<Uri>, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 PdfManipulator.mergePdfs(context, sourceUris, destUri)
                 historyRepository.addHistoryItem(destUri, context.getString(R.string.history_merged_pdf), context.getString(R.string.desc_merge))
@@ -681,8 +690,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateMetadata(context: Context, sourceUri: Uri, destUri: Uri, newMetadata: PdfMetadata) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             val result = metadataManager.updateMetadata(context, sourceUri, destUri, newMetadata)
             if (result.isSuccess) {
                 historyRepository.addHistoryItem(destUri, context.getString(R.string.history_updated_metadata), context.getString(R.string.history_metadata))
@@ -695,8 +704,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearMetadata(context: Context, sourceUri: Uri, destUri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             val result = metadataManager.clearMetadata(context, sourceUri, destUri)
             if (result.isSuccess) {
                 historyRepository.addHistoryItem(destUri, context.getString(R.string.history_cleared_metadata), context.getString(R.string.history_metadata))
@@ -709,8 +718,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearMetadataOverwrite(context: Context, sourceUri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             val result = metadataManager.clearMetadataOverwrite(context, sourceUri)
             if (result.isSuccess) {
                 historyRepository.addHistoryItem(sourceUri, context.getString(R.string.history_cleared_metadata), context.getString(R.string.history_metadata))
@@ -728,8 +737,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun splitPdf(context: Context, sourceUri: Uri, destTreeUri: Uri, pageRange: String? = null) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 val directory = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, destTreeUri)
                 if (directory == null || !directory.exists()) {
@@ -755,8 +764,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun splitByBlankPages(context: Context, sourceUri: Uri, destTreeUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 val directory = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, destTreeUri)
                 if (directory == null || !directory.exists()) {
@@ -784,8 +793,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun splitByBookmarks(context: Context, sourceUri: Uri, destTreeUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 val directory = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, destTreeUri)
                 if (directory == null || !directory.exists()) {
@@ -814,8 +823,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun deletePages(context: Context, sourceUri: Uri, destUri: Uri, pageRange: String) {
         if (_uiState.value is UiState.Processing) return
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch {
+            _uiState.value = UiState.Processing()
             try {
                 PdfManipulator.deletePages(context, sourceUri, destUri, pageRange)
                 historyRepository.addHistoryItem(destUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: context.getString(R.string.history_unknown), context.getString(R.string.history_organize))
@@ -831,8 +840,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // [FEATURE: Extract Images from PDF] (FEATURES_REGISTRY Android §3: Creation & Conversion)
     // =============================================================================================
     fun extractImagesFromPdf(pdfUri: Uri, outputDirectory: androidx.documentfile.provider.DocumentFile, context: Context, onComplete: (Int, Int) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = UiState.Processing
+        activeJob = viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value = UiState.Processing()
             var extractedCount = 0
             var errorCount = 0
             try {
@@ -885,7 +894,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // [FEATURE: Rotate Pages] (FEATURES_REGISTRY Android §2: Page Studio & Organization)
     // =============================================================================================
     fun rotatePdf(context: Context, sourceUri: Uri, destUri: Uri, degrees: Int, pageRange: String = "") {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 PdfManipulator.rotatePdf(context, sourceUri, destUri, degrees, pageRange)
@@ -907,7 +916,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // [FEATURE: Extract Plain Text from PDF] (FEATURES_REGISTRY Android §3: Creation & Conversion)
     // =============================================================================================
     fun extractTextFromPdf(context: Context, sourceUri: Uri, destUri: Uri) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val success = PdfTextExtractor.extractText(context, sourceUri, destUri)
@@ -942,7 +951,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stripExif: Boolean,
         onResult: (ImageCompressionResult) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val result = ImageCompressor.compressImage(
@@ -997,7 +1006,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stripExif: Boolean,
         onResult: (ImageCompressionResult) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val result = ImageCompressor.compressToTargetSize(
@@ -1153,7 +1162,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         modifications: Map<Int, com.pdfchemy.app.logic.PageModification>,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfEditor.exportModifiedPdf(
                 context = context,
@@ -1191,7 +1200,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         ownerPassword: String = userPassword,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 com.pdfchemy.app.logic.PdfManipulator.protectPdf(
@@ -1234,7 +1243,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 com.pdfchemy.app.logic.PdfManipulator.unlockPdf(
@@ -1279,7 +1288,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         targetWidth: Int = 1440,
         onComplete: (List<Uri>) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val uris = com.pdfchemy.app.logic.PdfManipulator.convertPdfToImages(
@@ -1327,7 +1336,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         flatten: Boolean = false,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.AcroFormEngine.fillAndSaveForm(
@@ -1374,7 +1383,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfOcrEngine.createSearchablePdf(
@@ -1424,7 +1433,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         redactions: List<com.pdfchemy.app.logic.RedactionBox>,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
@@ -1470,7 +1479,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         signatures: List<com.pdfchemy.app.logic.PlacedSignature>,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.SignatureEngine.applySignatures(
@@ -1516,7 +1525,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         format: com.pdfchemy.app.logic.OfficeFormat,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             val result = when (format) {
                 com.pdfchemy.app.logic.OfficeFormat.WORD -> com.pdfchemy.app.logic.OfficeExportEngine.exportToWord(context, sourceUri, destUri)
@@ -1558,7 +1567,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         isLossless: Boolean = true,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfImageReplacerEngine.replaceEmbeddedImage(
                 context,
@@ -1598,7 +1607,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         matchCase: Boolean,
         onComplete: (Boolean) -> Unit
     ) {
-        _uiState.value = UiState.Processing
+        _uiState.value = UiState.Processing()
         viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.replaceAll(
                 context,
