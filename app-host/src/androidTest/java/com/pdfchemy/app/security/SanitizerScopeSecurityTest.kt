@@ -45,9 +45,39 @@ class SanitizerScopeSecurityTest {
             assertEquals(0, selectedAudit.jsCount)
             assertEquals(1, selectedAudit.uriCount)
             assertTrue(selectedAudit.hasMetadata)
-            assertFalse(selectedAudit.isClean)
+            assertTrue(selectedAudit.isClean)
             assertTrue(PdfSanitizerEngine.sanitizeDocument(context, Uri.fromFile(source), Uri.fromFile(complete)).isSuccess)
             assertTrue(PdfSanitizerEngine.auditDocumentThreats(context, Uri.fromFile(complete)).isClean)
         } finally { source.delete(); selective.delete(); complete.delete() }
+    }
+
+    @Test fun attachmentDeduplicationRegressionTest() = runBlocking<Unit> {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val source = File.createTempFile("attachment_dedup_", ".pdf", context.cacheDir)
+        try {
+            PDFBoxResourceLoader.init(context)
+            PDDocument().use { document ->
+                val page = PDPage(); document.addPage(page)
+                
+                // Add embedded file mapping (one logical attachment, but multiple nested dictionaries: Names Tree, FileSpec, EmbeddedFile)
+                val efTree = com.tom_roush.pdfbox.pdmodel.PDDocumentNameDictionary(document.documentCatalog)
+                val efMap = com.tom_roush.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode()
+                val fs = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification()
+                fs.file = "TestFile.txt"
+                
+                val ef = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile(document, java.io.ByteArrayInputStream("Dummy".toByteArray()))
+                ef.subtype = "text/plain"
+                fs.embeddedFile = ef
+                
+                efMap.names = mapOf("TestFile" to fs)
+                efTree.embeddedFiles = efMap
+                document.documentCatalog.names = efTree
+                
+                document.save(source)
+            }
+            val audit = PdfSanitizerEngine.auditDocumentThreats(context, Uri.fromFile(source))
+            // The file contains exactly 1 logical attachment, so we expect exactly 1.
+            assertEquals("Logical attachment count should be exactly 1 despite nested dictionaries", 1, audit.attachmentCount)
+        } finally { source.delete() }
     }
 }

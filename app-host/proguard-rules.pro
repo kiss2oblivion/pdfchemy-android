@@ -29,3 +29,4 @@
 # to allow R8 to perform proper dead-code elimination and resource shrinking on release builds.
 
 
+-dontwarn javax.naming.**

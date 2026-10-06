@@ -24,6 +24,12 @@ object ActiveContentScrubber {
         val visited = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val triggered = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val uriObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val untrustedUriObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val jsObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val actionObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val launchObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val attachmentObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        
         queue.add(Triple(document.documentCatalog.cosObject, 0, false))
         require(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES) { "PDF object quota exceeded" }
         document.document.objects.forEach { queue.add(Triple(it, 0, false)) }
@@ -53,16 +59,22 @@ object ActiveContentScrubber {
                     if (action == "URI") {
                         if (uriObjects.add(base)) findings.uris++
                         val scheme = runCatching { java.net.URI(base.getString(name("URI"), "")).scheme?.lowercase() }.getOrNull()
-                        if (isTriggered || scheme !in setOf("http", "https")) findings.untrustedUris++
+                        if (isTriggered || scheme !in setOf("http", "https")) {
+                            if (untrustedUriObjects.add(base)) findings.untrustedUris++
+                        }
                         listOf("S", "URI", "Next").forEach { remove(it, purgeActions) }
                     }
                     if (action == "JavaScript" || base.containsKey(name("JS")) || base.containsKey(name("JavaScript"))) {
-                        findings.javascript++
+                        if (jsObjects.add(base)) findings.javascript++
                         remove("JS", purgeJs); remove("JavaScript", purgeJs)
                         if (action == "JavaScript") { remove("S", purgeJs); remove("Next", purgeJs) }
                     }
                     if (action in activeActions || subtype in activeSubtypes || base.containsKey(name("XFA"))) {
-                        if (action == "Launch") findings.launches++ else findings.actions++
+                        if (action == "Launch") {
+                            if (launchObjects.add(base)) findings.launches++
+                        } else {
+                            if (actionObjects.add(base)) findings.actions++
+                        }
                         if (action in activeActions) {
                             listOf("S", "URI", "F", "D", "Next", "Win", "R", "AN", "OP").forEach { remove(it, purgeActions) }
                         }
@@ -71,7 +83,7 @@ object ActiveContentScrubber {
                     }
                     
                     if (subtype == "FileAttachment" || listOf("EmbeddedFiles", "AF", "EF", "FS").any { base.containsKey(name(it)) }) {
-                        findings.attachments++
+                        if (attachmentObjects.add(base)) findings.attachments++
                         listOf("EmbeddedFiles", "AF", "EF", "FS").forEach { remove(it, purgeAttachments) }
                         if (subtype == "FileAttachment" && scrub && purgeAttachments) base.setName(COSName.SUBTYPE, "Text")
                     }
