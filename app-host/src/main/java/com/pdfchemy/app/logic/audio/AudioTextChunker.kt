@@ -1,67 +1,28 @@
 package com.pdfchemy.app.logic.audio
 
-import android.speech.tts.TextToSpeech
-
 object AudioTextChunker {
-
-    fun chunkText(text: String, maxLength: Int = TextToSpeech.getMaxSpeechInputLength()): List<String> {
-        if (text.length <= maxLength) return listOf(text)
-
+    // Caller supplies TextToSpeech.getMaxSpeechInputLength().
+    fun chunkText(text: String, maxLength: Int): List<String> {
+        require(maxLength >= 2) { "Speech input limit is too small" }
         val chunks = mutableListOf<String>()
-        var currentIndex = 0
-
-        while (currentIndex < text.length) {
-            val remainingLength = text.length - currentIndex
-            if (remainingLength <= maxLength) {
-                chunks.add(text.substring(currentIndex))
-                break
+        var start = 0
+        while (start < text.length) {
+            var end = minOf(text.length, start + maxLength)
+            if (end < text.length) {
+                if (Character.isHighSurrogate(text[end - 1]) && Character.isLowSurrogate(text[end])) end--
+                val window = text.substring(start, end)
+                val paragraph = window.lastIndexOf("\n\n").let { if (it >= 0) it + 2 else -1 }
+                val sentence = window.indices.lastOrNull { i ->
+                    window[i] in "。！？" || (window[i] in ".!?" && (i + 1 == window.length || window[i + 1].isWhitespace()))
+                }?.plus(1) ?: -1
+                val word = window.indices.lastOrNull { window[it].isWhitespace() }?.plus(1) ?: -1
+                val boundary = listOf(paragraph, sentence, word).firstOrNull { it > 0 }
+                if (boundary != null) end = start + boundary
             }
-
-            var splitIndex = findSplitIndex(text, currentIndex, currentIndex + maxLength)
-            
-            // Fallback: If no good boundary found, split exactly at maxLength, ensuring surrogate pair safety.
-            if (splitIndex == -1 || splitIndex == currentIndex) {
-                splitIndex = currentIndex + maxLength
-                if (Character.isHighSurrogate(text[splitIndex - 1])) {
-                    splitIndex-- // Don't split in the middle of a surrogate pair
-                }
-            }
-
-            val chunk = text.substring(currentIndex, splitIndex).trim()
-            if (chunk.isNotEmpty()) {
-                chunks.add(chunk)
-            }
-            currentIndex = splitIndex
+            check(end > start)
+            chunks.add(text.substring(start, end))
+            start = end
         }
-
         return chunks
-    }
-
-    private fun findSplitIndex(text: String, start: Int, maxEnd: Int): Int {
-        val substring = text.substring(start, maxEnd)
-        
-        // Try to find double newline
-        var lastIdx = substring.lastIndexOf("\n\n")
-        if (lastIdx > 0) return start + lastIdx + 2
-
-        // Try to find single newline
-        lastIdx = substring.lastIndexOf("\n")
-        if (lastIdx > 0) return start + lastIdx + 1
-
-        // Try to find sentence end
-        lastIdx = substring.lastIndexOf(". ")
-        if (lastIdx > 0) return start + lastIdx + 2
-        
-        lastIdx = substring.lastIndexOf("! ")
-        if (lastIdx > 0) return start + lastIdx + 2
-        
-        lastIdx = substring.lastIndexOf("? ")
-        if (lastIdx > 0) return start + lastIdx + 2
-
-        // Try to find space
-        lastIdx = substring.lastIndexOf(" ")
-        if (lastIdx > 0) return start + lastIdx + 1
-
-        return -1
     }
 }

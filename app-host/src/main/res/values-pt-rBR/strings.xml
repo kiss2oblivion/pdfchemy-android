@@ -1096,8 +1096,6 @@
     <string name="redaction_review_title">Revisar redações</string>
     <string name="redaction_review_message">%1$d redação(ões) serão aplicadas permanentemente. O conteúdo ocultado não pode ser recuperado.</string>
     <string name="redaction_review_confirm">Aplicar redações</string>
-    <string name="settings_remember_position">Remember Reading Position</string>
-    <string name="settings_remember_position_desc">Automatically restores your last viewed page when reopening a document.</string>
     <string name="settings_default_pdf_app">Default PDF Viewer</string>
     <string name="settings_default_pdf_app_desc">Set PdfChemy as your default app to open PDF files</string>
     <string name="settings_default_pdf_dialog_title">Set Default PDF Viewer</string>
@@ -1132,21 +1130,8 @@
     <string name="flip_fullscreen_mode">Full Screen Mode</string>
     <string name="flip_tabletop_mode_desc">Hands-free mode: Document displayed on top, desk controls on bottom</string>
     <string name="flip_tabletop_active_badge">Flex Mode</string>
-    <string name="vanguard_blocked_message_js">JavaScript action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
-    <string name="vanguard_blocked_message_launch">External process launch action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
-    <string name="vanguard_blocked_message_uri">Suspicious or automated network activity detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
-    <string name="vanguard_blocked_message_other">Active content or automated form submission detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
-    <string name="sanitizer_other_action_threats">Other active behaviors: %1</string>
-    <string name="vanguard_blocked_message_default">Automatic external action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="scanned_pdf_title">Scanned Document</string>
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
-    <string name="diagnosing_document">Diagnosing document...</string>
-    <string name="diagnosis_failed_title">Diagnosis Failed</string>
-    <string name="diagnosis_failed_desc">Could not diagnose the document.</string>
-    <string name="error_signing_failed">Signing Failed</string>
-    <string name="pki_signature_failed_desc">The PKI signature could not be applied.</string>
-    <string name="page_render_failed">Page Render Failed</string>
-    <string name="retry">Retry</string>
 </resources>

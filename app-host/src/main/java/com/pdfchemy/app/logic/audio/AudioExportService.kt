@@ -1,273 +1,196 @@
 package com.pdfchemy.app.logic.audio
 
-import android.app.Service
+import android.app.*
+import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.speech.tts.TextToSpeech
-import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import java.io.File
+import com.pdfchemy.app.R
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 import java.util.UUID
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Context
-import android.os.Build
-
-class AudioExportService : Service(), TextToSpeech.OnInitListener {
-
+class AudioExportService : Service() {
     companion object {
         const val EXTRA_JOB_ID = "extra_job_id"
-        const val EXTRA_DESTINATION_URI = "extra_destination_uri"
+        private const val ACTION_CANCEL = "com.pdfchemy.app.audio.CANCEL"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "audio_export_channel"
-        private const val TAG = "AudioExportService"
     }
-
-    // In a real app, these might be injected by Hilt/Dagger, but we instantiate or access a singleton here.
-    // For this implementation, we will assume a global job store exists or create a local one.
-    // Ideally we should have a singleton registry. We will simulate injection by using a companion object on store if needed,
-    // or just instantiate here for the sake of the architecture skeleton.
-    // Let's use a global instance pattern if needed, but for now we will instantiate.
-    private lateinit var jobStore: AudioExportJobStore
-    private lateinit var stagingManager: AudioStagingManager
-    
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val store get() = AudioExportDependencies.jobStore
+    private val staging get() = AudioExportDependencies.stagingManager
+    private var activeId: UUID? = null
+    private var pipeline: Job? = null
     private var tts: TextToSpeech? = null
-    private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
-    private var activeJobId: UUID? = null
-    private var destinationUri: Uri? = null
+    private var writer: PcmWriter? = null
+    private var abort: AudioExportAbort? = null
 
-    // We will inject the store via a static provider in a real app.
-    // For testability, let's assume there's a global AudioExportDependencies.
-    // Here we'll just instantiate them, as this is Phase 1 architecture implementation.
-    
     override fun onCreate() {
         super.onCreate()
-        jobStore = AudioExportDependencies.jobStore
-        stagingManager = AudioExportDependencies.stagingManager
-        
-        createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
+        AudioExportDependencies.initialize(this)
+        if (Build.VERSION.SDK_INT >= 26) {
+            getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, getString(R.string.audio_export_title), NotificationManager.IMPORTANCE_LOW)
+            )
+        }
+        updateForeground(null)
+    }
+
+    private fun updateForeground(id: UUID?) {
+        val notification = notification(id)
+        if (Build.VERSION.SDK_INT >= 29) startForeground(NOTIFICATION_ID, notification, AudioForegroundPolicy.typeForSdk(Build.VERSION.SDK_INT))
+        else startForeground(NOTIFICATION_ID, notification)
+    }
+
+    private fun notification(id: UUID?): Notification {
+        val builder = (if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL_ID) else Notification.Builder(this))
+            .setContentTitle(getString(R.string.audio_export_title))
+            .setContentText(getString(R.string.audio_export_notification))
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setOngoing(true)
+        if (id != null) {
+            val cancel = PendingIntent.getService(this, NOTIFICATION_ID,
+                Intent(this, AudioExportService::class.java).setAction(ACTION_CANCEL).putExtra(EXTRA_JOB_ID, id.toString()),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            builder.addAction(Notification.Action.Builder(android.R.drawable.ic_delete, getString(android.R.string.cancel), cancel).build())
+        }
+        return builder.build()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val jobIdString = intent?.getStringExtra(EXTRA_JOB_ID)
-        val destUri = intent?.getParcelableExtra<Uri>(EXTRA_DESTINATION_URI)
-
-        if (jobIdString == null || destUri == null) {
-            stopSelf()
+        val id = runCatching { UUID.fromString(intent?.getStringExtra(EXTRA_JOB_ID)) }.getOrNull()
+        if (id == null) { if (activeId == null) stopSelf(); return START_NOT_STICKY }
+        if (intent?.action == ACTION_CANCEL) {
+            if (id == activeId) abort?.cancel()
+            else if (activeId == null) stopSelf()
             return START_NOT_STICKY
         }
-
-        activeJobId = UUID.fromString(jobIdString)
-        destinationUri = destUri
-
-        jobStore.updateState(activeJobId!!, AudioExportState.INITIALIZING)
-
-        tts = TextToSpeech(this, this)
-
+        if (activeId != null) {
+            if (id != activeId && store.updateState(id, AudioExportState.FAILED, IllegalStateException("Another audio export is running"))) {
+                scope.launch(NonCancellable + Dispatchers.IO) {
+                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                    staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
+                }
+            }
+            return START_NOT_STICKY
+        }
+        if (!store.updateState(id, AudioExportState.INITIALIZING)) {
+            scope.launch(Dispatchers.IO) {
+                runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
+                if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
+                withContext(Dispatchers.Main) { stopSelf() }
+            }
+            return START_NOT_STICKY
+        }
+        activeId = id
+        updateForeground(id)
+        abort = AudioExportAbort(id, store,
+            invalidate = { error -> writer?.invalidate(error) },
+            stopTts = { tts?.stop() },
+            cancelPipeline = { pipeline?.cancel() }
+        )
+        pipeline = scope.launch { export(id) }
         return START_NOT_STICKY
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            serviceScope.launch {
-                initializeTtsAndStart()
-            }
-        } else {
-            activeJobId?.let { jobStore.updateState(it, AudioExportState.FAILED, Exception("TTS Init failed")) }
-            stopSelf()
+    private suspend fun export(id: UUID) {
+        val cancellationWatcher = scope.launch {
+            store.getJobFlow(id)?.first { it.state == AudioExportState.CANCELLING }
+            abort?.cancel()
         }
-    }
-
-    private suspend fun initializeTtsAndStart() {
-        val jobId = activeJobId ?: return
-        
-        // Select an offline voice
-        val voices = tts?.voices
-        val offlineVoice = voices?.firstOrNull { !it.isNetworkConnectionRequired && it.locale == Locale.getDefault() }
-            ?: voices?.firstOrNull { !it.isNetworkConnectionRequired }
-        
-        if (offlineVoice != null) {
-            tts?.voice = offlineVoice
-        } else {
-            // Fallback, not guaranteed offline but we tried
-        }
-
-        jobStore.updateState(jobId, AudioExportState.SYNTHESIZING)
-
-        val textFile = stagingManager.getTextArtifactFile(jobId)
-        if (!textFile.exists()) {
-            jobStore.updateState(jobId, AudioExportState.FAILED, Exception("Source text not found"))
-            stopSelf()
-            return
-        }
-
-        val text = textFile.readText()
-        val chunks = AudioTextChunker.chunkText(text, TextToSpeech.getMaxSpeechInputLength())
-        
-        val projector = QuotaProjector(text.length)
-        jobStore.updateProgress(jobId, 0, text.length, 0L)
-
-        val masterRawFile = stagingManager.getMasterRawFile(jobId)
-        val finalWavFile = stagingManager.getFinalWavFile(jobId)
-
-        var currentChunkIndex = 0
-        var chunkCompleteSignal = kotlinx.coroutines.channels.Channel<String>(1)
-
-        val assembler = TtsPcmAssembler(
-            jobId = jobId,
-            masterRawFile = masterRawFile,
-            jobStore = jobStore,
-            coroutineScope = serviceScope,
-            onChunkComplete = { uttId ->
-                chunkCompleteSignal.trySend(uttId)
-            },
-            onError = { uttId, errorMsg ->
-                jobStore.updateState(jobId, AudioExportState.FAILED, Exception(errorMsg))
-                chunkCompleteSignal.trySend("ERROR")
-            }
-        )
-
-        tts?.setOnUtteranceProgressListener(assembler)
-
-        for ((index, chunk) in chunks.withIndex()) {
-            val job = jobStore.getJob(jobId)
-            if (job?.state == AudioExportState.CANCELLING || job?.state == AudioExportState.CANCELLED) {
-                handleCancellation(jobId)
-                return
-            }
-
-            val chunkTempFile = stagingManager.getTempChunkFile(jobId, index)
-            val startTime = System.currentTimeMillis()
-            
-            val params = android.os.Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "chunk_$index")
-            
-            tts?.synthesizeToFile(chunk, params, chunkTempFile, "chunk_$index")
-            
-            // Suspend until chunk completes
-            val signal = chunkCompleteSignal.receive()
-            if (signal == "ERROR") {
-                stopSelf()
-                return
-            }
-
-            val synthesisTime = System.currentTimeMillis() - startTime
-            val bytesWritten = if (chunkTempFile.exists()) chunkTempFile.length() else 0L
-
-            projector.recordChunk(chunk.length, synthesisTime, bytesWritten)
-            chunkTempFile.delete() // Delete the chunk temp file after processing it
-
-            // Check Quota
-            val sampleRate = assembler.getSampleRate()
-            val channels = assembler.getChannelCount()
-            if (sampleRate != -1 && channels != -1) {
-                val bytesPerSample = assembler.getCalculatedBytesPerSample()
-                if (!projector.isProjectionSafe(sampleRate, channels, bytesPerSample)) {
-                    jobStore.updateState(jobId, AudioExportState.FAILED, Exception("Projected size exceeds limits"))
-                    stopSelf()
-                    return
-                }
-                
-                jobStore.updateProgress(
-                    jobId = jobId,
-                    processedCharacters = (job?.processedCharacters ?: 0) + chunk.length,
-                    projectedSizeBytes = projector.getProjectedTotalBytes(sampleRate, channels, bytesPerSample)
-                )
-            }
-        }
-
-        val job = jobStore.getJob(jobId)
-        if (job?.state == AudioExportState.CANCELLING || job?.state == AudioExportState.CANCELLED) {
-            handleCancellation(jobId)
-            return
-        }
-
-        // Assembly
-        jobStore.updateState(jobId, AudioExportState.ASSEMBLING)
         try {
-            assembler.finishAndWriteWavHeader(finalWavFile)
-        } catch (e: Exception) {
-            jobStore.updateState(jobId, AudioExportState.FAILED, e)
-            stopSelf()
-            return
-        }
-
-        // Publishing
-        jobStore.updateState(jobId, AudioExportState.PUBLISHING)
-        try {
-            contentResolver.openOutputStream(destinationUri!!, "wt")?.use { outputStream ->
-                finalWavFile.inputStream().use { inputStream ->
-                    inputStream.copyTo(outputStream)
-                }
-            } ?: throw Exception("Could not open destination URI")
-            
-            jobStore.updateState(jobId, AudioExportState.COMPLETED)
-        } catch (e: Exception) {
-            jobStore.updateState(jobId, AudioExportState.FAILED, e)
+            val destination = AudioExportDependencies.destination(id)
+            val initialized = CompletableDeferred<Int>()
+            tts = TextToSpeech(this) { initialized.complete(it) }
+            check(withTimeout(30_000) { initialized.await() } == TextToSpeech.SUCCESS) { "TTS initialization failed" }
+            val engine = requireNotNull(tts)
+            val offline = engine.voices.orEmpty().filter { !it.isNetworkConnectionRequired }
+            val voice = offline.firstOrNull { it.locale == Locale.getDefault() }
+                ?: offline.firstOrNull { it.locale.language == Locale.getDefault().language }
+                ?: throw IllegalStateException("No installed offline voice for the current language")
+            check(engine.setVoice(voice) == TextToSpeech.SUCCESS) { "Unable to select offline voice" }
+            check(store.updateState(id, AudioExportState.SYNTHESIZING))
+            val chunks = withContext(Dispatchers.IO) {
+                val text = staging.getTextArtifactFile(id).readText(Charsets.UTF_8)
+                require(text.length <= AudioStagingManager.MAX_TEXT_CHARACTERS)
+                AudioTextChunker.chunkText(text, TextToSpeech.getMaxSpeechInputLength()).filter { it.isNotBlank() }
+            }
+            require(chunks.isNotEmpty()) { "There is no text to export" }
+            val total = chunks.sumOf { it.length }
+            val projector = QuotaProjector(total)
+            val raw = staging.getMasterRawFile(id)
+            val wav = staging.getFinalWavFile(id)
+            val pcm = PcmWriter(id, UUID.randomUUID(), raw, CoroutineScope(currentCoroutineContext() + Dispatchers.IO),
+                isJobActive = { store.getJob(id)?.state == AudioExportState.SYNTHESIZING })
+            writer = pcm
+            check(engine.setOnUtteranceProgressListener(TtsPcmAssembler(pcm)) == TextToSpeech.SUCCESS)
+            var processed = 0
+            store.updateProgress(id, 0, total, 0)
+            for ((index, chunk) in chunks.withIndex()) {
+                currentCoroutineContext().ensureActive()
+                val (utterance, drained) = pcm.beginChunk(index)
+                val sink = staging.getTempChunkFile(id, index)
+                check(engine.synthesizeToFile(chunk, Bundle(), sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }
+                val bytes = withTimeout(120_000) { drained.await() }
+                // onDone alone cannot release this sink; drained acknowledges the application's writer flush.
+                withContext(Dispatchers.IO) { sink.delete() }
+                projector.recordChunk(chunk.length, bytes, pcm.format)
+                val safe = withContext(Dispatchers.IO) { projector.isSafe(pcm.format, raw.parentFile!!.usableSpace) }
+                check(safe) { "Projected audio exceeds available storage or RIFF limits" }
+                processed += chunk.length
+                store.updateProgress(id, processed, total, projector.projectedBytes(pcm.format))
+            }
+            withContext(Dispatchers.IO) { pcm.closeAndJoin() }
+            check(store.updateState(id, AudioExportState.ASSEMBLING))
+            withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+            check(store.updateState(id, AudioExportState.PUBLISHING))
+            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination) }
+            currentCoroutineContext().ensureActive()
+            check(store.updateState(id, AudioExportState.COMPLETED, outputUri = destination.toString()))
+        } catch (error: CancellationException) {
+            if (store.getJob(id)?.state == AudioExportState.CANCELLING) {
+                // CANCELLED is published only after descriptor/stage cleanup below.
+            } else store.updateState(id, AudioExportState.FAILED, IllegalStateException("Audio export interrupted", error))
+        } catch (error: Exception) {
+            writer?.invalidate(error)
+            store.updateState(id, AudioExportState.FAILED, error)
         } finally {
-            stagingManager.clearJobStaging(jobId)
-            stopSelf()
+            cancellationWatcher.cancel()
+            writer?.invalidate()
+            tts?.stop(); tts?.shutdown(); tts = null
+            withContext(NonCancellable + Dispatchers.IO) {
+                runCatching { writer?.closeAndJoin() }
+                if (store.getJob(id)?.state != AudioExportState.COMPLETED) {
+                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                }
+                staging.clearJobStaging(id)
+                AudioExportDependencies.forgetDestination(id)
+                if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
+            }
+            withContext(NonCancellable + Dispatchers.Main) {
+                writer = null; activeId = null
+                stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
+                scope.cancel()
+            }
         }
     }
 
-    private fun handleCancellation(jobId: UUID) {
-        tts?.stop()
-        stagingManager.clearJobStaging(jobId)
-        jobStore.updateState(jobId, AudioExportState.CANCELLED)
-        stopForeground(true)
-        stopSelf()
-    }
-
-    override fun onTimeout(startId: Int) {
-        super.onTimeout(startId)
-        activeJobId?.let {
-            jobStore.updateState(it, AudioExportState.FAILED, Exception("FGS Timeout Reached"))
-            handleCancellation(it)
-        }
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        abort?.timeout()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf() // Required immediately; IO cleanup continues in the pipeline's NonCancellable finally.
     }
 
     override fun onDestroy() {
+        abort?.interrupted()
         tts?.stop()
-        tts?.shutdown()
-        serviceScope.cancel()
+        if (pipeline == null) scope.cancel()
         super.onDestroy()
     }
-
     override fun onBind(intent: Intent?): IBinder? = null
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Audio Export",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun createNotification(): Notification {
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, CHANNEL_ID)
-        } else {
-            Notification.Builder(this)
-        }
-        return builder
-            .setContentTitle("Exporting Audio")
-            .setContentText("Synthesizing document...")
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .build()
-    }
 }

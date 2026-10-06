@@ -24,14 +24,18 @@ class AudioExportJobStore {
         return _jobs[jobId]!!.value
     }
 
-    fun updateState(jobId: UUID, state: AudioExportState, error: Throwable? = null) {
-        _jobs[jobId]?.update {
-            it.copy(state = state, error = error ?: it.error)
-        }
+    @Synchronized
+    fun updateState(jobId: UUID, state: AudioExportState, error: Throwable? = null, outputUri: String? = null): Boolean {
+        val flow = _jobs[jobId] ?: return false
+        val current = flow.value
+        if (state !in transitions(current.state)) return false
+        flow.value = current.copy(state = state, error = error, outputUri = if (state == AudioExportState.COMPLETED) outputUri else null)
+        return true
     }
 
     fun updateProgress(jobId: UUID, processedCharacters: Int, totalCharacters: Int? = null, projectedSizeBytes: Long? = null) {
         _jobs[jobId]?.update {
+            if (it.state in terminalStates || it.state == AudioExportState.CANCELLING) return@update it
             it.copy(
                 processedCharacters = processedCharacters,
                 totalCharacters = totalCharacters ?: it.totalCharacters,
@@ -46,5 +50,22 @@ class AudioExportJobStore {
 
     fun getAllJobs(): List<AudioExportJob> {
         return _jobs.values.map { it.value }
+    }
+
+    companion object {
+        val terminalStates = setOf(AudioExportState.COMPLETED, AudioExportState.CANCELLED, AudioExportState.FAILED)
+        private fun transitions(state: AudioExportState): Set<AudioExportState> {
+            if (state in terminalStates) return emptySet()
+            if (state == AudioExportState.CANCELLING) return setOf(AudioExportState.CANCELLED, AudioExportState.FAILED)
+            val next = when (state) {
+                AudioExportState.QUEUED -> AudioExportState.INITIALIZING
+                AudioExportState.INITIALIZING -> AudioExportState.SYNTHESIZING
+                AudioExportState.SYNTHESIZING -> AudioExportState.ASSEMBLING
+                AudioExportState.ASSEMBLING -> AudioExportState.PUBLISHING
+                AudioExportState.PUBLISHING -> AudioExportState.COMPLETED
+                else -> error("Invalid state")
+            }
+            return setOf(next, AudioExportState.CANCELLING, AudioExportState.FAILED)
+        }
     }
 }

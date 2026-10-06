@@ -7,7 +7,7 @@ import android.content.ServiceConnection
 import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
-
+import com.pdfchemy.app.logic.StagedPdf
 import com.pdfchemy.app.security.SecurityLimits
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +35,7 @@ class AudioStagingManagerTest {
     }
 
     @Test
-    fun `creates job directories and files correctly`() {
+    fun createsJobDirectoriesAndFilesCorrectly() {
         val jobId = UUID.randomUUID()
         val jobDir = stagingManager.getJobDir(jobId)
         
@@ -52,7 +53,7 @@ class AudioStagingManagerTest {
     }
 
     @Test
-    fun `clearJobStaging removes specific job directory`() {
+    fun clearJobStagingRemovesSpecificJobDirectory() {
         val jobId = UUID.randomUUID()
         val jobDir = stagingManager.getJobDir(jobId)
         
@@ -64,7 +65,7 @@ class AudioStagingManagerTest {
     }
 
     @Test
-    fun `sweepStaleJobs removes inactive jobs and keeps active ones`() {
+    fun sweepStaleJobsRemovesInactiveJobsAndKeepsActiveOnes() {
         val activeJobId = UUID.randomUUID()
         val staleJobId1 = UUID.randomUUID()
         val staleJobId2 = UUID.randomUUID()

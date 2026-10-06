@@ -1,37 +1,35 @@
 package com.pdfchemy.app.logic.audio
 
+import kotlin.math.ceil
+
 class QuotaProjector(private val totalCharacters: Int) {
-    private var synthesizedCharacters = 0
-    private var totalSynthesisTimeMs = 0L
-    private var bytesWritten = 0L
+    init { require(totalCharacters > 0) }
+    private var characters = 0
+    private var bytes = 0L
+    private var seconds = 0.0
 
-    fun recordChunk(chunkChars: Int, synthesisTimeMs: Long, chunkBytes: Long) {
-        synthesizedCharacters += chunkChars
-        totalSynthesisTimeMs += synthesisTimeMs
-        bytesWritten += chunkBytes
+    fun recordChunk(chunkChars: Int, chunkBytes: Long, format: PcmFormat) {
+        require(chunkChars > 0 && chunkChars <= totalCharacters - characters)
+        require(chunkBytes > 0 && chunkBytes % format.blockAlign == 0L)
+        characters += chunkChars
+        bytes = Math.addExact(bytes, chunkBytes)
+        seconds += chunkBytes.toDouble() / format.byteRate
     }
 
-    fun isProjectionSafe(sampleRate: Int, channelCount: Int, bytesPerSample: Int, maxAllowedBytes: Long = 4L * 1024 * 1024 * 1024 - 100): Boolean {
-        if (synthesizedCharacters == 0) return true
-        
-        val remainingCharacters = totalCharacters - synthesizedCharacters
-        if (remainingCharacters <= 0) return bytesWritten < maxAllowedBytes
-        
-        val observedSecondsPerCharacter = (totalSynthesisTimeMs / 1000.0) / synthesizedCharacters
-        val estimatedRemainingDurationSeconds = remainingCharacters * observedSecondsPerCharacter
-        
-        val estimatedRemainingBytes = (estimatedRemainingDurationSeconds * sampleRate * channelCount * bytesPerSample).toLong()
-        val projectedTotalBytes = bytesWritten + estimatedRemainingBytes
-        
-        return projectedTotalBytes <= maxAllowedBytes
+    fun projectedBytes(format: PcmFormat): Long {
+        if (characters == 0) return 0
+        val remainingSeconds = (totalCharacters - characters) * (seconds / characters)
+        val remainingBytes = ceil(remainingSeconds * format.byteRate)
+        if (!remainingBytes.isFinite() || remainingBytes >= Long.MAX_VALUE - bytes) return Long.MAX_VALUE
+        return bytes + remainingBytes.toLong()
     }
-    
-    fun getProjectedTotalBytes(sampleRate: Int, channelCount: Int, bytesPerSample: Int): Long {
-        if (synthesizedCharacters == 0) return 0L
-        val remainingCharacters = totalCharacters - synthesizedCharacters
-        val observedSecondsPerCharacter = (totalSynthesisTimeMs / 1000.0) / synthesizedCharacters
-        val estimatedRemainingDurationSeconds = remainingCharacters * observedSecondsPerCharacter
-        val estimatedRemainingBytes = (estimatedRemainingDurationSeconds * sampleRate * channelCount * bytesPerSample).toLong()
-        return bytesWritten + estimatedRemainingBytes
+
+    fun isSafe(format: PcmFormat, availableBytes: Long, reserveBytes: Long = FILESYSTEM_RESERVE): Boolean {
+        val projected = projectedBytes(format)
+        if (projected > WavWriter.MAX_PCM_BYTES || availableBytes <= reserveBytes) return false
+        // Raw + WAV + disposable engine sink can coexist. Reserve is free-space headroom, not an output quota.
+        val additional = maxOf(0, projected - bytes)
+        return projected <= (availableBytes - reserveBytes - minOf(additional, availableBytes)) / 2
     }
+    companion object { const val FILESYSTEM_RESERVE = 32L * 1024 * 1024 }
 }

@@ -20,7 +20,6 @@
 -keep class org.bouncycastle.jcajce.provider.** { *; }
 -dontwarn org.bouncycastle.jsse.**
 -dontwarn org.bouncycastle.jcajce.provider.asymmetric.util.**
--dontwarn javax.naming.**
 
 # Google Play Billing Library
 -keep class com.android.billingclient.api.** { *; }

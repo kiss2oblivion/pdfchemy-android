@@ -20,5 +20,6 @@ data class AudioExportJob(
     val totalCharacters: Int = 0,
     val processedCharacters: Int = 0,
     val projectedSizeBytes: Long = 0L,
-    val error: Throwable? = null
+    val error: Throwable? = null,
+    val outputUri: String? = null
 )
