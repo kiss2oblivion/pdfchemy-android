@@ -50,3 +50,18 @@ frozen for the benign PDF compatibility gate: OpenAI/ChatGPT, LibreOffice, Word,
 Google Docs, Acrobat, Canva, scanners, image-to-PDF, C2PA attachments, HTTPS links,
 bookmarks/outlines, metadata/XMP, destination OpenAction, and normal forms.
 Every discovered benign false positive must become a permanent fixture.
+
+## Final build blocker found by CI
+
+[Run #21](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37451983389)
+passed architecture, dependency-security, secrets, unit tests, and all three
+instrumentation targets. Each target completed 178 tests with zero failures or
+skips. The final build exposed 15 missing translations for existing reading,
+Vanguard, diagnosis, signing, and retry labels; local full release lint reproduced
+the same 15 errors.
+
+The follow-up adds those translations in all 20 existing locale configurations,
+preserving placeholders and threat-message meaning. English strings, UI behavior,
+security policy, and the existing lint baseline are unchanged. Full release lint
+is now part of local verification. Acceptance still requires a green full CI
+matrix on the final commit containing this resource correction.

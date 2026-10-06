@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">Lembrar posição de leitura</string>
+    <string name="settings_remember_position_desc">Restaura automaticamente a última página visualizada ao reabrir um documento.</string>
+    <string name="vanguard_blocked_message_js">Foi detectada uma ação JavaScript. De acordo com o princípio de segurança de confiança zero, o PDFchemy não abrirá este documento.</string>
+    <string name="vanguard_blocked_message_launch">Foi detectada uma ação que inicia um processo externo. De acordo com o princípio de segurança de confiança zero, o PDFchemy não abrirá este documento.</string>
+    <string name="vanguard_blocked_message_uri">Foi detectada atividade de rede suspeita ou automatizada. De acordo com o princípio de segurança de confiança zero, o PDFchemy não abrirá este documento.</string>
+    <string name="vanguard_blocked_message_other">Foi detectado conteúdo ativo ou envio automático de formulários. De acordo com o princípio de segurança de confiança zero, o PDFchemy não abrirá este documento.</string>
+    <string name="sanitizer_other_action_threats">Outros comportamentos ativos: %1</string>
+    <string name="vanguard_blocked_message_default">Foi detectada uma ação externa automática. De acordo com o princípio de segurança de confiança zero, o PDFchemy não abrirá este documento.</string>
+    <string name="diagnosing_document">Diagnosticando documento...</string>
+    <string name="diagnosis_failed_title">Falha no diagnóstico</string>
+    <string name="diagnosis_failed_desc">Não foi possível diagnosticar o documento.</string>
+    <string name="error_signing_failed">Falha ao assinar</string>
+    <string name="pki_signature_failed_desc">Não foi possível aplicar a assinatura PKI.</string>
+    <string name="page_render_failed">Falha na renderização da página</string>
+    <string name="retry">Tentar novamente</string>
+</resources>
