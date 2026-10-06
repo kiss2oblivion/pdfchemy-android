@@ -310,7 +310,7 @@ class PdfSanitizerAndBatesTest {
         val fs = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification()
         fs.file = "Credentials.txt"
         
-        val ef = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile(doc, "Dummy C2PA Data".toByteArray())
+        val ef = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile(doc, java.io.ByteArrayInputStream("Dummy C2PA Data".toByteArray()))
         ef.subtype = "text/plain"
         fs.embeddedFile = ef
         

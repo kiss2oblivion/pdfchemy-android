@@ -1106,6 +1106,8 @@
     <string name="vanguard_blocked_message_js">JavaScript action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_launch">External process launch action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_uri">Suspicious or automated network activity detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="vanguard_blocked_message_other">Active content or automated form submission detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="sanitizer_other_action_threats">Other active behaviors: %1</string>
     <string name="vanguard_blocked_message_default">Automatic external action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message">This PDF contains embedded scripts or automated execution hooks. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_encrypted_title">Password-Protected Document</string>

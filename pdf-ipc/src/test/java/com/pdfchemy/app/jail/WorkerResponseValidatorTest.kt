@@ -95,7 +95,7 @@ class WorkerResponseValidatorTest {
 
         // threatsFound > 0 reporting isClean=true rejected
         val badThreat = """{
-            "threatsFound": 2, "isClean": true, "jsCount": 2, "launchActionsCount": 0, "untrustedUriCount": 0,
+            "threatsFound": 2, "isClean": true, "jsCount": 2, "launchActionsCount": 0, "otherActionsCount": 0, "untrustedUriCount": 0,
             "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": false, "parseFailed": false
         }"""
         assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", badThreat) }
@@ -108,7 +108,7 @@ class WorkerResponseValidatorTest {
 
         // Valid clean audit
         val clean = """{
-            "threatsFound": 0, "isClean": true, "jsCount": 0, "launchActionsCount": 0, "untrustedUriCount": 0,
+            "threatsFound": 0, "isClean": true, "jsCount": 0, "launchActionsCount": 0, "otherActionsCount": 0, "untrustedUriCount": 0,
             "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": false, "parseFailed": false
         }"""
         val c = WorkerResponseValidator.validate("SANITIZE_AUDIT", clean) as SanitizeAuditContract
@@ -119,7 +119,7 @@ class WorkerResponseValidatorTest {
 
         // Valid canonical encrypted audit
         val encrypted = """{
-            "threatsFound": 1, "isClean": false, "jsCount": 0, "launchActionsCount": 0, "untrustedUriCount": 0,
+            "threatsFound": 1, "isClean": false, "jsCount": 0, "launchActionsCount": 0, "otherActionsCount": 0, "untrustedUriCount": 0,
             "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": true, "parseFailed": false
         }"""
         val cEncrypted = WorkerResponseValidator.validate("SANITIZE_AUDIT", encrypted) as SanitizeAuditContract
@@ -130,7 +130,7 @@ class WorkerResponseValidatorTest {
 
         // isEncrypted=true reporting isClean=true rejected fail-closed
         val badEncryptedClean = """{
-            "threatsFound": 1, "isClean": true, "jsCount": 0, "launchActionsCount": 0, "untrustedUriCount": 0,
+            "threatsFound": 1, "isClean": true, "jsCount": 0, "launchActionsCount": 0, "otherActionsCount": 0, "untrustedUriCount": 0,
             "attachmentCount": 0, "uriCount": 0, "hasMetadata": false, "isEncrypted": true, "parseFailed": false
         }"""
         assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", badEncryptedClean) }
@@ -300,7 +300,7 @@ class WorkerResponseValidatorTest {
         assertRejected {
             WorkerResponseValidator.validate("SANITIZE_AUDIT", """{
                 "threatsFound": 1.5, "isClean": false, "isEncrypted": false, "parseFailed": false,
-                "jsCount": 0, "launchActionsCount": 0, "untrustedUriCount": 0, "attachmentCount": 0, "uriCount": 0, "hasMetadata": false
+                "jsCount": 0, "launchActionsCount": 0, "otherActionsCount": 0, "untrustedUriCount": 0, "attachmentCount": 0, "uriCount": 0, "hasMetadata": false
             }""")
         }
 

@@ -201,6 +201,7 @@ fun DocumentSanitizerScreen(
 
                         Text(stringResource(R.string.sanitizer_js_threats, report.jsCount), style = MaterialTheme.typography.bodyMedium)
                         Text(stringResource(R.string.sanitizer_action_threats, report.launchActionsCount), style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.sanitizer_other_action_threats, report.otherActionsCount), style = MaterialTheme.typography.bodyMedium)
                         Text(stringResource(R.string.sanitizer_attachments, report.attachmentCount), style = MaterialTheme.typography.bodyMedium)
                     }
                 }

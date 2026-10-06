@@ -9,10 +9,10 @@ import com.pdfchemy.app.security.SecurityLimits
 
 /** Visits every reachable and pooled object, including outlines and associated-file dictionaries. */
 object ActiveContentScrubber {
-    data class Findings(var javascript: Int = 0, var actions: Int = 0, var untrustedUris: Int = 0, var attachments: Int = 0, var uris: Int = 0) {
-        val total get() = javascript + actions + untrustedUris + attachments + uris
+    data class Findings(var javascript: Int = 0, var launches: Int = 0, var actions: Int = 0, var untrustedUris: Int = 0, var attachments: Int = 0, var uris: Int = 0) {
+        val total get() = javascript + launches + actions + untrustedUris + attachments + uris
         fun selected(js: Boolean, actions: Boolean, attachments: Boolean) = Findings(
-            if (js) javascript else 0, if (actions) this.actions else 0, if (actions) this.untrustedUris else 0,
+            if (js) javascript else 0, if (actions) launches else 0, if (actions) this.actions else 0, if (actions) this.untrustedUris else 0,
             if (attachments) this.attachments else 0, if (actions) uris else 0)
     }
     private val activeActions = setOf("Launch", "GoToR", "GoToE", "SubmitForm", "ImportData", "Rendition", "Movie", "Sound", "RichMedia", "3D")
@@ -62,7 +62,7 @@ object ActiveContentScrubber {
                         if (action == "JavaScript") { remove("S", purgeJs); remove("Next", purgeJs) }
                     }
                     if (action in activeActions || subtype in activeSubtypes || base.containsKey(name("XFA"))) {
-                        findings.actions++
+                        if (action == "Launch") findings.launches++ else findings.actions++
                         if (action in activeActions) {
                             listOf("S", "URI", "F", "D", "Next", "Win", "R", "AN", "OP").forEach { remove(it, purgeActions) }
                         }

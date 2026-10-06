@@ -49,6 +49,7 @@ data class SanitizeAuditContract(
     val isClean: Boolean,
     val jsCount: Int,
     val launchActionsCount: Int,
+    val otherActionsCount: Int,
     val untrustedUriCount: Int,
     val attachmentCount: Int,
     val uriCount: Int,

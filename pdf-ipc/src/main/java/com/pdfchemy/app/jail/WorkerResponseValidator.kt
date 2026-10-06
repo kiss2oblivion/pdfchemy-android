@@ -237,6 +237,7 @@ object WorkerResponseValidator {
         // Canonical schema requires all detailed fields explicitly
         val jsCount = obj.requireInt("jsCount", min = 0)
         val launchActionsCount = obj.requireInt("launchActionsCount", min = 0)
+        val otherActionsCount = obj.requireInt("otherActionsCount", min = 0)
         val untrustedUriCount = obj.requireInt("untrustedUriCount", min = 0)
         val attachmentCount = obj.requireInt("attachmentCount", min = 0)
         val uriCount = obj.requireInt("uriCount", min = 0)
@@ -254,6 +255,7 @@ object WorkerResponseValidator {
             isClean = isClean,
             jsCount = jsCount,
             launchActionsCount = launchActionsCount,
+            otherActionsCount = otherActionsCount,
             untrustedUriCount = untrustedUriCount,
             attachmentCount = attachmentCount,
             uriCount = uriCount,

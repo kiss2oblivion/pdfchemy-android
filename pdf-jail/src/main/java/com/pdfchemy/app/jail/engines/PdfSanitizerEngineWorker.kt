@@ -15,9 +15,9 @@ object PdfSanitizerEngineWorker {
             val f = ActiveContentScrubber.inspect(document)
             val info = document.documentInformation
             val metadata = info != null && (!info.author.isNullOrBlank() || !info.title.isNullOrBlank() || !info.creator.isNullOrBlank())
-            val executableThreats = f.javascript + f.actions + f.untrustedUris
+            val executableThreats = f.javascript + f.launches + f.actions + f.untrustedUris
             JSONObject().put("threatsFound", executableThreats).put("isClean", executableThreats == 0)
-                .put("jsCount", f.javascript).put("launchActionsCount", f.actions).put("untrustedUriCount", f.untrustedUris).put("attachmentCount", f.attachments).put("uriCount", f.uris)
+                .put("jsCount", f.javascript).put("launchActionsCount", f.launches).put("otherActionsCount", f.actions).put("untrustedUriCount", f.untrustedUris).put("attachmentCount", f.attachments).put("uriCount", f.uris)
                 .put("hasMetadata", metadata).put("isEncrypted", document.isEncrypted).put("parseFailed", false).toString()
         }
     } catch (e: Exception) {
@@ -27,6 +27,7 @@ object PdfSanitizerEngineWorker {
             .put("isClean", false)
             .put("jsCount", 0)
             .put("launchActionsCount", 0)
+            .put("otherActionsCount", 0)
             .put("untrustedUriCount", 0)
             .put("attachmentCount", 0)
             .put("uriCount", 0)
@@ -55,7 +56,7 @@ object PdfSanitizerEngineWorker {
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
-                .put("actionsRemoved", removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
+                .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
         } finally { scratch.delete() }
     }
 }

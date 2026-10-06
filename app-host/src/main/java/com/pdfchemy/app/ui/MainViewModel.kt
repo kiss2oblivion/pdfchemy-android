@@ -74,8 +74,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val _uiStateInternal = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiStateInternal.asStateFlow()
+
+    private val _uiState = object {
+        var value: UiState
+            get() = _uiStateInternal.value
+            set(v) {
+                if (v is UiState.Error) {
+                    val context = getApplication<Application>()
+                    pendingOutputUris.toList().forEach { uri ->
+                        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() } catch(e: Exception) {}
+                    }
+                }
+                if (v is UiState.Success || v is UiState.Error || v is UiState.Idle) {
+                    pendingOutputUris.clear()
+                }
+                _uiStateInternal.value = v
+            }
+    }
 
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
