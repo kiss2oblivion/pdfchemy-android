@@ -1105,6 +1105,7 @@
     <string name="vanguard_blocked_title">Document Blocked by Vanguard</string>
     <string name="vanguard_blocked_message_js">JavaScript action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_launch">External process launch action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="vanguard_blocked_message_uri">Suspicious or automated network activity detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_default">Automatic external action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message">This PDF contains embedded scripts or automated execution hooks. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_encrypted_title">Password-Protected Document</string>

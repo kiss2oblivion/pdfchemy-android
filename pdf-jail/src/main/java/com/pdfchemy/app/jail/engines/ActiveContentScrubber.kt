@@ -9,10 +9,10 @@ import com.pdfchemy.app.security.SecurityLimits
 
 /** Visits every reachable and pooled object, including outlines and associated-file dictionaries. */
 object ActiveContentScrubber {
-    data class Findings(var javascript: Int = 0, var actions: Int = 0, var attachments: Int = 0, var uris: Int = 0) {
-        val total get() = javascript + actions + attachments + uris
+    data class Findings(var javascript: Int = 0, var actions: Int = 0, var untrustedUris: Int = 0, var attachments: Int = 0, var uris: Int = 0) {
+        val total get() = javascript + actions + untrustedUris + attachments + uris
         fun selected(js: Boolean, actions: Boolean, attachments: Boolean) = Findings(
-            if (js) javascript else 0, if (actions) this.actions else 0,
+            if (js) javascript else 0, if (actions) this.actions else 0, if (actions) this.untrustedUris else 0,
             if (attachments) this.attachments else 0, if (actions) uris else 0)
     }
     private val activeActions = setOf("Launch", "GoToR", "GoToE", "SubmitForm", "ImportData", "Rendition", "Movie", "Sound", "RichMedia", "3D")
@@ -45,7 +45,7 @@ object ActiveContentScrubber {
                         val child = if (it is COSObject) it.`object` else it
                         val automaticAction = key.name == "OpenAction" && child is COSDictionary && child.containsKey(COSName.S)
                         val inherited = isTriggered && key.name !in setOf("Dest", "D", "Parent", "P", "Pages", "Root", "Prev")
-                        queue.add(Triple(it, depth + 1, inherited || automaticAction || key.name in setOf("AA", "Outlines")))
+                        queue.add(Triple(it, depth + 1, inherited || automaticAction || key.name == "AA"))
                     } }
                     val action = base.getNameAsString(COSName.S)
                     val subtype = base.getNameAsString(COSName.SUBTYPE)
@@ -53,7 +53,7 @@ object ActiveContentScrubber {
                     if (action == "URI") {
                         if (uriObjects.add(base)) findings.uris++
                         val scheme = runCatching { java.net.URI(base.getString(name("URI"), "")).scheme?.lowercase() }.getOrNull()
-                        if (isTriggered || scheme !in setOf("http", "https")) findings.actions++
+                        if (isTriggered || scheme !in setOf("http", "https")) findings.untrustedUris++
                         listOf("S", "URI", "Next").forEach { remove(it, purgeActions) }
                     }
                     if (action == "JavaScript" || base.containsKey(name("JS")) || base.containsKey(name("JavaScript"))) {
@@ -69,7 +69,7 @@ object ActiveContentScrubber {
                         if (subtype in activeSubtypes && scrub && purgeActions) base.setName(COSName.SUBTYPE, "Text")
                         listOf("XFA", "RichMediaContent", "RichMediaSettings", "3DD", "3DA", "Movie", "Sound").forEach { remove(it, purgeActions) }
                     }
-                    if (base.containsKey(name("AA"))) { findings.actions++; remove("AA", purgeActions) }
+                    
                     if (subtype == "FileAttachment" || listOf("EmbeddedFiles", "AF", "EF", "FS").any { base.containsKey(name(it)) }) {
                         findings.attachments++
                         listOf("EmbeddedFiles", "AF", "EF", "FS").forEach { remove(it, purgeAttachments) }

@@ -57,7 +57,7 @@ class ActiveContentScrubberTest {
             val action = COSDictionary().apply { setName(COSName.S, "URI"); setString(name("URI"), "https://example.com/beacon") }
             document.documentCatalog.cosObject.setItem(name("Annots"), COSArray().apply { add(COSDictionary().apply { setItem(COSName.A, action) }) })
             document.documentCatalog.cosObject.setItem(name("OpenAction"), action)
-            assertTrue(ActiveContentScrubber.inspect(document).actions > 0)
+            assertTrue(ActiveContentScrubber.inspect(document).untrustedUris > 0)
             ActiveContentScrubber.inspect(document, scrub = true)
             assertEquals(0, ActiveContentScrubber.inspect(document).total)
         }

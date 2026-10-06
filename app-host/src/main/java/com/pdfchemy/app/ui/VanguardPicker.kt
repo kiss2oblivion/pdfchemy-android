@@ -292,6 +292,7 @@ fun rememberVanguardPdfPicker(
                                     blockedReasonResId = when {
                                         threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
                                         threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                        threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
                                         else -> R.string.vanguard_blocked_message_default
                                     }
                                     showBlockedDialog = true
@@ -573,6 +574,7 @@ fun rememberVanguardMultiplePdfPicker(
                                         blockedReasonResId = when {
                                             threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
                                             threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                            threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
                                             else -> R.string.vanguard_blocked_message_default
                                         }
                                         showBlockedDialog = true
