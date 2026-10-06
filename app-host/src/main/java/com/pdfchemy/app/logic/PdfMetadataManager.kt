@@ -79,13 +79,17 @@ class PdfMetadataManager {
             val destUri = Uri.fromFile(tempDest)
             val res = PdfMetadataEngine.writeOrSanitizeMetadata(context, sourceUri, destUri, null, true)
             if (res.isSuccess) {
-                context.contentResolver.openOutputStream(sourceUri, "wt")?.use { outputStream ->
+                requireNotNull(context.contentResolver.openOutputStream(sourceUri, "wt")) { "Cannot open metadata destination" }.use { outputStream ->
                     tempDest.inputStream().use { it.copyTo(outputStream) }
                 }
                 Result.success(Unit)
             } else {
                 Result.failure(res.exceptionOrNull() ?: Exception("Unknown error clearing metadata overwrite"))
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
         } finally {
             tempDest.delete()
         }

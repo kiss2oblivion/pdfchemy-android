@@ -36,15 +36,15 @@ object PdfManipulator {
         }
     }
 
-    suspend fun splitPdf(context: Context, sourceUri: Uri, outputDirectory: DocumentFile, baseName: String, pageRange: String? = null) {
-        withContext(Dispatchers.IO) {
+    suspend fun splitPdf(context: Context, sourceUri: Uri, outputDirectory: DocumentFile, baseName: String, pageRange: String? = null): List<Uri> {
+        return withContext(Dispatchers.IO) {
             var pagesToKeep = emptySet<Int>()
             // Need a fast way to get total pages. If we don't know it, we have a problem.
             var totalPages = getPageCountFromGateway(context, sourceUri)
-            if (totalPages == 0) return@withContext
+            require(totalPages > 0) { "No readable pages to split" }
             
             pagesToKeep = parsePageRange(pageRange, totalPages)
-            if (pagesToKeep.isEmpty()) return@withContext
+            require(pagesToKeep.isNotEmpty()) { "No pages selected to split" }
 
             if (pagesToKeep.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
@@ -73,6 +73,7 @@ object PdfManipulator {
                     destUris,
                     paramsJson
                 )
+                destUris.toList()
             } catch (e: Exception) {
                 createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to split PDF via Gateway", e)
@@ -89,6 +90,7 @@ object PdfManipulator {
         whiteThreshold: Float = 0.999f
     ): List<Uri> = withContext(Dispatchers.IO) {
         val outputUris = mutableListOf<Uri>()
+        val createdOutputs = mutableListOf<DocumentFile>()
         try {
             val paramsJson = org.json.JSONObject().apply {
                 put("whiteThreshold", whiteThreshold.toDouble())
@@ -103,7 +105,6 @@ object PdfManipulator {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
-            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
@@ -130,6 +131,7 @@ object PdfManipulator {
                 }
             }
         } catch (e: Exception) {
+            createdOutputs.forEach { runCatching { it.delete() } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by blank pages via Gateway", e)
             throw e
         }
@@ -143,6 +145,7 @@ object PdfManipulator {
         baseName: String
     ): List<Uri> = withContext(Dispatchers.IO) {
         val outputUris = mutableListOf<Uri>()
+        val createdOutputs = mutableListOf<DocumentFile>()
         try {
             val plan = PdfGateway.executeEngineTyped<PlanSplitBookmarksContract>(context, "PLAN_SPLIT_BOOKMARKS", sourceUri, null, "{}")
             if (!plan.success) {
@@ -154,7 +157,6 @@ object PdfManipulator {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
 
-            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
                 val newFile = outputDirectory.createFile("application/pdf", fileName)
@@ -181,6 +183,7 @@ object PdfManipulator {
                 }
             }
         } catch (e: Exception) {
+            createdOutputs.forEach { runCatching { it.delete() } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by bookmarks via Gateway", e)
             throw e
         }
@@ -290,9 +293,10 @@ object PdfManipulator {
         targetWidth: Int = 1440
     ): List<Uri> = withContext(Dispatchers.IO) {
         val outputUris = mutableListOf<Uri>()
+        val createdOutputs = mutableListOf<DocumentFile>()
         try {
             var totalPages = getPageCountFromGateway(context, sourceUri)
-            if (totalPages == 0) return@withContext emptyList()
+            require(totalPages > 0) { "No readable pages to export" }
             if (totalPages > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
                 throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
             }
@@ -301,7 +305,6 @@ object PdfManipulator {
             val mimeType = if (isPng) "image/png" else "image/jpeg"
             val extension = if (isPng) "png" else "jpg"
 
-            val createdOutputs = mutableListOf<DocumentFile>()
             for (i in 0 until totalPages) {
                 val fileName = "${baseName}_page_${i + 1}.$extension"
                 val newFile = outputDirectory.createFile(mimeType, fileName)
@@ -326,6 +329,7 @@ object PdfManipulator {
                 }
             }
         } catch (e: Exception) {
+            createdOutputs.forEach { runCatching { it.delete() } }
             com.pdfchemy.app.utils.AppLogger.e("Failed to convert PDF to images via Gateway", e)
             throw e
         }
@@ -333,12 +337,7 @@ object PdfManipulator {
     }
 
     private suspend fun getPageCountFromGateway(context: Context, sourceUri: Uri): Int {
-        return try {
-            val contract = PdfGateway.executeEngineTyped<PageCountContract>(context, "GET_PAGE_COUNT", sourceUri, null, "{}")
-            contract.pageCount
-        } catch (e: Exception) {
-            0
-        }
+        return PdfGateway.executeEngineTyped<PageCountContract>(context, "GET_PAGE_COUNT", sourceUri, null, "{}").pageCount
     }
 
     private fun parsePageRange(rangeStr: String?, totalPages: Int): Set<Int> {
@@ -355,7 +354,9 @@ object PdfManipulator {
                     val start = bounds[0].trim().toIntOrNull()
                     val end = bounds[1].trim().toIntOrNull()
                     if (start != null && end != null && start <= end) {
-                        pages.addAll((start..end).toList())
+                        val boundedStart = maxOf(1, start)
+                        val boundedEnd = minOf(totalPages, end)
+                        if (boundedStart <= boundedEnd) pages.addAll(boundedStart..boundedEnd)
                     }
                 }
             } else {

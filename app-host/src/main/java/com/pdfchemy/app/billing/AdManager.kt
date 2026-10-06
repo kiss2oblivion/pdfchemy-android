@@ -17,6 +17,7 @@ object AdManager {
     private var lastAdShownTime: Long = 0
     private const val COOLDOWN_MILLIS = 60_000L // 60 seconds cooldown
     fun loadInterstitial(context: Context) {
+        if (!com.google.android.ump.UserMessagingPlatform.getConsentInformation(context).canRequestAds()) return
         if (interstitialAd != null) return // Already loaded
 
         val adRequest = AdRequest.Builder().build()
@@ -43,7 +44,7 @@ object AdManager {
         isPremium: Boolean,
         onAdDismissed: () -> Unit
     ) {
-        if (isPremium) {
+        if (isPremium || !com.google.android.ump.UserMessagingPlatform.getConsentInformation(activity).canRequestAds()) {
             onAdDismissed()
             return
         }

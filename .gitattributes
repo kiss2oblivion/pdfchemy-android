@@ -1,0 +1,2 @@
+# PDF offsets and regression hashes require byte-for-byte preservation.
+*.pdf binary

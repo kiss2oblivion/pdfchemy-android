@@ -28,6 +28,7 @@ import android.graphics.Bitmap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 import java.io.File
 import java.io.FileInputStream
 import androidx.compose.ui.res.stringResource
@@ -61,15 +62,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun cancelOperation(context: android.content.Context) {
-        activeJob?.cancel()
+        val cancelledJob = activeJob
+        val ownedOutputs = synchronized(pendingOutputUris) { pendingOutputUris.toList().also { pendingOutputUris.clear() } }
+        cancelledJob?.cancel()
         activeJob = null
-        pendingOutputUris.toList().forEach { uri ->
-            try {
-                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete()
-            } catch(e: Exception) {}
-        }
-        pendingOutputUris.clear()
         _uiState.value = UiState.Idle
+        viewModelScope.launch(Dispatchers.IO) {
+            // A provider write must finish/abort before its document is deleted.
+            cancelledJob?.join()
+            ownedOutputs.forEach { uri ->
+                runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() }
+            }
+        }
     }
 
 
@@ -274,6 +278,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val size = try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 -1L
             }
             withContext(Dispatchers.Main) {
@@ -324,6 +329,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _inputText.value = stringBuilder.toString()
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error("Failed to read text file: ${e.message}")
             }
         }
@@ -365,6 +371,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val compressedSize = try {
                     context.contentResolver.openFileDescriptor(destUri, "r")?.use { it.statSize } ?: -1L
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     -1L
                 }
 
@@ -418,6 +425,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 refreshHistory()
                 
             }.onFailure { error ->
+                if (error is kotlinx.coroutines.CancellationException) throw error
                 val userFriendlyMessage = when {
                     error.message?.contains("password", ignoreCase = true) == true || error.message?.contains("encrypt", ignoreCase = true) == true ->
                         context.getString(R.string.error_user_encrypted)
@@ -456,6 +464,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_doc_saved), listOf(destUri))
             }.onFailure { error ->
+                if (error is kotlinx.coroutines.CancellationException) throw error
                 _uiState.value = UiState.Error(error.message ?: "Failed to create PDF.")
             }
         }
@@ -474,6 +483,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", imageUris, listOf(destUri), "{}")
                 _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted))
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in MainViewModel", e)
                 _uiState.value = UiState.Error(e.message ?: "Failed to create PDF from images.")
             }
@@ -501,6 +511,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val size = try {
                     context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     -1L
                 }
                 val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "unknown_file.pdf"
@@ -545,79 +556,95 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun compressBatch(context: Context, destTreeUri: Uri) {
         if (_uiState.value is UiState.Processing || _uiState.value is UiState.BatchProcessing) return
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val files = _selectedFiles.value
-            if (files.isEmpty()) {
-                _uiState.value = UiState.Error(context.getString(R.string.msg_no_files_batch))
-                return@launch
-            }
-
-            val directory = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, destTreeUri)
-            if (directory == null || !directory.exists()) {
-                _uiState.value = UiState.Error(context.getString(R.string.msg_invalid_folder))
-                return@launch
-            }
-
-            val total = files.size
-            var successCount = 0
-            val sizeSavedMap = mutableMapOf<Int, Long>()
-            val outputUris = mutableListOf<Uri>()
-
-            files.forEachIndexed { index, selectedFile ->
-                _uiState.value = UiState.BatchProcessing(index + 1, total, selectedFile.name)
-
-                val outputName = "compressed_${selectedFile.name}"
-                val outputDoc = directory.createFile("application/pdf", outputName)
-                if (outputDoc == null) {
-                    return@forEachIndexed
+        activeJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val files = _selectedFiles.value
+                if (files.isEmpty()) {
+                    _uiState.value = UiState.Error(context.getString(R.string.msg_no_files_batch))
+                    return@launch
                 }
-                addPendingOutputUri(outputDoc.uri)
 
-                val compressResult = PdfCompressor.compressPdf(
-                    context = context,
-                    sourceUri = selectedFile.uri,
-                    destUri = outputDoc.uri,
-                    quality = _compressionQuality.value,
-                    useGrayscale = _useGrayscale.value,
-                    useLossless = _useLossless.value,
-                    stripMetadata = _stripMetadata.value,
-                    targetMb = _targetMb.value
-                )
+                val directory = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, destTreeUri)
+                if (directory == null || !directory.exists()) {
+                    _uiState.value = UiState.Error(context.getString(R.string.msg_invalid_folder))
+                    return@launch
+                }
 
-                compressResult.onSuccess { report ->
-                    outputUris.add(outputDoc.uri)
-                    val compressedSize = try {
-                        context.contentResolver.openFileDescriptor(outputDoc.uri, "r")?.use { it.statSize } ?: -1L
-                    } catch (e: Exception) { -1L }
-                    if (report.originalSize > 0 && compressedSize > 0 && compressedSize < report.originalSize) {
-                        sizeSavedMap[index] = report.originalSize - compressedSize
+                val total = files.size
+                var successCount = 0
+                val sizeSavedMap = mutableMapOf<Int, Long>()
+                val outputUris = mutableListOf<Uri>()
+
+                files.forEachIndexed { index, selectedFile ->
+                    _uiState.value = UiState.BatchProcessing(index + 1, total, selectedFile.name)
+
+                    val outputName = "compressed_${selectedFile.name}"
+                    val outputDoc = directory.createFile("application/pdf", outputName)
+                    if (outputDoc == null) {
+                        return@forEachIndexed
                     }
-                    successCount++
-                }
-            }
+                    addPendingOutputUri(outputDoc.uri)
 
-            if (successCount == total) {
-                historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
-                refreshHistory()
-                val totalSavedBytes = sizeSavedMap.values.sum()
-                val totalSavedStr = formatSize(totalSavedBytes)
-                _uiState.value = UiState.Success(
-                    context.getString(R.string.title_batch_compress_result),
-                    context.getString(R.string.msg_batch_compress_success_all, total, totalSavedStr),
-                    outputUris
-                )
-            } else if (successCount > 0) {
-                historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
-                refreshHistory()
-                val totalSavedBytes = sizeSavedMap.values.sum()
-                val totalSavedStr = formatSize(totalSavedBytes)
-                _uiState.value = UiState.Success(
-                    context.getString(R.string.title_batch_compress_result),
-                    context.getString(R.string.msg_batch_compress_success_partial, successCount, total, totalSavedStr),
-                    outputUris
-                )
-            } else {
-                _uiState.value = UiState.Error(context.getString(R.string.msg_batch_compress_fail))
+                    val compressResult = try { PdfCompressor.compressPdf(
+                        context = context,
+                        sourceUri = selectedFile.uri,
+                        destUri = outputDoc.uri,
+                        quality = _compressionQuality.value,
+                        useGrayscale = _useGrayscale.value,
+                        useLossless = _useLossless.value,
+                        stripMetadata = _stripMetadata.value,
+                        targetMb = _targetMb.value
+                    ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        runCatching { outputDoc.delete() }
+                        pendingOutputUris.remove(outputDoc.uri)
+                        throw cancelled
+                    }
+
+                    compressResult.onSuccess { report ->
+                        outputUris.add(outputDoc.uri)
+                        val compressedSize = try {
+                            context.contentResolver.openFileDescriptor(outputDoc.uri, "r")?.use { it.statSize } ?: -1L
+                        } catch (e: Exception) {
+                            if (e is kotlinx.coroutines.CancellationException) throw e
+                            -1L }
+                        if (report.originalSize > 0 && compressedSize > 0 && compressedSize < report.originalSize) {
+                            sizeSavedMap[index] = report.originalSize - compressedSize
+                        }
+                        successCount++
+                    }.onFailure { error ->
+                        if (error is kotlinx.coroutines.CancellationException) throw error
+                        runCatching { outputDoc.delete() }
+                        pendingOutputUris.remove(outputDoc.uri)
+                    }
+                }
+
+                if (successCount == total) {
+                    historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
+                    refreshHistory()
+                    val totalSavedBytes = sizeSavedMap.values.sum()
+                    val totalSavedStr = formatSize(totalSavedBytes)
+                    _uiState.value = UiState.Success(
+                        context.getString(R.string.title_batch_compress_result),
+                        context.getString(R.string.msg_batch_compress_success_all, total, totalSavedStr),
+                        outputUris
+                    )
+                } else if (successCount > 0) {
+                    historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
+                    refreshHistory()
+                    val totalSavedBytes = sizeSavedMap.values.sum()
+                    val totalSavedStr = formatSize(totalSavedBytes)
+                    _uiState.value = UiState.Success(
+                        context.getString(R.string.title_batch_compress_result),
+                        context.getString(R.string.msg_batch_compress_success_partial, successCount, total, totalSavedStr),
+                        outputUris
+                    )
+                } else {
+                    _uiState.value = UiState.Error(context.getString(R.string.msg_batch_compress_fail))
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _uiState.value = UiState.Error(error.message ?: context.getString(R.string.msg_batch_compress_fail))
             }
         }
     }
@@ -700,6 +727,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_merge_complete), context.getString(R.string.success_merged_docs, sourceUris.size), listOf(destUri))
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to merge PDFs.")
             }
         }
@@ -790,11 +818,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 
                 val baseName = com.pdfchemy.app.utils.FileUtils.getFileName(context, sourceUri)?.substringBeforeLast(".") ?: "split_doc"
                 
-                PdfManipulator.splitPdf(context, sourceUri, directory, baseName, pageRange)
+                val results = PdfManipulator.splitPdf(context, sourceUri, directory, baseName, pageRange)
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.success_split_success), listOf(destTreeUri))
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.success_split_success), results)
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF.")
             }
         }
@@ -822,8 +851,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_blank_pages_found, results.size), listOf(destTreeUri))
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_blank_pages_found, results.size), results)
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF by blank pages.")
             }
         }
@@ -851,8 +881,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_bookmarks_found, results.size), listOf(destTreeUri))
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_bookmarks_found, results.size), results)
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF by bookmarks.")
             }
         }
@@ -874,6 +905,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_pages_deleted), context.getString(R.string.success_pages_removed), listOf(destUri))
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to delete pages.")
             }
         }
@@ -887,8 +919,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = UiState.Processing()
             var extractedCount = 0
             var errorCount = 0
+            var temporaryFrames: File? = null
+            var completed = false
+            val createdOutputs = mutableListOf<DocumentFile>()
             try {
                 val tempZip = File.createTempFile("images_", ".frames", context.cacheDir)
+                temporaryFrames = tempZip
                 val resultJson = com.pdfchemy.app.logic.PdfGateway.executeEngine(
                     context, "IMAGE_EXTRACT_FRAMED", pdfUri, Uri.fromFile(tempZip), "{}"
                 )
@@ -896,16 +932,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 java.io.DataInputStream(FileInputStream(tempZip)).use { input ->
                     var total = 0L
                     while (true) {
+                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
                         val size = input.readInt()
                         if (size == -1) break
                         require(size in 1..16 * 1024 * 1024 && extractedCount < com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES)
                         total += size
                         require(total <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_BYTES)
                         val newFile = outputDirectory.createFile("image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
-                        context.contentResolver.openOutputStream(newFile.uri)!!.use { output ->
+                        createdOutputs.add(newFile)
+                        requireNotNull(context.contentResolver.openOutputStream(newFile.uri, "wt")) { "Cannot open image output" }.use { output ->
                             val buffer = ByteArray(8192)
                             var remaining = size
                             while (remaining > 0) {
+                                kotlinx.coroutines.currentCoroutineContext().ensureActive()
                                 val read = minOf(remaining, buffer.size)
                                 input.readFully(buffer, 0, read)
                                 output.write(buffer, 0, read)
@@ -916,6 +955,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 tempZip.delete()
+                completed = true
                 
                 withContext(Dispatchers.Main) {
                     historyRepository.addHistoryItem(outputDirectory.uri, context.getString(R.string.history_extracted_images_folder), context.getString(R.string.history_extract_images))
@@ -924,11 +964,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.Idle
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in MainViewModel", e)
                 withContext(Dispatchers.Main) {
-                    onComplete(extractedCount, errorCount)
-                    _uiState.value = UiState.Idle
+                    onComplete(0, errorCount + 1)
+                    _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                 }
+            } finally {
+                temporaryFrames?.delete()
+                if (!completed) createdOutputs.forEach { runCatching { it.delete() } }
             }
         }
     }
@@ -937,8 +981,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // [FEATURE: Rotate Pages] (FEATURES_REGISTRY Android §2: Page Studio & Organization)
     // =============================================================================================
     fun rotatePdf(context: Context, sourceUri: Uri, destUri: Uri, degrees: Int, pageRange: String = "") {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 PdfManipulator.rotatePdf(context, sourceUri, destUri, degrees, pageRange)
                 withContext(Dispatchers.Main) {
@@ -947,6 +992,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_doc_saved), listOf(destUri))
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in MainViewModel", e)
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
@@ -959,8 +1005,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // [FEATURE: Extract Plain Text from PDF] (FEATURES_REGISTRY Android §3: Creation & Conversion)
     // =============================================================================================
     fun extractTextFromPdf(context: Context, sourceUri: Uri, destUri: Uri) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val success = PdfTextExtractor.extractText(context, sourceUri, destUri)
                 withContext(Dispatchers.Main) {
@@ -973,6 +1020,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in MainViewModel", e)
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
@@ -994,8 +1042,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stripExif: Boolean,
         onResult: (ImageCompressionResult) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val result = ImageCompressor.compressImage(
                     context = context,
@@ -1021,6 +1070,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onResult(result)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in compressImage", e)
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: "Image compression failed")
@@ -1049,8 +1099,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stripExif: Boolean,
         onResult: (ImageCompressionResult) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val result = ImageCompressor.compressToTargetSize(
                     context = context,
@@ -1075,6 +1126,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onResult(result)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 AppLogger.e("Exception in compressImageToTargetSize", e)
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: "Target size compression failed")
@@ -1104,93 +1156,99 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         stripExif: Boolean,
         onComplete: (BatchImageCompressionResult) -> Unit
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val outputUris = Collections.synchronizedList(mutableListOf<Uri>())
-            val errors = Collections.synchronizedList(mutableListOf<String>())
-            val totalOriginalBytes = AtomicLong(0L)
-            val totalCompressedBytes = AtomicLong(0L)
-            val successCount = AtomicInteger(0)
-            val failureCount = AtomicInteger(0)
-            val completedCount = AtomicInteger(0)
-            val semaphore = Semaphore(1)
+        activeJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val outputUris = Collections.synchronizedList(mutableListOf<Uri>())
+                val errors = Collections.synchronizedList(mutableListOf<String>())
+                val totalOriginalBytes = AtomicLong(0L)
+                val totalCompressedBytes = AtomicLong(0L)
+                val successCount = AtomicInteger(0)
+                val failureCount = AtomicInteger(0)
+                val completedCount = AtomicInteger(0)
+                val semaphore = Semaphore(1)
 
-            coroutineScope {
-                sourceUris.mapIndexed { index, uri ->
-                    launch(Dispatchers.IO) {
-                        semaphore.withPermit {
-                            val fileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "image_${index + 1}.jpg"
-                            val baseName = fileName.substringBeforeLast(".")
-                            val ext = if (format == ImageOutputFormat.ORIGINAL) {
-                                val origExt = fileName.substringAfterLast(".", "jpg").lowercase()
-                                if (origExt in listOf("jpg", "jpeg", "png", "webp")) origExt else "jpg"
-                            } else {
-                                format.extension
-                            }
-                            val mime = when (ext) {
-                                "png" -> "image/png"
-                                "webp" -> "image/webp"
-                                else -> "image/jpeg"
-                            }
+                coroutineScope {
+                    sourceUris.mapIndexed { index, uri ->
+                        launch(Dispatchers.IO) {
+                            semaphore.withPermit {
+                                val fileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "image_${index + 1}.jpg"
+                                val baseName = fileName.substringBeforeLast(".")
+                                val resolvedFormat = if (format == ImageOutputFormat.ORIGINAL) {
+                                    ImageCompressor.resolveOutputFormat(format, ImageCompressor.analyzeImage(context, uri).mimeType)
+                                } else format
+                                val ext = resolvedFormat.extension
+                                val mime = resolvedFormat.mimeType
 
-                            val originalSize = ImageCompressor.getUriFileSize(context, uri)
-                            totalOriginalBytes.addAndGet(originalSize)
+                                val originalSize = ImageCompressor.getUriFileSize(context, uri)
+                                totalOriginalBytes.addAndGet(originalSize)
 
-                            val targetFile = outputDirectory.createFile(mime, "${baseName}_compressed.$ext")
-                            if (targetFile != null) {
-                                val result = ImageCompressor.compressImage(
-                                    context = context,
-                                    sourceUri = uri,
-                                    destUri = targetFile.uri,
-                                    quality = quality,
-                                    targetFormat = format,
-                                    maxDimension = maxDimension,
-                                    stripExif = stripExif
-                                )
+                                val targetFile = outputDirectory.createFile(mime, "${baseName}_compressed.$ext")
+                                if (targetFile != null) {
+                                    addPendingOutputUri(targetFile.uri)
+                                    val result = try { ImageCompressor.compressImage(
+                                        context = context,
+                                        sourceUri = uri,
+                                        destUri = targetFile.uri,
+                                        quality = quality,
+                                        targetFormat = resolvedFormat,
+                                        maxDimension = maxDimension,
+                                        stripExif = stripExif
+                                    ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                        runCatching { targetFile.delete() }
+                                        pendingOutputUris.remove(targetFile.uri)
+                                        throw cancelled
+                                    }
 
-                                if (result.success) {
-                                    successCount.incrementAndGet()
-                                    totalCompressedBytes.addAndGet(result.compressedSize)
-                                    outputUris.add(targetFile.uri)
+                                    if (result.success) {
+                                        successCount.incrementAndGet()
+                                        totalCompressedBytes.addAndGet(result.compressedSize)
+                                        outputUris.add(targetFile.uri)
+                                    } else {
+                                        failureCount.incrementAndGet()
+                                        errors.add("$fileName: ${result.error ?: "Compression failed"}")
+                                        targetFile.delete()
+                                        pendingOutputUris.remove(targetFile.uri)
+                                    }
                                 } else {
                                     failureCount.incrementAndGet()
-                                    errors.add("$fileName: ${result.error ?: "Compression failed"}")
-                                    targetFile.delete()
+                                    errors.add("$fileName: Failed to create output file")
                                 }
-                            } else {
-                                failureCount.incrementAndGet()
-                                errors.add("$fileName: Failed to create output file")
-                            }
 
-                            val done = completedCount.incrementAndGet()
-                            withContext(Dispatchers.Main) {
-                                _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName)
+                                val done = completedCount.incrementAndGet()
+                                withContext(Dispatchers.Main) {
+                                    _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName)
+                                }
                             }
                         }
-                    }
-                }.joinAll()
-            }
-
-            val batchResult = BatchImageCompressionResult(
-                totalCount = sourceUris.size,
-                successCount = successCount.get(),
-                failureCount = failureCount.get(),
-                totalOriginalBytes = totalOriginalBytes.get(),
-                totalCompressedBytes = totalCompressedBytes.get(),
-                outputUris = ArrayList(outputUris),
-                errors = ArrayList(errors)
-            )
-
-            withContext(Dispatchers.Main) {
-                if (outputUris.isNotEmpty()) {
-                    historyRepository.addHistoryItem(
-                        outputDirectory.uri,
-                        context.getString(R.string.history_compressed_images_folder),
-                        context.getString(R.string.menu_compress_image)
-                    )
-                    refreshHistory()
+                    }.joinAll()
                 }
-                _uiState.value = UiState.Idle
-                onComplete(batchResult)
+
+                val batchResult = BatchImageCompressionResult(
+                    totalCount = sourceUris.size,
+                    successCount = successCount.get(),
+                    failureCount = failureCount.get(),
+                    totalOriginalBytes = totalOriginalBytes.get(),
+                    totalCompressedBytes = totalCompressedBytes.get(),
+                    outputUris = ArrayList(outputUris),
+                    errors = ArrayList(errors)
+                )
+
+                withContext(Dispatchers.Main) {
+                    if (outputUris.isNotEmpty()) {
+                        historyRepository.addHistoryItem(
+                            outputDirectory.uri,
+                            context.getString(R.string.history_compressed_images_folder),
+                            context.getString(R.string.menu_compress_image)
+                        )
+                        refreshHistory()
+                    }
+                    _uiState.value = UiState.Idle
+                    onComplete(batchResult)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _uiState.value = UiState.Error(error.message ?: context.getString(R.string.msg_error_unknown))
             }
         }
     }
@@ -1205,8 +1263,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         modifications: Map<Int, com.pdfchemy.app.logic.PageModification>,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfEditor.exportModifiedPdf(
                 context = context,
                 sourceUri = sourceUri,
@@ -1243,8 +1302,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         ownerPassword: String = userPassword,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 com.pdfchemy.app.logic.PdfManipulator.protectPdf(
                     context = context,
@@ -1268,6 +1328,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(true)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
@@ -1286,8 +1347,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         password: String,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 com.pdfchemy.app.logic.PdfManipulator.unlockPdf(
                     context = context,
@@ -1310,6 +1372,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(true)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.error_invalid_password))
                     onComplete(false)
@@ -1332,7 +1395,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onComplete: (List<Uri>) -> Unit
     ) {
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val uris = com.pdfchemy.app.logic.PdfManipulator.convertPdfToImages(
                     context = context,
@@ -1360,6 +1423,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(uris)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(emptyList())
@@ -1379,8 +1443,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         flatten: Boolean = false,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.AcroFormEngine.fillAndSaveForm(
                     context = context,
@@ -1408,6 +1473,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(success)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
@@ -1426,8 +1492,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfOcrEngine.createSearchablePdf(
                     context = context,
@@ -1458,6 +1525,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(success)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
@@ -1476,8 +1544,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         redactions: List<com.pdfchemy.app.logic.RedactionBox>,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
                     context = context,
@@ -1504,6 +1573,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(success)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
@@ -1522,8 +1592,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         signatures: List<com.pdfchemy.app.logic.PlacedSignature>,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.SignatureEngine.applySignatures(
                     context = context,
@@ -1550,6 +1621,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onComplete(success)
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 withContext(Dispatchers.Main) {
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
@@ -1568,8 +1640,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         format: com.pdfchemy.app.logic.OfficeFormat,
         onComplete: (Boolean) -> Unit
     ) {
+        addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             val result = when (format) {
                 com.pdfchemy.app.logic.OfficeFormat.WORD -> com.pdfchemy.app.logic.OfficeExportEngine.exportToWord(context, sourceUri, destUri)
                 com.pdfchemy.app.logic.OfficeFormat.EXCEL -> com.pdfchemy.app.logic.OfficeExportEngine.exportToExcel(context, sourceUri, destUri)
@@ -1590,6 +1663,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     onComplete(true)
                 }.onFailure { e ->
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
                 }
@@ -1611,7 +1685,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onComplete: (Boolean) -> Unit
     ) {
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfImageReplacerEngine.replaceEmbeddedImage(
                 context,
                 sourcePdfUri,
@@ -1631,6 +1705,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     onComplete(true)
                 }.onFailure { e ->
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
                 }
@@ -1651,7 +1726,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onComplete: (Boolean) -> Unit
     ) {
         _uiState.value = UiState.Processing()
-        viewModelScope.launch {
+        activeJob = viewModelScope.launch {
             val result = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.replaceAll(
                 context,
                 sourcePdfUri,
@@ -1670,6 +1745,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     onComplete(true)
                 }.onFailure { e ->
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
                     onComplete(false)
                 }

@@ -123,6 +123,8 @@ import com.pdfchemy.app.ui.FormBuilderScreen
 
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.text.font.FontWeight
@@ -362,7 +364,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             cleanDir(context.cacheDir)
-            cleanDir(File(context.filesDir, "scans"))
+            // Saved scans are user documents, not disposable cache files.
         } catch (e: Throwable) {
             AppLogger.w("Failed to clean orphaned cache files: ${e.message}")
         }
@@ -1029,13 +1031,13 @@ fun MainApp(
                                 OutlinedButton(
                                     onClick = { 
                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                            setDataAndType(state.outputUris.first(), "application/pdf")
+                                            setDataAndType(state.outputUris.first(), com.pdfchemy.app.utils.FileUtils.getMimeType(context, state.outputUris.first()))
                                             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                         try { context.startActivity(intent) } catch (e: Exception) { }
                                     },
                                     modifier = Modifier.fillMaxWidth()
-                                ) { Text("Open PDF") }
+                                ) { Text(stringResource(R.string.btn_open_file)) }
                                 OutlinedButton(
                                     onClick = { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output)) },
                                     modifier = Modifier.fillMaxWidth()
@@ -1196,6 +1198,7 @@ fun MainApp(
 
 @Composable
 fun BannerAdView(modifier: Modifier = Modifier) {
+    if (!rememberAdsAllowed()) return
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -1217,6 +1220,19 @@ fun BannerAdView(modifier: Modifier = Modifier) {
             }
         )
     }
+}
+
+@Composable
+private fun rememberAdsAllowed(): Boolean {
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(UserMessagingPlatform.getConsentInformation(context).canRequestAds()) }
+    LaunchedEffect(context) {
+        while (true) {
+            delay(1000)
+            allowed = UserMessagingPlatform.getConsentInformation(context).canRequestAds()
+        }
+    }
+    return allowed
 }
 
 // =============================================================================================
@@ -1814,17 +1830,29 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { destUri: Uri? ->
         if (destUri != null && scannedPdfUri != null) {
-            try {
-                val sourceUri = scannedPdfUri ?: return@rememberLauncherForActivityResult
-                context.contentResolver.openInputStream(sourceUri)?.use { input ->
-                    context.contentResolver.openOutputStream(destUri)?.use { output ->
-                        input.copyTo(output)
+            val sourceUri = scannedPdfUri ?: return@rememberLauncherForActivityResult
+            coroutineScope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        requireNotNull(context.contentResolver.openInputStream(sourceUri)) { "Cannot read scanned PDF" }.use { input ->
+                            requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open scan destination" }.use { output ->
+                                val buffer = ByteArray(64 * 1024)
+                                while (true) {
+                                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                    val count = input.read(buffer)
+                                    if (count < 0) break
+                                    output.write(buffer, 0, count)
+                                }
+                            }
+                        }
                     }
+                    Toast.makeText(context, context.getString(R.string.msg_scanned_pdf_exported), Toast.LENGTH_SHORT).show()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (e: Exception) {
+                    AppLogger.e("Exception caught in MainActivity", e)
+                    Toast.makeText(context, context.getString(R.string.msg_failed_export), Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context, context.getString(R.string.msg_scanned_pdf_exported), Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                AppLogger.e("Exception caught in MainActivity", e)
-                Toast.makeText(context, context.getString(R.string.msg_failed_export), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1837,6 +1865,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             scanningResult?.pdf?.uri?.let { pdfUri ->
                 scannedPdfUri = pdfUri
                 coroutineScope.launch {
+                    var savedScanFile: File? = null
                     try {
                         val scansDir = java.io.File(context.filesDir, "scans")
                         if (!scansDir.exists()) scansDir.mkdirs()
@@ -1844,10 +1873,19 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                         val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
                         val fileName = "${context.getString(R.string.scan_prefix)}$timeStamp.pdf"
                         val destFile = java.io.File(scansDir, fileName)
+                        savedScanFile = destFile
                         
-                        context.contentResolver.openInputStream(pdfUri)?.use { input ->
-                            java.io.FileOutputStream(destFile).use { output ->
-                                input.copyTo(output)
+                        withContext(Dispatchers.IO) {
+                            requireNotNull(context.contentResolver.openInputStream(pdfUri)) { "Cannot read scanned PDF" }.use { input ->
+                                java.io.FileOutputStream(destFile).use { output ->
+                                    val buffer = ByteArray(64 * 1024)
+                                    while (true) {
+                                        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                                        val count = input.read(buffer)
+                                        if (count < 0) break
+                                        output.write(buffer, 0, count)
+                                    }
+                                }
                             }
                         }
                         
@@ -1859,6 +1897,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                         
                         val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
                         historyRepo.addHistoryItem(internalUri, fileName, context.getString(R.string.menu_scan))
+                        savedScanFile = null // Successful persistence: later UI cancellation must retain it.
                         
                         // Show snackbar with Export option
                         val snackbarResult = snackbarHostState.showSnackbar(
@@ -1869,7 +1908,11 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                         if (snackbarResult == SnackbarResult.ActionPerformed) {
                             saveScannedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, context.getString(R.string.default_scanned_doc_name)))
                         }
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        savedScanFile?.delete()
+                        throw cancelled
                     } catch (e: Exception) {
+                        savedScanFile?.delete()
                         AppLogger.e("Exception caught in MainActivity", e)
                         snackbarHostState.showSnackbar(context.getString(R.string.msg_failed_scan))
                     }
@@ -3311,6 +3354,17 @@ fun SettingsScreen(
                 TextButton(onClick = { showPrivacyPolicyDialog = false }) {
                     Text(stringResource(R.string.ok))
                 }
+            },
+            dismissButton = {
+                val activity = context as? android.app.Activity
+                if (activity != null && UserMessagingPlatform.getConsentInformation(context).privacyOptionsRequirementStatus == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED) {
+                    TextButton(onClick = {
+                        showPrivacyPolicyDialog = false
+                        UserMessagingPlatform.showPrivacyOptionsForm(activity) { error ->
+                            if (error != null) Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+                        }
+                    }) { Text(stringResource(R.string.privacy_choices)) }
+                }
             }
         )
     }
@@ -4170,7 +4224,7 @@ fun RecentFilesSection(
 
 @Composable
 fun BannerAd(isPremium: Boolean, modifier: Modifier = Modifier) {
-    if (isPremium) return
+    if (isPremium || !rememberAdsAllowed()) return
     Box(
         modifier = modifier
             .fillMaxWidth()

@@ -1,0 +1,124 @@
+[
+  {
+    "file": "01-metadata-xmp.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "metadata",
+      "xmp"
+    ],
+    "sha256": "92e56c53c6471864753e546a758514afd339025608b5718f4e8e07c7fcd39943",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "02-https-link.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "https"
+    ],
+    "sha256": "bcf6812f5c2079e49d561c9a20e606bd71bcbf70a86f8e0969076524ff5385d6",
+    "attachments": 0,
+    "uris": 1
+  },
+  {
+    "file": "03-bookmark-https.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "outlines"
+    ],
+    "sha256": "48d5d36b11dba4d9f9fbe59dfe827c59efef6d7f90d9bf1b298eef8aebfb18ca",
+    "attachments": 0,
+    "uris": 1
+  },
+  {
+    "file": "04-destination-openaction.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "destination"
+    ],
+    "sha256": "43a4a97a592508a92b0aa46ddacbe236e6ea7c0f3208ff602ef8b332c0efdf5c",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "05-internal-goto.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "goto"
+    ],
+    "sha256": "0976f346992a0a1813f2b47c945c517b536910dd03dceb31554bc89a3afa4137",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "06-embedded-file.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "attachment"
+    ],
+    "sha256": "3ba827bbf7131bcac0718ce4d657a4a9122864d9215ab2bdb838c42f2cfa6192",
+    "attachments": 1,
+    "uris": 0
+  },
+  {
+    "file": "07-shared-af-annotation.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "attachment",
+      "af",
+      "fileannotation"
+    ],
+    "sha256": "4376a9243aa8dd6b1adb5d6a25367746551ea859f9e21ad71bbb706fded4bff8",
+    "attachments": 1,
+    "uris": 0
+  },
+  {
+    "file": "08-normal-form-annotations.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "form",
+      "annotation"
+    ],
+    "sha256": "476fdd60d7ce98f4066a9e90eec7c850f3bd5ad1f0fb30e1bf10a9d066e00d6f",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "09-image-font.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "image"
+    ],
+    "sha256": "a76765b1d27cf8a90d8baacf4a389bd957b3a91ab7f0f4b927e4874cb5fb5df6",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "10-combined-c2pa-carrier.pdf",
+    "provenance": "synthetic",
+    "features": [
+      "metadata",
+      "xmp",
+      "https",
+      "outlines",
+      "destination",
+      "goto",
+      "c2pa",
+      "af",
+      "fileannotation",
+      "form",
+      "annotation",
+      "image"
+    ],
+    "sha256": "4c25535cb4d58ee6f01f786d75aaff3a32598590e97331526d2622b3ff04923a",
+    "attachments": 1,
+    "uris": 2
+  },
+  {
+    "file": "local-benign-compatibility.pdf",
+    "provenance": "unchanged local test_pdfs/vanguard_benign_compatibility_test.pdf; original incident provenance unconfirmed",
+    "sha256": "eed4158214e58f8d5e09f912f927d17c9f58f1e4a2e1d0cab6594836471fa2a2",
+    "attachments": null,
+    "uris": null
+  }
+]

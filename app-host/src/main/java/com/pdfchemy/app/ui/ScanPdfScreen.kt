@@ -109,22 +109,28 @@ fun ScanPdfScreen(
             } else if (pdfUri != null) {
                 // If GMS directly provided PDF
                 coroutineScope.launch {
-                    val destFile = File(context.cacheDir, "scan_${System.currentTimeMillis()}.pdf")
-                    context.contentResolver.openInputStream(pdfUri)?.use { input ->
-                        destFile.outputStream().use { output -> input.copyTo(output) }
-                    }
-                    val uri = Uri.fromFile(destFile)
-                    
-                    if (pendingNavigation != null) {
-                        viewModel.setContinuityUri(uri)
-                        onNavigateToTool(if (pendingNavigation is Screen.PdfReader) Screen.PdfReader(uri) else pendingNavigation!!)
-                    } else {
-                        viewModel.notifySuccess(
-                            context.getString(R.string.title_scan_success),
-                            context.getString(R.string.desc_scan_success),
-                            uri
-                        )
-                        onBack()
+                    val exports = File(context.cacheDir, "exports").apply { mkdirs() }
+                    val destFile = File(exports, "scan_${System.currentTimeMillis()}.pdf")
+                    try {
+                        withContext(Dispatchers.IO) {
+                            requireNotNull(context.contentResolver.openInputStream(pdfUri)) { "Cannot read scanned PDF" }.use { input ->
+                                destFile.outputStream().use { output -> input.copyTo(output) }
+                            }
+                        }
+                        val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", destFile)
+                        if (pendingNavigation != null) {
+                            viewModel.setContinuityUri(uri)
+                            onNavigateToTool(if (pendingNavigation is Screen.PdfReader) Screen.PdfReader(uri) else pendingNavigation!!)
+                        } else {
+                            viewModel.notifySuccess(context.getString(R.string.title_scan_success), context.getString(R.string.desc_scan_success), uri)
+                            onBack()
+                        }
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        destFile.delete()
+                        throw cancelled
+                    } catch (error: Exception) {
+                        destFile.delete()
+                        viewModel.notifyError(context.getString(R.string.error_scan_failed))
                     }
                 }
             }
