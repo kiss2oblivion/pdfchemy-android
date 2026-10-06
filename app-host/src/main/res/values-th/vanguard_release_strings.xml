@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">จดจำตำแหน่งการอ่าน</string>
+    <string name="settings_remember_position_desc">เรียกคืนหน้าที่ดูล่าสุดโดยอัตโนมัติเมื่อเปิดเอกสารอีกครั้ง</string>
+    <string name="vanguard_blocked_message_js">ตรวจพบการดำเนินการ JavaScript ตามหลักการรักษาความปลอดภัยแบบ Zero Trust PDFchemy จะไม่เปิดเอกสารนี้</string>
+    <string name="vanguard_blocked_message_launch">ตรวจพบการดำเนินการที่เริ่มกระบวนการภายนอก ตามหลักการรักษาความปลอดภัยแบบ Zero Trust PDFchemy จะไม่เปิดเอกสารนี้</string>
+    <string name="vanguard_blocked_message_uri">ตรวจพบกิจกรรมเครือข่ายที่น่าสงสัยหรือทำงานอัตโนมัติ ตามหลักการรักษาความปลอดภัยแบบ Zero Trust PDFchemy จะไม่เปิดเอกสารนี้</string>
+    <string name="vanguard_blocked_message_other">ตรวจพบเนื้อหาที่ทำงานได้หรือการส่งแบบฟอร์มอัตโนมัติ ตามหลักการรักษาความปลอดภัยแบบ Zero Trust PDFchemy จะไม่เปิดเอกสารนี้</string>
+    <string name="sanitizer_other_action_threats">พฤติกรรมที่ทำงานได้อื่น ๆ: %1</string>
+    <string name="vanguard_blocked_message_default">ตรวจพบการดำเนินการภายนอกอัตโนมัติ ตามหลักการรักษาความปลอดภัยแบบ Zero Trust PDFchemy จะไม่เปิดเอกสารนี้</string>
+    <string name="diagnosing_document">กำลังวินิจฉัยเอกสาร...</string>
+    <string name="diagnosis_failed_title">การวินิจฉัยล้มเหลว</string>
+    <string name="diagnosis_failed_desc">ไม่สามารถวินิจฉัยเอกสารได้</string>
+    <string name="error_signing_failed">การลงนามล้มเหลว</string>
+    <string name="pki_signature_failed_desc">ไม่สามารถใช้ลายเซ็น PKI ได้</string>
+    <string name="page_render_failed">การแสดงหน้าล้มเหลว</string>
+    <string name="retry">ลองอีกครั้ง</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">Memorează poziția de citire</string>
+    <string name="settings_remember_position_desc">Restabilește automat ultima pagină vizualizată la redeschiderea unui document.</string>
+    <string name="vanguard_blocked_message_js">A fost detectată o acțiune JavaScript. Conform principiului de securitate zero trust, PDFchemy nu va deschide acest document.</string>
+    <string name="vanguard_blocked_message_launch">A fost detectată o acțiune care pornește un proces extern. Conform principiului de securitate zero trust, PDFchemy nu va deschide acest document.</string>
+    <string name="vanguard_blocked_message_uri">A fost detectată activitate de rețea suspectă sau automată. Conform principiului de securitate zero trust, PDFchemy nu va deschide acest document.</string>
+    <string name="vanguard_blocked_message_other">A fost detectat conținut activ sau trimiterea automată a unui formular. Conform principiului de securitate zero trust, PDFchemy nu va deschide acest document.</string>
+    <string name="sanitizer_other_action_threats">Alte comportamente active: %1</string>
+    <string name="vanguard_blocked_message_default">A fost detectată o acțiune externă automată. Conform principiului de securitate zero trust, PDFchemy nu va deschide acest document.</string>
+    <string name="diagnosing_document">Se diagnostichează documentul...</string>
+    <string name="diagnosis_failed_title">Diagnosticare eșuată</string>
+    <string name="diagnosis_failed_desc">Documentul nu a putut fi diagnosticat.</string>
+    <string name="error_signing_failed">Semnare eșuată</string>
+    <string name="pki_signature_failed_desc">Semnătura PKI nu a putut fi aplicată.</string>
+    <string name="page_render_failed">Redarea paginii a eșuat</string>
+    <string name="retry">Reîncearcă</string>
+</resources>

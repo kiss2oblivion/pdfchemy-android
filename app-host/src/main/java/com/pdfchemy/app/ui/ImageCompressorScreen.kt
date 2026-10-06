@@ -117,6 +117,7 @@ fun ImageCompressorScreen(
     }
 
     val singleAnalysis = singleAnalysisState
+    val resolvedOutputFormat = ImageCompressor.resolveOutputFormat(outputFormat, singleAnalysis?.mimeType.orEmpty())
 
     // Pickers
     val singlePickerLauncher = rememberLauncherForActivityResult(
@@ -139,13 +140,7 @@ fun ImageCompressorScreen(
     }
 
     val saveSingleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(
-            when (outputFormat) {
-                ImageOutputFormat.PNG -> "image/png"
-                ImageOutputFormat.WEBP -> "image/webp"
-                else -> "image/jpeg"
-            }
-        )
+        contract = ActivityResultContracts.CreateDocument(resolvedOutputFormat.mimeType)
     ) { destUri ->
         if (destUri != null && selectedSingleUri != null) {
             if (compressionMode == CompressionMode.TARGET_SIZE && currentTargetSizeBytes != null && currentTargetSizeBytes > 0) {
@@ -154,7 +149,7 @@ fun ImageCompressorScreen(
                     sourceUri = selectedSingleUri!!,
                     destUri = destUri,
                     targetSizeBytes = currentTargetSizeBytes,
-                    format = outputFormat,
+                    format = resolvedOutputFormat,
                     stripExif = stripExif
                 ) { res ->
                     singleResult = res
@@ -167,7 +162,7 @@ fun ImageCompressorScreen(
                     sourceUri = selectedSingleUri!!,
                     destUri = destUri,
                     quality = q,
-                    format = outputFormat,
+                    format = resolvedOutputFormat,
                     maxDimension = maxDimension,
                     stripExif = stripExif
                 ) { res ->
@@ -553,7 +548,7 @@ fun ImageCompressorScreen(
                                     selectedSingleUri,
                                     "compressed",
                                     "Image",
-                                    if (outputFormat == ImageOutputFormat.ORIGINAL) "jpg" else outputFormat.extension
+                                    resolvedOutputFormat.extension
                                 )
                                 saveSingleLauncher.launch(suggestedName)
                             } else if (selectedTab == 1 && selectedBatchUris.isNotEmpty()) {
@@ -595,11 +590,7 @@ fun ImageCompressorScreen(
                                 savedUri = lastSavedUri,
                                 onShare = {
                                     lastSavedUri?.let { uri ->
-                                        val mime = when (outputFormat) {
-                                            ImageOutputFormat.PNG -> "image/png"
-                                            ImageOutputFormat.WEBP -> "image/webp"
-                                            else -> "image/jpeg"
-                                        }
+                                        val mime = com.pdfchemy.app.utils.FileUtils.getMimeType(context, uri)
                                         ShareUtil.shareFile(context, uri, mime)
                                     }
                                 }

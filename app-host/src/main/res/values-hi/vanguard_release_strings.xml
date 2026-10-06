@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">पढ़ने की स्थिति याद रखें</string>
+    <string name="settings_remember_position_desc">दस्तावेज़ दोबारा खोलने पर पिछली बार देखे गए पृष्ठ को अपने आप बहाल करता है।</string>
+    <string name="vanguard_blocked_message_js">JavaScript कार्रवाई मिली। शून्य-विश्वास सुरक्षा नीति के अनुसार PDFchemy इस दस्तावेज़ को नहीं खोलेगा।</string>
+    <string name="vanguard_blocked_message_launch">बाहरी प्रक्रिया शुरू करने वाली कार्रवाई मिली। शून्य-विश्वास सुरक्षा नीति के अनुसार PDFchemy इस दस्तावेज़ को नहीं खोलेगा।</string>
+    <string name="vanguard_blocked_message_uri">संदिग्ध या स्वचालित नेटवर्क गतिविधि मिली। शून्य-विश्वास सुरक्षा नीति के अनुसार PDFchemy इस दस्तावेज़ को नहीं खोलेगा।</string>
+    <string name="vanguard_blocked_message_other">सक्रिय सामग्री या स्वचालित फ़ॉर्म सबमिशन मिला। शून्य-विश्वास सुरक्षा नीति के अनुसार PDFchemy इस दस्तावेज़ को नहीं खोलेगा।</string>
+    <string name="sanitizer_other_action_threats">अन्य सक्रिय व्यवहार: %1</string>
+    <string name="vanguard_blocked_message_default">स्वचालित बाहरी कार्रवाई मिली। शून्य-विश्वास सुरक्षा नीति के अनुसार PDFchemy इस दस्तावेज़ को नहीं खोलेगा।</string>
+    <string name="diagnosing_document">दस्तावेज़ का निदान किया जा रहा है...</string>
+    <string name="diagnosis_failed_title">निदान विफल</string>
+    <string name="diagnosis_failed_desc">दस्तावेज़ का निदान नहीं किया जा सका।</string>
+    <string name="error_signing_failed">हस्ताक्षर करना विफल</string>
+    <string name="pki_signature_failed_desc">PKI हस्ताक्षर लागू नहीं किया जा सका।</string>
+    <string name="page_render_failed">पृष्ठ दिखाना विफल</string>
+    <string name="retry">फिर से कोशिश करें</string>
+</resources>

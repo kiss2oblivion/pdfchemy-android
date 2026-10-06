@@ -156,7 +156,7 @@ fun MarkdownStudioScreen(
         if (destUri != null) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    context.contentResolver.openOutputStream(destUri)?.use { out ->
+                    requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open Markdown destination" }.use { out ->
                         out.write(markdownText.toByteArray(Charsets.UTF_8))
                     }
                     withContext(Dispatchers.Main) {

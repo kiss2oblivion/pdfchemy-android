@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">Leseposition merken</string>
+    <string name="settings_remember_position_desc">Stellt beim erneuten Öffnen eines Dokuments automatisch die zuletzt angezeigte Seite wieder her.</string>
+    <string name="vanguard_blocked_message_js">JavaScript-Aktion erkannt. Gemäß dem Zero-Trust-Sicherheitsprinzip öffnet PDFchemy dieses Dokument nicht.</string>
+    <string name="vanguard_blocked_message_launch">Aktion zum Starten eines externen Prozesses erkannt. Gemäß dem Zero-Trust-Sicherheitsprinzip öffnet PDFchemy dieses Dokument nicht.</string>
+    <string name="vanguard_blocked_message_uri">Verdächtige oder automatisierte Netzwerkaktivität erkannt. Gemäß dem Zero-Trust-Sicherheitsprinzip öffnet PDFchemy dieses Dokument nicht.</string>
+    <string name="vanguard_blocked_message_other">Aktive Inhalte oder automatische Formularübermittlung erkannt. Gemäß dem Zero-Trust-Sicherheitsprinzip öffnet PDFchemy dieses Dokument nicht.</string>
+    <string name="sanitizer_other_action_threats">Andere aktive Verhaltensweisen: %1</string>
+    <string name="vanguard_blocked_message_default">Automatische externe Aktion erkannt. Gemäß dem Zero-Trust-Sicherheitsprinzip öffnet PDFchemy dieses Dokument nicht.</string>
+    <string name="diagnosing_document">Dokument wird diagnostiziert...</string>
+    <string name="diagnosis_failed_title">Diagnose fehlgeschlagen</string>
+    <string name="diagnosis_failed_desc">Das Dokument konnte nicht diagnostiziert werden.</string>
+    <string name="error_signing_failed">Signieren fehlgeschlagen</string>
+    <string name="pki_signature_failed_desc">Die PKI-Signatur konnte nicht angewendet werden.</string>
+    <string name="page_render_failed">Seitendarstellung fehlgeschlagen</string>
+    <string name="retry">Erneut versuchen</string>
+</resources>

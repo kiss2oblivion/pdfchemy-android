@@ -7,6 +7,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object ImageCompressor {
+    fun resolveOutputFormat(requested: ImageOutputFormat, sourceMime: String): ImageOutputFormat =
+        if (requested != ImageOutputFormat.ORIGINAL) requested else when (sourceMime.lowercase(java.util.Locale.ROOT)) {
+            "image/png" -> ImageOutputFormat.PNG
+            "image/webp" -> ImageOutputFormat.WEBP
+            else -> ImageOutputFormat.JPEG
+        }
+
     suspend fun analyzeImage(context: Context, uri: Uri, quality: Int = 65, targetFormat: ImageOutputFormat = ImageOutputFormat.ORIGINAL, targetBytes: Long? = null): ImageAnalysis = withContext(Dispatchers.IO) {
         val contract = JailEngineBridge.callTyped<ImageAnalysisContract>(
             context, "IMAGE_ANALYZE", uri, null,

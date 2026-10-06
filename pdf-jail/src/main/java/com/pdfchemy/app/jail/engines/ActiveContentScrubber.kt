@@ -19,11 +19,20 @@ object ActiveContentScrubber {
     private val activeSubtypes = setOf("RichMedia", "Movie", "Sound", "3D", "Screen")
     private fun name(key: String) = COSName.getPDFName(key)
 
+    /** Carriers reference attachments; the resolved FileSpec owns their logical identity. */
+    private fun resolveAttachmentIdentity(dict: COSDictionary): COSDictionary? {
+        if (dict.containsKey(name("EF"))) return dict
+        if (dict.getNameAsString(COSName.SUBTYPE) != "FileAttachment") return null
+        val fileSpec = dict.getDictionaryObject(name("FS")) as? COSDictionary ?: return null
+        return fileSpec.takeIf { it.containsKey(name("EF")) }
+    }
+
     fun inspect(document: PDDocument, scrub: Boolean = false, purgeJs: Boolean = true, purgeActions: Boolean = true, purgeAttachments: Boolean = true): Findings {
         val queue = ArrayDeque<Triple<COSBase, Int, Boolean>>()
         val visited = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val triggered = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val uriObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val logicalAttachments = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         queue.add(Triple(document.documentCatalog.cosObject, 0, false))
         require(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES) { "PDF object quota exceeded" }
         document.document.objects.forEach { queue.add(Triple(it, 0, false)) }
@@ -69,9 +78,11 @@ object ActiveContentScrubber {
                         if (subtype in activeSubtypes && scrub && purgeActions) base.setName(COSName.SUBTYPE, "Text")
                         listOf("XFA", "RichMediaContent", "RichMediaSettings", "3DD", "3DA", "Movie", "Sound").forEach { remove(it, purgeActions) }
                     }
-                    
+                    resolveAttachmentIdentity(base)?.let { identity ->
+                        if (logicalAttachments.add(identity)) findings.attachments++
+                    }
+                    // Removal remains broader than counting: sever every carrier, including orphans.
                     if (subtype == "FileAttachment" || listOf("EmbeddedFiles", "AF", "EF", "FS").any { base.containsKey(name(it)) }) {
-                        findings.attachments++
                         listOf("EmbeddedFiles", "AF", "EF", "FS").forEach { remove(it, purgeAttachments) }
                         if (subtype == "FileAttachment" && scrub && purgeAttachments) base.setName(COSName.SUBTYPE, "Text")
                     }

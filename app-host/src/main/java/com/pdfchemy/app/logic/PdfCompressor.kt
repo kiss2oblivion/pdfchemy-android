@@ -11,6 +11,7 @@ import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 
 object PdfCompressor {
 
@@ -74,8 +75,14 @@ object PdfCompressor {
             try {
                 val contentResolver = context.contentResolver
                 val success = bestTempFile.inputStream().use { input ->
-                    contentResolver.openOutputStream(destUri)?.use { output ->
-                        input.copyTo(output)
+                    contentResolver.openOutputStream(destUri, "wt")?.use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        while (true) {
+                            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            output.write(buffer, 0, count)
+                        }
                         true
                     } ?: false
                 }
@@ -88,6 +95,8 @@ object PdfCompressor {
             } finally {
                 bestTempFile.delete()
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfCompressor: Compression failed", e)
             Result.failure(e)

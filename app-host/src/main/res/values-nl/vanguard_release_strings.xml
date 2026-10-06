@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">Leespositie onthouden</string>
+    <string name="settings_remember_position_desc">Herstelt automatisch de laatst bekeken pagina wanneer u een document opnieuw opent.</string>
+    <string name="vanguard_blocked_message_js">JavaScript-actie gedetecteerd. Volgens het zero-trust-beveiligingsprincipe opent PDFchemy dit document niet.</string>
+    <string name="vanguard_blocked_message_launch">Een actie die een extern proces start is gedetecteerd. Volgens het zero-trust-beveiligingsprincipe opent PDFchemy dit document niet.</string>
+    <string name="vanguard_blocked_message_uri">Verdachte of automatische netwerkactiviteit gedetecteerd. Volgens het zero-trust-beveiligingsprincipe opent PDFchemy dit document niet.</string>
+    <string name="vanguard_blocked_message_other">Actieve inhoud of automatische formulierverzending gedetecteerd. Volgens het zero-trust-beveiligingsprincipe opent PDFchemy dit document niet.</string>
+    <string name="sanitizer_other_action_threats">Ander actief gedrag: %1</string>
+    <string name="vanguard_blocked_message_default">Automatische externe actie gedetecteerd. Volgens het zero-trust-beveiligingsprincipe opent PDFchemy dit document niet.</string>
+    <string name="diagnosing_document">Document wordt gediagnosticeerd...</string>
+    <string name="diagnosis_failed_title">Diagnose mislukt</string>
+    <string name="diagnosis_failed_desc">Het document kon niet worden gediagnosticeerd.</string>
+    <string name="error_signing_failed">Ondertekenen mislukt</string>
+    <string name="pki_signature_failed_desc">De PKI-handtekening kon niet worden toegepast.</string>
+    <string name="page_render_failed">Paginaweergave mislukt</string>
+    <string name="retry">Opnieuw proberen</string>
+</resources>

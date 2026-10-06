@@ -1,6 +1,6 @@
 # Privacy Policy — PDFchemy Tools (Shrink PDF)
 
-**Last Updated:** September 4, 2026  
+**Last Updated:** October 6, 2026
 **Developer:** Andrei Ioan Cucoș (John / cucosandreiioan@gmail.com)  
 **Repository:** [https://github.com/kiss2oblivion/pdfchemy](https://github.com/kiss2oblivion/pdfchemy)
 
@@ -18,7 +18,7 @@ PDFchemy Tools is designed from the ground up as a **zero-leak, local-first, eme
 
 ## 2. Document & Data Security
 
-* **Original-Safe Operation:** PDFchemy never alters, overwrites, or damages your original source files. All operations produce new output files in locations explicitly selected by the user.
+* **Original-Safe Operation:** Tools normally create new output files in locations selected by the user. The metadata tool also offers an explicit overwrite operation; selecting it replaces the chosen document.
 * **Cryptographic Privacy:** Password protection and encryption algorithms (AES-128 and AES-256) are computed natively on-device. Your passphrases and encryption keys are held temporarily in volatile memory only for the duration of the cryptographic operation and are never stored or transmitted.
 * **True Redaction:** When redacting confidential information (e.g. SSNs, credit cards, legal names), PDFchemy physically strips and erases the underlying vector text and raster pixels beneath the redaction bounding box so that the redacted information cannot be recovered via copy-pasting, reverse-engineering, or search indexing.
 
@@ -29,7 +29,8 @@ PDFchemy Tools is designed from the ground up as a **zero-leak, local-first, eme
 * **Desktop Application (Windows & Linux):** Requires zero network permissions. The application functions identically when completely disconnected from the internet (air-gapped environments).
 * **Android Application:** 
   * Storage access is requested solely via standard Android Storage Access Framework (SAF) pickers to read and save documents chosen by the user.
-  * Camera permission (optional) is requested solely for the on-device ML Kit document scanner. Images captured by the scanner are processed on-device and never transmitted.
+  * The ML Kit document scanner uses Google Play services' camera permission; PDFchemy does not request its own camera permission. Scanner models, scanning logic, and UI are dynamically downloaded by Google Play services, so initial scanner setup can require network access. Scanning and document processing run on-device. See [Google's document scanner documentation](https://developers.google.com/ml-kit/vision/doc-scanner/android).
+  * The Android app has internet permission for AdMob, the User Messaging Platform (UMP), Play Billing, and the scanner dependency described above. There is no document-processing server or document upload API.
 
 ---
 
@@ -37,6 +38,7 @@ PDFchemy Tools is designed from the ground up as a **zero-leak, local-first, eme
 
 * **No Advertising on Desktop:** The Windows and Linux desktop editions contain zero advertisements and zero tracking SDKs.
 * **Respectful Monetization on Mobile:** The Android mobile edition does not share document data with advertising networks. Document processing workflows are never interrupted or blocked.
+* **Ads, Purchases, and Consent:** AdMob and UMP may process advertising identifiers, device information, and consent choices; Play Billing handles purchases through Google Play. Advertising requests require UMP's `canRequestAds()` approval. Where UMP requires privacy choices, they can be reopened from Settings → Privacy Policy → Privacy choices. App analytics collection is disabled; advertising SDK activity is distinct from app analytics.
 
 ---
 

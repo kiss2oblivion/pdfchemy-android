@@ -1,0 +1,551 @@
+[
+  {
+    "screen": "Home",
+    "input": "none",
+    "operation": "launch, recent files, tool search, light/dark, rotation",
+    "output": "dashboard",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Settings",
+    "input": "defaults",
+    "operation": "toggle Vanguard/history/theme/language/reader position; restart",
+    "output": "persisted settings",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Premium",
+    "input": "Play license tester",
+    "operation": "purchase, cancel purchase, pending purchase, restore, offline cached entitlement",
+    "output": "premium entitlement; Play-confirmed price",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "CompressCategory",
+    "input": "none",
+    "operation": "open every tool tile; Back restores category and Home",
+    "output": "correct destination screen",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "CreateCategory",
+    "input": "none",
+    "operation": "open every tool tile; Back restores category and Home",
+    "output": "correct destination screen",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "OrganizeCategory",
+    "input": "none",
+    "operation": "open every tool tile; Back restores category and Home",
+    "output": "correct destination screen",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "CheckCategory",
+    "input": "none",
+    "operation": "open every tool tile; Back restores category and Home",
+    "output": "correct destination screen",
+    "open_share": "Exercise linked destinations; unavailable external handlers must not crash",
+    "cancel": "Back and cancelled external dialogs must preserve navigation",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "CompressPdf",
+    "input": "text/vector PDF and scanned PDF",
+    "operation": "lossless, JPEG, grayscale, metadata purge, target size including missed target",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "BatchCompressPdf",
+    "input": "two PDFs + one denied URI",
+    "operation": "compress batch; check partial success",
+    "output": "multiple application/pdf files",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ImageCompressor",
+    "input": "JPEG with EXIF, PNG alpha, WebP",
+    "operation": "quality/target size; choose JPEG, PNG, WebP; strip EXIF",
+    "output": "image/jpeg, image/png, image/webp",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "GrayscaleOptimizer",
+    "input": "color PDF",
+    "operation": "convert colors to grayscale",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "LinearizePdf",
+    "input": "multi-page PDF",
+    "operation": "apply advertised Fast Web View operation",
+    "output": "application/pdf; inspect actual linearization separately",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "FlattenPdf",
+    "input": "08-normal-form-annotations.pdf",
+    "operation": "flatten forms and annotations",
+    "output": "application/pdf; values remain visible",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "MergePdf",
+    "input": "two multi-page PDFs",
+    "operation": "merge in chosen order",
+    "output": "application/pdf with summed page count",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "SplitPdf",
+    "input": "multi-page PDF, blank dividers, bookmarks",
+    "operation": "all/range/blank/bookmark modes; invalid and oversized ranges",
+    "output": "individual application/pdf files; no folder masquerading as PDF",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PageOrganizer",
+    "input": "three-page PDF",
+    "operation": "reorder, duplicate, delete and save",
+    "output": "application/pdf in expected order",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "DeletePages",
+    "input": "three-page PDF",
+    "operation": "delete selected pages; reject deleting every page",
+    "output": "application/pdf with remaining pages",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "RotatePdf",
+    "input": "landscape PDF",
+    "operation": "rotate selected page range",
+    "output": "application/pdf with corrected orientation",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Deskew",
+    "input": "tilted scanned PDF",
+    "operation": "straighten pages",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "CropPdf",
+    "input": "bordered PDF",
+    "operation": "crop selected/all pages",
+    "output": "application/pdf with intended media/crop boxes",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PageLayout",
+    "input": "mixed page sizes",
+    "operation": "fit/resize to chosen paper",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "NUp",
+    "input": "five-page PDF",
+    "operation": "2/4/6/9/16-up with incomplete final sheet",
+    "output": "application/pdf in correct cell order",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Booklet",
+    "input": "five-page PDF",
+    "operation": "booklet padding and duplex order",
+    "output": "application/pdf with correct fold order",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ImagesToPdf",
+    "input": "JPEG + PNG alpha",
+    "operation": "order images and create PDF",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PdfToImages",
+    "input": "two-page PDF",
+    "operation": "export JPEG and PNG to SAF folder",
+    "output": "image/jpeg or image/png per page",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ScanPdf",
+    "input": "camera scan; gallery fallback",
+    "operation": "capture, filter, reorder, persist, export; unavailable GMS",
+    "output": "application/pdf and grantable content URI",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "EbookConverter",
+    "input": "PDF, EPUB, CBZ",
+    "operation": "PDF->EPUB, EPUB->PDF, PDF->CBZ, CBZ->PDF",
+    "output": "application/epub+zip, application/vnd.comicbook+zip, application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "MarkdownStudio",
+    "input": "UTF-8 Markdown, tables and links",
+    "operation": "load, edit, export PDF and Markdown",
+    "output": "application/pdf or text/markdown",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "TextToPdf",
+    "input": "UTF-8 text, blank and large input",
+    "operation": "load/type and convert",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "TextConverter",
+    "input": "TXT/MD/HTML/CSV/TSV/JSON/YAML/XML",
+    "operation": "all supported format pairs; malformed and oversized input",
+    "output": "destination format MIME; exact UTF-8 bytes",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "TableExtractor",
+    "input": "PDF with columns and spreadsheet formulas",
+    "operation": "extract; safe/raw CSV modes",
+    "output": "text/csv; safe mode neutralizes formulas",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "OfficeExport",
+    "input": "two-page PDF with text/images/table",
+    "operation": "Word, Excel, PowerPoint exports",
+    "output": "DOCX/XLSX/PPTX valid ZIP package; corresponding OOXML MIME",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "OcrPdf",
+    "input": "image-only scanned PDF",
+    "operation": "generate searchable text layer; test language selection",
+    "output": "application/pdf with searchable text",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ExtractText",
+    "input": "text PDF and scanned PDF",
+    "operation": "extract text",
+    "output": "text/plain",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ExtractImages",
+    "input": "PDF with two image objects",
+    "operation": "extract embedded images to SAF folder",
+    "output": "image/jpeg files",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PdfEditor",
+    "input": "benign combined PDF",
+    "operation": "draw, highlight, text, shape, stamp; undo/redo and save",
+    "output": "application/pdf with visible edits",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PdfReader",
+    "input": "every benign corpus fixture",
+    "operation": "open, render, navigate, zoom, search, bookmark, external VIEW/SEND",
+    "output": "all pages readable; no benign Vanguard block",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "QuickFillSign",
+    "input": "flat form PDF",
+    "operation": "text/check/date/signature; save",
+    "output": "application/pdf with visible placement",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "FormBuilder",
+    "input": "flat PDF",
+    "operation": "add text/checkbox/dropdown fields; reopen",
+    "output": "application/pdf with working AcroForm",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "FillForm",
+    "input": "08-normal-form-annotations.pdf",
+    "operation": "fill and save, with/without flattening",
+    "output": "application/pdf retaining entered values",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "SignPdf",
+    "input": "unsigned PDF and PKCS#12",
+    "operation": "drawn signature and certificate signature; invalid key/password",
+    "output": "application/pdf; validate signature independently",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Watermark",
+    "input": "multi-page PDF + PNG",
+    "operation": "text/image watermark, selected pages",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "HeaderFooter",
+    "input": "multi-page PDF",
+    "operation": "add header/footer and tokens",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PageNumber",
+    "input": "multi-page PDF",
+    "operation": "number with offset and range",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "BookmarkEditor",
+    "input": "03-bookmark-https.pdf",
+    "operation": "add/edit/remove outline entries; navigate",
+    "output": "application/pdf with working outline",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "FindAndReplaceText",
+    "input": "text/vector PDF",
+    "operation": "find/replace selected text; no-match result",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ImageReplacer",
+    "input": "09-image-font.pdf + PNG",
+    "operation": "replace selected embedded image",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ProtectPdf",
+    "input": "benign PDF",
+    "operation": "user/owner passwords, then verify lock",
+    "output": "encrypted application/pdf; Vanguard asks to unlock",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "UnlockPdf",
+    "input": "password-protected PDF",
+    "operation": "correct/incorrect password and restrictions",
+    "output": "decrypted application/pdf only on success",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "Redaction",
+    "input": "PDF with sensitive text",
+    "operation": "redact selected area/text",
+    "output": "application/pdf; sensitive content not extractable",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "DocumentSanitizer",
+    "input": "benign corpus + JS/Launch/AA fixtures",
+    "operation": "selective/default purge and re-audit",
+    "output": "application/pdf; only selected structures removed",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "MetadataSanitizer",
+    "input": "01-metadata-xmp.pdf",
+    "operation": "selective metadata removal",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "InspectMetadata",
+    "input": "01-metadata-xmp.pdf",
+    "operation": "inspect/read/edit document information",
+    "output": "displayed metadata or updated application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "StripMetadata",
+    "input": "01-metadata-xmp.pdf",
+    "operation": "save copy and explicit overwrite mode",
+    "output": "application/pdf; source retained unless overwrite selected",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "TextCleaner",
+    "input": "text PDF",
+    "operation": "selective text-content cleanup",
+    "output": "application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "PdfAValidator",
+    "input": "ordinary PDF and known PDF/A fixture",
+    "operation": "preflight and advertised remediation",
+    "output": "accurate report; application/pdf for remediation",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "FontInspector",
+    "input": "09-image-font.pdf + embedded-font PDF",
+    "operation": "inspect fonts and export if supported",
+    "output": "font report; correct font output where applicable",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "AttachmentManager",
+    "input": "07-shared-af-annotation.pdf",
+    "operation": "list/extract/remove attachment",
+    "output": "text/plain attachment or application/pdf",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "RepairPdf",
+    "input": "damaged fixture + benign PDF",
+    "operation": "repair; report unrecoverable input honestly",
+    "output": "readable application/pdf only on success",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ComparePdf",
+    "input": "two differing PDFs",
+    "operation": "compare text/pages/visuals",
+    "output": "difference report",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  },
+  {
+    "screen": "ReflowReader",
+    "input": "text PDF, EPUB",
+    "operation": "reflow/search/navigation; offline TTS pause/resume",
+    "output": "readable text; audio stays local",
+    "open_share": "Open with matching viewer; share with actual MIME and URI grant; reopen after restart",
+    "cancel": "Cancel picker and active work; Back/rotate; denied/null/full provider; no false success or partial new output",
+    "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
+  }
+]

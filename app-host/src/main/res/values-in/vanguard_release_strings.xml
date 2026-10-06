@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remember_position">Ingat posisi membaca</string>
+    <string name="settings_remember_position_desc">Memulihkan halaman terakhir yang dilihat secara otomatis saat dokumen dibuka kembali.</string>
+    <string name="vanguard_blocked_message_js">Tindakan JavaScript terdeteksi. Sesuai prinsip keamanan zero trust, PDFchemy tidak akan membuka dokumen ini.</string>
+    <string name="vanguard_blocked_message_launch">Tindakan yang menjalankan proses eksternal terdeteksi. Sesuai prinsip keamanan zero trust, PDFchemy tidak akan membuka dokumen ini.</string>
+    <string name="vanguard_blocked_message_uri">Aktivitas jaringan yang mencurigakan atau otomatis terdeteksi. Sesuai prinsip keamanan zero trust, PDFchemy tidak akan membuka dokumen ini.</string>
+    <string name="vanguard_blocked_message_other">Konten aktif atau pengiriman formulir otomatis terdeteksi. Sesuai prinsip keamanan zero trust, PDFchemy tidak akan membuka dokumen ini.</string>
+    <string name="sanitizer_other_action_threats">Perilaku aktif lainnya: %1</string>
+    <string name="vanguard_blocked_message_default">Tindakan eksternal otomatis terdeteksi. Sesuai prinsip keamanan zero trust, PDFchemy tidak akan membuka dokumen ini.</string>
+    <string name="diagnosing_document">Mendiagnosis dokumen...</string>
+    <string name="diagnosis_failed_title">Diagnosis gagal</string>
+    <string name="diagnosis_failed_desc">Dokumen tidak dapat didiagnosis.</string>
+    <string name="error_signing_failed">Penandatanganan gagal</string>
+    <string name="pki_signature_failed_desc">Tanda tangan PKI tidak dapat diterapkan.</string>
+    <string name="page_render_failed">Gagal menampilkan halaman</string>
+    <string name="retry">Coba lagi</string>
+</resources>

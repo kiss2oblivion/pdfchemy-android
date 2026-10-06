@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.CancellationException
 import androidx.compose.ui.res.stringResource
 import com.pdfchemy.app.R
 
@@ -60,21 +63,22 @@ class TextConverterViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = UiState.Processing
             try {
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val reader = BufferedReader(InputStreamReader(inputStream))
-                    val stringBuilder = java.lang.StringBuilder()
-                    var line: String?
-                    val maxChars = 2_000_000
-                    while (reader.readLine().also { line = it } != null) {
-                        stringBuilder.append(line).append("\n")
-                        if (stringBuilder.length > maxChars) {
-                            // truncate large files to avoid OOM
-                            com.pdfchemy.app.utils.AppLogger.w("TextConverterViewModel: Input file exceeded size limit ($maxChars chars)")
-                            break
+                val text = withContext(Dispatchers.IO) {
+                    requireNotNull(context.contentResolver.openInputStream(uri)) { "Cannot open input document" }.bufferedReader(Charsets.UTF_8).use { reader ->
+                        val stringBuilder = java.lang.StringBuilder()
+                        val maxChars = 2_000_000
+                        val buffer = CharArray(8192)
+                        while (true) {
+                            currentCoroutineContext().ensureActive()
+                            val count = reader.read(buffer)
+                            if (count < 0) break
+                            require(stringBuilder.length <= maxChars - count) { "Input text exceeds size limit" }
+                            stringBuilder.append(buffer, 0, count)
                         }
+                        stringBuilder.toString()
                     }
-                    _inputText.value = stringBuilder.toString()
                 }
+                _inputText.value = text
                 
                 // Auto-detect format based on extension
                 val path = uri.path?.lowercase() ?: ""
@@ -90,6 +94,8 @@ class TextConverterViewModel : ViewModel() {
                 }
                 
                 _uiState.value = UiState.Idle
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("Failed to read file: ${e.message}")
             }
@@ -111,14 +117,20 @@ class TextConverterViewModel : ViewModel() {
             
             result.onSuccess { convertedText ->
                 try {
-                    context.contentResolver.openOutputStream(destUri)?.use { outputStream ->
-                        outputStream.write(convertedText.toByteArray(Charsets.UTF_8))
+                    withContext(Dispatchers.IO) {
+                        requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open output document" }.use { outputStream ->
+                            currentCoroutineContext().ensureActive()
+                            outputStream.write(convertedText.toByteArray(Charsets.UTF_8))
+                        }
                     }
                     _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_file_converted))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
                 } catch (e: Exception) {
                     _uiState.value = UiState.Error("Failed to save file: ${e.message}")
                 }
             }.onFailure { error ->
+                if (error is CancellationException) throw error
                 _uiState.value = UiState.Error(error.message ?: "Conversion failed.")
             }
         }

@@ -29,4 +29,7 @@
 # Blanket keep rules for com.google.android.gms.ads and com.google.android.ump have been removed
 # to allow R8 to perform proper dead-code elimination and resource shrinking on release builds.
 
-
+# Bouncy Castle's optional LDAP certificate/CRL stores require desktop JNDI.
+# PDFchemy signs with in-memory certificates and does not call these stores or
+# network PKIX validation. R8 retains provider classes through the keep rules above.
+-dontwarn javax.naming.**

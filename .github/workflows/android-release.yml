@@ -100,4 +100,6 @@ jobs:
           java-version: '21'
           distribution: temurin
       - run: chmod +x gradlew
-      - run: ./gradlew :app-host:lintRelease :app-host:assembleDebug --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+      - run: ./gradlew :app-host:lintRelease :app-host:assembleDebug :app-host:assembleRelease --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process -PunsignedReleaseVerification=true
+      - name: Verify compatibility corpus, smoke coverage, and release artifact hygiene
+        run: python3 scripts/check_release_gate.py --artifact
