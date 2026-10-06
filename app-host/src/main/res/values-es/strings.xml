@@ -336,7 +336,6 @@
 <string name="history_extracted_text">Texto extraído</string>
 <string name="history_pdf_to_text">PDF a texto</string>
 <string name="history_converted_text">texto_convertido</string>
-<string name="title_settings">Ajustes</string>
     
 <string name="settings_about_legal">Acerca de y legal</string>
 <string name="settings_theme">Tema de la app</string>
@@ -1072,4 +1071,30 @@
     <string name="vanguard_verifying_title">Verificación de Seguridad Vanguard</string>
     <string name="vanguard_verifying_desc">Comprobando si hay scripts y amenazas de seguridad...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Rehacer</string>
+    <string name="action_reset">Restablecer</string>
+    <string name="action_reverse">Invertir</string>
+    <string name="action_rotate_all">Girar todo</string>
+    <string name="label_preview_unavailable">Vista previa no disponible</string>
+    <string name="dialog_unsaved_title">Cambios sin guardar</string>
+    <string name="dialog_unsaved_message">Tiene cambios sin guardar. ¿Desea guardarlos o descartarlos antes de salir?</string>
+    <string name="dialog_unsaved_save">Guardar / Exportar</string>
+    <string name="dialog_unsaved_discard">Descartar</string>
+    <string name="dialog_unsaved_continue">Continuar editando</string>
+    <string name="vanguard_damaged_title">PDF dañado</string>
+    <string name="vanguard_damaged_message">Este PDF parece estar dañado o incompleto y no se pudo leer de forma segura. Intente ejecutar Reparar o seleccione otra copia.</string>
+    <string name="vanguard_provider_error_title">Archivo inaccesible</string>
+    <string name="vanguard_provider_error_message">No se pudo acceder al archivo seleccionado. Es posible que el proveedor de almacenamiento no esté disponible o que se hayan revocado los permisos.</string>
+    <string name="error_invalid_page_range">Rango de páginas no válido. Verifique los números de página e intente nuevamente.</string>
+    <string name="consent_dialog_decline">Continuar sin personalización</string>
+
+    <string name="generating_previews">Generando vistas previas…</string>
+    <string name="label_preview_loading">Cargando…</string>
+    <string name="premium_status_loading">Verificando tienda…</string>
+    <string name="premium_status_unavailable">Tienda no disponible. Toca para reintentar.</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="redaction_review_title">Revisar censuras</string>
+    <string name="redaction_review_message">Se aplicarán permanentemente %1$d censura(s). El contenido censurado no se puede recuperar.</string>
+    <string name="redaction_review_confirm">Aplicar censuras</string>
 </resources>

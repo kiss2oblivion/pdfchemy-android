@@ -6,7 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -74,6 +74,9 @@ fun rememberVanguardPdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
+    var showDamagedDialog by remember { mutableStateOf(false) }
+    var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -102,13 +105,89 @@ fun rememberVanguardPdfPicker(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.vanguard_blocked_message),
+                    text = stringResource(blockedReasonResId),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
                 Button(
                     onClick = { showBlockedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDamagedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showProviderErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showProviderErrorDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showProviderErrorDialog = false },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -196,7 +275,7 @@ fun rememberVanguardPdfPicker(
                 scope.launch {
                     try {
                         val stagedUri = withContext(Dispatchers.IO) {
-                            com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                            com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
                         }
                         val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                         withContext(Dispatchers.Main) {
@@ -208,15 +287,26 @@ fun rememberVanguardPdfPicker(
                                     encryptedPendingUri = stagedUri
                                     showEncryptedDialog = true
                                 }
-                                is VanguardThreatResult.ExecutableThreat,
-                                is VanguardThreatResult.ParseFailed -> {
+                                is VanguardThreatResult.ExecutableThreat -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                    blockedReasonResId = when {
+                                        threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
+                                        threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                        threat.report.otherActionsCount > 0 -> R.string.vanguard_blocked_message_other
+                                        threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
+                                        else -> R.string.vanguard_blocked_message_default
+                                    }
                                     showBlockedDialog = true
+                                }
+                                is VanguardThreatResult.ParseFailed -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                    showDamagedDialog = true
                                 }
                             }
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
-                            showBlockedDialog = true
+                            showProviderErrorDialog = true
                         }
                     } finally {
                         isScanning = false
@@ -224,7 +314,7 @@ fun rememberVanguardPdfPicker(
                     }
                 }
             } else {
-                onPdfSelected(originalUri)
+                scope.launch { try { onPdfSelected(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }) } catch (e: Exception) { showBlockedDialog = true } }
             }
         }
     }
@@ -261,6 +351,9 @@ fun rememberVanguardMultiplePdfPicker(
     var isScanning by remember { mutableStateOf(false) }
     var scanningFileName by remember { mutableStateOf<String?>(null) }
     var showBlockedDialog by remember { mutableStateOf(false) }
+    var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
+    var showDamagedDialog by remember { mutableStateOf(false) }
+    var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -289,13 +382,89 @@ fun rememberVanguardMultiplePdfPicker(
             },
             text = {
                 Text(
-                    text = stringResource(R.string.vanguard_blocked_message),
+                    text = stringResource(blockedReasonResId),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
                 Button(
                     onClick = { showBlockedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDamagedDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showProviderErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showProviderErrorDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_provider_error_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showProviderErrorDialog = false },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
@@ -386,7 +555,7 @@ fun rememberVanguardMultiplePdfPicker(
                         scanningFileName = FileUtils.getFileName(context, originalUri)
                         try {
                             val stagedUri = withContext(Dispatchers.IO) {
-                                com.pdfchemy.app.utils.DocumentStager.stageDocument(context, originalUri)
+                                com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
                             }
                             stagedUris.add(stagedUri)
                             val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
@@ -402,9 +571,20 @@ fun rememberVanguardMultiplePdfPicker(
                                         allClean = false
                                         stopBatch = true
                                     }
-                                    is VanguardThreatResult.ExecutableThreat,
-                                    is VanguardThreatResult.ParseFailed -> {
+                                    is VanguardThreatResult.ExecutableThreat -> {
+                                        blockedReasonResId = when {
+                                            threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
+                                            threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
+                                        threat.report.otherActionsCount > 0 -> R.string.vanguard_blocked_message_other
+                                            threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
+                                            else -> R.string.vanguard_blocked_message_default
+                                        }
                                         showBlockedDialog = true
+                                        allClean = false
+                                        stopBatch = true
+                                    }
+                                    is VanguardThreatResult.ParseFailed -> {
+                                        showDamagedDialog = true
                                         allClean = false
                                         stopBatch = true
                                     }
@@ -413,7 +593,7 @@ fun rememberVanguardMultiplePdfPicker(
                             if (stopBatch) break
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                showBlockedDialog = true
+                                showProviderErrorDialog = true
                                 allClean = false
                             }
                             break
@@ -426,10 +606,24 @@ fun rememberVanguardMultiplePdfPicker(
                         withContext(Dispatchers.Main) {
                             onPdfsSelected(stagedUris)
                         }
+                    } else {
+                        stagedUris.filter { it != encryptedPendingUri }.forEach(com.pdfchemy.app.utils.DocumentStager::release)
                     }
                 }
             } else {
-                onPdfsSelected(uris)
+                scope.launch {
+                    val stagedUris = mutableListOf<Uri>()
+                    try {
+                        for (uri in uris) stagedUris.add(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri })
+                        onPdfsSelected(stagedUris)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
+                        throw cancelled
+                    } catch (_: Exception) {
+                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
+                        showBlockedDialog = true
+                    }
+                }
             }
         }
     }

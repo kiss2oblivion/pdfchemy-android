@@ -6,8 +6,8 @@ import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import kotlin.math.max
 
 object PdfCropEngineWorker {
@@ -41,7 +41,7 @@ object PdfCropEngineWorker {
         var document: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-                document = PDDocument.load(inputStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val pageCount = document!!.numberOfPages
                 if (pageCount == 0) return false
 

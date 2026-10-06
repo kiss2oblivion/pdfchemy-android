@@ -5,8 +5,8 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfPageOrganizerWorker {
 
@@ -14,8 +14,8 @@ object PdfPageOrganizerWorker {
         var sourceDoc: PDDocument? = null
         var newDoc: PDDocument? = null
         try {
-            sourceDoc = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
-            newDoc = PDDocument()
+            sourceDoc = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
+            newDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             val totalOriginalPages = sourceDoc.numberOfPages
 
             val params = JSONObject(paramsJson)
@@ -42,7 +42,7 @@ object PdfPageOrganizerWorker {
 
             if (newDoc.numberOfPages == 0) throw IllegalStateException("No pages in resulting document")
 
-            newDoc.save(FileOutputStream(destFd.fileDescriptor))
+            FileOutputStream(destFd.fileDescriptor).use { newDoc.save(it) }
             return "{}"
         } finally {
             try { sourceDoc?.close() } catch (_: Exception) {}

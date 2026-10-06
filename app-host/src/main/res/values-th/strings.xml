@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">การตรวจสอบความปลอดภัย Vanguard</string>
     <string name="vanguard_verifying_desc">กำลังตรวจสอบเอกสารสำหรับสคริปต์และภัยคุกคามความปลอดภัย...</string>
     <string name="vanguard_zero_trust_badge">ออฟไลน์ 100%% • Zero-Trust</string>
+
+    <string name="action_redo">ทำซ้ำ</string>
+    <string name="action_reset">รีเซ็ต</string>
+    <string name="action_reverse">ย้อนกลับลำดับ</string>
+    <string name="action_rotate_all">หมุนทั้งหมด</string>
+    <string name="label_preview_unavailable">ไม่สามารถแสดงตัวอย่างได้</string>
+    <string name="dialog_unsaved_title">การเปลี่ยนแปลงที่ยังไม่ได้บันทึก</string>
+    <string name="dialog_unsaved_message">คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการบันทึกหรือยกเลิกก่อนออกหรือไม่?</string>
+    <string name="dialog_unsaved_save">บันทึก / ส่งออก</string>
+    <string name="dialog_unsaved_discard">ทิ้ง</string>
+    <string name="dialog_unsaved_continue">แก้ไขต่อ</string>
+    <string name="vanguard_damaged_title">PDF เสียหาย</string>
+    <string name="vanguard_damaged_message">PDF นี้ดูเหมือนจะเสียหายหรือไม่สมบูรณ์และไม่สามารถอ่านได้อย่างปลอดภัย ลองเรียกใช้การซ่อมแซมหรือเลือกสำเนาอื่น</string>
+    <string name="vanguard_provider_error_title">ไม่สามารถเข้าถึงไฟล์ได้</string>
+    <string name="vanguard_provider_error_message">ไม่สามารถเข้าถึงไฟล์ที่เลือกได้ ผู้ให้บริการพื้นที่เก็บข้อมูลอาจไม่พร้อมใช้งานหรือสิทธิ์ถูกเพิกถอน</string>
+    <string name="error_invalid_page_range">ช่วงหน้าไม่ถูกต้อง โปรดตรวจสอบหมายเลขหน้าและลองอีกครั้ง</string>
+    <string name="consent_dialog_decline">ดำเนินการต่อโดยไม่ปรับแต่งเฉพาะบุคคล</string>
+
+    <string name="generating_previews">กำลังสร้างภาพตัวอย่าง…</string>
+    <string name="label_preview_loading">กำลังโหลด…</string>
+    <string name="premium_status_loading">กำลังตรวจสอบร้านค้า…</string>
+    <string name="premium_status_unavailable">ร้านค้าไม่พร้อมใช้งาน แตะเพื่อลองใหม่</string>
+    <string name="action_retry">ลองใหม่</string>
+    <string name="redaction_review_title">ตรวจสอบการเซ็นเซอร์</string>
+    <string name="redaction_review_message">จะใช้การเซ็นเซอร์ %1$d รายการอย่างถาวร เนื้อหาที่ถูกเซ็นเซอร์จะไม่สามารถกู้คืนได้</string>
+    <string name="redaction_review_confirm">ใช้การเซ็นเซอร์</string>
 </resources>

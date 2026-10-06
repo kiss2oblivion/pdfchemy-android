@@ -7,8 +7,8 @@ import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState
 import com.tom_roush.pdfbox.util.Matrix
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfStampAndNumberWorker {
     fun applyWatermark(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
@@ -22,7 +22,7 @@ object PdfStampAndNumberWorker {
         var doc: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 if (doc == null) return JSONObject().put("success", false).toString()
 
                 val totalPages = doc!!.numberOfPages
@@ -108,7 +108,7 @@ object PdfStampAndNumberWorker {
         var doc: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 if (doc == null) return JSONObject().put("success", false).toString()
 
                 val totalPages = doc!!.numberOfPages
@@ -177,7 +177,7 @@ object PdfStampAndNumberWorker {
         var doc: PDDocument? = null
         try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 if (doc == null) return JSONObject().put("success", false).toString()
 
                 val totalPages = doc!!.numberOfPages

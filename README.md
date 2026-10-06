@@ -125,7 +125,9 @@ PDFchemy Tools stands on the shoulders of the global open-source community. Ever
 * **[jsoup](https://jsoup.org/)** (MIT) by Jonathan Hedley — HTML/EPUB DOM parser and sanitizer for document and eBook conversions.
 * **[flexmark-java](https://github.com/vsch/flexmark-java)** (BSD-2-Clause) — Markdown parser and AST engine for Markdown-to-PDF rendering.
 * **[FasterXML Jackson](https://github.com/FasterXML/jackson)** (Apache 2.0) — High-throughput serialization for CSV, YAML, and XML conversions.
-* **[Coil](https://coil-kt.github.io/coil/)** (Apache 2.0) by Colin White — Coroutine-powered asynchronous image loading on Android.
+* **[Guava](https://github.com/google/guava) & [Gson](https://github.com/google/gson)** (Apache 2.0) by Google and contributors — Worker utilities and bounded operation-contract serialization on Android.
+* **[ArchUnit](https://www.archunit.org/)** (Apache 2.0) by TNG and contributors — Tests that enforce host parser isolation in compiled bytecode.
+* **[Coil](https://coil-kt.github.io/coil/)** (Apache 2.0) by Colin White — Credited for its former Android preview loader; current document previews decode in isolated workers.
 * **[Tesseract OCR Models](https://github.com/tesseract-ocr/tessdata)** (Apache 2.0) — Bundled neural OCR English trained model (`eng.traineddata`).
 * **[Google Material Design Icons](https://fonts.google.com/icons)** (Apache 2.0) — System UI iconography across desktop and mobile suites.
 

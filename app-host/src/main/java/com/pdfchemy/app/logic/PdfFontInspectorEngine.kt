@@ -21,20 +21,17 @@ object PdfFontInspectorEngine {
 
     suspend fun inspectFonts(context: Context, pdfUri: Uri): Result<List<PdfFontInfo>> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "FONT_INSPECT", pdfUri, null, "{}")
-            val arr = JSONArray(jsonResult)
-            val result = mutableListOf<PdfFontInfo>()
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                result.add(PdfFontInfo(
-                    postscriptName = obj.getString("postscriptName"),
-                    familyName = obj.getString("familyName"),
-                    formatType = obj.getString("formatType"),
-                    isEmbedded = obj.getBoolean("isEmbedded"),
-                    isSubset = obj.getBoolean("isSubset"),
-                    encoding = obj.getString("encoding"),
-                    pageCountUsed = obj.getInt("pageCountUsed")
-                ))
+            val contract = PdfGateway.executeEngineTyped<FontInspectContract>(context, "FONT_INSPECT", pdfUri, null, "{}")
+            val result = contract.fonts.map {
+                PdfFontInfo(
+                    postscriptName = it.postscriptName,
+                    familyName = it.familyName,
+                    formatType = it.formatType,
+                    isEmbedded = it.isEmbedded,
+                    isSubset = it.isSubset,
+                    encoding = it.encoding,
+                    pageCountUsed = it.pageCountUsed
+                )
             }
             Result.success(result)
         } catch (e: Exception) {

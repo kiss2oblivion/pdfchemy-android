@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Vanguard Veiligheidscontrole</string>
     <string name="vanguard_verifying_desc">Document controleren op scripts en beveiligingsrisico\'s...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Opnieuw uitvoeren</string>
+    <string name="action_reset">Resetten</string>
+    <string name="action_reverse">Omkeren</string>
+    <string name="action_rotate_all">Alles draaien</string>
+    <string name="label_preview_unavailable">Voorbeeld niet beschikbaar</string>
+    <string name="dialog_unsaved_title">Niet-opgeslagen wijzigingen</string>
+    <string name="dialog_unsaved_message">U hebt niet-opgeslagen wijzigingen. Wilt u deze opslaan of verwijderen voordat u weggaat?</string>
+    <string name="dialog_unsaved_save">Opslaan / Exporteren</string>
+    <string name="dialog_unsaved_discard">Verwijderen</string>
+    <string name="dialog_unsaved_continue">Doorgaan met bewerken</string>
+    <string name="vanguard_damaged_title">Beschadigde PDF</string>
+    <string name="vanguard_damaged_message">Deze PDF lijkt beschadigd of afgekapt en kon niet veilig worden gelezen. Probeer Repareren uit te voeren of kies een andere kopie.</string>
+    <string name="vanguard_provider_error_title">Bestand niet toegankelijk</string>
+    <string name="vanguard_provider_error_message">Het geselecteerde bestand kon niet worden geopend. De opslagprovider is mogelijk niet beschikbaar of machtigingen zijn ingetrokken.</string>
+    <string name="error_invalid_page_range">Ongeldig paginabereik. Controleer de paginanummers en probeer het opnieuw.</string>
+    <string name="consent_dialog_decline">Doorgaan zonder personalisatie</string>
+
+    <string name="generating_previews">Voorbeelden genereren…</string>
+    <string name="label_preview_loading">Laden…</string>
+    <string name="premium_status_loading">Winkel controleren…</string>
+    <string name="premium_status_unavailable">Winkel niet beschikbaar. Tik om opnieuw te proberen.</string>
+    <string name="action_retry">Opnieuw proberen</string>
+    <string name="redaction_review_title">Redacties controleren</string>
+    <string name="redaction_review_message">%1$d redactie(s) worden definitief toegepast. Geredigeerde inhoud kan niet worden hersteld.</string>
+    <string name="redaction_review_confirm">Redacties toepassen</string>
 </resources>

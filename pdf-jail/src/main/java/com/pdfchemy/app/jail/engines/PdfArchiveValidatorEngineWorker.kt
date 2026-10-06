@@ -5,15 +5,15 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.font.PDFont
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfArchiveValidatorEngineWorker {
 
     fun inspectPdfACompliance(sourceFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val checks = JSONArray()
 
             val isUnencrypted = !document.isEncrypted
@@ -127,7 +127,7 @@ object PdfArchiveValidatorEngineWorker {
     fun convertToPdfA(sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
 
             val markInfo = com.tom_roush.pdfbox.pdmodel.documentinterchange.logicalstructure.PDMarkInfo()
             markInfo.isMarked = true
@@ -163,7 +163,7 @@ object PdfArchiveValidatorEngineWorker {
                 try { acroForm.flatten() } catch (_: Exception) {}
             }
 
-            document.save(FileOutputStream(destFd.fileDescriptor))
+            FileOutputStream(destFd.fileDescriptor).use { document.save(it) }
             return "{}"
         } finally {
             try { document?.close() } catch (_: Exception) {}

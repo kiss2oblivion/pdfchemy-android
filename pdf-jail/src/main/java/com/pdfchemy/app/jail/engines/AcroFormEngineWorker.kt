@@ -15,8 +15,8 @@ import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget
 import com.tom_roush.pdfbox.pdmodel.interactive.form.*
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object AcroFormEngineWorker {
 
@@ -91,7 +91,7 @@ object AcroFormEngineWorker {
         var doc: PDDocument? = null
         return try {
             FileInputStream(sourceFd.fileDescriptor).use { stream ->
-                doc = PDDocument.load(stream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(stream, com.pdfchemy.app.jail.JailMemory.settings())
                 doc?.documentCatalog?.acroForm != null
             }
         } catch (e: Exception) {
@@ -107,7 +107,7 @@ object AcroFormEngineWorker {
         val result = mutableListOf<FormFieldInfo>()
         try {
             FileInputStream(sourceFd.fileDescriptor).use { stream ->
-                doc = PDDocument.load(stream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(stream, com.pdfchemy.app.jail.JailMemory.settings())
                 val acroForm = doc?.documentCatalog?.acroForm ?: return emptyList()
 
                 for (field in acroForm.fieldTree) {
@@ -141,7 +141,7 @@ object AcroFormEngineWorker {
                 }
             }
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to extract AcroForm fields: ${e.message}", e)
+            com.pdfchemy.app.jail.AppLogger.e("Failed to extract AcroForm fields: ${e.message}", e)
         } finally {
             doc?.close()
         }
@@ -159,7 +159,7 @@ object AcroFormEngineWorker {
         var doc: PDDocument? = null
         return try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val catalog = doc?.documentCatalog ?: return false
                 val acroForm = catalog.acroForm ?: return false
 
@@ -177,7 +177,7 @@ object AcroFormEngineWorker {
                                 field.setValue(value)
                             }
                         } catch (e: Exception) {
-                            com.pdfchemy.app.utils.AppLogger.w("Could not set field ${fqn} to ${value}: ${e.message}")
+                            com.pdfchemy.app.jail.AppLogger.w("Could not set field ${fqn} to ${value}: ${e.message}")
                         }
                     }
                 }
@@ -189,13 +189,13 @@ object AcroFormEngineWorker {
                     acroForm.cosObject.setBoolean(COSName.NEED_APPEARANCES, true)
                 }
 
-                java.io.FileOutputStream(destFd.fileDescriptor).use { outStream ->
+                com.pdfchemy.app.jail.boundedFileOutput(destFd.fileDescriptor).use { outStream ->
                     doc?.save(outStream)
                 }
                 true
             }
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to fill AcroForm: ${e.message}", e)
+            com.pdfchemy.app.jail.AppLogger.e("Failed to fill AcroForm: ${e.message}", e)
             false
         } finally {
             doc?.close()
@@ -212,7 +212,7 @@ object AcroFormEngineWorker {
         var doc: PDDocument? = null
         return try {
             FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                doc = PDDocument.load(inStream, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val document = doc ?: return false
                 val catalog = document.documentCatalog
                 var acroForm = catalog.acroForm
@@ -331,13 +331,13 @@ object AcroFormEngineWorker {
                 acroForm.setNeedAppearances(true)
                 acroForm.cosObject.setBoolean(COSName.NEED_APPEARANCES, true)
 
-                java.io.FileOutputStream(destFd.fileDescriptor).use { outStream ->
+                com.pdfchemy.app.jail.boundedFileOutput(destFd.fileDescriptor).use { outStream ->
                     document.save(outStream)
                 }
                 true
             }
         } catch (e: Exception) {
-            com.pdfchemy.app.utils.AppLogger.e("Failed to create AcroForm fields: ${e.message}", e)
+            com.pdfchemy.app.jail.AppLogger.e("Failed to create AcroForm fields: ${e.message}", e)
             false
         } finally {
             doc?.close()

@@ -78,16 +78,7 @@ fun ImageReplacerScreen(
             replacementImageUri = uri
             scope.launch(Dispatchers.IO) {
                 try {
-                    val loader = coil.Coil.imageLoader(context)
-                    val req = coil.request.ImageRequest.Builder(context)
-                        .data(uri)
-                        .allowHardware(false)
-                        .size(2048)
-                        .build()
-                    val result = loader.execute(req)
-                    val bmp = (result as? coil.request.SuccessResult)?.drawable?.let {
-                        (it as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                    }
+                    val bmp = com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, uri)
                     withContext(Dispatchers.Main) {
                         replacementBitmap = bmp
                     }

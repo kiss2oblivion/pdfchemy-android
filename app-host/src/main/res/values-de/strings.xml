@@ -336,7 +336,6 @@
 <string name="history_extracted_text">Extrahierter Text</string>
 <string name="history_pdf_to_text">PDF zu Text</string>
 <string name="history_converted_text">konvertierter_text</string>
-<string name="title_settings">Einstellungen</string>
     
 <string name="settings_about_legal">Über &amp; Rechtliches</string>
 <string name="settings_theme">App-Design</string>
@@ -1071,4 +1070,30 @@
     <string name="vanguard_verifying_title">Vanguard Sicherheitsprüfung</string>
     <string name="vanguard_verifying_desc">Dokument wird auf Skripte und Sicherheitsbedrohungen geprüft...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Wiederholen</string>
+    <string name="action_reset">Zurücksetzen</string>
+    <string name="action_reverse">Umkehren</string>
+    <string name="action_rotate_all">Alle drehen</string>
+    <string name="label_preview_unavailable">Vorschau nicht verfügbar</string>
+    <string name="dialog_unsaved_title">Ungespeicherte Änderungen</string>
+    <string name="dialog_unsaved_message">Sie haben ungespeicherte Änderungen. Möchten Sie diese vor dem Verlassen speichern oder verwerfen?</string>
+    <string name="dialog_unsaved_save">Speichern / Exportieren</string>
+    <string name="dialog_unsaved_discard">Verwerfen</string>
+    <string name="dialog_unsaved_continue">Weiter bearbeiten</string>
+    <string name="vanguard_damaged_title">Beschädigte PDF</string>
+    <string name="vanguard_damaged_message">Diese PDF scheint beschädigt oder unvollständig zu sein und konnte nicht sicher gelesen werden. Versuchen Sie es mit Reparieren oder wählen Sie eine andere Kopie.</string>
+    <string name="vanguard_provider_error_title">Datei nicht zugänglich</string>
+    <string name="vanguard_provider_error_message">Auf die ausgewählte Datei konnte nicht zugegriffen werden. Der Speicheranbieter ist möglicherweise nicht verfügbar oder Berechtigungen wurden widerrufen.</string>
+    <string name="error_invalid_page_range">Ungültiger Seitenbereich. Bitte überprüfen Sie die Seitenzahlen und versuchen Sie es erneut.</string>
+    <string name="consent_dialog_decline">Ohne Personalisierung fortfahren</string>
+
+    <string name="generating_previews">Vorschauen werden generiert…</string>
+    <string name="label_preview_loading">Laden…</string>
+    <string name="premium_status_loading">Store wird überprüft…</string>
+    <string name="premium_status_unavailable">Store nicht verfügbar. Tippen zum Wiederholen.</string>
+    <string name="action_retry">Wiederholen</string>
+    <string name="redaction_review_title">Schwärzungen überprüfen</string>
+    <string name="redaction_review_message">%1$d Schwärzung(en) werden dauerhaft angewendet. Geschwärzte Inhalte können nicht wiederhergestellt werden.</string>
+    <string name="redaction_review_confirm">Schwärzungen anwenden</string>
 </resources>

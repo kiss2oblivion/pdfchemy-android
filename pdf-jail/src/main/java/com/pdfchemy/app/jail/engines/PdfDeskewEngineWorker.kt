@@ -10,8 +10,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.util.Matrix as PdfMatrix
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -37,16 +37,16 @@ object PdfDeskewEngineWorker {
         var straightenedCount = 0
 
         try {
-            tempSourceFile = File.createTempFile("deskew_src", ".pdf")
+            tempSourceFile = com.pdfchemy.app.jail.JailScratch.createTempFile("deskew_src", ".pdf")
             FileOutputStream(tempSourceFile).use { out ->
                 FileInputStream(sourceFd.fileDescriptor).use { inp ->
                     inp.copyTo(out)
                 }
             }
 
-            pfd = ParcelFileDescriptor.open(tempSourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            pfd = com.pdfchemy.app.jail.CapabilityIo.fd(tempSourceFile)
             renderer = PdfRenderer(pfd)
-            document = PDDocument.load(tempSourceFile, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = com.pdfchemy.app.jail.CapabilityIo.input(tempSourceFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
 
             val totalPages = document.numberOfPages
             for (i in 0 until totalPages) {
@@ -56,7 +56,7 @@ object PdfDeskewEngineWorker {
                 var bmp: Bitmap? = null
                 val angle = try {
                     page = renderer.openPage(i)
-                    bmp = Bitmap.createBitmap(250, (250f * page.height / page.width).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(250, (250f * page.height / page.width).toInt().coerceAtLeast(1)); Bitmap.createBitmap(250, (250f * page.height / page.width).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888) }
                     bmp.eraseColor(Color.WHITE)
                     page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     detectSkewAngle(bmp)
@@ -74,7 +74,7 @@ object PdfDeskewEngineWorker {
                 }
             }
 
-            tempDestFile = File.createTempFile("deskew_dest", ".pdf")
+            tempDestFile = com.pdfchemy.app.jail.JailScratch.createTempFile("deskew_dest", ".pdf")
             document.save(tempDestFile)
             document.close()
             document = null
@@ -84,7 +84,7 @@ object PdfDeskewEngineWorker {
             pfd = null
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
-                tempDestFile.inputStream().use { inp ->
+                com.pdfchemy.app.jail.CapabilityIo.input(tempDestFile).use { inp ->
                     inp.copyTo(out)
                 }
             }

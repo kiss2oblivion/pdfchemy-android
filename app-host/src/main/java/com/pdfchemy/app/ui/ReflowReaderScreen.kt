@@ -62,11 +62,13 @@ enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
 @Composable
 fun ReflowReaderScreen(
     initialUri: Uri? = null,
+    viewModel: com.pdfchemy.app.ui.MainViewModel,
     onBack: () -> Unit
 ) {
     SecureScreenContent()
     BackHandler { onBack() }
     val context = LocalContext.current
+    val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
@@ -101,6 +103,7 @@ fun ReflowReaderScreen(
         }
     }
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
+    var showVanguardDamagedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
@@ -136,6 +139,50 @@ fun ReflowReaderScreen(
                 Button(
                     onClick = {
                         showVanguardBlockedDialog = false
+                        if (initialUri != null) onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showVanguardDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showVanguardDamagedDialog = false
+                if (initialUri != null) onBack()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Rounded.BrokenImage,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.vanguard_damaged_message),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showVanguardDamagedDialog = false
                         if (initialUri != null) onBack()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -194,46 +241,61 @@ fun ReflowReaderScreen(
     )
 
     LaunchedEffect(initialUri) {
-        if (initialUri != null) {
-            val isPdf = initialUri.toString().lowercase().endsWith(".pdf") || 
-                (com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)?.lowercase()?.endsWith(".pdf") == true)
-            if (isPdf && isVanguardEnabled) {
-                isVanguardScanning = true
-                vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)
-                try {
-                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, initialUri)
-                    when (threat) {
-                        is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                            isLoading = true
-                            val docData = PdfOutlineReader.loadReflowDocument(context, initialUri)
-                            reflowSections = docData.sections
-                            bookmarks = docData.bookmarks
-                            isScannedOnly = docData.isScannedOnly
-                            uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
-                            isLoading = false
+        guardDocumentLoad(onFailure = {
+            showVanguardBlockedDialog = true
+            isVanguardScanning = false
+            isLoading = false
+        }) {
+            if (initialUri != null) {
+                val originalUri = initialUri
+                val initialUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                val isPdf = initialUri.toString().lowercase().endsWith(".pdf") ||
+                    (com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)?.lowercase()?.endsWith(".pdf") == true)
+                if (isPdf && isVanguardEnabled) {
+                    isVanguardScanning = true
+                    vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)
+                    try {
+                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, initialUri)
+                        when (threat) {
+                            is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
+                                isLoading = true
+                                val docData = PdfOutlineReader.loadReflowDocument(context, initialUri)
+                                reflowSections = docData.sections
+                                bookmarks = docData.bookmarks
+                                isScannedOnly = docData.isScannedOnly
+                                uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
+                                isLoading = false
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
+                                showVanguardEncryptedDialog = true
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
+                                showVanguardBlockedDialog = true
+                            }
+                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                showVanguardDamagedDialog = true
+                            }
                         }
-                        is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
-                            showVanguardEncryptedDialog = true
-                        }
-                        is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                        is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                            showVanguardBlockedDialog = true
-                        }
+                    } finally {
+                        isVanguardScanning = false
+                        vanguardScanningFileName = null
                     }
-                } finally {
-                    isVanguardScanning = false
-                    vanguardScanningFileName = null
+                } else {
+                    isLoading = true
+                    val docData = PdfOutlineReader.loadReflowDocument(context, initialUri)
+                    reflowSections = docData.sections
+                    bookmarks = docData.bookmarks
+                    isScannedOnly = docData.isScannedOnly
+                    uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
+                    isLoading = false
                 }
-            } else {
-                isLoading = true
-                val docData = PdfOutlineReader.loadReflowDocument(context, initialUri)
-                reflowSections = docData.sections
-                bookmarks = docData.bookmarks
-                isScannedOnly = docData.isScannedOnly
-                uriHash = android.util.Base64.encodeToString(initialUri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
-                isLoading = false
             }
         }
+
+    }
+
+    val hasReadableContent = remember(reflowSections) {
+        reflowSections.any { section -> section.paragraphs.any { it.isNotBlank() } }
     }
 
     var selectedTheme by remember { mutableStateOf(ReaderTheme.LIGHT) }
@@ -243,7 +305,7 @@ fun ReflowReaderScreen(
     val listState = rememberLazyListState()
 
     LaunchedEffect(reflowSections, uriHash) {
-        if (reflowSections.isNotEmpty() && !isScannedOnly) {
+        if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
             val savedIndex = prefs.getInt("reader_scroll_index_$uriHash", 0)
             val savedOffset = prefs.getInt("reader_scroll_offset_$uriHash", 0)
             if (savedIndex < reflowSections.size) {
@@ -252,10 +314,10 @@ fun ReflowReaderScreen(
         }
     }
 
-    LaunchedEffect(listState, uriHash, reflowSections) {
+    LaunchedEffect(listState, uriHash, reflowSections, isRememberPositionEnabled) {
         androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
-                if (reflowSections.isNotEmpty() && !isScannedOnly) {
+                if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
                     prefs.edit()
                         .putInt("reader_scroll_index_$uriHash", index)
                         .putInt("reader_scroll_offset_$uriHash", offset)
@@ -277,7 +339,7 @@ fun ReflowReaderScreen(
     val allParagraphs = remember(reflowSections) {
         reflowSections.flatMap { it.paragraphs }
     }
-    
+
     val paragraphToSection = remember(reflowSections) {
         val map = mutableMapOf<Int, Int>()
         var pIdx = 0
@@ -312,8 +374,8 @@ fun ReflowReaderScreen(
         }
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) { 
-                    isTtsPlaying = true 
+                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    isTtsPlaying = true
                     val sIdx = paragraphToSection[currentSpeakingIndex]
                     if (sIdx != null && !listState.isScrollInProgress) {
                         listState.animateScrollToItem(sIdx)
@@ -383,51 +445,61 @@ fun ReflowReaderScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            val isPdf = uri.toString().lowercase().endsWith(".pdf") || 
+            val isPdf = uri.toString().lowercase().endsWith(".pdf") ||
                 (com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.lowercase()?.endsWith(".pdf") == true)
             scope.launch {
-                if (isPdf && isVanguardEnabled) {
-                    isVanguardScanning = true
-                    vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
-                    try {
-                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
-                        when (threat) {
-                            is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                selectedPdfUri = uri
-                                isLoading = true
-                                val docData = PdfOutlineReader.loadReflowDocument(context, uri)
-                                reflowSections = docData.sections
-                                bookmarks = docData.bookmarks
-                                isScannedOnly = docData.isScannedOnly
-                                uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
-                                isLoading = false
-                            }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
-                                showVanguardEncryptedDialog = true
-                            }
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                                showVanguardBlockedDialog = true
-                            }
-                        }
-                    } finally {
-                        isVanguardScanning = false
-                        vanguardScanningFileName = null
-                    }
-                } else {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    selectedPdfUri = uri
-                    isLoading = true
-                    val docData = PdfOutlineReader.loadReflowDocument(context, uri)
-                    reflowSections = docData.sections
-                    bookmarks = docData.bookmarks
-                    isScannedOnly = docData.isScannedOnly
-                    uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
+                guardDocumentLoad(onFailure = {
+                    showVanguardBlockedDialog = true
+                    isVanguardScanning = false
                     isLoading = false
+                }) {
+                    val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri }
+                    if (isPdf && isVanguardEnabled) {
+                        isVanguardScanning = true
+                        vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
+                        try {
+                            val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
+                            when (threat) {
+                                is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    selectedPdfUri = uri
+                                    isLoading = true
+                                    val docData = PdfOutlineReader.loadReflowDocument(context, uri)
+                                    reflowSections = docData.sections
+                                    bookmarks = docData.bookmarks
+                                    isScannedOnly = docData.isScannedOnly
+                                    uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
+                                    isLoading = false
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
+                                    showVanguardEncryptedDialog = true
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
+                                    showVanguardBlockedDialog = true
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                    showVanguardDamagedDialog = true
+                                }
+                            }
+                        } finally {
+                            isVanguardScanning = false
+                            vanguardScanningFileName = null
+                        }
+                    } else {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        selectedPdfUri = uri
+                        isLoading = true
+                        val docData = PdfOutlineReader.loadReflowDocument(context, uri)
+                        reflowSections = docData.sections
+                        bookmarks = docData.bookmarks
+                        isScannedOnly = docData.isScannedOnly
+                        uriHash = android.util.Base64.encodeToString(uri.toString().toByteArray(), android.util.Base64.NO_WRAP or android.util.Base64.URL_SAFE)
+                        isLoading = false
+                    }
                 }
             }
         }
+
     }
 
     ModalNavigationDrawer(
@@ -784,7 +856,7 @@ fun ReflowReaderScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else if (selectedPdfUri != null && isScannedOnly && reflowSections.isEmpty()) {
+                } else if (selectedPdfUri != null && (isScannedOnly || !hasReadableContent)) {
                     Column(
                         modifier = Modifier
                             .widthIn(max = 500.dp)
@@ -835,7 +907,7 @@ fun ReflowReaderScreen(
                                             val paragraphs = extractedText.split(Regex("\n\n+"))
                                                 .map { it.replace(Regex("\n+"), " ").trim() }
                                                 .filter { it.isNotBlank() }
-                                            
+
                                             reflowSections = listOf(ReflowSection(pageNumber = 1, title = "OCR Extracted", paragraphs = paragraphs))
                                             isScannedOnly = false
                                         }
@@ -946,7 +1018,7 @@ fun ReflowReaderScreen(
                                         section.paragraphs.forEach { p ->
                                             val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                             val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
-                                            
+
                                             Box(modifier = Modifier.background(bgColor, RoundedCornerShape(4.dp)).padding(2.dp)) {
                                                 HighlightedParagraph(
                                                     text = p,
@@ -1111,7 +1183,7 @@ fun ReflowReaderScreen(
                                 section.paragraphs.forEach { p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
-                                    
+
                                     Box(modifier = Modifier.background(bgColor, RoundedCornerShape(4.dp)).padding(2.dp)) {
                                         HighlightedParagraph(
                                             text = p,
@@ -1157,7 +1229,7 @@ fun ReflowReaderScreen(
                                 section.paragraphs.forEach { p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
-                                    
+
                                     Box(modifier = Modifier.background(bgColor, RoundedCornerShape(4.dp)).padding(2.dp)) {
                                         HighlightedParagraph(
                                             text = p,

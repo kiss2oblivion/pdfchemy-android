@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">वैनगार्ड सुरक्षा सत्यापन</string>
     <string name="vanguard_verifying_desc">स्क्रिप्ट और सुरक्षा खतरों के लिए दस्तावेज़ की जाँच की जा रही है...</string>
     <string name="vanguard_zero_trust_badge">100%% ऑफ़लाइन • शून्य-विश्वास</string>
+
+    <string name="action_redo">फिर से करें</string>
+    <string name="action_reset">रीसेट करें</string>
+    <string name="action_reverse">उल्टा करें</string>
+    <string name="action_rotate_all">सभी घुमाएँ</string>
+    <string name="label_preview_unavailable">पूर्वावलोकन अनुपलब्ध</string>
+    <string name="dialog_unsaved_title">बिना सहेजे गए परिवर्तन</string>
+    <string name="dialog_unsaved_message">आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप छोड़ने से पहले उन्हें सहेजना या छोड़ना चाहते हैं?</string>
+    <string name="dialog_unsaved_save">सहेजें / निर्यात करें</string>
+    <string name="dialog_unsaved_discard">खारिज करें</string>
+    <string name="dialog_unsaved_continue">संपादन जारी रखें</string>
+    <string name="vanguard_damaged_title">क्षतिग्रस्त PDF</string>
+    <string name="vanguard_damaged_message">यह PDF क्षतिग्रस्त या अधूरा प्रतीत होता है और इसे सुरक्षित रूप से नहीं पढ़ा जा सका। मरम्मत चलाने का प्रयास करें या कोई अन्य प्रति चुनें।</string>
+    <string name="vanguard_provider_error_title">फ़ाइल अप्राप्य</string>
+    <string name="vanguard_provider_error_message">चयनित फ़ाइल तक नहीं पहुँचा जा सका। संग्रहण प्रदाता अनुपलब्ध हो सकता है या अनुमतियाँ रद्द कर दी गई हैं।</string>
+    <string name="error_invalid_page_range">अमान्य पृष्ठ सीमा। कृपया पृष्ठ संख्या सत्यापित करें और पुनः प्रयास करें।</string>
+    <string name="consent_dialog_decline">निजीकरण के बिना जारी रखें</string>
+
+    <string name="generating_previews">पूर्वावलोकन तैयार हो रहे हैं…</string>
+    <string name="label_preview_loading">लोड हो रहा है…</string>
+    <string name="premium_status_loading">स्टोर की जांच हो रही है…</string>
+    <string name="premium_status_unavailable">स्टोर अनुपलब्ध है। पुनः प्रयास करने के लिए टैप करें।</string>
+    <string name="action_retry">पुनः प्रयास करें</string>
+    <string name="redaction_review_title">संपादनों की समीक्षा करें</string>
+    <string name="redaction_review_message">%1$d संपादन स्थायी रूप से लागू किए जाएंगे। संपादित सामग्री को पुनर्प्राप्त नहीं किया जा सकता है।</string>
+    <string name="redaction_review_confirm">संपादन लागू करें</string>
 </resources>

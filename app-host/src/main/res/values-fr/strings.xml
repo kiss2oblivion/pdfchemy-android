@@ -335,7 +335,6 @@
 <string name="history_extracted_text">Texte extrait</string>
 <string name="history_pdf_to_text">PDF en texte</string>
 <string name="history_converted_text">texte_converti</string>
-<string name="title_settings">Paramètres</string>
     
 <string name="settings_about_legal">À propos et mentions légales</string>
 <string name="settings_theme">Thème de l\'application</string>
@@ -1071,4 +1070,30 @@
     <string name="vanguard_verifying_title">Vérification de Sécurité Vanguard</string>
     <string name="vanguard_verifying_desc">Analyse du document pour scripts et menaces de sécurité...</string>
     <string name="vanguard_zero_trust_badge">100%% Hors-ligne • Zero-Trust</string>
+
+    <string name="action_redo">Rétablir</string>
+    <string name="action_reset">Réinitialiser</string>
+    <string name="action_reverse">Inverser</string>
+    <string name="action_rotate_all">Faire pivoter tout</string>
+    <string name="label_preview_unavailable">Aperçu non disponible</string>
+    <string name="dialog_unsaved_title">Modifications non enregistrées</string>
+    <string name="dialog_unsaved_message">Vous avez des modifications non enregistrées. Voulez-vous les enregistrer ou les abandonner avant de quitter\?</string>
+    <string name="dialog_unsaved_save">Enregistrer / Exporter</string>
+    <string name="dialog_unsaved_discard">Abandonner</string>
+    <string name="dialog_unsaved_continue">Continuer l\'édition</string>
+    <string name="vanguard_damaged_title">PDF endommagé</string>
+    <string name="vanguard_damaged_message">Ce PDF semble endommagé ou tronqué et n\'a pas pu être lu en toute sécurité. Essayez d\'exécuter la réparation ou sélectionnez une autre copie.</string>
+    <string name="vanguard_provider_error_title">Fichier inaccessible</string>
+    <string name="vanguard_provider_error_message">Impossible d\'accéder au fichier sélectionné. Le fournisseur de stockage est peut-être indisponible ou les autorisations ont été révoquées.</string>
+    <string name="error_invalid_page_range">Plage de pages non valide. Veuillez vérifier les numéros de page et réessayer.</string>
+    <string name="consent_dialog_decline">Continuer sans personnalisation</string>
+
+    <string name="generating_previews">Génération des aperçus…</string>
+    <string name="label_preview_loading">Chargement…</string>
+    <string name="premium_status_loading">Vérification de la boutique…</string>
+    <string name="premium_status_unavailable">Boutique indisponible. Appuyez pour réessayer.</string>
+    <string name="action_retry">Réessayer</string>
+    <string name="redaction_review_title">Vérifier les caviardages</string>
+    <string name="redaction_review_message">%1$d caviardage(s) seront appliqués définitivement. Le contenu caviardé ne peut pas être récupéré.</string>
+    <string name="redaction_review_confirm">Appliquer les caviardages</string>
 </resources>

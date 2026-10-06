@@ -38,6 +38,8 @@ import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Crop
+import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.DynamicForm
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,6 +101,30 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             }
             item {
                 ToolCard(
+                    title = stringResource(R.string.menu_quick_fill_sign),
+                    subtitle = stringResource(R.string.menu_quick_fill_sign_desc),
+                    icon = Icons.Rounded.Draw,
+                    onClick = { onNavigate(Screen.QuickFillSign) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_form_builder),
+                    subtitle = stringResource(R.string.menu_form_builder_desc),
+                    icon = Icons.Rounded.EditNote,
+                    onClick = { onNavigate(Screen.FormBuilder) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_fill_form),
+                    subtitle = stringResource(R.string.menu_fill_form_desc),
+                    icon = Icons.Rounded.DynamicForm,
+                    onClick = { onNavigate(Screen.FillForm) }
+                )
+            }
+            item {
+                ToolCard(
                     title = stringResource(R.string.menu_merge),
                     subtitle = stringResource(R.string.menu_merge_desc),
                     icon = Icons.Rounded.Merge,
@@ -121,14 +147,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.DeletePages) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_extract_images),
-                    subtitle = stringResource(R.string.menu_extract_images_desc),
-                    icon = Icons.Rounded.Image,
-                    onClick = { onNavigate(Screen.ExtractImages) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_rotate_pages),
@@ -153,14 +172,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.PageOrganizer) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_sign_pdf),
-                    subtitle = stringResource(R.string.menu_sign_pdf_desc),
-                    icon = Icons.Rounded.Draw,
-                    onClick = { onNavigate(Screen.SignPdf) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_watermark_pdf),
@@ -217,14 +229,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.Booklet) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_grayscale_optimizer),
-                    subtitle = stringResource(R.string.menu_grayscale_optimizer_desc),
-                    icon = Icons.Rounded.Draw,
-                    onClick = { onNavigate(Screen.GrayscaleOptimizer) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_header_footer_stamping),
@@ -249,14 +254,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.AttachmentManager) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_fast_web_view),
-                    subtitle = stringResource(R.string.menu_fast_web_view_desc),
-                    icon = Icons.Rounded.Dashboard,
-                    onClick = { onNavigate(Screen.LinearizePdf) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_nup_handouts),

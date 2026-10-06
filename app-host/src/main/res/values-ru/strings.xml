@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Проверка безопасности Vanguard</string>
     <string name="vanguard_verifying_desc">Проверка документа на наличие скриптов и угроз безопасности...</string>
     <string name="vanguard_zero_trust_badge">100%% Офлайн • Zero-Trust</string>
+
+    <string name="action_redo">Повторить</string>
+    <string name="action_reset">Сбросить</string>
+    <string name="action_reverse">Обратный порядок</string>
+    <string name="action_rotate_all">Повернуть все</string>
+    <string name="label_preview_unavailable">Предпросмотр недоступен</string>
+    <string name="dialog_unsaved_title">Несохранённые изменения</string>
+    <string name="dialog_unsaved_message">У вас есть несохранённые изменения. Сохранить или отменить их перед выходом?</string>
+    <string name="dialog_unsaved_save">Сохранить / Экспорт</string>
+    <string name="dialog_unsaved_discard">Сбросить</string>
+    <string name="dialog_unsaved_continue">Продолжить редактирование</string>
+    <string name="vanguard_damaged_title">Повреждённый PDF</string>
+    <string name="vanguard_damaged_message">Этот PDF повреждён или обрезан и не может быть безопасно прочитан. Попробуйте выполнить восстановление или выберите другой файл.</string>
+    <string name="vanguard_provider_error_title">Файл недоступен</string>
+    <string name="vanguard_provider_error_message">Не удалось получить доступ к выбранному файлу. Хранилище может быть недоступно или разрешения были отозваны.</string>
+    <string name="error_invalid_page_range">Недопустимый диапазон страниц. Проверьте номера страниц и повторите попытку.</string>
+    <string name="consent_dialog_decline">Продолжить без персонализации</string>
+
+    <string name="generating_previews">Создание миниатюр…</string>
+    <string name="label_preview_loading">Загрузка…</string>
+    <string name="premium_status_loading">Проверка магазина…</string>
+    <string name="premium_status_unavailable">Магазин недоступен. Нажмите для повтора.</string>
+    <string name="action_retry">Повторить</string>
+    <string name="redaction_review_title">Проверка скрытых областей</string>
+    <string name="redaction_review_message">Будет навсегда применено скрытий: %1$d. Скрытое содержимое восстановить невозможно.</string>
+    <string name="redaction_review_confirm">Применить скрытие</string>
 </resources>

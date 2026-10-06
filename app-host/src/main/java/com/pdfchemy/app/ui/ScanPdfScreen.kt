@@ -47,6 +47,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+import com.pdfchemy.app.Screen
+
 enum class ScanFilterMode {
     ORIGINAL,
     MAGIC_COLOR,
@@ -58,6 +60,7 @@ enum class ScanFilterMode {
 @Composable
 fun ScanPdfScreen(
     viewModel: MainViewModel,
+    onNavigateToTool: (Screen) -> Unit,
     onBack: () -> Unit
 ) {
     SecureScreenContent()
@@ -69,6 +72,7 @@ fun ScanPdfScreen(
     var selectedIndex by remember { mutableIntStateOf(0) }
     var currentFilter by remember { mutableStateOf(ScanFilterMode.MAGIC_COLOR) }
     var isProcessing by remember { mutableStateOf(false) }
+    var pendingNavigation by remember { mutableStateOf<Screen?>(null) }
 
     val currentScannedBitmaps by rememberUpdatedState(scannedBitmaps)
     DisposableEffect(Unit) {
@@ -110,12 +114,18 @@ fun ScanPdfScreen(
                         destFile.outputStream().use { output -> input.copyTo(output) }
                     }
                     val uri = Uri.fromFile(destFile)
-                    viewModel.notifySuccess(
-                        context.getString(R.string.title_scan_success),
-                        context.getString(R.string.desc_scan_success),
-                        uri
-                    )
-                    onBack()
+                    
+                    if (pendingNavigation != null) {
+                        viewModel.setContinuityUri(uri)
+                        onNavigateToTool(if (pendingNavigation is Screen.PdfReader) Screen.PdfReader(uri) else pendingNavigation!!)
+                    } else {
+                        viewModel.notifySuccess(
+                            context.getString(R.string.title_scan_success),
+                            context.getString(R.string.desc_scan_success),
+                            uri
+                        )
+                        onBack()
+                    }
                 }
             }
         }
@@ -149,18 +159,14 @@ fun ScanPdfScreen(
         if (destUri != null && scannedBitmaps.isNotEmpty()) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {
-                val doc = android.graphics.pdf.PdfDocument()
+                val images = mutableListOf<java.io.File>()
                 try {
                     for (rawBmp in scannedBitmaps) {
                         val filteredBmp = applyScanFilter(rawBmp, currentFilter)
                         try {
-                            val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(
-                                filteredBmp.width, filteredBmp.height, doc.pages.size + 1
-                            ).create()
-                            val page = doc.startPage(pageInfo)
-                            val canvas = page.canvas
-                            canvas.drawBitmap(filteredBmp, 0f, 0f, null)
-                            doc.finishPage(page)
+                            val image = java.io.File.createTempFile("scan_", ".png", context.cacheDir)
+                            images.add(image)
+                            com.pdfchemy.app.security.BoundedOutputStream(image.outputStream(), com.pdfchemy.app.security.SecurityLimits.MAX_PDF_FILESIZE).use { check(filteredBmp.compress(Bitmap.CompressFormat.PNG, 100, it)) }
                         } finally {
                             if (filteredBmp != rawBmp && !filteredBmp.isRecycled) {
                                 filteredBmp.recycle()
@@ -168,18 +174,21 @@ fun ScanPdfScreen(
                         }
                     }
 
-                    context.contentResolver.openOutputStream(destUri)?.use { out ->
-                        doc.writeTo(out)
-                    }
+                    com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", images.map(android.net.Uri::fromFile), listOf(destUri), "{}")
 
                     withContext(Dispatchers.Main) {
                         isProcessing = false
-                        viewModel.notifySuccess(
-                            context.getString(R.string.title_scan_success),
-                            context.getString(R.string.desc_scan_success),
-                            destUri
-                        )
-                        onBack()
+                        if (pendingNavigation != null) {
+                            viewModel.setContinuityUri(destUri)
+                            onNavigateToTool(if (pendingNavigation is Screen.PdfReader) Screen.PdfReader(destUri) else pendingNavigation!!)
+                        } else {
+                            viewModel.notifySuccess(
+                                context.getString(R.string.title_scan_success),
+                                context.getString(R.string.desc_scan_success),
+                                destUri
+                            )
+                            onBack()
+                        }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
@@ -187,7 +196,7 @@ fun ScanPdfScreen(
                         viewModel.notifyError(context.getString(R.string.error_scan_failed))
                     }
                 } finally {
-                    try { doc.close() } catch (_: Exception) {}
+                    images.forEach { it.delete() }
                 }
             }
         }
@@ -422,27 +431,61 @@ fun ScanPdfScreen(
                     }
                 }
 
-                Button(
-                    onClick = { savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .defaultMinSize(minHeight = 52.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    enabled = !isProcessing
+                // Post-Capture Continuity Options
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (isProcessing) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-                    } else {
-                        Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.action_save_as_pdf, scannedBitmaps.size),
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                    Button(
+                        onClick = { 
+                            pendingNavigation = Screen.PdfReader()
+                            savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                        },
+                        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        enabled = !isProcessing
+                    ) {
+                        if (isProcessing) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                        } else {
+                            Icon(Icons.Rounded.MenuBook, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Save & Open in Reader", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { 
+                                pendingNavigation = Screen.OcrPdf
+                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                            },
+                            modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isProcessing
+                        ) {
+                            Icon(Icons.Rounded.DocumentScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Save & OCR", fontSize = 13.sp)
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { 
+                                pendingNavigation = Screen.CompressPdf
+                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                            },
+                            modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isProcessing
+                        ) {
+                            Icon(Icons.Rounded.Compress, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Save & Compress", fontSize = 13.sp)
+                        }
                     }
                 }
             }
@@ -497,23 +540,5 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
     }
 }
 
-private fun decodeBoundedBitmap(context: Context, uri: Uri, maxDim: Int = 2048): Bitmap? {
-    return try {
-        if (android.os.Build.VERSION.SDK_INT >= 28) {
-            val source = android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-            android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-                var sampleSize = 1
-                while ((info.size.width / sampleSize) > maxDim || (info.size.height / sampleSize) > maxDim) {
-                    sampleSize *= 2
-                }
-                decoder.setTargetSampleSize(sampleSize)
-                decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-        }
-    } catch (_: Throwable) {
-        null
-    }
-}
+private suspend fun decodeBoundedBitmap(context: Context, uri: Uri, maxDim: Int = 2048): Bitmap? =
+    com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, uri)

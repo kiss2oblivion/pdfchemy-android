@@ -24,12 +24,17 @@ object PdfCompressor {
         stripMetadata: Boolean = false,
         targetMb: Float? = null
     ): Result<CompressionReport> = withContext(Dispatchers.IO) {
+        var stagedPdf: com.pdfchemy.app.jail.StagedPdf? = null
+        var inputLease: java.io.Closeable? = null
+        val temporaryFiles = mutableListOf<java.io.File>()
         try {
+            stagedPdf = DocumentStager.stageDocumentCancellable(context, sourceUri)
+            inputLease = DocumentStager.retain(stagedPdf)
             val cacheDir = context.cacheDir
-            val tempFile1 = java.io.File(cacheDir, "temp_compress_${System.currentTimeMillis()}_1.pdf")
+            val tempFile1 = java.io.File.createTempFile("temp_compress_", ".pdf", cacheDir).also(temporaryFiles::add)
             val tempUri1 = Uri.fromFile(tempFile1)
 
-            val pass1Result = compressSinglePass(context, sourceUri, tempUri1, quality, useGrayscale, useLossless, stripMetadata)
+            val pass1Result = compressSinglePass(context, stagedPdf.uri, tempUri1, quality, useGrayscale, useLossless, stripMetadata)
             if (pass1Result.isFailure) {
                 tempFile1.delete()
                 return@withContext pass1Result
@@ -47,10 +52,10 @@ object PdfCompressor {
                     val scaleFactor = targetBytes.toFloat() / size1.toFloat()
                     val tighterQuality = (quality * scaleFactor * 0.90f).coerceIn(0.05f, quality - 0.05f)
 
-                    val tempFile2 = java.io.File(cacheDir, "temp_compress_${System.currentTimeMillis()}_2.pdf")
+                    val tempFile2 = java.io.File.createTempFile("temp_compress_", ".pdf", cacheDir).also(temporaryFiles::add)
                     val tempUri2 = Uri.fromFile(tempFile2)
 
-                    val pass2Result = compressSinglePass(context, sourceUri, tempUri2, tighterQuality, useGrayscale, useLossless, stripMetadata)
+                    val pass2Result = compressSinglePass(context, stagedPdf.uri, tempUri2, tighterQuality, useGrayscale, useLossless, stripMetadata)
                     if (pass2Result.isSuccess) {
                         val size2 = tempFile2.length()
                         if (size2 < size1) {
@@ -76,7 +81,7 @@ object PdfCompressor {
                 }
 
                 if (success) {
-                    Result.success(bestReport)
+                    Result.success(bestReport.copy(targetMissed = targetMb != null && bestTempFile.length() > (targetMb * 1024 * 1024).toLong()))
                 } else {
                     Result.failure(Exception("Failed to copy final compressed output to destination"))
                 }
@@ -86,6 +91,10 @@ object PdfCompressor {
         } catch (e: Exception) {
             AppLogger.e("PdfCompressor: Compression failed", e)
             Result.failure(e)
+        } finally {
+            temporaryFiles.forEach { it.delete() }
+            stagedPdf?.takeIf { it.uri != sourceUri }?.let(DocumentStager::release)
+            inputLease?.close()
         }
     }
 
@@ -105,19 +114,14 @@ private suspend fun compressSinglePass(
 
             val targetDpi = 150f
 
-            val stagedUri = DocumentStager.stageDocument(context, sourceUri)
-            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
-            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
-            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
-
-            com.pdfchemy.app.jail.PdfJailClient.compressPdf(
-                context, stagedPdf, destUri, targetDpi, quality, false
-            )
+            val contract = PdfGateway.executeEngineTyped<CompressContract>(context, "COMPRESS", sourceUri, destUri,
+                org.json.JSONObject().put("targetDpi", targetDpi).put("quality", quality)
+                    .put("useGrayscale", useGrayscale).put("useLossless", useLossless).put("stripMetadata", stripMetadata).toString())
 
             val report = CompressionReport(
                 originalSize = fileSize,
-                imagesProcessed = 1,
-                hasSignatures = false,
+                imagesProcessed = contract.imagesProcessed,
+                hasSignatures = contract.hasSignatures,
                 targetMissed = false
             )
 
@@ -140,22 +144,9 @@ private suspend fun compressSinglePass(
         uri: Uri
     ): Result<PdfAnalysis> = withContext(Dispatchers.IO) {
         try {
-            val stagedUri = DocumentStager.stageDocument(context, uri)
-            val contentResolver = context.contentResolver
-            val stagedSize = contentResolver.openFileDescriptor(stagedUri, "r")?.use { it.statSize } ?: -1L
-            val stagedHash = stagedUri.path?.substringAfterLast("pdf_staged_")?.substringBeforeLast(".pdf") ?: ""
-            val stagedPdf = StagedPdf(stagedUri, stagedHash, stagedSize)
-            val jsonString = com.pdfchemy.app.jail.PdfJailClient.analyzePdf(context, stagedPdf)
-            val json = org.json.JSONObject(jsonString)
+            val analysis = PdfGateway.analyzePdf(context, uri)
 
-            val pageCount = json.getInt("pageCount")
-            val imageCount = json.getInt("imageCount")
-            val hasSignatures = json.getBoolean("hasSignatures")
-            val scenarioName = json.getString("scenario")
-            val recommendedQuality = json.getDouble("recommendedQuality").toFloat()
-            val recommendationReason = json.getString("recommendationReason")
-
-            val scenario = when (scenarioName) {
+            val scenario = when (analysis.scenario) {
                 "SIGNED_OFFICIAL" -> PdfScenario.SIGNED_OFFICIAL
                 "TEXT_VECTOR" -> PdfScenario.TEXT_VECTOR
                 "SCANNED_IMAGE_HEAVY" -> PdfScenario.SCANNED_IMAGE_HEAVY
@@ -163,12 +154,12 @@ private suspend fun compressSinglePass(
             }
 
             Result.success(PdfAnalysis(
-                pageCount = pageCount,
-                imageCount = imageCount,
-                hasSignatures = hasSignatures,
+                pageCount = analysis.pageCount,
+                imageCount = analysis.imageCount,
+                hasSignatures = analysis.hasSignatures,
                 scenario = scenario,
-                recommendedQuality = recommendedQuality,
-                recommendationReason = recommendationReason
+                recommendedQuality = analysis.recommendedQuality,
+                recommendationReason = analysis.recommendationReason
             ))
         } catch (e: Exception) {
             Result.failure(e)

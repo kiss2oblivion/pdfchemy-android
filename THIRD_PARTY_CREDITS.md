@@ -60,7 +60,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [The Legion of the Bouncy Castle](https://www.bouncycastle.org/)
 * **Authors:** The Legion of the Bouncy Castle Inc.
-* **Libraries:** `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (v1.78)
+* **Libraries:** `org.bouncycastle:bcprov-jdk18on`, `org.bouncycastle:bcpkix-jdk18on` (`1.86` Android; `1.78` Desktop)
 * **License:** [Bouncy Castle Licence](https://www.bouncycastle.org/licence.html) (Permissive MIT/BSD-style license)
 * **Usage in PDFchemy (Android & Desktop):**
   * Industrial-grade cryptographic provider.
@@ -77,18 +77,27 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 * **Usage in PDFchemy (Desktop):**
   * Local, offline Optical Character Recognition (OCR) engine for converting scanned PDFs and bitmap pages into searchable text.
 
+### [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android) & [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
+* **Authors:** Robert Pösel, Adaptech s.r.o., Ray Smith, Google Inc. & Tesseract OCR Contributors
+* **Version:** `4.9.0` (packaging Tesseract `5.5.1` and Leptonica `1.84.1`)
+* **Upstream Provenance:** Git tag `4.9.0`, commit `15c534717b1cb58261b58d4e4c1200c7f81f668c`
+* **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+* **Usage in PDFchemy (Android):**
+  * Production optical character recognition engine executed inside the isolated worker process (`pdf-jail`). Built reproducibly with an audited minimal source patch (`patches/tesseract4android-4.9.0-inmemory.patch`) adding in-memory model initialization directly to `TessBaseAPI` via JNI `nativeInitMemory`, invoking upstream `TessBaseAPI::Init(const char *data, int data_size, ...)` from a trusted, privately held byte buffer.
+  * Vendored as `pdf-jail/libs/tesseract4android-4.9.0-inmemory.aar` with build-time cryptographic policy enforcement: the Gradle task `verifyTesseractAarHash` cryptographically validates the AAR SHA-256 (`d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa`) before compilation, guaranteeing 100% offline, local-first OCR with zero filesystem requirements (`filesDir`/`cacheDir`/`fopen`) under the Android isolated UID and zero build-time supply chain dependencies.
+
 ### [Tesseract OCR English Trained Data Model (`eng.traineddata`)](https://github.com/tesseract-ocr/tessdata)
 * **Authors:** Ray Smith & The Tesseract OCR Open Source Community
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-* **Usage in PDFchemy (Desktop):**
-  * Bundled offline neural OCR model enabling instantaneous character recognition without needing an internet connection or external downloads.
+* **Usage in PDFchemy (Android & Desktop):**
+  * Bundled offline neural OCR model enabling instantaneous character recognition without needing an internet connection or external downloads. In Android, model data is strictly bounded in memory and loaded once per isolated worker process.
 
-### [Google ML Kit (On-Device Vision)](https://developers.google.com/ml-kit)
+### [Google ML Kit (Document Scanner)](https://developers.google.com/ml-kit)
 * **Authors:** Google LLC
-* **Libraries:** `play-services-mlkit-document-scanner`, `com.google.mlkit:text-recognition`
+* **Libraries:** `play-services-mlkit-document-scanner`
 * **License:** Android Software Development Kit License
 * **Usage in PDFchemy (Android):**
-  * High-speed on-device document camera perspective warping, boundary detection, and offline mobile text recognition.
+  * Host UI-side camera capture, perspective warping, and page boundary detection. Standard text recognition in isolated processing is handled by Tesseract.
 
 ---
 
@@ -96,7 +105,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [jsoup: Java HTML Parser](https://jsoup.org/)
 * **Authors:** Jonathan Hedley
-* **Version:** `1.17.2`
+* **Version:** `1.23.2` (Android; strictly constrained) / `1.17.2` (Desktop)
 * **License:** [MIT License](https://jsoup.org/license)
 * **Usage in PDFchemy:**
   * HTML and EPUB eBook DOM parsing, tag stripping, entity unescaping, and structured text extraction for the EPUB-to-PDF and Web-to-PDF engines.
@@ -110,7 +119,7 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [FasterXML Jackson](https://github.com/FasterXML/jackson)
 * **Authors:** FasterXML, LLC & Tatu Saloranta
-* **Libraries:** `jackson-module-kotlin`, `jackson-dataformat-csv`, `jackson-dataformat-yaml`, `jackson-dataformat-xml` (v2.17.0)
+* **Libraries:** `jackson-module-kotlin`, `jackson-dataformat-csv`, `jackson-dataformat-yaml`, `jackson-dataformat-xml` (`2.18.11` Android; `2.17.0` Desktop)
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * **Usage in PDFchemy:**
   * Structured data streaming and formatting for CSV spreadsheet tables, XML, and YAML document export tools.
@@ -119,12 +128,18 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ## 🖼️ 6. Media, Assets & Typography
 
-### [Coil (Coroutine Image Loader)](https://coil-kt.github.io/coil/)
+### [Guava](https://github.com/google/guava) & [Gson](https://github.com/google/gson)
+* **Authors:** Google & Contributors
+* **Versions:** Guava `33.7.2-android`; Gson `2.10.1` (Android)
+* **License:** Apache License 2.0
+* **Usage in PDFchemy:** Worker collection utilities and serialization of bounded IPC document-operation contracts.
+
+### [Coil (Coroutine Image Loader)](https://coil-kt.github.io/coil/) — Historical Android Dependency
 * **Authors:** Colin White & Coil Contributors
 * **Version:** `2.6.0`
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
-* **Usage in PDFchemy (Android):**
-  * Asynchronous image loading and memory caching for page previews and UI graphics.
+* **Former usage in PDFchemy (Android):**
+  * Asynchronous image loading and memory caching for page previews and UI graphics. Removed from the current Android production graph; document previews now use bounded decoding in an isolated worker and raw pixel transport.
 
 ### [Google Material Design Icons & Symbols](https://fonts.google.com/icons)
 * **Authors:** Google LLC
@@ -136,6 +151,18 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 ---
 
 ## 🧪 7. Quality Assurance & Testing Frameworks
+
+### [TruffleHog](https://github.com/trufflesecurity/trufflehog)
+* **Authors:** Truffle Security Co. & Contributors
+* **Version:** `3.97.9`; official Linux/Windows release archives are SHA-256 pinned.
+* **License:** AGPL-3.0; used as a separate CI scanner, not distributed in the app.
+* **Usage in PDFchemy:** Full reachable-history secret scanning. Only exact reviewed historical fingerprints can pass; verified findings, verification errors, new findings and incomplete scans fail. Review provenance is recorded in `.github/secret-scan-reviewed.json`.
+
+### [ArchUnit](https://www.archunit.org/)
+* **Authors:** TNG Technology Consulting GmbH & Contributors
+* **Version:** `1.3.0`
+* **License:** Apache License 2.0
+* **Usage in PDFchemy:** Compiled host bytecode checks that reject document parser and decoder dependencies outside isolated services.
 
 ### [JUnit 4](https://junit.org/junit4/)
 * **Authors:** Kent Beck, Erich Gamma & JUnit team

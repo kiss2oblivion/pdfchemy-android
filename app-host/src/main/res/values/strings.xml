@@ -39,6 +39,8 @@
 <string name="settings_sfx_desc">Play audio on button clicks</string>
 <string name="settings_history">Remember Recent Files</string>
 <string name="settings_history_desc">Keep a local history of recently used files. Files are never uploaded.</string>
+    <string name="settings_remember_position">Remember Reading Position</string>
+    <string name="settings_remember_position_desc">Automatically restores your last viewed page when reopening a document.</string>
 <string name="settings_language">Language</string>
 <string name="settings_language_desc">Change app display language</string>
 <string name="settings_clear_history">Clear Recent History</string>
@@ -68,7 +70,7 @@
 <string name="warning_quality_desc">Compression reduces quality. This may invalidate official documents, medical records, or digital signatures. Always keep your original file.</string>
 <string name="warning_understand">I Understand</string>
 <string name="compress_options_empty">Optimization options will appear here once you select a file.</string>
-<string name="check">Check</string>
+<string name="check">Security &amp; Inspect</string>
 <string name="inspect_edit_metadata">Inspect &amp; Edit Metadata</string>
 <string name="select_pdf">Select PDF</string>
 <string name="select_different_pdf">Select Different PDF</string>
@@ -93,7 +95,7 @@
 <string name="gallery">Gallery</string>
 <string name="camera">Camera</string>
 <string name="no_images_selected">No images selected.</string>
-<string name="organize">Organize</string>
+<string name="organize">Organize &amp; Edit</string>
 <string name="select_from_recent">Select from Recent</string>
 <string name="no_recent_files_found">No recent files found.</string>
 <string name="merge_pdfs">Merge PDFs</string>
@@ -131,8 +133,8 @@
 <string name="enter_content">Enter content...</string>
 <string name="import_btn">Import</string>
 <string name="compressing_pdf">Compressing PDF...</string>
-<string name="create">Create</string>
-<string name="compress">Compress</string>
+<string name="create">Create &amp; Convert</string>
+<string name="compress">Compress &amp; Optimize</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Select target size (MB):</string>
 <string name="exact_mb">Exact MB</string>
@@ -1101,6 +1103,12 @@
     <string name="settings_vanguard">Vanguard Zero-Trust Shield</string>
     <string name="settings_vanguard_desc">Block PDFs containing embedded scripts, process launch hooks, or auto-run actions</string>
     <string name="vanguard_blocked_title">Document Blocked by Vanguard</string>
+    <string name="vanguard_blocked_message_js">JavaScript action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="vanguard_blocked_message_launch">External process launch action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="vanguard_blocked_message_uri">Suspicious or automated network activity detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="vanguard_blocked_message_other">Active content or automated form submission detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
+    <string name="sanitizer_other_action_threats">Other active behaviors: %1</string>
+    <string name="vanguard_blocked_message_default">Automatic external action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message">This PDF contains embedded scripts or automated execution hooks. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_encrypted_title">Password-Protected Document</string>
     <string name="vanguard_encrypted_message">This document is encrypted and password-protected. Vanguard Zero-Trust Shield cannot verify embedded scripts or security threats while the document remains locked. Please unlock it first.</string>
@@ -1112,4 +1120,38 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+
+    <string name="action_redo">Redo</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_reverse">Reverse</string>
+    <string name="action_rotate_all">Rotate All</string>
+    <string name="label_preview_unavailable">Preview unavailable</string>
+    <string name="dialog_unsaved_title">Unsaved Changes</string>
+    <string name="dialog_unsaved_message">You have unsaved changes. Do you want to save or discard them before leaving?</string>
+    <string name="dialog_unsaved_save">Save / Export</string>
+    <string name="dialog_unsaved_discard">Discard</string>
+    <string name="dialog_unsaved_continue">Continue Editing</string>
+    <string name="vanguard_damaged_title">Damaged PDF</string>
+    <string name="vanguard_damaged_message">This PDF appears to be damaged or truncated and could not be read safely. Try running Repair or selecting another copy.</string>
+    <string name="vanguard_provider_error_title">File Inaccessible</string>
+    <string name="vanguard_provider_error_message">The selected file could not be accessed. The storage provider may be unavailable or permissions were revoked.</string>
+    <string name="error_invalid_page_range">Invalid page range. Please verify the page numbers and try again.</string>
+    <string name="consent_dialog_decline">Continue without Personalization</string>
+
+    <string name="generating_previews">Generating previews…</string>
+    <string name="label_preview_loading">Loading…</string>
+    <string name="premium_status_loading">Checking store…</string>
+    <string name="premium_status_unavailable">Store unavailable. Tap to retry.</string>
+    <string name="action_retry">Retry</string>
+    <string name="redaction_review_title">Review Redactions</string>
+    <string name="redaction_review_message">%1$d redaction(s) will be permanently applied. Redacted content cannot be recovered.</string>
+    <string name="redaction_review_confirm">Apply Redactions</string>
+    <string name="diagnosing_document">Diagnosing document...</string>
+    <string name="diagnosis_failed_title">Diagnosis Failed</string>
+    <string name="diagnosis_failed_desc">Could not diagnose the document.</string>
+    <string name="error_signing_failed">Signing Failed</string>
+    <string name="pki_signature_failed_desc">The PKI signature could not be applied.</string>
+    <string name="page_render_failed">Page Render Failed</string>
+    <string name="retry">Retry</string>
 </resources>
+

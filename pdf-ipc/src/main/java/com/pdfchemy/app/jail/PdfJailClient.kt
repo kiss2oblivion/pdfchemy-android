@@ -8,88 +8,29 @@ import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.logic.StagedPdf
+import com.pdfchemy.app.security.SecurityLimits
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.File
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object PdfJailClient {
+    private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
 
     suspend fun exportModifiedPdf(
         context: Context,
         source: StagedPdf,
         destUri: Uri,
         modificationsJson: String
-    ): Boolean = suspendCancellableCoroutine { continuation ->
-        var isBound = false
-        var connection: ServiceConnection? = null
-        var sourceFdRef: ParcelFileDescriptor? = null
-        var targetFdRef: ParcelFileDescriptor? = null
-
-        fun cleanup() {
-            try { sourceFdRef?.close() } catch (e: Exception) {}
-            try { targetFdRef?.close() } catch (e: Exception) {}
-            if (isBound && connection != null) {
-                try {
-                    context.unbindService(connection!!)
-                } catch (e: Exception) {}
-                isBound = false
-            }
+    ): Boolean {
+        publish(context, source, destUri) { jail, token, input, output, scratch, callback ->
+            jail.exportModifiedPdf(token, input, output, modificationsJson, source.sha256, source.size, scratch, callback)
         }
-
-        connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jail = IPdfJailService.Stub.asInterface(service)
-                try {
-                    val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
-                    val targetFd = contentResolver.openFileDescriptor(destUri, "w")
-                    sourceFdRef = sourceFd
-                    targetFdRef = targetFd
-
-                    if (sourceFd == null || targetFd == null) {
-                        continuation.resumeWithException(Exception("Failed to open file descriptors"))
-                        cleanup()
-                        return
-                    }
-
-                    jail.exportModifiedPdf(sourceFd, targetFd, modificationsJson, source.sha256, source.size, object : IPdfJailCallback.Stub() {
-                        override fun onSuccess(outputSizeBytes: Long) {
-                            if (continuation.isActive) continuation.resume(true)
-                            cleanup()
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String?) {
-                            if (continuation.isActive) continuation.resumeWithException(Exception(errorMessage ?: "Export failed"))
-                            cleanup()
-                        }
-                    })
-
-                } catch (e: Exception) {
-                    if (continuation.isActive) continuation.resumeWithException(e)
-                    cleanup()
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                if (continuation.isActive) continuation.resumeWithException(Exception("Jail Service Disconnected Unexpectedly"))
-                cleanup()
-            }
-        }
-
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection!!, Context.BIND_AUTO_CREATE)
-
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
-        }
-
-        continuation.invokeOnCancellation {
-            cleanup()
-        }
+        return true
     }
-
 
     suspend fun compressPdf(
         context: Context,
@@ -98,178 +39,158 @@ object PdfJailClient {
         targetDpi: Float = 140f,
         quality: Float = 0.5f,
         rasterizePages: Boolean = false
-    ): Long = suspendCancellableCoroutine { continuation ->
+    ): Long = publish(context, source, destUri) { jail, token, input, output, scratch, callback ->
+        jail.compressPdf(token, input, output, targetDpi, quality, rasterizePages, source.sha256, source.size, scratch, callback)
+    }
+
+    /** Legacy writer entry points obey the same host-only publication boundary. */
+    private suspend fun publish(
+        context: Context,
+        source: StagedPdf,
+        destUri: Uri,
+        invoke: (IPdfJailService, Long, ParcelFileDescriptor, ParcelFileDescriptor, IBinder, IPdfJailCallback) -> Unit
+    ): Long = withContext(Dispatchers.IO) {
+        val scratch = OperationScratchBroker(context)
+        val output = HostOutputTransaction(context, listOf(destUri))
+        val bound = CompletableDeferred<IBinder>()
+        val response = CompletableDeferred<Unit>()
         var isBound = false
-        var connection: ServiceConnection? = null
-        var sourceFdRef: ParcelFileDescriptor? = null
-        var destFdRef: ParcelFileDescriptor? = null
-
-        fun cleanup() {
-            try { sourceFdRef?.close() } catch (e: Exception) {}
-            try { destFdRef?.close() } catch (e: Exception) {}
-            if (isBound && connection != null) {
-                try {
-                    context.unbindService(connection!!)
-                } catch (e: Exception) {
-                    // Ignore
-                }
-                isBound = false
-            }
+        var jail: IPdfJailService? = null
+        var operationToken = 0L
+        var input: ParcelFileDescriptor? = null
+        var binder: IBinder? = null
+        val death = IBinder.DeathRecipient {
+            response.completeExceptionally(IllegalStateException("Isolated worker died"))
         }
-
-        connection = object : ServiceConnection {
+        val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jailService = IPdfJailService.Stub.asInterface(service)
-                if (jailService == null) {
-                    cleanup()
-                    continuation.resumeWithException(IllegalStateException("Failed to bind to PdfJailService"))
-                    return
-                }
-
-                try {
-                    val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
-                    val destFd = contentResolver.openFileDescriptor(destUri, "w")
-                    sourceFdRef = sourceFd
-                    destFdRef = destFd
-
-                    if (sourceFd == null || destFd == null) {
-                        cleanup()
-                        continuation.resumeWithException(IllegalStateException("Failed to open file descriptors"))
-                        return
-                    }
-
-                    val callback = object : IPdfJailCallback.Stub() {
-                        override fun onSuccess(outputSizeBytes: Long) {
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resume(outputSizeBytes)
-                            }
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resumeWithException(RuntimeException("Jail Error $errorCode: $errorMessage"))
-                            }
-                        }
-                    }
-
-                    jailService.compressPdf(sourceFd, destFd, targetDpi, quality, rasterizePages, source.sha256, source.size, callback)
-
-                } catch (e: Exception) {
-                    cleanup()
-                    if (continuation.isActive) {
-                        continuation.resumeWithException(e)
-                    }
-                }
+                if (service == null) bound.completeExceptionally(IllegalStateException("Null worker binding"))
+                else bound.complete(service)
             }
-
             override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) {
-                    continuation.resumeWithException(RuntimeException("PdfJailService disconnected unexpectedly"))
+                val error = IllegalStateException("Isolated worker disconnected")
+                bound.completeExceptionally(error)
+                response.completeExceptionally(error)
+            }
+            override fun onNullBinding(name: ComponentName?) {
+                bound.completeExceptionally(IllegalStateException("Null worker binding"))
+            }
+            override fun onBindingDied(name: ComponentName?) { onServiceDisconnected(name) }
+        }
+        try {
+            val sourceFd = requireNotNull(context.contentResolver.openFileDescriptor(source.uri, "r")).also { input = it }
+            isBound = context.bindService(Intent().setClassName(context, "com.pdfchemy.app.jail.PdfJailService"), connection, Context.BIND_AUTO_CREATE)
+            check(isBound) { "Failed to bind to PdfJailService" }
+            binder = withTimeout(10_000L) { bound.await() }
+            jail = IPdfJailService.Stub.asInterface(binder)
+
+            // Synchronous admission handshake
+            operationToken = jail.beginOperation(scratch)
+            if (operationToken == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+
+            binder.linkToDeath(death, 0)
+            val callback = object : IPdfJailCallback.Stub() {
+                override fun onSuccess(outputSizeBytes: Long) { response.complete(Unit) }
+                override fun onFailure(errorCode: Int, errorMessage: String?) {
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
-        }
-
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection!!, Context.BIND_AUTO_CREATE)
-
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(IllegalStateException("Could not bind to PdfJailService"))
-        }
-
-        continuation.invokeOnCancellation {
-            cleanup()
+            withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                invoke(jail!!, operationToken, sourceFd, output.workerDescriptors.single(), scratch, callback)
+                response.await()
+            }
+            scratch.verifyBudget()
+            output.validateAndSnapshot("{\"success\":true}")
+            val size = output.validatedBytes // Never trust the worker's reported byte count.
+            check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
+            operationToken = 0L // Successfully completed/released
+            output.commit()
+            size
+        } catch (error: Throwable) {
+            if (operationToken > 0L) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken) }
+            }
+            throw error
+        } finally {
+            runCatching { binder?.unlinkToDeath(death, 0) }
+            output.close()
+            scratch.close()
+            runCatching { input?.close() }
+            if (isBound) runCatching { context.unbindService(connection) }
         }
     }
 
     suspend fun analyzePdf(
         context: Context,
         source: StagedPdf
-    ): String = suspendCancellableCoroutine { continuation ->
+    ): String {
+        val bound = CompletableDeferred<IPdfJailService>()
         var isBound = false
-        var connection: ServiceConnection? = null
-        var sourceFdRef: ParcelFileDescriptor? = null
-
-        fun cleanup() {
-            try { sourceFdRef?.close() } catch (e: Exception) {}
-            if (isBound && connection != null) {
-                try {
-                    context.unbindService(connection!!)
-                } catch (e: Exception) {
-                    // Ignore
-                }
-                isBound = false
-            }
-        }
-
-        connection = object : ServiceConnection {
+        val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jailService = IPdfJailService.Stub.asInterface(service)
-                if (jailService == null) {
-                    cleanup()
-                    continuation.resumeWithException(IllegalStateException("Failed to bind to PdfJailService"))
-                    return
+                bound.complete(IPdfJailService.Stub.asInterface(service))
+            }
+            override fun onServiceDisconnected(name: ComponentName?) {}
+        }
+        val scratch = OperationScratchBroker(context)
+        var sourceFd: ParcelFileDescriptor? = null
+        var operationToken = 0L
+        var jail: IPdfJailService? = null
+        var binder: IBinder? = null
+        val response = CompletableDeferred<String>()
+        val death = IBinder.DeathRecipient {
+            response.completeExceptionally(IllegalStateException("Isolated worker died"))
+        }
+
+        return try {
+            val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
+            isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            check(isBound) { "Could not bind to PdfJailService" }
+
+            jail = withTimeout(15_000) { bound.await() }
+            binder = jail.asBinder()
+
+            val token = jail.beginOperation(scratch)
+            if (token == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+            operationToken = token
+
+            sourceFd = context.contentResolver.openFileDescriptor(source.uri, "r")
+                ?: throw IllegalStateException("Failed to open file descriptor")
+
+            binder.linkToDeath(death, 0)
+            val callback = object : IPdfJailStringCallback.Stub() {
+                override fun onSuccess(resultJson: String) {
+                    response.complete(resultJson)
                 }
 
-                try {
-                    val contentResolver = context.contentResolver
-                    val sourceFd = contentResolver.openFileDescriptor(source.uri, "r")
-                    sourceFdRef = sourceFd
-
-                    if (sourceFd == null) {
-                        cleanup()
-                        continuation.resumeWithException(IllegalStateException("Failed to open file descriptor"))
-                        return
-                    }
-
-                    val callback = object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resume(resultJson)
-                            }
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            cleanup()
-                            if (continuation.isActive) {
-                                continuation.resumeWithException(RuntimeException("Jail Error $errorCode: $errorMessage"))
-                            }
-                        }
-                    }
-
-                    jailService.analyzePdf(sourceFd, source.sha256, source.size, callback)
-
-                } catch (e: Exception) {
-                    cleanup()
-                    if (continuation.isActive) {
-                        continuation.resumeWithException(e)
-                    }
+                override fun onFailure(errorCode: Int, errorMessage: String) {
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
 
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) {
-                    continuation.resumeWithException(RuntimeException("PdfJailService disconnected unexpectedly"))
-                }
+            val result = withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                jail.analyzePdf(operationToken, sourceFd, source.sha256, source.size, scratch, callback)
+                response.await()
             }
-        }
 
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection!!, Context.BIND_AUTO_CREATE)
-
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(IllegalStateException("Could not bind to PdfJailService"))
-        }
-
-        continuation.invokeOnCancellation {
-            cleanup()
+            scratch.verifyBudget()
+            check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
+            operationToken = 0L // Successfully completed/released
+            result
+        } catch (error: Throwable) {
+            if (operationToken > 0L) {
+                runCatching { jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken) }
+            }
+            throw error
+        } finally {
+            runCatching { binder?.unlinkToDeath(death, 0) }
+            scratch.close()
+            runCatching { sourceFd?.close() }
+            if (isBound) runCatching { context.unbindService(connection) }
         }
     }
 }

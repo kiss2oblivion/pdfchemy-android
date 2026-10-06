@@ -1,16 +1,9 @@
 package com.pdfchemy.app.logic
 
 import android.content.Context
+import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.pdf.PdfRenderer
-import android.net.Uri
-import android.os.ParcelFileDescriptor
-import com.pdfchemy.app.utils.AppLogger
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.text.PDFTextStripper
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 data class PageDiffResult(
     val pageIndex: Int,
@@ -29,141 +22,38 @@ data class DocumentDiffSummary(
 )
 
 object PdfDiffEngine {
-
-    suspend fun compareDocuments(
-        context: Context,
-        uri1: Uri,
-        uri2: Uri
-    ): DocumentDiffSummary = withContext(Dispatchers.IO) {
-        var pfd1: ParcelFileDescriptor? = null
-        var pfd2: ParcelFileDescriptor? = null
-        var renderer1: PdfRenderer? = null
-        var renderer2: PdfRenderer? = null
-        var doc1: PDDocument? = null
-        var doc2: PDDocument? = null
-
-        val pageDiffs = mutableListOf<PageDiffResult>()
-        var identicalCount = 0
-        var modifiedCount = 0
-
+    suspend fun compareDocuments(context: Context, uri1: Uri, uri2: Uri): DocumentDiffSummary {
+        val stager = com.pdfchemy.app.utils.DocumentStager
+        val snapshots = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
+        val leases = mutableListOf<java.io.Closeable>()
+        val diffs = mutableListOf<PageDiffResult>()
+        var completed = false
         try {
-            pfd1 = context.contentResolver.openFileDescriptor(uri1, "r")
-            pfd2 = context.contentResolver.openFileDescriptor(uri2, "r")
-
-            try {
-                if (pfd1 != null) renderer1 = PdfRenderer(pfd1)
-            } catch (e: Exception) {
-                // Ignore in headless/Robolectric test environments
-            }
-
-            try {
-                if (pfd2 != null) renderer2 = PdfRenderer(pfd2)
-            } catch (e: Exception) {
-                // Ignore in headless/Robolectric test environments
-            }
-
-            context.contentResolver.openInputStream(uri1)?.use { s1 -> doc1 = PDDocument.load(s1, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly()) }
-            context.contentResolver.openInputStream(uri2)?.use { s2 -> doc2 = PDDocument.load(s2, com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly()) }
-
-            val total1 = (renderer1?.pageCount ?: 0).takeIf { it > 0 } ?: (doc1?.numberOfPages ?: 0)
-            val total2 = (renderer2?.pageCount ?: 0).takeIf { it > 0 } ?: (doc2?.numberOfPages ?: 0)
-            val maxPages = maxOf(total1, total2)
-
-            val allPagesText1 = doc1?.let { PdfTextExtractor.extractAllPagesText(it) } ?: emptyList()
-            val allPagesText2 = doc2?.let { PdfTextExtractor.extractAllPagesText(it) } ?: emptyList()
-
-            for (i in 0 until maxPages) {
-                val hasPage1 = i < total1
-                val hasPage2 = i < total2
-
+            val first = stager.stageDocumentCancellable(context, uri1).also { snapshots.add(it); leases.add(stager.retain(it)) }
+            val second = stager.stageDocumentCancellable(context, uri2).also { snapshots.add(it); leases.add(stager.retain(it)) }
+            val texts1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null).pages
+            val texts2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null).pages
+            for (page in 0 until maxOf(texts1.size, texts2.size)) {
                 var bmp1: Bitmap? = null
                 var bmp2: Bitmap? = null
-
-                if (hasPage1 && renderer1 != null && i < renderer1!!.pageCount) {
-                    try {
-                        val p1 = renderer1!!.openPage(i)
-                        val scale = minOf(1.0f, 720f / maxOf(p1.width, p1.height))
-                        val w = (p1.width * scale).toInt().coerceAtLeast(1)
-                        val h = (p1.height * scale).toInt().coerceAtLeast(1)
-                        bmp1 = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-                        p1.render(bmp1, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        p1.close()
-                    } catch (e: Exception) {
-                        bmp1 = null
-                    }
-                }
-
-                if (hasPage2 && renderer2 != null && i < renderer2!!.pageCount) {
-                    try {
-                        val p2 = renderer2!!.openPage(i)
-                        val scale = minOf(1.0f, 720f / maxOf(p2.width, p2.height))
-                        val w = (p2.width * scale).toInt().coerceAtLeast(1)
-                        val h = (p2.height * scale).toInt().coerceAtLeast(1)
-                        bmp2 = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-                        p2.render(bmp2, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        p2.close()
-                    } catch (e: Exception) {
-                        bmp2 = null
-                    }
-                }
-
-                val text1 = allPagesText1.getOrNull(i)?.lines()?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
-                val text2 = allPagesText2.getOrNull(i)?.lines()?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
-
-                val addedLines = text2.filter { it !in text1 }
-                val removedLines = text1.filter { it !in text2 }
-
-                var diffPercent = 0f
-                var diffBmp: Bitmap? = null
-
-                if (bmp1 != null && bmp2 != null) {
-                    val diffData = generateVisualDiff(bmp1, bmp2)
-                    diffPercent = diffData.first
-                    diffBmp = diffData.second
-                } else {
-                    diffPercent = 100f
-                }
-
-                if (diffPercent < 0.05f && addedLines.isEmpty() && removedLines.isEmpty()) {
-                    identicalCount++
-                } else {
-                    modifiedCount++
-                }
-
-                pageDiffs.add(
-                    PageDiffResult(
-                        pageIndex = i,
-                        diffPercent = diffPercent,
-                        diffBitmap = diffBmp,
-                        textAddedLines = addedLines,
-                        textRemovedLines = removedLines
-                    )
-                )
-
-                bmp1?.recycle()
-                bmp2?.recycle()
+                try {
+                    bmp1 = if (page < texts1.size) PdfEditor.renderPageBitmap(context, first.uri, page, 720) else null
+                    bmp2 = if (page < texts2.size) PdfEditor.renderPageBitmap(context, second.uri, page, 720) else null
+                    val lines1 = texts1.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
+                    val lines2 = texts2.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
+                    val visual = if (bmp1 != null && bmp2 != null) generateVisualDiff(bmp1, bmp2) else 100f to null
+                    diffs.add(PageDiffResult(page, visual.first, visual.second, lines2.filter { it !in lines1 }, lines1.filter { it !in lines2 }))
+                } finally { bmp1?.recycle(); bmp2?.recycle() }
             }
-
-            DocumentDiffSummary(
-                totalPagesDoc1 = total1,
-                totalPagesDoc2 = total2,
-                identicalPages = identicalCount,
-                modifiedPages = modifiedCount,
-                pageDiffs = pageDiffs
-            )
-        } catch (e: Exception) {
-            AppLogger.e("Failed to compare PDF documents: ${e.message}", e)
-            DocumentDiffSummary(0, 0, 0, 0, emptyList())
+            val identical = diffs.count { it.diffPercent < 0.05f && it.textAddedLines.isEmpty() && it.textRemovedLines.isEmpty() }
+            completed = true
+            return DocumentDiffSummary(texts1.size, texts2.size, identical, diffs.size - identical, diffs)
         } finally {
-            doc1?.close()
-            doc2?.close()
-            renderer1?.close()
-            renderer2?.close()
-            pfd1?.close()
-            pfd2?.close()
+            if (!completed) diffs.forEach { it.diffBitmap?.recycle() }
+            snapshots.zip(listOf(uri1, uri2)).filter { (snapshot, original) -> snapshot.uri != original }.forEach { stager.release(it.first) }
+            leases.forEach { it.close() }
         }
     }
-
     private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap): Pair<Float, Bitmap?> {
         return try {
             val width = minOf(bmp1.width, bmp2.width)

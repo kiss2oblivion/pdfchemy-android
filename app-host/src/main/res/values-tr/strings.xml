@@ -228,7 +228,7 @@
 <string name="msg_compress_settings_used">Kullanılan Ayarlar:\n</string>
 <string name="msg_compress_target_size">- Hedef Boyut: %1$s MB\n</string>
 <string name="msg_compress_auto_optimized">- Otomatik Optimizasyon: Evet\n</string>
-<string name="msg_compress_quality_preset">- Kalite Ayarı: %%1$d\n</string>
+<string name="msg_compress_quality_preset">- Kalite Ayarı: %1$d%%\n</string>
 <string name="msg_compress_grayscale">- Gri Tonlama: %1$s\n</string>
 <string name="msg_compress_lossless_zip">- Kayıpsız ZIP: %1$s\n</string>
 <string name="msg_compress_metadata_removed">- Meta Veri Kaldırma: %1$s</string>
@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">Vanguard Güvenlik Doğrulaması</string>
     <string name="vanguard_verifying_desc">Belge komut dosyaları ve tehditler için denetleniyor...</string>
     <string name="vanguard_zero_trust_badge">100%% Çevrimdışı • Sıfır Güven</string>
+
+    <string name="action_redo">Yinele</string>
+    <string name="action_reset">Sıfırla</string>
+    <string name="action_reverse">Tersine Çevir</string>
+    <string name="action_rotate_all">Tümünü Döndür</string>
+    <string name="label_preview_unavailable">Önizleme kullanılamıyor</string>
+    <string name="dialog_unsaved_title">Kaydedilmemiş Değişiklikler</string>
+    <string name="dialog_unsaved_message">Kaydedilmemiş değişiklikleriniz var. Ayrılmadan önce bunları kaydetmek mi yoksa silmek mi istersiniz?</string>
+    <string name="dialog_unsaved_save">Kaydet / Dışa Aktar</string>
+    <string name="dialog_unsaved_discard">Sil</string>
+    <string name="dialog_unsaved_continue">Düzenlemeye Devam Et</string>
+    <string name="vanguard_damaged_title">Hasarlı PDF</string>
+    <string name="vanguard_damaged_message">Bu PDF hasarlı veya eksik görünüyor ve güvenli bir şekilde okunamadı. Onar seçeneğini çalıştırmayı veya başka bir kopya seçmeyi deneyin.</string>
+    <string name="vanguard_provider_error_title">Dosyaya Erişilemiyor</string>
+    <string name="vanguard_provider_error_message">Seçilen dosyaya erişilemedi. Depolama sağlayıcısı kullanılamıyor olabilir veya izinler iptal edilmiş olabilir.</string>
+    <string name="error_invalid_page_range">Geçersiz sayfa aralığı. Lütfen sayfa numaralarını doğrulayın ve tekrar deneyin.</string>
+    <string name="consent_dialog_decline">Kişiselleştirme Olmadan Devam Et</string>
+
+    <string name="generating_previews">Önizlemeler oluşturuluyor…</string>
+    <string name="label_preview_loading">Yükleniyor…</string>
+    <string name="premium_status_loading">Mağaza kontrol ediliyor…</string>
+    <string name="premium_status_unavailable">Mağaza kullanılamıyor. Yeniden denemek için dokunun.</string>
+    <string name="action_retry">Yeniden Dene</string>
+    <string name="redaction_review_title">Sansürleri İncele</string>
+    <string name="redaction_review_message">%1$d sansür kalıcı olarak uygulanacaktır. Sansürlenen içerik geri alınamaz.</string>
+    <string name="redaction_review_confirm">Sansürleri Uygula</string>
 </resources>

@@ -1061,4 +1061,30 @@
     <string name="vanguard_verifying_title">التحقق الأمني من Vanguard</string>
     <string name="vanguard_verifying_desc">جارٍ فحص المستند بحثاً عن نصوص برمجية وتهديدات أمنية...</string>
     <string name="vanguard_zero_trust_badge">100%% بدون إنترنت • بدون ثقة</string>
+
+    <string name="action_redo">إعادة</string>
+    <string name="action_reset">إعادة تعيين</string>
+    <string name="action_reverse">عكس الترتيب</string>
+    <string name="action_rotate_all">تدوير الكل</string>
+    <string name="label_preview_unavailable">المعاينة غير متوفرة</string>
+    <string name="dialog_unsaved_title">تغييرات غير محفوظة</string>
+    <string name="dialog_unsaved_message">لديك تغييرات غير محفوظة. هل ترغب في حفظها أو تجاهلها قبل المغادرة؟</string>
+    <string name="dialog_unsaved_save">حفظ / تصدير</string>
+    <string name="dialog_unsaved_discard">تجاهل</string>
+    <string name="dialog_unsaved_continue">متابعة التحرير</string>
+    <string name="vanguard_damaged_title">ملف PDF تالف</string>
+    <string name="vanguard_damaged_message">يبدو أن ملف PDF هذا تالف أو غير مكتمل ولا يمكن قراءته بأمان. حاول تشغيل أداة الإصلاح أو تحديد نسخة أخرى.</string>
+    <string name="vanguard_provider_error_title">تعذر الوصول إلى الملف</string>
+    <string name="vanguard_provider_error_message">تعذر الوصول إلى الملف المحدد. قد يكون موفر التخزين غير متوفر أو تم إلغاء الأذونات.</string>
+    <string name="error_invalid_page_range">نطاق الصفحات غير صالح. يرجى التحقق من أرقام الصفحات والمحاولة مرة أخرى.</string>
+    <string name="consent_dialog_decline">المتابعة بدون تخصيص</string>
+
+    <string name="generating_previews">جارٍ إنشاء المعاينات…</string>
+    <string name="label_preview_loading">جارٍ التحميل…</string>
+    <string name="premium_status_loading">جارٍ التحقق من المتجر…</string>
+    <string name="premium_status_unavailable">المتجر غير متوفر. انقر لإعادة المحاولة.</string>
+    <string name="action_retry">إعادة المحاولة</string>
+    <string name="redaction_review_title">مراجعة التنقيحات</string>
+    <string name="redaction_review_message">سيتم تطبيق %1$d تنقيح(ات) بشكل دائم. لا يمكن استرداد المحتوى المنقح.</string>
+    <string name="redaction_review_confirm">تطبيق التنقيحات</string>
 </resources>

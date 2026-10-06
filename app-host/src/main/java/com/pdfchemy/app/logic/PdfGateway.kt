@@ -7,477 +7,153 @@ import android.content.ServiceConnection
 import android.net.Uri
 import android.os.IBinder
 import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.jail.HostOutputTransaction
 import com.pdfchemy.app.jail.IPdfJailService
 import com.pdfchemy.app.jail.IPdfJailStringCallback
-import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.File
-import java.io.FileOutputStream
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import com.pdfchemy.app.jail.WorkerResponseValidator
+import com.pdfchemy.app.security.SecurityLimits
+import com.pdfchemy.app.utils.DocumentStager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 object PdfGateway {
+    private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
 
-    private const val MAX_INPUT_SIZE_BYTES = 2L * 1024 * 1024 * 1024 // 2GB
-
-    private fun boundedCopy(inputStream: java.io.InputStream, outputStream: java.io.OutputStream, runningTotal: LongArray? = null): Pair<Long, String> {
-        val buffer = ByteArray(8192)
-        var totalRead = 0L
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        while (true) {
-            val read = inputStream.read(buffer)
-            if (read == -1) break
-            totalRead += read
-            runningTotal?.let {
-                it[0] += read
-                if (it[0] > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_INPUT_BYTES) {
-                    throw SecurityException("Aggregate input exceeds maximum allowed size of 5GB")
-                }
-            }
-            if (totalRead > MAX_INPUT_SIZE_BYTES) {
-                throw SecurityException("Input file exceeds maximum allowed size of 2GB")
-            }
-            outputStream.write(buffer, 0, read)
-            digest.update(buffer, 0, read)
-        }
-        val sha256Hex = digest.digest().joinToString("") { "%02x".format(it) }
-        return Pair(totalRead, sha256Hex)
-    }
-
-    suspend fun analyzePdf(
+    private suspend fun request(
         context: Context,
-        sourceUri: Uri
-    ): String = suspendCancellableCoroutine { continuation ->
-        var isBound = false
-        var connection: ServiceConnection? = null
-
-        fun cleanup() {
-            if (isBound && connection != null) {
-                try { context.unbindService(connection!!) } catch (e: Exception) {}
-                isBound = false
-            }
-        }
-
-        connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jail = IPdfJailService.Stub.asInterface(service)
-                var sourceFd: ParcelFileDescriptor? = null
-
-                try {
-                    val tempFile = File.createTempFile("jail_snapshot_analyze_", ".pdf", context.cacheDir)
-                    var expectedSize = 0L
-                    var expectedSha256 = ""
-                    try {
-                        val inputStream = context.contentResolver.openInputStream(sourceUri)
-                            ?: throw java.io.IOException("Unable to open source URI")
-                        inputStream.use { input ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                val (size, sha) = boundedCopy(input, outputStream)
-                                expectedSize = size
-                                expectedSha256 = sha
-                            }
-                        }
-                        sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                    } finally {
-                        tempFile.delete()
-                    }
-
-                    jail.analyzePdf(sourceFd, expectedSha256, expectedSize, object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            sourceFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resume(resultJson)
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            sourceFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resumeWithException(Exception(errorMessage))
-                        }
-                    })
-                } catch (e: Exception) {
-                    sourceFd?.close()
-                    cleanup()
-                    if (continuation.isActive) continuation.resumeWithException(e)
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) continuation.resumeWithException(Exception("Jail Service Disconnected Unexpectedly"))
-            }
-        }
-
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
-        }
-
-        continuation.invokeOnCancellation { cleanup() }
-    }
-
-    suspend fun executeEngine(
-        context: Context,
-        engineName: String,
-        sourceUri: Uri?,
-        destUri: Uri?,
-        paramsJson: String
-    ): String = kotlinx.coroutines.coroutineScope {
-        var rendererConnection: ServiceConnection? = null
-        var rendererBinder: IBinder? = null
-        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
-            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
-            rendererConnection = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
-                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
-            }
-            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
-            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
-        }
-
+        operation: String,
+        sources: List<Uri>,
+        targets: List<Uri>,
+        paramsJson: String,
+        invoke: (IPdfJailService, Long, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
+    ): OperationContract = withContext(Dispatchers.IO) {
+        SecurityLimits.enforceStringLength(paramsJson, SecurityLimits.MAX_PARAMS_JSON_BYTES, "Request")
+        require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
+        val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
+        val inputLeases = mutableListOf<java.io.Closeable>()
+        val descriptors = mutableListOf<ParcelFileDescriptor>()
+        val connections = mutableListOf<ServiceConnection>()
+        var jail: IPdfJailService? = null
+        var operationToken: Long = 0L
+        val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
+        val outputTransaction = HostOutputTransaction(context, targets)
         try {
-            suspendCancellableCoroutine { continuation ->
-                var isBound = false
-        var connection: ServiceConnection? = null
-
-        fun cleanup() {
-            if (isBound && connection != null) {
-                try { context.unbindService(connection!!) } catch (e: Exception) {}
-                isBound = false
+            sources.forEach {
+                val snapshot = DocumentStager.stageDocumentCancellable(context, it)
+                staged.add(snapshot)
+                inputLeases.add(DocumentStager.retain(snapshot))
             }
-        }
+            require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
+            val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
+            val outputs = outputTransaction.workerDescriptors
 
-        connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jail = IPdfJailService.Stub.asInterface(service)
-                var sourceFd: ParcelFileDescriptor? = null
-                var destFd: ParcelFileDescriptor? = null
+            suspend fun bind(className: String): IBinder {
+                val channel = Channel<IBinder>(1)
+                val connection = object : ServiceConnection {
+                    override fun onServiceConnected(name: ComponentName?, service: IBinder?) { if (service != null) channel.trySend(service) }
+                    override fun onServiceDisconnected(name: ComponentName?) { channel.close(IllegalStateException("Isolated worker died")) }
+                    override fun onNullBinding(name: ComponentName?) { channel.close(IllegalStateException("Null worker binding")) }
+                    override fun onBindingDied(name: ComponentName?) { channel.close(IllegalStateException("Worker binding died")) }
+                }
+                check(context.bindService(Intent().setClassName(context, className), connection, Context.BIND_AUTO_CREATE))
+                connections.add(connection)
+                return withTimeout(10_000L) { channel.receive() }
+            }
 
-                try {
-                    // TOCTOU Snapshot for Source
-                    var expectedSize = 0L
-                    var expectedSha256 = ""
-                    if (sourceUri != null) {
-                        val tempFile = File.createTempFile("jail_snapshot_", ".pdf", context.cacheDir)
-                        try {
-                            val inputStream = context.contentResolver.openInputStream(sourceUri)
-                                ?: throw java.io.IOException("Unable to open source URI")
-                            inputStream.use { input ->
-                                FileOutputStream(tempFile).use { outputStream ->
-                                    val (size, sha) = boundedCopy(input, outputStream)
-                                    expectedSize = size
-                                    expectedSha256 = sha
-                                }
-                            }
-                            sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        } finally {
-                            tempFile.delete()
-                        }
-                    }
+            val renderer = bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
+            val binder = bind("com.pdfchemy.app.jail.PdfJailService")
+            jail = IPdfJailService.Stub.asInterface(binder)
 
-                    if (destUri != null) {
-                        destFd = context.contentResolver.openFileDescriptor(destUri, "w")
-                    }
+            // Synchronous admission handshake: obtain exclusive token or detect BUSY
+            operationToken = jail.beginOperation(scratch)
+            if (operationToken == 0L) {
+                throw WorkerFailure(429, "Jail 429: BUSY")
+            }
+            WorkerResponseValidator.validateOperation(operation)
 
-                    jail.executeEngine(engineName, sourceFd, destFd, paramsJson, rendererBinder, expectedSha256, expectedSize, object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            sourceFd?.close()
-                            destFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resume(resultJson)
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            sourceFd?.close()
-                            destFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resumeWithException(Exception(errorMessage))
-                        }
-                    })
-                } catch (e: Exception) {
-                    sourceFd?.close()
-                    destFd?.close()
-                    cleanup()
-                    if (continuation.isActive) continuation.resumeWithException(e)
+            val response = CompletableDeferred<String>()
+            val death = IBinder.DeathRecipient { response.completeExceptionally(IllegalStateException("Isolated worker died")) }
+            binder.linkToDeath(death, 0)
+            val callback = object : IPdfJailStringCallback.Stub() {
+                override fun onSuccess(resultJson: String) { response.complete(resultJson) }
+                override fun onFailure(errorCode: Int, errorMessage: String) {
+                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
                 }
             }
 
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) continuation.resumeWithException(Exception("Jail Service Disconnected Unexpectedly"))
+            val rawResult = try {
+                withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                    invoke(jail!!, operationToken, staged, inputs, outputs, renderer, scratch, callback)
+                    response.await()
+                }
+            } finally { runCatching { binder.unlinkToDeath(death, 0) } }
+
+            scratch.verifyBudget()
+
+            // Acceptance handshake:
+            // For output operations: validate and snapshot into private FDs, validate typed response, then ACK before committing to SAF.
+            if (targets.isNotEmpty()) {
+                outputTransaction.validateAndSnapshot(rawResult)
+                val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
+                check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
+                operationToken = 0L // Successfully completed/released
+                outputTransaction.commit()
+                contract
+            } else {
+                // Non-output operation: Host validates typed response before accepting result
+                val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
+                check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
+                operationToken = 0L // Successfully completed/released
+                contract
             }
-        }
-
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
-        }
-
-        continuation.invokeOnCancellation { cleanup() }
-            }
-        } finally {
-            if (rendererConnection != null) {
-                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
-            }
-        }
-    }
-
-    suspend fun executeEngineExtra(
-        context: Context,
-        engineName: String,
-        sourceUri: Uri?,
-        destUri: Uri?,
-        extraUri: Uri?,
-        paramsJson: String
-    ): String = kotlinx.coroutines.coroutineScope {
-        var rendererConnection: ServiceConnection? = null
-        var rendererBinder: IBinder? = null
-        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
-            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
-            rendererConnection = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
-                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
-            }
-            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
-            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
-        }
-
-        try {
-            suspendCancellableCoroutine { continuation ->
-                var isBound = false
-        var connection: ServiceConnection? = null
-
-        fun cleanup() {
-            if (isBound && connection != null) {
-                try { context.unbindService(connection!!) } catch (e: Exception) {}
-                isBound = false
-            }
-        }
-
-        connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jail = IPdfJailService.Stub.asInterface(service)
-                var sourceFd: ParcelFileDescriptor? = null
-                var destFd: ParcelFileDescriptor? = null
-                var extraFd: ParcelFileDescriptor? = null
-
-                try {
-                    var expectedSize = 0L
-                    var expectedSha256 = ""
-                    if (sourceUri != null) {
-                        val tempFile = File.createTempFile("jail_snapshot_", ".pdf", context.cacheDir)
-                        try {
-                            val inputStream = context.contentResolver.openInputStream(sourceUri)
-                                ?: throw java.io.IOException("Unable to open source URI")
-                            inputStream.use { input ->
-                                FileOutputStream(tempFile).use { outputStream ->
-                                    val (size, sha) = boundedCopy(input, outputStream)
-                                    expectedSize = size
-                                    expectedSha256 = sha
-                                }
-                            }
-                            sourceFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        } finally {
-                            tempFile.delete()
-                        }
-                    }
-
-                    if (destUri != null) {
-                        destFd = context.contentResolver.openFileDescriptor(destUri, "w")
-                    }
-                    
-                    var extraExpectedSize = 0L
-                    var extraExpectedSha256 = ""
-                    if (extraUri != null) {
-                        val tempFile = File.createTempFile("jail_snapshot_extra_", ".pdf", context.cacheDir)
-                        try {
-                            val inputStream = context.contentResolver.openInputStream(extraUri)
-                                ?: throw java.io.IOException("Unable to open extra URI")
-                            inputStream.use { input ->
-                                FileOutputStream(tempFile).use { outputStream ->
-                                    val (size, sha) = boundedCopy(input, outputStream)
-                                    extraExpectedSize = size
-                                    extraExpectedSha256 = sha
-                                }
-                            }
-                            extraFd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                        } finally {
-                            tempFile.delete()
-                        }
-                    }
-
-                    jail.executeEngineExtra(engineName, sourceFd, destFd, extraFd, paramsJson, rendererBinder, expectedSha256, expectedSize, extraExpectedSha256, extraExpectedSize, object : IPdfJailStringCallback.Stub() {
-                        override fun onSuccess(resultJson: String) {
-                            sourceFd?.close()
-                            destFd?.close()
-                            extraFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resume(resultJson)
-                        }
-
-                        override fun onFailure(errorCode: Int, errorMessage: String) {
-                            sourceFd?.close()
-                            destFd?.close()
-                            extraFd?.close()
-                            cleanup()
-                            if (continuation.isActive) continuation.resumeWithException(Exception(errorMessage))
-                        }
-                    })
-                } catch (e: Exception) {
-                    sourceFd?.close()
-                    destFd?.close()
-                    extraFd?.close()
-                    cleanup()
-                    if (continuation.isActive) continuation.resumeWithException(e)
+        } catch (error: Throwable) {
+            // Terminate worker ONLY if this operation holds a valid, active token.
+            // Never abort if token == 0L (e.g. BUSY or pre-admission failure).
+            if (operationToken > 0L) {
+                runCatching {
+                    jail?.takeIf { it.asBinder().isBinderAlive }?.abortOperation(operationToken)
                 }
             }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) continuation.resumeWithException(Exception("Jail Service Disconnected Unexpectedly"))
-            }
-        }
-
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
-        }
-
-        continuation.invokeOnCancellation { cleanup() }
-            }
+            throw error
         } finally {
-            if (rendererConnection != null) {
-                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
-            }
+            outputTransaction.close()
+            scratch.close()
+            descriptors.forEach { runCatching { it.close() } }
+            connections.forEach { runCatching { context.unbindService(it) } }
+            staged.zip(sources).filter { (snapshot, original) -> snapshot.uri != original }.forEach { DocumentStager.release(it.first) }
+            inputLeases.forEach { it.close() }
         }
     }
 
-    suspend fun executeEngineBatch(
-        context: Context,
-        engineName: String,
-        sourceUris: List<Uri>,
-        destUris: List<Uri>,
-        paramsJson: String
-    ): String = kotlinx.coroutines.coroutineScope {
-        var rendererConnection: ServiceConnection? = null
-        var rendererBinder: IBinder? = null
-        if (engineName == "OFFICE_PPT" || engineName == "REDACT" || engineName == "SEARCH_REDACT") {
-            val channel = kotlinx.coroutines.channels.Channel<IBinder?>()
-            rendererConnection = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(service) }
-                override fun onServiceDisconnected(name: ComponentName?) { channel.trySend(null) }
-            }
-            context.bindService(Intent(context, com.pdfchemy.app.sandbox.PdfNativeRendererService::class.java), rendererConnection, Context.BIND_AUTO_CREATE)
-            rendererBinder = kotlinx.coroutines.withTimeoutOrNull(2000L) { channel.receive() }
+    suspend fun analyzePdf(context: Context, sourceUri: Uri): PdfAnalysisContract =
+        request(context, "ANALYZE_PDF", listOf(sourceUri), emptyList(), "{}") { jail, token, staged, inputs, _, _, scratch, callback ->
+            jail.analyzePdf(token, inputs[0], staged[0].sha256, staged[0].size, scratch, callback)
+        } as PdfAnalysisContract
+
+    suspend fun executeEngine(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): OperationContract =
+        request(context, engineName, listOfNotNull(sourceUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngine(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, scratch, callback)
         }
 
-        try {
-            suspendCancellableCoroutine { continuation ->
-                var isBound = false
-        var connection: ServiceConnection? = null
+    suspend inline fun <reified T : OperationContract> executeEngineTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): T =
+        executeEngine(context, engineName, sourceUri, destUri, paramsJson) as T
 
-        fun cleanup() {
-            if (isBound && connection != null) {
-                try { context.unbindService(connection!!) } catch (e: Exception) {}
-                isBound = false
-            }
+    suspend fun executeEngineExtra(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): OperationContract =
+        request(context, engineName, listOfNotNull(sourceUri, extraUri), listOfNotNull(destUri), paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngineExtra(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), inputs.getOrNull(1), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, staged.getOrNull(1)?.sha256 ?: "", staged.getOrNull(1)?.size ?: 0L, scratch, callback)
         }
 
-        connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                val jail = IPdfJailService.Stub.asInterface(service)
-                val sourceFds = mutableListOf<ParcelFileDescriptor>()
-                val destFds = mutableListOf<ParcelFileDescriptor>()
+    suspend inline fun <reified T : OperationContract> executeEngineExtraTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): T =
+        executeEngineExtra(context, engineName, sourceUri, destUri, extraUri, paramsJson) as T
 
-                try {
-                    if (sourceUris.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_FDS || destUris.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_BATCH_FDS) {
-                        throw SecurityException("Too many file descriptors requested in batch")
-                    }
-
-                    val runningTotal = LongArray(1)
-                    val expectedSizes = mutableListOf<Long>()
-                    val expectedSha256s = mutableListOf<String>()
-
-                    for (uri in sourceUris) {
-                        val tempFile = File.createTempFile("jail_snapshot_src_", ".pdf", context.cacheDir)
-                        try {
-                            val inputStream = context.contentResolver.openInputStream(uri)
-                                ?: throw java.io.IOException("Unable to open source URI")
-                            inputStream.use { input ->
-                                FileOutputStream(tempFile).use { outputStream ->
-                                    val (size, sha) = boundedCopy(input, outputStream, runningTotal)
-                                    expectedSizes.add(size)
-                                    expectedSha256s.add(sha)
-                                }
-                            }
-                            val pfd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                            sourceFds.add(pfd)
-                        } finally {
-                            tempFile.delete()
-                        }
-                    }
-
-                    for (uri in destUris) {
-                        val pfd = context.contentResolver.openFileDescriptor(uri, "rw")
-                        if (pfd != null) destFds.add(pfd)
-                    }
-
-                    jail.executeEngineBatch(
-                        engineName,
-                        sourceFds.toTypedArray(),
-                        destFds.toTypedArray(),
-                        paramsJson,
-                        rendererBinder,
-                        expectedSha256s.toTypedArray(),
-                        expectedSizes.toLongArray(),
-                        object : IPdfJailStringCallback.Stub() {
-                            override fun onSuccess(resultJson: String) {
-                                sourceFds.forEach { try { it.close() } catch (e: Exception) {} }
-                                destFds.forEach { try { it.close() } catch (e: Exception) {} }
-                                cleanup()
-                                if (continuation.isActive) continuation.resume(resultJson)
-                            }
-
-                            override fun onFailure(errorCode: Int, errorMessage: String) {
-                                sourceFds.forEach { try { it.close() } catch (e: Exception) {} }
-                                destFds.forEach { try { it.close() } catch (e: Exception) {} }
-                                cleanup()
-                                if (continuation.isActive) continuation.resumeWithException(Exception("Engine Error: $errorMessage"))
-                            }
-                        }
-                    )
-                } catch (e: Exception) {
-                    sourceFds.forEach { try { it.close() } catch (ex: Exception) {} }
-                    destFds.forEach { try { it.close() } catch (ex: Exception) {} }
-                    cleanup()
-                    if (continuation.isActive) continuation.resumeWithException(e)
-                }
-            }
-
-            override fun onServiceDisconnected(name: ComponentName?) {
-                cleanup()
-                if (continuation.isActive) continuation.resumeWithException(Exception("Jail Service Disconnected Unexpectedly"))
-            }
+    suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): OperationContract =
+        request(context, engineName, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+            jail.executeEngineBatch(token, engineName, inputs.toTypedArray(), outputs.toTypedArray(), paramsJson, renderer, staged.map { it.sha256 }.toTypedArray(), staged.map { it.size }.toLongArray(), scratch, callback)
         }
 
-        val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-        isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        if (!isBound) {
-            cleanup()
-            continuation.resumeWithException(Exception("Failed to bind to Jail Service"))
-        }
-
-        continuation.invokeOnCancellation { cleanup() }
-            }
-        } finally {
-            if (rendererConnection != null) {
-                try { context.unbindService(rendererConnection) } catch (e: Exception) {}
-            }
-        }
-    }
+    suspend inline fun <reified T : OperationContract> executeEngineBatchTyped(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): T =
+        executeEngineBatch(context, engineName, sourceUris, destUris, paramsJson) as T
 }

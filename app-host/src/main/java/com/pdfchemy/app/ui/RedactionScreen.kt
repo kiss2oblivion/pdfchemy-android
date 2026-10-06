@@ -60,13 +60,18 @@ fun RedactionScreen(
     var foundBoxes by remember { mutableStateOf<List<RedactionBox>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    var showReviewDialog by remember { mutableStateOf(false) }
 
     fun performSearch(query: String, regex: Boolean) {
         val uri = selectedPdfUri ?: return
-        if (query.isBlank()) return
+        if (query.isBlank()) {
+            foundBoxes = emptyList()
+            return
+        }
 
         coroutineScope.launch {
             isSearching = true
+            foundBoxes = emptyList()
             val result = com.pdfchemy.app.logic.PdfRedactionEngine.searchRedactionTargets(
                 context = context,
                 pdfUri = uri,
@@ -76,6 +81,8 @@ fun RedactionScreen(
             isSearching = false
             if (result.isSuccess) {
                 foundBoxes = result.getOrThrow()
+            } else {
+                foundBoxes = emptyList()
             }
         }
     }
@@ -83,6 +90,8 @@ fun RedactionScreen(
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         foundBoxes = emptyList()
+        smartPatterns = emptySet()
+        searchQuery = ""
     }
 
     val saveFileLauncher = rememberLauncherForActivityResult(
@@ -427,11 +436,70 @@ fun RedactionScreen(
                 }
             }
 
+            if (showReviewDialog) {
+                val affectedPages = remember(foundBoxes) { foundBoxes.map { it.pageIndex + 1 }.distinct() }
+                AlertDialog(
+                    onDismissRequest = { showReviewDialog = false },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Security,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = stringResource(R.string.redaction_review_title),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = stringResource(
+                                    R.string.redaction_review_message,
+                                    foundBoxes.size,
+                                    affectedPages.size
+                                ),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (affectedPages.isNotEmpty()) {
+                                Text(
+                                    text = "Pages: ${affectedPages.sorted().joinToString(", ")}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showReviewDialog = false
+                                val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                                saveFileLauncher.launch("${base}_redacted.pdf")
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text(stringResource(R.string.redaction_review_confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showReviewDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
+            }
+
             // Sanitize and Save Button
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_redacted.pdf")
+                    showReviewDialog = true
                 },
                 modifier = Modifier
                     .fillMaxWidth()

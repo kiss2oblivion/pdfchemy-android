@@ -9,8 +9,8 @@ import com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.util.Calendar
 
 object PdfAttachmentEngineWorker {
@@ -18,7 +18,7 @@ object PdfAttachmentEngineWorker {
     fun listAttachments(sourceFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val names = document.documentCatalog.names
             val embeddedFiles = names?.embeddedFiles
 
@@ -57,7 +57,7 @@ object PdfAttachmentEngineWorker {
         
         var document: PDDocument? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val names = document.documentCatalog.names
             val embeddedFiles = names?.embeddedFiles ?: throw IllegalStateException("No embedded files found")
             val map = embeddedFiles.names ?: emptyMap()
@@ -93,7 +93,7 @@ object PdfAttachmentEngineWorker {
         var document: PDDocument? = null
         var tempFile: File? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             
             val namesDict = document.documentCatalog.names ?: PDDocumentNameDictionary(document.documentCatalog).also {
                 document.documentCatalog.names = it
@@ -119,14 +119,14 @@ object PdfAttachmentEngineWorker {
             currentMap[fileName] = fileSpec
             embeddedTree.setNames(currentMap)
 
-            tempFile = File.createTempFile("attached_", ".pdf")
-            document.save(tempFile)
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("attached_", ".pdf")
+            com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { document.save(it) }
             document.close()
             document = null
             attachStream.close()
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
-                tempFile.inputStream().use { inp ->
+                com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { inp ->
                     inp.copyTo(out)
                 }
             }
@@ -144,7 +144,7 @@ object PdfAttachmentEngineWorker {
         var document: PDDocument? = null
         var tempFile: File? = null
         try {
-            document = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val names = document.documentCatalog.names
             val embeddedFiles = names?.embeddedFiles
 
@@ -161,13 +161,13 @@ object PdfAttachmentEngineWorker {
                 }
             }
 
-            tempFile = File.createTempFile("rm_attach_", ".pdf")
-            document.save(tempFile)
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("rm_attach_", ".pdf")
+            com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { document.save(it) }
             document.close()
             document = null
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
-                tempFile.inputStream().use { inp ->
+                com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { inp ->
                     inp.copyTo(out)
                 }
             }

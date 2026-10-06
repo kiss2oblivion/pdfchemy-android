@@ -114,15 +114,15 @@ object PdfDeskewEngine {
             params.put("targetPages", arr)
         }
 
-        val resultStr = PdfGateway.executeEngine(
-            context,
-            "DESKEW",
-            sourceUri,
-            destUri,
-            params.toString()
-        )
         return try {
-            JSONObject(resultStr).optInt("straightenedCount", 0)
+            val contract = PdfGateway.executeEngineTyped<DeskewContract>(
+                context,
+                "DESKEW",
+                sourceUri,
+                destUri,
+                params.toString()
+            )
+            contract.straightenedCount
         } catch (e: Exception) {
             0
         }

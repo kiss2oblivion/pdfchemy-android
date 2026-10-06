@@ -9,8 +9,8 @@ import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.util.Matrix
 import org.json.JSONObject
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import com.pdfchemy.app.jail.capabilityInput as FileInputStream
+import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -27,14 +27,14 @@ object PdfBookletEngineWorker {
         var tempFile: File? = null
 
         try {
-            srcDoc = PDDocument.load(FileInputStream(sourceFd.fileDescriptor), com.tom_roush.pdfbox.io.MemoryUsageSetting.setupTempFileOnly())
+            srcDoc = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val origPageCount = srcDoc.numberOfPages
             if (origPageCount == 0) {
                 throw IllegalStateException("PDF contains no pages")
             }
 
             val plan = computeBookletPlan(origPageCount)
-            outDoc = PDDocument()
+            outDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             val layerUtil = LayerUtility(outDoc)
 
             val sheetWidth = paperHeightPts // Landscape
@@ -67,15 +67,15 @@ object PdfBookletEngineWorker {
                 }
             }
 
-            tempFile = File.createTempFile("booklet_", ".pdf")
-            outDoc.save(tempFile)
+            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("booklet_", ".pdf")
+            com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { outDoc.save(it) }
             outDoc.close()
             outDoc = null
             srcDoc.close()
             srcDoc = null
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
-                tempFile.inputStream().use { inp ->
+                com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { inp ->
                     inp.copyTo(out)
                 }
             }

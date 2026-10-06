@@ -336,7 +336,6 @@
 <string name="history_extracted_text">Text extras</string>
 <string name="history_pdf_to_text">PDF în text</string>
 <string name="history_converted_text">text_convertit</string>
-<string name="title_settings">Setări</string>
     
 <string name="settings_about_legal">Despre și Termeni Legali</string>
 <string name="settings_theme">Tema aplicației</string>
@@ -1071,4 +1070,30 @@
     <string name="vanguard_verifying_title">Verificare de Securitate Vanguard</string>
     <string name="vanguard_verifying_desc">Se verifică documentul pentru scripturi și amenințări...</string>
     <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+
+    <string name="action_redo">Refă</string>
+    <string name="action_reset">Resetează</string>
+    <string name="action_reverse">Inversează</string>
+    <string name="action_rotate_all">Rotește tot</string>
+    <string name="label_preview_unavailable">Previzualizare indisponibilă</string>
+    <string name="dialog_unsaved_title">Modificări nesalvate</string>
+    <string name="dialog_unsaved_message">Aveți modificări nesalvate. Doriți să le salvați sau să renunțați înainte de a părăsi pagina?</string>
+    <string name="dialog_unsaved_save">Salvează / Exportă</string>
+    <string name="dialog_unsaved_discard">Renunță</string>
+    <string name="dialog_unsaved_continue">Continuă editarea</string>
+    <string name="vanguard_damaged_title">PDF deteriorat</string>
+    <string name="vanguard_damaged_message">Acest PDF pare deteriorat sau trunchiat și nu a putut fi citit în siguranță. Încercați Reparare sau alegeți o altă copie.</string>
+    <string name="vanguard_provider_error_title">Fișier inaccesibil</string>
+    <string name="vanguard_provider_error_message">Fișierul selectat nu a putut fi accesat. Furnizorul de stocare poate fi indisponibil sau permisiunile au fost revocate.</string>
+    <string name="error_invalid_page_range">Interval de pagini nevalid. Verificați numerele de pagină și încercați din nou.</string>
+    <string name="consent_dialog_decline">Continuă fără personalizare</string>
+
+    <string name="generating_previews">Se generează previzualizările…</string>
+    <string name="label_preview_loading">Se încarcă…</string>
+    <string name="premium_status_loading">Se verifică magazinul…</string>
+    <string name="premium_status_unavailable">Magazin indisponibil. Atingeți pentru reîncercare.</string>
+    <string name="action_retry">Reîncearcă</string>
+    <string name="redaction_review_title">Revizuire cenzurări</string>
+    <string name="redaction_review_message">%1$d cenzurări vor fi aplicate permanent. Conținutul cenzurat nu poate fi recuperat.</string>
+    <string name="redaction_review_confirm">Aplică cenzurările</string>
 </resources>

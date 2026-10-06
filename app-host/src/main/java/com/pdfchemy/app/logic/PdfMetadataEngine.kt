@@ -25,20 +25,19 @@ data class DocumentMetadataInfo(
 object PdfMetadataEngine {
     suspend fun readMetadata(context: Context, pdfUri: Uri): Result<DocumentMetadataInfo> = withContext(Dispatchers.IO) {
         try {
-            val jsonResult = PdfGateway.executeEngine(context, "METADATA_READ", pdfUri, null, "{}")
-            val obj = JSONObject(jsonResult)
+            val contract = PdfGateway.executeEngineTyped<MetadataReadContract>(context, "METADATA_READ", pdfUri, null, "{}")
             val result = DocumentMetadataInfo(
-                title = obj.optString("title"),
-                author = obj.optString("author"),
-                subject = obj.optString("subject"),
-                keywords = obj.optString("keywords"),
-                creator = obj.optString("creator"),
-                producer = obj.optString("producer"),
-                creationDate = obj.optString("creationDate"),
-                modificationDate = obj.optString("modificationDate"),
-                pageCount = obj.optInt("pageCount"),
-                hasXmpMetadata = obj.optBoolean("hasXmpMetadata"),
-                isEncrypted = obj.optBoolean("isEncrypted")
+                title = contract.title,
+                author = contract.author,
+                subject = contract.subject,
+                keywords = contract.keywords,
+                creator = contract.creator,
+                producer = contract.producer,
+                creationDate = contract.creationDate,
+                modificationDate = contract.modificationDate,
+                pageCount = contract.pageCount,
+                hasXmpMetadata = contract.hasXmpMetadata,
+                isEncrypted = contract.isEncrypted
             )
             Result.success(result)
         } catch(e: Exception) {
