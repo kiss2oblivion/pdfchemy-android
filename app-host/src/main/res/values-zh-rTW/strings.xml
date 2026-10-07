@@ -1134,4 +1134,10 @@
     <string name="annotation_pink">Pink</string>
     <string name="annotation_purple">Purple</string>
     <string name="annotation_black">Black</string>
+    <string name="compression_defaults_title">Compression defaults</string>
+    <string name="compression_defaults_description">Save the current settings as My default for new documents. Analysis can still suggest settings you have not chosen.</string>
+    <string name="compression_defaults_save">Save as My default</string>
+    <string name="compression_defaults_reset">Reset defaults</string>
+    <string name="redaction_searching">Searching this document…</string>
+    <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
 </resources>

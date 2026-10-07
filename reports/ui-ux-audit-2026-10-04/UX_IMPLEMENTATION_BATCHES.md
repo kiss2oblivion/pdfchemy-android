@@ -217,3 +217,91 @@ passes. Command: `gradlew :app-host:testDebugUnitTest :app-host:assembleDebug
 :app-host:lintDebug --console=plain` (BUILD SUCCESSFUL, 6m 48s). The initial
 missing scroll imports were fixed before this successful recheck.
 No physical TalkBack, font-scale or haptic-device results are claimed.
+
+Batch 3 remote verified: `9b9c1222b2a8a1bbc23d0ab34e8883fb9d76a03c`.
+CI: https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37636867643
+(head SHA verified; architecture, secret/dependency checks and tests passed;
+emulator jobs were ongoing at Batch 4 preparation).
+
+## Batch 4 — asynchronous input/result correctness
+
+Closed implementation IDs: UX-35, UX-37.
+UX-38 remains PARTIAL: current-page publication and initial handoff rendering
+are corrected, but signature-session undo remains open. UX-18 also remains
+PARTIAL because returning to the preserved Reader session is still missing.
+
+Still-open IDs after Batch 4: UX-03, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10,
+UX-14, UX-15, UX-16, UX-17, UX-18, UX-20, UX-21, UX-22, UX-23, UX-25, UX-27,
+UX-28, UX-29, UX-30, UX-31, UX-34, UX-36, UX-38, UX-40, UX-41, UX-47, UX-48.
+
+Compression analysis has a publication generation and cancels superseded input
+jobs. A late recommendation only changes settings the user has not chosen;
+failure has no authority to reset explicit choices. The same rule applies to
+the existing batch-analysis path. Recurring settings are saved only through
+the explicit My default action in the existing compression app bar; reset is
+scoped to those settings. Changing a per-document slider/toggle does not
+silently create a persistent profile. Existing task/memory safeguards remain.
+Dismissal preserves the chosen controls; fresh batch input reloads saved
+defaults. A reset invalidates pending analysis, including batch publication.
+
+Redaction ties results to request, URI, query and regex mode. Editing the query
+or selecting another input clears old targets; out-of-order responses cannot
+publish. Failure is visibly distinct from zero matches, with a Search retry.
+Forensic sanitization and security/worker boundaries are untouched.
+
+Signing clears the previous preview and publishes only the latest URI/page
+request's count and bitmap. Unpublished bitmaps are recycled and cancellation
+is preserved. An initial URI passed from Reader is now rendered without
+forcing another picker. Existing PKI recovery is retained.
+
+Exact files changed:
+
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/CompressionDefaultsStore.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/LatestRequest.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/RedactionScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt`
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/main/res/values/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/logic/CompressionDefaultsStoreTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/logic/LatestRequestTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/ui/CompressionAnalysisChoiceTest.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+
+Validation: all 12 focused tests pass (LatestRequest, CompressionDefaultsStore,
+CompressionAnalysisChoice and ReleaseWorkflowRegression), zero failures/errors.
+Debug assembly and debug lint pass (zero errors, 632 warnings).
+`git diff --check` passes. Command: `gradlew :app-host:testDebugUnitTest
+--tests com.pdfchemy.app.logic.LatestRequestTest
+--tests com.pdfchemy.app.logic.CompressionDefaultsStoreTest
+--tests com.pdfchemy.app.ui.CompressionAnalysisChoiceTest
+--tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest
+:app-host:assembleDebug :app-host:lintDebug --console=plain`
+(BUILD SUCCESSFUL, 6m 9s). The final recheck includes the dismissal/batch regression.
+An incorrect helper name was corrected before this successful recheck.
+Physical signing/rendering and provider failure injection remain unverified.
+
+Current matrix after this batch: 21 DONE, 17 PARTIAL, 12 STILL OPEN,
+zero SUPERSEDED. The main reconciliation table contains all 50 latest
+dispositions, with previous batch evidence retained below it.

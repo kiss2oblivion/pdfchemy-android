@@ -77,6 +77,7 @@ fun SignPdfScreen(
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isRenderingPage by remember { mutableStateOf(false) }
+    val latestRender = remember { com.pdfchemy.app.logic.LatestRequest() }
     var pageRenderFailed by remember { mutableStateOf(false) }
 
     var savedSignatures by remember { mutableStateOf<List<Pair<String, Bitmap>>>(emptyList()) }
@@ -92,6 +93,7 @@ fun SignPdfScreen(
     val currentSignatures by rememberUpdatedState(savedSignatures)
     DisposableEffect(Unit) {
         onDispose {
+            latestRender.invalidate()
             currentBitmap?.recycle()
             currentSignatures.forEach { try { it.second.recycle() } catch (_: Throwable) {} }
         }
@@ -142,50 +144,48 @@ fun SignPdfScreen(
 
     // PDF Page Renderer
     fun renderPage(uri: Uri, index: Int) {
+        val ticket = latestRender.begin()
         isRenderingPage = true
         pageRenderFailed = false
         currentPageBitmap?.recycle()
         currentPageBitmap = null
         coroutineScope.launch(Dispatchers.IO) {
-            var pfd: ParcelFileDescriptor? = null
+            var rendered: Bitmap? = null
             try {
-                pfd = context.contentResolver.openFileDescriptor(uri, "r")
-                if (pfd == null) {
-                    withContext(Dispatchers.Main) {
-                        isRenderingPage = false
-                        pageRenderFailed = true
+                context.contentResolver.openFileDescriptor(uri, "r").use { pfd ->
+                    requireNotNull(pfd)
+                    val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                    if (index in 0 until count) {
+                        rendered = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, index, 1080)
                     }
-                    return@launch
-                }
-                totalPages = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
-                if (index in 0 until totalPages) {
-                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, index, 1080)
                     withContext(Dispatchers.Main) {
-                        if (bmp != null) {
-                            currentPageBitmap = bmp
-                            pageRenderFailed = false
-                        } else {
-                            pageRenderFailed = true
+                        if (latestRender.isCurrent(ticket) && selectedPdfUri == uri && currentPageIndex == index) {
+                            totalPages = count
+                            currentPageBitmap = rendered
+                            pageRenderFailed = rendered == null
+                            rendered = null // Ownership transfers to the displayed page.
+                            isRenderingPage = false
                         }
-                        isRenderingPage = false
                     }
-                } else {
-                    withContext(Dispatchers.Main) {
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (e: Exception) {
+                com.pdfchemy.app.utils.AppLogger.e("Failed to render PDF page", e)
+                withContext(Dispatchers.Main) {
+                    if (latestRender.isCurrent(ticket)) {
                         isRenderingPage = false
                         pageRenderFailed = true
                     }
-                }
-            } catch (e: Exception) {
-                com.pdfchemy.app.utils.AppLogger.e("Failed to render PDF page: ${e.message}", e)
-                withContext(Dispatchers.Main) {
-                    isRenderingPage = false
-                    pageRenderFailed = true
                 }
             } finally {
-                try { pfd?.close() } catch (_: Throwable) {}
+                rendered?.let { if (!it.isRecycled) it.recycle() }
             }
         }
     }
+
+    // A Reader handoff already provides input; load it without another picker.
+    LaunchedEffect(Unit) { selectedPdfUri?.let { renderPage(it, currentPageIndex) } }
 
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri

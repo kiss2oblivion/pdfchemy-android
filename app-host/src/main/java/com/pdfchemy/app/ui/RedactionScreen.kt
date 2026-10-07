@@ -60,34 +60,41 @@ fun RedactionScreen(
     var foundBoxes by remember { mutableStateOf<List<RedactionBox>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    val latestSearch = remember { com.pdfchemy.app.logic.LatestRequest() }
+    var searchFailed by remember { mutableStateOf(false) }
     var showReviewDialog by remember { mutableStateOf(false) }
 
     fun performSearch(query: String, regex: Boolean) {
+        val ticket = latestSearch.begin()
+        foundBoxes = emptyList()
+        searchFailed = false
+        isSearching = false
         val uri = selectedPdfUri ?: return
-        if (query.isBlank()) {
-            foundBoxes = emptyList()
-            return
-        }
-
+        if (query.isBlank()) return
+        isSearching = true
         coroutineScope.launch {
-            isSearching = true
-            foundBoxes = emptyList()
-            val result = com.pdfchemy.app.logic.PdfRedactionEngine.searchRedactionTargets(
-                context = context,
-                pdfUri = uri,
-                query = query,
-                isRegex = regex
-            )
-            isSearching = false
-            if (result.isSuccess) {
-                foundBoxes = result.getOrThrow()
-            } else {
-                foundBoxes = emptyList()
+            try {
+                val result = PdfRedactionEngine.searchRedactionTargets(context, uri, query, regex)
+                if (!latestSearch.isCurrent(ticket) || selectedPdfUri != uri || searchQuery != query || isRegex != regex) return@launch
+                foundBoxes = result.getOrDefault(emptyList())
+                searchFailed = result.isFailure
+                isSearching = false
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (latestSearch.isCurrent(ticket)) {
+                    foundBoxes = emptyList()
+                    searchFailed = true
+                    isSearching = false
+                }
             }
         }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
+        latestSearch.invalidate()
+        searchFailed = false
+        isSearching = false
         selectedPdfUri = uri
         foundBoxes = emptyList()
         smartPatterns = emptySet()
@@ -256,7 +263,13 @@ fun RedactionScreen(
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = searchQuery,
-                                onValueChange = { searchQuery = it },
+                                onValueChange = {
+                                    searchQuery = it
+                                    latestSearch.invalidate()
+                                    foundBoxes = emptyList()
+                                    searchFailed = false
+                                    isSearching = false
+                                },
                                 placeholder = { Text(stringResource(R.string.placeholder_search_redact)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
@@ -391,8 +404,12 @@ fun RedactionScreen(
                 if (foundBoxes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (selectedPdfUri != null) stringResource(R.string.no_redaction_targets_found)
-                            else stringResource(R.string.select_pdf_to_start),
+                            text = when {
+                                isSearching -> stringResource(R.string.redaction_searching)
+                                searchFailed -> stringResource(R.string.redaction_search_failed)
+                                selectedPdfUri != null -> stringResource(R.string.no_redaction_targets_found)
+                                else -> stringResource(R.string.select_pdf_to_start)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

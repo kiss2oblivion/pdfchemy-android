@@ -106,6 +106,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val prefs = application.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
+    private val compressionDefaults = com.pdfchemy.app.logic.CompressionDefaultsStore(prefs)
+    private val latestAnalysis = com.pdfchemy.app.logic.LatestRequest()
+    private var fileAnalysisJob: kotlinx.coroutines.Job? = null
+    private var batchAnalysisTicket = 0L
 
     private val historyRepository = com.pdfchemy.app.logic.HistoryRepository(application)
     private val _historyList = MutableStateFlow(historyRepository.getHistory())
@@ -201,7 +205,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    private val _compressionQuality = MutableStateFlow(0.50f)
+    private val _compressionQuality = MutableStateFlow(compressionDefaults.load().quality)
     val compressionQuality: StateFlow<Float> = _compressionQuality.asStateFlow()
 
     private val _inputText = MutableStateFlow("")
@@ -216,13 +220,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
-    private val _useGrayscale = MutableStateFlow(false)
+    private val _useGrayscale = MutableStateFlow(compressionDefaults.load().grayscale)
     val useGrayscale: StateFlow<Boolean> = _useGrayscale.asStateFlow()
 
-    private val _useLossless = MutableStateFlow(false)
+    private val _useLossless = MutableStateFlow(compressionDefaults.load().lossless)
     val useLossless: StateFlow<Boolean> = _useLossless.asStateFlow()
 
-    private val _stripMetadata = MutableStateFlow(false)
+    private val _stripMetadata = MutableStateFlow(compressionDefaults.load().stripMetadata)
     val stripMetadata: StateFlow<Boolean> = _stripMetadata.asStateFlow()
 
     private val metadataManager = PdfMetadataManager()
@@ -248,6 +252,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     fun setQuality(quality: Float) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.QUALITY)
         _compressionQuality.value = quality
     }
 
@@ -260,24 +265,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setUseGrayscale(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.GRAYSCALE)
         _useGrayscale.value = value
     }
 
     fun setUseLossless(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.LOSSLESS)
         _useLossless.value = value
     }
 
     fun setStripMetadata(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.STRIP_METADATA)
         _stripMetadata.value = value
     }
 
     fun onFileSelected(context: Context, uri: Uri) {
+        val ticket = latestAnalysis.begin()
+        fileAnalysisJob?.cancel()
+        compressionDefaults.beginInput()
+        dismissSafeguardAssessment()
+        val defaults = compressionDefaults.load()
         _pdfAnalysis.value = null
         _selectedFileSize.value = -1L
-        _useGrayscale.value = false
-        _useLossless.value = false
-        _stripMetadata.value = false
-        viewModelScope.launch(Dispatchers.IO) {
+        _compressionQuality.value = defaults.quality
+        _useGrayscale.value = defaults.grayscale
+        _useLossless.value = defaults.lossless
+        _stripMetadata.value = defaults.stripMetadata
+        _isAnalyzing.value = true
+        fileAnalysisJob = viewModelScope.launch(Dispatchers.IO) {
             val size = try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
             } catch (e: Exception) {
@@ -285,16 +300,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 -1L
             }
             withContext(Dispatchers.Main) {
+                if (!latestAnalysis.isCurrent(ticket)) return@withContext
                 _selectedFileSize.value = size
                 _isAnalyzing.value = true
             }
 
             val analysisResult = PdfCompressor.analyzePdf(context, uri)
             withContext(Dispatchers.Main) {
+                if (!latestAnalysis.isCurrent(ticket)) return@withContext
                 _isAnalyzing.value = false
                 analysisResult.onSuccess { analysis ->
                     _pdfAnalysis.value = analysis
-                    _compressionQuality.value = analysis.recommendedQuality
+                    if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.QUALITY)) {
+                        _compressionQuality.value = analysis.recommendedQuality
+                    }
                     
                     // Smart auto-toggles recommendation based on scenario
                     applyScenarioDefaults(analysis.scenario)
@@ -311,10 +330,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _safeguardAssessment.value = guardCheck
                     }
                 }.onFailure {
-                    _compressionQuality.value = 0.50f
-                    _useGrayscale.value = false
-                    _useLossless.value = false
-                    _stripMetadata.value = false
+                    // A failed analysis has no authority to change user choices.
                 }
             }
         }
@@ -506,6 +522,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onFilesSelected(context: Context, uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        if (_selectedFiles.value.isEmpty()) {
+            batchAnalysisTicket = latestAnalysis.begin()
+            fileAnalysisJob?.cancel()
+            compressionDefaults.beginInput()
+            val saved = compressionDefaults.load()
+            _compressionQuality.value = saved.quality
+            _useGrayscale.value = saved.grayscale
+            _useLossless.value = saved.lossless
+            _stripMetadata.value = saved.stripMetadata
+            _pdfAnalysis.value = null
+            _isAnalyzing.value = false
+            dismissSafeguardAssessment()
+        }
+        val ticket = batchAnalysisTicket
         viewModelScope.launch {
             val existingUris = _selectedFiles.value.map { it.uri }.toSet()
             val newUris = uris.filter { it !in existingUris }
@@ -529,6 +560,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     async {
                         val analysisResult = PdfCompressor.analyzePdf(context, selectedFile.uri)
                         withContext(Dispatchers.Main) {
+                            if (!latestAnalysis.isCurrent(ticket)) return@withContext
                             analysisResult.onSuccess { analysis ->
                                 _selectedFiles.update { currentFiles ->
                                     currentFiles.map { item ->
@@ -537,7 +569,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                                 if (_pdfAnalysis.value == null && _selectedFiles.value.firstOrNull()?.uri == selectedFile.uri) {
                                     _pdfAnalysis.value = analysis
-                                    _compressionQuality.value = analysis.recommendedQuality
+                                    if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.QUALITY)) {
+                                        _compressionQuality.value = analysis.recommendedQuality
+                                    }
                                     applyScenarioDefaults(analysis.scenario)
                                 }
                             }.onFailure {
@@ -654,39 +688,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetState() {
+        latestAnalysis.invalidate()
+        fileAnalysisJob?.cancel()
         _uiState.value = UiState.Idle
         _warning.value = null
         _pdfAnalysis.value = null
         _isAnalyzing.value = false
-        _useGrayscale.value = false
-        _useLossless.value = false
-        _stripMetadata.value = false
         _selectedFiles.value = emptyList()
     }
 
     private fun applyScenarioDefaults(scenario: com.pdfchemy.app.logic.PdfScenario) {
-        when (scenario) {
-            com.pdfchemy.app.logic.PdfScenario.SIGNED_OFFICIAL -> {
-                _useGrayscale.value = false
-                _useLossless.value = true
-                _stripMetadata.value = false
-            }
-            com.pdfchemy.app.logic.PdfScenario.SCANNED_IMAGE_HEAVY -> {
-                _useGrayscale.value = true
-                _useLossless.value = false
-                _stripMetadata.value = true
-            }
-            com.pdfchemy.app.logic.PdfScenario.TEXT_VECTOR -> {
-                _useGrayscale.value = false
-                _useLossless.value = true
-                _stripMetadata.value = true
-            }
-            com.pdfchemy.app.logic.PdfScenario.MIXED -> {
-                _useGrayscale.value = false
-                _useLossless.value = false
-                _stripMetadata.value = true
-            }
+        val suggested = when (scenario) {
+            com.pdfchemy.app.logic.PdfScenario.SIGNED_OFFICIAL -> Triple(false, true, false)
+            com.pdfchemy.app.logic.PdfScenario.SCANNED_IMAGE_HEAVY -> Triple(true, false, true)
+            com.pdfchemy.app.logic.PdfScenario.TEXT_VECTOR -> Triple(false, true, true)
+            com.pdfchemy.app.logic.PdfScenario.MIXED -> Triple(false, false, true)
         }
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.GRAYSCALE)) _useGrayscale.value = suggested.first
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.LOSSLESS)) _useLossless.value = suggested.second
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.STRIP_METADATA)) _stripMetadata.value = suggested.third
+    }
+
+    fun saveCompressionDefaults() {
+        compressionDefaults.save(com.pdfchemy.app.logic.CompressionDefaults(
+            _compressionQuality.value, _useGrayscale.value, _useLossless.value, _stripMetadata.value
+        ))
+    }
+
+    fun resetCompressionDefaults() {
+        latestAnalysis.invalidate()
+        fileAnalysisJob?.cancel()
+        _isAnalyzing.value = false
+        compressionDefaults.reset()
+        _compressionQuality.value = 0.5f
+        _useGrayscale.value = false
+        _useLossless.value = false
+        _stripMetadata.value = false
+        dismissSafeguardAssessment()
     }
 
     fun dismissWarning() {

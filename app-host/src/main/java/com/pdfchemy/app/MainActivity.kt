@@ -515,7 +515,8 @@ class MainActivity : AppCompatActivity() {
 fun PremiumTopAppBar(
     title: String,
     onBack: (() -> Unit)? = null,
-    isDarkTheme: Boolean = isSystemInDarkTheme()
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -538,7 +539,8 @@ fun PremiumTopAppBar(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
-            }
+            },
+            actions = actions
         )
     }
 }
@@ -2313,6 +2315,31 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
     val stripMetadata by viewModel.stripMetadata.collectAsState()
     val isPremium by viewModel.isPremium.collectAsState()
     
+    var showDefaultsDialog by remember { mutableStateOf(false) }
+    val operationState by viewModel.uiState.collectAsState()
+    if (showDefaultsDialog) {
+        AlertDialog(
+            onDismissRequest = { showDefaultsDialog = false },
+            title = { Text(stringResource(R.string.compression_defaults_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.compression_defaults_description))
+                    OutlinedButton(onClick = { viewModel.resetCompressionDefaults(); showDefaultsDialog = false }) {
+                        Text(stringResource(R.string.compression_defaults_reset))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.saveCompressionDefaults(); showDefaultsDialog = false }) {
+                    Text(stringResource(R.string.compression_defaults_save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDefaultsDialog = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
+
     var showOfficialDocWarning by remember { mutableStateOf(false) }
 
     LaunchedEffect(pdfAnalysis) {
@@ -2371,7 +2398,14 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(containerColor = Color.Transparent, 
-        topBar = { PremiumTopAppBar(stringResource(R.string.title_compress_pdf), onBack) }
+        topBar = {
+            PremiumTopAppBar(stringResource(R.string.title_compress_pdf), onBack, actions = {
+                IconButton(
+                    onClick = { showDefaultsDialog = true },
+                    enabled = operationState !is MainViewModel.UiState.Processing && operationState !is MainViewModel.UiState.BatchProcessing
+                ) { Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.compression_defaults_title)) }
+            })
+        }
     ) { padding ->
         Column(
             modifier = Modifier
