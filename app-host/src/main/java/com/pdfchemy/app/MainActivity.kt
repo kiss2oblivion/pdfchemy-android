@@ -728,10 +728,11 @@ fun MainApp(
             assessment = assessment,
             onDismiss = { viewModel.dismissSafeguardAssessment() },
             onAction = { action ->
+                val sourceUri = viewModel.safeguardSourceUri.value
                 viewModel.dismissSafeguardAssessment()
                 when (action) {
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.SPLIT_FIRST -> {
-                        currentScreen = Screen.SplitPdf
+                        currentScreen = Screen.SplitPdf(initialUri = sourceUri)
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.PAGE_RANGE -> {
                         currentScreen = Screen.PageOrganizer
@@ -834,7 +835,7 @@ fun MainApp(
                 // [FEATURE: Merge PDFs] — Multi-document combiner with drag-and-drop reordering
                 Screen.MergePdf -> MergePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Split PDFs (Range / All)] — Split into individual pages or arbitrary page ranges
-                Screen.SplitPdf -> SplitPdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                is Screen.SplitPdf -> SplitPdfScreen(viewModel, initialUri = targetScreen.initialUri) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Page Organizer] — Visual thumbnail grid: reorder, delete, duplicate, rotate
                 Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Delete Pages] — Visual single-page or multi-page removal
@@ -1266,7 +1267,7 @@ sealed class Screen {
     // [FEATURE: Merge PDFs] — Multi-document combiner
     object MergePdf : Screen()
     // [FEATURE: Split PDFs] — Range or single page split
-    object SplitPdf : Screen()
+    data class SplitPdf(val initialUri: Uri? = null) : Screen()
     // [FEATURE: Page Organizer] — Visual thumbnail grid
     object PageOrganizer : Screen()
     // [FEATURE: Delete Pages] — Visual page deletion
@@ -1371,6 +1372,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             is Screen.PdfReader -> "PdfReader:${screen.initialPdfUri?.toString() ?: ""}"
             is Screen.ReflowReader -> "ReflowReader:${screen.initialUri?.toString() ?: ""}"
             is Screen.UnlockPdf -> "UnlockPdf:${screen.initialUri?.toString() ?: ""}"
+            is Screen.SplitPdf -> "SplitPdf:${screen.initialUri?.toString() ?: ""}"
             is Screen.OfficeExport -> "OfficeExport:${screen.initialFormat.name}"
             else -> screen::class.simpleName ?: "Home"
         }
@@ -1393,6 +1395,10 @@ val ScreenSaver: Saver<Screen, String> = Saver(
                 val uriStr = str.removePrefix("UnlockPdf:")
                 Screen.UnlockPdf(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
             }
+            str.startsWith("SplitPdf:") -> {
+                val uriStr = str.removePrefix("SplitPdf:")
+                Screen.SplitPdf(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+            }
             str.startsWith("OfficeExport:") -> {
                 val formatName = str.removePrefix("OfficeExport:")
                 val format = try {
@@ -1412,7 +1418,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "CreateCategory" -> Screen.CreateCategory
             str == "OrganizeCategory" -> Screen.OrganizeCategory
             str == "MergePdf" -> Screen.MergePdf
-            str == "SplitPdf" -> Screen.SplitPdf
+            str == "SplitPdf" -> Screen.SplitPdf()
             str == "DeletePages" -> Screen.DeletePages
             str == "ExtractImages" -> Screen.ExtractImages
             str == "CheckCategory" -> Screen.CheckCategory

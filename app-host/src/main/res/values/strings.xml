@@ -556,7 +556,7 @@
 <string name="menu_page_organizer">Organize Pages</string>
 <string name="menu_page_organizer_desc">Visual thumbnail grid to reorder, duplicate, rotate, and insert blank pages</string>
 <string name="organizer_headline">Visual Page Organizer</string>
-<string name="organizer_subtitle">Drag, rotate, duplicate, or delete pages visually with instant preview.</string>
+<string name="organizer_subtitle">Move, rotate, duplicate, or delete pages visually with instant preview.</string>
 <string name="select_pdf_to_organize">Select PDF to Organize</string>
 <string name="label_blank_page">Blank Page</string>
 <string name="action_move_left">Move Backward</string>
@@ -1155,5 +1155,8 @@
     <string name="retry">Retry</string>
     <string name="tool_search_hint">Search tools</string>
     <string name="tool_search_no_results">No matching tools. Try a tool name or task.</string>
+    <string name="organizer_move_to">Move to position</string>
+    <string name="organizer_position">Page position</string>
+    <string name="organizer_position_range">Enter a position from 1 to %1$d.</string>
 </resources>
 

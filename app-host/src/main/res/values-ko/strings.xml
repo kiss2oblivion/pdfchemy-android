@@ -1125,4 +1125,7 @@
     <string name="run_on_device_ocr">Extract Text with OCR</string>
     <string name="tool_search_hint">Search tools</string>
     <string name="tool_search_no_results">No matching tools. Try a tool name or task.</string>
+    <string name="organizer_move_to">Move to position</string>
+    <string name="organizer_position">Page position</string>
+    <string name="organizer_position_range">Enter a position from 1 to %1$d.</string>
 </resources>

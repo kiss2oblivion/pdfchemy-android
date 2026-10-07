@@ -136,7 +136,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     title = stringResource(R.string.menu_split),
                     subtitle = stringResource(R.string.menu_split_desc),
                     icon = Icons.Rounded.CallSplit,
-                    onClick = { onNavigate(Screen.SplitPdf) }
+                    onClick = { onNavigate(Screen.SplitPdf()) }
                 )
             }
             item {
@@ -534,10 +534,12 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SplitPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<PdfItem?>(null) }
+    var selectedFile by remember(initialUri) {
+        mutableStateOf(initialUri?.let { PdfItem(it, com.pdfchemy.app.utils.FileUtils.getFileName(context, it) ?: "Document.pdf") })
+    }
     var extractMode by remember { mutableStateOf(0) } // 0 = All, 1 = Custom Range
     var customRange by remember { mutableStateOf("") }
 

@@ -163,6 +163,18 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
         selectedIndex++
     }
 
+    /** Move the selected page directly, preserving identity and a single undo step. */
+    fun moveSelectedTo(targetIndex: Int): Boolean {
+        if (selectedIndex !in pages.indices || targetIndex !in pages.indices || targetIndex == selectedIndex) return false
+        pushState()
+        val list = pages.toMutableList()
+        val item = list.removeAt(selectedIndex)
+        list.add(targetIndex, item)
+        pages = list
+        selectedIndex = targetIndex
+        return true
+    }
+
     fun duplicateSelected() {
         if (selectedIndex !in pages.indices) return
         pushState()

@@ -54,7 +54,7 @@ object ToolRegistry {
         ToolEntry(R.string.menu_form_builder, R.string.menu_form_builder_desc, Icons.Rounded.EditNote, Screen.FormBuilder, listOf("create form", "add form fields")),
         ToolEntry(R.string.menu_fill_form, R.string.menu_fill_form_desc, Icons.Rounded.DynamicForm, Screen.FillForm, listOf("fill interactive form", "acroform")),
         ToolEntry(R.string.menu_merge, R.string.menu_merge_desc, Icons.Rounded.Merge, Screen.MergePdf, listOf("combine", "join", "append", "add together")),
-        ToolEntry(R.string.menu_split, R.string.menu_split_desc, Icons.Rounded.CallSplit, Screen.SplitPdf, listOf("separate", "divide", "extract pages", "break apart")),
+        ToolEntry(R.string.menu_split, R.string.menu_split_desc, Icons.Rounded.CallSplit, Screen.SplitPdf(), listOf("separate", "divide", "extract pages", "break apart")),
         ToolEntry(R.string.menu_delete_pages, R.string.menu_delete_pages_desc, Icons.Rounded.Delete, Screen.DeletePages, listOf("remove pages", "delete pages")),
         ToolEntry(R.string.menu_rotate_pages, R.string.menu_rotate_pages_desc, Icons.Rounded.RotateRight, Screen.RotatePdf, listOf("turn pages", "orientation", "rotate pages")),
         ToolEntry(R.string.menu_reflow_reader, R.string.menu_reflow_reader_desc, Icons.Rounded.MenuBook, Screen.ReflowReader(), listOf("reflow", "text to speech", "tts", "audio export", "wav", "listen", "read aloud")),

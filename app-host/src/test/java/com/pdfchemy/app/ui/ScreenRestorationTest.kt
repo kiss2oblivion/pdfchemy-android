@@ -26,9 +26,13 @@ class ScreenRestorationTest {
     @Test fun readerEditorAndUnlockKeepTheDocumentUriAcrossRestoration() {
         val uri = Uri.parse("content://provider/document/example.pdf")
         val scope = SaverScope { true }
-        for (screen in listOf(Screen.PdfReader(uri), Screen.PdfEditor(uri), Screen.ReflowReader(uri), Screen.UnlockPdf(uri))) {
+        for (screen in listOf(Screen.PdfReader(uri), Screen.PdfEditor(uri), Screen.ReflowReader(uri), Screen.UnlockPdf(uri), Screen.SplitPdf(uri))) {
             val saved = with(ScreenSaver) { scope.save(screen) }!!
             assertEquals(screen, ScreenSaver.restore(saved))
         }
+    }
+
+    @Test fun legacySplitDestinationStillRestoresWithoutAnInput() {
+        assertEquals(Screen.SplitPdf(), ScreenSaver.restore("SplitPdf"))
     }
 }

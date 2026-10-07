@@ -98,3 +98,7 @@ changes and validation, and these overrides determine the current disposition:
 | UX-01 | DONE | Batch 1: complete registry, distinct conversion/OCR/extraction routes, conceptual-query and coverage tests. |
 | UX-02 | DONE | Batch 1: guarded direct Home Open PDF and safe URI-free Reader search entry. |
 | UX-03 | PARTIAL | Batch 1 removes duplicate Quick Fill; remaining category/scan ambiguity is still open. |
+| UX-04 | DONE | Batch 2: safeguard source is carried in a URI-bearing Split route, restored through ScreenSaver, and shown as selected input. |
+| UX-13 | DONE | Batch 2: direct validated Move To position uses one chronological undo step and preserves all page identities. |
+| UX-33 | DONE | Batch 2: repeated gallery/camera URIs are deduplicated before URI-keyed image composition. |
+| UX-23 | PARTIAL | Batch 2: renderUriToBitmap staging, decode and cleanup now stay on IO; physical release-like latency/memory measurements remain open. |

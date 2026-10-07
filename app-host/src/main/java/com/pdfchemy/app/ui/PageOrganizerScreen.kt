@@ -68,9 +68,47 @@ fun PageOrganizerScreen(
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
+    var showMoveDialog by remember { mutableStateOf(false) }
+    var movePosition by remember { mutableStateOf("") }
 
-    val pageItems = session.pages
-    val selectedItemIndex = session.selectedIndex
+    // The session is a plain model; observe its revision during composition so
+    // thumbnail publication and history/page actions actually refresh the UI.
+    val pageItems = remember(sessionTick) { session.pages }
+    val selectedItemIndex = remember(sessionTick) { session.selectedIndex }
+
+    if (showMoveDialog) {
+        val targetPosition = movePosition.toIntOrNull()
+        val validPosition = targetPosition != null && targetPosition in 1..pageItems.size
+        AlertDialog(
+            onDismissRequest = { showMoveDialog = false },
+            title = { Text(stringResource(R.string.organizer_move_to)) },
+            text = {
+                OutlinedTextField(
+                    value = movePosition,
+                    onValueChange = { movePosition = it },
+                    label = { Text(stringResource(R.string.organizer_position)) },
+                    supportingText = { Text(stringResource(R.string.organizer_position_range, pageItems.size)) },
+                    isError = movePosition.isNotEmpty() && !validPosition,
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = validPosition && targetPosition != selectedItemIndex + 1,
+                    onClick = {
+                        if (session.moveSelectedTo(targetPosition!! - 1)) sessionTick++
+                        showMoveDialog = false
+                    }
+                ) { Text(stringResource(R.string.organizer_move_to)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveDialog = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -525,6 +563,15 @@ fun PageOrganizerScreen(
                         }
                     }
                 }
+
+                OutlinedButton(
+                    onClick = {
+                        movePosition = (selectedItemIndex + 1).toString()
+                        showMoveDialog = true
+                    },
+                    enabled = selectedItemIndex in pageItems.indices && pageItems.size > 1 && !isOrganizing,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.organizer_move_to)) }
 
                 // Save Reorganized PDF Button
                 Button(

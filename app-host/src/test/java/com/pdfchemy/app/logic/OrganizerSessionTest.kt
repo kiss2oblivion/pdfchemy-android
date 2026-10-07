@@ -5,6 +5,35 @@ import org.junit.Test
 
 class OrganizerSessionTest {
 
+    @Test fun directMovePreservesAllSourcePagesAndOneUndoRedoStep() {
+        val session = OrganizerSession()
+        session.initialize(20)
+        val originalIds = session.pages.map { it.id }
+        session.selectPage(19)
+        assertTrue(session.moveSelectedTo(0))
+        assertEquals(19, session.pages.first().originalIndex)
+        assertEquals(0, session.selectedIndex)
+        assertEquals(originalIds.toSet(), session.pages.map { it.id }.toSet())
+        assertEquals(20, session.toPageActions().size)
+        assertTrue(session.undo())
+        assertEquals(originalIds, session.pages.map { it.id })
+        assertFalse(session.canUndo())
+        assertTrue(session.redo())
+        assertEquals(19, session.pages.first().originalIndex)
+    }
+
+    @Test fun invalidAndSamePositionMovesDoNotPolluteHistory() {
+        val session = OrganizerSession()
+        session.initialize(3)
+        assertFalse(session.moveSelectedTo(-1))
+        assertFalse(session.moveSelectedTo(3))
+        assertFalse(session.moveSelectedTo(0))
+        assertFalse(session.canUndo())
+        session.selectPage(0)
+        assertTrue(session.moveSelectedTo(2))
+        assertEquals(listOf(1, 2, 0), session.pages.map { it.originalIndex })
+    }
+
     @Test
     fun testInitializationPreservesAllPages() {
         val session = OrganizerSession()

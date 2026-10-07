@@ -170,9 +170,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _safeguardAssessment = MutableStateFlow<com.pdfchemy.app.logic.DeviceGuard.CapacityAssessment?>(null)
     val safeguardAssessment: StateFlow<com.pdfchemy.app.logic.DeviceGuard.CapacityAssessment?> = _safeguardAssessment.asStateFlow()
+    private val _safeguardSourceUri = MutableStateFlow<Uri?>(null)
+    val safeguardSourceUri: StateFlow<Uri?> = _safeguardSourceUri.asStateFlow()
 
     fun dismissSafeguardAssessment() {
         _safeguardAssessment.value = null
+        _safeguardSourceUri.value = null
     }
 
     private val _isPremium = MutableStateFlow(false)
@@ -304,6 +307,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         isImageHeavy = analysis.imageCount > 10
                     )
                     if (guardCheck.status != com.pdfchemy.app.logic.DeviceGuard.CapacityStatus.SAFE) {
+                        _safeguardSourceUri.value = uri
                         _safeguardAssessment.value = guardCheck
                     }
                 }.onFailure {
