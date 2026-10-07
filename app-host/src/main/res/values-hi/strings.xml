@@ -1060,7 +1060,7 @@
     <string name="vanguard_action_unlock">PDF अनलॉक करें</string>
     <string name="vanguard_verifying_title">वैनगार्ड सुरक्षा सत्यापन</string>
     <string name="vanguard_verifying_desc">स्क्रिप्ट और सुरक्षा खतरों के लिए दस्तावेज़ की जाँच की जा रही है...</string>
-    <string name="vanguard_zero_trust_badge">100%% ऑफ़लाइन • शून्य-विश्वास</string>
+    <string name="vanguard_zero_trust_badge" formatted="false">100% ऑफ़लाइन • शून्य-विश्वास</string>
 
     <string name="action_redo">फिर से करें</string>
     <string name="action_reset">रीसेट करें</string>
@@ -1128,4 +1128,12 @@
     <string name="organizer_move_to">Move to position</string>
     <string name="organizer_position">Page position</string>
     <string name="organizer_position_range">Enter a position from 1 to %1$d.</string>
+    <string name="reader_reset_defaults">Reset reading preferences</string>
+    <string name="annotation_red">Red</string>
+    <string name="annotation_blue">Blue</string>
+    <string name="annotation_green">Green</string>
+    <string name="annotation_yellow">Yellow</string>
+    <string name="annotation_pink">Pink</string>
+    <string name="annotation_purple">Purple</string>
+    <string name="annotation_black">Black</string>
 </resources>

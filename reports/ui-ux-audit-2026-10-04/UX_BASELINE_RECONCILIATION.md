@@ -1,5 +1,9 @@
 # PDFchemy Android — UX-0 Baseline Reconciliation
 
+> Historical October 4 baseline only. Current implementation dispositions are
+> maintained in [UX_CURRENT_RECONCILIATION.md](UX_CURRENT_RECONCILIATION.md), with
+> exact changes and validation in [UX_IMPLEMENTATION_BATCHES.md](UX_IMPLEMENTATION_BATCHES.md).
+
 **Audit Date:** 4 October 2026  
 **Audited Baseline:** `de053371333a773157ad66838d726071e32d1cab`  
 **Current HEAD:** `de053371333a773157ad66838d726071e32d1cab` (0 commits ahead/behind)  

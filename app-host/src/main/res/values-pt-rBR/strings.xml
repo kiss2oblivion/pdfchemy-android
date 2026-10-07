@@ -1069,7 +1069,7 @@
     <string name="vanguard_action_unlock">Desbloquear PDF</string>
     <string name="vanguard_verifying_title">Verificação de Segurança Vanguard</string>
     <string name="vanguard_verifying_desc">Verificando scripts e ameaças de segurança no documento...</string>
-    <string name="vanguard_zero_trust_badge">100%% Offline • Zero-Trust</string>
+    <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
 
     <string name="action_redo">Refazer</string>
     <string name="action_reset">Redefinir</string>
@@ -1139,4 +1139,12 @@
     <string name="organizer_move_to">Move to position</string>
     <string name="organizer_position">Page position</string>
     <string name="organizer_position_range">Enter a position from 1 to %1$d.</string>
+    <string name="reader_reset_defaults">Reset reading preferences</string>
+    <string name="annotation_red">Red</string>
+    <string name="annotation_blue">Blue</string>
+    <string name="annotation_green">Green</string>
+    <string name="annotation_yellow">Yellow</string>
+    <string name="annotation_pink">Pink</string>
+    <string name="annotation_purple">Purple</string>
+    <string name="annotation_black">Black</string>
 </resources>

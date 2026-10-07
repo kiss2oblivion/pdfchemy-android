@@ -146,3 +146,74 @@ debug lint pass, and `git diff --check` passes. Final command:
 This recheck includes the final Organizer composition-observation correction.
 No Android devices were attached (`adb devices -l`); device profiling remains
 unverified, not silently deferred or counted as complete.
+
+Batch 2 remote verified: `fb212fb6cb6cb321089dff4f2c08e7b5384729dc`.
+
+## Batch 3 — predictable preferences and accessible controls
+
+Closed implementation IDs: UX-26, UX-42, UX-43, UX-44, UX-49, UX-50.
+UX-48 remains PARTIAL: label sizing is corrected in source, but small-width and
+large-font device verification remains outstanding.
+
+Still-open IDs after Batch 3: UX-03, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10,
+UX-14, UX-15, UX-16, UX-17, UX-18, UX-20, UX-21, UX-22, UX-23, UX-25, UX-27,
+UX-28, UX-29, UX-30, UX-31, UX-34, UX-35, UX-36, UX-37, UX-38, UX-40, UX-41,
+UX-47, UX-48.
+
+Settings and Premium use the same Back contract for system/toolbar navigation.
+The existing haptics toggle gates the shared Compose delegate, including tools
+that already call LocalHapticFeedback; category/tool cards no longer bypass it.
+Home theme selection exposes System/Light/Dark choices with selected semantics
+and current-state announcement. Existing palette, cards and theme options remain.
+
+Reflow's deliberate theme/font/serif defaults persist locally and can be reset
+from its existing menu without deleting reading positions or privacy choices.
+Audio Export and its lifecycle remain untouched. Theme choices use a shared
+48dp named/selectable target in both reading layouts; editor color choices are
+named/selectable 48dp targets in a scrollable row, preserving access on narrow
+screens. Category height scales for enlarged fonts; tool cards wrap labels with
+flexible height. The Vanguard badge's percent escaping is corrected only in
+copy; no security implementation is changed.
+
+Exact files changed:
+
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ChoiceControls.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PreferenceHaptics.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ReaderDefaultsStore.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt`
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/main/res/values/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/ui/PreferenceHapticsTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/ui/ReaderDefaultsStoreTest.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_BASELINE_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+
+Validation: all 104 app-host tests pass, with zero failures/errors/skips,
+including preference persistence/reset and haptic delegation. Debug assembly
+and debug lint pass (630 warnings, zero fatal errors); `git diff --check`
+passes. Command: `gradlew :app-host:testDebugUnitTest :app-host:assembleDebug
+:app-host:lintDebug --console=plain` (BUILD SUCCESSFUL, 6m 48s). The initial
+missing scroll imports were fixed before this successful recheck.
+No physical TalkBack, font-scale or haptic-device results are claimed.

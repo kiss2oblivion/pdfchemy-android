@@ -299,9 +299,14 @@ fun ReflowReaderScreen(
         reflowSections.any { section -> section.paragraphs.any { it.isNotBlank() } }
     }
 
-    var selectedTheme by remember { mutableStateOf(ReaderTheme.LIGHT) }
-    var fontSizeSp by remember { mutableStateOf(16f) }
-    var useSerifFont by remember { mutableStateOf(false) }
+    val defaultsStore = remember(prefs) { ReaderDefaultsStore(prefs) }
+    val defaults = remember(defaultsStore) { defaultsStore.load() }
+    var selectedTheme by remember { mutableStateOf(ReaderTheme.valueOf(defaults.theme)) }
+    var fontSizeSp by remember { mutableStateOf(defaults.fontSize) }
+    var useSerifFont by remember { mutableStateOf(defaults.serif) }
+    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont) {
+        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont))
+    }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
 
@@ -735,6 +740,16 @@ fun ReflowReaderScreen(
                                         onDismissRequest = { showOverflowMenu = false }
                                     ) {
                                         DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.reader_reset_defaults)) },
+                                            onClick = {
+                                                defaultsStore.reset()
+                                                selectedTheme = ReaderTheme.LIGHT
+                                                fontSizeSp = 16f
+                                                useSerifFont = false
+                                                showOverflowMenu = false
+                                            }
+                                        )
+                                        DropdownMenuItem(
                                             text = { Text("Export to Audio (WAV)") },
                                             onClick = {
                                                 showOverflowMenu = false
@@ -937,25 +952,9 @@ fun ReflowReaderScreen(
                                 // Theme Selector
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     ReaderTheme.values().forEach { theme ->
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .background(theme.bg, CircleShape)
-                                                .clickable {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                    selectedTheme = theme
-                                                }
-                                                .padding(2.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (selectedTheme == theme) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = theme.text
-                                                )
-                                            }
+                                        ReaderThemeSwatch(theme, selectedTheme == theme) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedTheme = theme
                                         }
                                     }
                                 }
@@ -1227,32 +1226,11 @@ fun ReflowReaderScreen(
                                 ) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         ReaderTheme.values().forEach { theme ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .background(theme.bg, CircleShape)
-                                                    .clickable {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                        selectedTheme = theme
-                                                    }
-                                                    .border(
-                                                        width = if (selectedTheme == theme) 2.dp else 1.dp,
-                                                        color = if (selectedTheme == theme) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.2f),
-                                                        shape = CircleShape
-                                                    )
-                                                    .padding(2.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (selectedTheme == theme) {
-                                                    Icon(
-                                                        Icons.Default.Check,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(20.dp),
-                                                        tint = theme.text
-                                                    )
-                                                }
-                                            }
+                                        ReaderThemeSwatch(theme, selectedTheme == theme) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedTheme = theme
                                         }
+                                    }
                                     }
                                 }
 

@@ -102,3 +102,10 @@ changes and validation, and these overrides determine the current disposition:
 | UX-13 | DONE | Batch 2: direct validated Move To position uses one chronological undo step and preserves all page identities. |
 | UX-33 | DONE | Batch 2: repeated gallery/camera URIs are deduplicated before URI-keyed image composition. |
 | UX-23 | PARTIAL | Batch 2: renderUriToBitmap staging, decode and cleanup now stay on IO; physical release-like latency/memory measurements remain open. |
+| UX-26 | DONE | Batch 3: explicit local theme/font/serif defaults persist, with scoped reset and recreation/reset tests. |
+| UX-42 | DONE | Batch 3: Settings/Premium system Back invokes the same callback as toolbar Back. |
+| UX-43 | DONE | Batch 3: existing haptics preference gates the shared Compose feedback delegate; category/tool cards use that delegate. |
+| UX-44 | DONE | Batch 3: Home exposes explicit System/Light/Dark selected choices and announces current mode. |
+| UX-48 | PARTIAL | Batch 3: category height scales with font size; enlarged labels wrap and tool height is flexible. 320dp/font2.0 runtime verification remains open. |
+| UX-49 | DONE | Batch 3: editor color/reflow theme choices expose names, selected radio semantics and 48dp touch bounds in both reflow layouts; physical TalkBack validation remains a sign-off gate. |
+| UX-50 | DONE | Batch 3: the verification badge is an explicitly nonformatted single-percent string in all locale resources. |

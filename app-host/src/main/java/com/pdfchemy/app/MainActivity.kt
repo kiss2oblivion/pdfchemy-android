@@ -750,6 +750,12 @@ fun MainApp(
         )
     }
     
+    val hapticsEnabled by viewModel.isHapticEnabled.collectAsState()
+    val systemHaptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val preferenceHaptics = remember(systemHaptics, hapticsEnabled) {
+        com.pdfchemy.app.ui.PreferenceHaptics(systemHaptics, hapticsEnabled)
+    }
+    CompositionLocalProvider(androidx.compose.ui.platform.LocalHapticFeedback provides preferenceHaptics) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.weight(1f)) {
@@ -790,14 +796,8 @@ fun MainApp(
                 Screen.Home -> HomeScreen(
                     windowWidthSizeClass = windowWidthSizeClass,
                     isDarkTheme = isDarkTheme,
-                    onToggleTheme = {
-                        val nextMode = when (themeMode) {
-                            "SYSTEM" -> "LIGHT"
-                            "LIGHT" -> "DARK"
-                            else -> "SYSTEM"
-                        }
-                        onChangeThemeMode(nextMode)
-                    },
+                    themeMode = themeMode,
+                    onChangeThemeMode = onChangeThemeMode,
                     onNavigate = { screen -> currentScreen = screen },
                     viewModel = viewModel
                 )
@@ -1195,6 +1195,7 @@ fun MainApp(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -1576,10 +1577,20 @@ fun AnimatedMeshBackground() {
 fun HomeScreen(
     windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
+    themeMode: String,
+    onChangeThemeMode: (String) -> Unit,
     onNavigate: (Screen) -> Unit,
     viewModel: MainViewModel
 ) {
+    var showThemeChoices by remember { mutableStateOf(false) }
+    val categoryHeight = (150f * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
+    if (showThemeChoices) {
+        com.pdfchemy.app.ui.ThemeChoiceDialog(
+            currentMode = themeMode,
+            onSelect = { onChangeThemeMode(it); showThemeChoices = false },
+            onDismiss = { showThemeChoices = false }
+        )
+    }
     // Only run the entrance stagger once on initial cold launch
     val hasEnteredHome = rememberSaveable { mutableStateOf(false) }
     val initialAlpha = if (hasEnteredHome.value) 1f else 0f
@@ -1643,10 +1654,12 @@ fun HomeScreen(
                 Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            IconButton(onClick = onToggleTheme) {
+            IconButton(onClick = { showThemeChoices = true }) {
                 Icon(
                     imageVector = if (isDarkTheme) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-                    contentDescription = stringResource(R.string.desc_toggle_theme),
+                    contentDescription = stringResource(R.string.settings_theme) + ": " + stringResource(
+                        when (themeMode) { "LIGHT" -> R.string.theme_light; "DARK" -> R.string.theme_dark; else -> R.string.theme_system }
+                    ),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -1719,14 +1732,14 @@ fun HomeScreen(
                         }
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(150.dp),
+                            modifier = Modifier.fillMaxWidth().height(categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CategoryCard(stringResource(R.string.cat_compress), stringResource(R.string.cat_compress_desc), Icons.Rounded.Compress, { onNavigate(Screen.CompressCategory) }, Modifier.weight(1f).fillMaxHeight())
                             CategoryCard(stringResource(R.string.cat_create), stringResource(R.string.cat_create_desc), Icons.Rounded.AddCircleOutline, { onNavigate(Screen.CreateCategory) }, Modifier.weight(1f).fillMaxHeight())
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(150.dp),
+                            modifier = Modifier.fillMaxWidth().height(categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CategoryCard(stringResource(R.string.cat_organize), stringResource(R.string.cat_organize_desc), Icons.Rounded.FolderOpen, { onNavigate(Screen.OrganizeCategory) }, Modifier.weight(1f).fillMaxHeight())
@@ -1758,11 +1771,12 @@ fun CategoryCard(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "scaleAnim"
     )
-    val view = androidx.compose.ui.platform.LocalView.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val enlargedText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.2f
 
     LaunchedEffect(isPressed) {
         if (isPressed) {
-            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
         }
     }
 
@@ -1817,7 +1831,7 @@ fun CategoryCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
+                    maxLines = if (enlargedText) Int.MAX_VALUE else 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(3.dp))
@@ -2198,16 +2212,17 @@ fun ToolCard(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "scaleAnim"
     )
-    val view = androidx.compose.ui.platform.LocalView.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val enlargedText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.2f
 
     Card(
         onClick = { 
-            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
             onClick() 
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(108.dp)
+            .heightIn(min = 108.dp)
             .graphicsLayer { scaleX = scale; scaleY = scale },
         interactionSource = interactionSource,
         shape = RoundedCornerShape(20.dp),
@@ -2263,7 +2278,7 @@ fun ToolCard(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1,
+                        maxLines = if (enlargedText) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
@@ -3291,6 +3306,7 @@ fun SettingsScreen(
     onOpenTour: () -> Unit = {},
     onBack: () -> Unit
 ) {
+    BackHandler { onBack() }
     val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
     val isSfxEnabled by viewModel.isSfxEnabled.collectAsState()
     val isHistoryEnabled by viewModel.isHistoryEnabled.collectAsState()
@@ -4269,6 +4285,7 @@ fun BannerAd(isPremium: Boolean, modifier: Modifier = Modifier) {
 
 @Composable
 fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    BackHandler { onBack() }
     val isPremium by viewModel.isPremium.collectAsState()
     val price by viewModel.premiumPrice.collectAsState()
     val context = LocalContext.current as android.app.Activity
