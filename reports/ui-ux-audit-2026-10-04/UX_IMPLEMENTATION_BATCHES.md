@@ -305,3 +305,27 @@ Physical signing/rendering and provider failure injection remain unverified.
 Current matrix after this batch: 21 DONE, 17 PARTIAL, 12 STILL OPEN,
 zero SUPERSEDED. The main reconciliation table contains all 50 latest
 dispositions, with previous batch evidence retained below it.
+
+
+## Batch 5 — Reader navigation, document space and return continuity
+
+Native Reader now exposes working nested outline navigation, validated page jump, lazy page previews, local personal bookmarks, fit-page/fit-width modes, share and print. Hidden chrome releases its reserved document padding. Original Reader URI and in-memory page/offset survive tool handoffs and return, including when persistent position storage is disabled. Reflow counts actual occurrences, brings the active glyph into view, preserves nested outline targets and hides its controls. Provider/page failures expose retry separately from executable/encrypted/damaged Vanguard results. Existing renderer and security boundaries remain. Batch 4 remote SHA was verified as ca4091022ba4cfb4a13a42dd090ffc9c575e1e19; its CI run 37641926774 failed overall despite successful architecture/dependency/secrets jobs; remaining job evidence was unavailable through the current log API (403), so full CI success is not claimed.
+
+Closed source IDs: UX-15, UX-16, UX-18, UX-27.
+
+Still open or partial: UX-03, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10, UX-14, UX-17, UX-20, UX-21, UX-22, UX-23, UX-25, UX-28, UX-29, UX-30, UX-31, UX-34, UX-36, UX-38, UX-40, UX-41, UX-47, UX-48.
+
+Exact files changed:
+
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/ReaderNavigation.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/utils/DocumentIdentity.kt`
+- `app-host/src/test/java/com/pdfchemy/app/logic/ReaderNavigationTest.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+
+Nine focused tests pass (ReaderNavigation and ReleaseWorkflowRegression), zero failures/errors. Debug assembly and lint pass; lint reports zero errors and 634 warnings. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.ReaderNavigationTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:assembleDebug :app-host:lintDebug --console=plain. git diff --check passes. Physical gesture, print-service and font/device checks are explicitly unverified.

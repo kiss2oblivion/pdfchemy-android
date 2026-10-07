@@ -98,6 +98,15 @@ private fun PdfReaderDocument(
     
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var totalPages by remember { mutableIntStateOf(0) }
+    var loading by remember { mutableStateOf(true) }
+    var loadFailure by remember { mutableStateOf<String?>(null) }
+    var retry by remember { mutableIntStateOf(0) }
+    var documentId by remember { mutableStateOf("") }
+    var showNavigation by remember { mutableStateOf(false) }
+    var jumpInput by remember { mutableStateOf("") }
+    var fitPage by remember { mutableStateOf(false) }
+    var personalBookmarks by remember { mutableStateOf<Set<Int>>(emptySet()) }
+    viewModel.readerSourceUri = initialUri
     var fileName by remember { mutableStateOf("") }
     
     // Zoom and Pan state
@@ -117,6 +126,7 @@ private fun PdfReaderDocument(
     var searchMatches by remember { mutableStateOf<List<com.pdfchemy.app.logic.TextMatchOccurrence>>(emptyList()) }
     var currentMatchIndex by remember { mutableStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
+    val searchGeneration = remember { com.pdfchemy.app.logic.LatestRequest() }
     
     // Vanguard Threat state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -137,14 +147,20 @@ private fun PdfReaderDocument(
     
     val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
     
-    LaunchedEffect(initialUri) {
+    LaunchedEffect(initialUri, retry) {
+        loading = true
+        loadFailure = null
         guardDocumentLoad(onFailure = {
-            showVanguardBlockedDialog = true
+            loadFailure = "Cannot open this document. Check its access permission or select it again."
+            loading = false
             isVanguardScanning = false
         }) {
-            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
+            val docId = withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri) }
             val stagedUri = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri).uri }
             selectedPdfUri = stagedUri
+            documentId = docId
+            personalBookmarks = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
+                .getStringSet("bookmarks_$docId", emptySet()).orEmpty().mapNotNull { it.toIntOrNull() }.toSet()
             
             // Fetch bookmarks asynchronously
             coroutineScope.launch {
@@ -181,31 +197,80 @@ private fun PdfReaderDocument(
                 totalPages = PdfEditor.getPageCount(context, stagedUri)
             }
             
-            if (isRememberPositionEnabled && totalPages > 0) {
-                val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
-                val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
-                val savedPage = prefs.getInt("page_$docId", 0)
-                if (savedPage in 0 until totalPages) {
-                    listState.scrollToItem(savedPage)
-                }
+            loading = false
+            if (totalPages == 0 && !showVanguardBlockedDialog && !showVanguardEncryptedDialog && !showVanguardDamagedDialog) {
+                loadFailure = "No readable pages were found. Try Repair PDF or select another document."
+            }
+            if (totalPages > 0) {
+                val prefs = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
+                val sessionPosition = viewModel.readerPositions[initialUri.toString()]
+                val savedPage = sessionPosition?.page ?: if (isRememberPositionEnabled) prefs.getInt("page_$docId", 0) else 0
+                val offset = sessionPosition?.offset ?: if (isRememberPositionEnabled) prefs.getInt("offset_$docId", 0) else 0
+                listState.scrollToItem(savedPage.coerceIn(0, totalPages - 1), offset.coerceAtLeast(0))
             }
         }
     }
     
-    // Save position continuously
-    LaunchedEffect(listState.firstVisibleItemIndex, isRememberPositionEnabled) {
-        if (isRememberPositionEnabled && totalPages > 0) {
-            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
-            val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
-            prefs.edit().putInt("page_$docId", listState.firstVisibleItemIndex).apply()
+    LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset, totalPages, loading) {
+        if (!loading && totalPages > 0) {
+            val page = listState.firstVisibleItemIndex
+            val offset = listState.firstVisibleItemScrollOffset
+            viewModel.readerPositions[initialUri.toString()] = MainViewModel.ReaderPosition(page, offset)
+            if (isRememberPositionEnabled && documentId.isNotEmpty()) {
+                context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit()
+                    .putInt("page_$documentId", page).putInt("offset_$documentId", offset).apply()
+            }
         }
+    }
+
+    if (showNavigation) {
+        AlertDialog(
+            onDismissRequest = { showNavigation = false },
+            title = { Text("Navigate document") },
+            text = {
+                Column {
+                    OutlinedTextField(jumpInput, { jumpInput = it }, label = { Text("Page (1–$totalPages)") },
+                        singleLine = true, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number))
+                    TextButton(enabled = jumpInput.toIntOrNull()?.let { it in 1..totalPages } == true, onClick = {
+                        coroutineScope.launch { listState.scrollToItem(jumpInput.toInt() - 1) }; showNavigation = false
+                    }) { Text("Go to page") }
+                    androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 400.dp)) {
+                        item { Text("Table of contents", style = MaterialTheme.typography.titleSmall) }
+                        val rows = com.pdfchemy.app.logic.ReaderNavigation.flattenOutline(bookmarks)
+                        items(rows.size) { i ->
+                            val row = rows[i]
+                            TextButton(modifier = Modifier.padding(start = (row.depth * 12).dp), onClick = {
+                                coroutineScope.launch { listState.scrollToItem((row.bookmark.pageNumber - 1).coerceIn(0, totalPages - 1)) }; showNavigation = false
+                            }) { Text("${row.bookmark.title} · ${row.bookmark.pageNumber}") }
+                        }
+                        item { Text("Your bookmarks", style = MaterialTheme.typography.titleSmall) }
+                        items(personalBookmarks.size) { i ->
+                            val page = personalBookmarks.sorted()[i]
+                            TextButton(onClick = { coroutineScope.launch { listState.scrollToItem(page.coerceIn(0, totalPages - 1)) }; showNavigation = false }) { Text("Page ${page + 1}") }
+                        }
+                        item { Text("Pages", style = MaterialTheme.typography.titleSmall) }
+                        items(totalPages) { page ->
+                            Column(Modifier.clickable { coroutineScope.launch { listState.scrollToItem(page) }; showNavigation = false }.padding(8.dp)) {
+                                Text("Page ${page + 1}")
+                                PdfReaderPageItem(context, selectedPdfUri!!, page, 240)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showNavigation = false }) { Text("Close") } }
+        )
     }
 
     if (showVanguardBlockedDialog || showVanguardDamagedDialog || showVanguardEncryptedDialog) {
         AlertDialog(
             onDismissRequest = onBack,
-            title = { Text(stringResource(R.string.vanguard_blocked_title)) },
-            text = { Text("This document cannot be read safely.") },
+            title = { Text(if (showVanguardBlockedDialog) stringResource(R.string.vanguard_blocked_title) else "Document unavailable") },
+            text = { Text(when {
+                showVanguardEncryptedDialog -> "This PDF is password protected. Unlock a copy before reading."
+                showVanguardDamagedDialog -> "This PDF could not be parsed. Try Repair PDF or another copy."
+                else -> "Active executable content was detected. Select another document."
+            }) },
             confirmButton = { Button(onClick = onBack) { Text(stringResource(R.string.ok)) } }
         )
         return
@@ -221,7 +286,13 @@ private fun PdfReaderDocument(
             .fillMaxSize()
             .background(Color(0xFFE5E5E5)) // Neutral reading background
     ) {
-        if (totalPages > 0 && selectedPdfUri != null) {
+        if (loading || loadFailure != null) {
+            Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (loading) CircularProgressIndicator() else Text(loadFailure!!)
+                if (!loading) TextButton(onClick = { retry++ }) { Text("Retry") }
+            }
+        }
+        if (!loading && totalPages > 0 && selectedPdfUri != null) {
             // Interactive Reader Surface
             Box(
                 modifier = Modifier
@@ -262,7 +333,7 @@ private fun PdfReaderDocument(
                 LazyColumn(
                     state = listState,
                     userScrollEnabled = false, // We control scroll via transform gestures for perfect sync
-                    contentPadding = PaddingValues(top = 80.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
+                    contentPadding = PaddingValues(top = if (showControls) 80.dp else 0.dp, bottom = if (showControls) 120.dp else 0.dp, start = 16.dp, end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .fillMaxSize()
@@ -274,7 +345,7 @@ private fun PdfReaderDocument(
                         )
                 ) {
                     items(totalPages, key = { it }) { index ->
-                        PdfReaderPageItem(context, selectedPdfUri!!, index)
+                        PdfReaderPageItem(context, selectedPdfUri!!, index, fitPage = fitPage)
                     }
                 }
             }
@@ -306,9 +377,26 @@ private fun PdfReaderDocument(
                     IconButton(onClick = { isSearchMode = !isSearchMode }) {
                         Icon(Icons.Rounded.Search, contentDescription = "Search")
                     }
-                    if (bookmarks.isNotEmpty()) {
-                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Table of Contents")
+                    IconButton(enabled = totalPages > 0, onClick = { jumpInput = "${listState.firstVisibleItemIndex + 1}"; showNavigation = true }) {
+                        Icon(Icons.Rounded.Menu, contentDescription = "Pages, table of contents and bookmarks")
+                    }
+                    var showMore by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { showMore = true }) { Icon(Icons.Rounded.MoreVert, "Reading actions") }
+                        DropdownMenu(showMore, { showMore = false }) {
+                            DropdownMenuItem(text = { Text(if (fitPage) "Fit width" else "Fit page") }, onClick = { fitPage = !fitPage; showMore = false })
+                            DropdownMenuItem(text = { Text(if (listState.firstVisibleItemIndex in personalBookmarks) "Remove bookmark" else "Bookmark page") }, onClick = {
+                                val page = listState.firstVisibleItemIndex
+                                personalBookmarks = if (page in personalBookmarks) personalBookmarks - page else personalBookmarks + page
+                                context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit().putStringSet("bookmarks_$documentId", personalBookmarks.map { it.toString() }.toSet()).apply()
+                                showMore = false
+                            }, enabled = totalPages > 0)
+                            DropdownMenuItem(text = { Text("Share") }, onClick = {
+                                runCatching { com.pdfchemy.app.logic.DocumentActions.share(context, selectedPdfUri!!) }.onFailure { viewModel.notifyError("No sharing app is available. Save a copy and try again.") }; showMore = false
+                            }, enabled = totalPages > 0)
+                            DropdownMenuItem(text = { Text("Print") }, onClick = {
+                                runCatching { com.pdfchemy.app.logic.DocumentActions.print(context, selectedPdfUri!!, fileName) }.onFailure { viewModel.notifyError("Printing is unavailable. Check your print service and try again.") }; showMore = false
+                            }, enabled = totalPages > 0)
                         }
                     }
                     IconButton(onClick = { onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri)) }) {
@@ -332,7 +420,7 @@ private fun PdfReaderDocument(
                     ) {
                         OutlinedTextField(
                             value = searchQuery,
-                            onValueChange = { searchQuery = it },
+                            onValueChange = { searchQuery = it; searchGeneration.invalidate(); searchMatches = emptyList(); isSearching = false },
                             modifier = Modifier.weight(1f),
                             placeholder = { Text("Search document...") },
                             singleLine = true,
@@ -346,18 +434,21 @@ private fun PdfReaderDocument(
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
                             keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
                                 if (searchQuery.isNotBlank() && initialUri != null) {
+                                    val query = searchQuery
+                                    val ticket = searchGeneration.begin()
                                     isSearching = true
                                     coroutineScope.launch {
                                         try {
-                                            val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, initialUri, searchQuery)
+                                            val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, initialUri, query)
+                                            if (!searchGeneration.isCurrent(ticket)) return@launch
                                             searchMatches = summary.occurrences
                                             currentMatchIndex = 0
                                             if (searchMatches.isNotEmpty()) {
                                                 listState.animateScrollToItem(searchMatches[0].pageIndex)
                                             }
-                                        } finally {
-                                            isSearching = false
-                                        }
+                                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                        catch (_: Exception) { if (searchGeneration.isCurrent(ticket)) viewModel.notifyError("Search failed. Check document access and retry.") }
+                                        finally { if (searchGeneration.isCurrent(ticket)) isSearching = false }
                                     }
                                 }
                             })
@@ -375,12 +466,12 @@ private fun PdfReaderDocument(
                                     val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
                                     currentMatchIndex = newIdx
                                     coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
-                                }) { Icon(Icons.Rounded.KeyboardArrowUp, null) }
+                                }) { Icon(Icons.Rounded.KeyboardArrowUp, "Previous match") }
                                 IconButton(onClick = {
                                     val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
                                     currentMatchIndex = newIdx
                                     coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
-                                }) { Icon(Icons.Rounded.KeyboardArrowDown, null) }
+                                }) { Icon(Icons.Rounded.KeyboardArrowDown, "Next match") }
                             }
                         }
                     }
@@ -473,15 +564,19 @@ fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 }
 
 @Composable
-fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int, requestedWidth: Int? = null, fitPage: Boolean = false) {
+    var bitmap by remember(uri, pageIndex) { mutableStateOf<Bitmap?>(null) }
+    var failed by remember(uri, pageIndex) { mutableStateOf(false) }
+    var retryPage by remember(uri, pageIndex) { mutableIntStateOf(0) }
     
-    LaunchedEffect(uri, pageIndex) {
-        val targetWidth = (context.resources.displayMetrics.widthPixels * 1.5).toInt()
-        val bmp = withContext(Dispatchers.IO) {
-            NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
-        }
-        bitmap = bmp
+    LaunchedEffect(uri, pageIndex, retryPage) {
+        val targetWidth = requestedWidth ?: (context.resources.displayMetrics.widthPixels * 1.5).toInt()
+        failed = false
+        try {
+            bitmap = NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            failed = bitmap == null
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { failed = true }
     }
     
     DisposableEffect(bitmap) {
@@ -503,8 +598,8 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = "Page ${pageIndex + 1}",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth()
+                contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
+                modifier = if (fitPage) Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 140).coerceAtLeast(200).dp) else Modifier.fillMaxWidth()
             )
         } else {
             // Placeholder while loading
@@ -515,7 +610,8 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
                     .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                if (failed) TextButton(onClick = { retryPage++ }) { Text("Retry page ${pageIndex + 1}") }
+                else CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
         }
     }

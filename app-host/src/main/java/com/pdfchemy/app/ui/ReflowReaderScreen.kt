@@ -1,4 +1,5 @@
 package com.pdfchemy.app.ui
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 
 import android.content.Context
 import android.content.res.Configuration
@@ -412,18 +413,11 @@ fun ReflowReaderScreen(
         }
     }
 
+    var showReadingControls by remember { mutableStateOf(true) }
     val searchMatches = remember(searchQuery, reflowSections) {
-        val q = searchQuery.trim()
-        if (q.length < 2) emptyList()
-        else {
-            val list = mutableListOf<Int>()
-            reflowSections.forEachIndexed { sIdx, section ->
-                val hasMatch = section.paragraphs.any { p -> p.contains(q, ignoreCase = true) }
-                if (hasMatch) list.add(sIdx)
-            }
-            list
-        }
+        com.pdfchemy.app.logic.ReaderNavigation.occurrences(reflowSections, searchQuery)
     }
+    val activeOccurrence = searchMatches.getOrNull(currentMatchIndex)
 
     val onPreviousMatch = {
         if (searchMatches.isNotEmpty()) {
@@ -431,7 +425,7 @@ fun ReflowReaderScreen(
             val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
             currentMatchIndex = newIdx
             scope.launch {
-                listState.animateScrollToItem(searchMatches[newIdx])
+                listState.animateScrollToItem(searchMatches[newIdx].section)
             }
         }
     }
@@ -442,7 +436,7 @@ fun ReflowReaderScreen(
             val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
             currentMatchIndex = newIdx
             scope.launch {
-                listState.animateScrollToItem(searchMatches[newIdx])
+                listState.animateScrollToItem(searchMatches[newIdx].section)
             }
         }
     }
@@ -646,7 +640,10 @@ fun ReflowReaderScreen(
                     )
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(bookmarks, key = { "${it.title}_${it.pageNumber}" }) { bookmark ->
+                        val rows = com.pdfchemy.app.logic.ReaderNavigation.flattenOutline(bookmarks)
+                        items(rows.size) { outlineIndex ->
+                            val row = rows[outlineIndex]
+                            val bookmark = row.bookmark
                             NavigationDrawerItem(
                                 label = { Text(bookmark.title, maxLines = 1) },
                                 badge = { Text("P.${bookmark.pageNumber}") },
@@ -654,11 +651,11 @@ fun ReflowReaderScreen(
                                 onClick = {
                                     scope.launch {
                                         drawerState.close()
-                                        val targetIdx = (bookmark.pageNumber - 1).coerceIn(0, (reflowSections.size - 1).coerceAtLeast(0))
+                                        val targetIdx = reflowSections.indexOfFirst { it.pageNumber == bookmark.pageNumber }.coerceAtLeast(0)
                                         listState.animateScrollToItem(targetIdx)
                                     }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(start = (12 + row.depth * 12).dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
                             )
                         }
                     }
@@ -669,6 +666,7 @@ fun ReflowReaderScreen(
         Scaffold(
             containerColor = selectedTheme.bg,
             topBar = {
+                if (showReadingControls) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     TopAppBar(
                         title = {
@@ -688,6 +686,7 @@ fun ReflowReaderScreen(
                             }
                         },
                         actions = {
+                            IconButton(onClick = { showReadingControls = false }) { Icon(Icons.Rounded.Fullscreen, "Hide reading controls") }
                             if (bookmarks.isNotEmpty()) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                     Icon(Icons.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
@@ -930,9 +929,10 @@ fun ReflowReaderScreen(
                         }
                     }
                 }
+                }
             },
             bottomBar = {
-                if (selectedPdfUri != null && reflowSections.isNotEmpty() && !isTabletopMode) {
+                if (showReadingControls && selectedPdfUri != null && reflowSections.isNotEmpty() && !isTabletopMode) {
                     Surface(
                         color = selectedTheme.bg,
                         tonalElevation = 6.dp,
@@ -993,6 +993,9 @@ fun ReflowReaderScreen(
                     .padding(padding),
                 contentAlignment = Alignment.TopCenter
             ) {
+                if (!showReadingControls) {
+                    IconButton(modifier = Modifier.align(Alignment.TopEnd), onClick = { showReadingControls = true }) { Icon(Icons.Rounded.FullscreenExit, "Show reading controls") }
+                }
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else if (selectedPdfUri != null && (isScannedOnly || !hasReadableContent)) {
@@ -1118,7 +1121,7 @@ fun ReflowReaderScreen(
                             )
                         }
                     }
-                } else if (isTabletopMode) {
+                } else if (isTabletopMode && showReadingControls) {
                     // Tabletop Mode for Flip phones: Reading on top, Desk Controls on bottom
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Top Reading Viewport (above hinge)
@@ -1154,7 +1157,7 @@ fun ReflowReaderScreen(
                                             )
                                         }
 
-                                        section.paragraphs.forEach { p ->
+                                        section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                             val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                             val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1162,6 +1165,7 @@ fun ReflowReaderScreen(
                                                 HighlightedParagraph(
                                                     text = p,
                                                     searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                                     textColor = selectedTheme.text,
                                                     fontSizeSp = fontSizeSp,
                                                     useSerifFont = useSerifFont
@@ -1298,7 +1302,7 @@ fun ReflowReaderScreen(
                                     )
                                 }
 
-                                section.paragraphs.forEach { p ->
+                                section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1306,6 +1310,7 @@ fun ReflowReaderScreen(
                                         HighlightedParagraph(
                                             text = p,
                                             searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
                                             useSerifFont = useSerifFont
@@ -1344,7 +1349,7 @@ fun ReflowReaderScreen(
                                     )
                                 }
 
-                                section.paragraphs.forEach { p ->
+                                section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1352,6 +1357,7 @@ fun ReflowReaderScreen(
                                         HighlightedParagraph(
                                             text = p,
                                             searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
                                             useSerifFont = useSerifFont
@@ -1368,14 +1374,22 @@ fun ReflowReaderScreen(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun HighlightedParagraph(
     text: String,
     searchQuery: String,
     textColor: Color,
     fontSizeSp: Float,
-    useSerifFont: Boolean
+    useSerifFont: Boolean,
+    activeMatchStart: Int? = null
 ) {
+    val requester = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+    LaunchedEffect(activeMatchStart, layout) {
+        val result = layout
+        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+    }
     val trimmed = searchQuery.trim()
     if (trimmed.length < 2 || !text.contains(trimmed, ignoreCase = true)) {
         Text(
@@ -1387,13 +1401,12 @@ private fun HighlightedParagraph(
             textAlign = TextAlign.Start
         )
     } else {
-        val annotated = remember(text, trimmed) {
+        val annotated = remember(text, trimmed, activeMatchStart) {
             buildAnnotatedString {
                 var startIndex = 0
-                val lowerText = text.lowercase()
-                val lowerQuery = trimmed.lowercase()
+                
                 while (startIndex < text.length) {
-                    val matchIdx = lowerText.indexOf(lowerQuery, startIndex)
+                    val matchIdx = text.indexOf(trimmed, startIndex, ignoreCase = true)
                     if (matchIdx == -1) {
                         append(text.substring(startIndex))
                         break
@@ -1404,7 +1417,7 @@ private fun HighlightedParagraph(
                     val matchEnd = matchIdx + trimmed.length
                     pushStyle(
                         SpanStyle(
-                            background = Color(0xFFFFD54F),
+                            background = if (matchIdx == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
                             color = Color(0xFF1E293B),
                             fontWeight = FontWeight.Bold
                         )
@@ -1417,6 +1430,8 @@ private fun HighlightedParagraph(
         }
         Text(
             text = annotated,
+            modifier = Modifier.bringIntoViewRequester(requester),
+            onTextLayout = { layout = it },
             color = textColor,
             fontSize = fontSizeSp.sp,
             lineHeight = (fontSizeSp * 1.55f).sp,

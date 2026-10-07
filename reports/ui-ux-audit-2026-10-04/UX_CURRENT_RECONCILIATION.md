@@ -27,21 +27,21 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-12 | DONE | Organizer initializes every page before rendering; failed previews retain originalIndex and toPageActions exports all identities. Existing failure tests. |
 | UX-13 | DONE | Batch 2: direct validated Move To position uses one chronological undo step and preserves all page identities. |
 | UX-14 | PARTIAL | Organizer publishes previews incrementally; still serial eager render and bitmap retention without bounded cache. Measure and bound memory; preserve all page identities. |
-| UX-15 | PARTIAL | Dedicated PdfReader has continuous reading, pinch/double-tap zoom/pan, search and outline. Missing jump/thumbnails, user bookmarks, share/print and reading modes; inspect gestures on devices. |
-| UX-16 | PARTIAL | PdfReader chrome can hide; fixed 80/120dp content padding remains and reflow controls are permanent. Complete document-first behavior without replacing Reader. |
+| UX-15 | DONE | Batch 5 wires native nested TOC, page jump, lazy thumbnails, local bookmarks, fit-page/width modes, share and print alongside existing gestures/search. Physical gesture and printer-service checks remain deferred until a device/service is available. |
+| UX-16 | DONE | Batch 5 releases hidden native chrome padding and adds reflow hide/reveal controls, including a full reading viewport when tabletop controls are hidden. |
 | UX-17 | PARTIAL | PdfEditor guards dirty Back; source change/session recreation and saved-copy boundary still need session preservation validation. |
-| UX-18 | PARTIAL | Batch 4 also repairs initial Sign handoff rendering; preserved Reader return and the remaining valid handoffs are still open. |
+| UX-18 | DONE | Batch 5 preserves the original Reader route and in-memory page/offset through tool callbacks; Back/success returns to that Reader instead of a category. Batch 4 already corrected initial signing handoff rendering. |
 | UX-19 | DONE | Editor and QuickFill use chronological EditorSession with undo/redo, rotation/redaction tracking and mixed-action tests. |
 | UX-20 | STILL OPEN | PdfEditor wide/tabletop branches still display plain Image, unlike narrow interactive annotation surface. Preserve posture layout and share interactive surface. |
 | UX-21 | PARTIAL | PdfEditorWorker now composites annotations before raster redaction and applies rotation. Source omission is fixed; mixed preview/export order and existing-rotation parity need validation. |
 | UX-22 | PARTIAL | Text placement uses canvas ratios; preview still uses fixed sp text and dp stamp size while export scales annotations. Unify dimensions/transforms and verify density/rotation parity. |
 | UX-23 | PARTIAL | Batch 2: renderUriToBitmap staging, decode and cleanup now stay on IO; physical release-like latency/memory measurements remain open. |
 | UX-24 | DONE | Reflow computes hasReadableContent and offers OCR for scanned/no-readable-content state; original empty-section gate fixed. |
-| UX-25 | PARTIAL | Native Reader has stable DocumentIdentity and enabled preference; Reflow uses incoming URI rather than random snapshot and same toggle. Editor and staged-tool-return identity/offset persistence remain. |
+| UX-25 | PARTIAL | Batch 5 preserves original Reader URI and offset through tools; staged file identities now use retained display names rather than random snapshot names. Editor position/session persistence is in the next batch. |
 | UX-26 | DONE | Batch 3: explicit local theme/font/serif defaults persist, with scoped reset and recreation/reset tests. |
-| UX-27 | STILL OPEN | Reflow search returns section indices and outline drawer remains flat. Add occurrence-aware navigation and nested outline. |
-| UX-28 | PARTIAL | Loading/render states exist; editor starts pageCount=0/rendering=false and native Reader can leave blank state during initial staging/failure. Explicit loading/ready/error needed. |
-| UX-29 | PARTIAL | Merged Vanguard taxonomy distinguishes executable/encrypted/parse failure; do not redo remediation. DocumentLoadGuard/Reader still collapse provider/render errors into blocked/generic unsafe copy. Fix only UI recovery mapping. |
+| UX-27 | DONE | Batch 5 counts every search occurrence with paragraph/character identity, focuses the active glyph, and retains nested TOC depth and exact page targets. |
+| UX-28 | PARTIAL | Batch 5 gives native Reader explicit loading, unreadable/no-pages recovery and retry plus page render retry. Editor initial-load state remains for the next batch. |
+| UX-29 | PARTIAL | Batch 5 separates Reader provider failures, password protection and damaged parsing from executable-threat copy. Shared/editor recovery presentation remains for the next batch; Vanguard engine remediation is preserved. |
 | UX-30 | STILL OPEN | MainViewModel and tool screens pass exception messages into UiState.Error/toasts; technical details remain visible. Central meaningful error presentation with separate diagnostics. |
 | UX-31 | STILL OPEN | EbookConverterScreen still uses rememberVanguardPdfPicker for EPUB/CBZ. Format-appropriate guarded selection needed; retain all PDF/security boundaries. |
 | UX-32 | DONE | PdfManipulator.splitPdf requires readable pages and nonempty selected pages before creating outputs; release regression covers invalid split. |

@@ -98,6 +98,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    data class ReaderPosition(val page: Int, val offset: Int)
+    val readerPositions = mutableMapOf<String, ReaderPosition>()
+    var readerSourceUri: Uri? = null
+
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
 
