@@ -2,18 +2,24 @@
 
 Branch: `feature/wave-2-audio-export`. Stable base: Android `main @ 1f8e31d0aaea16d7c7efe24521e204a361b6ed5b`.
 
-Status: implementation and full local verification complete; GitHub CI pending. Merge recommendation: **NO until CI completes**.
+Status: implementation, local verification and full GitHub CI complete. Merge recommendation: **YES for Wave 2**. Application production-release certification remains blocked by the inherited release gates listed below.
 
 ## Commits
 
 - `71d2372`: conservative merge of current Android main; original feature commits `b631206` and `aae07e5` retained.
 - `ef43f2b`: safe WAV export implementation and full local verification, pushed to the Android feature branch.
+- `f777fe1`: accept the installed Java 21 vendor and remove stale daemon toolchain URLs.
+- `eb667d6`: deterministic publication-cleanup regression and restoration of main's unrelated feature-registry statuses. Current verification SHA: `eb667d68d732299cddd97305b94e2f65c14139e8`.
 
 ### CI continuation — 2026-10-07
 
-[Run #26](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37581722173) at `ef43f2bd865103a9124d3dfa462dbb0c4b2b5cb9` passed secrets but failed architecture/dependency initialization before tests. `gradle/gradle-daemon-jvm.properties` forced JetBrains Java 21 despite CI already installing Temurin 21; its Foojay download URL returned HTTP 400. The correction retains Java 21 and accepts the installed vendor, removing stale vendor-specific download URLs. Application/security behavior is unchanged. A replacement full CI run is required.
+[Run #26](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37581722173) at `ef43f2bd865103a9124d3dfa462dbb0c4b2b5cb9` passed secrets but failed architecture/dependency initialization before tests. `gradle/gradle-daemon-jvm.properties` forced JetBrains Java 21 despite CI already installing Temurin 21; its Foojay download URL returned HTTP 400. The correction retains Java 21 and accepts the installed vendor, removing stale vendor-specific download URLs. Application/security behavior is unchanged. Run #28 verifies the correction.
 
 Run #27 passed architecture, dependency security and secrets, then exposed a race in the existing `app-host/src/test/java/com/pdfchemy/app/ui/CancellationPublicationTest.kt`. The image-extraction callback completes before error-state publication and final cleanup; temporary frames disappear before destination deletion. The test now awaits destination deletion and the Error state explicitly, retaining all failure/cleanup assertions. No image-extraction production code changes. Inherited unrelated `FEATURES_REGISTRY.md` security-status edits were also restored to current main.
+
+[Run #28, attempt 2](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37583858601) at `eb667d68d732299cddd97305b94e2f65c14139e8` is **SUCCESS**: all nine jobs passed, including architecture, dependency security, secrets, unit tests, four instrumentation jobs and final build. API24's first attempt failed during APK installation with `ShellCommandUnresponsiveException` / `InstallException: Failed to install-write all apks`, executing zero tests. Its retry completed all 197 tests successfully. API30/34/36 each completed 197 tests successfully; total 788, zero failures. Final lint/debug/release/R8 verification passed in 14m19s using main's unsigned CI verification flag. Fixture hashes, production ad IDs, 61 smoke routes and release artifact hygiene also passed. Run #27 had already passed all four platform jobs on identical application code.
+
+After the cleanup-test correction, the focused two-test class and the full 172-test local unit suite passed again. No assertions were removed or weakened.
 
 ## Concrete defects and fixes
 
@@ -53,7 +59,9 @@ Required local command: `gradlew.bat testDebugUnitTest assembleDebug assembleRel
 
 Executed with `--max-workers=1 -Pkotlin.compiler.execution.strategy=in-process`, JAVA_HOME `E:\Android_Studio\jbr`. Final run: BUILD SUCCESSFUL, 19m38s. `git diff --check` and staged whitespace checks passed. `scripts/check_release_gate.py --artifact` passed: fixture hashes, 61 smoke routes, production IDs, manifest isolation and release asset hygiene. `apksigner verify` passed; certificate SHA256 remains `f7b12a179e08ebc24b0bc2afae5438e90834ec92896f67d9da8294aea653b41b`.
 
-Secret gate helper tests: 10 PASS. Local full-history scanner returned an incomplete result, not a pass; CI's independent secrets job remains mandatory. GitHub CI must pass architecture, dependency-security, secrets, tests, instrumentation API24/x86, API30/x86_64, API34/x86_64 and API36/x86_64, and final build. Expected instrumentation total: 197 tests per API, zero failures.
+Secret gate helper tests: 10 PASS. Local full-history scanner returned an incomplete result, not a pass; CI's independent secrets job passed. GitHub CI passed architecture, dependency-security, secrets, tests, instrumentation API24/x86, API30/x86_64, API34/x86_64 and API36/x86_64, and final build. Actual instrumentation total: 197 tests per API, zero failures.
+
+The final follow-up commit contains only this verification report and uses `[skip ci]`. The exact CI-tested code/configuration/test revision is `eb667d68d732299cddd97305b94e2f65c14139e8`; no application, workflow or test changes follow it. All work is on the Android feature branch; main remains at `1f8e31d0aaea16d7c7efe24521e204a361b6ed5b`.
 
 No connected Android device or local AVD was found. **Connected instrumentation not locally verified.** Compilation is not instrumentation execution.
 
@@ -63,7 +71,7 @@ The 11 permanent benign Vanguard fixtures and their hashes remain unchanged. The
 
 Physical smoke checklist (not executed locally): export short/long Unicode text; play the saved WAV in another app and share it; export while Reader speech is active; cancel during initialization/synthesis/publication and inspect partial outputs; background/return to Reader and cancel from notification; run Android15+ timeout with the documented test setting; retry after failure; exercise real SAF providers and an unavailable offline language.
 
-- P0: no known Wave 2 P0 defect identified.
+- P0/P1: no known unresolved Wave 2 code defect; all feature merge gates passed.
 - P1 release gates inherited from main: Play upload-certificate registration mismatch, unidentified original compatibility corpus, and signed physical-device smoke matrix remain unresolved. This feature does not certify the whole application for release.
 - P2: actual OEM/offline TTS voice installation, Android 15 timeout behavior and third-party SAF providers need signed-device smoke coverage. Controlled TTS service tests do not certify every OEM engine.
 - P2: English fallback resources from `b631206` resolve build omissions but are not completed translations; new audio strings are also English-only.
