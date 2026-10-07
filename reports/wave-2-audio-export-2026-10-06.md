@@ -7,7 +7,11 @@ Status: implementation and full local verification complete; GitHub CI pending. 
 ## Commits
 
 - `71d2372`: conservative merge of current Android main; original feature commits `b631206` and `aae07e5` retained.
-- Final implementation and verification commits: recorded after verification.
+- `ef43f2b`: safe WAV export implementation and full local verification, pushed to the Android feature branch.
+
+### CI continuation — 2026-10-07
+
+[Run #26](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37581722173) at `ef43f2bd865103a9124d3dfa462dbb0c4b2b5cb9` passed secrets but failed architecture/dependency initialization before tests. `gradle/gradle-daemon-jvm.properties` forced JetBrains Java 21 despite CI already installing Temurin 21; its Foojay download URL returned HTTP 400. The correction retains Java 21 and accepts the installed vendor, removing stale vendor-specific download URLs. Application/security behavior is unchanged. A replacement full CI run is required.
 
 ## Concrete defects and fixes
 
