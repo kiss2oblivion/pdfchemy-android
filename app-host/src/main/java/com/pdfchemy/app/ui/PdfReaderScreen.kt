@@ -51,6 +51,43 @@ import kotlinx.coroutines.withContext
 @Composable
 fun PdfReaderScreen(
     viewModel: MainViewModel,
+    initialUri: Uri?,
+    onBack: () -> Unit,
+    onNavigateToTool: (Screen) -> Unit
+) {
+    var documentUri by remember(initialUri) { mutableStateOf(initialUri) }
+    val picker = rememberVanguardPdfPicker(
+        onNavigateToUnlock = { onNavigateToTool(Screen.UnlockPdf(it)) },
+        onPdfSelected = { documentUri = it }
+    )
+    val uri = documentUri
+    if (uri != null) {
+        PdfReaderDocument(viewModel, uri, onBack, onNavigateToTool)
+    } else {
+        BackHandler { onBack() }
+        Scaffold(topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.select_pdf_for_reading)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.desc_back))
+                    }
+                }
+            )
+        }) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Button(onClick = { picker.launch() }) {
+                    Text(stringResource(R.string.select_pdf_for_reading))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PdfReaderDocument(
+    viewModel: MainViewModel,
     initialUri: Uri,
     onBack: () -> Unit,
     onNavigateToTool: (Screen) -> Unit

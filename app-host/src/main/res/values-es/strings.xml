@@ -1134,4 +1134,6 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="tool_search_hint">Search tools</string>
+    <string name="tool_search_no_results">No matching tools. Try a tool name or task.</string>
 </resources>

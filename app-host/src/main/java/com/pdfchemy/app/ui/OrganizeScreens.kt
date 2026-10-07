@@ -271,14 +271,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.Deskew) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_quick_fill_sign),
-                    subtitle = stringResource(R.string.menu_quick_fill_sign_desc),
-                    icon = Icons.Rounded.Draw,
-                    onClick = { onNavigate(Screen.QuickFillSign) }
-                )
-            }
+
         }
         }
     }

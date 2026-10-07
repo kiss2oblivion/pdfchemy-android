@@ -1153,5 +1153,7 @@
     <string name="pki_signature_failed_desc">The PKI signature could not be applied.</string>
     <string name="page_render_failed">Page Render Failed</string>
     <string name="retry">Retry</string>
+    <string name="tool_search_hint">Search tools</string>
+    <string name="tool_search_no_results">No matching tools. Try a tool name or task.</string>
 </resources>
 

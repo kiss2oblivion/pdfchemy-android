@@ -893,7 +893,7 @@ fun MainApp(
                     val readerScreen = targetScreen as Screen.PdfReader
                     com.pdfchemy.app.ui.PdfReaderScreen(
                         viewModel = viewModel,
-                        initialUri = readerScreen.initialPdfUri ?: Uri.EMPTY,
+                        initialUri = readerScreen.initialPdfUri,
                         onBack = { currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory },
                         onNavigateToTool = { screen -> currentScreen = screen }
                     )
@@ -1691,6 +1691,19 @@ fun HomeScreen(
                         modifier = Modifier.padding(bottom = 16.dp),
                         onToolSelected = onNavigate
                     )
+
+                    val readerPicker = com.pdfchemy.app.ui.rememberVanguardPdfPicker(
+                        onNavigateToUnlock = { onNavigate(Screen.UnlockPdf(it)) },
+                        onPdfSelected = { onNavigate(Screen.PdfReader(it)) }
+                    )
+                    OutlinedButton(
+                        onClick = { readerPicker.launch() },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    ) {
+                        Icon(Icons.Rounded.MenuBook, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.select_pdf_for_reading))
+                    }
 
                     Column(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
