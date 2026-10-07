@@ -8,7 +8,7 @@ All three PDFs were inspected with PyMuPDF: one page each, Microsoft Word 2021 p
 
 | Producer / evidence | Coverage | Release status |
 |---|---|---|
-| Microsoft Word 2021 | Three native exports: document properties/headings, HTTPS link/bookmarks, Unicode | Automated Android execution required on latest main |
+| Microsoft Word 2021 | Three native exports: document properties/headings, HTTPS link/bookmarks, Unicode | PASS: Clean/counts/open/render on API 24/30/34/36 in Run 30 at 51d0128 |
 | LibreOffice | Synthetic combined export-style fixture only | Actual export needed |
 | ChatGPT / OpenAI | Synthetic combined export-style fixture only | Actual export needed |
 | Google Docs | No approved neutral producer export in committed corpus | Actual export needed |
