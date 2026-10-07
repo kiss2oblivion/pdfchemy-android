@@ -1,0 +1,23 @@
+[
+  {
+    "file": "11-word-metadata.pdf",
+    "title": "Microsoft Word PDF compatibility",
+    "heading": "Ordinary document content",
+    "body": "This neutral test document is exported by the installed Microsoft Word PDF exporter. It contains ordinary text, document properties and a heading. It contains no scripts, attachments or automatic actions.",
+    "url": null
+  },
+  {
+    "file": "12-word-links-bookmarks.pdf",
+    "title": "Microsoft Word links and bookmarks",
+    "heading": "User clicked web link",
+    "body": "The following HTTPS link is an ordinary user clicked annotation. Heading bookmarks provide internal document navigation. Neither feature should block opening this benign PDF.",
+    "url": "https://example.com"
+  },
+  {
+    "file": "13-word-unicode.pdf",
+    "title": "Microsoft Word Unicode text",
+    "heading": "Romanian and international text",
+    "body": "Română: Știință, țară, înțelegere, mâine, România. CJK: 中文 日本語 한국어. Supplementary characters: 😀 🚀. This neutral document tests preservation of normal international text and embedded font resources.",
+    "url": null
+  }
+]

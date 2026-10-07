@@ -16,6 +16,11 @@ claim and does not certify genuine Content Credentials producer compatibility.
 Its producer and relationship to the original reported false positive are
 unconfirmed. It must not be relabeled as the original incident document.
 
+`11` through `13` are actual native Microsoft Word 2021 exports, covering
+document properties/headings, ordinary HTTPS links/bookmarks, and Unicode.
+Source text, engine/version, export receipts and the remaining producer coverage
+gaps are recorded in `reports/release-certification-2026-10-07/corpus/`.
+
 The separately referenced ten-file producer suite and original false-positive
 document were not supplied in this checkout. Add them here unchanged when
 available, with provenance and hashes in `manifest.json`. Both corpus test
@@ -26,6 +31,7 @@ PDFs are marked binary in `.gitattributes` so Windows checkouts preserve PDF
 cross-reference offsets and fixture hashes without newline conversion.
 
 Local `BenignPdfCorpusTest` verifies parsing and threat classification.
-Android `BenignPdfCompatibilityTest` verifies clean audit, Vanguard `Clean`,
+Android `BenignPdfCompatibilityTest` verifies manifest attachment/URI counts,
+clean audit, Vanguard `Clean`,
 page count, and first/last page rendering through the isolated production
 renderer. APK compilation alone does not verify rendering.

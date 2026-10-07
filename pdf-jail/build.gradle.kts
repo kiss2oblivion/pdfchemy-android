@@ -81,7 +81,9 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    systemProperty("benignPdfCorpus", rootProject.file("app-host/src/androidTest/assets/vanguard-benign").absolutePath)
+    val benignCorpus = rootProject.file("app-host/src/androidTest/assets/vanguard-benign")
+    inputs.dir(benignCorpus).withPropertyName("benignPdfCorpus")
+    systemProperty("benignPdfCorpus", benignCorpus.absolutePath)
 }
 
 val pinnedTesseractSha256 = "d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa"

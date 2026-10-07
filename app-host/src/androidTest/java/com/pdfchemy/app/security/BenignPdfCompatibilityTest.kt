@@ -13,6 +13,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.json.JSONArray
 import java.io.File
 
 @RunWith(Parameterized::class)
@@ -22,7 +23,7 @@ class BenignPdfCompatibilityTest(private val filename: String) {
         fun fixtures(): List<Array<String>> {
             val files = InstrumentationRegistry.getInstrumentation().context.assets
                 .list("vanguard-benign")!!.filter { it.endsWith(".pdf") }.sorted()
-            require(files.size >= 11) { "Benign compatibility corpus is incomplete" }
+            require(files.size >= 14) { "Benign compatibility corpus is incomplete" }
             return files.map { arrayOf(it) }
         }
     }
@@ -43,6 +44,16 @@ class BenignPdfCompatibilityTest(private val filename: String) {
             assertEquals(0, audit.launchActionsCount)
             assertEquals(0, audit.otherActionsCount)
             assertEquals(0, audit.untrustedUriCount)
+            val manifest = InstrumentationRegistry.getInstrumentation().context.assets
+                .open("vanguard-benign/manifest.json").bufferedReader().use { JSONArray(it.readText()) }
+            val expected = (0 until manifest.length()).map { manifest.getJSONObject(it) }
+                .single { it.getString("file") == filename }
+            if (!expected.isNull("attachments")) {
+                assertEquals("$filename logical attachments", expected.getInt("attachments"), audit.attachmentCount)
+            }
+            if (!expected.isNull("uris")) {
+                assertEquals("$filename ordinary URI actions", expected.getInt("uris"), audit.uriCount)
+            }
             assertTrue(audit.isClean)
             assertSame(VanguardThreatResult.Clean, PdfSanitizerEngine.checkVanguardThreat(context, uri))
             val staged = DocumentStager.stageDocumentCancellable(context, uri)

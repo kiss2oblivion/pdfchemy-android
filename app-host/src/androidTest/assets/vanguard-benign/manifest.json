@@ -120,5 +120,46 @@
     "sha256": "eed4158214e58f8d5e09f912f927d17c9f58f1e4a2e1d0cab6594836471fa2a2",
     "attachments": null,
     "uris": null
+  },
+  {
+    "file": "11-word-metadata.pdf",
+    "provenance": "native Microsoft Word 2021 export; neutral purpose-authored source; reports/release-certification-2026-10-07/corpus/word-export-receipt.json",
+    "producer": "Microsoft Word",
+    "features": [
+      "metadata",
+      "outlines",
+      "tagged-text"
+    ],
+    "sha256": "5950f0d7d9c64420e07bbeba4e40c97f02cf903e44bf24c31a471b752ed2d5ec",
+    "attachments": 0,
+    "uris": 0
+  },
+  {
+    "file": "12-word-links-bookmarks.pdf",
+    "provenance": "native Microsoft Word 2021 export; neutral purpose-authored source; reports/release-certification-2026-10-07/corpus/word-export-receipt.json",
+    "producer": "Microsoft Word",
+    "features": [
+      "metadata",
+      "outlines",
+      "tagged-text",
+      "https"
+    ],
+    "sha256": "6144b3280c466a7f720daa4bd8e489be25decea5579960d1694191000a8731a0",
+    "attachments": 0,
+    "uris": 1
+  },
+  {
+    "file": "13-word-unicode.pdf",
+    "provenance": "native Microsoft Word 2021 export; neutral purpose-authored source; reports/release-certification-2026-10-07/corpus/word-export-receipt.json",
+    "producer": "Microsoft Word",
+    "features": [
+      "metadata",
+      "outlines",
+      "tagged-text",
+      "unicode"
+    ],
+    "sha256": "80ba3d7a0900a55a5bdf6ce05d8ff5de26b06822e40586cf13060f4f8583a67b",
+    "attachments": 0,
+    "uris": 0
   }
 ]

@@ -1,0 +1,17 @@
+// Use the project's pinned Android plugin/bundletool, without downloading another tool.
+// Run: gradlew -I scripts/validate_release_bundle.init.gradle :app-host:validateSignedBundleForRelease
+gradle.projectsEvaluated {
+    def app = gradle.rootProject.project(':app-host')
+    app.tasks.register('validateSignedBundleForRelease') {
+        doLast {
+            def loader = app.plugins.getPlugin('com.android.application').class.classLoader
+            def command = loader.loadClass('com.android.tools.build.bundletool.commands.ValidateBundleCommand')
+            def builderType = loader.loadClass('com.android.tools.build.bundletool.commands.ValidateBundleCommand$Builder')
+            def builder = command.getMethod('builder').invoke(null)
+            builderType.getMethod('setBundlePath', java.nio.file.Path).invoke(builder,
+                app.file('build/outputs/bundle/release/app-host-release.aab').toPath())
+            command.getMethod('execute').invoke(builderType.getMethod('build').invoke(builder))
+            println 'Release bundle structure: VALIDATED by embedded bundletool'
+        }
+    }
+}

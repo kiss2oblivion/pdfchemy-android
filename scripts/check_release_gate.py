@@ -27,12 +27,20 @@ def main():
     entries = {entry["file"]: entry for entry in manifest}
     files = {file.name for file in corpus.glob("*.pdf")}
     check(files == set(entries), "Every corpus PDF needs a manifest entry and provenance")
-    check(len(files) >= 11, "Incomplete initial benign corpus")
+    check(len(files) >= 14, "Incomplete benign corpus including native Word exports")
     for filename, entry in entries.items():
         data = (corpus / filename).read_bytes()
         check(hashlib.sha256(data).hexdigest() == entry["sha256"], f"Fixture changed without manifest update: {filename}")
         check(data.startswith(b"%PDF-") and b"%%EOF" in data[-4096:], f"Invalid fixture header/EOF: {filename}")
         check(bool(entry["provenance"]), f"Missing provenance: {filename}")
+    evidence = ROOT / "reports/release-certification-2026-10-07/corpus"
+    receipt = json.loads((evidence / "word-export-receipt.json").read_text(encoding="utf-8"))
+    source_hash = hashlib.sha256((evidence / "word-source.json").read_bytes()).hexdigest()
+    word_files = {name for name, entry in entries.items() if entry.get("producer") == "Microsoft Word"}
+    check(len(word_files) == 3 and word_files == {row["file"] for row in receipt}, "Native Word export evidence is incomplete")
+    for row in receipt:
+        check(row["source_sha256"] == source_hash and row["sha256"] == entries[row["file"]]["sha256"], "Word receipt does not match committed source/PDF bytes")
+        check(row["exporter"] == "Microsoft Word" and row["version"] and row["build"] and row["generated_utc"], "Word exporter identification is missing")
     source = (ROOT / "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt").read_text(encoding="utf-8")
     registry = source.split("sealed class Screen {", 1)[1].split("val ScreenSaver", 1)[0]
     screens = set(re.findall(r"(?:object|data class) (\w+).*?: Screen\(\)", registry))

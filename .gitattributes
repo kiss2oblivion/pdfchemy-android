@@ -1,2 +1,4 @@
 # PDF offsets and regression hashes require byte-for-byte preservation.
 *.pdf binary
+# Export receipts hash the source bytes; keep that source stable on Windows/Linux.
+reports/release-certification-2026-10-07/corpus/word-source.json text eol=lf

@@ -1,0 +1,29 @@
+[
+  {
+    "file": "11-word-metadata.pdf",
+    "exporter": "Microsoft Word",
+    "version": "16.0",
+    "build": "16.0.14334",
+    "generated_utc": "2026-10-07T09:00:08.6103293Z",
+    "source_sha256": "b080f5809e4e96e8d00b490bdc04b309b19e9736004e28c8438df662af55cbab",
+    "sha256": "5950f0d7d9c64420e07bbeba4e40c97f02cf903e44bf24c31a471b752ed2d5ec"
+  },
+  {
+    "file": "12-word-links-bookmarks.pdf",
+    "exporter": "Microsoft Word",
+    "version": "16.0",
+    "build": "16.0.14334",
+    "generated_utc": "2026-10-07T09:00:08.9104017Z",
+    "source_sha256": "b080f5809e4e96e8d00b490bdc04b309b19e9736004e28c8438df662af55cbab",
+    "sha256": "6144b3280c466a7f720daa4bd8e489be25decea5579960d1694191000a8731a0"
+  },
+  {
+    "file": "13-word-unicode.pdf",
+    "exporter": "Microsoft Word",
+    "version": "16.0",
+    "build": "16.0.14334",
+    "generated_utc": "2026-10-07T09:00:10.1928962Z",
+    "source_sha256": "b080f5809e4e96e8d00b490bdc04b309b19e9736004e28c8438df662af55cbab",
+    "sha256": "80ba3d7a0900a55a5bdf6ce05d8ff5de26b06822e40586cf13060f4f8583a67b"
+  }
+]
