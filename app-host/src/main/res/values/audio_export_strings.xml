@@ -1,0 +1,9 @@
+<resources>
+    <!-- English source strings; translations are a remaining localization task. -->
+    <string name="audio_export_title" translatable="false">Export audio</string>
+    <string name="audio_export_notification" translatable="false">Converting document text to WAV…</string>
+    <string name="audio_export_complete" translatable="false">Audio saved</string>
+    <string name="audio_export_failed" translatable="false">Audio export failed</string>
+    <string name="audio_export_saved" translatable="false">The WAV file was saved successfully.</string>
+    <string name="audio_export_offline_notice" translatable="false">Uses an installed voice that Android reports as not requiring a network connection. The voice is provided by your device’s TTS engine.</string>
+</resources>

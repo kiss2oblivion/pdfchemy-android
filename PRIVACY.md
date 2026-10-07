@@ -6,12 +6,12 @@
 
 ---
 
-## 1. 100% Local-First & Air-Gapped Architecture
+## 1. Local document processing
 
 PDFchemy Tools is designed from the ground up as a **zero-leak, local-first, emergency document utility**.
 
 * **Zero Server Uploads:** All document processing (compression, conversion, page organization, visual editing, digital signatures, OCR, metadata sanitization, and encryption) executes entirely on your device's CPU and RAM.
-* **No Cloud Dependencies:** We do not operate external processing servers, conversion APIs, or cloud storage backends. Your documents never touch the internet.
+* **No Document-Processing Backend:** We do not operate external processing servers, conversion APIs, or cloud storage backends, and PDFchemy does not upload your documents to a processing server. Audio export uses the installed Android TTS engine; its voice declaration and privacy boundary are described below.
 * **Zero Telemetry & Analytics:** PDFchemy does not track user behavior, does not collect analytics, does not log document names or content, and does not report usage statistics.
 
 ---
@@ -29,6 +29,7 @@ PDFchemy Tools is designed from the ground up as a **zero-leak, local-first, eme
 * **Desktop Application (Windows & Linux):** Requires zero network permissions. The application functions identically when completely disconnected from the internet (air-gapped environments).
 * **Android Application:** 
   * Storage access is requested solely via standard Android Storage Access Framework (SAF) pickers to read and save documents chosen by the user.
+  * Audio export passes the selected document text to a separate installed Android text-to-speech instance. PDFchemy selects only voices Android reports as not requiring a network connection; this is an engine-provided declaration, not a guarantee about third-party engine network behavior. PCM and temporary WAV files stay in private cache until the user-selected output is published, then are removed. Abandoned stages are removed after restart.
   * The ML Kit document scanner uses Google Play services' camera permission; PDFchemy does not request its own camera permission. Scanner models, scanning logic, and UI are dynamically downloaded by Google Play services, so initial scanner setup can require network access. Scanning and document processing run on-device. See [Google's document scanner documentation](https://developers.google.com/ml-kit/vision/doc-scanner/android).
   * The Android app has internet permission for AdMob, the User Messaging Platform (UMP), Play Billing, and the scanner dependency described above. There is no document-processing server or document upload API.
 

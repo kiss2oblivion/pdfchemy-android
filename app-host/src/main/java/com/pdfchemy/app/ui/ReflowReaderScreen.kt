@@ -50,6 +50,7 @@ import com.pdfchemy.app.logic.PdfOutlineReader
 import com.pdfchemy.app.logic.ReflowSection
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
     LIGHT(Color(0xFFFFFFFF), Color(0xFF1E293B), "Light"),
@@ -502,6 +503,123 @@ fun ReflowReaderScreen(
 
     }
 
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
+    var activeExportJobKey by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf(com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.getAllJobs()
+            .firstOrNull { it.state !in com.pdfchemy.app.logic.audio.AudioExportJobStore.terminalStates }?.jobId?.toString())
+    }
+    var pendingAudioText by remember { mutableStateOf<String?>(null) }
+    var audioStartError by remember { mutableStateOf<String?>(null) }
+    val activeExportJobId = activeExportJobKey?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
+    val audioLifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    val activeJobState by produceState<com.pdfchemy.app.logic.audio.AudioExportJob?>(initialValue = null, activeExportJobId) {
+        if (activeExportJobId != null) {
+            com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.getJobFlow(activeExportJobId!!)?.collect { value = it }
+        } else {
+            value = null
+        }
+    }
+
+    if (activeJobState != null && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.CANCELLED && activeJobState!!.state != com.pdfchemy.app.logic.audio.AudioExportState.FAILED) {
+        AlertDialog(
+            onDismissRequest = { /* Cannot dismiss by clicking outside */ },
+            title = { Text(stringResource(R.string.audio_export_title)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.audio_export_offline_notice))
+                    if (activeJobState!!.totalCharacters > 0) {
+                        val progress = activeJobState!!.processedCharacters.toFloat() / activeJobState!!.totalCharacters
+                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                        Text("${(progress * 100).toInt()}% (${activeJobState!!.projectedSizeBytes / (1024 * 1024)} MB projected)")
+                    } else {
+                        CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { 
+                    com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING) 
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED || activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) {
+        AlertDialog(
+            onDismissRequest = { activeExportJobKey = null },
+            title = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
+            text = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved) else "Error: ${activeJobState!!.error?.message}") },
+            confirmButton = {
+                TextButton(onClick = { activeExportJobKey = null }) { Text("OK") }
+            },
+            dismissButton = {
+                activeJobState?.outputUri?.let { saved ->
+                    val output = Uri.parse(saved)
+                    Row {
+                        TextButton(onClick = {
+                            runCatching {
+                                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW)
+                                    .setDataAndType(output, "audio/wav")
+                                    .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                            }.onFailure { android.widget.Toast.makeText(context, it.message, android.widget.Toast.LENGTH_LONG).show() }
+                        }) { Text(stringResource(R.string.btn_open_file)) }
+                        TextButton(onClick = {
+                            runCatching { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, listOf(output), context.getString(R.string.share)) }
+                                .onFailure { android.widget.Toast.makeText(context, it.message, android.widget.Toast.LENGTH_LONG).show() }
+                        }) { Text(stringResource(R.string.share)) }
+                    }
+                }
+            }
+        )
+    }
+
+    if (audioStartError != null) {
+        AlertDialog(
+            onDismissRequest = { audioStartError = null },
+            title = { Text(stringResource(R.string.audio_export_failed)) },
+            text = { Text(audioStartError.orEmpty()) },
+            confirmButton = { TextButton(onClick = { audioStartError = null }) { Text(stringResource(android.R.string.ok)) } }
+        )
+    }
+
+    val audioExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("audio/wav")
+    ) { uri ->
+        val text = pendingAudioText
+        pendingAudioText = null
+        if (uri != null) {
+            scope.launch {
+                val jobId = java.util.UUID.randomUUID()
+                val jobs = com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore
+                try {
+                    requireNotNull(text) { "Source text is no longer available; retry export" }
+                    withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
+                        jobs.createJob(jobId)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.stageText(jobId, text)
+                    }
+                    check(audioLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) { "Return to the Reader and retry export" }
+                    val intent = android.content.Intent(context, com.pdfchemy.app.logic.audio.AudioExportService::class.java)
+                        .putExtra(com.pdfchemy.app.logic.audio.AudioExportService.EXTRA_JOB_ID, jobId.toString())
+                    androidx.core.content.ContextCompat.startForegroundService(context, intent)
+                    activeExportJobKey = jobId.toString()
+                } catch (error: Exception) {
+                    jobs.updateState(jobId, com.pdfchemy.app.logic.audio.AudioExportState.FAILED, error)
+                    withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+                        com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.clearJobStaging(jobId)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(jobId)
+                    }
+                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    audioStartError = error.message ?: "Unable to start audio export"
+                }
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = bookmarks.isNotEmpty(),
@@ -606,6 +724,28 @@ fun ReflowReaderScreen(
                             }
                             IconButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf", "application/epub+zip", "application/zip", "application/octet-stream")) }) {
                                 Icon(Icons.Rounded.FolderOpen, contentDescription = "Open Document", tint = selectedTheme.text)
+                            }
+                            if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
+                                Box {
+                                    IconButton(onClick = { showOverflowMenu = true }) {
+                                        Icon(Icons.Rounded.MoreVert, contentDescription = "More Options", tint = selectedTheme.text)
+                                    }
+                                    DropdownMenu(
+                                        expanded = showOverflowMenu,
+                                        onDismissRequest = { showOverflowMenu = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Export to Audio (WAV)") },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audio.wav") ?: "audio_export.wav"
+                                                pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
+                                                audioExportLauncher.launch(suggestedName)
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     )

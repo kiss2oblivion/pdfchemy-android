@@ -2,7 +2,7 @@ name: Android security and build
 
 on:
   push:
-    branches: [repo-android, main]
+    branches: [repo-android, main, feature/wave-2-audio-export]
   pull_request:
     branches: [repo-android, main]
   workflow_dispatch:
@@ -67,6 +67,8 @@ jobs:
           - api: 24
             arch: x86
           - api: 30
+            arch: x86_64
+          - api: 34
             arch: x86_64
           - api: 36
             arch: x86_64

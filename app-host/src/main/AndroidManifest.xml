@@ -3,6 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="com.android.vending.BILLING" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="false"
@@ -16,6 +25,10 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
 
+        <service
+            android:name=".logic.audio.AudioExportService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProcessing|dataSync" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
