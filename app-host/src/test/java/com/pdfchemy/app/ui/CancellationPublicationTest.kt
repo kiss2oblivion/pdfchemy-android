@@ -11,6 +11,7 @@ import com.pdfchemy.app.logic.PdfGateway
 import com.pdfchemy.app.logic.StandardOutputContract
 import io.mockk.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.*
@@ -78,6 +79,8 @@ class CancellationPublicationTest {
         every { directory.createFile(any(), any()) } returns document
         every { resolver.openOutputStream(destination, "wt") } returns null
         val callback = CompletableDeferred<Pair<Int, Int>>()
+        val deleted = CompletableDeferred<Unit>()
+        every { document.delete() } answers { deleted.complete(Unit); true }
         var frames: File? = null
         mockkObject(PdfGateway)
         coEvery { PdfGateway.executeEngine(any(), "IMAGE_EXTRACT_FRAMED", any(), any(), any()) } coAnswers {
@@ -87,7 +90,11 @@ class CancellationPublicationTest {
         }
         viewModel.extractImagesFromPdf(Uri.parse("content://fixture/input.pdf"), directory, context) { count, errors -> callback.complete(count to errors) }
         assertEquals(0 to 1, withTimeout(5_000) { callback.await() })
-        withTimeout(5_000) { while (frames?.exists() != false) delay(10) }
+        // onComplete runs before the error state and finally cleanup; observing the
+        // frames disappearing also precedes deletion of the published destination.
+        withTimeout(5_000) { deleted.await() }
+        withTimeout(5_000) { viewModel.uiState.first { it is MainViewModel.UiState.Error } }
+        assertFalse("Temporary frames must be released before output cleanup completes", frames!!.exists())
         verify { document.delete() }
         assertTrue(viewModel.uiState.value is MainViewModel.UiState.Error)
     }

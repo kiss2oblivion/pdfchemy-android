@@ -13,6 +13,8 @@ Status: implementation and full local verification complete; GitHub CI pending. 
 
 [Run #26](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37581722173) at `ef43f2bd865103a9124d3dfa462dbb0c4b2b5cb9` passed secrets but failed architecture/dependency initialization before tests. `gradle/gradle-daemon-jvm.properties` forced JetBrains Java 21 despite CI already installing Temurin 21; its Foojay download URL returned HTTP 400. The correction retains Java 21 and accepts the installed vendor, removing stale vendor-specific download URLs. Application/security behavior is unchanged. A replacement full CI run is required.
 
+Run #27 passed architecture, dependency security and secrets, then exposed a race in the existing `app-host/src/test/java/com/pdfchemy/app/ui/CancellationPublicationTest.kt`. The image-extraction callback completes before error-state publication and final cleanup; temporary frames disappear before destination deletion. The test now awaits destination deletion and the Error state explicitly, retaining all failure/cleanup assertions. No image-extraction production code changes. Inherited unrelated `FEATURES_REGISTRY.md` security-status edits were also restored to current main.
+
 ## Concrete defects and fixes
 
 | Severity | Evidence / defect | Exact files | Applied fix | Verification |
