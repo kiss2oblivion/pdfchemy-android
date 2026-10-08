@@ -138,6 +138,35 @@ object PdfGateway {
             jail.executeEngine(token, engineName, inputs.firstOrNull(), outputs.firstOrNull(), paramsJson, renderer, staged.firstOrNull()?.sha256 ?: "", staged.firstOrNull()?.size ?: 0L, scratch, callback)
         }
 
+    suspend fun executeOcr(context: Context, sourceUri: Uri, destUri: Uri,
+        onProgress: (OcrProgress) -> Unit): StandardOutputContract {
+        var tracker: OcrProgressTracker? = null
+        try {
+            return request(context, "OCR_PROCESS", listOf(sourceUri), listOf(destUri), "{}") {
+                jail, token, staged, inputs, outputs, _, scratch, terminal ->
+                val current = OcrProgressTracker(token, SecurityLimits.MAX_OUTPUT_FILES)
+                tracker = current
+                val progress = object : com.pdfchemy.app.jail.IPdfOcrProgressCallback.Stub() {
+                    override fun onProgress(operationId: Long, completedPages: Int, totalPages: Int, saving: Boolean) {
+                        try { current.accept(operationId, completedPages, totalPages, saving)?.let(onProgress) }
+                        catch (_: Exception) {
+                            current.close()
+                            terminal.onFailure(400, "Invalid OCR progress")
+                        }
+                    }
+                }
+                val result = object : IPdfJailStringCallback.Stub() {
+                    override fun onSuccess(resultJson: String) { current.close(); terminal.onSuccess(resultJson) }
+                    override fun onFailure(errorCode: Int, errorMessage: String) {
+                        current.close(); terminal.onFailure(errorCode, errorMessage)
+                    }
+                }
+                jail.executeOcr(token, inputs.single(), outputs.single(), staged.single().sha256,
+                    staged.single().size, scratch, progress, result)
+            } as StandardOutputContract
+        } finally { tracker?.close() }
+    }
+
     suspend inline fun <reified T : OperationContract> executeEngineTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, paramsJson: String): T =
         executeEngine(context, engineName, sourceUri, destUri, paramsJson) as T
 

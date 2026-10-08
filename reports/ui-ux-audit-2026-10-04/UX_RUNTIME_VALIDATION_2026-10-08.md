@@ -55,14 +55,11 @@ validation. Real purchases and consented ad loading were not invoked.
 
 ## Remaining scoped work and explicit hardware deferral
 
-**UX-05, scheduled next implementation batch after the user's 8 October continuation instruction:** the current `IPdfJailStringCallback` has only
-terminal success/failure methods, and `OCR_PROCESS` runs as one isolated worker
-operation. Page events cannot truthfully be inferred on the host. A streaming
-progress extension needs an operation-bound protocol design and validation;
-splitting OCR into host-driven page operations would change the existing output
-and security architecture. This tranche keeps truthful indeterminate recognition
-feedback and the existing safe cancellation/output-commit boundary. The user has now requested continued implementation, including this protocol
-work. It is scheduled for the next coherent batch; page progress is not yet claimed.
+**UX-05, completed in Batch 9:** real worker page counts, a distinct saving
+phase, operation-bound validated telemetry and cancellation guards are implemented.
+Actual searchable output, precise page-event ordering, cancellation without target
+overwrite or late progress, and existing worker isolation checks pass. See
+VANGUARD_OCR_VERIFICATION_2026-10-08.md for exact scope and test receipts.
 
 **UX-23, physical performance evidence:** no physical Android device is attached;
 only a debug emulator is available. Main-thread decoding/painting source defects
@@ -72,6 +69,6 @@ release-like traces on representative hardware. Resume with that hardware;
 emulator test timing does not justify changing memory safeguards or certifying
 physical responsiveness.
 
-UX-05 remains approved implementation work; UX-23 requires physical hardware.
+UX-05 implementation is complete; UX-23 requires physical hardware.
 The current matrix has all 50 original IDs. The branch remains unmerged and
 the UI/UX audit has **not** been declared fully validated or certified.

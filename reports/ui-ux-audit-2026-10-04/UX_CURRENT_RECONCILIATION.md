@@ -17,7 +17,7 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-02 | DONE | Batch 1: guarded direct Home Open PDF and safe URI-free Reader search entry. |
 | UX-03 | DONE | Batch 1 removed duplicate Quick Fill; Batch 7 aligns Gray/Linearize Back with their Compression category, distinguishes Quick camera PDF from the document-scanning studio, and gives native Reader an accurate description. |
 | UX-04 | DONE | Batch 2: safeguard source is carried in a URI-bearing Split route, restored through ScreenSaver, and shown as selected input. |
-| UX-05 | PARTIAL | Batch 8 completes task-aware modal feedback, truthful completed-file counts, owned-job cancellation and OCR cancellation UI reset; opaque operations use indeterminate feedback. Per-page OCR remains scheduled for the next batch after the user requested continued implementation on 8 October. The existing terminal-only callback requires an operation-bound progress extension; no invented percentage was introduced. |
+| UX-05 | DONE | Batch 9 reports actual isolated-worker completed pages, then a separate saving phase; validates operation token, quotas and event order, closes telemetry at terminal/cancellation, and rejects obsolete ViewModel callbacks. Native two-page searchable output and cancellation preserving destination bytes pass on Android 24/36. Batch 8 task-aware modal feedback and completed-file counts remain. |
 | UX-06 | DONE | Batch 7 carries explicit output URIs from file-producing tools, lists names/MIME and individual Open actions, adds Browse files, and makes viewer/share failure visible. State-only Markdown import correctly creates no output. |
 | UX-07 | DONE | Batch 7 resolves DISPLAY_NAME and retained staged aliases before generating editable action suffixes, sanitizes suggestions and verifies opaque-ID/provider-name behavior. |
 | UX-08 | DONE | Batch 7 adds an explicit local SAF output-folder choice/change/reset. Existing save callbacks receive a fresh URI in that folder; revoked/unwritable access falls back to the system save picker. |
@@ -35,7 +35,7 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-20 | DONE | Batch 6 routes narrow, dual-page and tabletop layouts through the same page-specific interactive annotation surface and rotation plane. Physical foldable posture checks remain deferred until hardware is available. |
 | UX-21 | DONE | Batch 8 places overlays in the original page rotation plane before added rotation; raster redaction uses the shared opaque painter and recycles its base bitmap while retaining forensic overwrite/annotation removal. Android 36 end-to-end exports pass eight combinations of existing rotation 0/90/180/270 plus added 90, with drawings, text, stamps and redaction/no redaction; color centroids, page aspect ratios and opaque redaction corners match preview. |
 | UX-22 | DONE | Batch 6 removes fixed preview sp/dp annotation sizing and duplicate export painters. Both use AnnotationRenderer in normalized page coordinates with the same scale, baseline, alpha and stamp geometry. |
-| UX-23 | PARTIAL | Batches 2/6 move staging, decoding and overlay painting to IO; Batch 8 bounds visible thumbnail ownership and in-flight work. DEFERRED: physical release-like Reader/annotation/100-500-page memory and latency traces (also O-01/O-04) need representative hardware. Only the Android 36 debug emulator is available; emulator test duration is not physical performance evidence. |
+| UX-23 | PARTIAL | Batches 2/6 move staging, decoding and overlay painting to IO; Batch 8 bounds visible thumbnail ownership and in-flight work. DEFERRED: physical release-like Reader/annotation/100-500-page memory and latency traces (also O-01/O-04) need representative hardware. Only Android 24/36 debug emulators are available; emulator test duration is not physical performance evidence. |
 | UX-24 | DONE | Reflow computes hasReadableContent and offers OCR for scanned/no-readable-content state; original empty-section gate fixed. |
 | UX-25 | DONE | Batches 5–6 preserve original Reader return identity/offset, retained staged display names, ephemeral editor page across recreation, and editor persistent page only when the existing remember-position preference is enabled. |
 | UX-26 | DONE | Batch 3: explicit local theme/font/serif defaults persist, with scoped reset and recreation/reset tests. |
@@ -82,7 +82,7 @@ Physical phone/tablet/foldable profiling, real consented ads, TalkBack, provider
 collision/grant failure and saved-copy inspection remain required evidence;
 source review alone cannot certify those outcomes. O-01/O-04 require measured
 profiling before optimization; O-02 needs active-work touch/Back verification;
-O-03's deliberate price stays unchanged. UX-05 is scheduled for continued source implementation. Physical performance
+O-03's deliberate price stays unchanged. UX-05 is complete in Batch 9 with actual worker page events, distinct saving feedback and cancellation regression evidence. Physical performance
 profiling under UX-23 is explicitly deferred because only an emulator is available;
 see UX_RUNTIME_VALIDATION_2026-10-08.md for scope and resumption conditions.
 

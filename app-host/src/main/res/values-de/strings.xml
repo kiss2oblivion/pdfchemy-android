@@ -1167,4 +1167,6 @@
     <string name="error_storage_recovery">The output could not be saved. Free some storage or choose another folder, then try again.</string>
     <string name="error_password_recovery">This PDF requires a password. Unlock it with the correct password before continuing.</string>
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
+    <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
+    <string name="ocr_saving_pdf">Saving searchable PDF…</string>
 </resources>

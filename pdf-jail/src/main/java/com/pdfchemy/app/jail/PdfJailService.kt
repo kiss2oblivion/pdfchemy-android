@@ -213,6 +213,18 @@ class PdfJailService : Service() {
             }
         }
 
+        override fun executeOcr(operationId: Long, sourceFd: ParcelFileDescriptor?, targetFd: ParcelFileDescriptor?,
+            expectedSha256: String, expectedSize: Long, scratchBinder: IBinder?,
+            progress: IPdfOcrProgressCallback?, callback: IPdfJailStringCallback) {
+            submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256),
+                listOf(expectedSize), "{}", callback, scratchBinder) {
+                require(sourceFd != null && targetFd != null && progress != null)
+                PdfOcrEngineWorker.createSearchablePdf(this@PdfJailService, sourceFd, targetFd) { completed, total, saving ->
+                    progress.onProgress(operationId, completed, total, saving)
+                }
+            }
+        }
+
         override fun executeEngineExtra(
             operationId: Long,
             engineName: String,

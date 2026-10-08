@@ -1015,6 +1015,10 @@ fun MainApp(
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium
                         )
+                        if (state.totalPages > 0) {
+                            Text(stringResource(R.string.ocr_pages_completed, state.completedPages, state.totalPages), color = Color.White)
+                            LinearProgressIndicator(progress = { state.completedPages.toFloat() / state.totalPages }, modifier = Modifier.fillMaxWidth())
+                        }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                     if (canCancel) Button(
@@ -4267,7 +4271,7 @@ fun RecentFilesSection(
                                                         val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                                                         when (threat) {
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                                                onNavigate(Screen.PdfEditor(initialPdfUri = stagedUri))
+                                                                onNavigate(Screen.PdfReader(initialPdfUri = stagedUri))
                                                             }
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                                                 vanguardPendingEncryptedUri = stagedUri

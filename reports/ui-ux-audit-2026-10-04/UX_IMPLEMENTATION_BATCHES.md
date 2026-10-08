@@ -506,3 +506,56 @@ Exact files changed:
 - `reports/ui-ux-audit-2026-10-04/UX_RUNTIME_VALIDATION_2026-10-08.md`
 
 Full host run: 122 tests, zero failures/errors (batch8-validation-final3.log). Final affected-source focused host tests and debug build/lint pass; commands and native emulator receipts are in UX_RUNTIME_VALIDATION_2026-10-08.md. Android 36 native runtime: OK (5 tests), including eight mixed annotation/export cases. Debug assembly and Android-test assembly pass; lint has zero errors and 650 warnings. git diff --check passes. No merge, physical performance claim or audit-certification claim. All 50 original IDs have current dispositions: 48 source-DONE, two PARTIAL: UX-05 scheduled for continued implementation, UX-23 physical profiling explicitly deferred. Of the requested remaining 29, 27 source findings are closed and one remains scheduled and physical profiling is explicitly deferred.
+
+
+## Batch 9 — real OCR progress and Vanguard PDF compatibility verification
+
+Adds admitted-operation OCR telemetry through the existing isolated-worker boundary, validates token/count/phase sequencing, reports actual completed pages and a distinct saving phase, and suppresses obsolete UI publication. Preserves the existing private output/ACK/commit and cancellation machinery. Fixes the observed Vanguard-enabled Recent PDF route to native Reader. Corrects cross-version export assertions to require fully opaque near-black redaction rather than byte-identical PDF renderer color. No unrelated security implementation or detection-policy change. Compatibility evidence and explicit hardware deferral are recorded in VANGUARD_OCR_VERIFICATION_2026-10-08.md.
+
+Closed source IDs: UX-05.
+
+Still open or partial: UX-23.
+
+Exact files changed:
+
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/AnnotationExportParityTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/OcrProgressIntegrationTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/ui/VanguardReaderNavigationTest.kt`
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/PdfGateway.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/PdfOcrEngine.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OcrScreens.kt`
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/main/res/values/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/logic/OcrProgressTrackerTest.kt`
+- `pdf-ipc/src/main/aidl/com/pdfchemy/app/jail/IPdfJailService.aidl`
+- `pdf-ipc/src/main/aidl/com/pdfchemy/app/jail/IPdfOcrProgressCallback.aidl`
+- `pdf-ipc/src/main/java/com/pdfchemy/app/logic/OcrProgressTracker.kt`
+- `pdf-jail/src/main/java/com/pdfchemy/app/jail/PdfJailService.kt`
+- `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfOcrEngineWorker.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+- `reports/ui-ux-audit-2026-10-04/UX_RUNTIME_VALIDATION_2026-10-08.md`
+- `reports/ui-ux-audit-2026-10-04/VANGUARD_OCR_VERIFICATION_2026-10-08.md`
+
+Full app-host unit suite: 125 tests, zero failures/errors. Focused worker Vanguard suites: 24 tests, zero failures/errors. Android 36 combined native Vanguard/OCR/isolation suite: OK (30 tests), plus actual Vanguard on/off Recent-to-Reader UI regression: OK (1 test). Android 24 export parity: OK (1 test, eight rotation/redaction cases), OCR and Reader route: OK (4 tests). Debug application and Android-test assembly and relevant lint pass (zero errors, 652 warnings); diff whitespace check is required before commit. All 50 original IDs have current dispositions: 49 source-DONE, UX-23 PARTIAL with physical profiling explicitly deferred because representative hardware is unavailable. Of the requested remaining 29, 28 source findings are closed and one physical-evidence item is explicitly deferred. Exact push SHA and replacement CI receipt follow after validation. No merge or certification claim.

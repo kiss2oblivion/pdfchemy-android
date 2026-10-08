@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicLong
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
+    private val ocrProgressRequests = com.pdfchemy.app.logic.LatestRequest()
     private val _canCancelOperation = MutableStateFlow(false)
     val canCancelOperation: StateFlow<Boolean> = _canCancelOperation.asStateFlow()
     private var activeJob: kotlinx.coroutines.Job? = null
@@ -99,6 +100,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 if (v is UiState.Success || v is UiState.Error || v is UiState.Idle) {
+                    ocrProgressRequests.invalidate()
                     pendingOutputUris.clear()
                 }
                 _uiStateInternal.value = v
@@ -258,7 +260,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     sealed class UiState {
         object Idle : UiState()
-        data class Processing(val taskNameResId: Int? = null) : UiState()
+        data class Processing(val taskNameResId: Int? = null, val completedPages: Int = 0, val totalPages: Int = 0) : UiState()
         data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String, val completed: Int = (current - 1).coerceAtLeast(0)) : UiState()
         data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Warning(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
@@ -1560,6 +1562,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         onComplete: (Boolean) -> Unit
     ) {
+        val progressTicket = ocrProgressRequests.begin()
         addPendingOutputUri(destUri)
         _uiState.value = UiState.Processing(R.string.ocr_processing_generic)
         activeJob = viewModelScope.launch {
@@ -1570,7 +1573,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     destUri = destUri,
                     onProgress = { current, total ->
                         viewModelScope.launch(Dispatchers.Main) {
-                            onProgress(current, total)
+                            if (ocrProgressRequests.isCurrent(progressTicket)) {
+                                _uiState.value = UiState.Processing(R.string.ocr_processing_generic, current, total)
+                                onProgress(current, total)
+                            }
+                        }
+                    },
+                    onSaving = {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (ocrProgressRequests.isCurrent(progressTicket)) _uiState.value = UiState.Processing(R.string.ocr_saving_pdf)
                         }
                     }
                 )

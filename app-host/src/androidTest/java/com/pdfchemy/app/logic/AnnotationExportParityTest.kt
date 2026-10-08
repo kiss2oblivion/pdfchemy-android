@@ -66,8 +66,12 @@ class AnnotationExportParityTest {
                 }
                 // Test the opaque block away from its deliberately white label glyphs.
                 if (redact) for (x in listOf(.46f,.54f)) for (y in listOf(.46f,.54f)) {
-                    assertEquals("Opaque redaction rotation=$rotation", Color.BLACK,
-                        actual.getPixel((actual.width*x).toInt(),(actual.height*y).toInt()))
+                    val pixel = actual.getPixel((actual.width*x).toInt(),(actual.height*y).toInt())
+                    assertEquals("Opaque redaction rotation=$rotation", 255, Color.alpha(pixel))
+                    // API 24 PdfRenderer maps embedded black to #020202. Require opaque
+                    // near-black at every corner; retain the independent geometry checks.
+                    assertTrue("Black redaction rotation=$rotation pixel=${Integer.toHexString(pixel)}",
+                        Color.red(pixel) <= 3 && Color.green(pixel) <= 3 && Color.blue(pixel) <= 3)
                 }
             } finally { held.distinct().forEach { it.recycle() }; source.delete(); output.delete() }
         }
