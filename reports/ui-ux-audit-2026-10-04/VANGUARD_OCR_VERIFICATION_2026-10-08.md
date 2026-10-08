@@ -58,15 +58,35 @@ and `batch9-vanguard-validation.log`.
 ## Cross-version export regression
 
 Batch 8 CI run 37755115243 passed architecture, dependency, secret, host-test and
-Android 36 instrumentation jobs. Android 24 and 34 each exposed the same single
+Android 36 instrumentation jobs. Android 24, 30 and 34 each exposed the same single
 new export-test assertion failure: opaque embedded black renders as `#FF020202`
 instead of exact `#FF000000`. The assertion now requires alpha 255 and each RGB
 channel at most 3; independent annotation centroids, page aspect ratio and all four
 redaction corner checks remain. No production redaction policy was relaxed.
 Local Android 24 native validation passes the full eight-case export test (one
 test, 22.585s), plus OCR progress/cancellation/malformed-input and Vanguard on/off
-Reader navigation (four tests, 5.958s). Replacement CI validation is recorded after
+Reader navigation (four tests, 5.958s). The corrected export assertion also passes
+again on Android 36 (one test, 47.281s). Replacement CI validation is recorded after
 the implementation push.
+
+Implementation SHA `4e49ce68da3821d589cd2302b5a812cc04334523` was pushed only to
+`kiss2oblivion/pdfchemy-android`, with the remote branch SHA verified. In CI run
+[37759325012](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37759325012),
+the complete 209-test native suites passed on Android 24, 34 and 36. Architecture,
+dependency, secret and full host-test jobs passed. Initial API 30 execution aborted
+during the existing Audio foreground-service test when unchanged activity-startup
+code raised `Window couldn't find content container view`; a same-source replay
+was requested. That aborted suite is not counted as a pass or an OCR/Vanguard
+failure. Final replay/current-report CI outcomes are recorded in the follow-up
+receipt; no unsupported root-cause claim is made.
+
+Local unsigned release assembly, R8/resource shrinking and release lint pass
+(`batch9-release-validation.log`, six minutes; zero errors, 651 warnings). The
+unchanged artifact checker initially found the new History route missing from
+the smoke checklist. Adding its truthful, manually-unverified row restores all
+62 route entries. `python scripts/check_release_gate.py --artifact` then passes
+fixture hashes, corpus provenance, complete route coverage and artifact hygiene.
+This is build/regression validation, not signed release certification.
 
 ## Remaining evidence
 

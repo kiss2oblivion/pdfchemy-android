@@ -9,6 +9,15 @@
     "verification": "MANUAL NOT RUN; existing automated tests cover subsets only"
   },
   {
+    "screen": "History",
+    "input": "opt-in history with PDF, image, directory, unavailable and empty entries",
+    "operation": "browse retained history, remove an entry, open available items, disabled/empty guidance",
+    "output": "updated local history and matching Reader/viewer destination; no generated document",
+    "open_share": "Open PDF through Vanguard and native Reader; other MIME through matching external handler; directories through file browser; report unavailable handlers",
+    "cancel": "Back returns Home; unavailable/deleted entry reports recovery; history remains opt-in with existing retention",
+    "verification": "MANUAL NOT RUN; history repository unit tests and Recent-to-Reader native regressions cover subsets only"
+  },
+  {
     "screen": "Settings",
     "input": "defaults",
     "operation": "toggle Vanguard/history/theme/language/reader position; restart",

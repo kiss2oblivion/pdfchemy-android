@@ -1,6 +1,12 @@
 # PDFchemy Android — Audit Handoff
 
-Date: 4 October 2026. Status: stopped for review.
+Date: 4 October 2026. Historical audit-only handoff, retained as baseline evidence.
+
+> Current implementation and dispositions are in
+> [UX_CURRENT_RECONCILIATION.md](UX_CURRENT_RECONCILIATION.md). Subsequent authorized
+> changes, exact file manifests and validation are in
+> [UX_IMPLEMENTATION_BATCHES.md](UX_IMPLEMENTATION_BATCHES.md). The following
+> observed behavior and review boundary describe October 4, not current source.
 
 ## Outcome
 

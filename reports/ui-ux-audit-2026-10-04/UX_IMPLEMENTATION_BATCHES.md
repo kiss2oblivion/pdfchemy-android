@@ -558,4 +558,29 @@ Exact files changed:
 - `reports/ui-ux-audit-2026-10-04/UX_RUNTIME_VALIDATION_2026-10-08.md`
 - `reports/ui-ux-audit-2026-10-04/VANGUARD_OCR_VERIFICATION_2026-10-08.md`
 
-Full app-host unit suite: 125 tests, zero failures/errors. Focused worker Vanguard suites: 24 tests, zero failures/errors. Android 36 combined native Vanguard/OCR/isolation suite: OK (30 tests), plus actual Vanguard on/off Recent-to-Reader UI regression: OK (1 test). Android 24 export parity: OK (1 test, eight rotation/redaction cases), OCR and Reader route: OK (4 tests). Debug application and Android-test assembly and relevant lint pass (zero errors, 652 warnings); diff whitespace check is required before commit. All 50 original IDs have current dispositions: 49 source-DONE, UX-23 PARTIAL with physical profiling explicitly deferred because representative hardware is unavailable. Of the requested remaining 29, 28 source findings are closed and one physical-evidence item is explicitly deferred. Exact push SHA and replacement CI receipt follow after validation. No merge or certification claim.
+Full app-host unit suite: 125 tests, zero failures/errors. Focused worker Vanguard suites: 24 tests, zero failures/errors. Android 36 combined native Vanguard/OCR/isolation suite: OK (30 tests), plus actual Vanguard on/off Recent-to-Reader UI regression: OK (1 test). Android 24 export parity: OK (1 test, eight rotation/redaction cases), OCR and Reader route: OK (4 tests). Debug application and Android-test assembly and relevant lint pass (zero errors, 652 warnings); git diff --check passed before commit. All 50 original IDs have current dispositions: 49 source-DONE, UX-23 PARTIAL with physical profiling explicitly deferred because representative hardware is unavailable. Of the requested remaining 29, 28 source findings are closed and one physical-evidence item is explicitly deferred. Pushed and remote-verified implementation SHA: 4e49ce68da3821d589cd2302b5a812cc04334523. CI follow-up is recorded in VANGUARD_OCR_VERIFICATION_2026-10-08.md. No merge or certification claim.
+
+## Batch 10 — current audit index and route coverage
+
+Updates the audit package index and historical handoff banner so baseline observations
+cannot be mistaken for current source. Adds the History screen introduced by Batch 7
+to the existing JSON/Markdown smoke checklists, preserving manually-unverified
+status and the unchanged checker. Records release validation and native CI evidence.
+Production source and the original audit remain unchanged.
+
+Closed source IDs: none additional. Still partial: UX-23, physical profiling deferred.
+
+Exact files changed:
+
+- `reports/release-candidate-2026-10-06/tool-smoke-matrix.json`
+- `reports/release-candidate-2026-10-06/tool-smoke-matrix.md`
+- `reports/ui-ux-audit-2026-10-04/HANDOFF.md`
+- `reports/ui-ux-audit-2026-10-04/README.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+- `reports/ui-ux-audit-2026-10-04/VANGUARD_OCR_VERIFICATION_2026-10-08.md`
+
+Validation: source-identical unsigned release assembly and release lint pass (zero
+errors, 651 warnings). The existing artifact checker passes all 62 routes and
+fixture/artifact checks after the checklist correction. No manual smoke result was
+invented. All 50 current dispositions remain 49 DONE, one justified PARTIAL.
+git diff --check passes. Replacement CI runs against the corrected report inputs.
