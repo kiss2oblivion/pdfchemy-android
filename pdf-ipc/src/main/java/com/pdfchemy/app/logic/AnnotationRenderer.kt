@@ -61,7 +61,7 @@ object AnnotationRenderer {
                     posX + textWidth + padding,
                     posY + padding
                 )
-                canvas.drawRoundRect(rect, 8f, 8f, bgPaint)
+                canvas.drawRoundRect(rect, 8f * scaleFactor, 8f * scaleFactor, bgPaint)
             }
 
             canvas.drawText(textAnn.text, posX, posY, textPaint)
@@ -123,8 +123,9 @@ object AnnotationRenderer {
             val rect = RectF(left, top, right, bottom)
             canvas.drawRect(rect, redactPaint)
 
-            if (!redaction.overlayLabel.isNullOrBlank() && rect.width() > 50 && rect.height() > 14) {
-                val fontSize = (rect.height() * 0.45f).coerceIn(8f, 20f)
+            val labelScale = targetWidth / 1000f
+            if (!redaction.overlayLabel.isNullOrBlank() && rect.width() > 50 * labelScale && rect.height() > 14 * labelScale) {
+                val fontSize = (rect.height() * 0.45f).coerceIn(8f * labelScale, 20f * labelScale)
                 redactTextPaint.textSize = fontSize
                 canvas.drawText(redaction.overlayLabel, rect.centerX(), rect.centerY() + (fontSize / 3f), redactTextPaint)
             }

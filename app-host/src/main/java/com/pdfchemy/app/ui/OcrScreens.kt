@@ -51,7 +51,8 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
     var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
-    var isProcessing by remember { mutableStateOf(false) }
+    val operationState by viewModel.uiState.collectAsState()
+    val isProcessing = operationState is MainViewModel.UiState.Processing || operationState is MainViewModel.UiState.BatchProcessing
     var currentProgressPage by remember { mutableStateOf(0) }
     var totalProgressPages by remember { mutableStateOf(0) }
 
@@ -62,7 +63,6 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     val saveDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
-            isProcessing = true
             viewModel.createSearchablePdf(
                 context = context,
                 sourceUri = selectedPdfUri!!,
@@ -72,7 +72,6 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     totalProgressPages = total
                 }
             ) { success ->
-                isProcessing = false
                 if (success) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }

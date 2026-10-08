@@ -68,6 +68,7 @@ fun PageOrganizerScreen(
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
+    var loadFailed by remember { mutableStateOf(false) }
     var showMoveDialog by remember { mutableStateOf(false) }
     var movePosition by remember { mutableStateOf("") }
 
@@ -116,37 +117,36 @@ fun PageOrganizerScreen(
         }
     }
 
+    val latestLoad = remember { com.pdfchemy.app.logic.LatestRequest() }
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+        val ticket = latestLoad.begin()
         selectedPdfUri = uri
+        loadFailed = false
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
             try {
                 // Clean up existing thumbnails
                 withContext(Dispatchers.Main) {
+                    if (!latestLoad.isCurrent(ticket)) return@withContext
                     session.pages.forEach { it.thumbnail?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
                     session.initialize(0)
                     sessionTick++
                 }
 
-                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
-                val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: error("File unavailable")
+                val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: error("Page count unavailable")
+                check(count > 0)
 
                 withContext(Dispatchers.Main) {
+                    if (!latestLoad.isCurrent(ticket)) return@withContext
                     // UX-12: Initialize ALL pages with LOADING state immediately so source page identity is decoupled from preview
                     session.initialize(count)
                     sessionTick++
                 }
 
-                for (i in 0 until count) {
-                    coroutineContext.ensureActive()
-                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, i, 240)
-                    withContext(Dispatchers.Main) {
-                        val state = if (bmp != null) PageThumbnailState.READY else PageThumbnailState.FAILED
-                        session.updateThumbnail(i, bmp, state)
-                        sessionTick++
-                    }
-                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
             } catch (e: Exception) {
+                withContext(Dispatchers.Main) { if (latestLoad.isCurrent(ticket)) loadFailed = true }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to load thumbnails for organizer: ${e.message}", e)
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
@@ -176,6 +176,13 @@ fun PageOrganizerScreen(
                 }
             }
         }
+    }
+
+    if (loadFailed) {
+        AlertDialog(onDismissRequest = { loadFailed = false },
+            title = { Text(stringResource(R.string.error)) },
+            text = { Text(stringResource(R.string.document_load_recovery)) },
+            confirmButton = { TextButton(onClick = { loadFailed = false; pdfPickerLauncher.launch() }) { Text(stringResource(R.string.select_pdf)) } })
     }
 
     Scaffold(
@@ -406,48 +413,9 @@ fun PageOrganizerScreen(
                                     ) {
                                         Text(stringResource(R.string.label_blank_page), fontSize = 11.sp, color = Color.Gray)
                                     }
-                                } else if (item.previewState == PageThumbnailState.READY && item.thumbnail != null) {
-                                    Image(
-                                        bitmap = item.thumbnail.asImageBitmap(),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .rotate(item.rotation.toFloat()),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                } else if (item.previewState == PageThumbnailState.LOADING) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color(0xFFFAFAFA)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                                    }
                                 } else {
-                                    // UX-12: Preview failed placeholder; page identity remains intact
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color(0xFFF5F5F5))
-                                            .padding(6.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Icon(
-                                                Icons.Rounded.BrokenImage,
-                                                contentDescription = null,
-                                                tint = Color.Gray,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = stringResource(R.string.label_preview_unavailable),
-                                                fontSize = 9.sp,
-                                                color = Color.Gray,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
+                                    selectedPdfUri?.let { uri ->
+                                        PdfPagePreview(uri, item.originalIndex!!, Modifier.fillMaxSize(), item.rotation)
                                     }
                                 }
 

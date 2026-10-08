@@ -23,6 +23,8 @@ object PdfOcrEngine {
                 "{}"
             )
             contract.success
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("Failed to create searchable OCR PDF: ${e.message}", e)
             false

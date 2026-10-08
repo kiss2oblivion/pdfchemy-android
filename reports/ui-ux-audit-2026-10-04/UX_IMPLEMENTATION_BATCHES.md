@@ -446,3 +446,63 @@ Exact files changed:
 - `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
 
 20 focused host tests pass (OutputWorkflow, BillingReadiness, ToolRegistry, FileUtil and ReleaseWorkflowRegression), zero failures/errors. Debug assembly and lint pass (zero errors, 645 warnings; BUILD SUCCESSFUL, 3m 2s). git diff --check passes after removing trailing spaces in the three migrated name-call lines. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.OutputWorkflowTest --tests com.pdfchemy.app.billing.BillingReadinessTest --tests com.pdfchemy.app.ui.ToolRegistryTest --tests com.pdfchemy.app.logic.FileUtilTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:assembleDebug :app-host:lintDebug --console=plain. Real Play checkout/payment was not invoked.
+
+
+## Batch 8 — Visual page and redaction workspaces, bounded previews, recovery and verified export parity
+
+Split/Delete/Rotate now share visible-page selection while retaining typed ranges and selected input on failure. Organizer initializes every source identity but renders only composed lazy items, with two in-flight previews, retained 240px resolution, retry and owned bitmap disposal; bitmap previews are excluded from chronological history and undo is capped at 50 actions. Existing and added page rotations now use the original annotation plane before rotation. Raster redaction uses the exact shared painter and keeps OVERWRITE, annotation removal, quotas and fail-closed behavior. Redaction patterns now discover reviewable targets instead of bypassing preview; affected pages display fitted normalized target overlays and the reviewed URI/targets are captured before saving. Advanced compression/redaction controls retain existing choices/defaults. Global operation feedback is modal, task-aware, counts completed files and only offers cancellation for an owned job; OCR is truthfully indeterminate and follows operation state after cancellation. Provider/parse failures retain their actual diagnosis; recovery copy and optional diagnostics are separated, and dismissing errors preserves selected inputs. Large-font descriptions wrap, Home height is flexible, tool cards wrap content, and enlarged search uses a wrapping field. A concrete Batch 7 recursive save-wrapper defect is fixed and covered by an Android composition regression; unhanded fresh folder copies are cleaned up, primary output Open uses safe document actions. Batch 7 history/cancellation fixtures now verify the changed filename and fresh-copy contracts. No unrelated security implementation was changed. Previous SHA 23fd32ce23cb393eaa4626f1e7d7d2855de1dfea was verified remotely; main remains 4b3c157f3458f7df00ea94044258d33c7449ced9.
+
+Closed source IDs: UX-10, UX-14, UX-21, UX-29, UX-30, UX-34, UX-36, UX-48.
+
+Still open or partial: UX-05, UX-23.
+
+Exact files changed:
+
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/AnnotationExportParityTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/AnnotationPixelParityTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/ui/RemainingUxRuntimeTest.kt`
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/OrganizerSession.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/PdfOcrEngine.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/VisualPageRanges.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/EbookConverterScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ErrorPresentation.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OcrScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/RedactionScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/VisualPageSelection.kt`
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/main/res/values/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/logic/HistoryRepositoryTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/logic/VisualWorkflowTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/ui/CancellationPublicationTest.kt`
+- `pdf-ipc/src/main/java/com/pdfchemy/app/logic/AnnotationRenderer.kt`
+- `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+- `reports/ui-ux-audit-2026-10-04/UX_RUNTIME_VALIDATION_2026-10-08.md`
+
+Full host run: 122 tests, zero failures/errors (batch8-validation-final3.log). Final affected-source focused host tests and debug build/lint pass; commands and native emulator receipts are in UX_RUNTIME_VALIDATION_2026-10-08.md. Android 36 native runtime: OK (5 tests), including eight mixed annotation/export cases. Debug assembly and Android-test assembly pass; lint has zero errors and 650 warnings. git diff --check passes. No merge, physical performance claim or audit-certification claim. All 50 original IDs have current dispositions: 48 source-DONE, two PARTIAL: UX-05 scheduled for continued implementation, UX-23 physical profiling explicitly deferred. Of the requested remaining 29, 27 source findings are closed and one remains scheduled and physical profiling is explicitly deferred.

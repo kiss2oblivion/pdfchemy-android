@@ -125,6 +125,32 @@ fun ToolSearchBar(
     // Read localized resources on composition so locale changes refresh matching.
     val filteredTools = ToolRegistry.search(query) { context.getString(it) }
 
+    // Material's compact SearchBar input has a fixed height. Use a wrapping
+    // field at enlarged fonts so its query and placeholder remain readable.
+    if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.2f) {
+        Column(modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            OutlinedTextField(value = query, onValueChange = { query = it; active = true },
+                label = { Text(stringResource(R.string.tool_search_hint)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    if (query.isNotEmpty()) IconButton(onClick = { query = ""; active = false }) {
+                        Icon(Icons.Default.Close, stringResource(R.string.clear))
+                    }
+                }, modifier = Modifier.fillMaxWidth(), maxLines = 3)
+            if (active && query.isNotBlank()) {
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp)) {
+                    if (filteredTools.isEmpty()) item { Text(stringResource(R.string.tool_search_no_results)) }
+                    items(filteredTools, key = { it.screen.toString() }) { tool ->
+                        ListItem(headlineContent = { Text(stringResource(tool.nameRes), fontWeight = FontWeight.Bold) },
+                            supportingContent = { Text(stringResource(tool.descriptionRes)) },
+                            modifier = Modifier.clickable { query = ""; active = false; onToolSelected(tool.screen) })
+                    }
+                }
+            }
+        }
+        return
+    }
+
     SearchBar(
         query = query,
         onQueryChange = { query = it },

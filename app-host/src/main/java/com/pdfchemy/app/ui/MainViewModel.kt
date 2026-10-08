@@ -49,7 +49,14 @@ import java.util.concurrent.atomic.AtomicLong
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
+    private val _canCancelOperation = MutableStateFlow(false)
+    val canCancelOperation: StateFlow<Boolean> = _canCancelOperation.asStateFlow()
     private var activeJob: kotlinx.coroutines.Job? = null
+        set(job) {
+            field = job
+            _canCancelOperation.value = job?.isActive == true
+            job?.invokeOnCompletion { if (field === job) _canCancelOperation.value = false }
+        }
     
     private val pendingOutputUris = java.util.Collections.synchronizedList(mutableListOf<android.net.Uri>())
 
@@ -252,7 +259,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     sealed class UiState {
         object Idle : UiState()
         data class Processing(val taskNameResId: Int? = null) : UiState()
-        data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String) : UiState()
+        data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String, val completed: Int = (current - 1).coerceAtLeast(0)) : UiState()
         data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Warning(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Error(val message: String, val technicalDetails: String? = null) : UiState()
@@ -700,6 +707,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = UiState.Error(error.message ?: context.getString(R.string.msg_batch_compress_fail))
             }
         }
+    }
+
+    fun dismissError() {
+        _uiState.value = UiState.Idle
     }
 
     fun resetState() {
@@ -1273,7 +1284,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                                 val done = completedCount.incrementAndGet()
                                 withContext(Dispatchers.Main) {
-                                    _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName)
+                                    _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName, completed = done)
                                 }
                             }
                         }
@@ -1550,7 +1561,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onComplete: (Boolean) -> Unit
     ) {
         addPendingOutputUri(destUri)
-        _uiState.value = UiState.Processing()
+        _uiState.value = UiState.Processing(R.string.ocr_processing_generic)
         activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfOcrEngine.createSearchablePdf(

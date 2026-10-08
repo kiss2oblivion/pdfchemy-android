@@ -1174,5 +1174,17 @@
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
     <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="select_pages_visually">Select pages visually</string>
+    <string name="visual_page_number">Page %1$d</string>
+    <string name="apply">Apply</string>
+    <string name="document_load_recovery">This file could not be opened. Check that it is still available and select it again to restore access.</string>
+    <string name="document_damaged_recovery">This PDF could not be read. Try another copy or use Repair PDF.</string>
+    <string name="processing_document">Processing documentâ€¦</string>
+    <string name="operation_batch_progress">Completed %1$d of %2$d files</string>
+    <string name="advanced_options">Advanced options</string>
+    <string name="error_operation_recovery">The operation could not finish. Check the input file and output location, then try again.</string>
+    <string name="error_storage_recovery">The output could not be saved. Free some storage or choose another folder, then try again.</string>
+    <string name="error_password_recovery">This PDF requires a password. Unlock it with the correct password before continuing.</string>
+    <string name="redaction_preview_patterns">Find and review selected patterns</string>
 </resources>
 

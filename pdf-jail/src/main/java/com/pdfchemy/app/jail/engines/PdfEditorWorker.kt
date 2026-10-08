@@ -81,44 +81,10 @@ object PdfEditorWorker {
                                 PdfRenderer.Page.RENDER_MODE_FOR_PRINT
                             )
 
-                            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                color = android.graphics.Color.BLACK
-                                style = Paint.Style.FILL
-                            }
-                            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                color = android.graphics.Color.WHITE
-                                isFakeBoldText = true
-                            }
-
-                            // If the page also has drawings, text annotations, or stamps, draw them onto the base raster
-                            if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
-                                val overlayBmp = renderAnnotationOverlayBitmap(mod, finalW, finalH)
-                                if (overlayBmp != null) {
-                                    canvas.drawBitmap(overlayBmp, 0f, 0f, null)
-                                    try { overlayBmp.recycle() } catch (ignored: Exception) {}
-                                }
-                            }
-
-                            for (rBox in mod.redactions) {
-                                val rectF = rBox.normalizedRect
-                                val left = rectF.left * finalW
-                                val top = rectF.top * finalH
-                                val right = rectF.right * finalW
-                                val bottom = rectF.bottom * finalH
-
-                                canvas.drawRect(left, top, right, bottom, paint)
-
-                                if (rBox.overlayLabel?.isNotEmpty() == true) {
-                                    val bw = right - left
-                                    val bh = bottom - top
-                                    val ts = (bh * 0.4f).coerceIn(12f, 60f)
-                                    textPaint.textSize = ts
-                                    val tw = textPaint.measureText(rBox.overlayLabel!!)
-                                    val tx = left + (bw - tw) / 2f
-                                    val ty = top + (bh + ts * 0.7f) / 2f
-                                    canvas.drawText(rBox.overlayLabel!!, tx, ty, textPaint)
-                                }
-                            }
+                            // Composite the exact preview painter, including opaque redactions last.
+                            val overlay = checkNotNull(com.pdfchemy.app.logic.AnnotationRenderer.render(mod, finalW, finalH))
+                            try { canvas.drawBitmap(overlay, 0f, 0f, null) }
+                            finally { overlay.recycle() }
 
                             val pdImage = LosslessFactory.createFromImage(document, baseBmp)
                             page.rotation = if (mod.rotationDegrees != 0) (mod.rotationDegrees % 360 + 360) % 360 else 0
@@ -133,6 +99,7 @@ object PdfEditorWorker {
                         } catch (e: Exception) {
                             AppLogger.w("PdfEditorWorker: renderer-based redaction flattening failed for page ${pageIdx}: ${e.message}")
                         } finally {
+                            baseBmp?.recycle()
                             try { renderPage?.close() } catch (e: Exception) {}
                         }
                     }
@@ -141,10 +108,8 @@ object PdfEditorWorker {
                         throw SecurityException("Cannot forensically rasterize the PDF page because PdfRenderer is unavailable. Aborting redaction to ensure maximum security without data loss.")
                     }
                 } else {
-                    if (mod.rotationDegrees != 0) {
-                    val currentRotation = page.rotation
-                    page.rotation = (currentRotation + mod.rotationDegrees) % 360
-                }
+                    // Overlay coordinates refer to the original rendered page plane.
+                    val originalRotation = (page.rotation % 360 + 360) % 360
 
                 if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
                     val cropBox = page.cropBox ?: page.mediaBox
@@ -152,7 +117,7 @@ object PdfEditorWorker {
                     val pageHeightPts = cropBox.height
                     val lowerLeftX = cropBox.lowerLeftX
                     val lowerLeftY = cropBox.lowerLeftY
-                    val rot = page.rotation
+                    val rot = originalRotation
 
                     val dispW = if (rot == 90 || rot == 270) pageHeightPts else pageWidthPts
                     val dispH = if (rot == 90 || rot == 270) pageWidthPts else pageHeightPts
@@ -199,6 +164,7 @@ object PdfEditorWorker {
                         }
                     }
                 }
+                    page.rotation = ((originalRotation + mod.rotationDegrees) % 360 + 360) % 360
                 }
             }
 

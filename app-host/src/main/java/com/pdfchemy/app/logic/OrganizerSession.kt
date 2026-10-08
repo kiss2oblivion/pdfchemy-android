@@ -87,6 +87,7 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
 
     private fun pushState() {
         undoStack.addLast(pages)
+        if (undoStack.size > 50) undoStack.removeFirst()
         redoStack.clear()
     }
 
@@ -105,6 +106,7 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
         if (!canRedo()) return false
         val next = redoStack.removeLast()
         undoStack.addLast(pages)
+        if (undoStack.size > 50) undoStack.removeFirst()
         pages = next
         if (selectedIndex >= pages.size) {
             selectedIndex = pages.size - 1

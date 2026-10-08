@@ -132,10 +132,10 @@ fun EbookConverterScreen(
                     EbookMode.EPUB_TO_PDF -> {
                         try {
                             progressCurrent = 0
-                            progressTotal = 100
+                            progressTotal = 0
                             val contract = com.pdfchemy.app.logic.PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.StandardOutputContract>(context, "EPUB_TO_PDF", selectedSourceUri!!, destUri, "{}")
                             if (contract.success) {
-                                progressCurrent = 100
+                                progressCurrent = 0
                                 val historyRepo = com.pdfchemy.app.logic.HistoryRepository(context)
                                 historyRepo.addHistoryItem(
                                     destUri,

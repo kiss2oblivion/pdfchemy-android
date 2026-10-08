@@ -73,6 +73,10 @@ class CancellationPublicationTest {
         every { context.cacheDir } returns application.cacheDir
         every { context.contentResolver } returns resolver
         val directory = mockk<DocumentFile>()
+        every { directory.exists() } returns true
+        every { directory.isDirectory } returns true
+        every { directory.canWrite() } returns true
+        every { directory.listFiles() } returns emptyArray()
         val document = mockk<DocumentFile>(relaxed = true)
         val destination = Uri.parse("content://fixture/image.jpg")
         every { document.uri } returns destination

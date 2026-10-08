@@ -629,6 +629,7 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
                     Text(stringResource(R.string.split_mode_range), modifier = Modifier.padding(start = 8.dp))
                 }
                 if (extractMode == 1) {
+                    VisualPageSelector(file.uri, customRange) { customRange = it }
                     OutlinedTextField(
                         value = customRange,
                         onValueChange = { customRange = it },
@@ -864,6 +865,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     }
                 }
 
+                VisualPageSelector(file.uri, pagesToDelete) { pagesToDelete = it }
                 Text(stringResource(R.string.pages_to_delete), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 OutlinedTextField(
@@ -881,6 +883,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     var selectedFile by remember { mutableStateOf<androidx.documentfile.provider.DocumentFile?>(null) }
     var pageRange by remember { mutableStateOf("") }
@@ -895,7 +898,6 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         uri?.let { destUri ->
             selectedFile?.uri?.let { sourceUri ->
                 viewModel.rotatePdf(context, sourceUri, destUri, rotationDegrees, pageRange)
-                onBack()
             }
         }
     }
@@ -977,6 +979,7 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
 
+                VisualPageSelector(file.uri, pageRange) { pageRange = it }
                 Text(stringResource(R.string.pages_to_rotate_optional), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 OutlinedTextField(

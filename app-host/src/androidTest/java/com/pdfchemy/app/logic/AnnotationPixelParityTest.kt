@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AnnotationPixelParityTest {
     @Test fun redactionCoordinatesRemainNormalizedAcrossPreviewAndExportWidths() {
-        val modification = PageModification(0, redactions = listOf(RedactionBox(0, RectF(.2f,.3f,.4f,.5f))))
+        val modification = PageModification(0, redactions = listOf(RedactionBox(0, RectF(.2f,.3f,.4f,.5f), overlayLabel = "")))
         val preview = AnnotationRenderer.render(modification, 200, 300)!!
         val export = AnnotationRenderer.render(modification, 1000, 1500)!!
         try {

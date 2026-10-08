@@ -586,7 +586,7 @@ fun MainApp(
 
     LaunchedEffect(incomingPdfUri) {
         com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
-            showVanguardBlockedDialog = true
+            viewModel.notifyError(context.getString(R.string.document_load_recovery))
             isVanguardScanning = false
             vanguardScanningFileName = null
             incomingPdfUriState?.value = null
@@ -612,10 +612,8 @@ fun MainApp(
                                     vanguardPendingEncryptedUri = uri
                                     showVanguardEncryptedDialog = true
                                 }
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                                    showVanguardBlockedDialog = true
-                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> { showVanguardBlockedDialog = true }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> { viewModel.notifyError(context.getString(R.string.document_damaged_recovery)) }
                             }
                         } finally {
                             isVanguardScanning = false
@@ -975,6 +973,8 @@ fun MainApp(
         }
 
         if (uiState is MainViewModel.UiState.Processing || uiState is MainViewModel.UiState.BatchProcessing) {
+            val canCancel by viewModel.canCancelOperation.collectAsState()
+            androidx.compose.ui.window.Dialog(onDismissRequest = {}, properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -990,7 +990,7 @@ fun MainApp(
                     if (uiState is MainViewModel.UiState.BatchProcessing) {
                         val state = uiState as MainViewModel.UiState.BatchProcessing
                         Text(
-                            text = stringResource(R.string.batch_compressing, state.current, state.total),
+                            text = stringResource(R.string.operation_batch_progress, state.completed, state.total),
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -1002,14 +1002,14 @@ fun MainApp(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         LinearProgressIndicator(
-                            progress = { state.current.toFloat() / state.total },
+                            progress = { state.completed.toFloat() / state.total.coerceAtLeast(1) },
                             modifier = Modifier.fillMaxWidth().height(8.dp),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = Color.White.copy(alpha = 0.3f)
                         )
                     } else {
                         val state = uiState as MainViewModel.UiState.Processing
-                        val label = if (state.taskNameResId != null) stringResource(state.taskNameResId) else stringResource(R.string.compressing_pdf)
+                        val label = if (state.taskNameResId != null) stringResource(state.taskNameResId) else com.pdfchemy.app.ui.ToolRegistry.allTools.firstOrNull { it.screen::class == currentScreen::class }?.let { stringResource(it.nameRes) } ?: stringResource(R.string.processing_document)
                         Text(
                             text = label,
                             color = Color.White,
@@ -1017,13 +1017,14 @@ fun MainApp(
                         )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
-                    Button(
+                    if (canCancel) Button(
                         onClick = { viewModel.cancelOperation(context) },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
                 }
+            }
             }
         }
         // Dynamic Result Dialog
@@ -1058,11 +1059,8 @@ fun MainApp(
                                 OutlinedButton(onClick = { browseOutput.launch(state.outputUris.first()) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
                                 OutlinedButton(
                                     onClick = { 
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                            setDataAndType(state.outputUris.first(), com.pdfchemy.app.utils.FileUtils.getMimeType(context, state.outputUris.first()))
-                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        try { context.startActivity(intent) } catch (_: Exception) { viewModel.notifyError("No app can open this file. Check file access or use Share.") }
+                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, state.outputUris.first()) }
+                                            .onFailure { viewModel.notifyError("No app can open this file. Check file access or use Share.") }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.btn_open_file)) }
@@ -1078,6 +1076,7 @@ fun MainApp(
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
+                                    readerReturnUri = null
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
@@ -1111,7 +1110,7 @@ fun MainApp(
             is MainViewModel.UiState.Error -> {
                 var showDiagnostics by remember { mutableStateOf(false) }
                 AlertDialog(
-                    onDismissRequest = { viewModel.resetState() },
+                    onDismissRequest = { viewModel.dismissError() },
                     icon = { Icon(Icons.Rounded.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     title = { Text(stringResource(R.string.error), fontWeight = FontWeight.Bold) },
                     text = {
@@ -1122,12 +1121,12 @@ fun MainApp(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = state.message,
+                                text = com.pdfchemy.app.ui.ErrorPresentation.message(context, state.message),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
 
-                            if (!state.technicalDetails.isNullOrBlank()) {
+                            if (!(state.technicalDetails ?: state.message).isBlank()) {
                                 OutlinedCard(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
@@ -1169,7 +1168,7 @@ fun MainApp(
                                             ) {
                                                 Column(modifier = Modifier.padding(8.dp)) {
                                                     Text(
-                                                        text = state.technicalDetails,
+                                                        text = state.technicalDetails ?: state.message,
                                                         style = MaterialTheme.typography.bodySmall.copy(
                                                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                                             fontSize = 11.sp
@@ -1180,7 +1179,7 @@ fun MainApp(
                                                     TextButton(
                                                         onClick = {
                                                             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                                                            val clip = android.content.ClipData.newPlainText("PDFchemy Error Trace", state.technicalDetails)
+                                                            val clip = android.content.ClipData.newPlainText("PDFchemy Error Trace", state.technicalDetails ?: state.message)
                                                             clipboard?.setPrimaryClip(clip)
                                                             Toast.makeText(context, context.getString(R.string.error_diagnostics_copied), Toast.LENGTH_SHORT).show()
                                                         },
@@ -1199,7 +1198,7 @@ fun MainApp(
                         }
                     },
                     confirmButton = {
-                        Button(onClick = { viewModel.resetState() }) {
+                        Button(onClick = { viewModel.dismissError() }) {
                             Text(stringResource(R.string.ok))
                         }
                     }
@@ -1761,14 +1760,14 @@ fun HomeScreen(
                         }
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(categoryHeight),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CategoryCard(stringResource(R.string.cat_compress), stringResource(R.string.cat_compress_desc), Icons.Rounded.Compress, { onNavigate(Screen.CompressCategory) }, Modifier.weight(1f).fillMaxHeight())
                             CategoryCard(stringResource(R.string.cat_create), stringResource(R.string.cat_create_desc), Icons.Rounded.AddCircleOutline, { onNavigate(Screen.CreateCategory) }, Modifier.weight(1f).fillMaxHeight())
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(categoryHeight),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CategoryCard(stringResource(R.string.cat_organize), stringResource(R.string.cat_organize_desc), Icons.Rounded.FolderOpen, { onNavigate(Screen.OrganizeCategory) }, Modifier.weight(1f).fillMaxHeight())
@@ -1869,7 +1868,7 @@ fun CategoryCard(
                     style = MaterialTheme.typography.bodySmall.copy(lineHeight = 15.sp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    maxLines = 2,
+                    maxLines = if (enlargedText) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -2261,7 +2260,7 @@ fun ToolCard(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
@@ -2279,7 +2278,7 @@ fun ToolCard(
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(horizontal = 18.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -2313,7 +2312,7 @@ fun ToolCard(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        maxLines = 2,
+                        maxLines = if (enlargedText) Int.MAX_VALUE else 2,
                         overflow = TextOverflow.Ellipsis,
                         lineHeight = 16.sp
                     )
@@ -3092,7 +3091,9 @@ fun RightPanel(
         border = CardDefaults.outlinedCardBorder()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.compression_options), style = MaterialTheme.typography.titleMedium)
+            var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+            TextButton(onClick = { advanced = !advanced }) { Text(stringResource(R.string.advanced_options)) }
+            if (advanced) {
             Spacer(modifier = Modifier.height(8.dp))
             
             Row(
@@ -3167,6 +3168,7 @@ fun RightPanel(
                     }
                 }
                 Switch(checked = stripMetadata, onCheckedChange = { viewModel.setStripMetadata(it) })
+            }
             }
         }
     }
@@ -4253,7 +4255,7 @@ fun RecentFilesSection(
                                     } else if (ext == "pdf" && onNavigate != null) {
                                         scope.launch {
                                             com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
-                                                showVanguardBlockedDialog = true
+                                                viewModel.notifyError(context.getString(R.string.document_load_recovery))
                                                 isVanguardScanning = false
                                                 vanguardScanningFileName = null
                                             }) {
@@ -4271,10 +4273,8 @@ fun RecentFilesSection(
                                                                 vanguardPendingEncryptedUri = stagedUri
                                                                 showVanguardEncryptedDialog = true
                                                             }
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
-                                                                showVanguardBlockedDialog = true
-                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> { showVanguardBlockedDialog = true }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> { viewModel.notifyError(context.getString(R.string.document_damaged_recovery)) }
                                                         }
                                                     } finally {
                                                         isVanguardScanning = false

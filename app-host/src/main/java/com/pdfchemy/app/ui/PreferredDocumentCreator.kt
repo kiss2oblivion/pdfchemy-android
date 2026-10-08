@@ -26,7 +26,7 @@ fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit)
     val scope = rememberCoroutineScope()
     val currentResult by rememberUpdatedState(onResult)
     val prefs = remember { context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE) }
-    val systemPicker = rememberPreferredDocumentCreator(mimeType) { currentResult(it) }
+    val systemPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(mimeType)) { currentResult(it) }
     var requestedName by remember { mutableStateOf<String?>(null) }
     var folderUri by remember { mutableStateOf<Uri?>(null) }
     var editedName by remember { mutableStateOf("") }
@@ -48,14 +48,28 @@ fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit)
                     scope.launch {
                         val uri = folderUri
                         val name = OutputPolicy.safeName(editedName)
-                        val result = withContext(Dispatchers.IO) {
-                            runCatching { OutputPolicy.createCopy(checkNotNull(DocumentFile.fromTreeUri(context, checkNotNull(uri))), mimeType, name).uri }
-                        }
-                        working = false; requestedName = null
-                        if (result.isSuccess) currentResult(result.getOrThrow())
-                        else {
-                            Toast.makeText(context, "Saved folder unavailable. Choose a location to save this copy.", Toast.LENGTH_LONG).show()
-                            systemPicker.launch(name)
+                        var created: DocumentFile? = null
+                        var handedOff = false
+                        try {
+                            val result = withContext(Dispatchers.IO) {
+                                runCatching {
+                                    OutputPolicy.createCopy(checkNotNull(DocumentFile.fromTreeUri(context, checkNotNull(uri))), mimeType, name)
+                                        .also { created = it }.uri
+                                }
+                            }
+                            working = false; requestedName = null
+                            if (result.isSuccess) {
+                                handedOff = true
+                                currentResult(result.getOrThrow())
+                            } else {
+                                Toast.makeText(context, "Saved folder unavailable. Choose a location to save this copy.", Toast.LENGTH_LONG).show()
+                                systemPicker.launch(name)
+                            }
+                        } finally {
+                            // Only a fresh copy created here is ours to remove before callback ownership.
+                            if (!handedOff) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                                created?.let { runCatching { it.delete() } }
+                            }
                         }
                     }
                 }) { Text("Save copy") }
