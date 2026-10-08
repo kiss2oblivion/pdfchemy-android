@@ -60,9 +60,7 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedPdfUri = uri
     }
 
-    val saveDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isProcessing = true
             viewModel.createSearchablePdf(

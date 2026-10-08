@@ -66,9 +66,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         }
     }
 
-    val saveDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             viewModel.fillAndSaveForm(
                 context = context,

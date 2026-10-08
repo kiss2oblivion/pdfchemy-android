@@ -13,6 +13,16 @@ import java.io.File
 import java.io.FileOutputStream
 
 object DocumentActions {
+    fun view(context: Context, uri: Uri) {
+        val output = if (uri.scheme == "file") FileProvider.getUriForFile(context,
+            "${context.packageName}.fileprovider", File(requireNotNull(uri.path))) else uri
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+            setDataAndType(output, com.pdfchemy.app.utils.FileUtils.getMimeType(context, output))
+            clipData = android.content.ClipData.newUri(context.contentResolver, "Document", output)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(intent)
+    }
     fun share(context: Context, uri: Uri) {
         val shareUri = if (uri.scheme == "file") FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", File(requireNotNull(uri.path))

@@ -57,9 +57,7 @@ fun NUpScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -86,7 +84,7 @@ fun NUpScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_nup_success),
                         context.getString(R.string.desc_nup_success, selectedLayout.pagesPerSheet)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

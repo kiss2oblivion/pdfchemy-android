@@ -1149,4 +1149,6 @@
     <string name="compression_defaults_reset">Reset defaults</string>
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
+    <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
+    <string name="quick_camera_pdf">Quick camera PDF</string>
 </resources>

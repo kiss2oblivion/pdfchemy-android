@@ -1,4 +1,7 @@
 package com.pdfchemy.app
+import com.pdfchemy.app.ui.rememberPreferredDocumentCreator
+import com.pdfchemy.app.ui.HistoryScreen
+import com.pdfchemy.app.ui.BrowseOutputContract
 
 import android.content.Context
 import android.content.Intent
@@ -569,6 +572,10 @@ fun MainApp(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    val browseOutput = rememberLauncherForActivityResult(BrowseOutputContract()) { uri ->
+        if (uri != null) runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
+            .onFailure { viewModel.notifyError("No app can open this file. Choose another viewer or check file access.") }
+    }
     val incomingPdfUri by (incomingPdfUriState?.collectAsState() ?: remember { mutableStateOf<Uri?>(null) })
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -820,6 +827,7 @@ fun MainApp(
                 Screen.CreateCategory -> CreateCategoryScreen(onNavigate = { screen -> currentScreen = screen }, onBack = { currentScreen = Screen.Home })
                 Screen.OrganizeCategory -> OrganizeCategoryScreen(onNavigate = { screen -> currentScreen = screen }, onBack = { currentScreen = Screen.Home })
                 Screen.CheckCategory -> CheckCategoryScreen(onNavigate = { screen -> currentScreen = screen }, onBack = { currentScreen = Screen.Home })
+                Screen.History -> HistoryScreen(viewModel, { currentScreen = it }) { currentScreen = Screen.Home }
                 Screen.Premium -> PremiumUpgradeScreen(viewModel) { currentScreen = Screen.Home }
 
                 // =========================================================================================
@@ -832,9 +840,9 @@ fun MainApp(
                 // [FEATURE: Image Compressor] — Compress standalone JPEG/PNG/WEBP photos
                 Screen.ImageCompressor -> ImageCompressorScreen(viewModel) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Grayscale Optimizer] — Converts color PDF streams to monochrome/grayscale
-                Screen.GrayscaleOptimizer -> GrayscaleOptimizerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.GrayscaleOptimizer -> GrayscaleOptimizerScreen(viewModel) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Linearize (Fast Web View)] — Restructures PDF dictionary for instant streaming
-                Screen.LinearizePdf -> LinearizePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.LinearizePdf -> LinearizePdfScreen(viewModel) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Flatten PDF] — Permanently bakes form fields, comments, and annotations into page layer
                 Screen.FlattenPdf -> FlattenPdfScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
 
@@ -1038,18 +1046,28 @@ fun MainApp(
                             Text(state.message)
                             Spacer(modifier = Modifier.height(16.dp))
                             if (state.outputUris.isNotEmpty()) {
+                                androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 200.dp)) {
+                                    items(state.outputUris.size) { index ->
+                                        val output = state.outputUris[index]
+                                        TextButton(onClick = { runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, output) }
+                                            .onFailure { viewModel.notifyError("No app can open this file. Check file access or use Share.") } }) {
+                                            Text((com.pdfchemy.app.utils.FileUtils.getFileName(context, output) ?: "Output ${index + 1}") + "\n" + com.pdfchemy.app.utils.FileUtils.getMimeType(context, output))
+                                        }
+                                    }
+                                }
+                                OutlinedButton(onClick = { browseOutput.launch(state.outputUris.first()) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
                                 OutlinedButton(
                                     onClick = { 
                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
                                             setDataAndType(state.outputUris.first(), com.pdfchemy.app.utils.FileUtils.getMimeType(context, state.outputUris.first()))
                                             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
-                                        try { context.startActivity(intent) } catch (e: Exception) { }
+                                        try { context.startActivity(intent) } catch (_: Exception) { viewModel.notifyError("No app can open this file. Check file access or use Share.") }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.btn_open_file)) }
                                 OutlinedButton(
-                                    onClick = { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output)) },
+                                    onClick = { runCatching { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output)) }.onFailure { viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.") } },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.share)) }
                             }
@@ -1252,6 +1270,7 @@ private fun rememberAdsAllowed(): Boolean {
 sealed class Screen {
     // Core Navigation & Settings
     object Home : Screen()
+    object History : Screen()
     object Settings : Screen()
     object Premium : Screen()
     object CompressCategory : Screen()
@@ -1423,6 +1442,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "ImageCompressor" -> Screen.ImageCompressor
             str == "TextToPdf" -> Screen.TextToPdf
             str == "TextConverter" -> Screen.TextConverter
+            str == "History" -> Screen.History
             str == "Settings" -> Screen.Settings
             str == "CompressCategory" -> Screen.CompressCategory
             str == "CreateCategory" -> Screen.CreateCategory
@@ -1868,11 +1888,9 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
     var scannedPdfUri by remember { mutableStateOf<Uri?>(null) }
 
-    val saveScannedPdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri: Uri? ->
+    val saveScannedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri: Uri? ->
         if (destUri != null && scannedPdfUri != null) {
-            val sourceUri = scannedPdfUri ?: return@rememberLauncherForActivityResult
+            val sourceUri = scannedPdfUri ?: return@rememberPreferredDocumentCreator
             coroutineScope.launch {
                 try {
                     withContext(Dispatchers.IO) {
@@ -1948,7 +1966,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                             duration = SnackbarDuration.Short
                         )
                         if (snackbarResult == SnackbarResult.ActionPerformed) {
-                            saveScannedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, context.getString(R.string.default_scanned_doc_name)))
+                            saveScannedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, context.getString(R.string.default_scanned_doc_name)))
                         }
                     } catch (cancelled: kotlinx.coroutines.CancellationException) {
                         savedScanFile?.delete()
@@ -2001,7 +2019,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             ) {
             item {
                 ToolCard(
-                    title = stringResource(R.string.menu_scan),
+                    title = stringResource(R.string.quick_camera_pdf),
                     subtitle = stringResource(R.string.menu_scan_desc),
                     icon = Icons.Rounded.DocumentScanner,
                     onClick = { launchScanner() }
@@ -2382,11 +2400,9 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
         viewModel.onFilesSelected(context, uris)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { uri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         if (uri != null) {
-            val src = sourceUri ?: return@rememberLauncherForActivityResult
+            val src = sourceUri ?: return@rememberPreferredDocumentCreator
             viewModel.compressPdf(context, src, uri)
         }
     }
@@ -2501,7 +2517,7 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
                                 stripMetadata = stripMetadata,
                                 pdfAnalysis = pdfAnalysis,
                                 viewModel = viewModel,
-                                    onSaveSingle = { savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(sourceUri, context.getString(R.string.compressed_prefix))) },
+                                    onSaveSingle = { savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, sourceUri, context.getString(R.string.compressed_prefix))) },
                                 onSaveBatch = { selectDirectoryLauncher.launch(null) }
                             )
                         }
@@ -2564,7 +2580,7 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
                             pdfAnalysis = pdfAnalysis,
                             viewModel = viewModel,
                             onSaveSingle = { 
-                                savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(sourceUri, context.getString(R.string.compressed_prefix))) 
+                                savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, sourceUri, context.getString(R.string.compressed_prefix)))
                             },
                             onSaveBatch = { 
                                 selectDirectoryLauncher.launch(null) 
@@ -3203,9 +3219,7 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         }
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { uri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         if (uri != null) {
             viewModel.convertTextToPdf(context, uri)
         }
@@ -3260,7 +3274,7 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         if (inputText.isBlank()) {
                             Toast.makeText(context, context.getString(R.string.msg_enter_text), Toast.LENGTH_SHORT).show()
                         } else {
-                            savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, "converted_text"))
+                            savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "converted_text"))
                         }
                     },
                     modifier = Modifier
@@ -3358,6 +3372,18 @@ fun SettingsScreen(
     var showRefundPolicyDialog by remember { mutableStateOf(false) }
     var showManifestoDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val outputPrefs = remember { context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE) }
+    var preferredOutput by remember { mutableStateOf(outputPrefs.getString(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY, null)) }
+    val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                outputPrefs.edit().putString(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY, uri.toString()).apply()
+                preferredOutput = uri.toString()
+            } catch (_: Exception) { viewModel.notifyError("This folder cannot retain write access. Choose another folder.") }
+        }
+    }
+
 
     if (showManifestoDialog) {
         AndroidManifestoDialog(onDismiss = { showManifestoDialog = false })
@@ -3484,6 +3510,13 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             // Theme Selector
+
+            Text("Output folder", style = MaterialTheme.typography.titleMedium)
+            Text(if (preferredOutput == null) "Ask where to save each time" else "Saved folder selected. New copies keep existing files.", style = MaterialTheme.typography.bodySmall)
+            Row {
+                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) "Choose folder" else "Change folder") }
+                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text("Reset") }
+            }
                             var themeExpanded by remember { mutableStateOf(false) }
                             val themeOptions = mapOf(
                                 "SYSTEM" to stringResource(R.string.theme_system),
@@ -4192,6 +4225,9 @@ fun RecentFilesSection(
         fileName = vanguardScanningFileName
     )
 
+    Column(modifier = Modifier.fillMaxWidth()) {
+        TextButton(onClick = { onNavigate?.invoke(Screen.History) }) { Text("View all history") }
+    }
     if (history.isNotEmpty()) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -4211,7 +4247,7 @@ fun RecentFilesSection(
                                 .fillMaxWidth()
                                 .clickable {
                                     val uri = Uri.parse(item.uriString)
-                                    val ext = item.name.substringAfterLast('.', "").lowercase()
+                                    val ext = when (item.mimeType) { "application/pdf" -> "pdf"; "application/epub+zip" -> "epub"; else -> "" }
                                     if (ext == "epub" && onNavigate != null) {
                                         onNavigate(Screen.ReflowReader(uri))
                                     } else if (ext == "pdf" && onNavigate != null) {
@@ -4329,6 +4365,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     BackHandler { onBack() }
     val isPremium by viewModel.isPremium.collectAsState()
     val price by viewModel.premiumPrice.collectAsState()
+    val billingUi by viewModel.billingUi.collectAsState()
     val context = LocalContext.current as android.app.Activity
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -4378,6 +4415,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = { viewModel.purchasePremium(context) },
+                    enabled = billingUi.canPurchase,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text(
@@ -4385,6 +4423,9 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
+                Text(billingUi.message, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
+                if (billingUi.loading) CircularProgressIndicator(Modifier.padding(12.dp))
+                if (billingUi.canRetry) TextButton(onClick = { viewModel.retryBilling(context) }) { Text("Retry Google Play") }
             }
         }
     }

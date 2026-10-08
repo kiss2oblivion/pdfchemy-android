@@ -287,7 +287,16 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     var selectedFiles by remember { mutableStateOf(listOf<PdfItem>()) }
     var showHistorySheet by remember { mutableStateOf(false) }
-    val historyItems by viewModel.historyList.collectAsState()
+    val allHistoryItems by viewModel.historyList.collectAsState()
+    val historyItems = allHistoryItems.filter { !it.isDirectory && it.mimeType == "application/pdf" }
+    var historyAvailability by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    LaunchedEffect(historyItems) {
+        historyAvailability = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            historyItems.associate { item -> item.uriString to runCatching {
+                context.contentResolver.openFileDescriptor(Uri.parse(item.uriString), "r")?.use { true } == true
+            }.getOrDefault(false) }
+        }
+    }
 
     val filePickerLauncher = rememberVanguardMultiplePdfPicker { uris ->
         val newItems = uris.map { uri ->
@@ -297,9 +306,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFiles = (selectedFiles + newItems).distinctBy { it.uri }
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
             viewModel.mergePdfs(context, selectedFiles.map { it.uri }, destUri)
         }
@@ -324,7 +331,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clickable {
+                                    .clickable(enabled = historyAvailability[item.uriString] == true) {
                                         val uri = Uri.parse(item.uriString)
                                         if (isSelected) {
                                             selectedFiles = selectedFiles.filterNot { it.uri == uri }
@@ -343,7 +350,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(if (historyAvailability[item.uriString] == false) item.name + " (unavailable)" else item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(item.action, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                     if (isSelected) {
@@ -373,7 +380,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         floatingActionButton = {
             if (selectedFiles.size >= 2) {
                 ExtendedFloatingActionButton(
-                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, "merged")) },
+                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "merged")) },
                     icon = { Icon(Icons.Rounded.Merge, stringResource(R.string.desc_merge)) },
                     text = { Text(stringResource(R.string.merge)) }
                 )
@@ -797,11 +804,9 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = PdfItem(uri, name)
     }
 
-    val createDocumentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { uri ->
+    val createDocumentLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         if (uri != null && pagesToDelete.isNotBlank()) {
-            val file = selectedFile ?: return@rememberLauncherForActivityResult
+            val file = selectedFile ?: return@rememberPreferredDocumentCreator
             viewModel.deletePages(context, file.uri, uri, pagesToDelete)
         }
     }
@@ -886,7 +891,7 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = docFile
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         uri?.let { destUri ->
             selectedFile?.uri?.let { sourceUri ->
                 viewModel.rotatePdf(context, sourceUri, destUri, rotationDegrees, pageRange)

@@ -51,9 +51,7 @@ fun OfficeExportScreen(
         fileName = FileUtils.getFileName(context, uri) ?: "document.pdf"
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(selectedFormat.mimeType)
-    ) { destUri: Uri? ->
+    val saveFileLauncher = rememberPreferredDocumentCreator(selectedFormat.mimeType) { destUri: Uri? ->
         if (destUri != null && selectedUri != null) {
             isProcessing = true
             viewModel.exportPdfToOffice(

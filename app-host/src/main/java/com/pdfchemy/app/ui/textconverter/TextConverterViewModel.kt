@@ -34,7 +34,7 @@ class TextConverterViewModel : ViewModel() {
     sealed class UiState {
         object Idle : UiState()
         object Processing : UiState()
-        data class Success(val title: String, val message: String) : UiState()
+        data class Success(val title: String, val message: String, val outputUri: Uri? = null) : UiState()
         data class Error(val message: String) : UiState()
     }
 
@@ -123,7 +123,7 @@ class TextConverterViewModel : ViewModel() {
                             outputStream.write(convertedText.toByteArray(Charsets.UTF_8))
                         }
                     }
-                    _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_file_converted))
+                    _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_file_converted), destUri)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (e: Exception) {

@@ -97,9 +97,7 @@ fun WatermarkScreen(
         loadPreview(uri)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {

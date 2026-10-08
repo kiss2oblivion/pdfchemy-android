@@ -582,9 +582,7 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("audio/wav")
-    ) { uri ->
+    val audioExportLauncher = rememberPreferredDocumentCreator("audio/wav") { uri ->
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {

@@ -123,6 +123,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _historyList = MutableStateFlow(historyRepository.getHistory())
     val historyList: StateFlow<List<com.pdfchemy.app.logic.HistoryItem>> = _historyList.asStateFlow()
 
+    fun removeHistory(uriString: String) {
+        viewModelScope.launch(Dispatchers.IO) { historyRepository.remove(uriString); refreshHistory() }
+    }
     fun refreshHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             val items = historyRepository.getHistory()
@@ -201,10 +204,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val premiumPrice: StateFlow<String> = _premiumPrice.asStateFlow()
 
     private var billingManager: BillingManager? = null
+    private val _billingUi = MutableStateFlow(com.pdfchemy.app.billing.BillingUiState())
+    val billingUi = _billingUi.asStateFlow()
+    fun retryBilling(context: Context) { initBilling(context); billingManager?.retry() }
 
     fun initBilling(context: Context) {
         if (billingManager == null) {
             billingManager = BillingManager(context.applicationContext, viewModelScope)
+            viewModelScope.launch { billingManager?.billingUi?.collect { _billingUi.value = it } }
             viewModelScope.launch {
                 billingManager?.isPremium?.collect { _isPremium.value = it }
             }
@@ -625,7 +632,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.BatchProcessing(index + 1, total, selectedFile.name)
 
                     val outputName = "compressed_${selectedFile.name}"
-                    val outputDoc = directory.createFile("application/pdf", outputName)
+                    val outputDoc = com.pdfchemy.app.logic.OutputPolicy.createCopy(directory, "application/pdf", outputName)
                     if (outputDoc == null) {
                         return@forEachIndexed
                     }
@@ -988,7 +995,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         require(size in 1..16 * 1024 * 1024 && extractedCount < com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES)
                         total += size
                         require(total <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_BYTES)
-                        val newFile = outputDirectory.createFile("image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
+                        val newFile = com.pdfchemy.app.logic.OutputPolicy.createCopy(outputDirectory, "image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
                         createdOutputs.add(newFile)
                         requireNotNull(context.contentResolver.openOutputStream(newFile.uri, "wt")) { "Cannot open image output" }.use { output ->
                             val buffer = ByteArray(8192)
@@ -1232,7 +1239,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 val originalSize = ImageCompressor.getUriFileSize(context, uri)
                                 totalOriginalBytes.addAndGet(originalSize)
 
-                                val targetFile = outputDirectory.createFile(mime, "${baseName}_compressed.$ext")
+                                val targetFile = com.pdfchemy.app.logic.OutputPolicy.createCopy(outputDirectory, mime, "${baseName}_compressed.$ext")
                                 if (targetFile != null) {
                                     addPendingOutputUri(targetFile.uri)
                                     val result = try { ImageCompressor.compressImage(
@@ -1813,8 +1820,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = UiState.Error(message, technicalDetails)
     }
 
-    fun showSuccessToast(title: String, message: String) {
-        _uiState.value = UiState.Success(title, message, emptyList())
+    fun showSuccessToast(title: String, message: String, outputUri: Uri? = null) {
+        outputUri?.let { historyRepository.addHistoryItem(it, title, message); refreshHistory() }
+        _uiState.value = UiState.Success(title, message, listOfNotNull(outputUri))
     }
 
     fun showErrorToast(title: String, message: String, technicalDetails: String? = null) {

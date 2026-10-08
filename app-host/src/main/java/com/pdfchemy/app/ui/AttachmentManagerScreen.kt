@@ -89,9 +89,7 @@ fun AttachmentManagerScreen(
         }
     }
 
-    val extractSaveLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*")
-    ) { destUri ->
+    val extractSaveLauncher = rememberPreferredDocumentCreator("*/*") { destUri ->
         if (destUri != null && selectedPdfUri != null && targetExtractAttachment != null) {
             coroutineScope.launch {
                 try {
@@ -100,7 +98,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_extract_success),
                         context.getString(R.string.desc_extract_success)
-                    )
+                    , destUri)
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_extract_failed),
@@ -111,9 +109,7 @@ fun AttachmentManagerScreen(
         }
     }
 
-    val saveAttachedPdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveAttachedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && fileToEmbedUri != null) {
             coroutineScope.launch {
                 try {
@@ -122,7 +118,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_embed_success),
                         context.getString(R.string.desc_embed_success)
-                    )
+                    , destUri)
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_embed_failed),
@@ -133,7 +129,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_embed_success),
                         context.getString(R.string.desc_embed_success)
-                    )
+                    , destUri)
                     selectedPdfUri = destUri
                     fileToEmbedUri = null
                     refreshAttachments()

@@ -72,9 +72,7 @@ fun RepairPdfScreen(
         }
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -90,7 +88,7 @@ fun RepairPdfScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_repair_success),
                         context.getString(R.string.desc_repair_success, count)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

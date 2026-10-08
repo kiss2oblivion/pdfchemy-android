@@ -154,9 +154,7 @@ fun PageOrganizerScreen(
         }
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && pageItems.isNotEmpty()) {
             isOrganizing = true
             coroutineScope.launch(Dispatchers.IO) {

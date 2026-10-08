@@ -101,9 +101,7 @@ fun RedactionScreen(
         searchQuery = ""
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && foundBoxes.isNotEmpty()) {
             coroutineScope.launch {
                 isProcessing = true
@@ -126,7 +124,7 @@ fun RedactionScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_redaction_success),
                         context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(
@@ -138,9 +136,7 @@ fun RedactionScreen(
         }
     }
 
-    val smartRedactLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val smartRedactLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && smartPatterns.isNotEmpty()) {
             coroutineScope.launch {
                 isProcessing = true
@@ -161,7 +157,7 @@ fun RedactionScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_redaction_success),
                         context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

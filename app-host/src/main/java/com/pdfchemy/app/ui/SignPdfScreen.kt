@@ -112,9 +112,7 @@ fun SignPdfScreen(
     var pkiReason by remember { mutableStateOf("Signed by PDFchemy") }
     var pkiLocation by remember { mutableStateOf("Local Device") }
     
-    val pkiSignLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val pkiSignLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isSaving = true
             coroutineScope.launch {
@@ -202,9 +200,7 @@ fun SignPdfScreen(
         renderPage(uri, 0)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isSaving = true
             viewModel.applySignatures(context, selectedPdfUri!!, destUri, placedSignatures) { success ->

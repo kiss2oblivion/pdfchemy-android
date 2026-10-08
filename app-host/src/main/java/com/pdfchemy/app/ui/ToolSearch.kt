@@ -32,6 +32,7 @@ object ToolRegistry {
     // One entry per destination/format. Keep this catalog in sync with Screen;
     // registry tests enforce coverage without usage-based ordering.
     val allTools = listOf(
+        ToolEntry(R.string.recent_activity, R.string.settings_history_desc, Icons.Rounded.History, Screen.History, listOf("history", "recent files", "saved files")),
         ToolEntry(R.string.images_to_pdf, R.string.subtitle_images_to_pdf, Icons.Rounded.PictureAsPdf, Screen.ImagesToPdf, listOf("jpg to pdf", "png to pdf", "photo to pdf", "picture to pdf")),
         ToolEntry(R.string.text_to_pdf, R.string.subtitle_text_to_pdf, Icons.Rounded.Description, Screen.TextToPdf, listOf("txt to pdf", "notes to pdf")),
         ToolEntry(R.string.text_format_converter, R.string.subtitle_format_converter, Icons.Rounded.SyncAlt, Screen.TextConverter, listOf("txt", "rtf", "html", "convert text format")),
@@ -86,7 +87,7 @@ object ToolRegistry {
         ToolEntry(R.string.menu_font_inspector, R.string.menu_font_inspector_desc, Icons.Rounded.Edit, Screen.FontInspector, listOf("fonts", "typography", "embedded fonts")),
         ToolEntry(R.string.menu_doc_sanitizer, R.string.menu_doc_sanitizer_desc, Icons.Rounded.VerifiedUser, Screen.DocumentSanitizer, listOf("remove javascript", "remove threats", "sanitize document")),
         ToolEntry(R.string.menu_scan_document, R.string.menu_scan_document_desc, Icons.Rounded.DocumentScanner, Screen.ScanPdf, listOf("camera to pdf", "digitize", "photo scan", "scan paper")),
-        ToolEntry(R.string.select_pdf_for_reading, R.string.reflow_reader_subtitle, Icons.Rounded.MenuBook, Screen.PdfReader(), listOf("read pdf", "open pdf", "view pdf", "continuous reading")),
+        ToolEntry(R.string.select_pdf_for_reading, R.string.native_reader_description, Icons.Rounded.MenuBook, Screen.PdfReader(), listOf("read pdf", "open pdf", "view pdf", "continuous reading")),
         ToolEntry(R.string.menu_sign_pdf, R.string.menu_sign_pdf_desc, Icons.Rounded.Draw, Screen.SignPdf, listOf("signature", "digital signature", "sign pdf")),
     )
 

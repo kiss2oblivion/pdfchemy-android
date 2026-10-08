@@ -414,9 +414,7 @@ fun PdfEditorScreen(
     }
 
     // Save Modified PDF Launcher
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             viewModel.exportEditedPdf(
                 context = context,
@@ -540,7 +538,7 @@ fun PdfEditorScreen(
                         // Save Modified PDF
                         FilledTonalButton(
                             onClick = {
-                                val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "edited", "Document", "pdf")
+                                val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "edited", "Document", "pdf")
                                 savePdfLauncher.launch(suggestedName)
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -954,7 +952,7 @@ fun PdfEditorScreen(
                 Button(
                     onClick = {
                         showUnsavedDialog = false
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "edited", "Document", "pdf")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "edited", "Document", "pdf")
                         savePdfLauncher.launch(suggestedName)
                     }
                 ) {

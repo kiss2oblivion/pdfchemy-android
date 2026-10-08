@@ -15,13 +15,13 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 |---|---|---|
 | UX-01 | DONE | Batch 1: complete registry, distinct conversion/OCR/extraction routes, conceptual-query and coverage tests. |
 | UX-02 | DONE | Batch 1: guarded direct Home Open PDF and safe URI-free Reader search entry. |
-| UX-03 | PARTIAL | Batch 1 removes duplicate Quick Fill; remaining category/scan ambiguity is still open. |
+| UX-03 | DONE | Batch 1 removed duplicate Quick Fill; Batch 7 aligns Gray/Linearize Back with their Compression category, distinguishes Quick camera PDF from the document-scanning studio, and gives native Reader an accurate description. |
 | UX-04 | DONE | Batch 2: safeguard source is carried in a URI-bearing Split route, restored through ScreenSaver, and shown as selected input. |
 | UX-05 | PARTIAL | MainViewModel activeJob cancellation and pending-output cleanup exist; shared Processing often has no task ID, OCR lacks real page feedback. Complete truthful task progress and scoped cancellation. |
-| UX-06 | PARTIAL | MainActivity result has Open/Share/Another/Home; several tools call showSuccessToast without output URI, Open swallows failure, no supported Files action. |
-| UX-07 | STILL OPEN | `logic/FileUtil.kt` uses URI lastPathSegment; editor/organizer and other tools have generic suggestions. Resolve display names and preserve editable suffixes. |
-| UX-08 | STILL OPEN | Settings has no preferred output destination. Add local persisted SAF directory with change/reset and revoked-grant fallback. |
-| UX-09 | STILL OPEN | CreateDocument/provider still owns collision handling. Explicit safe-copy/confirmed overwrite policy needed for app-managed destinations. |
+| UX-06 | DONE | Batch 7 carries explicit output URIs from file-producing tools, lists names/MIME and individual Open actions, adds Browse files, and makes viewer/share failure visible. State-only Markdown import correctly creates no output. |
+| UX-07 | DONE | Batch 7 resolves DISPLAY_NAME and retained staged aliases before generating editable action suffixes, sanitizes suggestions and verifies opaque-ID/provider-name behavior. |
+| UX-08 | DONE | Batch 7 adds an explicit local SAF output-folder choice/change/reset. Existing save callbacks receive a fresh URI in that folder; revoked/unwritable access falls back to the system save picker. |
+| UX-09 | DONE | Batch 7 states and enforces keep-both numbered copy behavior for app-managed destinations, rejects a provider returning an existing capability, and preserves the system picker's own collision confirmation for other locations. |
 | UX-10 | STILL OPEN | `OrganizeScreens.kt` Split/Delete/Rotate retain numerical range controls; visual workspace exists separately. Add content-based selection and retain input on failure. |
 | UX-11 | DONE | `OrganizerSession.kt`, `PageOrganizerScreen.kt`: session undo/redo/reset and tests exist. Do not replace. |
 | UX-12 | DONE | Organizer initializes every page before rendering; failed previews retain originalIndex and toPageActions exports all identities. Existing failure tests. |
@@ -43,7 +43,7 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-28 | DONE | Batches 5–6 distinguish loading, readable content and provider/load failure in Reader/editor, and expose retry/select-file rather than flashing inaccessible content during initial staging. |
 | UX-29 | PARTIAL | Batch 5 separates Reader provider failures, password protection and damaged parsing from executable-threat copy. Shared/editor recovery presentation remains for the next batch; Vanguard engine remediation is preserved. |
 | UX-30 | STILL OPEN | MainViewModel and tool screens pass exception messages into UiState.Error/toasts; technical details remain visible. Central meaningful error presentation with separate diagnostics. |
-| UX-31 | STILL OPEN | EbookConverterScreen still uses rememberVanguardPdfPicker for EPUB/CBZ. Format-appropriate guarded selection needed; retain all PDF/security boundaries. |
+| UX-31 | DONE | Batch 7 selects and stages EPUB/CBZ archives through matching format contracts, then uses the existing bounded archive engines. PDF conversion inputs still use the existing Vanguard picker. |
 | UX-32 | DONE | PdfManipulator.splitPdf requires readable pages and nonempty selected pages before creating outputs; release regression covers invalid split. |
 | UX-33 | DONE | Batch 2: repeated gallery/camera URIs are deduplicated before URI-keyed image composition. |
 | UX-34 | STILL OPEN | Compression/redaction still expose large technical settings inline. Separate Advanced with preserved state and useful defaults. |
@@ -52,14 +52,14 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-37 | DONE | Batch 4: changing query/input clears targets; request identity rejects out-of-order publication, failures have visible retry guidance, and only current query results can be used. |
 | UX-38 | DONE | Batch 4 guards latest signing page publication and initial handoff; Batch 6 adds bounded chronological placement undo/redo and single-step drag history. Existing PKI error handling remains. |
 | UX-39 | DONE | Repair clears diagnostic on picker and selected URI effect, displays diagnosis failure. Original stale report defect fixed. |
-| UX-40 | STILL OPEN | HistoryRepository retains 20, Home shows five, no full-history/per-item removal/empty action. Preserve opt-in privacy and tool-first dashboard. |
-| UX-41 | STILL OPEN | HistoryItem has no MIME/directory identity; generic labels and unfiltered Merge recents remain. Store actual identity, task-filter and check availability. |
+| UX-40 | DONE | Batch 7 adds complete bounded history, per-entry removal and disabled/empty guidance without enabling history automatically or changing retention/privacy. |
+| UX-41 | DONE | Batch 7 stores actual filename, MIME and directory identity, checks availability, routes recents by MIME, and restricts Merge selection to available PDF entries. |
 | UX-42 | DONE | Batch 3: Settings/Premium system Back invokes the same callback as toolbar Back. |
 | UX-43 | DONE | Batch 3: existing haptics preference gates the shared Compose feedback delegate; category/tool cards use that delegate. |
 | UX-44 | DONE | Batch 3: Home exposes explicit System/Light/Dark selected choices and announces current mode. |
 | UX-45 | DONE | First-run agreement has decline/use-locally path and persisted AdConsentGate. Do not redesign consent/security. |
 | UX-46 | DONE | Banner eligibility explicitly excludes PdfReader/ReflowReader. Preserve exclusion; actual consented ad geometry is still a validation gate. |
-| UX-47 | STILL OPEN | Billing launch silently returns without ProductDetails; CTA enabled and no visible failure/retry. Preserve entitlement logic and price decision. |
+| UX-47 | DONE | Batch 7 disables checkout until Play/product readiness, provides connection/details timeout and retry, and shows cancelled/failed/pending outcomes. Mocked Play callback integration confirms no purchase launch or entitlement grant during readiness/retry/cancellation tests. |
 | UX-48 | PARTIAL | Batch 3: category height scales with font size; enlarged labels wrap and tool height is flexible. 320dp/font2.0 runtime verification remains open. |
 | UX-49 | DONE | Batch 3: editor color/reflow theme choices expose names, selected radio semantics and 48dp touch bounds in both reflow layouts; physical TalkBack validation remains a sign-off gate. |
 | UX-50 | DONE | Batch 3: the verification badge is an explicitly nonformatted single-percent string in all locale resources. |

@@ -79,9 +79,7 @@ fun BookletScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -94,7 +92,7 @@ fun BookletScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_booklet_success),
                         context.getString(R.string.desc_booklet_success)
-                    )
+                    , destUri)
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_booklet_failed),
@@ -108,7 +106,7 @@ fun BookletScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_booklet_success),
                         context.getString(R.string.desc_booklet_success)
-                    )
+                    , destUri)
                     onBack()
                 }
             }

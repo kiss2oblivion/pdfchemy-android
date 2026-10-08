@@ -1,4 +1,5 @@
 package com.pdfchemy.app.ui.textconverter
+import com.pdfchemy.app.ui.rememberPreferredDocumentCreator
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -51,9 +52,7 @@ fun TextConverterScreen(
         }
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(getMimeType(outputFormat))
-    ) { uri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator(getMimeType(outputFormat)) { uri ->
         if (uri != null) {
             viewModel.convertAndSave(context, uri)
         }
@@ -63,7 +62,7 @@ fun TextConverterScreen(
         when (val state = uiState) {
             is TextConverterViewModel.UiState.Success -> {
                 if (mainViewModel != null) {
-                    mainViewModel.showSuccessToast(state.message, "")
+                    mainViewModel.showSuccessToast(state.title, state.message, state.outputUri)
                 } else {
                     Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                 }
@@ -216,7 +215,7 @@ fun TextConverterScreen(
                             if (inputText.isBlank()) {
                                 Toast.makeText(context, context.getString(R.string.msg_enter_text), Toast.LENGTH_SHORT).show()
                             } else {
-                                val filename = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, context.getString(R.string.history_converted_text), context.getString(R.string.default_document_name), outputFormat.name.lowercase())
+                                val filename = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, context.getString(R.string.history_converted_text), context.getString(R.string.default_document_name), outputFormat.name.lowercase())
                                 saveFileLauncher.launch(filename)
                             }
                         },

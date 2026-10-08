@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+
+data class BillingUiState(val canPurchase: Boolean = false, val loading: Boolean = true,
+    val message: String = "Connecting to Google Play…", val canRetry: Boolean = false)
 
 class BillingManager(
     private val context: Context,
@@ -28,6 +33,20 @@ class BillingManager(
     val premiumPrice: StateFlow<String> = _premiumPrice.asStateFlow()
 
     private var premiumProductDetails: ProductDetails? = null
+    private val _billingUi = MutableStateFlow(BillingUiState())
+    val billingUi: StateFlow<BillingUiState> = _billingUi.asStateFlow()
+    private var connecting = false
+    private var connectionTimeout: Job? = null
+    private val connectionRequests = com.pdfchemy.app.logic.LatestRequest()
+    private val detailRequests = com.pdfchemy.app.logic.LatestRequest()
+    private fun available(message: String) = BillingUiState(
+        canPurchase = premiumProductDetails != null && billingClient.isReady, loading = false,
+        message = message, canRetry = premiumProductDetails == null || !billingClient.isReady)
+
+    fun retry() {
+        if (connecting) return
+        if (billingClient.isReady) queryProductDetails() else connectToPlayBilling()
+    }
 
     companion object {
         const val PREMIUM_PRODUCT_ID = "premium_upgrade"
@@ -66,20 +85,42 @@ class BillingManager(
     }
 
     private fun connectToPlayBilling() {
+        if (connecting) return
+        connecting = true
+        val ticket = connectionRequests.begin()
+        _billingUi.value = BillingUiState()
+        connectionTimeout?.cancel()
+        connectionTimeout = coroutineScope.launch {
+            delay(15_000)
+            if (connectionRequests.isCurrent(ticket) && connecting) {
+                connecting = false
+                _billingUi.value = BillingUiState(loading = false, message = "Google Play did not respond. Check your connection and retry.", canRetry = true)
+            }
+        }
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (!connectionRequests.isCurrent(ticket)) return
+                connecting = false
+                connectionTimeout?.cancel()
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     // The BillingClient is ready. You can query purchases here.
                     queryPurchases()
                     queryProductDetails()
+                } else {
+                    _billingUi.value = BillingUiState(loading = false, message = "Google Play billing is unavailable. Check your connection and retry.", canRetry = true)
                 }
             }
 
             override fun onBillingServiceDisconnected() {
+                if (!connectionRequests.isCurrent(ticket)) return
+                connecting = false
+                premiumProductDetails = null
+                detailRequests.invalidate()
+                _billingUi.value = available("Google Play disconnected. Retry when your connection is available.")
                 // Retry connection after a brief delay
                 coroutineScope.launch {
                     kotlinx.coroutines.delay(3000)
-                    if (!billingClient.isReady) {
+                    if (!billingClient.isReady && connectionRequests.isCurrent(ticket)) {
                         connectToPlayBilling()
                     }
                 }
@@ -88,6 +129,15 @@ class BillingManager(
     }
 
     private fun queryProductDetails() {
+        val ticket = detailRequests.begin()
+        premiumProductDetails = null
+        _billingUi.value = BillingUiState(message = "Loading purchase details…")
+        connectionTimeout?.cancel()
+        connectionTimeout = coroutineScope.launch {
+            delay(15_000)
+            if (detailRequests.isCurrent(ticket) && premiumProductDetails == null)
+                _billingUi.value = available("Google Play did not return purchase details. Retry when your connection is available.")
+        }
         val queryProductDetailsParams =
             QueryProductDetailsParams.newBuilder()
                 .setProductList(
@@ -101,12 +151,15 @@ class BillingManager(
                 .build()
 
         billingClient.queryProductDetailsAsync(queryProductDetailsParams) { billingResult, productDetailsResult ->
+            if (!detailRequests.isCurrent(ticket)) return@queryProductDetailsAsync
+            connectionTimeout?.cancel()
             val list = productDetailsResult.productDetailsList
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !list.isNullOrEmpty()) {
-                val details = list[0]
+            val details = list.firstOrNull { it.productId == PREMIUM_PRODUCT_ID }
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && details != null) {
                 premiumProductDetails = details
+                _billingUi.value = available("One-time purchase through Google Play.")
                 // We intentionally don't update _premiumPrice.value here because the user wants it hardcoded to $4.99
-            }
+            } else _billingUi.value = available("Purchase details are unavailable. Check Google Play and retry.")
         }
     }
 
@@ -129,11 +182,14 @@ class BillingManager(
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+            _billingUi.value = if (purchases.any { it.purchaseState == Purchase.PurchaseState.PENDING })
+                BillingUiState(loading = false, message = "Payment is pending. Premium unlocks when Google Play confirms it.")
+            else available("Purchase received. Google Play is confirming your entitlement.")
             processPurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            // Handle an error caused by a user cancelling the purchase flow.
+            _billingUi.value = available("Purchase cancelled. You can continue using PDFchemy.")
         } else {
-            // Handle any other error codes.
+            _billingUi.value = available("Purchase could not complete. Check Google Play and try again.")
         }
     }
 
@@ -166,7 +222,11 @@ class BillingManager(
     }
 
     fun launchPurchaseFlow(activity: Activity) {
-        val productDetails = premiumProductDetails ?: return
+        val productDetails = premiumProductDetails
+        if (productDetails == null || !billingClient.isReady || !_billingUi.value.canPurchase) {
+            _billingUi.value = available("Purchase is not ready. Check Google Play and retry.")
+            return
+        }
 
         val productDetailsParamsList = listOf(
             BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -178,6 +238,9 @@ class BillingManager(
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
 
-        billingClient.launchBillingFlow(activity, billingFlowParams)
+        _billingUi.value = BillingUiState(loading = true, message = "Opening Google Play…")
+        val result = billingClient.launchBillingFlow(activity, billingFlowParams)
+        if (result.responseCode != BillingClient.BillingResponseCode.OK)
+            _billingUi.value = available("Google Play could not open checkout. Check your connection and try again.")
     }
 }

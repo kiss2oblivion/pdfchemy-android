@@ -356,3 +356,93 @@ Exact files changed:
 - `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
 
 13 focused host tests pass (AnnotationParity, EditorSession and ReleaseWorkflowRegression), zero failures/errors. Debug assembly, debug lint and Android-test Kotlin compilation pass (BUILD SUCCESSFUL, 1m 36s); git diff --check passes. Native bitmap pixel testing was moved to AnnotationPixelParityTest in androidTest after Windows Robolectric reported missing native/windows/x86_64/robolectric-nativeruntime.dll. That test is compiled but not yet executed; pixel parity is not claimed. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.AnnotationParityTest --tests com.pdfchemy.app.logic.EditorSessionTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:compileDebugAndroidTestKotlin :app-host:assembleDebug :app-host:lintDebug --console=plain.
+
+
+## Batch 7 — File results, naming, saved folders, history and purchase readiness
+
+Every existing single-document save launcher now uses the optional saved SAF folder policy, with editable names, explicit keep-both copy semantics, change/reset in Settings and revoked/unavailable folder fallback to the system picker. App-managed batch outputs use the same numbered no-overwrite policy. Provider display names (including staged aliases) replace opaque IDs in smart filenames. Success producers explicitly carry their own output URI; Markdown import, which creates no file, remains a state-only result. Results list actual names/types with individual Open, Share and Browse files actions, with visible viewer/share failure. History retains the existing opt-in/20-item privacy model, stores real file/MIME/directory identity, offers all entries/removal/empty guidance, and filters Merge recents to available PDFs. EPUB/CBZ inputs use a matching archive picker and bounded staging; PDF inputs retain Vanguard. Billing CTA is disabled until matching ProductDetails and Play readiness exist, with timeout/unavailable/retry, cancellation and failure messages; entitlement/encrypted cache and the existing price decision are preserved. Gray/Linearize Back routes match Compression; quick camera capture and native reading copy are distinct. Batch 6 SHA verified d269bfb97ecd9d77224ccf5e94882abb17a1213d; CI run 37745712959 is tracked separately. The Batch 6 native annotation pixel test subsequently ran successfully on a local Android 36 emulator (OK, 1 test).
+
+Closed source IDs: UX-03, UX-06, UX-07, UX-08, UX-09, UX-31, UX-40, UX-41, UX-47.
+
+Still open or partial: UX-05, UX-10, UX-14, UX-21, UX-23, UX-29, UX-30, UX-34, UX-36, UX-48.
+
+Exact files changed:
+
+- `app-host/src/main/java/com/pdfchemy/app/MainActivity.kt`
+- `app-host/src/main/java/com/pdfchemy/app/billing/BillingManager.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/FileUtil.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/HistoryRepository.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/ShareUtil.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/AcroFormScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/AttachmentManagerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/BookmarkEditorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/BrowseOutputContract.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/CreateScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/EbookConverterScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/FindAndReplaceScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/FlattenPdfScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/FormBuilderScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/GrayscaleOptimizerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/HeaderFooterScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/HistoryScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ImageCompressorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ImageReplacerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/LinearizePdfScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MarkdownStudioScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MetadataSanitizerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/NUpScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OcrScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PageCropperScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PageLayoutScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PageNumberScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/QuickFillSignScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/RedactionScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/RepairPdfScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ScanPdfScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/SecurityScreens.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/TableExtractorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/textconverter/TextConverterScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/textconverter/TextConverterViewModel.kt`
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/main/res/values/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/billing/BillingReadinessTest.kt`
+- `app-host/src/test/java/com/pdfchemy/app/logic/OutputWorkflowTest.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+
+20 focused host tests pass (OutputWorkflow, BillingReadiness, ToolRegistry, FileUtil and ReleaseWorkflowRegression), zero failures/errors. Debug assembly and lint pass (zero errors, 645 warnings; BUILD SUCCESSFUL, 3m 2s). git diff --check passes after removing trailing spaces in the three migrated name-call lines. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.OutputWorkflowTest --tests com.pdfchemy.app.billing.BillingReadinessTest --tests com.pdfchemy.app.ui.ToolRegistryTest --tests com.pdfchemy.app.logic.FileUtilTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:assembleDebug :app-host:lintDebug --console=plain. Real Play checkout/payment was not invoked.
