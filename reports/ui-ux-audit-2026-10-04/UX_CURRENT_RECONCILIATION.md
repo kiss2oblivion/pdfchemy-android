@@ -29,18 +29,18 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-14 | PARTIAL | Organizer publishes previews incrementally; still serial eager render and bitmap retention without bounded cache. Measure and bound memory; preserve all page identities. |
 | UX-15 | DONE | Batch 5 wires native nested TOC, page jump, lazy thumbnails, local bookmarks, fit-page/width modes, share and print alongside existing gestures/search. Physical gesture and printer-service checks remain deferred until a device/service is available. |
 | UX-16 | DONE | Batch 5 releases hidden native chrome padding and adds reflow hide/reveal controls, including a full reading viewport when tabletop controls are hidden. |
-| UX-17 | PARTIAL | PdfEditor guards dirty Back; source change/session recreation and saved-copy boundary still need session preservation validation. |
+| UX-17 | DONE | Batch 6 retains EditorSession in the ViewModel across configuration recreation, protects input replacement and Back, preserves annotations at a saved baseline, and handles save cancellation/continue/discard explicitly. Process-death and protected-device recovery validation remain unverified; no new persistent sensitive draft store was introduced. |
 | UX-18 | DONE | Batch 5 preserves the original Reader route and in-memory page/offset through tool callbacks; Back/success returns to that Reader instead of a category. Batch 4 already corrected initial signing handoff rendering. |
 | UX-19 | DONE | Editor and QuickFill use chronological EditorSession with undo/redo, rotation/redaction tracking and mixed-action tests. |
-| UX-20 | STILL OPEN | PdfEditor wide/tabletop branches still display plain Image, unlike narrow interactive annotation surface. Preserve posture layout and share interactive surface. |
-| UX-21 | PARTIAL | PdfEditorWorker now composites annotations before raster redaction and applies rotation. Source omission is fixed; mixed preview/export order and existing-rotation parity need validation. |
-| UX-22 | PARTIAL | Text placement uses canvas ratios; preview still uses fixed sp text and dp stamp size while export scales annotations. Unify dimensions/transforms and verify density/rotation parity. |
+| UX-20 | DONE | Batch 6 routes narrow, dual-page and tabletop layouts through the same page-specific interactive annotation surface and rotation plane. Physical foldable posture checks remain deferred until hardware is available. |
+| UX-21 | PARTIAL | Worker mixed-annotation/redaction ordering is preserved and Batch 6 shares annotation paints with preview. The native pixel test is compiled, but mixed-page PDF/export/existing-rotation corpus execution remains deferred until an Android test device/emulator is available; Windows Robolectric lacks its native runtime DLL. |
+| UX-22 | DONE | Batch 6 removes fixed preview sp/dp annotation sizing and duplicate export painters. Both use AnnotationRenderer in normalized page coordinates with the same scale, baseline, alpha and stamp geometry. |
 | UX-23 | PARTIAL | Batch 2: renderUriToBitmap staging, decode and cleanup now stay on IO; physical release-like latency/memory measurements remain open. |
 | UX-24 | DONE | Reflow computes hasReadableContent and offers OCR for scanned/no-readable-content state; original empty-section gate fixed. |
-| UX-25 | PARTIAL | Batch 5 preserves original Reader URI and offset through tools; staged file identities now use retained display names rather than random snapshot names. Editor position/session persistence is in the next batch. |
+| UX-25 | DONE | Batches 5–6 preserve original Reader return identity/offset, retained staged display names, ephemeral editor page across recreation, and editor persistent page only when the existing remember-position preference is enabled. |
 | UX-26 | DONE | Batch 3: explicit local theme/font/serif defaults persist, with scoped reset and recreation/reset tests. |
 | UX-27 | DONE | Batch 5 counts every search occurrence with paragraph/character identity, focuses the active glyph, and retains nested TOC depth and exact page targets. |
-| UX-28 | PARTIAL | Batch 5 gives native Reader explicit loading, unreadable/no-pages recovery and retry plus page render retry. Editor initial-load state remains for the next batch. |
+| UX-28 | DONE | Batches 5–6 distinguish loading, readable content and provider/load failure in Reader/editor, and expose retry/select-file rather than flashing inaccessible content during initial staging. |
 | UX-29 | PARTIAL | Batch 5 separates Reader provider failures, password protection and damaged parsing from executable-threat copy. Shared/editor recovery presentation remains for the next batch; Vanguard engine remediation is preserved. |
 | UX-30 | STILL OPEN | MainViewModel and tool screens pass exception messages into UiState.Error/toasts; technical details remain visible. Central meaningful error presentation with separate diagnostics. |
 | UX-31 | STILL OPEN | EbookConverterScreen still uses rememberVanguardPdfPicker for EPUB/CBZ. Format-appropriate guarded selection needed; retain all PDF/security boundaries. |
@@ -50,7 +50,7 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-35 | DONE | Batch 4: analysis generations reject obsolete results; per-input explicit choices and saved My default protect each setting independently; explicit save/reset controls and a delayed-analysis view-model regression verify the contract. |
 | UX-36 | PARTIAL | Redaction review dialog lists counts/pages, not visual target review; smart patterns bypass visual preview. Add preview and explicit commit boundary. |
 | UX-37 | DONE | Batch 4: changing query/input clears targets; request identity rejects out-of-order publication, failures have visible retry guidance, and only current query results can be used. |
-| UX-38 | PARTIAL | Batch 4: signing publishes count/bitmap only for the current URI/page/request and recycles unpublished results; initial Reader handoff now renders. Signature-session undo remains open. |
+| UX-38 | DONE | Batch 4 guards latest signing page publication and initial handoff; Batch 6 adds bounded chronological placement undo/redo and single-step drag history. Existing PKI error handling remains. |
 | UX-39 | DONE | Repair clears diagnostic on picker and selected URI effect, displays diagnosis failure. Original stale report defect fixed. |
 | UX-40 | STILL OPEN | HistoryRepository retains 20, Home shows five, no full-history/per-item removal/empty action. Preserve opt-in privacy and tool-first dashboard. |
 | UX-41 | STILL OPEN | HistoryItem has no MIME/directory identity; generic labels and unfiltered Merge recents remain. Store actual identity, task-filter and check availability. |

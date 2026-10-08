@@ -329,3 +329,30 @@ Exact files changed:
 - `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
 
 Nine focused tests pass (ReaderNavigation and ReleaseWorkflowRegression), zero failures/errors. Debug assembly and lint pass; lint reports zero errors and 634 warnings. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.ReaderNavigationTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:assembleDebug :app-host:lintDebug --console=plain. git diff --check passes. Physical gesture, print-service and font/device checks are explicitly unverified.
+
+
+## Batch 6 — Shared annotation surface, editor drafts and signing undo
+
+Host preview and isolated export now share AnnotationRenderer, with identical normalized dimensions and text/stamp paint. Narrow, dual-page and tabletop editor layouts use the same interactive AnnotationPageCanvas, including page-specific text insertion and rotation. EditorSession is retained in the ViewModel across configuration recreation, guards input replacement, distinguishes cancelled save/continue/discard, and marks a saved baseline without removing the visible annotations. Editor page restore obeys the existing remember-position toggle. Signing has bounded chronological undo/redo with drag commits grouped as one operation. Pixel limits and forensic worker redaction order are preserved. Reader batch remote SHA verified: 2c0a779ceb5b191d2b0cf08930aa3df479febe81; CI run 37744566602 is tracked separately.
+
+Closed source IDs: UX-17, UX-20, UX-22, UX-25, UX-28, UX-38.
+
+Still open or partial: UX-03, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10, UX-14, UX-21, UX-23, UX-29, UX-30, UX-31, UX-34, UX-36, UX-40, UX-41, UX-47, UX-48.
+
+Exact files changed:
+
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/AnnotationPixelParityTest.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/EditorSession.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/PdfEditor.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/SessionHistory.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/AnnotationPageCanvas.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt`
+- `app-host/src/test/java/com/pdfchemy/app/logic/AnnotationParityTest.kt`
+- `pdf-ipc/src/main/java/com/pdfchemy/app/logic/AnnotationRenderer.kt`
+- `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt`
+- `reports/ui-ux-audit-2026-10-04/UX_CURRENT_RECONCILIATION.md`
+- `reports/ui-ux-audit-2026-10-04/UX_IMPLEMENTATION_BATCHES.md`
+
+13 focused host tests pass (AnnotationParity, EditorSession and ReleaseWorkflowRegression), zero failures/errors. Debug assembly, debug lint and Android-test Kotlin compilation pass (BUILD SUCCESSFUL, 1m 36s); git diff --check passes. Native bitmap pixel testing was moved to AnnotationPixelParityTest in androidTest after Windows Robolectric reported missing native/windows/x86_64/robolectric-nativeruntime.dll. That test is compiled but not yet executed; pixel parity is not claimed. Command: gradlew :app-host:testDebugUnitTest --tests com.pdfchemy.app.logic.AnnotationParityTest --tests com.pdfchemy.app.logic.EditorSessionTest --tests com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest :app-host:compileDebugAndroidTestKotlin :app-host:assembleDebug :app-host:lintDebug --console=plain.

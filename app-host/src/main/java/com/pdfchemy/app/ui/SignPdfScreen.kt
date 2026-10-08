@@ -84,7 +84,14 @@ fun SignPdfScreen(
     var showSignaturePad by remember { mutableStateOf(false) }
 
     // Placed signatures on the document
+    val placementHistory = remember { com.pdfchemy.app.logic.SessionHistory<List<PlacedSignature>>(emptyList()) }
+    var draggingPlacement by remember { mutableStateOf(false) }
     var placedSignatures by remember { mutableStateOf<List<PlacedSignature>>(emptyList()) }
+    fun updatePlacements(value: List<PlacedSignature>) {
+        if (!draggingPlacement) placementHistory.replace(value)
+        placedSignatures = value
+    }
+
     var selectedSignatureId by remember { mutableStateOf<String?>(null) }
     var includeDateStamp by remember { mutableStateOf(true) }
     var isSaving by remember { mutableStateOf(false) }
@@ -190,6 +197,7 @@ fun SignPdfScreen(
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         currentPageIndex = 0
+        placementHistory.reset(emptyList())
         placedSignatures = emptyList()
         renderPage(uri, 0)
     }
@@ -223,6 +231,8 @@ fun SignPdfScreen(
                     }
                 },
                 actions = {
+                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Undo, "Undo placement") }
+                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Redo, "Redo placement") }
                     IconButton(onClick = { forceTabletopMode = !forceTabletopMode }) {
                         Icon(
                             imageVector = if (isTabletopMode) Icons.Rounded.LaptopMac else Icons.Rounded.PhoneAndroid,
@@ -389,7 +399,10 @@ fun SignPdfScreen(
                                                 detectDragGestures(
                                                     onDragStart = {
                                                         selectedSignatureId = sig.id
+                                                        draggingPlacement = true
                                                     },
+                                                    onDragEnd = { placementHistory.replace(placedSignatures); draggingPlacement = false },
+                                                    onDragCancel = { placedSignatures = placementHistory.current; draggingPlacement = false },
                                                     onDrag = { change, dragAmount ->
                                                         change.consume()
                                                         if (pagePixelSize.width > 0 && pagePixelSize.height > 0) {
@@ -434,7 +447,7 @@ fun SignPdfScreen(
                                                     .size(22.dp)
                                                     .background(MaterialTheme.colorScheme.error, CircleShape)
                                                     .clickable {
-                                                        placedSignatures = placedSignatures.filter { it.id != sig.id }
+                                                        updatePlacements(placedSignatures.filter { it.id != sig.id })
                                                         if (selectedSignatureId == sig.id) {
                                                             selectedSignatureId = null
                                                         }
@@ -547,7 +560,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.05f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("✓ Check", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
@@ -570,7 +583,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.05f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("✕ Cross", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
@@ -594,7 +607,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("📅 Date", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
@@ -617,7 +630,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.10f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("CONFORM CU ORIGINALUL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
@@ -640,7 +653,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.09f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("APPROVED", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
@@ -663,7 +676,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.09f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("CONFIDENTIAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
@@ -686,7 +699,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("PAID", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED)) },
@@ -709,7 +722,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("DRAFT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD97706)) },
@@ -754,7 +767,7 @@ fun SignPdfScreen(
                                         bitmapBytes = stream.toByteArray(),
                                         dateStamp = dateStr
                                     )
-                                    placedSignatures = placedSignatures + newSig
+                                    updatePlacements(placedSignatures + newSig)
                                     selectedSignatureId = newSig.id
                                 },
                             shape = RoundedCornerShape(10.dp)

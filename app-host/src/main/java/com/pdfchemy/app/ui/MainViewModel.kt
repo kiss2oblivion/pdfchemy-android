@@ -98,6 +98,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    val editorSession = com.pdfchemy.app.logic.EditorSession()
+    var editorUri: Uri? = null
+    var editorSourceUri: Uri? = null
+    var editorPage = 0
     data class ReaderPosition(val page: Int, val offset: Int)
     val readerPositions = mutableMapOf<String, ReaderPosition>()
     var readerSourceUri: Uri? = null

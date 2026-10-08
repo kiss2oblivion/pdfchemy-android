@@ -83,21 +83,41 @@ fun PdfEditorScreen(
     SecureScreenContent()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val session = remember { EditorSession() }
+    val session = viewModel.editorSession
     var sessionTick by remember { mutableIntStateOf(0) }
     val pageModifications = remember(sessionTick) { session.getModifications() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    remember(initialPdfUri) {
+        if (initialPdfUri != null && viewModel.editorSourceUri != initialPdfUri) {
+            session.clear(); viewModel.editorSourceUri = initialPdfUri; viewModel.editorUri = initialPdfUri; viewModel.editorPage = 0
+        }
+        true
+    }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(viewModel.editorUri ?: initialPdfUri) }
+    var documentId by remember { mutableStateOf("") }
+    val rememberPosition by viewModel.isRememberPositionEnabled.collectAsState()
     var totalPages by remember { mutableIntStateOf(0) }
-    var currentPageIndex by remember { mutableIntStateOf(0) }
+    var currentPageIndex by remember { mutableIntStateOf(viewModel.editorPage) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var secondaryPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isRenderingPage by remember { mutableStateOf(false) }
+    var isRenderingPage by remember { mutableStateOf(initialPdfUri != null || viewModel.editorUri != null) }
+    var documentLoading by remember { mutableStateOf(initialPdfUri != null || viewModel.editorUri != null) }
+    var loadFailed by remember { mutableStateOf(false) }
 
+    var pendingInput by remember { mutableStateOf<Uri?>(null) }
+    var pendingTextPage by remember { mutableIntStateOf(0) }
+    SideEffect { viewModel.editorUri = selectedPdfUri; viewModel.editorPage = currentPageIndex }
+    fun changeInput(uri: Uri) {
+        session.clear(); sessionTick++
+        viewModel.editorSourceUri = uri
+        selectedPdfUri = uri; currentPageIndex = 0; loadFailed = false; documentLoading = true
+    }
     var showUnsavedDialog by remember { mutableStateOf(false) }
+    var leaveAfterSave by remember { mutableStateOf(false) }
 
     fun handleBack() {
         if (session.isDirty) {
+            leaveAfterSave = true
             showUnsavedDialog = true
         } else {
             onBack()
@@ -287,15 +307,21 @@ fun PdfEditorScreen(
 
     // Load initial PDF bounds / page count
     LaunchedEffect(selectedPdfUri, reloadTrigger) {
+        documentLoading = selectedPdfUri != null
         guardDocumentLoad(onFailure = {
-            showVanguardBlockedDialog = true
-            selectedPdfUri = null
+            loadFailed = true
+            documentLoading = false
             totalPages = 0
             isVanguardScanning = false
         }) {
             selectedPdfUri?.let { originalUri ->
                 val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
                 if (uri != originalUri) { selectedPdfUri = uri; return@LaunchedEffect }
+                documentId = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, viewModel.editorSourceUri ?: uri)
+                }
+                if (rememberPosition) currentPageIndex = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
+                    .getInt("editor_page_$documentId", currentPageIndex).coerceAtLeast(0)
                 if (isVanguardEnabled) {
                     isVanguardScanning = true
                     vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
@@ -304,8 +330,7 @@ fun PdfEditorScreen(
                         when (threat) {
                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
                                 totalPages = PdfEditor.getPageCount(context, uri)
-                                currentPageIndex = 0
-                                session.reset(); sessionTick++
+                                currentPageIndex = currentPageIndex.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
                             }
                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                 showVanguardEncryptedDialog = true
@@ -329,14 +354,20 @@ fun PdfEditorScreen(
                     }
                 } else {
                     totalPages = PdfEditor.getPageCount(context, uri)
-                    currentPageIndex = 0
-                    session.reset(); sessionTick++
+                    currentPageIndex = currentPageIndex.coerceIn(0, (totalPages - 1).coerceAtLeast(0))
                 }
             }
         }
 
     }
 
+    LaunchedEffect(totalPages) { if (totalPages > 0) documentLoading = false }
+
+    LaunchedEffect(currentPageIndex, documentLoading, rememberPosition) {
+        if (!documentLoading && totalPages > 0 && rememberPosition && documentId.isNotEmpty()) {
+            context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit().putInt("editor_page_$documentId", currentPageIndex).apply()
+        }
+    }
     // Render current page(s) with immediate recycling
     LaunchedEffect(selectedPdfUri, currentPageIndex, totalPages, isDualPageMode) {
         guardDocumentLoad(onFailure = {
@@ -377,8 +408,8 @@ fun PdfEditorScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
-            selectedPdfUri = uri
-            reloadTrigger++
+            if (session.isDirty) { pendingInput = uri; leaveAfterSave = false; showUnsavedDialog = true }
+            else { changeInput(uri); reloadTrigger++ }
         }
     }
 
@@ -394,16 +425,28 @@ fun PdfEditorScreen(
                 modifications = pageModifications
             ) { success ->
                 if (success) {
-                    session.reset()
+                    session.markSaved()
                     sessionTick++
+                    pendingInput?.let { changeInput(it); pendingInput = null }
                     viewModel.notifySuccess(
                         context.getString(R.string.editor_export_success_title),
                         context.getString(R.string.editor_export_success_desc),
                         destUri
                     )
+                    if (leaveAfterSave) { leaveAfterSave = false; onBack() }
                 }
             }
-        }
+        } else { pendingInput = null; leaveAfterSave = false }
+    }
+
+    @Composable
+    fun EditorPageCanvas(bitmap: Bitmap, pageIndex: Int) {
+        val modification = pageModifications[pageIndex] ?: PageModification(pageIndex)
+        AnnotationPageCanvas(bitmap, modification, activeTool, selectedColor, strokeWidth,
+            onDrawing = { session.addDrawing(pageIndex, it); sessionTick++ },
+            onText = { pendingTextPage = pageIndex; pendingTextPosition = it; showTextDialog = true },
+            onStamp = { session.addStamp(pageIndex, StampAnnotation(type = selectedStampType, xRatio = it.x, yRatio = it.y)); sessionTick++ },
+            onRedaction = { session.addRedaction(pageIndex, it); sessionTick++ })
     }
 
     Scaffold(
@@ -556,7 +599,15 @@ fun PdfEditorScreen(
                 .padding(padding),
             contentAlignment = Alignment.Center
         ) {
-            if (selectedPdfUri == null) {
+            if (documentLoading) {
+                CircularProgressIndicator()
+            } else if (loadFailed) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Cannot load this document. Check access permission or select another copy.")
+                    TextButton(onClick = { loadFailed = false; reloadTrigger++; documentLoading = true }) { Text("Retry") }
+                    TextButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) { Text("Select PDF") }
+                }
+            } else if (selectedPdfUri == null) {
                 // Empty Picker View
                 EmptyPdfPickerView(
                     onPickClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }
@@ -626,12 +677,7 @@ fun PdfEditorScreen(
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.White)
                         ) {
-                            Image(
-                                bitmap = currentPageBitmap!!.asImageBitmap(),
-                                contentDescription = "Page ${currentPageIndex + 1}",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                            EditorPageCanvas(currentPageBitmap!!, currentPageIndex)
                         }
                     }
 
@@ -710,12 +756,7 @@ fun PdfEditorScreen(
                             .background(Color.White),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            bitmap = currentPageBitmap!!.asImageBitmap(),
-                            contentDescription = "Page ${currentPageIndex + 1}",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        EditorPageCanvas(currentPageBitmap!!, currentPageIndex)
                     }
 
                     // Center Book Spine / Crease Gutter
@@ -744,231 +785,11 @@ fun PdfEditorScreen(
                             .background(Color.White),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            bitmap = secondaryPageBitmap!!.asImageBitmap(),
-                            contentDescription = "Page ${currentPageIndex + 2}",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        EditorPageCanvas(secondaryPageBitmap!!, currentPageIndex + 1)
                     }
                 }
             } else {
-                // Interactive PDF Canvas
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(currentPageBitmap!!.width.toFloat() / currentPageBitmap!!.height.toFloat())
-                            .shadow(12.dp, RoundedCornerShape(8.dp))
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White)
-                            .rotate(currentMod.rotationDegrees.toFloat())
-                            .onSizeChanged { canvasSize = it }
-                            .pointerInput(activeTool, currentPageIndex) {
-                                when (activeTool) {
-                                    EditorTool.PEN, EditorTool.HIGHLIGHTER -> {
-                                        detectDragGestures(
-                                            onDragStart = { offset ->
-                                                if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    currentStrokePoints = listOf(
-                                                        DrawingPoint(offset.x / canvasSize.width, offset.y / canvasSize.height)
-                                                    )
-                                                }
-                                            },
-                                            onDrag = { change, _ ->
-                                                change.consume()
-                                                if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    val pt = DrawingPoint(
-                                                        (change.position.x / canvasSize.width).coerceIn(0f, 1f),
-                                                        (change.position.y / canvasSize.height).coerceIn(0f, 1f)
-                                                    )
-                                                    currentStrokePoints = currentStrokePoints + pt
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                if (currentStrokePoints.size >= 2) {
-                                                    val newPath = DrawingPath(
-                                                        points = currentStrokePoints,
-                                                        color = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f).hashCode() else selectedColor.hashCode(),
-                                                        strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
-                                                        isHighlighter = activeTool == EditorTool.HIGHLIGHTER
-                                                    )
-                                                    session.addDrawing(currentPageIndex, newPath)
-                                                    sessionTick++
-                                                }
-                                                currentStrokePoints = emptyList()
-                                            }
-                                        )
-                                    }
-                                    EditorTool.TEXT -> {
-                                        detectTapGestures { offset ->
-                                            if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                pendingTextPosition = offset
-                                                showTextDialog = true
-                                            }
-                                        }
-                                    }
-                                    EditorTool.STAMP -> {
-                                        detectTapGestures { offset ->
-                                            if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                val xR = offset.x / canvasSize.width
-                                                val yR = offset.y / canvasSize.height
-                                                val newStamp = StampAnnotation(
-                                                    type = selectedStampType,
-                                                    xRatio = xR,
-                                                    yRatio = yR
-                                                )
-                                                session.addStamp(currentPageIndex, newStamp)
-                                                sessionTick++
-                                            }
-                                        }
-                                    }
-                                    EditorTool.REDACT -> {
-                                        detectDragGestures(
-                                            onDragStart = { offset ->
-                                                redactDragStart = offset
-                                                redactDragCurrent = offset
-                                            },
-                                            onDrag = { change, _ ->
-                                                change.consume()
-                                                redactDragCurrent = change.position
-                                            },
-                                            onDragEnd = {
-                                                val start = redactDragStart
-                                                val end = redactDragCurrent
-                                                if (start != null && end != null && canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    val leftNorm = (minOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
-                                                    val topNorm = (minOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
-                                                    val rightNorm = (maxOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
-                                                    val bottomNorm = (maxOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
-
-                                                    if (rightNorm - leftNorm > 0.02f && bottomNorm - topNorm > 0.01f) {
-                                                        val newRedaction = com.pdfchemy.app.logic.RedactionBox(
-                                                            pageIndex = currentPageIndex,
-                                                            normalizedRect = android.graphics.RectF(leftNorm, topNorm, rightNorm, bottomNorm),
-                                                            overlayLabel = "REDACTED"
-                                                        )
-                                                        session.addRedaction(currentPageIndex, newRedaction)
-                                                        sessionTick++
-                                                    }
-                                                }
-                                                redactDragStart = null
-                                                redactDragCurrent = null
-                                            }
-                                        )
-                                    }
-                                    EditorTool.VIEW -> { /* View mode allows page inspection */ }
-                                }
-                            }
-                    ) {
-                        // 1. Render Background PDF Page Bitmap
-                        Image(
-                            bitmap = currentPageBitmap!!.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-
-                        // 2. Render Overlay Annotations (Drawings, Texts, Stamps, Redactions)
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            // Render Saved Drawings
-                            for (drawing in currentMod.drawings) {
-                                drawPathStroke(drawing, size.width, size.height)
-                            }
-                            // Render In-Progress Stroke
-                            if (currentStrokePoints.size >= 2) {
-                                val tempDrawing = DrawingPath(
-                                    points = currentStrokePoints,
-                                    color = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f).hashCode() else selectedColor.hashCode(),
-                                    strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
-                                    isHighlighter = activeTool == EditorTool.HIGHLIGHTER
-                                )
-                                drawPathStroke(tempDrawing, size.width, size.height)
-                            }
-
-                            // Render Saved Redactions
-                            for (redaction in currentMod.redactions) {
-                                val norm = redaction.normalizedRect
-                                drawRect(
-                                    color = Color.Black,
-                                    topLeft = androidx.compose.ui.geometry.Offset(norm.left * size.width, norm.top * size.height),
-                                    size = androidx.compose.ui.geometry.Size((norm.right - norm.left) * size.width, (norm.bottom - norm.top) * size.height)
-                                )
-                            }
-
-                            // Render In-Progress Redaction Box
-                            if (activeTool == EditorTool.REDACT && redactDragStart != null && redactDragCurrent != null) {
-                                val start = redactDragStart!!
-                                val end = redactDragCurrent!!
-                                val left = minOf(start.x, end.x)
-                                val top = minOf(start.y, end.y)
-                                val width = kotlin.math.abs(end.x - start.x)
-                                val height = kotlin.math.abs(end.y - start.y)
-                                drawRect(
-                                    color = Color.Black.copy(alpha = 0.75f),
-                                    topLeft = androidx.compose.ui.geometry.Offset(left, top),
-                                    size = androidx.compose.ui.geometry.Size(width, height)
-                                )
-                            }
-                        }
-
-                        // Render Text Annotations
-                        for (textAnn in currentMod.textAnnotations) {
-                            Box(
-                                modifier = Modifier
-                                    .offset {
-                                        IntOffset(
-                                            (canvasSize.width * textAnn.xRatio).roundToInt(),
-                                            (canvasSize.height * textAnn.yRatio).roundToInt()
-                                        )
-                                    }
-                                    .background(Color(textAnn.backgroundColor), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = textAnn.text,
-                                    color = Color(textAnn.textColor),
-                                    fontSize = textAnn.fontSize.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        // Render Stamps
-                        val density = LocalDensity.current
-                        val stampWidthPx = with(density) { 90.dp.toPx() }
-                        val stampHeightPx = with(density) { 36.dp.toPx() }
-                        for (stamp in currentMod.stamps) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .offset {
-                                        IntOffset(
-                                            (canvasSize.width * stamp.xRatio - stampWidthPx / 2f).roundToInt(),
-                                            (canvasSize.height * stamp.yRatio - stampHeightPx / 2f).roundToInt()
-                                        )
-                                    }
-                                    .rotate(stamp.rotation)
-                                    .border(2.5.dp, Color(stamp.type.colorHex), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = stamp.type.text,
-                                    color = Color(stamp.type.colorHex),
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    letterSpacing = 1.sp
-                                )
-                            }
-                        }
-                    }
-                }
+                EditorPageCanvas(currentPageBitmap!!, currentPageIndex)
             }
         }
     }
@@ -994,8 +815,8 @@ fun PdfEditorScreen(
                 Button(
                     onClick = {
                         if (textInputContent.isNotBlank() && pendingTextPosition != null) {
-                            val xRatio = if (canvasSize.width > 0) (pendingTextPosition!!.x / canvasSize.width.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
-                            val yRatio = if (canvasSize.height > 0) (pendingTextPosition!!.y / canvasSize.height.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
+                            val xRatio = pendingTextPosition!!.x.coerceIn(0.02f, 0.95f)
+                            val yRatio = pendingTextPosition!!.y.coerceIn(0.02f, 0.95f)
                             val newTextAnn = TextAnnotation(
                                 text = textInputContent.trim(),
                                 xRatio = xRatio,
@@ -1003,7 +824,7 @@ fun PdfEditorScreen(
                                 fontSize = 16f,
                                 textColor = selectedColor.hashCode()
                             )
-                            session.addTextAnnotation(currentPageIndex, newTextAnn)
+                            session.addTextAnnotation(pendingTextPage, newTextAnn)
                             sessionTick++
                         }
                         textInputContent = ""
@@ -1126,7 +947,7 @@ fun PdfEditorScreen(
 
     if (showUnsavedDialog) {
         AlertDialog(
-            onDismissRequest = { showUnsavedDialog = false },
+            onDismissRequest = { showUnsavedDialog = false; pendingInput = null; leaveAfterSave = false },
             title = { Text(stringResource(R.string.dialog_unsaved_title)) },
             text = { Text(stringResource(R.string.dialog_unsaved_message)) },
             confirmButton = {
@@ -1145,12 +966,14 @@ fun PdfEditorScreen(
                     TextButton(
                         onClick = {
                             showUnsavedDialog = false
-                            onBack()
+                            session.clear(); sessionTick++
+                            val next = pendingInput; pendingInput = null
+                            if (next != null) changeInput(next) else onBack()
                         }
                     ) {
                         Text(stringResource(R.string.dialog_unsaved_discard), color = MaterialTheme.colorScheme.error)
                     }
-                    TextButton(onClick = { showUnsavedDialog = false }) {
+                    TextButton(onClick = { showUnsavedDialog = false; pendingInput = null; leaveAfterSave = false }) {
                         Text(stringResource(R.string.dialog_unsaved_continue))
                     }
                 }
