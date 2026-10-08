@@ -33,9 +33,9 @@ finding. Device, provider, ad-load, and export-parity checks remain sign-off gat
 | UX-18 | DONE | Batch 5 preserves the original Reader route and in-memory page/offset through tool callbacks; Back/success returns to that Reader instead of a category. Batch 4 already corrected initial signing handoff rendering. |
 | UX-19 | DONE | Editor and QuickFill use chronological EditorSession with undo/redo, rotation/redaction tracking and mixed-action tests. |
 | UX-20 | DONE | Batch 6 routes narrow, dual-page and tabletop layouts through the same page-specific interactive annotation surface and rotation plane. Physical foldable posture checks remain deferred until hardware is available. |
-| UX-21 | DONE | Batch 8 places overlays in the original page rotation plane before added rotation; raster redaction uses the shared opaque painter and recycles its base bitmap while retaining forensic overwrite/annotation removal. Android 36 end-to-end exports pass eight combinations of existing rotation 0/90/180/270 plus added 90, with drawings, text, stamps and redaction/no redaction; color centroids, page aspect ratios and opaque redaction corners match preview. |
+| UX-21 | DONE | Batch 8 places overlays in the original rotation plane before added rotation and uses the shared opaque raster painter with forensic overwrite/annotation removal retained. Final CI 37764572638 passes the full 209-test native suites on Android 24/30/34/36, including all eight mixed annotation/export combinations (existing 0/90/180/270 plus added 90, with and without redaction), color centroids, page aspect ratios and fully opaque near-black redaction corners. |
 | UX-22 | DONE | Batch 6 removes fixed preview sp/dp annotation sizing and duplicate export painters. Both use AnnotationRenderer in normalized page coordinates with the same scale, baseline, alpha and stamp geometry. |
-| UX-23 | PARTIAL | Batches 2/6 move staging, decoding and overlay painting to IO; Batch 8 bounds visible thumbnail ownership and in-flight work. DEFERRED: physical release-like Reader/annotation/100-500-page memory and latency traces (also O-01/O-04) need representative hardware. Only Android 24/36 debug emulators are available; emulator test duration is not physical performance evidence. |
+| UX-23 | PARTIAL | Batches 2/6 move staging, decoding and overlay painting to IO; Batch 8 bounds visible thumbnail ownership and in-flight work. DEFERRED: physical release-like Reader/annotation/100-500-page memory and latency traces (also O-01/O-04) need representative hardware. Only local debug emulators are available; remote CI is not physical performance evidence; emulator test duration is not physical performance evidence. |
 | UX-24 | DONE | Reflow computes hasReadableContent and offers OCR for scanned/no-readable-content state; original empty-section gate fixed. |
 | UX-25 | DONE | Batches 5–6 preserve original Reader return identity/offset, retained staged display names, ephemeral editor page across recreation, and editor persistent page only when the existing remember-position preference is enabled. |
 | UX-26 | DONE | Batch 3: explicit local theme/font/serif defaults persist, with scoped reset and recreation/reset tests. |
@@ -92,3 +92,9 @@ been completed or explicitly deferred with a concrete justification.
 
 The single 50-row matrix above is authoritative. Batch receipts preserve prior
 implementation evidence without conflicting historical disposition overrides.
+
+Implementation closeout: all approved source work is complete. The 50 unique
+original IDs retain 49 DONE and one PARTIAL, UX-23, with physical performance
+profiling explicitly deferred. Final source/build CI and the remaining hardware
+gates are recorded in [VANGUARD_OCR_VERIFICATION_2026-10-08.md](VANGUARD_OCR_VERIFICATION_2026-10-08.md).
+The implementation branch remains unmerged.

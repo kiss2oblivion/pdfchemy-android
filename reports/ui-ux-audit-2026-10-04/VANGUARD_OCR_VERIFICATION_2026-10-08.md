@@ -96,3 +96,29 @@ Reader/annotation/100-500-page memory and latency profiling explicitly deferred:
 no physical device is attached. Hardware resumption and the other physical UI
 gates are listed in `UX_RUNTIME_VALIDATION_2026-10-08.md`. No merge or audit
 certification is claimed.
+
+## Final CI and implementation closeout
+
+**PASS:** [CI run 37764572638](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/37764572638)
+at `7aca098a02edd246b914669fae542967cd5608fc`. All nine jobs passed:
+architecture, dependency checks, secret checks, full host suites, native Android
+24/30/34/36 (209 tests on each), and the final build/artifact job. The latter runs
+release lint, debug/release assembly with unsigned verification, and the unchanged
+artifact checker against all 62 route checklist entries and committed corpus.
+
+The earlier API 30 startup abort did not recur: same-source replay at `4e49ce6`
+and this source-identical corrected-report run each complete all 209 tests with
+zero failures. No production startup change or unsupported root cause is claimed.
+The earlier run's subsequent release build/lint passed, but its artifact checker
+failed on the missing History row. Batch 10 fixes that actual checklist defect;
+the current complete CI run passes. Failed attempts remain documented and are
+not counted as passes.
+
+All approved source implementation work is complete: 28 of the requested remaining
+29 findings closed, UX-23 physical profiling explicitly deferred. The current
+50-row matrix is authoritative (49 DONE, one PARTIAL). The final receipt changes
+only three audit Markdown files; production, CI configuration, checker and its
+fixture/checklist inputs are unchanged from the tested revision. No extra test
+run is needed for this documentation-only receipt. Commit/push and remote SHA
+verification are reported in the final handoff. No merge, physical validation or
+release certification is claimed.
