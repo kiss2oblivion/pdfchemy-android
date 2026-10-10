@@ -9,7 +9,7 @@ Implementation candidate: `80ecd0ba00d209daee14ce6613820b7b715c608c`.
 Prior tested head: `7aca098a02edd246b914669fae542967cd5608fc`.
 The tested-to-candidate comparison contains only three audit Markdown files; production source, tests and build inputs are identical. Main and implementation are distinct revisions: candidate CI is not a test of every main-only difference.
 
-The preceding [code audit](SECURITY_CODE_REAUDIT.md) inspected isolated workers, IPC, staging, output publication, UI privacy, audio, redaction, archives, billing, manifests and logging. This continuation rechecked main's destination cleanup and SecureScreen, candidate manifests/FileProvider, release configuration and prior certification records, scanner implementations, destination creation, staging and Settings privacy-options wiring. Source findings have not been reproduced as exploits on a device. Backend rules, Play Console, signing infrastructure and third-party native internals remain outside scope. Local shell/edit execution is still unavailable; no new local test/build/diff-check is claimed.
+The preceding [code audit](SECURITY_CODE_REAUDIT.md) inspected isolated workers, IPC, staging, output publication, UI privacy, audio, redaction, archives, billing, manifests and logging. This continuation rechecked main's destination cleanup, SecureScreen, staging/Reader lifetime and audio cleanup, candidate manifests/FileProvider, release configuration and prior certification records, scanner implementations, destination creation, staging and Settings privacy-options wiring. Source findings have not been reproduced as exploits on a device. Backend rules, Play Console, signing infrastructure and third-party native internals remain outside scope. Local shell/edit execution is still unavailable; no new local test/build/diff-check is claimed.
 
 ## Open code findings
 
@@ -33,7 +33,7 @@ The API 30 startup content-container crash remains unresolved: no verified produ
 - **Fresh, 2026-10-10 18:41:22 UTC:** dependency job `114285038779` passed; 234 resolved production dependencies, 0 OSV affected packages. This is a database result at that time, not proof that dependencies are vulnerability-free.
 - **Historical, 2026-10-08:** architecture and unit gates passed; instrumentation completed 209 tests with zero failures on each API 24/30/34/36. These suites do not close the newly identified findings.
 - **Historical, 2026-10-08:** TruffleHog 3.97.9 reachable-history policy passed: 6 exact reviewed historical matches, 0 rejected findings. This continuation has not yet executed a fresh secret scan.
-- **Fresh build job `114285337630`: pending final receipt.** It runs release lint, debug/unsigned minified release assembly and artifact hygiene. It does not produce a signed Play upload certificate verification.
+- **Fresh, 2026-10-10 18:57:39 UTC:** build job `114285337630` passed in 16m 8s: release lint, debug/unsigned minified release assembly and artifact hygiene. Lint reported 652 warnings and 38 stale baseline entries; this is not a warning-free result. Artifact gate verified 14 corpus files, 62 smoke routes, fixture hashes, production ad IDs and release hygiene. Run attempt 2 completed successfully at 18:57:41 UTC. Only dependency and downstream build were rerun; other job results are carried over from October 8. This does not verify Play upload signing.
 
 The release checker enforces corpus hashes, 62 route coverage and artifact hygiene. It does **not** turn NOT RUN manual matrix rows into PASS. No retained Actions artifacts were returned for this run.
 
