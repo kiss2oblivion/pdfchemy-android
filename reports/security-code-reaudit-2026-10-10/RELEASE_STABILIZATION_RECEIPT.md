@@ -138,9 +138,41 @@ Following automated CI Run #41 on commit `64f75ea`, four focused findings were i
 
 ---
 
+### Mandatory Remediation Directive Report (2026-10-11)
+
+Following the independent review and CI Run #44 analysis, three critical production and test defects were remediated:
+
+#### Finding CI44-01: Undefined Kotlin Variable Breaks Instrumentation Compilation (P1)
+- **Root Cause:** In `ResourceLeakStressTest.kt`, `val success = result.isSuccess && outFile.exists() && outFile.length() > 0` was omitted during the diagnostic logging update while the final return expression still referenced `success`.
+- **Resolution:** Restored `val success` calculation before file deletion. Verified local instrumentation compilation via `:app-host:compileDebugAndroidTestKotlin`.
+- **Commit SHA:** `bbf20d38`
+
+#### Finding RV-04: MainViewModel.onCleared Timeout / Output Deletion Race (P1)
+- **Root Cause:** In `MainViewModel.kt`, `withTimeoutOrNull(3000L) { job?.join() }` returns `null` if the deadline expires, which previously proceeded to delete unfinished outputs while an active writer was still writing.
+- **Resolution:** `onCleared()` checks whether the writer confirmed termination (`completed == true`). If the writer is still active after the timeout, output deletion is skipped immediately and deferred via `job.invokeOnCompletion { vmCleanupScope.launch { cleanupFreshOutputs() } }`. Verified with a dedicated regression test in `DestinationIntegritySecurityTest.kt` holding the writer past timeout.
+- **Commit SHA:** `fe2551df`
+
+#### Finding IPC-01: Worker Failure Categories Incorrectly Converted to BUSY (P1)
+- **Root Cause:** `PdfGateway.kt` mapped worker disconnection, null binding, binding died, and binding timeout all to 429 `BUSY`.
+- **Resolution:** Maintained distinct exception classes: `WorkerAdmissionBusyException` (genuine capacity saturation), `WorkerDiedException` (worker death / disconnection), `WorkerBindingException` (null binding / bindService failure), `WorkerTimeoutException` (service binding timeout), and `WorkerFailure` (operational protocol failure). Added Robolectric test in `PdfGatewayErrorClassificationTest.kt`.
+- **Commit SHA:** `33d7cf75`
+
+#### Finding SR-01: Proposed Decision Heading & Duration Boundary Clarification (P2)
+- **Root Cause:** The decision heading retained `Decision: ACCEPT RESIDUAL RISK` and lacked explicit clarification that timeout enforcement bounds duration rather than mathematically capping raw byte writes during active execution.
+- **Resolution:** Updated heading to `Proposed Architectural Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES (Pending Formal Owner Approval)` and documented that execution duration (30–120s) is bounded by watchdogs while raw active disk consumption is bounded by VFS unlinking reclamation, strictly distinct from host pre-publication limits (`MAX_OUTPUT_BYTES`).
+- **Commit SHA:** `cddeea45`
+
+---
+
 ## 3. Full Commit Verification Chain
 
 ```
+[pending push] docs(security): record CI-44, RV-04, IPC-01, and SR-01 resolutions in stabilization receipt
+cddeea45 docs(security): clarify SR-01 proposed decision heading and temporal boundary mechanics
+33d7cf75 fix(ipc): separate worker failure categories and prevent incorrect BUSY mapping (IPC-01)
+fe2551df fix(lifecycle): prevent output deletion on onCleared when writer exceeds timeout and defer until termination (RV-04)
+bbf20d38 fix(test): restore success calculation variable in ResourceLeakStressTest (CI44-01)
+f478febc docs(security): document CI Run 41 remediation in stabilization receipt
 b8d6de16 docs(security): update SR-01 disposition to pending formal owner sign-off
 cb93185f fix(ipc): optimize Gateway service binding and enhance concurrency bomb diagnostics
 1e8e4c39 fix(redaction): resolve text position grouping on rotated pages and robust character mapping
