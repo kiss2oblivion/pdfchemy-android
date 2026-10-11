@@ -170,6 +170,61 @@ class DestinationIntegritySecurityTest {
     }
 
     @Test
+    fun `fresh incomplete destination is deleted on onCleared only after writer stops`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source.pdf")
+        val freshDestination = Uri.parse("content://fixture/fresh_copy_oncleared_${UUID.randomUUID()}.pdf")
+
+        OutputPolicy.registerFreshCopy(freshDestination)
+        assertTrue(OutputPolicy.isFreshCopy(freshDestination))
+
+        mockkStatic(DocumentFile::class)
+        val documentFile = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshDestination) } returns documentFile
+        val deleted = CompletableDeferred<Unit>()
+        val writerFinished = CompletableDeferred<Unit>()
+        val allowFinish = CompletableDeferred<Unit>()
+
+        every { documentFile.delete() } answers {
+            assertTrue("Deletion must not race with active writer on onCleared!", writerFinished.isCompleted)
+            deleted.complete(Unit)
+            true
+        }
+
+        val started = CompletableDeferred<Unit>()
+        mockkObject(PdfCompressor)
+        coEvery { PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any()) } coAnswers {
+            started.complete(Unit)
+            try {
+                awaitCancellation()
+            } finally {
+                withContext(NonCancellable) {
+                    allowFinish.await()
+                    writerFinished.complete(Unit)
+                }
+            }
+        }
+
+        viewModel.compressPdf(application, source, freshDestination)
+        started.await()
+
+        val onClearedMethod = MainViewModel::class.java.getDeclaredMethod("onCleared")
+        onClearedMethod.isAccessible = true
+        onClearedMethod.invoke(viewModel)
+
+        // Deletion must NOT occur while writer is still running
+        assertFalse(deleted.isCompleted)
+
+        // Allow writer to complete and verify deletion happens cleanly
+        allowFinish.complete(Unit)
+        withTimeout(5_000) { viewModel.lastCleanupJob?.join() }
+        withTimeout(5_000) { deleted.await() }
+
+        assertFalse(OutputPolicy.isFreshCopy(freshDestination))
+    }
+
+    @Test
     fun `fresh incomplete destination is deleted on worker error`() = runBlocking {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = MainViewModel(application)

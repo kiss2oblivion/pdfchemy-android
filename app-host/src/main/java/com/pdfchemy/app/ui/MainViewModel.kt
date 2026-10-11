@@ -254,20 +254,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         setContinuityUri(null)
     }
 
+    private val vmCleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())
+    @androidx.annotation.VisibleForTesting
+    internal var lastCleanupJob: kotlinx.coroutines.Job? = null
+
     override fun onCleared() {
         super.onCleared()
         setContinuityUri(null)
         val context = getApplication<Application>()
-        activeOperations.values.forEach { opRecord ->
-            opRecord.job?.cancel()
-            opRecord.outputs.forEach { tracked ->
-                if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
-                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                    runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+        val records = activeOperations.values.toList()
+        activeOperations.clear()
+
+        lastCleanupJob = vmCleanupScope.launch {
+            records.forEach { opRecord ->
+                val job = opRecord.job
+                job?.cancel()
+                kotlinx.coroutines.withTimeoutOrNull(3000L) {
+                    job?.join()
+                }
+                opRecord.outputs.forEach { tracked ->
+                    if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                        runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                    }
                 }
             }
         }
-        activeOperations.clear()
     }
 
 
