@@ -225,10 +225,59 @@ class DestinationIntegritySecurityTest {
             viewModel.uiState.first { it is MainViewModel.UiState.Success }
         }
 
+        // Classification must no longer be fresh!
+        assertFalse("Fresh copy classification must be removed after successful publication!", OutputPolicy.isFreshCopy(freshDestination))
+
         // Setting error or idle afterwards must not delete the published output
         viewModel.cancelOperation(application)
         delay(50)
 
+        verify(exactly = 0) { documentFile.delete() }
+    }
+
+    @Test
+    fun `published URI reused in subsequent operation survives subsequent failure`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source1 = Uri.parse("content://fixture/source1.pdf")
+        val reusedDestination = Uri.parse("content://fixture/reused_output.pdf")
+
+        // 1. Initial creation as fresh copy
+        OutputPolicy.registerFreshCopy(reusedDestination)
+        assertTrue(OutputPolicy.isFreshCopy(reusedDestination))
+
+        mockkStatic(DocumentFile::class)
+        val documentFile = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), reusedDestination) } returns documentFile
+        every { documentFile.delete() } answers {
+            fail("Reused published destination must NEVER be deleted!")
+            true
+        }
+
+        mockkObject(PdfCompressor)
+        val dummyReport = PdfCompressor.CompressionReport(1000L, 5, false, false)
+        coEvery { PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            Result.success(dummyReport)
+
+        // Op 1 publishes successfully
+        viewModel.compressPdf(application, source1, reusedDestination)
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Success }
+        }
+
+        assertFalse("Destination must no longer be fresh after Op 1 publication", OutputPolicy.isFreshCopy(reusedDestination))
+
+        // 2. Op 2 reuses the published destination, but fails
+        val source2 = Uri.parse("content://fixture/source2.pdf")
+        coEvery { PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            Result.failure(IOException("Op 2 failed write"))
+
+        viewModel.compressPdf(application, source2, reusedDestination)
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+        }
+
+        delay(100)
         verify(exactly = 0) { documentFile.delete() }
     }
 

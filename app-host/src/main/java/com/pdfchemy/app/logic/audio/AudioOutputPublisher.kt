@@ -16,11 +16,14 @@ object AudioOutputPublisher {
         wav: File,
         destination: Uri,
         isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
-    ) = copy(
-        wav,
-        { context.contentResolver.openOutputStream(destination, "wt") },
-        { deletePartial(context, destination, isFreshCopy) }
-    )
+    ) {
+        copy(
+            wav,
+            { context.contentResolver.openOutputStream(destination, "wt") },
+            { deletePartial(context, destination, isFreshCopy) }
+        )
+        OutputPolicy.markPublished(destination)
+    }
 
     fun deletePartial(
         context: Context,

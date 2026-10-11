@@ -71,7 +71,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val currentId = currentOperationId
         if (currentId != 0L) {
             val existing = activeOperations[currentId]
-            if (existing != null) return existing
+            if (existing != null && (existing.job == null || existing.job?.isActive == true)) {
+                return existing
+            }
         }
         val newId = operationCounter.incrementAndGet()
         currentOperationId = newId
@@ -122,6 +124,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (currentId != 0L) {
             activeOperations[currentId]?.outputs?.find { it.uri == uri }?.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED
         }
+        com.pdfchemy.app.logic.OutputPolicy.markPublished(uri)
     }
 
     fun clearPendingOutputUris() {
@@ -149,8 +152,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Only proven fresh incomplete destinations may be deleted; existing/unknown destinations remain intact.
             opRecord?.outputs?.forEach { tracked ->
                 if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
-                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                    runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                    val claimedByNewerOp = activeOperations.values.any { other ->
+                        other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
+                    }
+                    if (!claimedByNewerOp) {
+                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                        runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                    }
                 }
             }
         }
@@ -175,8 +183,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         jobToJoin?.join()
                         opRecord?.outputs?.forEach { tracked ->
                             if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
-                                com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                                try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
+                                val claimedByNewerOp = activeOperations.values.any { other ->
+                                    other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
+                                }
+                                if (!claimedByNewerOp) {
+                                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                                    try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
+                                }
                             }
                         }
                     }
@@ -185,7 +198,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val opId = currentOperationId
                     if (opId != 0L) {
                         val opRecord = activeOperations.remove(opId)
-                        opRecord?.outputs?.forEach { it.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED }
+                        opRecord?.outputs?.forEach { tracked ->
+                            tracked.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED
+                            com.pdfchemy.app.logic.OutputPolicy.markPublished(tracked.uri)
+                        }
                     }
                     activeJob = null
                     _canCancelOperation.value = false
@@ -241,6 +257,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         setContinuityUri(null)
+        val context = getApplication<Application>()
+        activeOperations.values.forEach { opRecord ->
+            opRecord.job?.cancel()
+            opRecord.outputs.forEach { tracked ->
+                if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                    runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                }
+            }
+        }
+        activeOperations.clear()
     }
 
 

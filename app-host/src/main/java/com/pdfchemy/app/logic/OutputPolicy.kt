@@ -39,6 +39,11 @@ object OutputPolicy {
         freshUris.remove(uri)
     }
 
+    /** Transitions destination to published state: it is no longer an uncommitted fresh copy. */
+    fun markPublished(uri: Uri) {
+        unregisterFreshCopy(uri)
+    }
+
     fun isFreshCopy(uri: Uri): Boolean = freshUris.contains(uri)
 
     fun provenanceOf(uri: Uri): DestinationProvenance =
