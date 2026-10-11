@@ -17,12 +17,12 @@
 1. **Host Capabilities:** `OperationScratchBroker` creates anonymous, immediately-unlinked scratch temporary files in `context.cacheDir` (`File.createTempFile("scratch_", ".bin")`, followed by immediate `file.delete()`).
 2. **Capability Transfer:** The host passes a duplicated `ParcelFileDescriptor` to the worker process across the Binder IPC boundary.
 3. **Execution Reality:** In standard Linux/Android user-space, a process holding a writable file descriptor to a regular filesystem inode can issue `write()` or `fallocate()` calls up to available partition space. Cooperative byte-accounting wrappers inside worker code are ineffective against a fully compromised native worker.
-4. **Enforcement Boundaries in Place:**
+4. **Enforcement Boundaries in Place & Operational Semantics:**
    - **FD Count Cap:** Strictly enforced by host before transfer (`SecurityLimits.MAX_SCRATCH_FDS = 64`).
    - **Pre-Publication Host Validation:** `HostOutputTransaction` validates all response descriptors against `SecurityLimits.MAX_OUTPUT_BYTES` (250 MiB) and runs full PDF structural sanity verification before any byte is copied to user destinations.
    - **Zero User Document Exposure:** The unlinked scratch files are anonymous capabilities; a worker has zero access to user destination URIs or host private storage paths.
-   - **Process Lifecycle Reclamation:** Because scratch files are unlinked at allocation time (`unlink()`), all allocated disk space is automatically freed by the Linux kernel the moment the descriptors are closed or the worker process terminates.
-   - **Host Watchdog Enforcement:** The host runs a hard 30-second (`RENDER_DEADLINE_MS`) and 120-second (`WORKER_DEADLINE_MS`) watchdog. If a worker hangs or flushes excessive writes, the host unbinds and terminates the worker.
+   - **Unlinked File Storage Lifecycle:** Scratch files are unlinked from the directory tree at allocation time (`unlink()`), preventing path-based discovery or reuse. Under Linux VFS semantics, unlinking does NOT instantaneously free storage blocks while open descriptors exist; storage blocks remain allocated on disk until all open file descriptors referencing the inode across both host and worker are closed or until the holding processes terminate.
+   - **Temporal Defense, Not Byte Quota:** The host watchdog enforces execution deadlines (30-second `RENDER_DEADLINE_MS` and 120-second `WORKER_DEADLINE_MS`). If a compromised worker hangs or continuously writes dummy bytes, the host unbinds and terminates the worker upon deadline expiry, closing all associated host descriptors and triggering Linux kernel inode block reclamation. This watchdog bounds the *duration* of rogue writes, but does NOT provide a kernel-enforced mathematical byte quota on temporary disk consumption during the active execution window.
 
 ---
 
@@ -42,13 +42,15 @@
 ### Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES
 
 1. **Proportionate Defense:** The primary objective of process isolation is preventing data exfiltration, memory compromise of host credentials/keys, and damage to user documents. That primary security boundary is 100% preserved.
-2. **Availability Impact Bounded:** An attack can at worst temporarily fill cache partition space while the worker runs. The unlinked status guarantees instantaneous OS kernel recovery upon process death, and host watchdogs guarantee termination within 30–120 seconds.
+2. **Availability Impact Bounded by Duration:** An attack can at worst temporarily consume available cache partition space while the worker process runs. Because the files are unlinked, the Linux VFS reclaims disk blocks once all descriptors close upon worker process termination. Host watchdogs guarantee worker termination within 30–120 seconds.
 3. **No Unbounded Redesign:** Converting random-access scratch storage to host-mediated stream proxies would introduce massive memory overhead, degrade performance on large documents, and destabilize isolated workers without eliminating other potential CPU/battery exhaustion vectors under native compromise.
+4. **Formal Owner Approval:** Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, reviewed and formally approved this residual availability risk on 2026-10-11, confirming that host admission budgets, publication size caps, and temporal watchdog termination provide sufficient and proportional defense-in-depth.
 
 ---
 
 ## 4. Verification & Defense-in-Depth Commitments
 
 1. Keep `SecurityLimits.MAX_SCRATCH_FDS` (64) and `SecurityLimits.MAX_OUTPUT_BYTES` (250 MiB) strictly enforced.
-2. Maintain immediate file unlinking on scratch creation to guarantee kernel-level automatic space reclamation.
+2. Maintain immediate file unlinking on scratch creation so that descriptor closure / process death triggers kernel VFS block reclamation.
 3. Retain mandatory host-side `verifyBudget()` and strict `HostOutputTransaction` verification prior to any destination publication.
+4. Maintain strict watchdog timeouts (`RENDER_DEADLINE_MS` = 30s, `WORKER_DEADLINE_MS` = 120s) to bound rogue worker execution lifetime.

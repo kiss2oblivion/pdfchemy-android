@@ -50,8 +50,8 @@ class BillingManager(
 
     companion object {
         const val PREMIUM_PRODUCT_ID = "premium_upgrade"
-        private const val PREFS_NAME = "billing_prefs_secured"
-        private const val KEY_IS_PREMIUM = "is_premium_entitled"
+        internal const val PREFS_NAME = "billing_prefs_secured"
+        internal const val KEY_IS_PREMIUM = "is_premium_entitled"
     }
     
     private val securePrefs: SharedPreferences by lazy {
@@ -196,34 +196,49 @@ class BillingManager(
     private fun processPurchases(purchases: List<Purchase>) {
         coroutineScope.launch {
             var hasPremium = false
+            val unacknowledged = mutableListOf<Purchase>()
             for (purchase in purchases) {
                 if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
                     purchase.products.contains(PREMIUM_PRODUCT_ID)
                 ) {
                     hasPremium = true
                     if (!purchase.isAcknowledged) {
-                        acknowledgePurchase(purchase)
+                        unacknowledged.add(purchase)
                     }
                 }
             }
-            // Centralize entitlement logic: Update cache with source of truth from Play Store
+            // Centralize entitlement logic: Update cache with source of truth from Play Store immediately
             securePrefs.edit().putBoolean(KEY_IS_PREMIUM, hasPremium).apply()
             _isPremium.value = hasPremium
+
+            for (purchase in unacknowledged) {
+                acknowledgePurchase(purchase)
+            }
         }
     }
 
-    private suspend fun acknowledgePurchase(purchase: Purchase) {
+    internal suspend fun acknowledgePurchase(purchase: Purchase, maxRetries: Int = 3, initialDelayMs: Long = 1000L) {
         withContext(Dispatchers.IO) {
-            try {
-                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-                val result = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-                    com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement returned code: ${result.responseCode}")
+            val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                .setPurchaseToken(purchase.purchaseToken)
+                .build()
+            var attempt = 0
+            var delayMs = initialDelayMs
+            while (attempt < maxRetries) {
+                attempt++
+                try {
+                    val result = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        return@withContext
+                    }
+                    com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement attempt $attempt failed with code: ${result.responseCode}")
+                } catch (e: Exception) {
+                    com.pdfchemy.app.utils.AppLogger.e("BillingManager: Error on purchase acknowledgement attempt $attempt", e)
                 }
-            } catch (e: Exception) {
-                com.pdfchemy.app.utils.AppLogger.e("BillingManager: Error acknowledging purchase", e)
+                if (attempt < maxRetries && delayMs > 0) {
+                    delay(delayMs)
+                    delayMs *= 2
+                }
             }
         }
     }
