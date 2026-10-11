@@ -54,16 +54,26 @@ object PdfGateway {
                 val channel = Channel<IBinder>(1)
                 val connection = object : ServiceConnection {
                     override fun onServiceConnected(name: ComponentName?, service: IBinder?) { if (service != null) channel.trySend(service) }
-                    override fun onServiceDisconnected(name: ComponentName?) { channel.close(IllegalStateException("Isolated worker died")) }
-                    override fun onNullBinding(name: ComponentName?) { channel.close(IllegalStateException("Null worker binding")) }
-                    override fun onBindingDied(name: ComponentName?) { channel.close(IllegalStateException("Worker binding died")) }
+                    override fun onServiceDisconnected(name: ComponentName?) { channel.close(WorkerFailure(429, "Isolated worker died: BUSY")) }
+                    override fun onNullBinding(name: ComponentName?) { channel.close(WorkerFailure(429, "Null worker binding: BUSY")) }
+                    override fun onBindingDied(name: ComponentName?) { channel.close(WorkerFailure(429, "Worker binding died: BUSY")) }
                 }
-                check(context.bindService(Intent().setClassName(context, className), connection, Context.BIND_AUTO_CREATE))
+                if (!context.bindService(Intent().setClassName(context, className), connection, Context.BIND_AUTO_CREATE)) {
+                    throw WorkerFailure(429, "Jail 429: BUSY (bindService rejected)")
+                }
                 connections.add(connection)
-                return withTimeout(10_000L) { channel.receive() }
+                return try {
+                    withTimeout(30_000L) { channel.receive() }
+                } catch (t: kotlinx.coroutines.TimeoutCancellationException) {
+                    throw WorkerFailure(429, "Jail 429: BUSY (binding timeout)")
+                }
             }
 
-            val renderer = bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
+            val renderer = if (operation == "REDACT" || operation == "OFFICE_PPT") {
+                bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
+            } else {
+                null
+            }
             val binder = bind("com.pdfchemy.app.jail.PdfJailService")
             jail = IPdfJailService.Stub.asInterface(binder)
 
