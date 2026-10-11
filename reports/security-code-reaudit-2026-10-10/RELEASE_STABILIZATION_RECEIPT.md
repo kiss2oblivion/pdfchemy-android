@@ -112,23 +112,53 @@ In strict compliance with the project's ethical mandate of radical transparency,
 
 ---
 
+### CI Run #41 Remediation Report (2026-10-11)
+
+Following automated CI Run #41 on commit `64f75ea`, four focused findings were isolated and remediated:
+
+#### Finding CI41-01: MainViewModel.onCleared Writer Cleanup Race (P1)
+- **Root Cause:** In `MainViewModel.kt`, `onCleared()` cancelled the active worker job and immediately deleted unfinished outputs without awaiting writer thread termination.
+- **Resolution:** Introduced `vmCleanupScope = CoroutineScope(Dispatchers.IO + SupervisorJob())`. In `onCleared()`, jobs are cancelled and awaited via `withTimeoutOrNull(3000L) { job?.join() }` before unregistering provenance or deleting incomplete files. Verified with unit test in `DestinationIntegritySecurityTest.kt`.
+- **Commit SHA:** `29e0019d`
+
+#### Finding CI41-02: Search Redaction Glyph Grouping on Rotated/Cropped Pages (P1)
+- **Root Cause:** In `PdfRedactionEngineWorker.kt` and `PdfFindAndReplaceEngine.kt`, default `sortByPosition = false` in PDFBox stripped glyphs on 90° rotated pages out-of-order, segmenting multi-word phrases. Additionally, direct substring indexing into `textPositions` failed when synthesized spaces created length mismatches.
+- **Resolution:** Set `sortByPosition = true` in `PositionalSearchStripper` and `searchDocumentTargets`. Built a 1-to-1 `charToPosition` map tracking each character to its `TextPosition`, and sliced via `(foundIndex until endIndex).map { charToPosition[it] }.distinct()`. Preserved 4-match assertion on rotated/cropped pages.
+- **Commit SHA:** `1e8e4c39`
+
+#### Finding CI41-03: Concurrency Admission Service Binding Contention & Telemetry (P1)
+- **Root Cause:** `PdfGateway.kt` unconditionally bound `PdfNativeRendererService` on all operations including compression, spawning 32 concurrent bindings under 16-thread pressure. The 10s bind timeout could expire before admission on resource-constrained runners. Tests asserted `.contains("BUSY")` without logging underlying exception details.
+- **Resolution:** In `PdfGateway.kt`, `PdfNativeRendererService` is only bound for `REDACT` and `OFFICE_PPT`. Binding timeout increased to 30s (`RENDER_DEADLINE_MS`). Service saturation/timeout is properly surfaced as 429 `BUSY`. Enhanced assertion messages and error logging in `ResourceLeakStressTest.kt` and `StressGauntletAndroidTest.kt`.
+- **Commit SHA:** `cb93185f`
+
+#### Finding CI41-04: SR-01 Storage Residual Risk Approval Statement (P2)
+- **Root Cause:** SR-01 decision document asserted formal approval had already been executed rather than stating pending owner sign-off.
+- **Resolution:** Updated `SR-01_STORAGE_RESIDUAL_DECISION.md` section 4 and header disposition to "Architectural Evaluation (Pending Formal Owner Sign-off)" submitted to Andrei Ioan Cucoș (@kiss2oblivion).
+- **Commit SHA:** `b8d6de16`
+
+---
+
 ## 3. Full Commit Verification Chain
 
 ```
-[pending push] docs(security): update stabilization receipt and release readiness with review resolutions
-de0cf48 fix(security): implement billing acknowledgement retry and refine residual risk boundaries (VG-03, VG-04)
-3fab08a fix(ux): correct Reader bitmap ownership, asynchronous disposal, and cancellation safety (RV-03)
-5d8d5ad fix(security): eliminate WeakHashMap window retention and value-to-key cycle (RV-02)
-c11b4bd fix(security): resolve destination provenance lifetime and cross-operation isolation (RV-01)
-e3c9979 docs(security): synchronize receipt head SHA and verification chain
-14022ba docs(security): record comprehensive release stabilization receipt and readiness status
-7e29642 fix(redaction): harden search redaction bounds and billing acknowledgement resilience
-87cc462 docs(security): document explicit architectural residual risk decision for SR-01
-029425b fix(lifecycle): defer consent and ad initialization to onPostResume (START-01)
-91c765c fix(security): implement bounded staged document retention and session cleanup (SA-03)
-569e62d fix(security): coordinate window-scoped FLAG_SECURE ownership (SA-02)
-f26454c fix(security): implement per-operation output ownership and provenance (SA-01)
-a8728b1 docs(security): record successful refreshed release build and lint (Baseline)
+b8d6de16 docs(security): update SR-01 disposition to pending formal owner sign-off
+cb93185f fix(ipc): optimize Gateway service binding and enhance concurrency bomb diagnostics
+1e8e4c39 fix(redaction): resolve text position grouping on rotated pages and robust character mapping
+29e0019d fix(lifecycle): prevent MainViewModel onCleared output deletion race with active writer
+64f75eab docs(security): update stabilization receipt and release readiness with review resolutions
+de0cf48c fix(security): implement billing acknowledgement retry and refine residual risk boundaries (VG-03, VG-04)
+3fab08a1 fix(ux): correct Reader bitmap ownership, asynchronous disposal, and cancellation safety (RV-03)
+5d8d5ad1 fix(security): eliminate WeakHashMap window retention and value-to-key cycle (RV-02)
+c11b4bdc fix(security): resolve destination provenance lifetime and cross-operation isolation (RV-01)
+e3c99790 docs(security): synchronize receipt head SHA and verification chain
+14022ba2 docs(security): record comprehensive release stabilization receipt and readiness status
+7e296422 fix(redaction): harden search redaction bounds and billing acknowledgement resilience
+87cc4623 docs(security): document explicit architectural residual risk decision for SR-01
+029425b4 fix(lifecycle): defer consent and ad initialization to onPostResume (START-01)
+91c765c3 fix(security): implement bounded staged document retention and session cleanup (SA-03)
+569e62d6 fix(security): coordinate window-scoped FLAG_SECURE ownership (SA-02)
+f26454c1 fix(security): implement per-operation output ownership and provenance (SA-01)
+a8728b18 docs(security): record successful refreshed release build and lint (Baseline)
 ```
 
 ---
@@ -139,26 +169,29 @@ In adherence to radical honesty, the following table details the exact validatio
 
 | Verification Requirement | Verified via Local Unit Test | Verified via CI at Implementation SHA | Verified on Physical Device / Play Sandbox | Status |
 |---|---|---|---|---|
-| **SA-01 Destination Provenance** | YES (`CancellationPublicationTest`, `DestinationIntegritySecurityTest`) | PR #2 CI Pending | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **SA-02 Window FLAG_SECURE** | YES (`WindowSecureManagerTest`) | PR #2 CI Pending | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **SA-03 Staged Document Retain** | YES (`DocumentStagerRetentionTest`, `StagedSessionRetentionTest`) | PR #2 CI Pending | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **START-01 onPostResume Startup** | YES (`StartupContentContainerTest` SDK 30 & 33) | PR #2 CI Pending | Physical API 30 emulator run required | **CODE COMPLETE / HARDWARE GATE OPEN** |
-| **RV-01 Freshness Lifetime** | YES (`DestinationIntegritySecurityTest`) | PR #2 CI Pending | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **RV-02 WeakHashMap Cycle** | YES (`WindowSecureManagerTest`) | PR #2 CI Pending | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **RV-03 Reader Bitmap Ownership** | YES (`PdfReaderBitmapOwnershipTest`) | PR #2 CI Pending | Physical touch scrolling test required | **CODE COMPLETE / HARDWARE GATE OPEN** |
-| **VG-02 Forensic Redaction** | YES (`AcroFormAndRedactionAuditTest` geometry) | PR #2 CI Pending | Full raw stream forensic pixel inspection | **CODE COMPLETE / FORENSIC GATE OPEN** |
-| **VG-03 Billing Retry & Cache** | YES (`BillingReadinessTest`) | PR #2 CI Pending | Google Play License Testing sandbox run | **CODE COMPLETE / SANDBOX GATE OPEN** |
-| **SR-01 Storage Residual Risk** | N/A (Architectural Decision) | N/A | Formally approved by Owner Andrei Ioan Cucoș | **CLOSED (ARCHITECTURAL DECISION)** |
+| **SA-01 Destination Provenance** | YES (`CancellationPublicationTest`, `DestinationIntegritySecurityTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **SA-02 Window FLAG_SECURE** | YES (`WindowSecureManagerTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **SA-03 Staged Document Retain** | YES (`DocumentStagerRetentionTest`, `StagedSessionRetentionTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **START-01 onPostResume Startup** | YES (`StartupContentContainerTest` SDK 30 & 33) | In progress (CI #42) | Physical API 30 emulator run required | **CODE COMPLETE / HARDWARE GATE OPEN** |
+| **RV-01 Freshness Lifetime** | YES (`DestinationIntegritySecurityTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **RV-02 WeakHashMap Cycle** | YES (`WindowSecureManagerTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **RV-03 Reader Bitmap Ownership** | YES (`PdfReaderBitmapOwnershipTest`) | In progress (CI #42) | Physical touch scrolling test required | **CODE COMPLETE / HARDWARE GATE OPEN** |
+| **CI-41-01 onCleared Writer Join** | YES (`DestinationIntegritySecurityTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **CI-41-02 Redaction Rotated/Cropped**| YES (`searchDocumentTargets` 4-match) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **CI-41-03 Concurrency Admission 429**| YES (`ResourceLeakStressTest`, `StressGauntlet`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **VG-02 Forensic Redaction** | YES (`AcroFormAndRedactionAuditTest` geometry) | In progress (CI #42) | Full raw stream forensic pixel inspection | **CODE COMPLETE / FORENSIC GATE OPEN** |
+| **VG-03 Billing Retry & Cache** | YES (`BillingReadinessTest`) | In progress (CI #42) | Google Play License Testing sandbox run | **CODE COMPLETE / SANDBOX GATE OPEN** |
+| **SR-01 Storage Residual Risk** | N/A (Architectural Evaluation) | N/A | Pending Formal Owner Sign-off (@kiss2oblivion) | **PENDING OWNER SIGN-OFF** |
 
 ---
 
 ## 5. Release-Readiness Assessment & Recommendation
 
-**Recommendation: STABILIZED CODEBASE / HOLD PUBLIC RELEASE.**
+**Recommendation: STABILIZED CODEBASE / HOLD PUBLIC RELEASE (KEEP PR #2 IN DRAFT).**
 
-1. **Production Code & Unit Test Status:** All identified vulnerabilities (SA-01, SA-02, SA-03, RV-01, RV-02, RV-03) and functional hardening items (START-01, VG-03, VG-04) are fully resolved in production code and verified by automated JVM and Robolectric suites. All unit test tasks across all modules passed cleanly (`testDebugUnitTest` green in 2m 1s).
+1. **Production Code & Unit Test Status:** All identified vulnerabilities (SA-01, SA-02, SA-03, RV-01, RV-02, RV-03), functional hardening items (START-01, VG-03, VG-04), and CI Run #41 findings (CI41-01, CI41-02, CI41-03, CI41-04) are fully resolved in production code and verified by automated JVM and Robolectric suites. All unit test tasks across all modules passed cleanly (`:pdf-ipc:testDebugUnitTest`, `:pdf-jail:testDebugUnitTest`, `:app-host:testDebugUnitTest`).
 2. **Release Hold Rationale:** In accordance with the ethical mandate, public release certification is held pending:
-   - Verification of fresh GitHub Actions CI on the new commit SHA via PR #2.
+   - Verification of fresh GitHub Actions CI on commit `b8d6de16` via PR #2.
    - Physical device or emulator validation of the API 30 startup sequence and rapid touch-scrolling in Reader.
    - Physical or sandbox verification of Google Play Billing purchases and live UMP consent dialogs.
    - Formal verification of Play upload signing keys.
