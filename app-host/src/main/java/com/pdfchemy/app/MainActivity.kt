@@ -302,6 +302,64 @@ fun playFeedback(view: android.view.View, isHaptic: Boolean, isSfx: Boolean) {
 }
 
 class MainActivity : AppCompatActivity() {
+    private var consentStartupRequested = false
+
+    override fun onPostResume() {
+        super.onPostResume()
+        // Compose/AppCompat installs the content container before an SDK can inspect the window.
+        val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)
+        if (!consentStartupRequested && !isScreenshotRun) {
+            consentStartupRequested = true
+            initializeConsentAndAds()
+        }
+    }
+
+    private fun initializeConsentAndAds() {
+        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        if (consentInformation.canRequestAds()) {
+            MobileAds.initialize(this) {
+                AdManager.loadInterstitial(this)
+            }
+        }
+
+        val debugSettings = ConsentDebugSettings.Builder(this)
+            .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+            .addTestDeviceHashedId("TEST-EMULATOR")
+            .build()
+
+        val params = ConsentRequestParameters.Builder()
+            // Uncomment the next line to force the GDPR form for testing
+            // .setConsentDebugSettings(debugSettings)
+            .build()
+
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                    this
+                ) { loadAndShowError ->
+                    if (loadAndShowError != null) {
+                        Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
+                    }
+                    if (consentInformation.canRequestAds()) {
+                        MobileAds.initialize(this) {
+                            AdManager.loadInterstitial(this)
+                        }
+                    }
+                }
+            },
+            { requestConsentError ->
+                Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
+                if (consentInformation.canRequestAds()) {
+                    MobileAds.initialize(this) {
+                        AdManager.loadInterstitial(this)
+                    }
+                }
+            }
+        )
+    }
+
     override fun onDestroy() {
         if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
         super.onDestroy()
@@ -392,52 +450,6 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "SYSTEM"
             }
-        }
-
-        if (!isScreenshotRun) {
-            val consentInformation = UserMessagingPlatform.getConsentInformation(this)
-            if (consentInformation.canRequestAds()) {
-                MobileAds.initialize(this) {
-                    AdManager.loadInterstitial(this)
-                }
-            }
-
-            val debugSettings = ConsentDebugSettings.Builder(this)
-                .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
-                .addTestDeviceHashedId("TEST-EMULATOR")
-                .build()
-
-            val params = ConsentRequestParameters.Builder()
-                // Uncomment the next line to force the GDPR form for testing
-                // .setConsentDebugSettings(debugSettings) 
-                .build()
-
-            consentInformation.requestConsentInfoUpdate(
-                this,
-                params,
-                {
-                    UserMessagingPlatform.loadAndShowConsentFormIfRequired(
-                        this
-                    ) { loadAndShowError ->
-                        if (loadAndShowError != null) {
-                            Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
-                        }
-                        if (consentInformation.canRequestAds()) {
-                            MobileAds.initialize(this) {
-                                AdManager.loadInterstitial(this)
-                            }
-                        }
-                    }
-                },
-                { requestConsentError ->
-                    Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
-                    if (consentInformation.canRequestAds()) {
-                        MobileAds.initialize(this) {
-                            AdManager.loadInterstitial(this)
-                        }
-                    }
-                }
-            )
         }
 
         setContent {
