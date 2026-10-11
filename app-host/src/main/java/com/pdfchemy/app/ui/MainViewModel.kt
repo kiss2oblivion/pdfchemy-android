@@ -257,6 +257,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val vmCleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())
     @androidx.annotation.VisibleForTesting
     internal var lastCleanupJob: kotlinx.coroutines.Job? = null
+    @androidx.annotation.VisibleForTesting
+    internal var onClearedWriterJoinTimeoutMs: Long = 3000L
 
     override fun onCleared() {
         super.onCleared()
@@ -269,13 +271,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             records.forEach { opRecord ->
                 val job = opRecord.job
                 job?.cancel()
-                kotlinx.coroutines.withTimeoutOrNull(3000L) {
-                    job?.join()
+
+                val completed = job == null || kotlinx.coroutines.withTimeoutOrNull(onClearedWriterJoinTimeoutMs) {
+                    job.join()
+                    true
+                } == true
+
+                fun cleanupFreshOutputs() {
+                    opRecord.outputs.forEach { tracked ->
+                        if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                            com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                            runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                        }
+                    }
                 }
-                opRecord.outputs.forEach { tracked ->
-                    if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
-                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                        runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+
+                if (completed) {
+                    cleanupFreshOutputs()
+                } else {
+                    // Writer exceeded timeout and is STILL ACTIVE.
+                    // DO NOT delete outputs while writer is still running.
+                    // Defer cleanup until the writer confirms termination.
+                    job.invokeOnCompletion {
+                        vmCleanupScope.launch {
+                            cleanupFreshOutputs()
+                        }
                     }
                 }
             }
