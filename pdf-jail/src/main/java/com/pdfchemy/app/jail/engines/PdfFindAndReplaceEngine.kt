@@ -34,11 +34,30 @@ object PdfFindAndReplaceEngine {
         private val matchCase: Boolean
     ) : PDFTextStripper() {
 
+        init {
+            sortByPosition = true
+        }
+
         val matches = mutableListOf<TextMatchOccurrence>()
 
         override fun writeString(text: String, textPositions: MutableList<TextPosition>) {
             val currentPage = (currentPageNo - 1).coerceAtLeast(0)
-            val line = text
+            if (textPositions.isEmpty()) return
+
+            val charToPosition = ArrayList<TextPosition>(text.length + 16)
+            val fullTextBuilder = StringBuilder(text.length + 16)
+            for (tp in textPositions) {
+                val unicode = tp.unicode.orEmpty()
+                if (unicode.isNotEmpty()) {
+                    for (ch in unicode) {
+                        charToPosition.add(tp)
+                        fullTextBuilder.append(ch)
+                    }
+                }
+            }
+            val line = fullTextBuilder.toString()
+            if (line.isEmpty() || charToPosition.isEmpty()) return
+
             val target = if (matchCase) query else query.lowercase()
             val source = if (matchCase) line else line.lowercase()
 
@@ -48,19 +67,18 @@ object PdfFindAndReplaceEngine {
                 if (foundIndex == -1) break
 
                 val endIndex = foundIndex + target.length
-                if (endIndex <= textPositions.size) {
-                    val matchPositions = textPositions.subList(foundIndex, endIndex)
+                if (foundIndex in 0 until charToPosition.size && endIndex <= charToPosition.size) {
+                    val matchPositions = (foundIndex until endIndex).map { charToPosition[it] }.distinct()
                     if (matchPositions.isNotEmpty()) {
                         val firstPos = matchPositions.first()
                         val lastPos = matchPositions.last()
 
-                        val minX = firstPos.xDirAdj
-                        val maxX = lastPos.xDirAdj + lastPos.widthDirAdj
+                        val minX = matchPositions.minOf { it.xDirAdj }
+                        val maxX = matchPositions.maxOf { it.xDirAdj + it.widthDirAdj }
                         val width = (maxX - minX).coerceAtLeast(1f)
                         val avgHeight = matchPositions.map { it.heightDir }.average().toFloat().coerceAtLeast(8f)
                         val avgFontSize = matchPositions.map { it.fontSizeInPt }.average().toFloat().coerceAtLeast(10f)
 
-                        // yDirAdj is measured from top of page. We will compute standard PDF coordinate (bottom-left) when applying.
                         val topY = firstPos.yDirAdj
 
                         val snippetStart = (foundIndex - 20).coerceAtLeast(0)
