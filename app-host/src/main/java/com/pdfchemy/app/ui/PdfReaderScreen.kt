@@ -43,6 +43,8 @@ import com.pdfchemy.app.logic.VanguardThreatResult
 import com.pdfchemy.app.sandbox.NativeRendererCoordinator
 import com.pdfchemy.app.utils.DocumentStager
 import com.pdfchemy.app.utils.FileUtils
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -594,16 +596,27 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int, requestedWidth
     LaunchedEffect(uri, pageIndex, retryPage) {
         val targetWidth = requestedWidth ?: (context.resources.displayMetrics.widthPixels * 1.5).toInt()
         failed = false
+        var newlyRendered: Bitmap? = null
         try {
-            bitmap = NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            newlyRendered = NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            bitmap = newlyRendered
+            newlyRendered = null
             failed = bitmap == null
-        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch (_: Exception) { failed = true }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            newlyRendered?.let { if (!it.isRecycled) it.recycle() }
+            throw cancelled
+        } catch (_: Exception) {
+            newlyRendered?.let { if (!it.isRecycled) it.recycle() }
+            failed = true
+        }
     }
     
-    DisposableEffect(bitmap) {
+    // Capture the exact bitmap instance owned by this effect cycle to eliminate mutable getter capture race (RV-03)
+    val activeBitmap = bitmap
+    DisposableEffect(activeBitmap) {
         onDispose {
-            bitmap?.let { if (!it.isRecycled) it.recycle() }
+            activeBitmap?.let { if (!it.isRecycled) it.recycle() }
         }
     }
     
@@ -616,9 +629,10 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int, requestedWidth
             .clip(RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (bitmap != null) {
+        val displayBitmap = bitmap
+        if (displayBitmap != null && !displayBitmap.isRecycled) {
             Image(
-                bitmap = bitmap!!.asImageBitmap(),
+                bitmap = displayBitmap.asImageBitmap(),
                 contentDescription = "Page ${pageIndex + 1}",
                 contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
                 modifier = if (fitPage) Modifier.fillMaxWidth().height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 140).coerceAtLeast(200).dp) else Modifier.fillMaxWidth()
