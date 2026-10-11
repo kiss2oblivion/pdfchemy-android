@@ -96,22 +96,19 @@ object PdfRedactionEngineWorker {
         private fun addMatch(currentPage: Int, textPositions: List<TextPosition>, foundIndex: Int, endIndex: Int) {
             val matchPositions = textPositions.subList(foundIndex, endIndex)
             if (matchPositions.isNotEmpty()) {
-                val firstPos = matchPositions.first()
-                val lastPos = matchPositions.last()
-
-                val minX = firstPos.xDirAdj
-                val maxX = lastPos.xDirAdj + lastPos.widthDirAdj
+                val minX = matchPositions.minOf { it.xDirAdj }
+                val maxX = matchPositions.maxOf { it.xDirAdj + it.widthDirAdj }
                 val width = (maxX - minX).coerceAtLeast(1f)
-                val avgHeight = matchPositions.map { it.heightDir }.average().toFloat().coerceAtLeast(8f)
+                val minY = matchPositions.minOf { it.yDirAdj }
+                val maxY = matchPositions.maxOf { it.yDirAdj + it.heightDir }
+                val height = (maxY - minY).coerceAtLeast(8f)
 
-                val topY = firstPos.yDirAdj
-                
                 val boxObj = JSONObject()
                 boxObj.put("pageIndex", currentPage)
                 boxObj.put("rawLeft", minX.toDouble())
-                boxObj.put("rawTop", topY.toDouble())
+                boxObj.put("rawTop", minY.toDouble())
                 boxObj.put("rawRight", (minX + width).toDouble())
-                boxObj.put("rawBottom", (topY + avgHeight).toDouble())
+                boxObj.put("rawBottom", (minY + height).toDouble())
                 matches.add(boxObj)
             }
         }
@@ -150,10 +147,10 @@ object PdfRedactionEngineWorker {
                     val rawRight = match.getDouble("rawRight").toFloat()
                     val rawBottom = match.getDouble("rawBottom").toFloat()
                     
-                    val normLeft = rawLeft / pw
-                    val normTop = rawTop / ph
-                    val normRight = rawRight / pw
-                    val normBottom = rawBottom / ph
+                    val normLeft = (minOf(rawLeft, rawRight) / pw).coerceIn(0f, 1f)
+                    val normTop = (minOf(rawTop, rawBottom) / ph).coerceIn(0f, 1f)
+                    val normRight = (maxOf(rawLeft, rawRight) / pw).coerceIn(normLeft, 1f)
+                    val normBottom = (maxOf(rawTop, rawBottom) / ph).coerceIn(normTop, 1f)
                     
                     val boxObj = JSONObject()
                     boxObj.put("pageIndex", pageIndex)

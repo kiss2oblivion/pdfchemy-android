@@ -214,10 +214,17 @@ class BillingManager(
 
     private suspend fun acknowledgePurchase(purchase: Purchase) {
         withContext(Dispatchers.IO) {
-            val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                .setPurchaseToken(purchase.purchaseToken)
-                .build()
-            billingClient.acknowledgePurchase(acknowledgePurchaseParams)
+            try {
+                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+                val result = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                    com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement returned code: ${result.responseCode}")
+                }
+            } catch (e: Exception) {
+                com.pdfchemy.app.utils.AppLogger.e("BillingManager: Error acknowledging purchase", e)
+            }
         }
     }
 
