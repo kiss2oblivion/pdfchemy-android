@@ -346,6 +346,7 @@ class ResourceLeakStressTest {
                     destUri = Uri.fromFile(outFile),
                     quality = 0.4f
                 )
+                val success = result.isSuccess && outFile.exists() && outFile.length() > 0
                 if (result.isFailure) {
                     val err = result.exceptionOrNull()
                     println("Concurrent job $i rejected with: ${err?.javaClass?.name}: ${err?.message}")
