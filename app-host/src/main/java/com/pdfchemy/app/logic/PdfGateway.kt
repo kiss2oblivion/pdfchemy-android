@@ -20,7 +20,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 object PdfGateway {
-    private class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
+    class WorkerAdmissionBusyException(message: String = "Jail 429: BUSY") : IllegalStateException(message)
+    class WorkerDiedException(message: String) : IllegalStateException(message)
+    class WorkerBindingException(message: String) : IllegalStateException(message)
+    class WorkerTimeoutException(message: String) : IllegalStateException(message)
+    class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
 
     private suspend fun request(
         context: Context,
@@ -53,19 +57,27 @@ object PdfGateway {
             suspend fun bind(className: String): IBinder {
                 val channel = Channel<IBinder>(1)
                 val connection = object : ServiceConnection {
-                    override fun onServiceConnected(name: ComponentName?, service: IBinder?) { if (service != null) channel.trySend(service) }
-                    override fun onServiceDisconnected(name: ComponentName?) { channel.close(WorkerFailure(429, "Isolated worker died: BUSY")) }
-                    override fun onNullBinding(name: ComponentName?) { channel.close(WorkerFailure(429, "Null worker binding: BUSY")) }
-                    override fun onBindingDied(name: ComponentName?) { channel.close(WorkerFailure(429, "Worker binding died: BUSY")) }
+                    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                        if (service != null) channel.trySend(service)
+                    }
+                    override fun onServiceDisconnected(name: ComponentName?) {
+                        channel.close(WorkerDiedException("Isolated worker disconnected: ${name?.className ?: className}"))
+                    }
+                    override fun onNullBinding(name: ComponentName?) {
+                        channel.close(WorkerBindingException("Null worker binding: ${name?.className ?: className}"))
+                    }
+                    override fun onBindingDied(name: ComponentName?) {
+                        channel.close(WorkerDiedException("Worker binding died: ${name?.className ?: className}"))
+                    }
                 }
                 if (!context.bindService(Intent().setClassName(context, className), connection, Context.BIND_AUTO_CREATE)) {
-                    throw WorkerFailure(429, "Jail 429: BUSY (bindService rejected)")
+                    throw WorkerBindingException("Failed to bind worker service: $className")
                 }
                 connections.add(connection)
                 return try {
                     withTimeout(30_000L) { channel.receive() }
                 } catch (t: kotlinx.coroutines.TimeoutCancellationException) {
-                    throw WorkerFailure(429, "Jail 429: BUSY (binding timeout)")
+                    throw WorkerTimeoutException("Service binding timed out after 30s: $className")
                 }
             }
 
@@ -80,17 +92,24 @@ object PdfGateway {
             // Synchronous admission handshake: obtain exclusive token or detect BUSY
             operationToken = jail.beginOperation(scratch)
             if (operationToken == 0L) {
-                throw WorkerFailure(429, "Jail 429: BUSY")
+                throw WorkerAdmissionBusyException("Jail 429: BUSY")
             }
             WorkerResponseValidator.validateOperation(operation)
 
             val response = CompletableDeferred<String>()
-            val death = IBinder.DeathRecipient { response.completeExceptionally(IllegalStateException("Isolated worker died")) }
+            val death = IBinder.DeathRecipient {
+                response.completeExceptionally(WorkerDiedException("Isolated worker died"))
+            }
             binder.linkToDeath(death, 0)
             val callback = object : IPdfJailStringCallback.Stub() {
                 override fun onSuccess(resultJson: String) { response.complete(resultJson) }
                 override fun onFailure(errorCode: Int, errorMessage: String) {
-                    response.completeExceptionally(WorkerFailure(errorCode, "Jail $errorCode: $errorMessage"))
+                    val ex = if (errorCode == 429 || errorMessage.contains("BUSY")) {
+                        WorkerAdmissionBusyException("Jail $errorCode: $errorMessage")
+                    } else {
+                        WorkerFailure(errorCode, "Jail $errorCode: $errorMessage")
+                    }
+                    response.completeExceptionally(ex)
                 }
             }
 
