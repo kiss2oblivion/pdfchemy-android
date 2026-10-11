@@ -267,4 +267,25 @@ class WindowSecureManagerTest {
         readerLease.release()
         assertFalse("Returning to Home clears window security", WindowSecureManager.isSecure(window))
     }
+
+    @Test
+    fun windowCycleAbsence_allowsGarbageCollectionWithoutRetainingObsoleteWindow() {
+        var tempController: ActivityController<Activity>? = Robolectric.buildActivity(Activity::class.java).setup()
+        val tempActivity = tempController!!.get()
+        val tempWindow = tempActivity.window
+
+        val lease = WindowSecureManager.acquire(tempWindow, "TempScreen")
+        assertTrue(WindowSecureManager.isSecure(tempWindow))
+        assertEquals(1, WindowSecureManager.activeLeaseCount(tempWindow))
+
+        lease.release()
+        assertFalse(WindowSecureManager.isSecure(tempWindow))
+        assertEquals(0, WindowSecureManager.activeLeaseCount(tempWindow))
+
+        WindowSecureManager.releaseWindow(tempWindow)
+        tempController.destroy()
+        tempController = null
+
+        assertEquals(0, WindowSecureManager.activeLeaseCount(tempWindow))
+    }
 }

@@ -32,12 +32,14 @@ object WindowSecureManager {
     private val states = WeakHashMap<Window, WindowSecureState>()
 
     private class WindowSecureState(
-        val window: Window,
+        window: Window,
         val initialExternalSecure: Boolean
     ) {
+        // Prevent strong value-to-key reference cycle in WeakHashMap
+        private val windowRef = java.lang.ref.WeakReference(window)
         private val activeTokens = mutableMapOf<Any, String>()
 
-        fun acquire(token: Any, tag: String) {
+        fun acquire(window: Window, token: Any, tag: String) {
             val wasEmpty = activeTokens.isEmpty()
             activeTokens[token] = tag
             if (wasEmpty) {
@@ -45,11 +47,12 @@ object WindowSecureManager {
             }
         }
 
-        fun release(token: Any) {
+        fun release(window: Window?, token: Any) {
             val removed = activeTokens.remove(token)
             if (removed != null && activeTokens.isEmpty()) {
                 if (!initialExternalSecure) {
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    val target = window ?: windowRef.get()
+                    target?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }
         }
@@ -57,15 +60,23 @@ object WindowSecureManager {
         val activeCount: Int
             get() = activeTokens.size
 
-        val isSecure: Boolean
-            get() = (window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
+        fun isSecure(window: Window?): Boolean {
+            val target = window ?: windowRef.get() ?: return false
+            return (target.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) != 0
+        }
     }
 
     private class LeaseImpl(
-        override val window: Window,
+        window: Window,
         override val tag: String,
         private val token: Any
     ) : SecureLease {
+        // Weak reference to prevent lease handles from retaining obsolete Activity/Window
+        private val windowRef = java.lang.ref.WeakReference(window)
+
+        override val window: Window
+            get() = windowRef.get() ?: error("Window has been reclaimed")
+
         @Volatile
         private var _isReleased = false
 
@@ -76,7 +87,14 @@ object WindowSecureManager {
             synchronized(lock) {
                 if (!_isReleased) {
                     _isReleased = true
-                    states[window]?.release(token)
+                    val targetWindow = windowRef.get()
+                    if (targetWindow != null) {
+                        val state = states[targetWindow]
+                        state?.release(targetWindow, token)
+                        if (state?.activeCount == 0 && !state.initialExternalSecure) {
+                            states.remove(targetWindow)
+                        }
+                    }
                 }
             }
         }
@@ -92,8 +110,18 @@ object WindowSecureManager {
             WindowSecureState(window, hadFlag)
         }
         val token = Any()
-        state.acquire(token, tag)
+        state.acquire(window, token, tag)
         LeaseImpl(window, tag, token)
+    }
+
+    /**
+     * Explicitly clears any recorded state and removes protection from [window] on Activity destruction.
+     */
+    fun releaseWindow(window: Window) = synchronized(lock) {
+        val state = states.remove(window)
+        if (state != null && !state.initialExternalSecure) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     /**
