@@ -3,7 +3,7 @@
 **Document ID:** SEC-SR-01-2026-10-11  
 **Project:** PDFchemy Tools (Android)  
 **Security Boundary:** Host / Isolated PDF Worker Process (`OperationScratchBroker`)  
-**Disposition:** Explicit Architectural Residual Risk Acceptance & Proportional Defense-in-Depth  
+**Disposition:** Architectural Residual Risk Assessment & Decision (Pending Formal Owner Sign-off)  
 
 ---
 
@@ -44,7 +44,7 @@
 1. **Proportionate Defense:** The primary objective of process isolation is preventing data exfiltration, memory compromise of host credentials/keys, and damage to user documents. That primary security boundary is 100% preserved.
 2. **Availability Impact Bounded by Duration:** An attack can at worst temporarily consume available cache partition space while the worker process runs. Because the files are unlinked, the Linux VFS reclaims disk blocks once all descriptors close upon worker process termination. Host watchdogs guarantee worker termination within 30–120 seconds.
 3. **No Unbounded Redesign:** Converting random-access scratch storage to host-mediated stream proxies would introduce massive memory overhead, degrade performance on large documents, and destabilize isolated workers without eliminating other potential CPU/battery exhaustion vectors under native compromise.
-4. **Formal Owner Approval:** Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, reviewed and formally approved this residual availability risk on 2026-10-11, confirming that host admission budgets, publication size caps, and temporal watchdog termination provide sufficient and proportional defense-in-depth.
+4. **Architectural Evaluation (Pending Formal Owner Sign-off):** This documented risk assessment represents the engineering rationale based on Android sandbox mechanics, Linux VFS lifecycle, and host defense-in-depth boundaries. It is submitted to Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, for formal review and sign-off prior to final production release.
 
 ---
 
