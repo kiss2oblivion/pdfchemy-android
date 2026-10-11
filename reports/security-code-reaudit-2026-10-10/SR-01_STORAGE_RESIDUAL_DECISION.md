@@ -37,14 +37,14 @@
 
 ---
 
-## 3. Explicit Architectural Decision
+## 3. Explicit Architectural Evaluation
 
-### Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES
+### Proposed Architectural Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES (Pending Formal Owner Approval)
 
 1. **Proportionate Defense:** The primary objective of process isolation is preventing data exfiltration, memory compromise of host credentials/keys, and damage to user documents. That primary security boundary is 100% preserved.
-2. **Availability Impact Bounded by Duration:** An attack can at worst temporarily consume available cache partition space while the worker process runs. Because the files are unlinked, the Linux VFS reclaims disk blocks once all descriptors close upon worker process termination. Host watchdogs guarantee worker termination within 30–120 seconds.
+2. **Availability Impact Bounded by Duration, Not Kernel Byte Quota:** An attack can at worst temporarily consume available cache partition space while the worker process runs. Host watchdogs guarantee worker termination within 30–120 seconds, bounding execution duration; however, watchdog timeouts do NOT mathematically limit scratch-file allocation to a fixed byte count during active execution. Disk blocks are reclaimed by Linux VFS once all descriptors close upon worker process termination. This residual availability exposure during execution is strictly distinguished from the host's non-bypassable pre-publication output byte limits (`SecurityLimits.MAX_OUTPUT_BYTES = 250 MiB`), which unconditionally prevent oversized files from reaching user storage.
 3. **No Unbounded Redesign:** Converting random-access scratch storage to host-mediated stream proxies would introduce massive memory overhead, degrade performance on large documents, and destabilize isolated workers without eliminating other potential CPU/battery exhaustion vectors under native compromise.
-4. **Architectural Evaluation (Pending Formal Owner Sign-off):** This documented risk assessment represents the engineering rationale based on Android sandbox mechanics, Linux VFS lifecycle, and host defense-in-depth boundaries. It is submitted to Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, for formal review and sign-off prior to final production release.
+4. **Proposed Decision Awaiting Formal Owner Sign-off:** This documented risk assessment represents the engineering rationale and proposed defense-in-depth posture. It is submitted to Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, for formal review and sign-off. Formal sign-off remains a mandatory release gate.
 
 ---
 
