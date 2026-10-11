@@ -3,6 +3,7 @@ package com.pdfchemy.app.logic.audio
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import com.pdfchemy.app.logic.OutputPolicy
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
@@ -10,13 +11,27 @@ import java.io.OutputStream
 
 /** Host-only, best-effort SAF publication. No destination capability reaches Android TTS. */
 object AudioOutputPublisher {
-    suspend fun publish(context: Context, wav: File, destination: Uri) = copy(
+    suspend fun publish(
+        context: Context,
+        wav: File,
+        destination: Uri,
+        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
+    ) = copy(
         wav,
         { context.contentResolver.openOutputStream(destination, "wt") },
-        { deletePartial(context, destination) }
+        { deletePartial(context, destination, isFreshCopy) }
     )
 
-    fun deletePartial(context: Context, destination: Uri) {
+    fun deletePartial(
+        context: Context,
+        destination: Uri,
+        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
+    ) {
+        if (!isFreshCopy) {
+            // Existing or unknown destinations must not be deleted during pre-publication failure cleanup
+            return
+        }
+        OutputPolicy.unregisterFreshCopy(destination)
         runCatching { DocumentFile.fromSingleUri(context, destination)?.delete() }
     }
 

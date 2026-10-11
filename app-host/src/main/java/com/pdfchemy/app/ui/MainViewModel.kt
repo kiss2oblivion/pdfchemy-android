@@ -49,6 +49,37 @@ import java.util.concurrent.atomic.AtomicLong
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
+    data class TrackedOutput(
+        val uri: android.net.Uri,
+        val provenance: com.pdfchemy.app.logic.DestinationProvenance,
+        @Volatile var publicationState: com.pdfchemy.app.logic.PublicationState = com.pdfchemy.app.logic.PublicationState.PENDING
+    ) {
+        val isFreshCopy: Boolean get() = provenance == com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY
+    }
+
+    private class OperationOutputRecord(
+        val operationId: Long,
+        @Volatile var job: kotlinx.coroutines.Job? = null,
+        val outputs: MutableList<TrackedOutput> = java.util.Collections.synchronizedList(mutableListOf())
+    )
+
+    private val operationCounter = java.util.concurrent.atomic.AtomicLong(0L)
+    @Volatile private var currentOperationId: Long = 0L
+    private val activeOperations = java.util.concurrent.ConcurrentHashMap<Long, OperationOutputRecord>()
+
+    private fun getOrCreateCurrentOperation(): OperationOutputRecord {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            val existing = activeOperations[currentId]
+            if (existing != null) return existing
+        }
+        val newId = operationCounter.incrementAndGet()
+        currentOperationId = newId
+        val newRecord = OperationOutputRecord(newId)
+        activeOperations[newId] = newRecord
+        return newRecord
+    }
+
     private val ocrProgressRequests = com.pdfchemy.app.logic.LatestRequest()
     private val _canCancelOperation = MutableStateFlow(false)
     val canCancelOperation: StateFlow<Boolean> = _canCancelOperation.asStateFlow()
@@ -56,35 +87,74 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         set(job) {
             field = job
             _canCancelOperation.value = job?.isActive == true
-            job?.invokeOnCompletion { if (field === job) _canCancelOperation.value = false }
+            if (job != null) {
+                val record = getOrCreateCurrentOperation()
+                record.job = job
+                job.invokeOnCompletion { if (field === job) _canCancelOperation.value = false }
+            }
         }
-    
-    private val pendingOutputUris = java.util.Collections.synchronizedList(mutableListOf<android.net.Uri>())
 
-    fun addPendingOutputUri(uri: android.net.Uri) {
-        pendingOutputUris.add(uri)
-    }
-
-    fun clearPendingOutputUris() {
-        pendingOutputUris.clear()
-    }
-
-    fun cancelOperation(context: android.content.Context) {
-        val cancelledJob = activeJob
-        val ownedOutputs = synchronized(pendingOutputUris) { pendingOutputUris.toList().also { pendingOutputUris.clear() } }
-        cancelledJob?.cancel()
-        activeJob = null
-        _uiState.value = UiState.Idle
-        viewModelScope.launch(Dispatchers.IO) {
-            // A provider write must finish/abort before its document is deleted.
-            cancelledJob?.join()
-            ownedOutputs.forEach { uri ->
-                runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() }
+    fun addPendingOutput(destination: com.pdfchemy.app.logic.OutputDestination) {
+        val record = getOrCreateCurrentOperation()
+        synchronized(record.outputs) {
+            if (record.outputs.none { it.uri == destination.uri }) {
+                record.outputs.add(TrackedOutput(destination.uri, destination.provenance))
             }
         }
     }
 
+    fun addPendingOutputUri(uri: android.net.Uri, isFreshCopy: Boolean = com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(uri)) {
+        addPendingOutput(com.pdfchemy.app.logic.OutputDestination(
+            uri,
+            if (isFreshCopy) com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY else com.pdfchemy.app.logic.DestinationProvenance.EXISTING_OR_UNKNOWN
+        ))
+    }
 
+    fun removePendingOutputUri(uri: android.net.Uri) {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.removeAll { it.uri == uri }
+        }
+    }
+
+    fun markOutputPublished(uri: android.net.Uri) {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.find { it.uri == uri }?.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED
+        }
+    }
+
+    fun clearPendingOutputUris() {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.clear()
+        }
+    }
+
+    fun cancelOperation(context: android.content.Context) {
+        val opId = currentOperationId
+        val opRecord = if (opId != 0L) activeOperations.remove(opId) else null
+        val cancelledJob = opRecord?.job ?: activeJob
+        activeJob = null
+        _canCancelOperation.value = false
+        currentOperationId = 0L
+        _uiState.value = UiState.Idle
+
+        opRecord?.outputs?.forEach { it.publicationState = com.pdfchemy.app.logic.PublicationState.CANCELLED }
+        cancelledJob?.cancel()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // A provider write must finish/abort before its document is deleted.
+            cancelledJob?.join()
+            // Only proven fresh incomplete destinations may be deleted; existing/unknown destinations remain intact.
+            opRecord?.outputs?.forEach { tracked ->
+                if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                    runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                }
+            }
+        }
+    }
 
     private val _uiStateInternal = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiStateInternal.asStateFlow()
@@ -94,14 +164,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             get() = _uiStateInternal.value
             set(v) {
                 if (v is UiState.Error) {
+                    val opId = currentOperationId
+                    val opRecord = if (opId != 0L) activeOperations.remove(opId) else null
+                    val jobToJoin = opRecord?.job ?: activeJob
+                    activeJob = null
+                    _canCancelOperation.value = false
+                    currentOperationId = 0L
                     val context = getApplication<Application>()
-                    pendingOutputUris.toList().forEach { uri ->
-                        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() } catch(e: Exception) {}
+                    viewModelScope.launch(Dispatchers.IO) {
+                        jobToJoin?.join()
+                        opRecord?.outputs?.forEach { tracked ->
+                            if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                                com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                                try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
+                            }
+                        }
+                    }
+                }
+                if (v is UiState.Success) {
+                    val opId = currentOperationId
+                    if (opId != 0L) {
+                        val opRecord = activeOperations.remove(opId)
+                        opRecord?.outputs?.forEach { it.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED }
+                    }
+                    activeJob = null
+                    _canCancelOperation.value = false
+                    currentOperationId = 0L
+                }
+                if (v is UiState.Idle) {
+                    val opId = currentOperationId
+                    if (opId != 0L) {
+                        activeOperations.remove(opId)
+                        currentOperationId = 0L
                     }
                 }
                 if (v is UiState.Success || v is UiState.Error || v is UiState.Idle) {
                     ocrProgressRequests.invalidate()
-                    pendingOutputUris.clear()
                 }
                 _uiStateInternal.value = v
             }
@@ -658,11 +756,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         targetMb = _targetMb.value
                     ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
                         runCatching { outputDoc.delete() }
-                        pendingOutputUris.remove(outputDoc.uri)
+                        removePendingOutputUri(outputDoc.uri)
                         throw cancelled
                     }
 
                     compressResult.onSuccess { report ->
+                        markOutputPublished(outputDoc.uri)
                         outputUris.add(outputDoc.uri)
                         val compressedSize = try {
                             context.contentResolver.openFileDescriptor(outputDoc.uri, "r")?.use { it.statSize } ?: -1L
@@ -676,7 +775,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }.onFailure { error ->
                         if (error is kotlinx.coroutines.CancellationException) throw error
                         runCatching { outputDoc.delete() }
-                        pendingOutputUris.remove(outputDoc.uri)
+                        removePendingOutputUri(outputDoc.uri)
                     }
                 }
 
@@ -1265,11 +1364,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                         stripExif = stripExif
                                     ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
                                         runCatching { targetFile.delete() }
-                                        pendingOutputUris.remove(targetFile.uri)
+                                        removePendingOutputUri(targetFile.uri)
                                         throw cancelled
                                     }
 
                                     if (result.success) {
+                                        markOutputPublished(targetFile.uri)
                                         successCount.incrementAndGet()
                                         totalCompressedBytes.addAndGet(result.compressedSize)
                                         outputUris.add(targetFile.uri)
@@ -1277,7 +1377,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                         failureCount.incrementAndGet()
                                         errors.add("$fileName: ${result.error ?: "Compression failed"}")
                                         targetFile.delete()
-                                        pendingOutputUris.remove(targetFile.uri)
+                                        removePendingOutputUri(targetFile.uri)
                                     }
                                 } else {
                                     failureCount.incrementAndGet()

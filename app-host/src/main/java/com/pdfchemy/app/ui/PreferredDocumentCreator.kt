@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.documentfile.provider.DocumentFile
+import com.pdfchemy.app.logic.DestinationProvenance
+import com.pdfchemy.app.logic.OutputDestination
 import com.pdfchemy.app.logic.OutputPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,14 +21,19 @@ class DocumentCreateLauncher(private val action: (String) -> Unit) {
     fun launch(name: String) = action(name)
 }
 
-/** Existing tool callbacks own writing/cleanup; this only chooses a fresh output URI. */
+/** Output creator tracking explicit provenance: fresh copy vs existing/unknown destination. */
 @Composable
-fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit): DocumentCreateLauncher {
+fun rememberPreferredDocumentDestinationCreator(
+    mimeType: String,
+    onResult: (OutputDestination?) -> Unit
+): DocumentCreateLauncher {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val currentResult by rememberUpdatedState(onResult)
     val prefs = remember { context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE) }
-    val systemPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(mimeType)) { currentResult(it) }
+    val systemPicker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(mimeType)) { uri ->
+        currentResult(uri?.let { OutputDestination(it, DestinationProvenance.EXISTING_OR_UNKNOWN) })
+    }
     var requestedName by remember { mutableStateOf<String?>(null) }
     var folderUri by remember { mutableStateOf<Uri?>(null) }
     var editedName by remember { mutableStateOf("") }
@@ -60,7 +67,7 @@ fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit)
                             working = false; requestedName = null
                             if (result.isSuccess) {
                                 handedOff = true
-                                currentResult(result.getOrThrow())
+                                currentResult(OutputDestination(result.getOrThrow(), DestinationProvenance.FRESH_COPY))
                             } else {
                                 Toast.makeText(context, "Saved folder unavailable. Choose a location to save this copy.", Toast.LENGTH_LONG).show()
                                 systemPicker.launch(name)
@@ -68,7 +75,10 @@ fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit)
                         } finally {
                             // Only a fresh copy created here is ours to remove before callback ownership.
                             if (!handedOff) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                                created?.let { runCatching { it.delete() } }
+                                created?.let {
+                                    OutputPolicy.unregisterFreshCopy(it.uri)
+                                    runCatching { it.delete() }
+                                }
                             }
                         }
                     }
@@ -87,3 +97,8 @@ fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit)
         }
     }
 }
+
+/** Existing tool callbacks own writing/cleanup; delegates to destination creator preserving proven freshness. */
+@Composable
+fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit): DocumentCreateLauncher =
+    rememberPreferredDocumentDestinationCreator(mimeType) { onResult(it?.uri) }

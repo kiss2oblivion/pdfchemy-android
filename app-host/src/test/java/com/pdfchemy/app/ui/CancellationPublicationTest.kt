@@ -34,6 +34,7 @@ class CancellationPublicationTest {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = MainViewModel(application)
         val output = Uri.parse("content://fixture/output.pdf")
+        com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(output)
         val started = CompletableDeferred<Unit>()
         val finished = CompletableDeferred<Unit>()
         val allowFinish = CompletableDeferred<Unit>()

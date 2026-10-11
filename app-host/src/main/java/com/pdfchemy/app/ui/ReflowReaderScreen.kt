@@ -582,7 +582,9 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberPreferredDocumentCreator("audio/wav") { uri ->
+    val audioExportLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { dest ->
+        val uri = dest?.uri
+        val isFresh = dest?.isFreshCopy ?: (uri?.let { com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(it) } ?: false)
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {
@@ -594,7 +596,7 @@ fun ReflowReaderScreen(
                     withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         jobs.createJob(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.stageText(jobId, text)
                     }
                     check(audioLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) { "Return to the Reader and retry export" }
@@ -605,7 +607,7 @@ fun ReflowReaderScreen(
                 } catch (error: Exception) {
                     jobs.updateState(jobId, com.pdfchemy.app.logic.audio.AudioExportState.FAILED, error)
                     withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
-                        com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri)
+                        com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.clearJobStaging(jobId)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(jobId)

@@ -72,7 +72,11 @@ class AudioExportService : Service() {
         if (activeId != null) {
             if (id != activeId && store.updateState(id, AudioExportState.FAILED, IllegalStateException("Another audio export is running"))) {
                 scope.launch(NonCancellable + Dispatchers.IO) {
-                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                    val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
+                    val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
+                    if (dest != null) {
+                        runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
+                    }
                     staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
                 }
             }
@@ -80,7 +84,11 @@ class AudioExportService : Service() {
         }
         if (!store.updateState(id, AudioExportState.INITIALIZING)) {
             scope.launch(Dispatchers.IO) {
-                runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
+                val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
+                if (dest != null) {
+                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
+                }
                 staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
                 if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
                 withContext(Dispatchers.Main) { stopSelf() }
@@ -149,7 +157,8 @@ class AudioExportService : Service() {
             check(store.updateState(id, AudioExportState.ASSEMBLING))
             withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
             check(store.updateState(id, AudioExportState.PUBLISHING))
-            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination) }
+            val isFresh = AudioExportDependencies.isFreshDestination(id)
+            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination, isFresh) }
             currentCoroutineContext().ensureActive()
             check(store.updateState(id, AudioExportState.COMPLETED, outputUri = destination.toString()))
         } catch (error: CancellationException) {
@@ -166,7 +175,11 @@ class AudioExportService : Service() {
             withContext(NonCancellable + Dispatchers.IO) {
                 runCatching { writer?.closeAndJoin() }
                 if (store.getJob(id)?.state != AudioExportState.COMPLETED) {
-                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, AudioExportDependencies.destination(id)) }
+                    val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
+                    val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
+                    if (dest != null) {
+                        runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
+                    }
                 }
                 staging.clearJobStaging(id)
                 AudioExportDependencies.forgetDestination(id)
