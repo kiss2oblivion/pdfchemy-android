@@ -242,6 +242,21 @@ fun ReflowReaderScreen(
         fileName = vanguardScanningFileName
     )
 
+    var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+    var currentStagedUri by remember { mutableStateOf<Uri?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activeSessionLease?.close()
+            activeSessionLease = null
+            currentStagedUri?.let { uri ->
+                if (viewModel.continuityDocumentUri.value != uri) {
+                    com.pdfchemy.app.utils.DocumentStager.release(uri)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(initialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
@@ -250,7 +265,17 @@ fun ReflowReaderScreen(
         }) {
             if (initialUri != null) {
                 val originalUri = initialUri
-                val initialUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                val staged = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri) }
+                val initialUri = staged.uri
+                val newLease = com.pdfchemy.app.utils.DocumentStager.retain(staged)
+                val oldLease = activeSessionLease
+                val oldUri = currentStagedUri
+                activeSessionLease = newLease
+                currentStagedUri = initialUri
+                oldLease?.close()
+                if (oldUri != null && oldUri != initialUri && viewModel.continuityDocumentUri.value != oldUri) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.release(oldUri) }
+                }
                 val isPdf = initialUri.toString().lowercase().endsWith(".pdf") ||
                     (com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)?.lowercase()?.endsWith(".pdf") == true)
                 if (isPdf && isVanguardEnabled) {

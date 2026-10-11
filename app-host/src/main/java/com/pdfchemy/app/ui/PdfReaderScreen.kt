@@ -146,7 +146,20 @@ private fun PdfReaderDocument(
     }
     
     val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
-    
+    var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activeSessionLease?.close()
+            activeSessionLease = null
+            selectedPdfUri?.let { uri ->
+                if (viewModel.continuityDocumentUri.value != uri) {
+                    DocumentStager.release(uri)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(initialUri, retry) {
         loading = true
         loadFailure = null
@@ -156,8 +169,17 @@ private fun PdfReaderDocument(
             isVanguardScanning = false
         }) {
             val docId = withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri) }
-            val stagedUri = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri).uri }
+            val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
+            val stagedUri = staged.uri
+            val newLease = DocumentStager.retain(staged)
+            val oldLease = activeSessionLease
+            val oldUri = selectedPdfUri
+            activeSessionLease = newLease
             selectedPdfUri = stagedUri
+            oldLease?.close()
+            if (oldUri != null && oldUri != stagedUri && viewModel.continuityDocumentUri.value != oldUri) {
+                withContext(Dispatchers.IO) { DocumentStager.release(oldUri) }
+            }
             documentId = docId
             personalBookmarks = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
                 .getStringSet("bookmarks_$docId", emptySet()).orEmpty().mapNotNull { it.toIntOrNull() }.toSet()

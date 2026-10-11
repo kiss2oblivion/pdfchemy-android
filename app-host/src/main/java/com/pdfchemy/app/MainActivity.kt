@@ -670,6 +670,7 @@ fun MainApp(
         AlertDialog(
             onDismissRequest = {
                 showVanguardEncryptedDialog = false
+                vanguardPendingEncryptedUri?.let { com.pdfchemy.app.utils.DocumentStager.release(it) }
                 vanguardPendingEncryptedUri = null
             },
             icon = {
@@ -709,6 +710,7 @@ fun MainApp(
                 TextButton(
                     onClick = {
                         showVanguardEncryptedDialog = false
+                        vanguardPendingEncryptedUri?.let { com.pdfchemy.app.utils.DocumentStager.release(it) }
                         vanguardPendingEncryptedUri = null
                     }
                 ) {
@@ -4178,6 +4180,7 @@ fun RecentFilesSection(
         AlertDialog(
             onDismissRequest = {
                 showVanguardEncryptedDialog = false
+                vanguardPendingEncryptedUri?.let { com.pdfchemy.app.utils.DocumentStager.release(it) }
                 vanguardPendingEncryptedUri = null
             },
             icon = {
@@ -4217,6 +4220,7 @@ fun RecentFilesSection(
                 TextButton(
                     onClick = {
                         showVanguardEncryptedDialog = false
+                        vanguardPendingEncryptedUri?.let { com.pdfchemy.app.utils.DocumentStager.release(it) }
                         vanguardPendingEncryptedUri = null
                     }
                 ) {

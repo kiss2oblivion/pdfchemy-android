@@ -305,6 +305,20 @@ fun PdfEditorScreen(
         fileName = vanguardScanningFileName
     )
 
+    var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activeSessionLease?.close()
+            activeSessionLease = null
+            selectedPdfUri?.let { uri ->
+                if (viewModel.continuityDocumentUri.value != uri) {
+                    com.pdfchemy.app.utils.DocumentStager.release(uri)
+                }
+            }
+        }
+    }
+
     // Load initial PDF bounds / page count
     LaunchedEffect(selectedPdfUri, reloadTrigger) {
         documentLoading = selectedPdfUri != null
@@ -315,7 +329,20 @@ fun PdfEditorScreen(
             isVanguardScanning = false
         }) {
             selectedPdfUri?.let { originalUri ->
-                val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                val staged = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri)
+                }
+                val uri = staged.uri
+                val newLease = com.pdfchemy.app.utils.DocumentStager.retain(staged)
+                val oldLease = activeSessionLease
+                val oldUri = selectedPdfUri
+                activeSessionLease = newLease
+                oldLease?.close()
+                if (oldUri != null && oldUri != uri && oldUri != originalUri && viewModel.continuityDocumentUri.value != oldUri) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        com.pdfchemy.app.utils.DocumentStager.release(oldUri)
+                    }
+                }
                 if (uri != originalUri) { selectedPdfUri = uri; return@LaunchedEffect }
                 documentId = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, viewModel.editorSourceUri ?: uri)

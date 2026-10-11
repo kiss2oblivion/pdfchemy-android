@@ -210,15 +210,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var editorSourceUri: Uri? = null
     var editorPage = 0
     data class ReaderPosition(val page: Int, val offset: Int)
-    val readerPositions = mutableMapOf<String, ReaderPosition>()
+    val readerPositions = object : LinkedHashMap<String, ReaderPosition>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ReaderPosition>?): Boolean {
+            return size > 32
+        }
+    }
     var readerSourceUri: Uri? = null
 
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
+    private var continuityLease: java.io.Closeable? = null
 
     fun setContinuityUri(uri: Uri?) {
+        continuityLease?.close()
+        continuityLease = null
+        val previousUri = _continuityDocumentUri.value
         _continuityDocumentUri.value = uri
+        if (uri != null) {
+            continuityLease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
+        }
+        if (previousUri != null && previousUri != uri) {
+            com.pdfchemy.app.utils.DocumentStager.release(previousUri)
+        }
     }
+
+    fun clearContinuityUri() {
+        setContinuityUri(null)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        setContinuityUri(null)
+    }
+
 
     private val prefs = application.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
     private val compressionDefaults = com.pdfchemy.app.logic.CompressionDefaultsStore(prefs)
