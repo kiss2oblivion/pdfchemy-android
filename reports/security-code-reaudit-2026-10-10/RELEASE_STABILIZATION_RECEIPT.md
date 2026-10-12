@@ -183,7 +183,7 @@ Following the independent review and CI Run #44 analysis, three critical product
 ## 3. Full Commit Verification Chain
 
 ```
-[pending commit] fix(staging): implement atomic stage-and-retain in DocumentStager to prevent concurrent capability eviction (CI46-01)
+89e193a0 fix(staging): implement atomic stage-and-retain in DocumentStager to prevent concurrent capability eviction (CI46-01)
 21024351 docs(security): record CI-44, RV-04, IPC-01, and SR-01 resolutions in stabilization receipt
 cddeea45 docs(security): clarify SR-01 proposed decision heading and temporal boundary mechanics
 33d7cf75 fix(ipc): separate worker failure categories and prevent incorrect BUSY mapping (IPC-01)
