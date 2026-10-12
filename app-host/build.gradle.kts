@@ -25,6 +25,10 @@ android {
         }
     }
 
+    installation {
+        timeOutInMs = 15 * 60 * 1000
+    }
+
     lint {
         abortOnError = true
         checkReleaseBuilds = true

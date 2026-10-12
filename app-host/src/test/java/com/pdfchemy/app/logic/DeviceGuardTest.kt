@@ -19,6 +19,7 @@ class DeviceGuardTest {
 
     @Before
     fun setup() {
+        System.gc()
         context = ApplicationProvider.getApplicationContext()
     }
 

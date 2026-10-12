@@ -89,8 +89,12 @@ jobs:
           api-level: ${{ matrix.api }}
           arch: ${{ matrix.arch }}
           target: google_apis
+          ram-size: 2048M
+          heap-size: 512M
+          disk-size: 4096M
           disable-animations: true
-          script: ./gradlew :app-host:connectedDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: ./gradlew :app-host:connectedDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.android.injected.adb.shell.command.timeout=900000 -Dcom.android.ddmlib.timeOut=900000
 
   build:
     needs: [architecture, secrets, dependency-security, tests, android-instrumented-security]
