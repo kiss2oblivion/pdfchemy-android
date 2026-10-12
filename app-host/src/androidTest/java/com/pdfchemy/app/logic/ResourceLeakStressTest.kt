@@ -347,7 +347,14 @@ class ResourceLeakStressTest {
                     quality = 0.4f
                 )
                 val success = result.isSuccess && outFile.exists() && outFile.length() > 0
-                if (result.isFailure) assertTrue("Excess work must be rejected with BUSY", result.exceptionOrNull()?.message.orEmpty().contains("BUSY"))
+                if (result.isFailure) {
+                    val err = result.exceptionOrNull()
+                    println("Concurrent job $i rejected with: ${err?.javaClass?.name}: ${err?.message}")
+                    assertTrue(
+                        "Excess work must be rejected with BUSY (got ${err?.javaClass?.simpleName}: '${err?.message}')",
+                        err?.message.orEmpty().contains("BUSY")
+                    )
+                }
                 outFile.delete()
                 success
             }

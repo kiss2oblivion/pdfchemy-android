@@ -480,6 +480,7 @@ fun rememberVanguardMultiplePdfPicker(
         AlertDialog(
             onDismissRequest = {
                 showEncryptedDialog = false
+                encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
                 encryptedPendingUri = null
             },
             icon = {
@@ -520,6 +521,7 @@ fun rememberVanguardMultiplePdfPicker(
                     Button(
                         onClick = {
                             showEncryptedDialog = false
+                            encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
                             encryptedPendingUri = null
                         }
                     ) {
@@ -532,6 +534,7 @@ fun rememberVanguardMultiplePdfPicker(
                     TextButton(
                         onClick = {
                             showEncryptedDialog = false
+                            encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
                             encryptedPendingUri = null
                         }
                     ) {

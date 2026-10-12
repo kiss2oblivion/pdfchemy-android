@@ -92,9 +92,7 @@ fun ImageReplacerScreen(
     }
 
     // Save updated PDF launcher
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && selectedTargetImage != null && replacementBitmap != null) {
             viewModel.replaceEmbeddedImage(
                 context = context,

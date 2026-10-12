@@ -136,7 +136,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     title = stringResource(R.string.menu_split),
                     subtitle = stringResource(R.string.menu_split_desc),
                     icon = Icons.Rounded.CallSplit,
-                    onClick = { onNavigate(Screen.SplitPdf) }
+                    onClick = { onNavigate(Screen.SplitPdf()) }
                 )
             }
             item {
@@ -271,14 +271,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.Deskew) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_quick_fill_sign),
-                    subtitle = stringResource(R.string.menu_quick_fill_sign_desc),
-                    icon = Icons.Rounded.Draw,
-                    onClick = { onNavigate(Screen.QuickFillSign) }
-                )
-            }
+
         }
         }
     }
@@ -294,7 +287,16 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     var selectedFiles by remember { mutableStateOf(listOf<PdfItem>()) }
     var showHistorySheet by remember { mutableStateOf(false) }
-    val historyItems by viewModel.historyList.collectAsState()
+    val allHistoryItems by viewModel.historyList.collectAsState()
+    val historyItems = allHistoryItems.filter { !it.isDirectory && it.mimeType == "application/pdf" }
+    var historyAvailability by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    LaunchedEffect(historyItems) {
+        historyAvailability = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            historyItems.associate { item -> item.uriString to runCatching {
+                context.contentResolver.openFileDescriptor(Uri.parse(item.uriString), "r")?.use { true } == true
+            }.getOrDefault(false) }
+        }
+    }
 
     val filePickerLauncher = rememberVanguardMultiplePdfPicker { uris ->
         val newItems = uris.map { uri ->
@@ -304,9 +306,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFiles = (selectedFiles + newItems).distinctBy { it.uri }
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
             viewModel.mergePdfs(context, selectedFiles.map { it.uri }, destUri)
         }
@@ -331,7 +331,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
-                                    .clickable {
+                                    .clickable(enabled = historyAvailability[item.uriString] == true) {
                                         val uri = Uri.parse(item.uriString)
                                         if (isSelected) {
                                             selectedFiles = selectedFiles.filterNot { it.uri == uri }
@@ -350,7 +350,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(if (historyAvailability[item.uriString] == false) item.name + " (unavailable)" else item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(item.action, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                     if (isSelected) {
@@ -380,7 +380,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         floatingActionButton = {
             if (selectedFiles.size >= 2) {
                 ExtendedFloatingActionButton(
-                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, "merged")) },
+                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "merged")) },
                     icon = { Icon(Icons.Rounded.Merge, stringResource(R.string.desc_merge)) },
                     text = { Text(stringResource(R.string.merge)) }
                 )
@@ -541,10 +541,12 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SplitPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<PdfItem?>(null) }
+    var selectedFile by remember(initialUri) {
+        mutableStateOf(initialUri?.let { PdfItem(it, com.pdfchemy.app.utils.FileUtils.getFileName(context, it) ?: "Document.pdf") })
+    }
     var extractMode by remember { mutableStateOf(0) } // 0 = All, 1 = Custom Range
     var customRange by remember { mutableStateOf("") }
 
@@ -627,6 +629,7 @@ fun SplitPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     Text(stringResource(R.string.split_mode_range), modifier = Modifier.padding(start = 8.dp))
                 }
                 if (extractMode == 1) {
+                    VisualPageSelector(file.uri, customRange) { customRange = it }
                     OutlinedTextField(
                         value = customRange,
                         onValueChange = { customRange = it },
@@ -802,11 +805,9 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = PdfItem(uri, name)
     }
 
-    val createDocumentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { uri ->
+    val createDocumentLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         if (uri != null && pagesToDelete.isNotBlank()) {
-            val file = selectedFile ?: return@rememberLauncherForActivityResult
+            val file = selectedFile ?: return@rememberPreferredDocumentCreator
             viewModel.deletePages(context, file.uri, uri, pagesToDelete)
         }
     }
@@ -864,6 +865,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     }
                 }
 
+                VisualPageSelector(file.uri, pagesToDelete) { pagesToDelete = it }
                 Text(stringResource(R.string.pages_to_delete), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 OutlinedTextField(
@@ -881,6 +883,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     var selectedFile by remember { mutableStateOf<androidx.documentfile.provider.DocumentFile?>(null) }
     var pageRange by remember { mutableStateOf("") }
@@ -891,11 +894,10 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = docFile
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
         uri?.let { destUri ->
             selectedFile?.uri?.let { sourceUri ->
                 viewModel.rotatePdf(context, sourceUri, destUri, rotationDegrees, pageRange)
-                onBack()
             }
         }
     }
@@ -977,6 +979,7 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
 
+                VisualPageSelector(file.uri, pageRange) { pageRange = it }
                 Text(stringResource(R.string.pages_to_rotate_optional), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 OutlinedTextField(

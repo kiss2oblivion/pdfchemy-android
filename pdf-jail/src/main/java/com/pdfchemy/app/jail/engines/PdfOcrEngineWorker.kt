@@ -21,7 +21,8 @@ import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfOcrEngineWorker {
 
-    fun createSearchablePdf(context: Context, sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor): String {
+    fun createSearchablePdf(context: Context, sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor,
+        onProgress: (Int, Int, Boolean) -> Unit = { _, _, _ -> }): String {
         val ocrBackend = OcrBackendFactory.create(context)
         var renderer: PdfRenderer? = null
         var outputDoc: PDDocument? = null
@@ -34,6 +35,7 @@ object PdfOcrEngineWorker {
             }
             require(pageCount <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) { "Page count quota exceeded" }
 
+            onProgress(0, pageCount, false)
             outputDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
 
             for (i in 0 until pageCount) {
@@ -104,7 +106,9 @@ object PdfOcrEngineWorker {
                     bitmap?.recycle()
                     page.close()
                 }
+                onProgress(i + 1, pageCount, false)
             }
+            onProgress(pageCount, pageCount, true)
 
             FileOutputStream(targetFd.fileDescriptor).use { outStream ->
                 outputDoc.save(outStream)

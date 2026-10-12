@@ -107,4 +107,16 @@ interface IPdfJailService {
 
     // Debug builds only: observe/overwrite the retained temporary output fixture.
     oneway void debugOutputProbe(boolean rewrite, com.pdfchemy.app.jail.IPdfJailCallback callback);
+
+    /** OCR uses the same admission, identity, quotas and terminal acceptance as executeEngine. */
+    oneway void executeOcr(
+        long operationId,
+        in ParcelFileDescriptor sourceFd,
+        in ParcelFileDescriptor targetFd,
+        String expectedSha256,
+        long expectedSize,
+        IBinder scratchBinder,
+        com.pdfchemy.app.jail.IPdfOcrProgressCallback progress,
+        com.pdfchemy.app.jail.IPdfJailStringCallback callback
+    );
 }

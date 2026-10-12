@@ -29,8 +29,8 @@ object PdfDiffEngine {
         val diffs = mutableListOf<PageDiffResult>()
         var completed = false
         try {
-            val first = stager.stageDocumentCancellable(context, uri1).also { snapshots.add(it); leases.add(stager.retain(it)) }
-            val second = stager.stageDocumentCancellable(context, uri2).also { snapshots.add(it); leases.add(stager.retain(it)) }
+            val first = stager.stageDocumentCancellableWithLease(context, uri1).also { snapshots.add(it.document); leases.add(it.lease) }.document
+            val second = stager.stageDocumentCancellableWithLease(context, uri2).also { snapshots.add(it.document); leases.add(it.lease) }.document
             val texts1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null).pages
             val texts2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null).pages
             for (page in 0 until maxOf(texts1.size, texts2.size)) {

@@ -34,6 +34,7 @@ class CancellationPublicationTest {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = MainViewModel(application)
         val output = Uri.parse("content://fixture/output.pdf")
+        com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(output)
         val started = CompletableDeferred<Unit>()
         val finished = CompletableDeferred<Unit>()
         val allowFinish = CompletableDeferred<Unit>()
@@ -73,6 +74,10 @@ class CancellationPublicationTest {
         every { context.cacheDir } returns application.cacheDir
         every { context.contentResolver } returns resolver
         val directory = mockk<DocumentFile>()
+        every { directory.exists() } returns true
+        every { directory.isDirectory } returns true
+        every { directory.canWrite() } returns true
+        every { directory.listFiles() } returns emptyArray()
         val document = mockk<DocumentFile>(relaxed = true)
         val destination = Uri.parse("content://fixture/image.jpg")
         every { document.uri } returns destination

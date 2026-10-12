@@ -60,44 +60,53 @@ fun RedactionScreen(
     var foundBoxes by remember { mutableStateOf<List<RedactionBox>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    val latestSearch = remember { com.pdfchemy.app.logic.LatestRequest() }
+    var searchFailed by remember { mutableStateOf(false) }
+    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var committedTargets by remember { mutableStateOf<Pair<Uri, List<RedactionBox>>?>(null) }
     var showReviewDialog by remember { mutableStateOf(false) }
 
     fun performSearch(query: String, regex: Boolean) {
+        val ticket = latestSearch.begin()
+        foundBoxes = emptyList()
+        searchFailed = false
+        isSearching = false
         val uri = selectedPdfUri ?: return
-        if (query.isBlank()) {
-            foundBoxes = emptyList()
-            return
-        }
-
+        if (query.isBlank()) return
+        isSearching = true
         coroutineScope.launch {
-            isSearching = true
-            foundBoxes = emptyList()
-            val result = com.pdfchemy.app.logic.PdfRedactionEngine.searchRedactionTargets(
-                context = context,
-                pdfUri = uri,
-                query = query,
-                isRegex = regex
-            )
-            isSearching = false
-            if (result.isSuccess) {
-                foundBoxes = result.getOrThrow()
-            } else {
-                foundBoxes = emptyList()
+            try {
+                val result = PdfRedactionEngine.searchRedactionTargets(context, uri, query, regex)
+                if (!latestSearch.isCurrent(ticket) || selectedPdfUri != uri || searchQuery != query || isRegex != regex) return@launch
+                foundBoxes = result.getOrDefault(emptyList())
+                searchFailed = result.isFailure
+                isSearching = false
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (latestSearch.isCurrent(ticket)) {
+                    foundBoxes = emptyList()
+                    searchFailed = true
+                    isSearching = false
+                }
             }
         }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
+        latestSearch.invalidate()
+        searchFailed = false
+        isSearching = false
         selectedPdfUri = uri
         foundBoxes = emptyList()
         smartPatterns = emptySet()
         searchQuery = ""
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
-        if (destUri != null && selectedPdfUri != null && foundBoxes.isNotEmpty()) {
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
+        val reviewed = committedTargets
+        committedTargets = null
+        if (destUri != null && reviewed != null) {
             coroutineScope.launch {
                 isProcessing = true
                 val config = RedactionConfig(
@@ -108,9 +117,9 @@ fun RedactionScreen(
 
                 val result = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
                     context = context,
-                    sourceUri = selectedPdfUri!!,
+                    sourceUri = reviewed.first,
                     destUri = destUri,
-                    redactions = foundBoxes,
+                    redactions = reviewed.second,
                     config = config
                 )
                 isProcessing = false
@@ -119,42 +128,7 @@ fun RedactionScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_redaction_success),
                         context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
-                    onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_redaction_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
-                }
-            }
-        }
-    }
-
-    val smartRedactLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
-        if (destUri != null && selectedPdfUri != null && smartPatterns.isNotEmpty()) {
-            coroutineScope.launch {
-                isProcessing = true
-                val config = RedactionConfig(
-                    isBlackout = isBlackout,
-                    defaultOverlayText = overlayText,
-                    forensicSanitize = forensicSanitize
-                )
-                val result = com.pdfchemy.app.logic.PdfRedactionEngine.smartRedact(
-                    context = context,
-                    pdfUri = selectedPdfUri!!,
-                    destUri = destUri,
-                    patterns = smartPatterns.toList(),
-                    config = config
-                )
-                isProcessing = false
-                if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_redaction_success),
-                        context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(
@@ -182,7 +156,8 @@ fun RedactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header card
@@ -256,7 +231,13 @@ fun RedactionScreen(
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
                                 value = searchQuery,
-                                onValueChange = { searchQuery = it },
+                                onValueChange = {
+                                    searchQuery = it
+                                    latestSearch.invalidate()
+                                    foundBoxes = emptyList()
+                                    searchFailed = false
+                                    isSearching = false
+                                },
                                 placeholder = { Text(stringResource(R.string.placeholder_search_redact)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
@@ -310,6 +291,8 @@ fun RedactionScreen(
                     }
                 }
 
+                TextButton(onClick = { advanced = !advanced }) { Text(stringResource(R.string.advanced_options)) }
+                if (advanced) {
                 // Redaction Style Options
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
@@ -342,6 +325,7 @@ fun RedactionScreen(
                     )
                 }
 
+                }
                 // Smart PII Redaction
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -359,6 +343,10 @@ fun RedactionScreen(
                                         } else {
                                             smartPatterns += pattern
                                         }
+                                        latestSearch.invalidate()
+                                        foundBoxes = emptyList()
+                                        searchFailed = false
+                                        isSearching = false
                                     },
                                     label = { Text(pattern.label, fontSize = 11.sp) }
                                 )
@@ -367,18 +355,19 @@ fun RedactionScreen(
                         if (smartPatterns.isNotEmpty()) {
                             Button(
                                 onClick = {
-                                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                                    smartRedactLauncher.launch("${base}_smart_redacted.pdf")
+                                    searchQuery = smartPatterns.joinToString("|") { it.regex }
+                                    isRegex = true
+                                    performSearch(searchQuery, true)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !isProcessing
+                                enabled = !isProcessing && !isSearching
                             ) {
                                 if (isProcessing) {
                                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                                 } else {
                                     Icon(Icons.Rounded.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Auto-Scrub Selected PII")
+                                    Text(stringResource(R.string.redaction_preview_patterns))
                                 }
                             }
                         }
@@ -387,12 +376,16 @@ fun RedactionScreen(
             }
 
             // Results List
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Box(modifier = Modifier.height(240.dp).fillMaxWidth()) {
                 if (foundBoxes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (selectedPdfUri != null) stringResource(R.string.no_redaction_targets_found)
-                            else stringResource(R.string.select_pdf_to_start),
+                            text = when {
+                                isSearching -> stringResource(R.string.redaction_searching)
+                                searchFailed -> stringResource(R.string.redaction_search_failed)
+                                selectedPdfUri != null -> stringResource(R.string.no_redaction_targets_found)
+                                else -> stringResource(R.string.select_pdf_to_start)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -464,12 +457,14 @@ fun RedactionScreen(
                                 ),
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            if (affectedPages.isNotEmpty()) {
-                                Text(
-                                    text = "Pages: ${affectedPages.sorted().joinToString(", ")}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            LazyColumn(Modifier.fillMaxWidth().height(360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                itemsIndexed(affectedPages.sorted()) { _, page ->
+                                    Text(stringResource(R.string.visual_page_number, page))
+                                    selectedPdfUri?.let { uri ->
+                                        PdfPagePreview(uri, page - 1, Modifier.fillMaxWidth().height(260.dp),
+                                            targets = foundBoxes.filter { it.pageIndex == page - 1 })
+                                    }
+                                }
                             }
                         }
                     },
@@ -478,6 +473,7 @@ fun RedactionScreen(
                             onClick = {
                                 showReviewDialog = false
                                 val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                                committedTargets = selectedPdfUri?.let { it to foundBoxes.toList() }
                                 saveFileLauncher.launch("${base}_redacted.pdf")
                             },
                             colors = ButtonDefaults.buttonColors(

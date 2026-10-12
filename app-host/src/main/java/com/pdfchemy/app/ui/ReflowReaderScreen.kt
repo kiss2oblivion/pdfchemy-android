@@ -1,4 +1,5 @@
 package com.pdfchemy.app.ui
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 
 import android.content.Context
 import android.content.res.Configuration
@@ -241,6 +242,21 @@ fun ReflowReaderScreen(
         fileName = vanguardScanningFileName
     )
 
+    var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+    var currentStagedUri by remember { mutableStateOf<Uri?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            activeSessionLease?.close()
+            activeSessionLease = null
+            currentStagedUri?.let { uri ->
+                if (viewModel.continuityDocumentUri.value != uri) {
+                    com.pdfchemy.app.utils.DocumentStager.release(uri)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(initialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
@@ -249,7 +265,18 @@ fun ReflowReaderScreen(
         }) {
             if (initialUri != null) {
                 val originalUri = initialUri
-                val initialUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
+                val stagedLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, originalUri) }
+                val staged = stagedLease.document
+                val initialUri = staged.uri
+                val newLease = stagedLease.lease
+                val oldLease = activeSessionLease
+                val oldUri = currentStagedUri
+                activeSessionLease = newLease
+                currentStagedUri = initialUri
+                oldLease?.close()
+                if (oldUri != null && oldUri != initialUri && viewModel.continuityDocumentUri.value != oldUri) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.release(oldUri) }
+                }
                 val isPdf = initialUri.toString().lowercase().endsWith(".pdf") ||
                     (com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri)?.lowercase()?.endsWith(".pdf") == true)
                 if (isPdf && isVanguardEnabled) {
@@ -299,9 +326,14 @@ fun ReflowReaderScreen(
         reflowSections.any { section -> section.paragraphs.any { it.isNotBlank() } }
     }
 
-    var selectedTheme by remember { mutableStateOf(ReaderTheme.LIGHT) }
-    var fontSizeSp by remember { mutableStateOf(16f) }
-    var useSerifFont by remember { mutableStateOf(false) }
+    val defaultsStore = remember(prefs) { ReaderDefaultsStore(prefs) }
+    val defaults = remember(defaultsStore) { defaultsStore.load() }
+    var selectedTheme by remember { mutableStateOf(ReaderTheme.valueOf(defaults.theme)) }
+    var fontSizeSp by remember { mutableStateOf(defaults.fontSize) }
+    var useSerifFont by remember { mutableStateOf(defaults.serif) }
+    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont) {
+        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont))
+    }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
 
@@ -407,18 +439,11 @@ fun ReflowReaderScreen(
         }
     }
 
+    var showReadingControls by remember { mutableStateOf(true) }
     val searchMatches = remember(searchQuery, reflowSections) {
-        val q = searchQuery.trim()
-        if (q.length < 2) emptyList()
-        else {
-            val list = mutableListOf<Int>()
-            reflowSections.forEachIndexed { sIdx, section ->
-                val hasMatch = section.paragraphs.any { p -> p.contains(q, ignoreCase = true) }
-                if (hasMatch) list.add(sIdx)
-            }
-            list
-        }
+        com.pdfchemy.app.logic.ReaderNavigation.occurrences(reflowSections, searchQuery)
     }
+    val activeOccurrence = searchMatches.getOrNull(currentMatchIndex)
 
     val onPreviousMatch = {
         if (searchMatches.isNotEmpty()) {
@@ -426,7 +451,7 @@ fun ReflowReaderScreen(
             val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
             currentMatchIndex = newIdx
             scope.launch {
-                listState.animateScrollToItem(searchMatches[newIdx])
+                listState.animateScrollToItem(searchMatches[newIdx].section)
             }
         }
     }
@@ -437,7 +462,7 @@ fun ReflowReaderScreen(
             val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
             currentMatchIndex = newIdx
             scope.launch {
-                listState.animateScrollToItem(searchMatches[newIdx])
+                listState.animateScrollToItem(searchMatches[newIdx].section)
             }
         }
     }
@@ -583,9 +608,9 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("audio/wav")
-    ) { uri ->
+    val audioExportLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { dest ->
+        val uri = dest?.uri
+        val isFresh = dest?.isFreshCopy ?: (uri?.let { com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(it) } ?: false)
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {
@@ -597,7 +622,7 @@ fun ReflowReaderScreen(
                     withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         jobs.createJob(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.stageText(jobId, text)
                     }
                     check(audioLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) { "Return to the Reader and retry export" }
@@ -608,7 +633,7 @@ fun ReflowReaderScreen(
                 } catch (error: Exception) {
                     jobs.updateState(jobId, com.pdfchemy.app.logic.audio.AudioExportState.FAILED, error)
                     withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
-                        com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri)
+                        com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.clearJobStaging(jobId)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(jobId)
@@ -641,7 +666,10 @@ fun ReflowReaderScreen(
                     )
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(bookmarks, key = { "${it.title}_${it.pageNumber}" }) { bookmark ->
+                        val rows = com.pdfchemy.app.logic.ReaderNavigation.flattenOutline(bookmarks)
+                        items(rows.size) { outlineIndex ->
+                            val row = rows[outlineIndex]
+                            val bookmark = row.bookmark
                             NavigationDrawerItem(
                                 label = { Text(bookmark.title, maxLines = 1) },
                                 badge = { Text("P.${bookmark.pageNumber}") },
@@ -649,11 +677,11 @@ fun ReflowReaderScreen(
                                 onClick = {
                                     scope.launch {
                                         drawerState.close()
-                                        val targetIdx = (bookmark.pageNumber - 1).coerceIn(0, (reflowSections.size - 1).coerceAtLeast(0))
+                                        val targetIdx = reflowSections.indexOfFirst { it.pageNumber == bookmark.pageNumber }.coerceAtLeast(0)
                                         listState.animateScrollToItem(targetIdx)
                                     }
                                 },
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                modifier = Modifier.padding(start = (12 + row.depth * 12).dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
                             )
                         }
                     }
@@ -664,6 +692,7 @@ fun ReflowReaderScreen(
         Scaffold(
             containerColor = selectedTheme.bg,
             topBar = {
+                if (showReadingControls) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     TopAppBar(
                         title = {
@@ -683,6 +712,7 @@ fun ReflowReaderScreen(
                             }
                         },
                         actions = {
+                            IconButton(onClick = { showReadingControls = false }) { Icon(Icons.Rounded.Fullscreen, "Hide reading controls") }
                             if (bookmarks.isNotEmpty()) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                     Icon(Icons.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
@@ -734,6 +764,16 @@ fun ReflowReaderScreen(
                                         expanded = showOverflowMenu,
                                         onDismissRequest = { showOverflowMenu = false }
                                     ) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.reader_reset_defaults)) },
+                                            onClick = {
+                                                defaultsStore.reset()
+                                                selectedTheme = ReaderTheme.LIGHT
+                                                fontSizeSp = 16f
+                                                useSerifFont = false
+                                                showOverflowMenu = false
+                                            }
+                                        )
                                         DropdownMenuItem(
                                             text = { Text("Export to Audio (WAV)") },
                                             onClick = {
@@ -915,9 +955,10 @@ fun ReflowReaderScreen(
                         }
                     }
                 }
+                }
             },
             bottomBar = {
-                if (selectedPdfUri != null && reflowSections.isNotEmpty() && !isTabletopMode) {
+                if (showReadingControls && selectedPdfUri != null && reflowSections.isNotEmpty() && !isTabletopMode) {
                     Surface(
                         color = selectedTheme.bg,
                         tonalElevation = 6.dp,
@@ -937,25 +978,9 @@ fun ReflowReaderScreen(
                                 // Theme Selector
                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     ReaderTheme.values().forEach { theme ->
-                                        Box(
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .background(theme.bg, CircleShape)
-                                                .clickable {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                    selectedTheme = theme
-                                                }
-                                                .padding(2.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (selectedTheme == theme) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = theme.text
-                                                )
-                                            }
+                                        ReaderThemeSwatch(theme, selectedTheme == theme) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedTheme = theme
                                         }
                                     }
                                 }
@@ -994,6 +1019,9 @@ fun ReflowReaderScreen(
                     .padding(padding),
                 contentAlignment = Alignment.TopCenter
             ) {
+                if (!showReadingControls) {
+                    IconButton(modifier = Modifier.align(Alignment.TopEnd), onClick = { showReadingControls = true }) { Icon(Icons.Rounded.FullscreenExit, "Show reading controls") }
+                }
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else if (selectedPdfUri != null && (isScannedOnly || !hasReadableContent)) {
@@ -1119,7 +1147,7 @@ fun ReflowReaderScreen(
                             )
                         }
                     }
-                } else if (isTabletopMode) {
+                } else if (isTabletopMode && showReadingControls) {
                     // Tabletop Mode for Flip phones: Reading on top, Desk Controls on bottom
                     Column(modifier = Modifier.fillMaxSize()) {
                         // Top Reading Viewport (above hinge)
@@ -1155,7 +1183,7 @@ fun ReflowReaderScreen(
                                             )
                                         }
 
-                                        section.paragraphs.forEach { p ->
+                                        section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                             val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                             val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1163,6 +1191,7 @@ fun ReflowReaderScreen(
                                                 HighlightedParagraph(
                                                     text = p,
                                                     searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                                     textColor = selectedTheme.text,
                                                     fontSizeSp = fontSizeSp,
                                                     useSerifFont = useSerifFont
@@ -1227,32 +1256,11 @@ fun ReflowReaderScreen(
                                 ) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         ReaderTheme.values().forEach { theme ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(36.dp)
-                                                    .background(theme.bg, CircleShape)
-                                                    .clickable {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                                        selectedTheme = theme
-                                                    }
-                                                    .border(
-                                                        width = if (selectedTheme == theme) 2.dp else 1.dp,
-                                                        color = if (selectedTheme == theme) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.2f),
-                                                        shape = CircleShape
-                                                    )
-                                                    .padding(2.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (selectedTheme == theme) {
-                                                    Icon(
-                                                        Icons.Default.Check,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(20.dp),
-                                                        tint = theme.text
-                                                    )
-                                                }
-                                            }
+                                        ReaderThemeSwatch(theme, selectedTheme == theme) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            selectedTheme = theme
                                         }
+                                    }
                                     }
                                 }
 
@@ -1320,7 +1328,7 @@ fun ReflowReaderScreen(
                                     )
                                 }
 
-                                section.paragraphs.forEach { p ->
+                                section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1328,6 +1336,7 @@ fun ReflowReaderScreen(
                                         HighlightedParagraph(
                                             text = p,
                                             searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
                                             useSerifFont = useSerifFont
@@ -1366,7 +1375,7 @@ fun ReflowReaderScreen(
                                     )
                                 }
 
-                                section.paragraphs.forEach { p ->
+                                section.paragraphs.forEachIndexed { paragraphIndex, p ->
                                     val isSpoken = isTtsPlaying && p == allParagraphs.getOrNull(currentSpeakingIndex)
                                     val bgColor = if (isSpoken) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
@@ -1374,6 +1383,7 @@ fun ReflowReaderScreen(
                                         HighlightedParagraph(
                                             text = p,
                                             searchQuery = searchQuery,
+                                                    activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
                                             useSerifFont = useSerifFont
@@ -1390,14 +1400,22 @@ fun ReflowReaderScreen(
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun HighlightedParagraph(
     text: String,
     searchQuery: String,
     textColor: Color,
     fontSizeSp: Float,
-    useSerifFont: Boolean
+    useSerifFont: Boolean,
+    activeMatchStart: Int? = null
 ) {
+    val requester = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+    LaunchedEffect(activeMatchStart, layout) {
+        val result = layout
+        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+    }
     val trimmed = searchQuery.trim()
     if (trimmed.length < 2 || !text.contains(trimmed, ignoreCase = true)) {
         Text(
@@ -1409,13 +1427,12 @@ private fun HighlightedParagraph(
             textAlign = TextAlign.Start
         )
     } else {
-        val annotated = remember(text, trimmed) {
+        val annotated = remember(text, trimmed, activeMatchStart) {
             buildAnnotatedString {
                 var startIndex = 0
-                val lowerText = text.lowercase()
-                val lowerQuery = trimmed.lowercase()
+                
                 while (startIndex < text.length) {
-                    val matchIdx = lowerText.indexOf(lowerQuery, startIndex)
+                    val matchIdx = text.indexOf(trimmed, startIndex, ignoreCase = true)
                     if (matchIdx == -1) {
                         append(text.substring(startIndex))
                         break
@@ -1426,7 +1443,7 @@ private fun HighlightedParagraph(
                     val matchEnd = matchIdx + trimmed.length
                     pushStyle(
                         SpanStyle(
-                            background = Color(0xFFFFD54F),
+                            background = if (matchIdx == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
                             color = Color(0xFF1E293B),
                             fontWeight = FontWeight.Bold
                         )
@@ -1439,6 +1456,8 @@ private fun HighlightedParagraph(
         }
         Text(
             text = annotated,
+            modifier = Modifier.bringIntoViewRequester(requester),
+            onTextLayout = { layout = it },
             color = textColor,
             fontSize = fontSizeSp.sp,
             lineHeight = (fontSizeSp * 1.55f).sp,

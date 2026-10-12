@@ -61,9 +61,7 @@ fun LinearizePdfScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -79,7 +77,7 @@ fun LinearizePdfScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_linearize_success),
                         context.getString(R.string.desc_linearize_success, FileUtils.formatFileSize(outBytes))
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

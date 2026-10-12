@@ -16,13 +16,17 @@ android {
         applicationId = "com.pdfchemy.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 13
-        versionName = "2.0.6"
+        versionCode = 14
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
+
+    installation {
+        timeOutInMs = 15 * 60 * 1000
     }
 
     lint {

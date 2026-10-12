@@ -159,9 +159,7 @@ fun ScanPdfScreen(
     }
 
     // Export PDF Launcher
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && scannedBitmaps.isNotEmpty()) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {

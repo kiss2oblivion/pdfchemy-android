@@ -57,61 +57,78 @@ object PdfRedactionEngineWorker {
         }
     }
 
-    private class PositionalSearchStripper(
+    internal class PositionalSearchStripper(
         private val query: String,
         private val isRegex: Boolean
     ) : PDFTextStripper() {
+
+        init {
+            sortByPosition = true
+        }
 
         val matches = mutableListOf<JSONObject>()
 
         override fun writeString(text: String, textPositions: MutableList<TextPosition>) {
             val currentPage = (currentPageNo - 1).coerceAtLeast(0)
-            
+            if (textPositions.isEmpty()) return
+
+            val charToPosition = ArrayList<TextPosition>(text.length + 16)
+            val fullTextBuilder = StringBuilder(text.length + 16)
+            for (tp in textPositions) {
+                val unicode = tp.unicode.orEmpty()
+                if (unicode.isNotEmpty()) {
+                    for (ch in unicode) {
+                        charToPosition.add(tp)
+                        fullTextBuilder.append(ch)
+                    }
+                }
+            }
+            val line = fullTextBuilder.toString()
+            if (line.isEmpty() || charToPosition.isEmpty()) return
+
             if (isRegex) {
                 val regex = Regex(query)
-                val results = regex.findAll(text)
+                val results = regex.findAll(line)
                 for (match in results) {
-                    val foundIndex = match.range.first
-                    val endIndex = match.range.last + 1
-                    if (endIndex <= textPositions.size) {
-                        addMatch(currentPage, textPositions, foundIndex, endIndex)
+                    val start = match.range.first
+                    val end = match.range.last + 1
+                    if (start in 0 until charToPosition.size && end <= charToPosition.size) {
+                        val matchedPositions = (start until end).map { charToPosition[it] }.distinct()
+                        addMatch(currentPage, matchedPositions)
                     }
                 }
             } else {
                 var startIndex = 0
                 val target = query.lowercase()
-                val source = text.lowercase()
+                val source = line.lowercase()
                 while (startIndex < source.length) {
                     val foundIndex = source.indexOf(target, startIndex)
                     if (foundIndex == -1) break
                     val endIndex = foundIndex + target.length
-                    if (endIndex <= textPositions.size) {
-                        addMatch(currentPage, textPositions, foundIndex, endIndex)
+                    if (foundIndex in 0 until charToPosition.size && endIndex <= charToPosition.size) {
+                        val matchedPositions = (foundIndex until endIndex).map { charToPosition[it] }.distinct()
+                        addMatch(currentPage, matchedPositions)
                     }
                     startIndex = foundIndex + 1
                 }
             }
         }
-        
-        private fun addMatch(currentPage: Int, textPositions: List<TextPosition>, foundIndex: Int, endIndex: Int) {
-            val matchPositions = textPositions.subList(foundIndex, endIndex)
+
+        private fun addMatch(currentPage: Int, matchPositions: List<TextPosition>) {
             if (matchPositions.isNotEmpty()) {
-                val firstPos = matchPositions.first()
-                val lastPos = matchPositions.last()
-
-                val minX = firstPos.xDirAdj
-                val maxX = lastPos.xDirAdj + lastPos.widthDirAdj
+                val minX = matchPositions.minOf { it.xDirAdj }
+                val maxX = matchPositions.maxOf { it.xDirAdj + it.widthDirAdj }
                 val width = (maxX - minX).coerceAtLeast(1f)
-                val avgHeight = matchPositions.map { it.heightDir }.average().toFloat().coerceAtLeast(8f)
+                val minY = matchPositions.minOf { it.yDirAdj }
+                val maxY = matchPositions.maxOf { it.yDirAdj + it.heightDir }
+                val height = (maxY - minY).coerceAtLeast(8f)
 
-                val topY = firstPos.yDirAdj
-                
                 val boxObj = JSONObject()
                 boxObj.put("pageIndex", currentPage)
                 boxObj.put("rawLeft", minX.toDouble())
-                boxObj.put("rawTop", topY.toDouble())
+                boxObj.put("rawTop", minY.toDouble())
                 boxObj.put("rawRight", (minX + width).toDouble())
-                boxObj.put("rawBottom", (topY + avgHeight).toDouble())
+                boxObj.put("rawBottom", (minY + height).toDouble())
                 matches.add(boxObj)
             }
         }
@@ -132,40 +149,7 @@ object PdfRedactionEngineWorker {
                     document = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
                 }
 
-                val stripper = PositionalSearchStripper(query, isRegex)
-                val nullWriter = java.io.OutputStreamWriter(java.io.ByteArrayOutputStream())
-                stripper.startPage = 1
-                stripper.endPage = document!!.numberOfPages
-                stripper.writeText(document, nullWriter)
-                
-                for (match in stripper.matches) {
-                    val pageIndex = match.getInt("pageIndex")
-                    val page = document!!.getPage(pageIndex)
-                    val cropBox = page.cropBox ?: page.mediaBox
-                    val pw = cropBox.width
-                    val ph = cropBox.height
-                    
-                    val rawLeft = match.getDouble("rawLeft").toFloat()
-                    val rawTop = match.getDouble("rawTop").toFloat()
-                    val rawRight = match.getDouble("rawRight").toFloat()
-                    val rawBottom = match.getDouble("rawBottom").toFloat()
-                    
-                    val normLeft = rawLeft / pw
-                    val normTop = rawTop / ph
-                    val normRight = rawRight / pw
-                    val normBottom = rawBottom / ph
-                    
-                    val boxObj = JSONObject()
-                    boxObj.put("pageIndex", pageIndex)
-                    boxObj.put("left", normLeft.toDouble())
-                    boxObj.put("top", normTop.toDouble())
-                    boxObj.put("right", normRight.toDouble())
-                    boxObj.put("bottom", normBottom.toDouble())
-                    boxObj.put("overlayLabel", "REDACTED")
-                    
-                    resultMatches.add(boxObj)
-                }
-
+                resultMatches.addAll(searchDocumentTargets(document!!, query, isRegex))
             } finally {
                 try { document?.close() } catch (e: Exception) {}
             }
@@ -180,6 +164,45 @@ object PdfRedactionEngineWorker {
         } catch (e: Exception) {
             JSONObject().put("error", e.message).toString()
         }
+    }
+
+    internal fun searchDocumentTargets(document: PDDocument, query: String, isRegex: Boolean): List<JSONObject> {
+        val stripper = PositionalSearchStripper(query, isRegex)
+        stripper.sortByPosition = true
+        val nullWriter = java.io.OutputStreamWriter(java.io.ByteArrayOutputStream())
+        stripper.startPage = 1
+        stripper.endPage = document.numberOfPages
+        stripper.writeText(document, nullWriter)
+
+        val resultMatches = mutableListOf<JSONObject>()
+        for (match in stripper.matches) {
+            val pageIndex = match.getInt("pageIndex")
+            val page = document.getPage(pageIndex)
+            val cropBox = page.cropBox ?: page.mediaBox
+            val pw = cropBox.width
+            val ph = cropBox.height
+
+            val rawLeft = match.getDouble("rawLeft").toFloat()
+            val rawTop = match.getDouble("rawTop").toFloat()
+            val rawRight = match.getDouble("rawRight").toFloat()
+            val rawBottom = match.getDouble("rawBottom").toFloat()
+
+            val normLeft = (minOf(rawLeft, rawRight) / pw).coerceIn(0f, 1f)
+            val normTop = (minOf(rawTop, rawBottom) / ph).coerceIn(0f, 1f)
+            val normRight = (maxOf(rawLeft, rawRight) / pw).coerceIn(normLeft, 1f)
+            val normBottom = (maxOf(rawTop, rawBottom) / ph).coerceIn(normTop, 1f)
+
+            val boxObj = JSONObject()
+            boxObj.put("pageIndex", pageIndex)
+            boxObj.put("left", normLeft.toDouble())
+            boxObj.put("top", normTop.toDouble())
+            boxObj.put("right", normRight.toDouble())
+            boxObj.put("bottom", normBottom.toDouble())
+            boxObj.put("overlayLabel", "REDACTED")
+
+            resultMatches.add(boxObj)
+        }
+        return resultMatches
     }
 
     private suspend fun applyRedactions(

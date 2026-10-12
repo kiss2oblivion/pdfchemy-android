@@ -114,9 +114,7 @@ fun TableExtractorScreen(
         extractTables(uri)
     }
 
-    val saveCsvLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/csv")
-    ) { destUri ->
+    val saveCsvLauncher = rememberPreferredDocumentCreator("text/csv") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isExporting = true
@@ -290,7 +288,7 @@ fun TableExtractorScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "tables", extension = "csv")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
                         saveCsvLauncher.launch(suggestedName)
                     },
                     enabled = !isExporting,

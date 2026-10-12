@@ -11,10 +11,12 @@ data class HistoryItem(
     val uriString: String,
     val name: String,
     val action: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val mimeType: String = "",
+    val isDirectory: Boolean = false
 )
 
-class HistoryRepository(context: Context) {
+class HistoryRepository(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("pdfchemy_history", Context.MODE_PRIVATE)
     private val KEY_HISTORY = "recent_files"
 
@@ -36,7 +38,9 @@ class HistoryRepository(context: Context) {
                         uriString = obj.getString("uri"),
                         name = obj.getString("name"),
                         action = obj.getString("action"),
-                        timestamp = obj.getLong("timestamp")
+                        timestamp = obj.getLong("timestamp"),
+                        mimeType = obj.optString("mime", "").ifBlank { com.pdfchemy.app.utils.FileUtils.getMimeType(context, Uri.parse(obj.getString("uri")), obj.getString("name")) },
+                        isDirectory = obj.optBoolean("directory", android.provider.DocumentsContract.isTreeUri(Uri.parse(obj.getString("uri"))))
                     )
                 )
             }
@@ -60,9 +64,11 @@ class HistoryRepository(context: Context) {
         currentList.add(
             HistoryItem(
                 uriString = uriStr,
-                name = name,
+                name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.takeIf { it.isNotBlank() } ?: name,
                 action = action,
-                timestamp = System.currentTimeMillis()
+                timestamp = System.currentTimeMillis(),
+                mimeType = com.pdfchemy.app.utils.FileUtils.getMimeType(context, uri),
+                isDirectory = android.provider.DocumentsContract.isTreeUri(uri)
             )
         )
         
@@ -76,6 +82,8 @@ class HistoryRepository(context: Context) {
             obj.put("name", item.name)
             obj.put("action", item.action)
             obj.put("timestamp", item.timestamp)
+            obj.put("mime", item.mimeType)
+            obj.put("directory", item.isDirectory)
             jsonArray.put(obj)
         }
         
@@ -84,5 +92,12 @@ class HistoryRepository(context: Context) {
     
     fun clearHistory() {
         prefs.edit().remove(KEY_HISTORY).apply()
+    }
+    fun remove(uriString: String) {
+        val items = getHistory().filterNot { it.uriString == uriString }
+        val json = JSONArray()
+        items.forEach { json.put(JSONObject().put("uri", it.uriString).put("name", it.name)
+            .put("action", it.action).put("timestamp", it.timestamp).put("mime", it.mimeType).put("directory", it.isDirectory)) }
+        prefs.edit().putString(KEY_HISTORY, json.toString()).apply()
     }
 }

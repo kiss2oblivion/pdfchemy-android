@@ -30,7 +30,7 @@ object DocumentIdentity {
                 // Ignore
             }
         } else if (uri.scheme == "file") {
-            name = uri.lastPathSegment ?: ""
+            name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: ""
             size = java.io.File(uri.path ?: "").length()
         }
         

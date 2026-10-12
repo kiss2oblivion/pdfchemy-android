@@ -220,11 +220,9 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         viewModel.loadMetadata(context, uri)
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberLauncherForActivityResult
+            val src = sourceUri ?: return@rememberPreferredDocumentCreator
             val newMetadata = PdfMetadata(title, author, subject, keywords, creator, producer)
             viewModel.updateMetadata(context, src, destUri, newMetadata)
         }
@@ -324,7 +322,7 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 Button(
-                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "metadata_updated")) } },
+                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "metadata_updated")) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -355,11 +353,9 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         fileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberLauncherForActivityResult
+            val src = sourceUri ?: return@rememberPreferredDocumentCreator
             viewModel.clearMetadata(context, src, destUri)
         }
     }
@@ -447,7 +443,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                     Button(
-                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "stripped")) } },
+                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "stripped")) } },
                         modifier = Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 52.dp),
@@ -481,7 +477,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("text/plain") { uri ->
         uri?.let { destUri ->
             selectedFile?.uri?.let { sourceUri ->
                 viewModel.extractTextFromPdf(context, sourceUri, destUri)

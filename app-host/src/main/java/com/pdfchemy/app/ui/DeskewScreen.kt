@@ -110,9 +110,7 @@ fun DeskewScreen(
         analyzeDocument(uri)
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isProcessing = true
@@ -267,7 +265,7 @@ fun DeskewScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(
+                        val suggestedName = FileUtil.generateSuggestedName(context,
                             selectedPdfUri,
                             "straightened"
                         )

@@ -81,44 +81,10 @@ object PdfEditorWorker {
                                 PdfRenderer.Page.RENDER_MODE_FOR_PRINT
                             )
 
-                            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                color = android.graphics.Color.BLACK
-                                style = Paint.Style.FILL
-                            }
-                            val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                                color = android.graphics.Color.WHITE
-                                isFakeBoldText = true
-                            }
-
-                            // If the page also has drawings, text annotations, or stamps, draw them onto the base raster
-                            if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
-                                val overlayBmp = renderAnnotationOverlayBitmap(mod, finalW, finalH)
-                                if (overlayBmp != null) {
-                                    canvas.drawBitmap(overlayBmp, 0f, 0f, null)
-                                    try { overlayBmp.recycle() } catch (ignored: Exception) {}
-                                }
-                            }
-
-                            for (rBox in mod.redactions) {
-                                val rectF = rBox.normalizedRect
-                                val left = rectF.left * finalW
-                                val top = rectF.top * finalH
-                                val right = rectF.right * finalW
-                                val bottom = rectF.bottom * finalH
-
-                                canvas.drawRect(left, top, right, bottom, paint)
-
-                                if (rBox.overlayLabel?.isNotEmpty() == true) {
-                                    val bw = right - left
-                                    val bh = bottom - top
-                                    val ts = (bh * 0.4f).coerceIn(12f, 60f)
-                                    textPaint.textSize = ts
-                                    val tw = textPaint.measureText(rBox.overlayLabel!!)
-                                    val tx = left + (bw - tw) / 2f
-                                    val ty = top + (bh + ts * 0.7f) / 2f
-                                    canvas.drawText(rBox.overlayLabel!!, tx, ty, textPaint)
-                                }
-                            }
+                            // Composite the exact preview painter, including opaque redactions last.
+                            val overlay = checkNotNull(com.pdfchemy.app.logic.AnnotationRenderer.render(mod, finalW, finalH))
+                            try { canvas.drawBitmap(overlay, 0f, 0f, null) }
+                            finally { overlay.recycle() }
 
                             val pdImage = LosslessFactory.createFromImage(document, baseBmp)
                             page.rotation = if (mod.rotationDegrees != 0) (mod.rotationDegrees % 360 + 360) % 360 else 0
@@ -133,6 +99,7 @@ object PdfEditorWorker {
                         } catch (e: Exception) {
                             AppLogger.w("PdfEditorWorker: renderer-based redaction flattening failed for page ${pageIdx}: ${e.message}")
                         } finally {
+                            baseBmp?.recycle()
                             try { renderPage?.close() } catch (e: Exception) {}
                         }
                     }
@@ -141,10 +108,8 @@ object PdfEditorWorker {
                         throw SecurityException("Cannot forensically rasterize the PDF page because PdfRenderer is unavailable. Aborting redaction to ensure maximum security without data loss.")
                     }
                 } else {
-                    if (mod.rotationDegrees != 0) {
-                    val currentRotation = page.rotation
-                    page.rotation = (currentRotation + mod.rotationDegrees) % 360
-                }
+                    // Overlay coordinates refer to the original rendered page plane.
+                    val originalRotation = (page.rotation % 360 + 360) % 360
 
                 if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
                     val cropBox = page.cropBox ?: page.mediaBox
@@ -152,7 +117,7 @@ object PdfEditorWorker {
                     val pageHeightPts = cropBox.height
                     val lowerLeftX = cropBox.lowerLeftX
                     val lowerLeftY = cropBox.lowerLeftY
-                    val rot = page.rotation
+                    val rot = originalRotation
 
                     val dispW = if (rot == 90 || rot == 270) pageHeightPts else pageWidthPts
                     val dispH = if (rot == 90 || rot == 270) pageWidthPts else pageHeightPts
@@ -199,6 +164,7 @@ object PdfEditorWorker {
                         }
                     }
                 }
+                    page.rotation = ((originalRotation + mod.rotationDegrees) % 360 + 360) % 360
                 }
             }
 
@@ -217,115 +183,6 @@ object PdfEditorWorker {
         }
     }
 
-    private fun renderAnnotationOverlayBitmap(
-        mod: PageModification,
-        targetWidth: Int,
-        targetHeight: Int
-    ): Bitmap? {
-        if (targetWidth <= 0 || targetHeight <= 0) return null
-        val bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetWidth, targetHeight); Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888) }
-        val canvas = Canvas(bitmap)
-
-        val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeCap = Paint.Cap.ROUND
-            strokeJoin = Paint.Join.ROUND
-        }
-
-        for (drawing in mod.drawings) {
-            if (drawing.points.size < 2) continue
-            pathPaint.color = drawing.color
-            pathPaint.strokeWidth = drawing.strokeWidth * (targetWidth / 1000f).coerceAtLeast(1f)
-            if (drawing.isHighlighter) {
-                pathPaint.alpha = 110
-            }
-
-            val path = Path()
-            val p0 = drawing.points[0]
-            path.moveTo(p0.x * targetWidth, p0.y * targetHeight)
-            for (i in 1 until drawing.points.size) {
-                val p = drawing.points[i]
-                path.lineTo(p.x * targetWidth, p.y * targetHeight)
-            }
-            canvas.drawPath(path, pathPaint)
-        }
-
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            isFakeBoldText = true
-        }
-        val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-        for (textAnn in mod.textAnnotations) {
-            if (textAnn.text.isBlank()) continue
-            val posX = textAnn.xRatio * targetWidth
-            val posY = textAnn.yRatio * targetHeight
-            val scaleFactor = (targetWidth / 1000f).coerceAtLeast(1f)
-            val textSize = textAnn.fontSize * scaleFactor * 2.2f
-            textPaint.textSize = textSize
-            textPaint.color = textAnn.textColor
-
-            val textWidth = textPaint.measureText(textAnn.text)
-            val textHeight = textSize
-
-            if (textAnn.backgroundColor != android.graphics.Color.TRANSPARENT) {
-                bgPaint.color = textAnn.backgroundColor
-                val padding = textHeight * 0.3f
-                val rect = RectF(
-                    posX - padding,
-                    posY - textHeight,
-                    posX + textWidth + padding,
-                    posY + padding
-                )
-                canvas.drawRoundRect(rect, padding, padding, bgPaint)
-            }
-
-            canvas.drawText(textAnn.text, posX, posY, textPaint)
-        }
-
-        val stampPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 10f * (targetWidth / 1000f).coerceAtLeast(1f)
-            isFakeBoldText = true
-        }
-        val stampTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            isFakeBoldText = true
-        }
-
-        for (stamp in mod.stamps) {
-            val posX = stamp.xRatio * targetWidth
-            val posY = stamp.yRatio * targetHeight
-            val scaleFactor = (targetWidth / 1000f).coerceAtLeast(1f) * stamp.scale
-            
-            val stampColor = stamp.type.colorHex.toInt()
-            stampPaint.color = stampColor
-            stampTextPaint.color = stampColor
-
-            val textSize = 60f * scaleFactor
-            stampTextPaint.textSize = textSize
-            
-            val textWidth = stampTextPaint.measureText(stamp.type.text)
-            val textHeight = textSize
-            val paddingX = textWidth * 0.2f
-            val paddingY = textHeight * 0.5f
-
-            val rectLeft = posX - (textWidth / 2f) - paddingX
-            val rectTop = posY - (textHeight / 2f) - paddingY
-            val rectRight = posX + (textWidth / 2f) + paddingX
-            val rectBottom = posY + (textHeight / 2f) + paddingY
-
-            canvas.save()
-            canvas.translate(posX, posY)
-            canvas.rotate(stamp.rotation)
-            canvas.translate(-posX, -posY)
-
-            val cornerRadius = 15f * scaleFactor
-            canvas.drawRoundRect(rectLeft, rectTop, rectRight, rectBottom, cornerRadius, cornerRadius, stampPaint)
-            canvas.drawText(stamp.type.text, rectLeft + paddingX, posY + textHeight * 0.35f, stampTextPaint)
-
-            canvas.restore()
-        }
-
-        return bitmap
-    }
+    private fun renderAnnotationOverlayBitmap(mod: PageModification, targetWidth: Int, targetHeight: Int): Bitmap? =
+        com.pdfchemy.app.logic.AnnotationRenderer.render(mod.copy(redactions = emptyList()), targetWidth, targetHeight)
 }

@@ -139,9 +139,7 @@ fun FormBuilderScreen(
         placedFields.clear()
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isSaving = true

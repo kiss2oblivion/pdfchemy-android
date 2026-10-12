@@ -49,34 +49,120 @@ import java.util.concurrent.atomic.AtomicLong
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
+    data class TrackedOutput(
+        val uri: android.net.Uri,
+        val provenance: com.pdfchemy.app.logic.DestinationProvenance,
+        @Volatile var publicationState: com.pdfchemy.app.logic.PublicationState = com.pdfchemy.app.logic.PublicationState.PENDING
+    ) {
+        val isFreshCopy: Boolean get() = provenance == com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY
+    }
+
+    private class OperationOutputRecord(
+        val operationId: Long,
+        @Volatile var job: kotlinx.coroutines.Job? = null,
+        val outputs: MutableList<TrackedOutput> = java.util.Collections.synchronizedList(mutableListOf())
+    )
+
+    private val operationCounter = java.util.concurrent.atomic.AtomicLong(0L)
+    @Volatile private var currentOperationId: Long = 0L
+    private val activeOperations = java.util.concurrent.ConcurrentHashMap<Long, OperationOutputRecord>()
+
+    private fun getOrCreateCurrentOperation(): OperationOutputRecord {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            val existing = activeOperations[currentId]
+            if (existing != null && (existing.job == null || existing.job?.isActive == true)) {
+                return existing
+            }
+        }
+        val newId = operationCounter.incrementAndGet()
+        currentOperationId = newId
+        val newRecord = OperationOutputRecord(newId)
+        activeOperations[newId] = newRecord
+        return newRecord
+    }
+
+    private val ocrProgressRequests = com.pdfchemy.app.logic.LatestRequest()
+    private val _canCancelOperation = MutableStateFlow(false)
+    val canCancelOperation: StateFlow<Boolean> = _canCancelOperation.asStateFlow()
     private var activeJob: kotlinx.coroutines.Job? = null
-    
-    private val pendingOutputUris = java.util.Collections.synchronizedList(mutableListOf<android.net.Uri>())
+        set(job) {
+            field = job
+            _canCancelOperation.value = job?.isActive == true
+            if (job != null) {
+                val record = getOrCreateCurrentOperation()
+                record.job = job
+                job.invokeOnCompletion { if (field === job) _canCancelOperation.value = false }
+            }
+        }
 
-    fun addPendingOutputUri(uri: android.net.Uri) {
-        pendingOutputUris.add(uri)
-    }
-
-    fun clearPendingOutputUris() {
-        pendingOutputUris.clear()
-    }
-
-    fun cancelOperation(context: android.content.Context) {
-        val cancelledJob = activeJob
-        val ownedOutputs = synchronized(pendingOutputUris) { pendingOutputUris.toList().also { pendingOutputUris.clear() } }
-        cancelledJob?.cancel()
-        activeJob = null
-        _uiState.value = UiState.Idle
-        viewModelScope.launch(Dispatchers.IO) {
-            // A provider write must finish/abort before its document is deleted.
-            cancelledJob?.join()
-            ownedOutputs.forEach { uri ->
-                runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() }
+    fun addPendingOutput(destination: com.pdfchemy.app.logic.OutputDestination) {
+        val record = getOrCreateCurrentOperation()
+        synchronized(record.outputs) {
+            if (record.outputs.none { it.uri == destination.uri }) {
+                record.outputs.add(TrackedOutput(destination.uri, destination.provenance))
             }
         }
     }
 
+    fun addPendingOutputUri(uri: android.net.Uri, isFreshCopy: Boolean = com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(uri)) {
+        addPendingOutput(com.pdfchemy.app.logic.OutputDestination(
+            uri,
+            if (isFreshCopy) com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY else com.pdfchemy.app.logic.DestinationProvenance.EXISTING_OR_UNKNOWN
+        ))
+    }
 
+    fun removePendingOutputUri(uri: android.net.Uri) {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.removeAll { it.uri == uri }
+        }
+    }
+
+    fun markOutputPublished(uri: android.net.Uri) {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.find { it.uri == uri }?.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED
+        }
+        com.pdfchemy.app.logic.OutputPolicy.markPublished(uri)
+    }
+
+    fun clearPendingOutputUris() {
+        val currentId = currentOperationId
+        if (currentId != 0L) {
+            activeOperations[currentId]?.outputs?.clear()
+        }
+    }
+
+    fun cancelOperation(context: android.content.Context) {
+        val opId = currentOperationId
+        val opRecord = if (opId != 0L) activeOperations.remove(opId) else null
+        val cancelledJob = opRecord?.job ?: activeJob
+        activeJob = null
+        _canCancelOperation.value = false
+        currentOperationId = 0L
+        _uiState.value = UiState.Idle
+
+        opRecord?.outputs?.forEach { it.publicationState = com.pdfchemy.app.logic.PublicationState.CANCELLED }
+        cancelledJob?.cancel()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // A provider write must finish/abort before its document is deleted.
+            cancelledJob?.join()
+            // Only proven fresh incomplete destinations may be deleted; existing/unknown destinations remain intact.
+            opRecord?.outputs?.forEach { tracked ->
+                if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                    val claimedByNewerOp = activeOperations.values.any { other ->
+                        other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
+                    }
+                    if (!claimedByNewerOp) {
+                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                        runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                    }
+                }
+            }
+        }
+    }
 
     private val _uiStateInternal = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiStateInternal.asStateFlow()
@@ -86,31 +172,150 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             get() = _uiStateInternal.value
             set(v) {
                 if (v is UiState.Error) {
+                    val opId = currentOperationId
+                    val opRecord = if (opId != 0L) activeOperations.remove(opId) else null
+                    val jobToJoin = opRecord?.job ?: activeJob
+                    activeJob = null
+                    _canCancelOperation.value = false
+                    currentOperationId = 0L
                     val context = getApplication<Application>()
-                    pendingOutputUris.toList().forEach { uri ->
-                        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)?.delete() } catch(e: Exception) {}
+                    viewModelScope.launch(Dispatchers.IO) {
+                        jobToJoin?.join()
+                        opRecord?.outputs?.forEach { tracked ->
+                            if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                                val claimedByNewerOp = activeOperations.values.any { other ->
+                                    other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
+                                }
+                                if (!claimedByNewerOp) {
+                                    com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                                    try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
+                                }
+                            }
+                        }
+                    }
+                }
+                if (v is UiState.Success) {
+                    val opId = currentOperationId
+                    if (opId != 0L) {
+                        val opRecord = activeOperations.remove(opId)
+                        opRecord?.outputs?.forEach { tracked ->
+                            tracked.publicationState = com.pdfchemy.app.logic.PublicationState.PUBLISHED
+                            com.pdfchemy.app.logic.OutputPolicy.markPublished(tracked.uri)
+                        }
+                    }
+                    activeJob = null
+                    _canCancelOperation.value = false
+                    currentOperationId = 0L
+                }
+                if (v is UiState.Idle) {
+                    val opId = currentOperationId
+                    if (opId != 0L) {
+                        activeOperations.remove(opId)
+                        currentOperationId = 0L
                     }
                 }
                 if (v is UiState.Success || v is UiState.Error || v is UiState.Idle) {
-                    pendingOutputUris.clear()
+                    ocrProgressRequests.invalidate()
                 }
                 _uiStateInternal.value = v
             }
     }
 
+    val editorSession = com.pdfchemy.app.logic.EditorSession()
+    var editorUri: Uri? = null
+    var editorSourceUri: Uri? = null
+    var editorPage = 0
+    data class ReaderPosition(val page: Int, val offset: Int)
+    val readerPositions = object : LinkedHashMap<String, ReaderPosition>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ReaderPosition>?): Boolean {
+            return size > 32
+        }
+    }
+    var readerSourceUri: Uri? = null
+
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
+    private var continuityLease: java.io.Closeable? = null
 
     fun setContinuityUri(uri: Uri?) {
+        continuityLease?.close()
+        continuityLease = null
+        val previousUri = _continuityDocumentUri.value
         _continuityDocumentUri.value = uri
+        if (uri != null) {
+            continuityLease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
+        }
+        if (previousUri != null && previousUri != uri) {
+            com.pdfchemy.app.utils.DocumentStager.release(previousUri)
+        }
     }
 
+    fun clearContinuityUri() {
+        setContinuityUri(null)
+    }
+
+    private val vmCleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())
+    @androidx.annotation.VisibleForTesting
+    internal var lastCleanupJob: kotlinx.coroutines.Job? = null
+    @androidx.annotation.VisibleForTesting
+    internal var onClearedWriterJoinTimeoutMs: Long = 3000L
+
+    override fun onCleared() {
+        super.onCleared()
+        setContinuityUri(null)
+        val context = getApplication<Application>()
+        val records = activeOperations.values.toList()
+        activeOperations.clear()
+
+        lastCleanupJob = vmCleanupScope.launch {
+            records.forEach { opRecord ->
+                val job = opRecord.job
+                job?.cancel()
+
+                val completed = job == null || kotlinx.coroutines.withTimeoutOrNull(onClearedWriterJoinTimeoutMs) {
+                    job.join()
+                    true
+                } == true
+
+                fun cleanupFreshOutputs() {
+                    opRecord.outputs.forEach { tracked ->
+                        if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
+                            com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
+                            runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                        }
+                    }
+                }
+
+                if (completed) {
+                    cleanupFreshOutputs()
+                } else {
+                    // Writer exceeded timeout and is STILL ACTIVE.
+                    // DO NOT delete outputs while writer is still running.
+                    // Defer cleanup until the writer confirms termination.
+                    job.invokeOnCompletion {
+                        vmCleanupScope.launch {
+                            cleanupFreshOutputs()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     private val prefs = application.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
+    private val compressionDefaults = com.pdfchemy.app.logic.CompressionDefaultsStore(prefs)
+    private val latestAnalysis = com.pdfchemy.app.logic.LatestRequest()
+    private var fileAnalysisJob: kotlinx.coroutines.Job? = null
+    private var batchAnalysisTicket = 0L
 
     private val historyRepository = com.pdfchemy.app.logic.HistoryRepository(application)
     private val _historyList = MutableStateFlow(historyRepository.getHistory())
     val historyList: StateFlow<List<com.pdfchemy.app.logic.HistoryItem>> = _historyList.asStateFlow()
 
+    fun removeHistory(uriString: String) {
+        viewModelScope.launch(Dispatchers.IO) { historyRepository.remove(uriString); refreshHistory() }
+    }
     fun refreshHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             val items = historyRepository.getHistory()
@@ -170,9 +375,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _safeguardAssessment = MutableStateFlow<com.pdfchemy.app.logic.DeviceGuard.CapacityAssessment?>(null)
     val safeguardAssessment: StateFlow<com.pdfchemy.app.logic.DeviceGuard.CapacityAssessment?> = _safeguardAssessment.asStateFlow()
+    private val _safeguardSourceUri = MutableStateFlow<Uri?>(null)
+    val safeguardSourceUri: StateFlow<Uri?> = _safeguardSourceUri.asStateFlow()
 
     fun dismissSafeguardAssessment() {
         _safeguardAssessment.value = null
+        _safeguardSourceUri.value = null
     }
 
     private val _isPremium = MutableStateFlow(false)
@@ -186,10 +394,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val premiumPrice: StateFlow<String> = _premiumPrice.asStateFlow()
 
     private var billingManager: BillingManager? = null
+    private val _billingUi = MutableStateFlow(com.pdfchemy.app.billing.BillingUiState())
+    val billingUi = _billingUi.asStateFlow()
+    fun retryBilling(context: Context) { initBilling(context); billingManager?.retry() }
 
     fun initBilling(context: Context) {
         if (billingManager == null) {
             billingManager = BillingManager(context.applicationContext, viewModelScope)
+            viewModelScope.launch { billingManager?.billingUi?.collect { _billingUi.value = it } }
             viewModelScope.launch {
                 billingManager?.isPremium?.collect { _isPremium.value = it }
             }
@@ -198,7 +410,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    private val _compressionQuality = MutableStateFlow(0.50f)
+    private val _compressionQuality = MutableStateFlow(compressionDefaults.load().quality)
     val compressionQuality: StateFlow<Float> = _compressionQuality.asStateFlow()
 
     private val _inputText = MutableStateFlow("")
@@ -213,13 +425,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isAnalyzing = MutableStateFlow(false)
     val isAnalyzing: StateFlow<Boolean> = _isAnalyzing.asStateFlow()
 
-    private val _useGrayscale = MutableStateFlow(false)
+    private val _useGrayscale = MutableStateFlow(compressionDefaults.load().grayscale)
     val useGrayscale: StateFlow<Boolean> = _useGrayscale.asStateFlow()
 
-    private val _useLossless = MutableStateFlow(false)
+    private val _useLossless = MutableStateFlow(compressionDefaults.load().lossless)
     val useLossless: StateFlow<Boolean> = _useLossless.asStateFlow()
 
-    private val _stripMetadata = MutableStateFlow(false)
+    private val _stripMetadata = MutableStateFlow(compressionDefaults.load().stripMetadata)
     val stripMetadata: StateFlow<Boolean> = _stripMetadata.asStateFlow()
 
     private val metadataManager = PdfMetadataManager()
@@ -229,8 +441,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     sealed class UiState {
         object Idle : UiState()
-        data class Processing(val taskNameResId: Int? = null) : UiState()
-        data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String) : UiState()
+        data class Processing(val taskNameResId: Int? = null, val completedPages: Int = 0, val totalPages: Int = 0) : UiState()
+        data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String, val completed: Int = (current - 1).coerceAtLeast(0)) : UiState()
         data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Warning(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Error(val message: String, val technicalDetails: String? = null) : UiState()
@@ -245,6 +457,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     fun setQuality(quality: Float) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.QUALITY)
         _compressionQuality.value = quality
     }
 
@@ -257,24 +470,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setUseGrayscale(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.GRAYSCALE)
         _useGrayscale.value = value
     }
 
     fun setUseLossless(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.LOSSLESS)
         _useLossless.value = value
     }
 
     fun setStripMetadata(value: Boolean) {
+        compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.STRIP_METADATA)
         _stripMetadata.value = value
     }
 
     fun onFileSelected(context: Context, uri: Uri) {
+        val ticket = latestAnalysis.begin()
+        fileAnalysisJob?.cancel()
+        compressionDefaults.beginInput()
+        dismissSafeguardAssessment()
+        val defaults = compressionDefaults.load()
         _pdfAnalysis.value = null
         _selectedFileSize.value = -1L
-        _useGrayscale.value = false
-        _useLossless.value = false
-        _stripMetadata.value = false
-        viewModelScope.launch(Dispatchers.IO) {
+        _compressionQuality.value = defaults.quality
+        _useGrayscale.value = defaults.grayscale
+        _useLossless.value = defaults.lossless
+        _stripMetadata.value = defaults.stripMetadata
+        _isAnalyzing.value = true
+        fileAnalysisJob = viewModelScope.launch(Dispatchers.IO) {
             val size = try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize } ?: -1L
             } catch (e: Exception) {
@@ -282,16 +505,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 -1L
             }
             withContext(Dispatchers.Main) {
+                if (!latestAnalysis.isCurrent(ticket)) return@withContext
                 _selectedFileSize.value = size
                 _isAnalyzing.value = true
             }
 
             val analysisResult = PdfCompressor.analyzePdf(context, uri)
             withContext(Dispatchers.Main) {
+                if (!latestAnalysis.isCurrent(ticket)) return@withContext
                 _isAnalyzing.value = false
                 analysisResult.onSuccess { analysis ->
                     _pdfAnalysis.value = analysis
-                    _compressionQuality.value = analysis.recommendedQuality
+                    if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.QUALITY)) {
+                        _compressionQuality.value = analysis.recommendedQuality
+                    }
                     
                     // Smart auto-toggles recommendation based on scenario
                     applyScenarioDefaults(analysis.scenario)
@@ -304,13 +531,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         isImageHeavy = analysis.imageCount > 10
                     )
                     if (guardCheck.status != com.pdfchemy.app.logic.DeviceGuard.CapacityStatus.SAFE) {
+                        _safeguardSourceUri.value = uri
                         _safeguardAssessment.value = guardCheck
                     }
                 }.onFailure {
-                    _compressionQuality.value = 0.50f
-                    _useGrayscale.value = false
-                    _useLossless.value = false
-                    _stripMetadata.value = false
+                    // A failed analysis has no authority to change user choices.
                 }
             }
         }
@@ -502,6 +727,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onFilesSelected(context: Context, uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        if (_selectedFiles.value.isEmpty()) {
+            batchAnalysisTicket = latestAnalysis.begin()
+            fileAnalysisJob?.cancel()
+            compressionDefaults.beginInput()
+            val saved = compressionDefaults.load()
+            _compressionQuality.value = saved.quality
+            _useGrayscale.value = saved.grayscale
+            _useLossless.value = saved.lossless
+            _stripMetadata.value = saved.stripMetadata
+            _pdfAnalysis.value = null
+            _isAnalyzing.value = false
+            dismissSafeguardAssessment()
+        }
+        val ticket = batchAnalysisTicket
         viewModelScope.launch {
             val existingUris = _selectedFiles.value.map { it.uri }.toSet()
             val newUris = uris.filter { it !in existingUris }
@@ -525,6 +765,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     async {
                         val analysisResult = PdfCompressor.analyzePdf(context, selectedFile.uri)
                         withContext(Dispatchers.Main) {
+                            if (!latestAnalysis.isCurrent(ticket)) return@withContext
                             analysisResult.onSuccess { analysis ->
                                 _selectedFiles.update { currentFiles ->
                                     currentFiles.map { item ->
@@ -533,7 +774,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 }
                                 if (_pdfAnalysis.value == null && _selectedFiles.value.firstOrNull()?.uri == selectedFile.uri) {
                                     _pdfAnalysis.value = analysis
-                                    _compressionQuality.value = analysis.recommendedQuality
+                                    if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.QUALITY)) {
+                                        _compressionQuality.value = analysis.recommendedQuality
+                                    }
                                     applyScenarioDefaults(analysis.scenario)
                                 }
                             }.onFailure {
@@ -579,7 +822,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.BatchProcessing(index + 1, total, selectedFile.name)
 
                     val outputName = "compressed_${selectedFile.name}"
-                    val outputDoc = directory.createFile("application/pdf", outputName)
+                    val outputDoc = com.pdfchemy.app.logic.OutputPolicy.createCopy(directory, "application/pdf", outputName)
                     if (outputDoc == null) {
                         return@forEachIndexed
                     }
@@ -596,11 +839,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         targetMb = _targetMb.value
                     ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
                         runCatching { outputDoc.delete() }
-                        pendingOutputUris.remove(outputDoc.uri)
+                        removePendingOutputUri(outputDoc.uri)
                         throw cancelled
                     }
 
                     compressResult.onSuccess { report ->
+                        markOutputPublished(outputDoc.uri)
                         outputUris.add(outputDoc.uri)
                         val compressedSize = try {
                             context.contentResolver.openFileDescriptor(outputDoc.uri, "r")?.use { it.statSize } ?: -1L
@@ -614,7 +858,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }.onFailure { error ->
                         if (error is kotlinx.coroutines.CancellationException) throw error
                         runCatching { outputDoc.delete() }
-                        pendingOutputUris.remove(outputDoc.uri)
+                        removePendingOutputUri(outputDoc.uri)
                     }
                 }
 
@@ -649,40 +893,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun dismissError() {
+        _uiState.value = UiState.Idle
+    }
+
     fun resetState() {
+        latestAnalysis.invalidate()
+        fileAnalysisJob?.cancel()
         _uiState.value = UiState.Idle
         _warning.value = null
         _pdfAnalysis.value = null
         _isAnalyzing.value = false
-        _useGrayscale.value = false
-        _useLossless.value = false
-        _stripMetadata.value = false
         _selectedFiles.value = emptyList()
     }
 
     private fun applyScenarioDefaults(scenario: com.pdfchemy.app.logic.PdfScenario) {
-        when (scenario) {
-            com.pdfchemy.app.logic.PdfScenario.SIGNED_OFFICIAL -> {
-                _useGrayscale.value = false
-                _useLossless.value = true
-                _stripMetadata.value = false
-            }
-            com.pdfchemy.app.logic.PdfScenario.SCANNED_IMAGE_HEAVY -> {
-                _useGrayscale.value = true
-                _useLossless.value = false
-                _stripMetadata.value = true
-            }
-            com.pdfchemy.app.logic.PdfScenario.TEXT_VECTOR -> {
-                _useGrayscale.value = false
-                _useLossless.value = true
-                _stripMetadata.value = true
-            }
-            com.pdfchemy.app.logic.PdfScenario.MIXED -> {
-                _useGrayscale.value = false
-                _useLossless.value = false
-                _stripMetadata.value = true
-            }
+        val suggested = when (scenario) {
+            com.pdfchemy.app.logic.PdfScenario.SIGNED_OFFICIAL -> Triple(false, true, false)
+            com.pdfchemy.app.logic.PdfScenario.SCANNED_IMAGE_HEAVY -> Triple(true, false, true)
+            com.pdfchemy.app.logic.PdfScenario.TEXT_VECTOR -> Triple(false, true, true)
+            com.pdfchemy.app.logic.PdfScenario.MIXED -> Triple(false, false, true)
         }
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.GRAYSCALE)) _useGrayscale.value = suggested.first
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.LOSSLESS)) _useLossless.value = suggested.second
+        if (compressionDefaults.mayRecommend(com.pdfchemy.app.logic.CompressionChoice.STRIP_METADATA)) _stripMetadata.value = suggested.third
+    }
+
+    fun saveCompressionDefaults() {
+        compressionDefaults.save(com.pdfchemy.app.logic.CompressionDefaults(
+            _compressionQuality.value, _useGrayscale.value, _useLossless.value, _stripMetadata.value
+        ))
+    }
+
+    fun resetCompressionDefaults() {
+        latestAnalysis.invalidate()
+        fileAnalysisJob?.cancel()
+        _isAnalyzing.value = false
+        compressionDefaults.reset()
+        _compressionQuality.value = 0.5f
+        _useGrayscale.value = false
+        _useLossless.value = false
+        _stripMetadata.value = false
+        dismissSafeguardAssessment()
     }
 
     fun dismissWarning() {
@@ -938,7 +1190,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         require(size in 1..16 * 1024 * 1024 && extractedCount < com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES)
                         total += size
                         require(total <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_BYTES)
-                        val newFile = outputDirectory.createFile("image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
+                        val newFile = com.pdfchemy.app.logic.OutputPolicy.createCopy(outputDirectory, "image/jpeg", "image_${extractedCount + 1}.jpg") ?: error("Cannot create image output")
                         createdOutputs.add(newFile)
                         requireNotNull(context.contentResolver.openOutputStream(newFile.uri, "wt")) { "Cannot open image output" }.use { output ->
                             val buffer = ByteArray(8192)
@@ -1182,7 +1434,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 val originalSize = ImageCompressor.getUriFileSize(context, uri)
                                 totalOriginalBytes.addAndGet(originalSize)
 
-                                val targetFile = outputDirectory.createFile(mime, "${baseName}_compressed.$ext")
+                                val targetFile = com.pdfchemy.app.logic.OutputPolicy.createCopy(outputDirectory, mime, "${baseName}_compressed.$ext")
                                 if (targetFile != null) {
                                     addPendingOutputUri(targetFile.uri)
                                     val result = try { ImageCompressor.compressImage(
@@ -1195,11 +1447,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                         stripExif = stripExif
                                     ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
                                         runCatching { targetFile.delete() }
-                                        pendingOutputUris.remove(targetFile.uri)
+                                        removePendingOutputUri(targetFile.uri)
                                         throw cancelled
                                     }
 
                                     if (result.success) {
+                                        markOutputPublished(targetFile.uri)
                                         successCount.incrementAndGet()
                                         totalCompressedBytes.addAndGet(result.compressedSize)
                                         outputUris.add(targetFile.uri)
@@ -1207,7 +1460,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                         failureCount.incrementAndGet()
                                         errors.add("$fileName: ${result.error ?: "Compression failed"}")
                                         targetFile.delete()
-                                        pendingOutputUris.remove(targetFile.uri)
+                                        removePendingOutputUri(targetFile.uri)
                                     }
                                 } else {
                                     failureCount.incrementAndGet()
@@ -1216,7 +1469,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                                 val done = completedCount.incrementAndGet()
                                 withContext(Dispatchers.Main) {
-                                    _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName)
+                                    _uiState.value = UiState.BatchProcessing(done, sourceUris.size, fileName, completed = done)
                                 }
                             }
                         }
@@ -1492,8 +1745,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         onComplete: (Boolean) -> Unit
     ) {
+        val progressTicket = ocrProgressRequests.begin()
         addPendingOutputUri(destUri)
-        _uiState.value = UiState.Processing()
+        _uiState.value = UiState.Processing(R.string.ocr_processing_generic)
         activeJob = viewModelScope.launch {
             try {
                 val success = com.pdfchemy.app.logic.PdfOcrEngine.createSearchablePdf(
@@ -1502,7 +1756,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     destUri = destUri,
                     onProgress = { current, total ->
                         viewModelScope.launch(Dispatchers.Main) {
-                            onProgress(current, total)
+                            if (ocrProgressRequests.isCurrent(progressTicket)) {
+                                _uiState.value = UiState.Processing(R.string.ocr_processing_generic, current, total)
+                                onProgress(current, total)
+                            }
+                        }
+                    },
+                    onSaving = {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            if (ocrProgressRequests.isCurrent(progressTicket)) _uiState.value = UiState.Processing(R.string.ocr_saving_pdf)
                         }
                     }
                 )
@@ -1763,8 +2025,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = UiState.Error(message, technicalDetails)
     }
 
-    fun showSuccessToast(title: String, message: String) {
-        _uiState.value = UiState.Success(title, message, emptyList())
+    fun showSuccessToast(title: String, message: String, outputUri: Uri? = null) {
+        outputUri?.let { historyRepository.addHistoryItem(it, title, message); refreshHistory() }
+        _uiState.value = UiState.Success(title, message, listOfNotNull(outputUri))
     }
 
     fun showErrorToast(title: String, message: String, technicalDetails: String? = null) {

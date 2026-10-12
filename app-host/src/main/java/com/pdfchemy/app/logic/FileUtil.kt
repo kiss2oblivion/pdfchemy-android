@@ -6,6 +6,13 @@ import java.util.Date
 import java.util.Locale
 
 object FileUtil {
+    fun generateSuggestedName(context: android.content.Context, originalUri: Uri?, action: String,
+        defaultName: String = "Document", extension: String = "pdf"): String {
+        val displayName = originalUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) }
+            ?.takeIf { it.isNotBlank() && it.toLongOrNull() == null }
+        val nameUri = originalUri?.let { Uri.parse("file:///" + Uri.encode(OutputPolicy.safeName(displayName ?: defaultName, defaultName))) }
+        return OutputPolicy.safeName(generateSuggestedName(nameUri, action, defaultName, extension))
+    }
 
     /**
      * Generates a smart file name based on the original URI and the action performed.

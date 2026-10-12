@@ -53,7 +53,8 @@ class HistoryRepositoryTest {
 
         val history = historyRepository.getHistory()
         assertEquals(1, history.size)
-        assertEquals("MyDoc.pdf", history[0].name)
+        assertEquals("file.pdf", history[0].name)
+        assertEquals("application/pdf", history[0].mimeType)
         assertEquals("Compressed", history[0].action)
         assertEquals("content://dummy/file.pdf", history[0].uriString)
     }
@@ -67,7 +68,7 @@ class HistoryRepositoryTest {
 
         val history = historyRepository.getHistory()
         assertEquals(1, history.size)
-        assertEquals("Doc1_Updated.pdf", history[0].name)
+        assertEquals("duplicate.pdf", history[0].name)
         assertEquals("Merged", history[0].action)
     }
 
@@ -82,9 +83,9 @@ class HistoryRepositoryTest {
         assertEquals(20, history.size)
         
         // Since list is sorted descending by timestamp, the 25th item should be first
-        assertEquals("File 25", history[0].name)
+        assertEquals("file_25.pdf", history[0].name)
         // And the 6th item should be the last in the history list (items 1-5 dropped)
-        assertEquals("File 6", history[19].name)
+        assertEquals("file_6.pdf", history[19].name)
     }
 
     @Test

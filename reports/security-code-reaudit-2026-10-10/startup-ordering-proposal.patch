@@ -1,0 +1,298 @@
+diff --git a/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt b/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt
+--- a/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt
++++ b/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt
+@@ -302,143 +302,157 @@
+ }
+ 
+ class MainActivity : AppCompatActivity() {
+-    override fun onDestroy() {
+-        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
+-        super.onDestroy()
+-    }
+-
+-    private val incomingPdfUriState = MutableStateFlow<Uri?>(null)
+-
+-    override fun onNewIntent(intent: Intent) {
+-        super.onNewIntent(intent)
+-        setIntent(intent)
+-        handleIncomingIntent(intent)
+-    }
+-
+-    private fun handleIncomingIntent(intent: Intent?) {
+-        val uri = extractPdfUri(intent)
+-        if (uri != null) {
+-            incomingPdfUriState.value = uri
+-        }
+-    }
+-
+-    private fun extractPdfUri(intent: Intent?): Uri? {
+-        if (intent == null) return null
+-        val action = intent.action
+-        if (Intent.ACTION_VIEW == action) {
+-            return intent.data
+-        } else if (Intent.ACTION_SEND == action) {
+-            val streamUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+-                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+-            } else {
+-                @Suppress("DEPRECATION")
+-                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+-            }
+-            return streamUri ?: intent.data
+-        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
+-            val list = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+-                intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
+-            } else {
+-                @Suppress("DEPRECATION")
+-                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
+-            }
+-            return list?.firstOrNull() ?: intent.data
+-        }
+-        return null
+-    }
+-
+-    private fun cleanupOrphanedCacheFiles(context: Context) {
+-        try {
+-            val oneHourAgo = System.currentTimeMillis() - (60 * 60 * 1000L)
+-            fun cleanDir(dir: File?) {
+-                if (dir == null || !dir.exists()) return
+-                val files = dir.listFiles() ?: return
+-                for (file in files) {
+-                    if (file.isDirectory) {
+-                        cleanDir(file)
+-                    } else if (file.isFile && file.lastModified() < oneHourAgo) {
+-                        val name = file.name.lowercase()
+-                        if (name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".cbz") ||
+-                            name.endsWith(".csv") || name.endsWith(".docx") || name.endsWith(".xlsx") || name.endsWith(".pptx") ||
+-                            name.startsWith("temp_") || name.startsWith("pdf_seekable_") || name.startsWith("scan_")) {
+-                            try { file.delete() } catch (_: Throwable) {}
+-                        }
+-                    }
+-                }
+-            }
+-            cleanDir(context.cacheDir)
+-            // Saved scans are user documents, not disposable cache files.
+-        } catch (e: Throwable) {
+-            AppLogger.w("Failed to clean orphaned cache files: ${e.message}")
+-        }
+-    }
+-
+-    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+-    override fun onCreate(savedInstanceState: Bundle?) {
+-        installSplashScreen()
+-        super.onCreate(savedInstanceState)
+-        lifecycleScope.launch(Dispatchers.IO) {
+-            cleanupOrphanedCacheFiles(applicationContext)
+-        }
+-        handleIncomingIntent(intent)
+-        
+-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+-        val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)
+-        val hasConsentedInitial = if (isScreenshotRun) true else prefs.getBoolean("has_consented", false)
+-        val hasCompletedOnboardingInitial = if (isScreenshotRun) true else prefs.getBoolean("has_completed_onboarding", false)
+-        val themeModeInitial = if (isScreenshotRun) "DARK" else {
+-            prefs.getString("theme_mode", null) ?: if (prefs.contains("is_dark_theme")) {
+-                if (prefs.getBoolean("is_dark_theme", false)) "DARK" else "LIGHT"
+-            } else {
+-                "SYSTEM"
+-            }
+-        }
+-
+-        if (!isScreenshotRun) {
+-            val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+-            if (consentInformation.canRequestAds()) {
+-                MobileAds.initialize(this) {
+-                    AdManager.loadInterstitial(this)
+-                }
+-            }
+-
+-            val debugSettings = ConsentDebugSettings.Builder(this)
+-                .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+-                .addTestDeviceHashedId("TEST-EMULATOR")
+-                .build()
+-
+-            val params = ConsentRequestParameters.Builder()
+-                // Uncomment the next line to force the GDPR form for testing
+-                // .setConsentDebugSettings(debugSettings) 
+-                .build()
+-
+-            consentInformation.requestConsentInfoUpdate(
+-                this,
+-                params,
+-                {
+-                    UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+-                        this
+-                    ) { loadAndShowError ->
+-                        if (loadAndShowError != null) {
+-                            Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
+-                        }
+-                        if (consentInformation.canRequestAds()) {
+-                            MobileAds.initialize(this) {
+-                                AdManager.loadInterstitial(this)
+-                            }
+-                        }
+-                    }
+-                },
+-                { requestConsentError ->
+-                    Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
+-                    if (consentInformation.canRequestAds()) {
+-                        MobileAds.initialize(this) {
+-                            AdManager.loadInterstitial(this)
+-                        }
+-                    }
+-                }
+-            )
+-        }
++    private var consentStartupRequested = false
++
++    override fun onPostResume() {
++        super.onPostResume()
++        // Compose/AppCompat installs the content before an SDK can inspect the window.
++        val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)
++        if (!consentStartupRequested && !isScreenshotRun) {
++            consentStartupRequested = true
++            initializeConsentAndAds()
++        }
++    }
++
++    private fun initializeConsentAndAds() {
++        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
++        if (consentInformation.canRequestAds()) {
++            MobileAds.initialize(this) {
++                AdManager.loadInterstitial(this)
++            }
++        }
++
++        val debugSettings = ConsentDebugSettings.Builder(this)
++            .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
++            .addTestDeviceHashedId("TEST-EMULATOR")
++            .build()
++
++        val params = ConsentRequestParameters.Builder()
++            // Uncomment the next line to force the GDPR form for testing
++            // .setConsentDebugSettings(debugSettings) 
++            .build()
++
++        consentInformation.requestConsentInfoUpdate(
++            this,
++            params,
++            {
++                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
++                    this
++                ) { loadAndShowError ->
++                    if (loadAndShowError != null) {
++                        Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
++                    }
++                    if (consentInformation.canRequestAds()) {
++                        MobileAds.initialize(this) {
++                            AdManager.loadInterstitial(this)
++                        }
++                    }
++                }
++            },
++            { requestConsentError ->
++                Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
++                if (consentInformation.canRequestAds()) {
++                    MobileAds.initialize(this) {
++                        AdManager.loadInterstitial(this)
++                    }
++                }
++            }
++        )
++
++    }
++
++    override fun onDestroy() {
++        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
++        super.onDestroy()
++    }
++
++    private val incomingPdfUriState = MutableStateFlow<Uri?>(null)
++
++    override fun onNewIntent(intent: Intent) {
++        super.onNewIntent(intent)
++        setIntent(intent)
++        handleIncomingIntent(intent)
++    }
++
++    private fun handleIncomingIntent(intent: Intent?) {
++        val uri = extractPdfUri(intent)
++        if (uri != null) {
++            incomingPdfUriState.value = uri
++        }
++    }
++
++    private fun extractPdfUri(intent: Intent?): Uri? {
++        if (intent == null) return null
++        val action = intent.action
++        if (Intent.ACTION_VIEW == action) {
++            return intent.data
++        } else if (Intent.ACTION_SEND == action) {
++            val streamUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
++                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
++            } else {
++                @Suppress("DEPRECATION")
++                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
++            }
++            return streamUri ?: intent.data
++        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
++            val list = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
++                intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
++            } else {
++                @Suppress("DEPRECATION")
++                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
++            }
++            return list?.firstOrNull() ?: intent.data
++        }
++        return null
++    }
++
++    private fun cleanupOrphanedCacheFiles(context: Context) {
++        try {
++            val oneHourAgo = System.currentTimeMillis() - (60 * 60 * 1000L)
++            fun cleanDir(dir: File?) {
++                if (dir == null || !dir.exists()) return
++                val files = dir.listFiles() ?: return
++                for (file in files) {
++                    if (file.isDirectory) {
++                        cleanDir(file)
++                    } else if (file.isFile && file.lastModified() < oneHourAgo) {
++                        val name = file.name.lowercase()
++                        if (name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".cbz") ||
++                            name.endsWith(".csv") || name.endsWith(".docx") || name.endsWith(".xlsx") || name.endsWith(".pptx") ||
++                            name.startsWith("temp_") || name.startsWith("pdf_seekable_") || name.startsWith("scan_")) {
++                            try { file.delete() } catch (_: Throwable) {}
++                        }
++                    }
++                }
++            }
++            cleanDir(context.cacheDir)
++            // Saved scans are user documents, not disposable cache files.
++        } catch (e: Throwable) {
++            AppLogger.w("Failed to clean orphaned cache files: ${e.message}")
++        }
++    }
++
++    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
++    override fun onCreate(savedInstanceState: Bundle?) {
++        installSplashScreen()
++        super.onCreate(savedInstanceState)
++        lifecycleScope.launch(Dispatchers.IO) {
++            cleanupOrphanedCacheFiles(applicationContext)
++        }
++        handleIncomingIntent(intent)
++        
++        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
++        val isScreenshotRun = BuildConfig.DEBUG && intent.getBooleanExtra("isScreenshotRun", false)
++        val hasConsentedInitial = if (isScreenshotRun) true else prefs.getBoolean("has_consented", false)
++        val hasCompletedOnboardingInitial = if (isScreenshotRun) true else prefs.getBoolean("has_completed_onboarding", false)
++        val themeModeInitial = if (isScreenshotRun) "DARK" else {
++            prefs.getString("theme_mode", null) ?: if (prefs.contains("is_dark_theme")) {
++                if (prefs.getBoolean("is_dark_theme", false)) "DARK" else "LIGHT"
++            } else {
++                "SYSTEM"
++            }
++        }
++
+ 
+         setContent {
+             val windowSizeClass = calculateWindowSizeClass(this)

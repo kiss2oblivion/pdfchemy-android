@@ -87,9 +87,7 @@ fun DocumentSanitizerScreen(
         }
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isSanitizing = true
@@ -275,7 +273,7 @@ fun DocumentSanitizerScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "sanitized")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "sanitized")
                         saveFileLauncher.launch(suggestedName)
                     },
                     enabled = !isSanitizing,

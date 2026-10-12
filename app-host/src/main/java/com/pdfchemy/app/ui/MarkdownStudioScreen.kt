@@ -121,9 +121,7 @@ fun MarkdownStudioScreen(
     }
 
     // Save as PDF
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -138,7 +136,7 @@ fun MarkdownStudioScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_md_to_pdf_success),
                         context.getString(R.string.desc_md_to_pdf_success)
-                    )
+                    , destUri)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_md_to_pdf_failed),
@@ -150,9 +148,7 @@ fun MarkdownStudioScreen(
     }
 
     // Save as .MD file
-    val saveMdLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/markdown")
-    ) { destUri ->
+    val saveMdLauncher = rememberPreferredDocumentCreator("text/markdown") { destUri ->
         if (destUri != null) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
@@ -163,7 +159,7 @@ fun MarkdownStudioScreen(
                         viewModel.showSuccessToast(
                             context.getString(R.string.title_save_md_success),
                             context.getString(R.string.desc_save_md_success)
-                        )
+                        , destUri)
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {

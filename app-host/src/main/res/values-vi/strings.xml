@@ -1060,7 +1060,7 @@
     <string name="vanguard_action_unlock">Mở khóa PDF</string>
     <string name="vanguard_verifying_title">Xác minh bảo mật Vanguard</string>
     <string name="vanguard_verifying_desc">Đang kiểm tra tài liệu tìm tập lệnh và mối đe dọa...</string>
-    <string name="vanguard_zero_trust_badge">100%% Ngoại tuyến • Zero-Trust</string>
+    <string name="vanguard_zero_trust_badge" formatted="false">100% Ngoại tuyến • Zero-Trust</string>
 
     <string name="action_redo">Làm lại</string>
     <string name="action_reset">Đặt lại</string>
@@ -1123,4 +1123,39 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="tool_search_hint">Search tools</string>
+    <string name="tool_search_no_results">No matching tools. Try a tool name or task.</string>
+    <string name="organizer_move_to">Move to position</string>
+    <string name="organizer_position">Page position</string>
+    <string name="organizer_position_range">Enter a position from 1 to %1$d.</string>
+    <string name="reader_reset_defaults">Reset reading preferences</string>
+    <string name="annotation_red">Red</string>
+    <string name="annotation_blue">Blue</string>
+    <string name="annotation_green">Green</string>
+    <string name="annotation_yellow">Yellow</string>
+    <string name="annotation_pink">Pink</string>
+    <string name="annotation_purple">Purple</string>
+    <string name="annotation_black">Black</string>
+    <string name="compression_defaults_title">Compression defaults</string>
+    <string name="compression_defaults_description">Save the current settings as My default for new documents. Analysis can still suggest settings you have not chosen.</string>
+    <string name="compression_defaults_save">Save as My default</string>
+    <string name="compression_defaults_reset">Reset defaults</string>
+    <string name="redaction_searching">Searching this document…</string>
+    <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
+    <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
+    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="select_pages_visually">Select pages visually</string>
+    <string name="visual_page_number">Page %1$d</string>
+    <string name="apply">Apply</string>
+    <string name="document_load_recovery">This file could not be opened. Check that it is still available and select it again to restore access.</string>
+    <string name="document_damaged_recovery">This PDF could not be read. Try another copy or use Repair PDF.</string>
+    <string name="processing_document">Processing documentâ€¦</string>
+    <string name="operation_batch_progress">Completed %1$d of %2$d files</string>
+    <string name="advanced_options">Advanced options</string>
+    <string name="error_operation_recovery">The operation could not finish. Check the input file and output location, then try again.</string>
+    <string name="error_storage_recovery">The output could not be saved. Free some storage or choose another folder, then try again.</string>
+    <string name="error_password_recovery">This PDF requires a password. Unlock it with the correct password before continuing.</string>
+    <string name="redaction_preview_patterns">Find and review selected patterns</string>
+    <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
+    <string name="ocr_saving_pdf">Saving searchable PDF…</string>
 </resources>

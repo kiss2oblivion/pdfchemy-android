@@ -139,9 +139,7 @@ fun ImageCompressorScreen(
         }
     }
 
-    val saveSingleLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(resolvedOutputFormat.mimeType)
-    ) { destUri ->
+    val saveSingleLauncher = rememberPreferredDocumentCreator(resolvedOutputFormat.mimeType) { destUri ->
         if (destUri != null && selectedSingleUri != null) {
             if (compressionMode == CompressionMode.TARGET_SIZE && currentTargetSizeBytes != null && currentTargetSizeBytes > 0) {
                 viewModel.compressImageToTargetSize(
@@ -544,7 +542,7 @@ fun ImageCompressorScreen(
                     Button(
                         onClick = {
                             if (selectedTab == 0 && selectedSingleUri != null) {
-                                val suggestedName = FileUtil.generateSuggestedName(
+                                val suggestedName = FileUtil.generateSuggestedName(context,
                                     selectedSingleUri,
                                     "compressed",
                                     "Image",

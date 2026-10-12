@@ -77,13 +77,21 @@ fun SignPdfScreen(
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isRenderingPage by remember { mutableStateOf(false) }
+    val latestRender = remember { com.pdfchemy.app.logic.LatestRequest() }
     var pageRenderFailed by remember { mutableStateOf(false) }
 
     var savedSignatures by remember { mutableStateOf<List<Pair<String, Bitmap>>>(emptyList()) }
     var showSignaturePad by remember { mutableStateOf(false) }
 
     // Placed signatures on the document
+    val placementHistory = remember { com.pdfchemy.app.logic.SessionHistory<List<PlacedSignature>>(emptyList()) }
+    var draggingPlacement by remember { mutableStateOf(false) }
     var placedSignatures by remember { mutableStateOf<List<PlacedSignature>>(emptyList()) }
+    fun updatePlacements(value: List<PlacedSignature>) {
+        if (!draggingPlacement) placementHistory.replace(value)
+        placedSignatures = value
+    }
+
     var selectedSignatureId by remember { mutableStateOf<String?>(null) }
     var includeDateStamp by remember { mutableStateOf(true) }
     var isSaving by remember { mutableStateOf(false) }
@@ -92,6 +100,7 @@ fun SignPdfScreen(
     val currentSignatures by rememberUpdatedState(savedSignatures)
     DisposableEffect(Unit) {
         onDispose {
+            latestRender.invalidate()
             currentBitmap?.recycle()
             currentSignatures.forEach { try { it.second.recycle() } catch (_: Throwable) {} }
         }
@@ -103,9 +112,7 @@ fun SignPdfScreen(
     var pkiReason by remember { mutableStateOf("Signed by PDFchemy") }
     var pkiLocation by remember { mutableStateOf("Local Device") }
     
-    val pkiSignLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val pkiSignLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isSaving = true
             coroutineScope.launch {
@@ -142,61 +149,58 @@ fun SignPdfScreen(
 
     // PDF Page Renderer
     fun renderPage(uri: Uri, index: Int) {
+        val ticket = latestRender.begin()
         isRenderingPage = true
         pageRenderFailed = false
         currentPageBitmap?.recycle()
         currentPageBitmap = null
         coroutineScope.launch(Dispatchers.IO) {
-            var pfd: ParcelFileDescriptor? = null
+            var rendered: Bitmap? = null
             try {
-                pfd = context.contentResolver.openFileDescriptor(uri, "r")
-                if (pfd == null) {
-                    withContext(Dispatchers.Main) {
-                        isRenderingPage = false
-                        pageRenderFailed = true
+                context.contentResolver.openFileDescriptor(uri, "r").use { pfd ->
+                    requireNotNull(pfd)
+                    val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                    if (index in 0 until count) {
+                        rendered = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, index, 1080)
                     }
-                    return@launch
-                }
-                totalPages = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
-                if (index in 0 until totalPages) {
-                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, index, 1080)
                     withContext(Dispatchers.Main) {
-                        if (bmp != null) {
-                            currentPageBitmap = bmp
-                            pageRenderFailed = false
-                        } else {
-                            pageRenderFailed = true
+                        if (latestRender.isCurrent(ticket) && selectedPdfUri == uri && currentPageIndex == index) {
+                            totalPages = count
+                            currentPageBitmap = rendered
+                            pageRenderFailed = rendered == null
+                            rendered = null // Ownership transfers to the displayed page.
+                            isRenderingPage = false
                         }
-                        isRenderingPage = false
                     }
-                } else {
-                    withContext(Dispatchers.Main) {
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (e: Exception) {
+                com.pdfchemy.app.utils.AppLogger.e("Failed to render PDF page", e)
+                withContext(Dispatchers.Main) {
+                    if (latestRender.isCurrent(ticket)) {
                         isRenderingPage = false
                         pageRenderFailed = true
                     }
-                }
-            } catch (e: Exception) {
-                com.pdfchemy.app.utils.AppLogger.e("Failed to render PDF page: ${e.message}", e)
-                withContext(Dispatchers.Main) {
-                    isRenderingPage = false
-                    pageRenderFailed = true
                 }
             } finally {
-                try { pfd?.close() } catch (_: Throwable) {}
+                rendered?.let { if (!it.isRecycled) it.recycle() }
             }
         }
     }
 
+    // A Reader handoff already provides input; load it without another picker.
+    LaunchedEffect(Unit) { selectedPdfUri?.let { renderPage(it, currentPageIndex) } }
+
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         currentPageIndex = 0
+        placementHistory.reset(emptyList())
         placedSignatures = emptyList()
         renderPage(uri, 0)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isSaving = true
             viewModel.applySignatures(context, selectedPdfUri!!, destUri, placedSignatures) { success ->
@@ -223,6 +227,8 @@ fun SignPdfScreen(
                     }
                 },
                 actions = {
+                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Undo, "Undo placement") }
+                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Redo, "Redo placement") }
                     IconButton(onClick = { forceTabletopMode = !forceTabletopMode }) {
                         Icon(
                             imageVector = if (isTabletopMode) Icons.Rounded.LaptopMac else Icons.Rounded.PhoneAndroid,
@@ -389,7 +395,10 @@ fun SignPdfScreen(
                                                 detectDragGestures(
                                                     onDragStart = {
                                                         selectedSignatureId = sig.id
+                                                        draggingPlacement = true
                                                     },
+                                                    onDragEnd = { placementHistory.replace(placedSignatures); draggingPlacement = false },
+                                                    onDragCancel = { placedSignatures = placementHistory.current; draggingPlacement = false },
                                                     onDrag = { change, dragAmount ->
                                                         change.consume()
                                                         if (pagePixelSize.width > 0 && pagePixelSize.height > 0) {
@@ -434,7 +443,7 @@ fun SignPdfScreen(
                                                     .size(22.dp)
                                                     .background(MaterialTheme.colorScheme.error, CircleShape)
                                                     .clickable {
-                                                        placedSignatures = placedSignatures.filter { it.id != sig.id }
+                                                        updatePlacements(placedSignatures.filter { it.id != sig.id })
                                                         if (selectedSignatureId == sig.id) {
                                                             selectedSignatureId = null
                                                         }
@@ -547,7 +556,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.05f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("✓ Check", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
@@ -570,7 +579,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.05f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("✕ Cross", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
@@ -594,7 +603,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("📅 Date", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
@@ -617,7 +626,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.10f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("CONFORM CU ORIGINALUL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
@@ -640,7 +649,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.09f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("APPROVED", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
@@ -663,7 +672,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.09f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("CONFIDENTIAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
@@ -686,7 +695,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("PAID", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED)) },
@@ -709,7 +718,7 @@ fun SignPdfScreen(
                                     heightRatio = 0.08f,
                                     bitmapBytes = stream.toByteArray()
                                 )
-                                placedSignatures = placedSignatures + newSig
+                                updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
                             label = { Text("DRAFT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD97706)) },
@@ -754,7 +763,7 @@ fun SignPdfScreen(
                                         bitmapBytes = stream.toByteArray(),
                                         dateStamp = dateStr
                                     )
-                                    placedSignatures = placedSignatures + newSig
+                                    updatePlacements(placedSignatures + newSig)
                                     selectedSignatureId = newSig.id
                                 },
                             shape = RoundedCornerShape(10.dp)

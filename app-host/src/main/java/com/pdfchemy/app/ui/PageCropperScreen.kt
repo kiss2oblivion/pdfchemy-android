@@ -129,9 +129,7 @@ fun PageCropperScreen(
         loadPagePreview(uri, 0)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -148,7 +146,7 @@ fun PageCropperScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_crop_success),
                         context.getString(R.string.desc_crop_success)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(
