@@ -51,7 +51,7 @@ $hashes = Get-ChildItem -LiteralPath $OutputDirectory -File -Recurse | ForEach-O
 }
 $receipt = [ordered]@{
     head = "$head"; tracked_tree_dirty = [bool]$trackedChanges
-    packaged_utc = [DateTime]::UtcNow.ToString('o'); version = '2.0.7 (14)'
+    packaged_utc = [DateTime]::UtcNow.ToString('o'); version = '2.1.0 (14)'
     signature_sha256 = $expected; apk_signature_verified = $true
     physical_execution = 'NOT RUN'; play_upload_registration = 'UNVERIFIED'; files = @($hashes)
 }
