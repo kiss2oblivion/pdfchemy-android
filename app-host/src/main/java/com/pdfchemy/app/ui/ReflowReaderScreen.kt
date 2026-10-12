@@ -265,9 +265,10 @@ fun ReflowReaderScreen(
         }) {
             if (initialUri != null) {
                 val originalUri = initialUri
-                val staged = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri) }
+                val stagedLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, originalUri) }
+                val staged = stagedLease.document
                 val initialUri = staged.uri
-                val newLease = com.pdfchemy.app.utils.DocumentStager.retain(staged)
+                val newLease = stagedLease.lease
                 val oldLease = activeSessionLease
                 val oldUri = currentStagedUri
                 activeSessionLease = newLease

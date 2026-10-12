@@ -11,13 +11,43 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 
 object DocumentStager {
+    data class StagedLease(
+        val document: StagedPdf,
+        val lease: java.io.Closeable
+    ) : java.io.Closeable {
+        override fun close() = lease.close()
+    }
+
     private val staged = ConcurrentHashMap<String, StagedPdf>()
     private val displayNames = ConcurrentHashMap<String, String>()
     private val leases = mutableMapOf<String, Int>()
     private val pendingRelease = mutableSetOf<String>()
     private val initializedDirectories = mutableSetOf<String>()
+
     @Synchronized
-    fun stageDocument(context: Context, sourceUri: Uri, checkCancellation: () -> Unit = {}, onInputOpened: (InputStream) -> Unit = {}): StagedPdf {
+    fun stageDocument(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {}
+    ): StagedPdf = stageDocumentInternal(context, sourceUri, checkCancellation, onInputOpened, acquireInitialLease = false).document
+
+    @Synchronized
+    fun stageDocumentWithLease(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {}
+    ): StagedLease = stageDocumentInternal(context, sourceUri, checkCancellation, onInputOpened, acquireInitialLease = true)
+
+    @Synchronized
+    private fun stageDocumentInternal(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {},
+        acquireInitialLease: Boolean
+    ): StagedLease {
         checkCancellation()
         if (sourceUri.scheme == "file") {
             val file = File(requireNotNull(sourceUri.path)).canonicalFile
@@ -25,17 +55,18 @@ object DocumentStager {
             if (file.parentFile == directory) {
                 staged[file.path]?.let {
                     require(file.length() == it.size) { "Staged capability changed" }
-                    return it
+                    val lease = if (acquireInitialLease) retain(it) else java.io.Closeable {}
+                    return StagedLease(it, lease)
                 }
             }
         }
         val name = FileUtils.getFileName(context, sourceUri)
-        val snapshot = (context.contentResolver.openInputStream(sourceUri) ?: error("Cannot open input")).use {
+        val stagedLease = (context.contentResolver.openInputStream(sourceUri) ?: error("Cannot open input")).use {
             onInputOpened(it)
-            stageStream(context, it, name?.substringAfterLast('.')?.lowercase(), checkCancellation)
+            stageStreamInternal(context, it, name?.substringAfterLast('.')?.lowercase(), checkCancellation, acquireInitialLease)
         }
-        name?.take(512)?.let { displayNames[requireNotNull(snapshot.uri.path)] = it }
-        return snapshot
+        name?.take(512)?.let { displayNames[requireNotNull(stagedLease.document.uri.path)] = it }
+        return stagedLease
     }
     const val MAX_UNLEASED_DOCUMENTS = 4
 
@@ -82,7 +113,29 @@ object DocumentStager {
     }
 
     @Synchronized
-    fun stageStream(context: Context, input: InputStream, extension: String? = null, checkCancellation: () -> Unit = {}): StagedPdf {
+    fun stageStream(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {}
+    ): StagedPdf = stageStreamInternal(context, input, extension, checkCancellation, acquireInitialLease = false).document
+
+    @Synchronized
+    fun stageStreamWithLease(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {}
+    ): StagedLease = stageStreamInternal(context, input, extension, checkCancellation, acquireInitialLease = true)
+
+    @Synchronized
+    private fun stageStreamInternal(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {},
+        acquireInitialLease: Boolean
+    ): StagedLease {
         checkCancellation()
         if (staged.size >= SecurityLimits.MAX_STAGED_DOCUMENTS) {
             pruneUnleasedSnapshots(targetCount = SecurityLimits.MAX_STAGED_DOCUMENTS - 1)
@@ -131,9 +184,12 @@ object DocumentStager {
             check(file.setReadOnly()) { "Unable to seal staged input" }
             val capability = StagedPdf(Uri.fromFile(file), hash, size)
             staged[file.canonicalPath] = capability
+            val lease = if (acquireInitialLease) retain(capability) else java.io.Closeable {}
             trimUnleasedToBound()
-            return capability
+            return StagedLease(capability, lease)
         } catch (error: Throwable) {
+            staged.remove(file.canonicalPath)
+            leases.remove(file.canonicalPath)
             file.delete()
             throw error
         }
@@ -172,6 +228,17 @@ object DocumentStager {
             stageStream(context, input, checkCancellation = checkpoint)
         }
     }
+    suspend fun stageDocumentCancellableWithLease(context: Context, sourceUri: Uri): StagedLease {
+        return copyCancellableWithLease(sourceUri) { checkpoint, opened ->
+            stageDocumentWithLease(context, sourceUri, checkpoint, opened)
+        }
+    }
+    suspend fun stageStreamCancellableWithLease(context: Context, input: InputStream): StagedLease {
+        return copyCancellableWithLease(null) { checkpoint, opened ->
+            opened(input)
+            stageStreamWithLease(context, input, checkCancellation = checkpoint)
+        }
+    }
     private suspend fun copyCancellable(borrowedUri: Uri?, copy: (() -> Unit, (InputStream) -> Unit) -> StagedPdf): StagedPdf {
         val job = currentCoroutineContext()[Job]
         val input = java.util.concurrent.atomic.AtomicReference<InputStream>()
@@ -194,6 +261,39 @@ object DocumentStager {
             }
         } catch (error: Throwable) {
             result?.takeIf { it.uri != borrowedUri }?.let(::release)
+            throw error
+        }
+    }
+    private suspend fun copyCancellableWithLease(
+        borrowedUri: Uri?,
+        copy: (() -> Unit, (InputStream) -> Unit) -> StagedLease
+    ): StagedLease {
+        val job = currentCoroutineContext()[Job]
+        val input = java.util.concurrent.atomic.AtomicReference<InputStream>()
+        var result: StagedLease? = null
+        try {
+            return coroutineScope {
+                val finished = java.util.concurrent.atomic.AtomicBoolean()
+                val closeOnCancellation = launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+                    try { awaitCancellation() }
+                    finally { if (!finished.get()) runCatching { input.get()?.close() } }
+                }
+                try {
+                    runInterruptible(Dispatchers.IO) {
+                        copy({ job?.ensureActive() }, { input.set(it) }).also { result = it }
+                    }
+                } finally {
+                    finished.set(true)
+                    withContext(NonCancellable) { closeOnCancellation.cancelAndJoin() }
+                }
+            }
+        } catch (error: Throwable) {
+            result?.let {
+                if (it.document.uri != borrowedUri) {
+                    release(it.document)
+                }
+                it.lease.close()
+            }
             throw error
         }
     }

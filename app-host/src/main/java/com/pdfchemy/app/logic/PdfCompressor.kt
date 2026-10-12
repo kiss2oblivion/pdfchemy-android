@@ -29,8 +29,9 @@ object PdfCompressor {
         var inputLease: java.io.Closeable? = null
         val temporaryFiles = mutableListOf<java.io.File>()
         try {
-            stagedPdf = DocumentStager.stageDocumentCancellable(context, sourceUri)
-            inputLease = DocumentStager.retain(stagedPdf)
+            val stagedLease = DocumentStager.stageDocumentCancellableWithLease(context, sourceUri)
+            stagedPdf = stagedLease.document
+            inputLease = stagedLease.lease
             val cacheDir = context.cacheDir
             val tempFile1 = java.io.File.createTempFile("temp_compress_", ".pdf", cacheDir).also(temporaryFiles::add)
             val tempUri1 = Uri.fromFile(tempFile1)

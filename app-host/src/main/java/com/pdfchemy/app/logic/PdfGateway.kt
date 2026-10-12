@@ -46,9 +46,9 @@ object PdfGateway {
         val outputTransaction = HostOutputTransaction(context, targets)
         try {
             sources.forEach {
-                val snapshot = DocumentStager.stageDocumentCancellable(context, it)
-                staged.add(snapshot)
-                inputLeases.add(DocumentStager.retain(snapshot))
+                val stagedLease = DocumentStager.stageDocumentCancellableWithLease(context, it)
+                staged.add(stagedLease.document)
+                inputLeases.add(stagedLease.lease)
             }
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
             val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }

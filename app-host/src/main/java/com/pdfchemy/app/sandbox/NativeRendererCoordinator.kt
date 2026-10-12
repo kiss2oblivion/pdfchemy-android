@@ -23,8 +23,7 @@ object NativeRendererCoordinator {
         finally { context.unbindService(connection) }
     }
     suspend fun renderUriToBitmap(context: Context, uri: Uri, pageIndex: Int, width: Int): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
-        val staged = DocumentStager.stageDocumentCancellable(context, uri)
-        val inputLease = DocumentStager.retain(staged)
+        val (staged, inputLease) = DocumentStager.stageDocumentCancellableWithLease(context, uri)
         var file: File? = null
         try {
             val pixels = File.createTempFile("pixels_", ".argb", context.cacheDir)

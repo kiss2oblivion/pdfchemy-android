@@ -171,9 +171,10 @@ private fun PdfReaderDocument(
             isVanguardScanning = false
         }) {
             val docId = withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri) }
-            val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
+            val stagedLease = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellableWithLease(context, initialUri) }
+            val staged = stagedLease.document
             val stagedUri = staged.uri
-            val newLease = DocumentStager.retain(staged)
+            val newLease = stagedLease.lease
             val oldLease = activeSessionLease
             val oldUri = selectedPdfUri
             activeSessionLease = newLease

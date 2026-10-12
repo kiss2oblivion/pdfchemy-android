@@ -329,11 +329,12 @@ fun PdfEditorScreen(
             isVanguardScanning = false
         }) {
             selectedPdfUri?.let { originalUri ->
-                val staged = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri)
+                val stagedLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, originalUri)
                 }
+                val staged = stagedLease.document
                 val uri = staged.uri
-                val newLease = com.pdfchemy.app.utils.DocumentStager.retain(staged)
+                val newLease = stagedLease.lease
                 val oldLease = activeSessionLease
                 val oldUri = selectedPdfUri
                 activeSessionLease = newLease

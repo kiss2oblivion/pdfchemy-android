@@ -164,10 +164,27 @@ Following the independent review and CI Run #44 analysis, three critical product
 
 ---
 
+### CI Run #46 Remediation Report (2026-10-12)
+
+#### Finding CI46-01: DocumentStager Staged Capability Eviction Under Concurrent Operations (P1 / SA-03 Hardening)
+- **Root Cause:** In `DocumentStager.kt`, `stageStream()` registered snapshots into the `staged` registry and immediately called `trimUnleasedToBound()`. Callers (`PdfGateway`, `PdfCompressor`) acquired their protective lease via `DocumentStager.retain()` after `stageDocumentCancellable()` returned. Under 12–16 parallel coroutines, concurrent staging operations pushed the unleased count beyond `MAX_UNLEASED_DOCUMENTS = 4`, evicting newly created snapshots before callers could acquire their lease. `retain()` subsequently rejected the snapshot with `IllegalArgumentException: Expired staged capability`.
+- **Resolution:**
+  1. Introduced atomic stage-and-retain in `DocumentStager`: added `StagedLease(document, lease)` (implementing `Closeable`), `stageDocumentWithLease()`, `stageStreamWithLease()`, `stageDocumentCancellableWithLease()`, and `stageStreamCancellableWithLease()`.
+  2. Inside `stageStreamInternal`, when `acquireInitialLease == true`, the lease is acquired atomically within `@Synchronized` before `trimUnleasedToBound()` executes. Because `leases[path]` is 1, the new snapshot is never treated as unleased and cannot be pruned by concurrent operations.
+  3. Migrated callers across `PdfGateway`, `PdfCompressor`, `PdfDiffEngine`, `NativeRendererCoordinator`, `PdfReaderScreen`, `PdfEditorScreen`, and `ReflowReaderScreen` to atomic stage-and-retain.
+  4. Preserved existing quotas and security boundaries without increasing `MAX_UNLEASED_DOCUMENTS = 4`, suppressing `Expired staged capability`, or disguising lifecycle races as `BUSY`.
+  5. Added three deterministic concurrency regression tests in `DocumentStagerRetentionTest`:
+     - `atomicStageAndRetain_survivesConcurrentFloodingWithoutEviction`
+     - `concurrencyRegression_unleasedSnapshotIsEvicted_atomicallyLeasedSnapshotSurvives`
+     - `concurrentCoroutinesStagingWithLease_noExpiredStagedCapability`
+
+---
+
 ## 3. Full Commit Verification Chain
 
 ```
-[pending push] docs(security): record CI-44, RV-04, IPC-01, and SR-01 resolutions in stabilization receipt
+[pending commit] fix(staging): implement atomic stage-and-retain in DocumentStager to prevent concurrent capability eviction (CI46-01)
+21024351 docs(security): record CI-44, RV-04, IPC-01, and SR-01 resolutions in stabilization receipt
 cddeea45 docs(security): clarify SR-01 proposed decision heading and temporal boundary mechanics
 33d7cf75 fix(ipc): separate worker failure categories and prevent incorrect BUSY mapping (IPC-01)
 fe2551df fix(lifecycle): prevent output deletion on onCleared when writer exceeds timeout and defer until termination (RV-04)
@@ -203,7 +220,7 @@ In adherence to radical honesty, the following table details the exact validatio
 |---|---|---|---|---|
 | **SA-01 Destination Provenance** | YES (`CancellationPublicationTest`, `DestinationIntegritySecurityTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
 | **SA-02 Window FLAG_SECURE** | YES (`WindowSecureManagerTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
-| **SA-03 Staged Document Retain** | YES (`DocumentStagerRetentionTest`, `StagedSessionRetentionTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
+| **SA-03 Staged Document Retain & Atomic Leases** | YES (`DocumentStagerRetentionTest` [8 tests], `StagedSessionRetentionTest`) | Target CI #47 | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
 | **START-01 onPostResume Startup** | YES (`StartupContentContainerTest` SDK 30 & 33) | In progress (CI #42) | Physical API 30 emulator run required | **CODE COMPLETE / HARDWARE GATE OPEN** |
 | **RV-01 Freshness Lifetime** | YES (`DestinationIntegritySecurityTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |
 | **RV-02 WeakHashMap Cycle** | YES (`WindowSecureManagerTest`) | In progress (CI #42) | Local worktree verified | **CODE COMPLETE & UNIT VERIFIED** |

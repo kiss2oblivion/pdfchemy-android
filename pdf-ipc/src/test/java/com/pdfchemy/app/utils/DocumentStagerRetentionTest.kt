@@ -17,6 +17,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 
 /**
  * Regression tests for SA-03: Staged document capability retention, LRU pruning, and bounded session cleanup.
@@ -151,5 +155,85 @@ class DocumentStagerRetentionTest {
         DocumentStager.release(snapshot)
         assertFalse("File must be deleted immediately when release is called with 0 leases", File(path).exists())
         assertNull(DocumentStager.stagedFor(snapshot.uri))
+    }
+
+    @Test
+    fun atomicStageAndRetain_survivesConcurrentFloodingWithoutEviction() {
+        // Stage target document atomically with lease
+        val targetInput = ByteArrayInputStream(samplePdf("atomic_target"))
+        val (targetSnapshot, targetLease) = DocumentStager.stageStreamWithLease(context, targetInput, "pdf")
+        val targetPath = targetSnapshot.uri.path!!
+
+        assertEquals("Atomically staged document must immediately have active lease = 1",
+            1, DocumentStager.activeLeases(targetSnapshot))
+
+        // Flood with 20 unleased documents, each triggering trimUnleasedToBound()
+        for (i in 1..20) {
+            val input = ByteArrayInputStream(samplePdf("flood_$i"))
+            DocumentStager.stageStream(context, input, "pdf")
+        }
+
+        // Target document must survive because activeLeases > 0 protects it from trimUnleasedToBound
+        assertEquals("Target document must still have active lease", 1, DocumentStager.activeLeases(targetSnapshot))
+        assertNotNull("Target document must still exist in staged registry", DocumentStager.stagedFor(targetSnapshot.uri))
+        assertTrue("Target file on disk must exist", File(targetPath).exists())
+
+        // Cleanup
+        targetLease.close()
+        assertEquals(0, DocumentStager.activeLeases(targetSnapshot))
+        DocumentStager.release(targetSnapshot)
+        assertFalse("File must be deleted after release with 0 leases", File(targetPath).exists())
+        assertNull("Snapshot must be removed from staged registry", DocumentStager.stagedFor(targetSnapshot.uri))
+    }
+
+    @Test
+    fun concurrencyRegression_unleasedSnapshotIsEvicted_atomicallyLeasedSnapshotSurvives() {
+        // 1. Stage unleased document A
+        val docA = DocumentStager.stageStream(context, ByteArrayInputStream(samplePdf("unleased_a")), "pdf")
+        assertEquals(0, DocumentStager.activeLeases(docA))
+
+        // 2. Stage atomically leased document B
+        val docBLease = DocumentStager.stageStreamWithLease(context, ByteArrayInputStream(samplePdf("leased_b")), "pdf")
+        assertEquals(1, DocumentStager.activeLeases(docBLease.document))
+
+        // 3. Flood with 10 unleased documents to trigger LRU eviction (exceeding MAX_UNLEASED_DOCUMENTS = 4)
+        for (i in 1..10) {
+            DocumentStager.stageStream(context, ByteArrayInputStream(samplePdf("noise_$i")), "pdf")
+        }
+
+        // Document A (unleased) must be evicted by trimUnleasedToBound
+        assertNull("Unleased Document A must have been evicted", DocumentStager.stagedFor(docA.uri))
+
+        // Document B (atomically leased) must survive!
+        assertNotNull("Atomically leased Document B must survive eviction", DocumentStager.stagedFor(docBLease.document.uri))
+        assertEquals(1, DocumentStager.activeLeases(docBLease.document))
+        assertTrue("File B must exist on disk", File(docBLease.document.uri.path!!).exists())
+
+        // Cleanup doc B
+        docBLease.close()
+        DocumentStager.release(docBLease.document)
+        assertNull(DocumentStager.stagedFor(docBLease.document.uri))
+    }
+
+    @Test
+    fun concurrentCoroutinesStagingWithLease_noExpiredStagedCapability() = runBlocking {
+        // Launch 16 parallel coroutines staging distinct inputs simultaneously
+        val jobs = (0 until 16).map { i ->
+            async(Dispatchers.IO) {
+                val input = ByteArrayInputStream(samplePdf("coroutine_stress_$i"))
+                DocumentStager.stageStreamCancellableWithLease(context, input)
+            }
+        }
+
+        val stagedLeases = jobs.awaitAll()
+        assertEquals("All 16 concurrent staging operations must succeed", 16, stagedLeases.size)
+
+        stagedLeases.forEach { (doc, lease) ->
+            assertEquals("Each capability must have active lease = 1", 1, DocumentStager.activeLeases(doc))
+            assertNotNull("Capability must exist in staged registry", DocumentStager.stagedFor(doc.uri))
+            lease.close()
+            DocumentStager.release(doc)
+            assertNull("Cleaned up capability must be removed", DocumentStager.stagedFor(doc.uri))
+        }
     }
 }
