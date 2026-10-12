@@ -67,7 +67,7 @@ def main():
         check(application.get(A + "allowBackup") == "false", "Document backup unexpectedly enabled")
         sdk = tree.find("uses-sdk")
         check(sdk.get(A + "minSdkVersion") == "24" and sdk.get(A + "targetSdkVersion") == "36", "Unexpected SDK configuration")
-        check(tree.get(A + "versionCode") == "13" and tree.get(A + "versionName") == "2.0.6", "Unexpected RC version; deliberately update gate when incrementing")
+        check(tree.get(A + "versionCode") == "14" and tree.get(A + "versionName") == "2.0.7", "Unexpected RC version; deliberately update gate when incrementing")
         metadata = {node.get(A + "name"): node.get(A + "value") for node in application.findall("meta-data")}
         check(metadata.get("com.google.android.gms.ads.APPLICATION_ID") == "ca-app-pub-8945763551071628~8206577473", "Unexpected production AdMob app ID")
         check(metadata.get("firebase_analytics_collection_deactivated") == "true", "Analytics deactivation missing")
@@ -92,7 +92,7 @@ def main():
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in (b"Lcom/pdfchemy/app/security/OutputCommitProvider;", b"Lcom/pdfchemy/app/security/MutableInputProvider;", b"Lcom/pdfchemy/app/security/BenignPdfCompatibilityTest;"):
                 check(marker not in dex, "Instrumentation class leaked into production DEX")
-        report.update(version="2.0.6 (13)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
+        report.update(version="2.0.7 (14)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
     print(json.dumps(report, indent=2))
 
 
