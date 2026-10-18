@@ -90,6 +90,24 @@ internal object RedactionResources {
                     }
                 }
             }
+            val processedStates = mutableSetOf<COSName>()
+            while (true) {
+                val pending = used["ExtGState"].orEmpty().filter { processedStates.add(it) }
+                if (pending.isEmpty()) break
+                val states = resources.cosObject.getDictionaryObject(COSName.EXT_G_STATE) as? COSDictionary ?: break
+                for (name in pending) {
+                    val state = states.getDictionaryObject(name) as? COSDictionary ?: continue
+                    val mask = state.getDictionaryObject(COSName.SMASK) as? COSDictionary ?: continue
+                    val group = mask.getDictionaryObject(COSName.G) as? COSStream ?: continue
+                    val form = PDFormXObject(group)
+                    val own = form.resources
+                    if (own == null && inheritedForms.add(group)) collect(form, depth + 1)
+                    else if (own != null && visited.add(group)) {
+                        require(++visitedStreams <= SecurityLimits.MAX_GRAPH_NODES) { "Resource graph exceeds limit" }
+                        form.resources = filtered(form, own, depth + 1)
+                    }
+                }
+            }
             for ((category, names) in used) {
                 val key = COSName.getPDFName(category)
                 val original = resources.cosObject.getDictionaryObject(key) as? COSDictionary ?: continue
@@ -104,6 +122,15 @@ internal object RedactionResources {
                     require(++visitedStreams <= SecurityLimits.MAX_GRAPH_NODES) { "Resource graph exceeds limit" }
                     val form = PDFormXObject(stream)
                     form.resources?.let { form.resources = filtered(form, it, depth + 1) }
+                }
+            }
+            val patterns = result.getDictionaryObject(COSName.PATTERN) as? COSDictionary
+            for (name in patterns?.keySet().orEmpty()) {
+                val stream = patterns?.getDictionaryObject(name) as? COSStream ?: continue
+                if (stream.getInt(COSName.PATTERN_TYPE) == 1 && visited.add(stream)) {
+                    require(++visitedStreams <= SecurityLimits.MAX_GRAPH_NODES) { "Resource graph exceeds limit" }
+                    val pattern = com.tom_roush.pdfbox.pdmodel.graphics.pattern.PDTilingPattern(stream)
+                    pattern.resources = filtered(pattern, requireNotNull(pattern.resources) { "Missing tiling-pattern resources" }, depth + 1)
                 }
             }
             return PDResources(result)

@@ -144,4 +144,40 @@ class RedactionResourcesTest {
             assertNotNull(page.resources.getFont(COSName.getPDFName("F1")))
         }
     }
+
+    @Test fun usedTilingPatternDoesNotRetainUnusedOriginalForm() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val pattern = com.tom_roush.pdfbox.pdmodel.graphics.pattern.PDTilingPattern().apply {
+                resources = PDResources()
+                bBox = PDRectangle(100f, 100f); xStep = 100f; yStep = 100f
+            }
+            pattern.resources.put(COSName.getPDFName("UnusedSecret"), secretForm(doc, "SECRET_PATTERN_RESOURCE"))
+            pattern.contentStream.createOutputStream().use { it.write("0 0 10 10 re f".toByteArray()) }
+            page.resources = PDResources().apply { put(COSName.getPDFName("P1"), pattern) }
+            val content = com.tom_roush.pdfbox.pdmodel.common.PDStream(doc)
+            content.createOutputStream().use { it.write("/Pattern cs /P1 scn 0 0 100 100 re f".toByteArray()) }
+            page.setContents(content)
+            assertAbsent(doc, "SECRET_PATTERN_RESOURCE")
+        }
+    }
+
+    @Test fun softMaskDoesNotRetainUnusedOriginalForm() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val group = PDFormXObject(doc).apply { resources = PDResources(); bBox = PDRectangle(100f, 100f) }
+            group.resources.put(COSName.getPDFName("UnusedSecret"), secretForm(doc, "SECRET_MASK_RESOURCE"))
+            group.cosObject.createOutputStream().use { it.write("0 0 10 10 re f".toByteArray()) }
+            val state = COSDictionary().apply {
+                setItem(COSName.SMASK, COSDictionary().apply { setItem(COSName.G, group); setItem(COSName.S, COSName.LUMINOSITY) })
+            }
+            page.resources = PDResources(COSDictionary().apply {
+                setItem(COSName.EXT_G_STATE, COSDictionary().apply { setItem(COSName.getPDFName("GS1"), state) })
+            })
+            val content = com.tom_roush.pdfbox.pdmodel.common.PDStream(doc)
+            content.createOutputStream().use { it.write("/GS1 gs 0 0 100 100 re f".toByteArray()) }
+            page.setContents(content)
+            assertAbsent(doc, "SECRET_MASK_RESOURCE")
+        }
+    }
 }

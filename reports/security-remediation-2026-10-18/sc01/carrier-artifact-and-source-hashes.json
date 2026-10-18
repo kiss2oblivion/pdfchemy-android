@@ -1,0 +1,14 @@
+[
+  {
+    "sha256": "FB7A730C15056D84556E30FC5358FAA5926E809AF35B62DEA8DA499DB13D916B",
+    "path": "app-host/build/outputs/apk/debug/app-host-debug.apk"
+  },
+  {
+    "sha256": "876F9A3357D07987E5AE582482CD29F00D1CF64F7B31290472A580BF442C1B11",
+    "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk"
+  },
+  {
+    "sha256": "808FF94CCFBC299A562A9B7F1B83AC137B61213B7BD7899007321CEC974D1C2B",
+    "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt"
+  }
+]

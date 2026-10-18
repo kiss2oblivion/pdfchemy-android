@@ -14,7 +14,7 @@ Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18
 
 | Finding | Implementation | Local verification | Android / CI | Commit / push |
 |---|---|---|---|---|
-| SC-01 | Implemented: fresh redacted-page resources; unused shared/inherited resource pruning | 48 worker tests (including seven resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. Fixed final APK: four tests pass on each API24 and API36. Full CI matrix pending | Ready for separate commit/push; CI remains required |
+| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. First fix: API24/36 four tests pass each. Carrier extension: API36 four tests pass; latest full CI matrix pending | Initial fix `a1077e47` pushed/remote-verified; carrier follow-up in this batch |
 | SC-02 through SC-09 | Not started | Not run | Not run | None |
 | Retained RA / external URI / SR-01 | Not started | Not run | Not run | None |
 
@@ -31,3 +31,9 @@ An earlier API36 iteration passed the same four Android test methods in 50.206 s
 Final local build command: `:pdf-jail:testDebugUnitTest :app-host:assembleDebug :app-host:assembleDebugAndroidTest :app-host:lintRelease`, offline, one Gradle worker, in-process Kotlin compilation. Result: BUILD SUCCESSFUL (4 minutes). Release lint reports 629 warnings and 38 unmatched baseline entries, not a warning-free result. Architecture/static host gates and five host boundary tests passed in the preceding broader verification. `sc01/artifact-and-source-hashes.json` identifies baseline/fixed APKs, test APK and changed production sources.
 
 No later finding is advanced before the required SC-01 checks and commit/push/CI evidence. This receipt will be updated with actual outcomes rather than inferred completion.
+
+## SC-01 nested-carrier extension
+
+Pre-closeout review identified that a used tiling pattern or soft-mask group can hold its own unused original Form resource. Cleanup now prunes those resource scopes too, preserving resource-less mask inheritance. Two further production-helper regressions cover these carriers; all nine resource tests and the full 50-test worker suite pass. Build/Android-test assembly and release lint pass again (`sc01-resource-carriers.log`, 4m 9s). The extended APK passes the four Android methods on API36 in 39.983 seconds (`sc01-carriers-api36.log`). Earlier API24 evidence applies to the initial fix; the extended source's full API24/30/34/36 CI remains required.
+
+The initial source commit is `a1077e47abd833a24018ec455aff3cbe6465d823`, pushed to the Android-only remediation branch with matching remote SHA. CI run `39124161582` covers that first commit; its architecture, secrets and dependency checks passed before the run was superseded by this carrier extension. It must not be counted as a complete pass for the extended source. Replacement CI is recorded after the follow-up push.
