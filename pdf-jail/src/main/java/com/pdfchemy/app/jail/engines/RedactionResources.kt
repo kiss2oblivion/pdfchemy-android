@@ -12,6 +12,159 @@ import java.util.IdentityHashMap
 
 /** Removes original resources instead of merely hiding them behind replacement content. */
 internal object RedactionResources {
+    /** A used stream can contain invisible data outside another page's clipping area. */
+    class RasterizationPlan internal constructor(
+        val pages: Set<Int>,
+        private val originals: Set<COSStream>
+    ) {
+        fun requireOriginalsDetached(document: PDDocument) {
+            visitGraph(document.document.trailer) {
+                require(it !is COSStream || it !in originals) {
+                    "Original redacted stream remains reachable outside replaced pages"
+                }
+            }
+        }
+    }
+
+    fun rasterizationPlan(document: PDDocument, redacted: Set<Int>, deleted: Set<Int>): RasterizationPlan {
+        // Remove unused inherited resources first: sharing an unused resource does
+        // not require destroying an otherwise independent page's vector content.
+        pruneUnused(document)
+        val observed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        var streamReferences = 0
+        val streams = document.pages.map { page ->
+            Collections.newSetFromMap(IdentityHashMap<COSStream, Boolean>()).apply {
+                visitGraph(page.cosObject, page.cosObject) {
+                    observed.add(it)
+                    require(observed.size <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive page resource graph" }
+                    if (it is COSStream) add(it)
+                }
+                streamReferences += size
+                require(streamReferences <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive shared stream graph" }
+            }
+        }
+        val selected = redacted.filterTo(mutableSetOf()) { it in streams.indices && it !in deleted }
+        val originals = Collections.newSetFromMap(IdentityHashMap<COSStream, Boolean>())
+        selected.forEach { originals.addAll(streams[it]) }
+        // Expand to a fixed point: rasterizing a dependent page also replaces its
+        // other original streams, which must not survive through a third page.
+        do {
+            var changed = false
+            for (index in streams.indices) {
+                if (index !in selected && index !in deleted && streams[index].any { it in originals }) {
+                    selected.add(index)
+                    originals.addAll(streams[index])
+                    changed = true
+                }
+            }
+        } while (changed)
+        return RasterizationPlan(selected, originals)
+    }
+
+    private fun visitGraph(root: COSBase, pageRoot: COSDictionary? = null, visit: (COSBase) -> Unit) {
+        val seen = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun walk(raw: COSBase?, depth: Int) {
+            val node = dereference(raw) ?: return
+            if (node !is COSDictionary && node !is COSArray || !seen.add(node)) return
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                "Document graph exceeds redaction limit"
+            }
+            // A page's Parent/P/destination references must not pull in the entire
+            // page tree when computing its own stream dependencies.
+            if (pageRoot != null && node is COSDictionary && node !== pageRoot &&
+                node.getCOSName(COSName.TYPE) in listOf(COSName.PAGE, COSName.PAGES)) return
+            visit(node)
+            when (node) {
+                is COSDictionary -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive dictionary" }
+                    for (key in node.keySet()) {
+                        if (pageRoot == null || key != COSName.PARENT) walk(node.getItem(key), depth + 1)
+                    }
+                }
+                is COSArray -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive array" }
+                    for (index in 0 until node.size()) walk(node.get(index), depth + 1)
+                }
+            }
+        }
+        walk(root, 0)
+    }
+
+    /** Form values live outside page resources; preserve their visible appearances, then detach data. */
+    fun prepareForRedaction(document: PDDocument) {
+        val catalog = document.documentCatalog
+        val form = catalog.getAcroForm(null) ?: return
+        require(!form.hasXFA()) { "Secure redaction does not support XFA forms" }
+        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun collect(raw: COSBase?, depth: Int) {
+            val field = dereference(raw) as? COSDictionary
+                ?: throw IllegalArgumentException("Invalid form field")
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && removed.add(field) &&
+                removed.size <= SecurityLimits.MAX_GRAPH_NODES) { "Invalid or excessive form hierarchy" }
+            val children = field.getDictionaryObject(COSName.KIDS)
+            require(children == null || children is COSArray) { "Invalid form children" }
+            if (children is COSArray) for (index in 0 until children.size()) collect(children.get(index), depth + 1)
+        }
+        val roots = form.cosObject.getDictionaryObject(COSName.FIELDS)
+        require(roots == null || roots is COSArray) { "Invalid form roots" }
+        if (roots is COSArray) for (index in 0 until roots.size()) collect(roots.get(index), 0)
+        removed.add(form.cosObject)
+
+        // Flatten before replacing any page: doing it afterward could paint a private
+        // widget back over the redaction. Other pages keep static, selectable values.
+        val fields = form.fieldTree.toList()
+        // PDFBox flattening checks Hidden/Invisible but not NoView. Never bake a
+        // screen-hidden field's private appearance into visible page content.
+        for (field in fields) if (field is com.tom_roush.pdfbox.pdmodel.interactive.form.PDTerminalField) {
+            for (widget in field.widgets) if (widget.isNoView) widget.isHidden = true
+        }
+        val missing = fields.filter { field ->
+            field is com.tom_roush.pdfbox.pdmodel.interactive.form.PDTerminalField && field.widgets.any {
+                !it.isHidden && !it.isInvisible && it.normalAppearanceStream == null
+            }
+        }
+        if (form.needAppearances) form.refreshAppearances(fields)
+        else if (missing.isNotEmpty()) form.refreshAppearances(missing)
+        form.flatten(fields, false)
+        catalog.cosObject.removeItem(COSName.ACRO_FORM)
+
+        // Actions/calculation arrays can reference detached fields independently of
+        // AcroForm. Remove those references throughout the reachable document graph.
+        val seen = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun detach(raw: COSBase?, depth: Int) {
+            val node = dereference(raw) ?: return
+            if (node !is COSDictionary && node !is COSArray) return
+            if (!seen.add(node)) return
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                "Document graph exceeds form-sanitization limit"
+            }
+            when (node) {
+                is COSDictionary -> for (key in node.keySet().toList()) {
+                    val child = dereference(node.getItem(key))
+                    if (child != null && child in removed) node.removeItem(key)
+                    else detach(child, depth + 1)
+                }
+                is COSArray -> for (index in node.size() - 1 downTo 0) {
+                    val child = dereference(node.get(index))
+                    if (child != null && child in removed) node.remove(index)
+                    else detach(child, depth + 1)
+                }
+            }
+        }
+        detach(document.document.trailer, 0)
+    }
+
+    private fun dereference(raw: COSBase?): COSBase? {
+        if (raw !is COSObject) return raw
+        var value = raw
+        val seen = Collections.newSetFromMap(IdentityHashMap<COSObject, Boolean>())
+        while (value is COSObject) {
+            require(seen.add(value) && seen.size <= SecurityLimits.MAX_GRAPH_DEPTH) { "Invalid object reference" }
+            value = value.`object`
+        }
+        return value
+    }
+
     fun replacePageContent(document: PDDocument, page: PDPage, draw: (PDPageContentStream) -> Unit) {
         // Do not reuse the original (possibly inherited/shared) resource dictionary.
         page.resources = PDResources()

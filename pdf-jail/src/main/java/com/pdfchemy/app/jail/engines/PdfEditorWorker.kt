@@ -32,22 +32,38 @@ object PdfEditorWorker {
         var document: PDDocument? = null
         val hasAnyRedactions = modifications.values.any { it.redactions.isNotEmpty() }
         var renderer: PdfRenderer? = null
+        var preparedSource: java.io.File? = null
         try {
-            if (hasAnyRedactions) {
-                try {
-                    renderer = PdfRenderer(sourceFd.dup())
-                } catch (e: Exception) {
-                    AppLogger.w("PdfEditorWorker: Could not initialize PdfRenderer for redactions", e)
-                }
-            }
-
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
             }
+            if (hasAnyRedactions) RedactionResources.prepareForRedaction(document!!)
+            val rasterization = if (hasAnyRedactions) RedactionResources.rasterizationPlan(
+                document!!,
+                modifications.filterValues { it.redactions.isNotEmpty() }.keys,
+                modifications.filterValues { it.isDeleted }.keys
+            ) else null
             val totalPages = document?.numberOfPages ?: 0
+            if (rasterization != null && rasterization.pages.isNotEmpty()) {
+                // Render the validated, flattened appearances, not stale form
+                // values/APs from the original source. Scratch stays broker-owned
+                // and every write uses the operation's existing byte quotas.
+                val prepared = com.pdfchemy.app.jail.JailScratch.createTempFile("redaction_", ".pdf")
+                preparedSource = prepared
+                FileOutputStream(prepared).use { document!!.save(it) }
+                val renderFd = com.pdfchemy.app.jail.CapabilityIo.fd(prepared)
+                try {
+                    android.system.Os.lseek(renderFd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+                    renderer = PdfRenderer(renderFd)
+                } catch (error: Exception) {
+                    renderFd.close()
+                    throw error
+                }
+            }
 
             for (pageIdx in (totalPages - 1) downTo 0) {
-                val mod = modifications[pageIdx] ?: continue
+                val mod = modifications[pageIdx] ?: if (rasterization?.pages?.contains(pageIdx) == true)
+                    PageModification(pageIdx) else continue
 
                 if (mod.isDeleted) {
                     document?.removePage(pageIdx)
@@ -56,7 +72,7 @@ object PdfEditorWorker {
 
                 val page = document?.getPage(pageIdx) ?: continue
 
-                if (mod.redactions.isNotEmpty()) {
+                if (rasterization?.pages?.contains(pageIdx) == true) {
                     var rasterized = false
                     if (renderer != null && pageIdx in 0 until renderer.pageCount) {
                         var renderPage: PdfRenderer.Page? = null
@@ -167,6 +183,7 @@ object PdfEditorWorker {
             }
 
             if (hasAnyRedactions) RedactionResources.pruneUnused(document!!)
+            rasterization?.requireOriginalsDetached(document!!)
             FileOutputStream(targetFd.fileDescriptor).use { out ->
                 document?.save(out)
                 out.flush()
@@ -178,6 +195,7 @@ object PdfEditorWorker {
             false
         } finally {
             try { renderer?.close() } catch (e: Exception) {}
+            preparedSource?.delete()
             try { document?.close() } catch (e: Exception) {}
         }
     }

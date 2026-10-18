@@ -1,0 +1,38 @@
+{
+  "scope": "Raw local source/artifact bytes for prepared-source/shared-stream follow-up. Earlier CI tested 9e03c062, not these sources.",
+  "negative_baseline": "form-fix-baseline.apk is the form-only follow-up used for clipped-sharing and catalog-reference negative exports. shared-clip-baseline-test.apk identifies only the first clipped-sharing probe APK.",
+  "files": [
+    {
+      "path": "app-host/build/outputs/apk/debug/app-host-debug.apk",
+      "sha256": "fe3d46b3a0f99caa1e7f47202524b28e6a31150bd72a3ac6a27fb720a13cfb30"
+    },
+    {
+      "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk",
+      "sha256": "75d20ce83a7bf7066764c334c95216858ca4ebc929566deb6c667e409f44f66c"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt",
+      "sha256": "6a48b23ea280d748034e80cdb6d1f62c063111fb93f82ae81c7db03ec692b2fd"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+      "sha256": "bd7325fe4353c93723c73fab889031cde34010c2b174b361197d17f757ddaf11"
+    },
+    {
+      "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/RedactionResourcesTest.kt",
+      "sha256": "d03a81e5ae7e7be65521b72716bdbe9b2f5fe44dc506c953605a97324add61eb"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/EditorRedactionResourceSecurityTest.kt",
+      "sha256": "58c9fdf2fe30a529af10897732b6e07c870c328ced58df4f9f3d370cbcd45e62"
+    },
+    {
+      "path": ".security-runtime/sc01/form-fix-baseline.apk",
+      "sha256": "0b385c7a4ea2dceb6ec5568f70b6011405d361437a256adde37dfff6077387a5"
+    },
+    {
+      "path": ".security-runtime/sc01/shared-clip-baseline-test.apk",
+      "sha256": "56a36d1d8ac5bf59b3b011fb3a757c9fb01c27444de511e4ce590aa23ae7d48f"
+    }
+  ]
+}

@@ -33,6 +33,7 @@ class RedactionResourcesTest {
     }
 
     private fun replace(doc: PDDocument, page: PDPage) {
+        RedactionResources.prepareForRedaction(doc)
         RedactionResources.replacePageContent(doc, page) { it.addRect(0f, 0f, 200f, 100f); it.fill() }
     }
 
@@ -58,6 +59,188 @@ class RedactionResourcesTest {
             PDPageContentStream(doc, page).use { it.drawForm(secretForm(doc, "SECRET_FORM_731904")) }
             replace(doc, page)
             assertAbsent(doc, "SECRET_FORM_731904")
+        }
+    }
+
+    @Test fun sharedStreamsPropagateRasterizationWithoutSelectingIndependentPages() {
+        PDDocument().use { doc ->
+            val pages = List(4) { PDPage().also(doc::addPage) }
+            val private = secretForm(doc, "PRIVATE_SHARED_FORM")
+            val second = secretForm(doc, "SECOND_SHARED_FORM")
+            PDPageContentStream(doc, pages[0]).use { it.drawForm(private) }
+            PDPageContentStream(doc, pages[1]).use { it.drawForm(private); it.drawForm(second) }
+            PDPageContentStream(doc, pages[2]).use { it.drawForm(second) }
+            PDPageContentStream(doc, pages[3]).use {
+                it.beginText(); it.setFont(PDType1Font.HELVETICA, 12f)
+                it.showText("KEEP_INDEPENDENT_VECTOR"); it.endText()
+            }
+            val plan = RedactionResources.rasterizationPlan(doc, setOf(0), emptySet())
+            assertEquals(setOf(0, 1, 2), plan.pages)
+            for (index in plan.pages) replace(doc, pages[index])
+            plan.requireOriginalsDetached(doc)
+            assertAbsent(doc, "PRIVATE_SHARED_FORM", "KEEP_INDEPENDENT_VECTOR")
+            assertAbsent(doc, "SECOND_SHARED_FORM")
+        }
+    }
+
+    @Test fun originalStreamRetainedThroughCatalogMustFailClosed() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val private = secretForm(doc, "PRIVATE_CATALOG_STREAM")
+            PDPageContentStream(doc, page).use { it.drawForm(private) }
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("RetainedOriginal"), private)
+            val plan = RedactionResources.rasterizationPlan(doc, setOf(0), emptySet())
+            replace(doc, page)
+            try {
+                plan.requireOriginalsDetached(doc)
+                fail("A catalog reference must not bypass stream removal")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message.orEmpty().contains("remains reachable"))
+            }
+        }
+    }
+
+    @Test fun noViewFieldMustNotBecomeVisibleSelectableTextDuringFlattening() {
+        PDDocument().use { doc ->
+            val target = PDPage().also(doc::addPage)
+            val other = PDPage().also(doc::addPage)
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            form.defaultResources = PDResources().apply { put(COSName.getPDFName("Helv"), PDType1Font.HELVETICA) }
+            form.defaultAppearance = "/Helv 12 Tf 0 g"
+            val field = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            field.partialName = "noViewField"
+            form.fields.add(field)
+            field.widgets.first().apply {
+                rectangle = PDRectangle(10f, 50f, 180f, 100f)
+                page = other
+                isNoView = true
+                other.annotations.add(this)
+            }
+            field.value = "PRIVATE_NO_VIEW_VALUE"
+            replace(doc, target)
+            assertAbsent(doc, "PRIVATE_NO_VIEW_VALUE")
+        }
+    }
+
+    @Test fun redactedWidgetDoesNotRetainOriginalValueInDocumentFormTree() {
+        PDDocument().use { doc ->
+            val targetPage = PDPage().also(doc::addPage)
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            form.defaultResources = PDResources().apply {
+                put(COSName.getPDFName("Helv"), PDType1Font.HELVETICA)
+            }
+            form.defaultAppearance = "/Helv 12 Tf 0 g"
+            val field = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            field.partialName = "privateField"
+            form.fields.add(field)
+            field.widgets.first().apply {
+                rectangle = PDRectangle(0f, 0f, 200f, 100f)
+                page = targetPage
+                targetPage.annotations.add(this)
+            }
+            field.value = "SECRET_FORM_VALUE_159204"
+            val otherPage = PDPage().also(doc::addPage)
+            val other = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            other.partialName = "publicField"
+            form.fields.add(other)
+            other.widgets.first().apply {
+                rectangle = PDRectangle(10f, 50f, 180f, 100f)
+                page = otherPage
+                otherPage.annotations.add(this)
+            }
+            other.value = "KEEP_FORM_VALUE"
+            val reset = COSDictionary().apply {
+                setName(COSName.S, "ResetForm")
+                setItem(COSName.FIELDS, COSArray().apply { add(field.cosObject) })
+            }
+            doc.documentCatalog.cosObject.setItem(COSName.OPEN_ACTION, reset)
+            replace(doc, targetPage)
+            assertAbsent(doc, "SECRET_FORM_VALUE_159204", "KEEP_FORM_VALUE")
+            assertNull(doc.documentCatalog.cosObject.getDictionaryObject(COSName.ACRO_FORM))
+        }
+    }
+
+    @Test fun xfaFormsAreRejectedBeforeAnyFormMutation() {
+        PDDocument().use { doc ->
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            form.cosObject.setItem(COSName.XFA, COSString("PRIVATE_XFA_VALUE"))
+            try {
+                RedactionResources.prepareForRedaction(doc)
+                fail("XFA redaction must fail closed")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message.orEmpty().contains("XFA"))
+            }
+            assertSame(form.cosObject, doc.documentCatalog.cosObject.getDictionaryObject(COSName.ACRO_FORM))
+        }
+    }
+
+    @Test fun cyclicFormHierarchyIsRejectedBeforeFlattening() {
+        PDDocument().use { doc ->
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            val field = COSDictionary()
+            field.setItem(COSName.KIDS, COSArray().apply { add(field) })
+            form.cosObject.setItem(COSName.FIELDS, COSArray().apply { add(field) })
+            try {
+                RedactionResources.prepareForRedaction(doc)
+                fail("Cyclic fields must fail closed")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message.orEmpty().contains("hierarchy"))
+            }
+        }
+    }
+
+    @Test fun formFlatteningPreservesAnExistingCustomAppearance() {
+        PDDocument().use { doc ->
+            val target = PDPage().also(doc::addPage)
+            val otherPage = PDPage().also(doc::addPage)
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            form.defaultResources = PDResources().apply { put(COSName.getPDFName("Helv"), PDType1Font.HELVETICA) }
+            form.defaultAppearance = "/Helv 12 Tf 0 g"
+            val field = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            field.partialName = "customAppearance"
+            form.fields.add(field)
+            val widget = field.widgets.first()
+            widget.rectangle = PDRectangle(10f, 50f, 180f, 100f)
+            widget.page = otherPage
+            otherPage.annotations.add(widget)
+            field.value = "UNUSED_STRUCTURAL_VALUE"
+            widget.cosObject.setItem(COSName.AP, COSDictionary().apply {
+                setItem(COSName.N, secretForm(doc, "KEEP_CUSTOM_APPEARANCE"))
+            })
+            replace(doc, target)
+            assertAbsent(doc, "UNUSED_STRUCTURAL_VALUE", "KEEP_CUSTOM_APPEARANCE")
+        }
+    }
+
+    @Test fun missingVisibleFieldAppearanceIsCreatedBeforeFlattening() {
+        PDDocument().use { doc ->
+            val target = PDPage().also(doc::addPage)
+            val otherPage = PDPage().also(doc::addPage)
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(doc)
+            doc.documentCatalog.acroForm = form
+            form.defaultResources = PDResources().apply { put(COSName.getPDFName("Helv"), PDType1Font.HELVETICA) }
+            form.defaultAppearance = "/Helv 12 Tf 0 g"
+            val field = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            field.partialName = "missingAppearance"
+            form.fields.add(field)
+            val widget = field.widgets.first()
+            widget.rectangle = PDRectangle(10f, 50f, 180f, 100f)
+            widget.page = otherPage
+            otherPage.annotations.add(widget)
+            field.value = "KEEP_MISSING_APPEARANCE"
+            widget.cosObject.removeItem(COSName.AP)
+            replace(doc, target)
+            RedactionResources.pruneUnused(doc)
+            val bytes = ByteArrayOutputStream().also { doc.save(it) }.toByteArray()
+            PDDocument.load(bytes).use { saved ->
+                assertTrue(PDFTextStripper().getText(saved).contains("KEEP_MISSING_APPEARANCE"))
+                assertNull(saved.documentCatalog.getAcroForm(null))
+            }
         }
     }
 

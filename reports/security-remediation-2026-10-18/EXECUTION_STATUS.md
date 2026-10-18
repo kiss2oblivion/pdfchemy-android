@@ -1,77 +1,121 @@
-# Security remediation execution — 2026-10-18
+# Android security remediation execution - 2026-10-18
 
-Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18`.
+**Release: HOLD. SC-01 remains open.** Resource cleanup and the API24 CI repair pass full CI at `9e03c062`. Additional AcroForm, hidden-field and clipped shared-Form cases required source follow-ups; current local and refreshed CI verification are tracked below. SC-02 and later source findings have not started.
 
-## Baseline preparation
+Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
-- Local and remote implementation baseline match `670578355c4e408c2468ba1564b0e1a366faaa0c`.
-- Android remote main: `4b3c157f3458f7df00ea94044258d33c7449ced9`.
-- PR #2 remains open/draft on the prior implementation branch. Its baseline checks were all successful in run `38270216907`; this is historical baseline evidence, not verification of the new fixes.
-- Review checkout, original implementation checkout and their untracked files are preserved. Production changes use a separate worktree.
-- Baseline probes, synthetic leaking PDFs, XML and logs are archived under `reports/security-code-analysis-2026-10-18/`; `evidence/BASELINE_SHA256SUMS.txt` records their original review-relative identities. Probe source copies are under `baseline-probes/`.
+## Candidate and baseline identities
 
-## Batch status
+| Identity | Value |
+|---|---|
+| Implementation/audit baseline | `670578355c4e408c2468ba1564b0e1a366faaa0c` |
+| Android remote main | `4b3c157f3458f7df00ea94044258d33c7449ced9` |
+| SC-01 initial resource fix | `a1077e47abd833a24018ec455aff3cbe6465d823` |
+| SC-01 nested-pattern/mask follow-up | `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9` |
+| API24 CI installation repair / current CI target | `9e03c062f9cb797573430e1b5bd8d7b15f24b696` |
+| Documentation/evidence checkpoint before closeout | `e24999296cfb2ff4b82a7ad89dec708c1d1fe187` |
 
-| Finding | Implementation | Local verification | Android / CI | Commit / push |
-|---|---|---|---|---|
-| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Final local API24 complete suite: 216 pass. Focused API36 passes; prior complete CI API30/34/36 216 tests each pass. Fresh complete CI at the installation repair is running | Source: `a1077e47` and `9d7dc22d`; CI repair: `9e03c062`, all pushed/remote-verified |
-| SC-02 through SC-09 | Not started | Not run | Not run | None |
-| Retained RA / external URI / SR-01 | Not started | Not run | Not run | None |
+Each listed implementation push went only to `kiss2oblivion/pdfchemy-android`, with the remote ref checked against the local SHA. The documentation/evidence checkpoints `1e20f8dc` and `e2499929` do not change application source, tests, scripts or workflows from CI target `9e03c062`. PR #2 remains open/draft on the earlier branch; no merge, upload or release is claimed.
 
-## SC-01 evidence and limits
+The original audit probes, synthetic leaking PDFs, XML and logs are frozen under [the independent analysis](../security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md), with `evidence/BASELINE_SHA256SUMS.txt` recording their original review-relative identities. Archived vulnerability-confirming probe sources are outside compiled tests. Historical baseline run `38270216907` is not verification of these fixes.
 
-The first focused JVM invocation failed because PDFBox font/glyph assets were unavailable in the worker module's test environment. Failure log/XML are retained in `sc01/`. Enabling Android resources for worker unit tests resolved that fixture problem; all three focused resource tests then passed.
+## Finding status
 
-The seven component regressions verify original Form/image removal, inherited/shared unused-resource removal while retaining unrelated vector text, nested Forms, resource-less Forms, implicit default color spaces and annotation appearance resources. Android tests invoke the actual Editor → gateway → isolated worker export, inspect saved decoded objects, retain unrelated text, and check opaque output pixels.
+| Finding | Status | Remaining gate |
+|---|---|---|
+| SC-01 editor forensic redaction | Resource cleanup/CI installation checkpoint verified; form-tree and shared-stream follow-up implemented locally | Complete current-source build, native regressions and refreshed CI |
+| SC-02 through SC-09 | Not started | Their separate implementation/test/commit batches |
+| Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
+| FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
 
-The actual baseline APK was assembled from the unchanged review worktree at `67057835`. All three new Android export tests failed at sensitive-data assertions on API24. Installing the fixed APK on the same isolated emulator changed those results to PASS; the existing eight-case mixed-annotation/rotation test also passed (four JUnit methods total, 22.884 seconds).
+## SC-01 implementation
 
-An earlier API36 iteration passed the same four Android test methods in 50.206 seconds. The final source, including additional resource-preservation cases, was rebuilt and rerun on API36: all four methods pass in 97.478 seconds. These are test durations, not device performance measurements. API30/34 and the complete same-source CI suites remain pending. No physical-device verification is claimed.
+Redacted editor pages receive fresh resources and replacement raster content; original annotations, thumbnail, metadata and related page attachments/actions are detached. Used-only resource cleanup removes inherited/shared unused resources and recursively handles Forms, annotation appearances, tiling patterns and soft-mask groups while preserving supported inherited resources and unrelated vector content. Failures abort export rather than publish an unsanitized fallback.
 
-Final local build command: `:pdf-jail:testDebugUnitTest :app-host:assembleDebug :app-host:assembleDebugAndroidTest :app-host:lintRelease`, offline, one Gradle worker, in-process Kotlin compilation. Result: BUILD SUCCESSFUL (4 minutes). Release lint reports 629 warnings and 38 unmatched baseline entries, not a warning-free result. Architecture/static host gates and five host boundary tests passed in the preceding broader verification. `sc01/artifact-and-source-hashes.json` identifies baseline/fixed APKs, test APK and changed production sources.
+Nine production-helper regressions exercise original Forms/images, shared/inherited dictionaries, nested/resource-less Forms, implicit default color spaces, annotation appearances, used patterns and soft masks. Three Android regressions invoke the real Editor -> gateway -> isolated worker export, inspect saved serialized/decoded objects and text, preserve unrelated vector text, and check opaque redaction pixels. The existing mixed-annotation rotation method covers eight geometry cases.
 
-No later finding is advanced before the required SC-01 checks and commit/push/CI evidence. This receipt will be updated with actual outcomes rather than inferred completion.
+## Verification of resource/CI source checkpoint `9e03c062`
 
-## SC-01 nested-carrier extension
+| Layer | Observed result | Evidence |
+|---|---|---|
+| Negative native reproduction on unchanged baseline | Three new SC-01 methods fail at sensitive-data assertions after successful export. A later unfiltered baseline run completes 216 methods with exactly those three failures | `sc01-baseline-api24.log`, `sc01-api24-full-baseline.log` |
+| Worker JVM suite | 50 tests pass, including all nine resource regressions | `sc01-carriers-full-unit.log`, resource test XML |
+| Host boundaries/static architecture | Five focused host boundary tests and architecture/static audit pass; complete current CI JVM job also passes | Local validation logs and `sc01-ci-repair-architecture.log` / `sc01-ci-repair-tests.log` |
+| Local assembly/lint | Debug and Android-test assembly plus release lint pass. Local lint records 629 warnings and 38 unmatched baseline entries | `sc01-resource-carriers.log`, `sc01-final-validation.log` |
+| Local final native focused runs | API24: four methods pass (19.454s). API36: four methods pass (39.983s) | `sc01-carriers-api24.log`, `sc01-carriers-api36.log` |
+| Local complete API24 suite | 216 pass, zero failures/skips, strict runner result validation passes; crash buffer empty | `sc01-api24-full-fixed.log`, installation/runner/crash logs |
+| CI helper result gate | Five unit tests pass. Actual passing native logs are accepted; real crash and baseline assertion-failure logs are rejected | `scripts/test_run_android_instrumentation.py`, architecture job log |
+| Current complete CI native matrix | 216 pass per API24/30/34/36; 864 executions total, zero failures/errors/skips | Matrix below and `ci-repair-native-summary.json` |
+| Current CI secrets/dependencies | Complete reachable-history secret and resolved-dependency jobs pass | `sc01-ci-repair-secrets.log`, `sc01-ci-repair-dependency.log` |
+| CI release build/artifact gate | PASS: lint, unsigned minified release/debug assembly and artifact/corpus checks | Build job `117780283938`, `sc01-ci-repair-build.log` |
+| Physical device, signed release, Play sandbox | NOT RUN | Final release gates remain open |
 
-Pre-closeout review identified that a used tiling pattern or soft-mask group can hold its own unused original Form resource. Cleanup now prunes those resource scopes too, preserving resource-less mask inheritance. Two further production-helper regressions cover these carriers; all nine resource tests and the full 50-test worker suite pass. Build/Android-test assembly and release lint pass again (`sc01-resource-carriers.log`, 4m 9s). The extended APK passes the four Android methods on API36 in 39.983 seconds (`sc01-carriers-api36.log`). Earlier API24 evidence applies to the initial fix; the extended source's full API24/30/34/36 CI remains required.
+Test durations describe these runs, not performance benchmarks. Local final build verification used offline Gradle, one worker and in-process Kotlin. CI uses its recorded clean-runner commands. Source review, JVM, emulator, CI and physical-device claims are kept separate.
 
-The initial source commit is `a1077e47abd833a24018ec455aff3cbe6465d823`, pushed to the Android-only remediation branch with matching remote SHA. CI run `39124161582` covers that first commit; its architecture, secrets and dependency checks passed before the run was superseded by this carrier extension. It must not be counted as a complete pass for the extended source.
+### Current full CI matrix
 
-The carrier follow-up is `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`, pushed with matching remote SHA. The final APK also passes all four Android methods on local API24 in 19.454 seconds; see `sc01/sc01-carriers-api24.log`, installation log and device fingerprint. Local API36 passes in 39.983 seconds. These focused native runs do not replace the complete CI suites.
+[Run 39160660276](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39160660276), attempt 1, targets `9e03c062f9cb797573430e1b5bd8d7b15f24b696`.
 
-## Current CI gate
+| API / ABI | Tests | Failures / errors / skipped | Result evidence | Job |
+|---|---:|---|---|---|
+| 24 / x86 | 216 | 0 / 0 / 0 | Strictly validated `sc01-ci-repair-api24-instrumentation.log`; push-install logs; empty crash buffer | `117774121419` |
+| 30 / x86_64 | 216 | 0 / 0 / 0 | `sc01-ci-repair-api30.xml` | `117774121392` |
+| 34 / x86_64 | 216 | 0 / 0 / 0 | `sc01-ci-repair-api34.xml` | `117774121458` |
+| 36 / x86_64 | 216 | 0 / 0 / 0 | `sc01-ci-repair-api36.xml` | `117774121365` |
 
-[Run 39124748605](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39124748605), attempt 1, targets source commit `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`. Architecture, history-secret, resolved-dependency and complete JVM test jobs pass. API24 job `117668349134` fails before test execution with `InstallException: Failed to install-write all apks`; its UTP report records zero tests. The full failed-job log is retained as `sc01/sc01-ci-api24-failure.log`. A more specific installation root cause has not been established.
+Uploaded results were downloaded and checked for complete counts and all three real-editor regressions. The native result validator checks unique per-test starts/completions, consistent declared counts, successful final instrumentation status and a nonzero passing summary. An adb shell exit code alone cannot pass the gate.
 
-API30/34/36 each complete all 216 native tests with zero failures/skips in attempt 1. API30 reports BUILD SUCCESSFUL in 19m 44s, API34 in 20m 39s and API36 in 21m 11s. These are complete job script durations, not performance benchmarks.
+The complete workflow, including build job `117780283938`, succeeds at `9e03c062`. This is evidence for the tested resource cases and installation repair; it does not close the new form-tree case below.
 
-GitHub initially rejected an API24-only rerun while the workflow was still running (`job 117668349134 cannot be rerun`). After attempt 1 completed, `gh run rerun --failed` was accepted. Attempt 2 retains source SHA `9d7dc22d`; API24 job `117673053473` also fails during installation, with `ShellCommandUnresponsiveException`, `Failed to install-write all apks` and zero tests executed. The other successful results are carried forward, and the dependent build is skipped. Its failed log is retained as `sc01-ci-api24-attempt2.log`. No API removal, test filtering or assertion weakening is authorized as a substitute for this gate. SC-02 remains unstarted.
+## Additional SC-01 form-tree retention
 
-Detailed review of the first failed log also identifies `executeRemoteCommand write timed out after 240000ms` in ddmlib during installation. Why that transfer stalled is not yet established; extending nominal timeout properties did not prevent this observed 240-second limit.
+A new production-helper test constructs a standard AcroForm text field on a redacted page. Replacing its page content and removing the page annotations still leaves the original private field value reachable through the document-level AcroForm. The serialized-output absence assertion fails on the resource-cleanup implementation. Evidence: `sc01-form-tree-negative.xml` and `sc01-form-tree-probe.log` (one executed test, one assertion failure). An earlier invocation failed at Gradle command-line parsing before test execution; `sc01-form-tree-negative.log` preserves that separate invocation error and is not counted as reproduction.
 
-## Additional local API24 full-suite diagnostic
+The real-editor API24 form-value test also failed against the retained resource-only APK. Production now validates the field hierarchy, rejects XFA before output writing, refreshes missing appearances, flattens supported visible form appearances before redaction, removes AcroForm and detaches external field references. Valid custom appearances are preserved. The form-only follow-up passes 55 worker tests and six focused native methods on local API24 and API36. These local runs are distinct from the earlier CI source checkpoint.
 
-An unfiltered full-suite run on the local Google Play API24 image, after successful non-streaming installation, reports `Process crashed` during method 5 (after four methods completed). The crash buffer identifies host process `com.pdfchemy.app`, `HTMLParserThrea`, SIGILL and `/system/app/Chrome/Chrome.apk`; its bundled WebView version is 51.0.2704.90. This is a failed additional run and does not supersede the earlier focused native passes.
+An additional unit probe confirms PDFBox flattening can make a NoView field selectable; `sc01-noview-negative.xml` and `sc01-noview-probe.log` retain the failing assertion. NoView widgets are now hidden before flattening. Hidden fields must not become visible page content.
 
-Attribution remains open. An unchanged-baseline APK (`67057835`) passes an eight-method startup/text/redaction selection after application-data clearing. Its subsequent unfiltered diagnostic completes all 216 methods with exactly the three expected new SC-01 assertion failures in 747.544 seconds; no process crash is reported. Those failure logs remain negative vulnerability evidence.
+## Additional SC-01 clipped shared streams
 
-The matched clean-state fixed APK completes all 216 methods in 740.582 seconds, zero failures/skips, and passes the new runner's complete-result validation. Its crash buffer is empty. Logs are `sc01-api24-full-fixed.log`, the two installation logs, `sc01-api24-full-fixed-runner.log` and the empty `sc01-api24-full-fixed-crash.log`. The isolated emulator was stopped after verification. These are observed test durations, not performance benchmarks. The original WebView SIGILL remains retained and unexplained under FOLLOW-05; a successful retry is not evidence that startup/consent code was repaired.
+The actual API24 worker export succeeds but retains private decoded Form text when an untouched second page uses the same Form with a clipping rectangle that hides the private area. `sc01-shared-clip-baseline.log` records the failed sensitive-data assertion against the retained form-follow-up APK. This is a distinct defect from unused-resource retention: the second page legitimately uses the shared stream.
 
-## API24 CI installation repair
+The current patch computes a bounded closure of pages sharing streams with redacted pages, rasterizes those dependent pages, and preserves independent vector pages. Embedded font streams can also create dependencies; affected pages consequently lose text selection. A final bounded traversal rejects output before destination writing if any replaced original stream remains reachable through the catalog or another carrier. It does not claim to identify every semantically duplicated private value elsewhere in a document. Independent text/vector preservation remains the implementation policy; whole-document image conversion has not been adopted.
 
-After two failed installation attempts, the workflow now builds both native-test APKs before starting the emulator, reducing concurrent build/boot load. API24 uses `adb install --no-streaming` and the same unfiltered AndroidJUnitRunner suite via `scripts/run_android_instrumentation.py`. API30/34/36 retain the Gradle connected-test path. The complete API matrix remains required, and native logs/results are uploaded on success or failure.
+Current regressions cover transitive stream sharing, independent vector text, catalog references and hidden fields. Native regressions additionally require visible content on a clipped dependent page to survive and failed catalog/XFA exports to preserve seeded existing destination bytes. Verification results for this patch must be recorded separately from the green `9e03c062` workflow.
 
-The runner rejects unsuccessful installation, nonzero subprocess exits, timeouts, crashes, failed/skipped test status codes, zero tests, inconsistent counts, unmatched starts/completions and missing final instrumentation success. A successful adb shell exit alone cannot pass the gate. Five unit tests pass, including negative cases; the validator also accepts the actual four-test local success log and rejects the real full-run crash and baseline assertion-failure logs. Workflow YAML, unchanged API membership and the folded shell command validate locally. Folding is required because the pinned emulator action executes each script line separately.
+The raster renderer now consumes a broker-owned, bounded scratch serialization of the validated/flattened document. This preserves newly generated form appearances on dependent pages; it also avoids rendering stale original field appearances. The descriptor is rewound, handed to PdfRenderer and closed with the scratch lease in cleanup. The existing aggregate write quotas apply to this additional serialization.
 
-Local end-to-end installation and the complete 216-test fixed suite pass through this runner. Full CI and the dependent release build are still required. [Android's command-line test documentation](https://developer.android.com/studio/test/command-line) describes direct instrumentation invocation; this workflow retains `-w`, the full runner and strict result checking.
+### Current follow-up local verification
 
-The CI repair is commit `9e03c062f9cb797573430e1b5bd8d7b15f24b696`, pushed to the Android remote with matching SHA. [Run 39160660276](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39160660276) covers that exact head. Its architecture, secret-history, dependency and complete JVM gates pass; API24/30/34/36 jobs are running. Production PDF sources and APK identities are unchanged from the verified carrier fix. The local APK, test APK and resource-helper SHA-256 identities have been rechecked against `carrier-artifact-and-source-hashes.json`.
+| Layer | Result | Evidence |
+|---|---|---|
+| Worker JVM | 58 pass, including 17 redaction helper regressions; zero failures/errors/skips | `sc01-prepared-render-validation.log`, `shared-stream-unit-results/` |
+| Debug/test assembly and static checks | PASS; security audit scans 135 host files | `sc01-prepared-render-validation.log` |
+| Real Editor export and annotation geometry, API24 | Eight focused methods pass in 29.483s; strict runner validator accepts; crash buffer empty | `sc01-shared-stream-api24.log`, install/crash logs |
+| Same focused selection, API36 | Eight methods pass in 52.982s; strict runner validator accepts; crash buffer empty | `sc01-shared-stream-api36-retry.log`, install/retry-crash logs |
+| Latest release lint | PASS in 3m 8s; 629 warnings and 38 unmatched localization-baseline entries | `sc01-prepared-render-lint.log` |
+| New full CI at follow-up source | Not yet dispatched | The earlier 216-per-API workflow does not cover these additions |
 
-`sc01/RAW_LOG_XML_SHA256SUMS.txt` records the 39 archived raw log/XML files at this checkpoint, including failed attempts. Scoped Git attributes preserve these raw file bytes across checkouts. APK/source identities are separately recorded in the two JSON manifests; the baseline review's original hash manifest remains separate.
+API36's first attempt installed both APKs but failed to connect to the adb daemon before instrumentation. The failed connection/result-validation attempt is retained as `sc01-shared-stream-api36.log`; it executes zero tests and is not a passing run. A sequential retry completes the full eight-method selection. The separate catalog-reference negative export against the retained form-only APK succeeds incorrectly and fails the required rejection assertion; see `sc01-catalog-baseline.log`.
 
-A follow-up comparison against Git blobs detected four early files staged before the raw-byte attributes took effect: `sc01-unit-passing.xml`, `sc01-unit-retry.log`, `sc01-unit.log`, and `TEST-com.pdfchemy.app.jail.engines.RedactionResourcesTest.xml`. Those blobs had LF normalization while retained originals used CRLF; content differed only in line endings. The intact raw originals were restaged under the scoped attributes. All 39 staged evidence blobs now match the recorded SHA-256 values exactly. Historical normalized blobs remain in Git history; the correction does not rewrite or discard them.
+## Failed, superseded and unresolved attempts
 
-## Historical documentation reconciliation
+- The first focused worker JVM invocation failed because PDFBox glyph/font assets were missing from the test environment. Enabling Android resources for worker unit tests resolved that fixture failure. The failed log/XML remain archived; this was not negative security reproduction.
+- Initial source run `39124161582` was superseded by the nested-carrier follow-up and cancelled. Its partial successful gates are not counted as a complete pass.
+- Run `39124748605` at `9d7dc22d` passes complete JVM/static/secret/dependency jobs and all 216 native methods on API30/34/36. API24 fails before tests in both attempts: first ddmlib write timeout at 240000ms, then `ShellCommandUnresponsiveException`; both report `Failed to install-write all apks` and zero tests. The dependent build is skipped. Both failed job logs remain archived. GitHub initially rejected retry while that workflow was active; a failed-job retry was accepted after completion.
+- The repair builds APKs before emulator startup and uses `adb install --no-streaming` plus the same unfiltered AndroidJUnitRunner suite on API24. Other APIs retain Gradle connected tests. The pinned emulator action splits script input into separate commands, so the conditional uses a validated folded shell command. No API, test or assertion was removed. Native installation/test results are uploaded on success or failure. See [Android command-line instrumentation](https://developer.android.com/studio/test/command-line).
+- An additional local full API24 run on the Google Play image crashes during method 5 after four completed methods. The host crash buffer identifies `HTMLParserThrea`, SIGILL and `/system/app/Chrome/Chrome.apk`, with WebView 51.0.2704.90. The crash log and failed run remain archived. Matched clean-data baseline and fixed runs subsequently complete the full suite: baseline has the three expected redaction failures; fixed has 216 passes in 740.582s and an empty crash buffer. The baseline eight-method selection also passes. The original SIGILL is unexplained and remains under FOLLOW-05; successful retries do not establish a startup/consent repair. The owned emulator was stopped after verification.
 
-Root handoff/status documents now point to the dated analysis, implementation plan and this receipt. Earlier release receipts no longer assert unverified SR-01 owner acceptance. The [SR-01 reassessment](../security-code-reaudit-2026-10-10/SR-01_STORAGE_RESIDUAL_DECISION.md) corrects the host PDF-validation claim, worker-local timer guarantees and premature rejection of hard file-size limits/seekable proxy descriptors. FOLLOW-06 documentation reconciliation is complete; feasibility experiments, implementation/disposition and attributable sign-off remain open under FOLLOW-07. No source fix or hostile-worker verification is claimed by these corrections.
+## Evidence integrity
+
+All evidence paths above are relative to `sc01/` beside this receipt. `artifact-and-source-hashes.json` identifies the initial baseline/fixed artifacts; `carrier-artifact-and-source-hashes.json` identifies the final local APK, test APK and resource-helper source. These final local identities were rechecked before the complete native run. CI source/run identities and downloaded native results are recorded separately in `ci-repair-native-summary.json`.
+
+`RAW_LOG_XML_SHA256SUMS.txt` extends the earlier 39-file raw-evidence checkpoint with the downloaded CI results, additional negative probes and local follow-up runs. Each earlier hash is checked before extending the manifest; every staged log/XML blob is checked against the manifest before committing. Four early blobs were found to have LF normalization while their retained originals used CRLF: `sc01-unit-passing.xml`, `sc01-unit-retry.log`, `sc01-unit.log`, and `TEST-com.pdfchemy.app.jail.engines.RedactionResourcesTest.xml`. Only line endings differed. Intact originals were restaged under scoped raw-byte attributes; all 39 staged blobs matched the recorded hashes exactly before the correction commit. Earlier normalized blobs remain in history. No history or failed attempt was discarded.
+
+`shared-stream-artifact-and-source-hashes.json` identifies the current raw local source, final compiled APKs and retained earlier probe artifacts. Its current source/artifact hashes are separate from both the resource-only manifests and previous CI source identity.
+
+## Documentation and remaining release work
+
+Root handoff/status documents point to the dated analysis, remediation plan/checklist and this receipt. Historical readiness/receipt files no longer claim unverified SR-01 owner approval. The [SR-01 reassessment](../security-code-reaudit-2026-10-10/SR-01_STORAGE_RESIDUAL_DECISION.md) corrects host PDF-validation claims, worker-local timer guarantees and premature rejection of hard file-size limits/seekable proxy descriptors. No hostile-worker experiment, stronger storage enforcement or owner risk acceptance is claimed by that correction.
+
+All later source findings, the recorded legacy-WebView observation, signed physical workflows, Play Billing/UMP checks and final release/owner decisions remain tracked in [SECURITY_TODO.md](../../SECURITY_TODO.md). A completed SC-01 batch will not change the overall release HOLD.

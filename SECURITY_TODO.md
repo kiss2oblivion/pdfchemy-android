@@ -16,9 +16,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 ## 1. SC-01 — Editor forensic redaction
 
 - [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
-- [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Source implemented; remaining matrix gate below remains open.
-- [x] SC01-03 Convert the component probe into an absence-of-sensitive-data regression; cover scanned images and shared resources. Nine production-helper regressions pass, including pattern and soft-mask carriers.
-- [x] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Final focused local API24 tests pass; CI attempt 1 executes all 216 native tests on each of API30/34/36 without failures/skips. Complete API24 suite and overall CI gate remain below.
+- [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Form-tree cleanup, hidden-widget handling and shared-stream dependency rasterization pass local worker/native checks; full CI remains a separate gate below.
+- [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources and retained form values. All 17 helper regressions pass within the 58-test worker suite; eight focused native methods pass on API24 and API36. See execution receipt and raw evidence.
+- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Resource-only checkpoint passes all 216 native methods per API in full CI; the expanded form/shared-stream cases require refreshed coverage.
 - [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 2. SC-02 — Search-redaction object graph
@@ -120,7 +120,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | IMPLEMENTED; CI verification pending | Source `a1077e47` / `9d7dc22d`; CI repair `9e03c062`, remote-verified | 50 worker unit tests; local complete API24 suite 216 passes; prior full CI API30/34/36 216 passes each | Fresh complete CI at installation repair and dependent build; original local WebView failure retained under FOLLOW-05 |
+| SC-01 | PARTIAL: resource fix verified; additional form-tree leak reproduced | Source `a1077e47` / `9d7dc22d`; CI repair `9e03c062`, remote-verified | Full CI at `9e03c062` passes, including 216 native methods per API and release build; new AcroForm absence probe fails | Form-tree implementation, actual worker verification and refreshed CI; legacy WebView observation remains under FOLLOW-05 |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

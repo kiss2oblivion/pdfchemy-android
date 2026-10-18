@@ -39,6 +39,8 @@ Implementation:
 3. Handle shared Forms/images and original metadata/annotation carriers explicitly. Preserve unrelated pages, annotation fidelity, rotations and supported document behavior.
 4. Keep secure export fail-closed if required rasterization or sanitization fails.
 
+Follow-up implementation policy: flatten supported form appearances before replacing redacted content, detach form values and reject XFA. Rasterize the bounded transitive closure of pages sharing original streams with redacted pages; keep independent pages as vectors. Shared embedded-font streams may expand that closure and remove text selection from additional pages. Before writing output, reject any remaining reachable original stream from a replaced page. Unsupported retained references must preserve an existing destination on failure.
+
 Acceptance:
 
 - Form XObject and scanned-image fixtures cannot yield original sensitive text or image content from decoded saved objects/resources.

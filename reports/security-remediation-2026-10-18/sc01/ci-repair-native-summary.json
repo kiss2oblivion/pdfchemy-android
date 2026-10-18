@@ -1,0 +1,51 @@
+{
+  "workflow_run": 39160660276,
+  "attempt": 1,
+  "source_sha": "9e03c062f9cb797573430e1b5bd8d7b15f24b696",
+  "test_executions": 864,
+  "native_jobs": [
+    {
+      "api": 24,
+      "arch": "x86",
+      "job_id": 117774121419,
+      "evidence": "sc01-ci-repair-api24-instrumentation.log",
+      "tests": 216,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 30,
+      "arch": "x86_64",
+      "job_id": 117774121392,
+      "evidence": "sc01-ci-repair-api30.xml",
+      "tests": 216,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 34,
+      "arch": "x86_64",
+      "job_id": 117774121458,
+      "evidence": "sc01-ci-repair-api34.xml",
+      "tests": 216,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "api": 36,
+      "arch": "x86_64",
+      "job_id": 117774121365,
+      "evidence": "sc01-ci-repair-api36.xml",
+      "tests": 216,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "release_build": "PASS",
+  "overall_conclusion": "success",
+  "scope": "Resource cleanup and installation repair; new form-tree follow-up not covered"
+}

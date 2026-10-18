@@ -1,0 +1,3 @@
+Performing Streamed Install
+adb.exe: failed to install app-host/build/outputs/apk/debug/app-host-debug.apk: cmd: Can't find service: package
+
