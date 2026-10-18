@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.IndependentSecurityReviewProbeTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-18T10:50:40.816Z" hostname="DESKTOP-N37P7P6" time="0.154">
+  <properties/>
+  <testcase name="publishedBatchOutputIsDeletedOnCancellation_probe" classname="com.pdfchemy.app.security.IndependentSecurityReviewProbeTest" time="0.116"/>
+  <testcase name="directScreenSuccessLeavesPublishedUriClassifiedFresh_probe" classname="com.pdfchemy.app.security.IndependentSecurityReviewProbeTest" time="0.038"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

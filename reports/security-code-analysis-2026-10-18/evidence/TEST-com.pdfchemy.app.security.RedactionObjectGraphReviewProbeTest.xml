@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.RedactionObjectGraphReviewProbeTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-18T10:53:35.529Z" hostname="DESKTOP-N37P7P6" time="2.943">
+  <properties/>
+  <testcase name="editorOverwriteRetainsUnredactedOriginalFormResource_probe" classname="com.pdfchemy.app.security.RedactionObjectGraphReviewProbeTest" time="2.881"/>
+  <testcase name="importedUnchangedPageLinkRetainsOriginalSensitivePageStream_probe" classname="com.pdfchemy.app.security.RedactionObjectGraphReviewProbeTest" time="0.059"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

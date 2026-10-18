@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.RedactionResourcesTest" tests="3" skipped="0" failures="3" errors="0" timestamp="2026-10-18T11:16:24.402Z" hostname="DESKTOP-N37P7P6" time="2.143">
+  <properties/>
+  <testcase name="replacingScanRemovesOriginalImageResource" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="2.083">
+    <failure message="java.lang.ExceptionInInitializerError" type="java.lang.ExceptionInInitializerError">java.lang.ExceptionInInitializerError
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.assertAbsent(RedactionResourcesTest.kt:43)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.assertAbsent$default(RedactionResourcesTest.kt:39)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.replacingScanRemovesOriginalImageResource(RedactionResourcesTest.kt:72)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.RuntimeException: java.io.FileNotFoundException: com/tom_roush/pdfbox/resources/glyphlist/additional.txt
+	at com.tom_roush.pdfbox.text.LegacyPDFStreamEngine.&lt;clinit&gt;(LegacyPDFStreamEngine.java:107)
+	... 18 more
+Caused by: java.io.FileNotFoundException: com/tom_roush/pdfbox/resources/glyphlist/additional.txt
+	at org.robolectric.shadows.ShadowArscAssetManager10.nativeOpenAsset(ShadowArscAssetManager10.java:718)
+	at android.content.res.AssetManager.nativeOpenAsset(AssetManager.java)
+	at android.content.res.AssetManager.open(AssetManager.java:904)
+	at android.content.res.AssetManager.open(AssetManager.java:881)
+	at com.tom_roush.pdfbox.android.PDFBoxResourceLoader.getStream(PDFBoxResourceLoader.java:69)
+	at com.tom_roush.pdfbox.text.LegacyPDFStreamEngine.&lt;clinit&gt;(LegacyPDFStreamEngine.java:95)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.assertAbsent(RedactionResourcesTest.kt:43)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.assertAbsent$default(RedactionResourcesTest.kt:39)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.replacingScanRemovesOriginalImageResource(RedactionResourcesTest.kt:72)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	... 13 more
+</failure>
+  </testcase>
+  <testcase name="inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.03">
+    <failure message="java.lang.ExceptionInInitializerError" type="java.lang.ExceptionInInitializerError">java.lang.ExceptionInInitializerError
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.secretForm(RedactionResourcesTest.kt:31)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText(RedactionResourcesTest.kt:81)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.IllegalArgumentException: java.io.FileNotFoundException: com/tom_roush/pdfbox/resources/afm/Times-Roman.afm
+	at com.tom_roush.pdfbox.pdmodel.font.Standard14Fonts.getAFM(Standard14Fonts.java:198)
+	at com.tom_roush.pdfbox.pdmodel.font.PDFont.&lt;init&gt;(PDFont.java:90)
+	at com.tom_roush.pdfbox.pdmodel.font.PDSimpleFont.&lt;init&gt;(PDSimpleFont.java:62)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;init&gt;(PDType1Font.java:120)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;clinit&gt;(PDType1Font.java:77)
+	... 17 more
+Caused by: java.io.FileNotFoundException: com/tom_roush/pdfbox/resources/afm/Times-Roman.afm
+	at org.robolectric.shadows.ShadowArscAssetManager10.nativeOpenAsset(ShadowArscAssetManager10.java:718)
+	at android.content.res.AssetManager.nativeOpenAsset(AssetManager.java)
+	at android.content.res.AssetManager.open(AssetManager.java:904)
+	at android.content.res.AssetManager.open(AssetManager.java:881)
+	at com.tom_roush.pdfbox.android.PDFBoxResourceLoader.getStream(PDFBoxResourceLoader.java:69)
+	at com.tom_roush.pdfbox.pdmodel.font.Standard14Fonts.loadMetrics(Standard14Fonts.java:121)
+	at com.tom_roush.pdfbox.pdmodel.font.Standard14Fonts.getAFM(Standard14Fonts.java:194)
+	at com.tom_roush.pdfbox.pdmodel.font.PDFont.&lt;init&gt;(PDFont.java:90)
+	at com.tom_roush.pdfbox.pdmodel.font.PDSimpleFont.&lt;init&gt;(PDSimpleFont.java:62)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;init&gt;(PDType1Font.java:120)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;clinit&gt;(PDType1Font.java:77)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.secretForm(RedactionResourcesTest.kt:31)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText(RedactionResourcesTest.kt:81)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	... 13 more
+</failure>
+  </testcase>
+  <testcase name="replacingContentRemovesOriginalSensitiveForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.027">
+    <failure message="java.lang.NoClassDefFoundError: Could not initialize class com.tom_roush.pdfbox.pdmodel.font.PDType1Font" type="java.lang.NoClassDefFoundError">java.lang.NoClassDefFoundError: Could not initialize class com.tom_roush.pdfbox.pdmodel.font.PDType1Font
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.secretForm(RedactionResourcesTest.kt:31)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.replacingContentRemovesOriginalSensitiveForm(RedactionResourcesTest.kt:58)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.ExceptionInInitializerError: Exception java.lang.IllegalArgumentException: java.io.FileNotFoundException: com/tom_roush/pdfbox/resources/afm/Times-Roman.afm [in thread &quot;SDK 33 Main Thread&quot;]
+	at com.tom_roush.pdfbox.pdmodel.font.Standard14Fonts.getAFM(Standard14Fonts.java:198)
+	at com.tom_roush.pdfbox.pdmodel.font.PDFont.&lt;init&gt;(PDFont.java:90)
+	at com.tom_roush.pdfbox.pdmodel.font.PDSimpleFont.&lt;init&gt;(PDSimpleFont.java:62)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;init&gt;(PDType1Font.java:120)
+	at com.tom_roush.pdfbox.pdmodel.font.PDType1Font.&lt;clinit&gt;(PDType1Font.java:77)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.secretForm(RedactionResourcesTest.kt:31)
+	at com.pdfchemy.app.jail.engines.RedactionResourcesTest.inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText(RedactionResourcesTest.kt:81)
+	... 15 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

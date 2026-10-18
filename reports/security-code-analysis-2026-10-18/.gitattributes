@@ -1,0 +1,3 @@
+evidence/* -text -whitespace
+evidence/*.log -diff
+baseline-probes/* -text

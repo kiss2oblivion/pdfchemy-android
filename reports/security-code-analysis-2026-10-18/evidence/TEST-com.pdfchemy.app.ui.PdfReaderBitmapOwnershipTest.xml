@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.ui.PdfReaderBitmapOwnershipTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T10:50:42.334Z" hostname="DESKTOP-N37P7P6" time="0.128">
+  <properties/>
+  <testcase name="cancellation during async render recycles uncommitted bitmap" classname="com.pdfchemy.app.ui.PdfReaderBitmapOwnershipTest" time="0.07"/>
+  <testcase name="bitmap replacement recycles old bitmap without touching newly installed bitmap" classname="com.pdfchemy.app.ui.PdfReaderBitmapOwnershipTest" time="0.032"/>
+  <testcase name="idempotent disposal does not throw or double-recycle" classname="com.pdfchemy.app.ui.PdfReaderBitmapOwnershipTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
