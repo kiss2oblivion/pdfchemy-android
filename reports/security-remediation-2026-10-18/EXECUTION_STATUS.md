@@ -70,6 +70,8 @@ The CI repair is commit `9e03c062f9cb797573430e1b5bd8d7b15f24b696`, pushed to th
 
 `sc01/RAW_LOG_XML_SHA256SUMS.txt` records the 39 archived raw log/XML files at this checkpoint, including failed attempts. Scoped Git attributes preserve these raw file bytes across checkouts. APK/source identities are separately recorded in the two JSON manifests; the baseline review's original hash manifest remains separate.
 
+A follow-up comparison against Git blobs detected four early files staged before the raw-byte attributes took effect: `sc01-unit-passing.xml`, `sc01-unit-retry.log`, `sc01-unit.log`, and `TEST-com.pdfchemy.app.jail.engines.RedactionResourcesTest.xml`. Those blobs had LF normalization while retained originals used CRLF; content differed only in line endings. The intact raw originals were restaged under the scoped attributes. All 39 staged evidence blobs now match the recorded SHA-256 values exactly. Historical normalized blobs remain in Git history; the correction does not rewrite or discard them.
+
 ## Historical documentation reconciliation
 
 Root handoff/status documents now point to the dated analysis, implementation plan and this receipt. Earlier release receipts no longer assert unverified SR-01 owner acceptance. The [SR-01 reassessment](../security-code-reaudit-2026-10-10/SR-01_STORAGE_RESIDUAL_DECISION.md) corrects the host PDF-validation claim, worker-local timer guarantees and premature rejection of hard file-size limits/seekable proxy descriptors. FOLLOW-06 documentation reconciliation is complete; feasibility experiments, implementation/disposition and attributable sign-off remain open under FOLLOW-07. No source fix or hostile-worker verification is claimed by these corrections.
