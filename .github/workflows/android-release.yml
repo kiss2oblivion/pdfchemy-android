@@ -21,6 +21,7 @@ jobs:
           distribution: temurin
       - uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
       - run: chmod +x gradlew
+      - run: python3 -m unittest discover -s scripts -p test_run_android_instrumentation.py
       - run: ./gradlew :app-host:securityAudit securityArchitecture :app-host:testDebugUnitTest --tests 'com.pdfchemy.app.arch.*' --tests 'com.pdfchemy.app.architecture.*' --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
 
   secrets:
@@ -79,6 +80,8 @@ jobs:
           java-version: '21'
           distribution: temurin
       - run: chmod +x gradlew
+      - name: Build native test APKs before emulator startup
+        run: ./gradlew :app-host:assembleDebug :app-host:assembleDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -94,7 +97,22 @@ jobs:
           disk-size: 4096M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: ./gradlew :app-host:connectedDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.android.injected.adb.shell.command.timeout=900000 -Dcom.android.ddmlib.timeOut=900000
+          script: >-
+            if [ '${{ matrix.api }}' = '24' ]; then
+            python3 scripts/run_android_instrumentation.py --serial emulator-5554 --apk app-host/build/outputs/apk/debug/app-host-debug.apk --test-apk app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk --output build/reports/native-api24;
+            else
+            ./gradlew :app-host:connectedDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.android.injected.adb.shell.command.timeout=900000 -Dcom.android.ddmlib.timeOut=900000;
+            fi
+      - name: Retain native test and installation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-security-api${{ matrix.api }}-${{ matrix.arch }}
+          path: |
+            build/reports/native-api24/
+            app-host/build/outputs/androidTest-results/
+            app-host/build/reports/androidTests/
+          if-no-files-found: warn
 
   build:
     needs: [architecture, secrets, dependency-security, tests, android-instrumented-security]

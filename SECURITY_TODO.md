@@ -18,7 +18,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
 - [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Source implemented; remaining matrix gate below remains open.
 - [x] SC01-03 Convert the component probe into an absence-of-sensitive-data regression; cover scanned images and shared resources. Nine production-helper regressions pass, including pattern and soft-mask carriers.
-- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36.
+- [x] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Final focused local API24 tests pass; CI attempt 1 executes all 216 native tests on each of API30/34/36 without failures/skips. Complete API24 suite and overall CI gate remain below.
 - [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 2. SC-02 — Search-redaction object graph
@@ -120,7 +120,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | IMPLEMENTED; CI verification pending | `a1077e47` and `9d7dc22d`, remote-verified | 50 worker unit tests; final focused API24/36 native passes; local build/lint evidence in execution receipt | Full same-source CI: API24 installation failure before tests; other matrix jobs pending |
+| SC-01 | IMPLEMENTED; CI verification pending | `a1077e47` and `9d7dc22d`, remote-verified | 50 worker unit tests; focused API24/36 passes; full CI API30/34/36 216 tests each pass | API24 same-source CI retry and dependent build; local full-suite WebView crash under investigation |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

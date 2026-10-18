@@ -44,7 +44,25 @@ The carrier follow-up is `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`, pushed with
 
 [Run 39124748605](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39124748605), attempt 1, targets source commit `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`. Architecture, history-secret, resolved-dependency and complete JVM test jobs pass. API24 job `117668349134` fails before test execution with `InstallException: Failed to install-write all apks`; its UTP report records zero tests. The full failed-job log is retained as `sc01/sc01-ci-api24-failure.log`. A more specific installation root cause has not been established.
 
-At this receipt update, API30/34/36 remain in progress. GitHub rejected an API24-only rerun while the workflow was still running (`job 117668349134 cannot be rerun`). A same-source fresh-runner retry must be requested after the active workflow completes. No API removal, test filtering or assertion weakening is authorized as a substitute for this gate. SC-02 remains unstarted.
+API30/34/36 each complete all 216 native tests with zero failures/skips in attempt 1. API30 reports BUILD SUCCESSFUL in 19m 44s, API34 in 20m 39s and API36 in 21m 11s. These are complete job script durations, not performance benchmarks.
+
+GitHub initially rejected an API24-only rerun while the workflow was still running (`job 117668349134 cannot be rerun`). After attempt 1 completed, `gh run rerun --failed` was accepted. Attempt 2 retains source SHA `9d7dc22d`; API24 job `117673053473` also fails during installation, with `ShellCommandUnresponsiveException`, `Failed to install-write all apks` and zero tests executed. The other successful results are carried forward, and the dependent build is skipped. Its failed log is retained as `sc01-ci-api24-attempt2.log`. No API removal, test filtering or assertion weakening is authorized as a substitute for this gate. SC-02 remains unstarted.
+
+Detailed review of the first failed log also identifies `executeRemoteCommand write timed out after 240000ms` in ddmlib during installation. Why that transfer stalled is not yet established; extending nominal timeout properties did not prevent this observed 240-second limit.
+
+## Additional local API24 full-suite diagnostic
+
+An unfiltered full-suite run on the local Google Play API24 image, after successful non-streaming installation, reports `Process crashed` during method 5 (after four methods completed). The crash buffer identifies host process `com.pdfchemy.app`, `HTMLParserThrea`, SIGILL and `/system/app/Chrome/Chrome.apk`; its bundled WebView version is 51.0.2704.90. This is a failed additional run and does not supersede the earlier focused native passes.
+
+Attribution remains open. An unchanged-baseline APK (`67057835`) passes an eight-method startup/text/redaction selection after application-data clearing. Its subsequent unfiltered diagnostic completes all 216 methods with exactly the three expected new SC-01 assertion failures; no process crash is reported. Those failure logs remain negative vulnerability evidence. A matched clean-state fixed-APK comparison is now running. No new production fix or security-test success is inferred from the Chrome stack alone.
+
+## API24 CI installation repair
+
+After two failed installation attempts, the workflow now builds both native-test APKs before starting the emulator, reducing concurrent build/boot load. API24 uses `adb install --no-streaming` and the same unfiltered AndroidJUnitRunner suite via `scripts/run_android_instrumentation.py`. API30/34/36 retain the Gradle connected-test path. The complete API matrix remains required, and native logs/results are uploaded on success or failure.
+
+The runner rejects unsuccessful installation, nonzero subprocess exits, timeouts, crashes, failed/skipped test status codes, zero tests, inconsistent counts, unmatched starts/completions and missing final instrumentation success. A successful adb shell exit alone cannot pass the gate. Five unit tests pass, including negative cases; the validator also accepts the actual four-test local success log and rejects the real full-run crash and baseline assertion-failure logs. Workflow YAML, unchanged API membership and the folded shell command validate locally. Folding is required because the pinned emulator action executes each script line separately.
+
+Local end-to-end installation through this runner succeeds for both APKs. Its unfiltered fixed native run remains in progress; full CI and the dependent release build are still required. [Android's command-line test documentation](https://developer.android.com/studio/test/command-line) describes direct instrumentation invocation; this workflow retains `-w`, the full runner and strict result checking.
 
 ## Historical documentation reconciliation
 
