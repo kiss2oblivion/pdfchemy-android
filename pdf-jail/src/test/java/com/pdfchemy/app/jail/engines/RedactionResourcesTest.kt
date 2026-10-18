@@ -62,6 +62,84 @@ class RedactionResourcesTest {
         }
     }
 
+    @Test fun redactionRemovesDocumentAccessibilityText() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            page.cosObject.setInt(COSName.getPDFName("StructParents"), 0)
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("StructTreeRoot"), COSDictionary().apply {
+                setName(COSName.TYPE, "StructTreeRoot")
+                setItem(COSName.K, COSArray().apply {
+                    add(COSDictionary().apply {
+                        setName(COSName.TYPE, "StructElem")
+                        setName(COSName.S, "Span")
+                        setString(COSName.getPDFName("ActualText"), "PRIVATE_ACCESSIBILITY_TEXT")
+                        setItem(COSName.getPDFName("Pg"), page)
+                    })
+                })
+            })
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_ACCESSIBILITY_TEXT")
+        }
+    }
+
+    @Test fun redactionRemovesDocumentInformationStrings() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            doc.documentInformation.subject = "PRIVATE_INFORMATION_SUBJECT"
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_INFORMATION_SUBJECT")
+        }
+    }
+
+    @Test fun redactionRemovesDocumentXmpMetadata() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            doc.documentCatalog.metadata = com.tom_roush.pdfbox.pdmodel.common.PDMetadata(doc).apply {
+                importXMPMetadata(("<x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF " +
+                    "xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description " +
+                    "xmlns:dc='http://purl.org/dc/elements/1.1/' dc:description='PRIVATE_XMP_TEXT'/>" +
+                    "</rdf:RDF></x:xmpmeta>").toByteArray())
+            }
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("RetainedMetadata"), doc.documentCatalog.metadata)
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_XMP_TEXT")
+        }
+    }
+
+    @Test fun redactionRemovesEmbeddedOriginalsAndAliasesButPreservesNamedDestinations() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val payload = doc.document.createCOSStream().apply {
+                setName(COSName.TYPE, "EmbeddedFile")
+                createOutputStream().use { it.write("PRIVATE_EMBEDDED_ORIGINAL".toByteArray()) }
+            }
+            val specification = COSDictionary().apply {
+                setName(COSName.TYPE, "Filespec"); setString(COSName.F, "original.pdf")
+                setName(COSName.getPDFName("AFRelationship"), "Source")
+                setItem(COSName.getPDFName("EF"), COSDictionary().apply { setItem(COSName.F, payload) })
+            }
+            val destinations = COSDictionary().apply {
+                setItem(COSName.getPDFName("Names"), COSArray().apply {
+                    add(COSString("keepNavigation")); add(COSArray().apply { add(page); add(COSName.getPDFName("Fit")) })
+                })
+            }
+            doc.documentCatalog.cosObject.setItem(COSName.NAMES, COSDictionary().apply {
+                setItem(COSName.DESTS, destinations)
+                setItem(COSName.getPDFName("EmbeddedFiles"), COSDictionary().apply {
+                    setItem(COSName.NAMES, COSArray().apply { add(COSString("original.pdf")); add(specification) })
+                })
+            })
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("AF"), COSArray().apply { add(specification) })
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("RetainedEmbeddedStream"), payload)
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_EMBEDDED_ORIGINAL")
+            val names = doc.documentCatalog.cosObject.getDictionaryObject(COSName.NAMES) as COSDictionary
+            assertNotNull(names.getDictionaryObject(COSName.DESTS))
+            assertNull(names.getDictionaryObject(COSName.getPDFName("EmbeddedFiles")))
+            assertNull(doc.documentCatalog.cosObject.getDictionaryObject(COSName.getPDFName("AF")))
+        }
+    }
+
     @Test fun sharedStreamsPropagateRasterizationWithoutSelectingIndependentPages() {
         PDDocument().use { doc ->
             val pages = List(4) { PDPage().also(doc::addPage) }

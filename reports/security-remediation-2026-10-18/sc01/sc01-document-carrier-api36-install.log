@@ -1,0 +1,6 @@
+app-host/build/outputs/apk/debug/app-host-debug.apk: 1 file pushed, 0 skipped. 115.3 MB/s (127831335 bytes in 1.058s)
+Performing Push Install
+Success
+app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk: 1 file pushed, 0 skipped. 58.2 MB/s (12772955 bytes in 0.209s)
+Performing Push Install
+Success

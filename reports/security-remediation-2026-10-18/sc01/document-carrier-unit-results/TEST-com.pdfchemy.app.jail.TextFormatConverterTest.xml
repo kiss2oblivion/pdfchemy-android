@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.TextFormatConverterTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-18T22:17:14.128Z" hostname="DESKTOP-N37P7P6" time="0.422">
+  <properties/>
+  <testcase name="convert_JsonToCsv_worksCorrectly" classname="com.pdfchemy.app.jail.TextFormatConverterTest" time="0.366"/>
+  <testcase name="convert_TextToJson_wrapsInContentKey" classname="com.pdfchemy.app.jail.TextFormatConverterTest" time="0.013"/>
+  <testcase name="convert_HtmlToMarkdown_worksCorrectly" classname="com.pdfchemy.app.jail.TextFormatConverterTest" time="0.035"/>
+  <testcase name="convert_CsvToMarkdownTable_worksCorrectly" classname="com.pdfchemy.app.jail.TextFormatConverterTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -25,7 +25,7 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class EditorRedactionResourceSecurityTest {
-    private fun runFixture(scan: Boolean, inherited: Boolean, formField: Boolean = false) = runBlocking {
+    private fun runFixture(scan: Boolean, inherited: Boolean, formField: Boolean = false, documentCarriers: Boolean = false) = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         PDFBoxResourceLoader.init(context)
         val source = File.createTempFile("sc01_input_", ".pdf", context.cacheDir)
@@ -35,6 +35,50 @@ class EditorRedactionResourceSecurityTest {
         try {
             PDDocument().use { doc ->
                 val target = PDPage(PDRectangle(200f, 200f)).also(doc::addPage)
+                if (documentCarriers) {
+                    doc.documentInformation.subject = secret
+                    doc.documentCatalog.metadata = com.tom_roush.pdfbox.pdmodel.common.PDMetadata(doc).apply {
+                        importXMPMetadata(("<x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF " +
+                            "xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description " +
+                            "xmlns:dc='http://purl.org/dc/elements/1.1/' dc:description='$secret'/>" +
+                            "</rdf:RDF></x:xmpmeta>").toByteArray())
+                    }
+                    doc.documentCatalog.cosObject.setItem(COSName.getPDFName("RetainedMetadata"), doc.documentCatalog.metadata)
+                    val original = doc.document.createCOSStream().apply {
+                        setName(COSName.TYPE, "EmbeddedFile")
+                        createOutputStream().use { it.write(secret.toByteArray()) }
+                    }
+                    val specification = COSDictionary().apply {
+                        setName(COSName.TYPE, "Filespec"); setString(COSName.F, "original.pdf")
+                        setName(COSName.getPDFName("AFRelationship"), "Source")
+                        setItem(COSName.getPDFName("EF"), COSDictionary().apply { setItem(COSName.F, original) })
+                    }
+                    doc.documentCatalog.cosObject.setItem(COSName.NAMES, COSDictionary().apply {
+                        setItem(COSName.getPDFName("EmbeddedFiles"), COSDictionary().apply {
+                            setItem(COSName.NAMES, COSArray().apply { add(COSString("original.pdf")); add(specification) })
+                        })
+                    })
+                    doc.documentCatalog.cosObject.setItem(COSName.getPDFName("AF"), COSArray().apply { add(specification) })
+                    doc.documentCatalog.cosObject.setItem(COSName.getPDFName("RetainedEmbeddedStream"), original)
+                    val structure = COSDictionary().apply { setName(COSName.TYPE, "StructTreeRoot") }
+                    val element = COSDictionary().apply {
+                        setName(COSName.TYPE, "StructElem"); setName(COSName.S, "Span")
+                        setItem(COSName.P, structure); setItem(COSName.getPDFName("Pg"), target)
+                        setInt(COSName.K, 0); setString(COSName.getPDFName("ActualText"), secret)
+                    }
+                    structure.setItem(COSName.K, COSArray().apply { add(element) })
+                    structure.setItem(COSName.getPDFName("ParentTree"), COSDictionary().apply {
+                        setItem(COSName.getPDFName("Nums"), COSArray().apply {
+                            add(COSInteger.ZERO); add(COSArray().apply { add(element) })
+                        })
+                    })
+                    structure.setInt(COSName.getPDFName("ParentTreeNextKey"), 1)
+                    target.cosObject.setInt(COSName.getPDFName("StructParents"), 0)
+                    doc.documentCatalog.cosObject.setItem(COSName.getPDFName("StructTreeRoot"), structure)
+                    doc.documentCatalog.cosObject.setItem(COSName.getPDFName("MarkInfo"), COSDictionary().apply {
+                        setBoolean(COSName.getPDFName("Marked"), true)
+                    })
+                }
                 val resources = PDResources()
                 if (inherited) doc.pages.cosObject.setItem(COSName.RESOURCES, resources)
                 else target.resources = resources
@@ -76,7 +120,13 @@ class EditorRedactionResourceSecurityTest {
                     form.cosObject.createOutputStream().use {
                         it.write("BT /F1 10 Tf 10 100 Td ($secret) Tj ET".toByteArray(Charsets.US_ASCII))
                     }
-                    PDPageContentStream(doc, target).use { it.drawForm(form) }
+                    PDPageContentStream(doc, target).use {
+                        if (documentCarriers) it.beginMarkedContent(COSName.getPDFName("Span"),
+                            com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDPropertyList.create(
+                                COSDictionary().apply { setInt(COSName.getPDFName("MCID"), 0) }))
+                        it.drawForm(form)
+                        if (documentCarriers) it.endMarkedContent()
+                    }
                 }
                 if (inherited) {
                     val other = PDPage(PDRectangle(200f, 200f)).also(doc::addPage)
@@ -118,6 +168,7 @@ class EditorRedactionResourceSecurityTest {
     @Test(timeout = 180000) fun originalScanCannotSurviveRealEditorRedactionExport() = runFixture(true, false)
     @Test(timeout = 180000) fun inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives() = runFixture(false, true)
     @Test(timeout = 180000) fun formValuesCannotSurviveRealEditorRedactionExport() = runFixture(false, false, true)
+    @Test(timeout = 180000) fun documentMetadataAndAccessibilityTextCannotSurviveRedaction() = runFixture(false, false, documentCarriers = true)
 
     @Test(timeout = 180000) fun unsupportedXfaCannotOverwriteAnExistingDestination() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()

@@ -1,6 +1,6 @@
 # Android security remediation execution - 2026-10-18
 
-**Release: HOLD. SC-01 remains open.** Resource cleanup and the API24 CI repair pass full CI at `9e03c062`. Additional AcroForm, hidden-field and clipped shared-Form cases required source follow-ups; current local and refreshed CI verification are tracked below. SC-02 and later source findings have not started.
+**Release: HOLD. SC-01 remains open pending refreshed full CI.** Resource cleanup and the API24 CI repair pass full CI at `9e03c062`. Form/shared-stream source `593be048` passes the clean-data local 220-method API24 suite. Additional document metadata, accessibility and attachment carriers required a further source follow-up; current verification is tracked below. SC-02 and later source findings have not started.
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
@@ -12,8 +12,9 @@ Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFch
 | Android remote main | `4b3c157f3458f7df00ea94044258d33c7449ced9` |
 | SC-01 initial resource fix | `a1077e47abd833a24018ec455aff3cbe6465d823` |
 | SC-01 nested-pattern/mask follow-up | `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9` |
-| API24 CI installation repair / current CI target | `9e03c062f9cb797573430e1b5bd8d7b15f24b696` |
+| API24 CI installation repair / prior full CI source | `9e03c062f9cb797573430e1b5bd8d7b15f24b696` |
 | Documentation/evidence checkpoint before closeout | `e24999296cfb2ff4b82a7ad89dec708c1d1fe187` |
+| Form-tree / hidden-field / shared-stream follow-up | `593be048fc7b5e2a340940419d8eec0d9c944e3f` |
 
 Each listed implementation push went only to `kiss2oblivion/pdfchemy-android`, with the remote ref checked against the local SHA. The documentation/evidence checkpoints `1e20f8dc` and `e2499929` do not change application source, tests, scripts or workflows from CI target `9e03c062`. PR #2 remains open/draft on the earlier branch; no merge, upload or release is claimed.
 
@@ -23,7 +24,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 
 | Finding | Status | Remaining gate |
 |---|---|---|
-| SC-01 editor forensic redaction | Resource cleanup/CI installation checkpoint verified; form-tree and shared-stream follow-up implemented locally | Complete current-source build, native regressions and refreshed CI |
+| SC-01 editor forensic redaction | Form/shared-stream checkpoint verified locally; document-carrier follow-up passes 62 worker tests, nine focused methods on API24/36, assembly/static/lint | Complete commit/push and refreshed full CI |
 | SC-02 through SC-09 | Not started | Their separate implementation/test/commit batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
@@ -52,7 +53,7 @@ Nine production-helper regressions exercise original Forms/images, shared/inheri
 
 Test durations describe these runs, not performance benchmarks. Local final build verification used offline Gradle, one worker and in-process Kotlin. CI uses its recorded clean-runner commands. Source review, JVM, emulator, CI and physical-device claims are kept separate.
 
-### Current full CI matrix
+### Prior complete CI matrix
 
 [Run 39160660276](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39160660276), attempt 1, targets `9e03c062f9cb797573430e1b5bd8d7b15f24b696`.
 
@@ -85,7 +86,7 @@ Current regressions cover transitive stream sharing, independent vector text, ca
 
 The raster renderer now consumes a broker-owned, bounded scratch serialization of the validated/flattened document. This preserves newly generated form appearances on dependent pages; it also avoids rendering stale original field appearances. The descriptor is rewound, handed to PdfRenderer and closed with the scratch lease in cleanup. The existing aggregate write quotas apply to this additional serialization.
 
-### Current follow-up local verification
+### Form/shared-stream checkpoint local verification at `593be048`
 
 | Layer | Result | Evidence |
 |---|---|---|
@@ -94,9 +95,29 @@ The raster renderer now consumes a broker-owned, bounded scratch serialization o
 | Real Editor export and annotation geometry, API24 | Eight focused methods pass in 29.483s; strict runner validator accepts; crash buffer empty | `sc01-shared-stream-api24.log`, install/crash logs |
 | Same focused selection, API36 | Eight methods pass in 52.982s; strict runner validator accepts; crash buffer empty | `sc01-shared-stream-api36-retry.log`, install/retry-crash logs |
 | Latest release lint | PASS in 3m 8s; 629 warnings and 38 unmatched localization-baseline entries | `sc01-prepared-render-lint.log` |
-| New full CI at follow-up source | Not yet dispatched | The earlier 216-per-API workflow does not cover these additions |
+| Full local API24 suite | 220 pass in 837.592s; strict result validator accepts; crash buffer empty | `local-followup-api24/`, `sc01-shared-stream-api24-full-runner.log` |
+| Full CI attempt at follow-up source | Superseded and intentionally cancelled after the document-carrier probes fail | [Run 39170654288](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39170654288); architecture, secrets and dependencies pass; JVM/native jobs are cancelled and no complete matrix is claimed |
 
 API36's first attempt installed both APKs but failed to connect to the adb daemon before instrumentation. The failed connection/result-validation attempt is retained as `sc01-shared-stream-api36.log`; it executes zero tests and is not a passing run. A sequential retry completes the full eight-method selection. The separate catalog-reference negative export against the retained form-only APK succeeds incorrectly and fails the required rejection assertion; see `sc01-catalog-baseline.log`.
+
+## Additional SC-01 document carriers
+
+Three new helper probes fail because document information strings, XMP and accessibility ActualText remain outside page streams. A fourth probe confirms embedded/associated original files and alternate stream references survive. The original three-test and later four-test negative XML/logs are preserved separately. The first attachment invocation fails compilation on an unavailable `COSName.FIT` constant, executes no tests and is not negative security evidence; the corrected name lookup produces the four actual failed privacy assertions.
+
+A valid tagged-PDF fixture (StructTreeRoot/ParentTree, page StructParents and marked-content MCID) reproduces the real Editor export leak on the retained `593be048` APK, API36. The native fixture is then extended with named/associated embedded originals and alternate metadata/file-stream references. Ordinary text, raw serialization and decoded saved streams must all exclude the private marker after export.
+
+The current source strips document information, XMP/private application metadata and accessibility structure, including alternate references to removed carrier objects. It reuses the existing bounded attachment scrubber and detaches embedded originals through all recorded references. Named destinations and independent vector text are preserved. Form/XFA validation still runs before sanitization; unsupported exports retain the existing destination bytes. Accessibility structure, metadata, attachments and interactive fields are deliberately removed from secure redaction output.
+
+| Latest document-carrier follow-up | Result | Evidence |
+|---|---|---|
+| Worker JVM | 62 pass, including 21 redaction helper regressions | `sc01-document-carrier-unit.log`, `document-carrier-unit-results/` |
+| Debug/test assembly and static checks | PASS | `sc01-document-carrier-validation.log` |
+| Actual Editor export and annotation geometry, API24 | Nine methods pass in 28.7s; strict validator accepts; crash buffer empty | `sc01-document-carrier-api24.log`, install/crash logs |
+| Same selection, API36 | Nine methods pass in 67.909s; strict validator accepts; crash buffer empty | `sc01-document-carrier-api36.log`, install/crash logs |
+| Latest release lint | PASS in 3m 41s; 629 warnings and 38 unmatched localization-baseline entries | `sc01-document-carrier-lint.log` |
+| Full CI at this document-carrier source | Not yet dispatched | Earlier complete workflows and the local 220-method run test earlier source |
+
+`sc01-ci-shared-stream-superseded.log` retains the cancelled workflow's available job output. Log retrieval exits nonzero only because the never-started dependent build job has no log; the status JSON records that job and the workflow as cancelled. This is not a new build or test assertion failure.
 
 ## Failed, superseded and unresolved attempts
 

@@ -41,6 +41,8 @@ Implementation:
 
 Follow-up implementation policy: flatten supported form appearances before replacing redacted content, detach form values and reject XFA. Rasterize the bounded transitive closure of pages sharing original streams with redacted pages; keep independent pages as vectors. Shared embedded-font streams may expand that closure and remove text selection from additional pages. Before writing output, reject any remaining reachable original stream from a replaced page. Unsupported retained references must preserve an existing destination on failure.
 
+Secure redaction also removes document information, XMP/private application metadata, accessibility structure and embedded/associated original files, including recorded alternate references. Reuse the bounded attachment scrubber and retain benign named destinations. These removals require helper and actual-worker saved-object regressions; an earlier green suite without these cases cannot close SC-01.
+
 Acceptance:
 
 - Form XObject and scanned-image fixtures cannot yield original sensitive text or image content from decoded saved objects/resources.

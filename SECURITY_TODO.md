@@ -16,9 +16,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 ## 1. SC-01 — Editor forensic redaction
 
 - [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
-- [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Form-tree cleanup, hidden-widget handling and shared-stream dependency rasterization pass local worker/native checks; full CI remains a separate gate below.
-- [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources and retained form values. All 17 helper regressions pass within the 58-test worker suite; eight focused native methods pass on API24 and API36. See execution receipt and raw evidence.
-- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Resource-only checkpoint passes all 216 native methods per API in full CI; the expanded form/shared-stream cases require refreshed coverage.
+- [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Form-tree cleanup, hidden widgets, shared-stream rasterization and document-carrier removal pass local worker/native checks; full CI remains a separate gate below.
+- [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources, retained form values and metadata/accessibility/embedded originals. All 21 helper regressions pass within the 62-test worker suite; nine focused native methods pass on API24 and API36. See execution receipt and raw evidence.
+- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Resource-only checkpoint passes 216 native methods per API in full CI; form/shared-stream source passes 220 locally on API24. The latest document-carrier source requires refreshed full CI.
 - [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 2. SC-02 — Search-redaction object graph

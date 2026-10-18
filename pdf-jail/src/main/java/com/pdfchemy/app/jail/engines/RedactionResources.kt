@@ -93,8 +93,10 @@ internal object RedactionResources {
     /** Form values live outside page resources; preserve their visible appearances, then detach data. */
     fun prepareForRedaction(document: PDDocument) {
         val catalog = document.documentCatalog
-        val form = catalog.getAcroForm(null) ?: return
-        require(!form.hasXFA()) { "Secure redaction does not support XFA forms" }
+        val form = catalog.getAcroForm(null)
+        require(form?.hasXFA() != true) { "Secure redaction does not support XFA forms" }
+        removeDocumentCarriers(document)
+        if (form == null) return
         val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         fun collect(raw: COSBase?, depth: Int) {
             val field = dereference(raw) as? COSDictionary
@@ -130,28 +132,55 @@ internal object RedactionResources {
 
         // Actions/calculation arrays can reference detached fields independently of
         // AcroForm. Remove those references throughout the reachable document graph.
-        val seen = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        fun detach(raw: COSBase?, depth: Int) {
-            val node = dereference(raw) ?: return
-            if (node !is COSDictionary && node !is COSArray) return
-            if (!seen.add(node)) return
-            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES) {
-                "Document graph exceeds form-sanitization limit"
+        detachReferences(document, removed)
+    }
+
+    private fun removeDocumentCarriers(document: PDDocument) {
+        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun record(raw: COSBase?) {
+            val value = dereference(raw)
+            // Never record shared primitive singletons (null, names, numbers).
+            if (value is COSDictionary || value is COSArray || value is COSString) removed.add(value)
+        }
+        val catalog = document.documentCatalog.cosObject
+        for (key in listOf("StructTreeRoot", "MarkInfo")) {
+            val name = COSName.getPDFName(key)
+            record(catalog.getItem(name))
+            catalog.removeItem(name)
+        }
+        record(document.document.trailer.getItem(COSName.INFO))
+        document.documentInformation = PDDocumentInformation()
+        // Record identities before scrubbing severs standard links. Alternate
+        // references must not retain XMP, private application data or attachments.
+        visitGraph(document.document.trailer) { node ->
+            if (node is COSDictionary) {
+                for (key in listOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS")) {
+                    record(node.getItem(COSName.getPDFName(key)))
+                }
+                if (node.containsKey(COSName.getPDFName("EF"))) record(node)
+                if (node is COSStream && node.getCOSName(COSName.TYPE) == COSName.getPDFName("EmbeddedFile")) record(node)
+                node.removeItem(COSName.getPDFName("StructParents"))
+                node.removeItem(COSName.getPDFName("StructParent"))
             }
+        }
+        ActiveContentScrubber.inspect(document, scrub = true, purgeJs = false,
+            purgeActions = false, purgeAttachments = true)
+        detachReferences(document, removed)
+    }
+
+    private fun detachReferences(document: PDDocument, removed: Set<COSBase>) {
+        visitGraph(document.document.trailer) { node ->
             when (node) {
                 is COSDictionary -> for (key in node.keySet().toList()) {
                     val child = dereference(node.getItem(key))
                     if (child != null && child in removed) node.removeItem(key)
-                    else detach(child, depth + 1)
                 }
                 is COSArray -> for (index in node.size() - 1 downTo 0) {
                     val child = dereference(node.get(index))
                     if (child != null && child in removed) node.remove(index)
-                    else detach(child, depth + 1)
                 }
             }
         }
-        detach(document.document.trailer, 0)
     }
 
     private fun dereference(raw: COSBase?): COSBase? {
