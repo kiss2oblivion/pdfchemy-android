@@ -95,7 +95,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [ ] FOLLOW-03 Define external VIEW/SEND URI admission separately from trusted internal staged capabilities.
 - [ ] FOLLOW-04 Run separate-sender/provider Android tests for scheme/grant/private-path policy and record actual impact.
 - [ ] FOLLOW-05 Reconcile existing window/startup/billing/consent/audio evidence without assuming closure or rewriting correct fixes.
-- [ ] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims.
+- [x] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims. See updated SR-01 assessment and execution receipt; stronger enforcement and owner disposition remain open.
 - [ ] FOLLOW-07 Record attributable owner risk disposition or implement and verify a stronger boundary.
 
 ## 12. Integrated release verification
@@ -120,7 +120,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | IMPLEMENTED; CI verification pending | `a1077e47` plus nested-carrier follow-up | 50 worker unit tests; local native/build/lint evidence in execution receipt | Full same-source CI and API matrix |
+| SC-01 | IMPLEMENTED; CI verification pending | `a1077e47` and `9d7dc22d`, remote-verified | 50 worker unit tests; final focused API24/36 native passes; local build/lint evidence in execution receipt | Full same-source CI: API24 installation failure before tests; other matrix jobs pending |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

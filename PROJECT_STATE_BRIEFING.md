@@ -1,4 +1,6 @@
 # PDFchemy Tools — Master Briefing & Technical Capability Dossier 📋
+
+> **Android status update, 2026-10-18:** this dossier contains historical version/release statements. The 2.1.0 candidate remains **HOLD**; use the [current remediation plan](SECURITY_REMEDIATION_PLAN.md) and [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md) for implementation and verification status.
 > **Document de referință complet pentru Claude sau orice alt model / dezvoltator.**
 
 ---

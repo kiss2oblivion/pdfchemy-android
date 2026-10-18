@@ -1,5 +1,7 @@
 # Android security remediation — 2026-10-01
 
+> **Historical record — reconciled 2026-10-18.** The run-specific blockers, tool-access notes and source claims below describe their original revisions. Current Android release status is **HOLD** under the [new security findings](reports/security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md); follow the [remediation plan](SECURITY_REMEDIATION_PLAN.md) and [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
+
 Work order: the 2026-09-30 audit of `repo-android` at `cbafb998666219862b64e8d3d8dd1c172217b4e6`.
 Implementation and verification were performed with Codex assistance. This record describes observed results; it is not a security certification.
 

@@ -1,5 +1,7 @@
 # Kilo Session Context — PDFchemy Tools (Shrink PDF)
 
+> **2026-10-18 Android handoff:** the September context below is historical. Current candidate: 2.1.0 (14), release **HOLD**. Read [SECURITY_REMEDIATION_PLAN.md](SECURITY_REMEDIATION_PLAN.md), [SECURITY_TODO.md](SECURITY_TODO.md), and the [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md) before continuing implementation.
+
 > **Auto-generated session context for Kilo AI agent**  
 > **Project:** PDFchemy Tools / Shrink PDF  
 > **Developer:** Andrei Ioan Cucoș (John / @kiss2oblivion)  

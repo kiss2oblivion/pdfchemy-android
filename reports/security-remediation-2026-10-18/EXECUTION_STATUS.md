@@ -14,7 +14,7 @@ Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18
 
 | Finding | Implementation | Local verification | Android / CI | Commit / push |
 |---|---|---|---|---|
-| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. First fix: API24/36 four tests pass each. Carrier extension: API36 four tests pass; latest full CI matrix pending | Initial fix `a1077e47` pushed/remote-verified; carrier follow-up in this batch |
+| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. Final carrier source: API24/36 four tests pass each. Full CI attempt 1: API24 installation failure, zero tests; other API jobs pending | `a1077e47` and `9d7dc22d` pushed/remote-verified |
 | SC-02 through SC-09 | Not started | Not run | Not run | None |
 | Retained RA / external URI / SR-01 | Not started | Not run | Not run | None |
 
@@ -36,4 +36,16 @@ No later finding is advanced before the required SC-01 checks and commit/push/CI
 
 Pre-closeout review identified that a used tiling pattern or soft-mask group can hold its own unused original Form resource. Cleanup now prunes those resource scopes too, preserving resource-less mask inheritance. Two further production-helper regressions cover these carriers; all nine resource tests and the full 50-test worker suite pass. Build/Android-test assembly and release lint pass again (`sc01-resource-carriers.log`, 4m 9s). The extended APK passes the four Android methods on API36 in 39.983 seconds (`sc01-carriers-api36.log`). Earlier API24 evidence applies to the initial fix; the extended source's full API24/30/34/36 CI remains required.
 
-The initial source commit is `a1077e47abd833a24018ec455aff3cbe6465d823`, pushed to the Android-only remediation branch with matching remote SHA. CI run `39124161582` covers that first commit; its architecture, secrets and dependency checks passed before the run was superseded by this carrier extension. It must not be counted as a complete pass for the extended source. Replacement CI is recorded after the follow-up push.
+The initial source commit is `a1077e47abd833a24018ec455aff3cbe6465d823`, pushed to the Android-only remediation branch with matching remote SHA. CI run `39124161582` covers that first commit; its architecture, secrets and dependency checks passed before the run was superseded by this carrier extension. It must not be counted as a complete pass for the extended source.
+
+The carrier follow-up is `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`, pushed with matching remote SHA. The final APK also passes all four Android methods on local API24 in 19.454 seconds; see `sc01/sc01-carriers-api24.log`, installation log and device fingerprint. Local API36 passes in 39.983 seconds. These focused native runs do not replace the complete CI suites.
+
+## Current CI gate
+
+[Run 39124748605](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39124748605), attempt 1, targets source commit `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`. Architecture, history-secret, resolved-dependency and complete JVM test jobs pass. API24 job `117668349134` fails before test execution with `InstallException: Failed to install-write all apks`; its UTP report records zero tests. The full failed-job log is retained as `sc01/sc01-ci-api24-failure.log`. A more specific installation root cause has not been established.
+
+At this receipt update, API30/34/36 remain in progress. GitHub rejected an API24-only rerun while the workflow was still running (`job 117668349134 cannot be rerun`). A same-source fresh-runner retry must be requested after the active workflow completes. No API removal, test filtering or assertion weakening is authorized as a substitute for this gate. SC-02 remains unstarted.
+
+## Historical documentation reconciliation
+
+Root handoff/status documents now point to the dated analysis, implementation plan and this receipt. Earlier release receipts no longer assert unverified SR-01 owner acceptance. The [SR-01 reassessment](../security-code-reaudit-2026-10-10/SR-01_STORAGE_RESIDUAL_DECISION.md) corrects the host PDF-validation claim, worker-local timer guarantees and premature rejection of hard file-size limits/seekable proxy descriptors. FOLLOW-06 documentation reconciliation is complete; feasibility experiments, implementation/disposition and attributable sign-off remain open under FOLLOW-07. No source fix or hostile-worker verification is claimed by these corrections.

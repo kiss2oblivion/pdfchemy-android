@@ -1,5 +1,7 @@
 # PDFchemy Android — Security Stabilization Receipt
 
+> **2026-10-18 correction:** this receipt records historical revisions. New [independent findings](../security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md) reopen release criteria; current execution is tracked [here](../security-remediation-2026-10-18/EXECUTION_STATUS.md). The earlier assertions of formal SR-01 approval are withdrawn pending attributable owner sign-off, consistent with the dedicated proposed-decision document. Release remains **HOLD**.
+
 **Auditor / Implementer:** Vulcan (Google Anti-Gravity Autonomous Co-Architect)  
 **Collaborator / Owner:** John (Andrei Ioan Cucoș — @kiss2oblivion)  
 **Handoff From:** Codex  
@@ -27,7 +29,7 @@ In strict compliance with the project's ethical mandate of radical transparency,
 | **SA-02** | High / P1 | FLAG_SECURE Lease Ownership | **CLOSED** | `569e62d` | Unit tested (`WindowSecureManagerTest`) |
 | **SA-03** | Medium / P2| Staged Capability & Session Retention | **CLOSED** | `91c765c` | Unit tested (`DocumentStagerRetentionTest`, `StagedSessionRetentionTest`) |
 | **START-01**| High | API 30 Content-Container Startup Race | **CLOSED** | `029425b` | Robolectric unit tested across API 30 & 33 (`StartupContentContainerTest`) |
-| **SR-01** | Residual | Compromised Worker Scratch Allocation | **ACCEPTED DECISION** | `87cc462` / `de0cf48` | Formally approved by Owner Andrei Ioan Cucoș; Linux VFS & watchdog bounds clarified |
+| **SR-01** | Residual | Compromised Worker Scratch Allocation | **PROPOSED / SIGN-OFF PENDING** | `87cc462` / `de0cf48` | Engineering assessment documented; no attributable owner approval verified |
 | **VERIF-01**| Hardening | Search Redaction Bounding Boxes & Clamping | **CLOSED** | `7e29642` | Unit & instrumentation test verified (`AcroFormAndRedactionAuditTest`) |
 | **RV-01** | High / P1 | Destination Freshness Lifetime & Publication Transition | **CLOSED** | `c11b4bd` | Unit tested (`DestinationIntegritySecurityTest`, `CancellationPublicationTest`) |
 | **RV-02** | High / P2 | Window Reference Cycle in `WindowSecureManager` | **CLOSED** | `5d8d5ad` | Unit tested (10 tests in `WindowSecureManagerTest`) |
@@ -35,7 +37,7 @@ In strict compliance with the project's ethical mandate of radical transparency,
 | **VG-01** | Verification| Startup Initialization & Consent Lifecycle | **VERIFIED (UNIT)** | `029425b` | Robolectric tested; physical device execution remains open gate |
 | **VG-02** | Verification| End-to-End Forensic Redaction Validation | **PARTIALLY VERIFIED**| `7e29642` | Target geometry verified; full forensic stream destruction is an open hardware gate |
 | **VG-03** | Verification| Billing Acknowledgement Exponential Retry | **CLOSED** | `de0cf48` | Production backoff retry implemented & unit tested (`BillingReadinessTest`) |
-| **VG-04** | Verification| SR-01 Linux VFS Reclamation & Temporal Bounds | **CLOSED** | `de0cf48` | Formally refined in `SR-01_STORAGE_RESIDUAL_DECISION.md`; approved by Owner |
+| **VG-04** | Verification| SR-01 Linux VFS Reclamation & Temporal Bounds | **DOCUMENTED / APPROVAL PENDING** | `de0cf48` | Documentation refined; technical guarantees and owner disposition require verification |
 
 ---
 
@@ -106,8 +108,8 @@ In strict compliance with the project's ethical mandate of radical transparency,
   - `reports/security-code-reaudit-2026-10-10/SR-01_STORAGE_RESIDUAL_DECISION.md`
 - **Resolution:**
   1. Clarified Linux VFS mechanics: unlinked inodes (`unlink()`) retain allocated disk blocks while any open file descriptor references them in host or worker; storage is reclaimed when all descriptors are closed or holding processes terminate.
-  2. Clarified host watchdog boundaries: 30s (`RENDER_DEADLINE_MS`) and 120s (`WORKER_DEADLINE_MS`) watchdogs enforce temporal boundaries, not mathematical kernel byte quotas during active execution.
-  3. Formally recorded review and approval by Product & Security Owner Andrei Ioan Cucoș (@kiss2oblivion).
+  2. Correction dated 2026-10-18: these configured 30s (`RENDER_DEADLINE_MS`) and 120s (`WORKER_DEADLINE_MS`) timers are worker-local defenses. A non-bypassable hostile-worker lifetime bound has not been demonstrated; see the revised SR-01 assessment. They also do not establish a kernel allocation quota.
+  3. Correction dated 2026-10-18: the earlier statement claiming owner approval is withdrawn pending attributable sign-off by Product & Security Owner Andrei Ioan Cucoș (@kiss2oblivion).
 - **Commit SHA:** `de0cf48`
 
 ---
@@ -159,7 +161,7 @@ Following the independent review and CI Run #44 analysis, three critical product
 
 #### Finding SR-01: Proposed Decision Heading & Duration Boundary Clarification (P2)
 - **Root Cause:** The decision heading retained `Decision: ACCEPT RESIDUAL RISK` and lacked explicit clarification that timeout enforcement bounds duration rather than mathematically capping raw byte writes during active execution.
-- **Resolution:** Updated heading to `Proposed Architectural Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES (Pending Formal Owner Approval)` and documented that execution duration (30–120s) is bounded by watchdogs while raw active disk consumption is bounded by VFS unlinking reclamation, strictly distinct from host pre-publication limits (`MAX_OUTPUT_BYTES`).
+- **Historical resolution, corrected 2026-10-18:** the proposed-acceptance heading did not constitute owner sign-off. The prior duration guarantee and description of unlinking as an active-allocation bound are withdrawn. Worker-local timers do not demonstrate a hostile-worker lifetime bound; unlinking only permits reclamation after the last open reference closes. See the revised SR-01 assessment for remaining technical and approval gates.
 - **Commit SHA:** `cddeea45`
 
 ---

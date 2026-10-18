@@ -1,56 +1,40 @@
-# SR-01: Compromised-Worker Scratch-Allocation Residual Risk Assessment & Decision
+# SR-01: compromised-worker temporary-storage residual risk
 
-**Document ID:** SEC-SR-01-2026-10-11  
-**Project:** PDFchemy Tools (Android)  
-**Security Boundary:** Host / Isolated PDF Worker Process (`OperationScratchBroker`)  
-**Disposition:** Architectural Residual Risk Assessment & Decision (Pending Formal Owner Sign-off)  
+Updated 2026-10-18 against remediation source commit `9d7dc22dd9ed38fb03ab50c52ac853f0e3fa72f9`. **OPEN: technical evaluation and attributable owner disposition required. Release HOLD.** This supersedes the earlier assessment's unsupported termination, validation and mitigation-rejection claims. It records source review and feasibility questions, not a new hostile-worker experiment or risk acceptance.
 
----
+## Threat and observed boundaries
 
-## 1. Threat Scenario & Mechanism
+Assume arbitrary native execution inside an isolated PDF worker. The host transfers writable anonymous regular-file descriptors for temporary output and scratch storage. A compromised worker can use those capabilities without obeying cooperative worker byte counters. File-descriptor count and post-execution size checks do not enforce an aggregate allocation limit while a hostile worker holds writable descriptors.
 
-### 1.1 Threat Model
-- **Adversary Capability:** Full arbitrary native code execution (RCE) achieved inside one of the two private isolated service worker processes (`PdfJailService` or `PdfNativeRendererService`) via a malformed PDF parser exploit.
-- **Attack Vector:** An attacker-controlled worker attempts an availability denial-of-service (storage exhaustion) by writing excessive dummy bytes to open scratch file descriptors transferred from the host.
+The inspected source provides these narrower guarantees:
 
-### 1.2 Mechanism & Limitations in Inspected Architecture
-1. **Host Capabilities:** `OperationScratchBroker` creates anonymous, immediately-unlinked scratch temporary files in `context.cacheDir` (`File.createTempFile("scratch_", ".bin")`, followed by immediate `file.delete()`).
-2. **Capability Transfer:** The host passes a duplicated `ParcelFileDescriptor` to the worker process across the Binder IPC boundary.
-3. **Execution Reality:** In standard Linux/Android user-space, a process holding a writable file descriptor to a regular filesystem inode can issue `write()` or `fallocate()` calls up to available partition space. Cooperative byte-accounting wrappers inside worker code are ineffective against a fully compromised native worker.
-4. **Enforcement Boundaries in Place & Operational Semantics:**
-   - **FD Count Cap:** Strictly enforced by host before transfer (`SecurityLimits.MAX_SCRATCH_FDS = 64`).
-   - **Pre-Publication Host Validation:** `HostOutputTransaction` validates all response descriptors against `SecurityLimits.MAX_OUTPUT_BYTES` (250 MiB) and runs full PDF structural sanity verification before any byte is copied to user destinations.
-   - **Zero User Document Exposure:** The unlinked scratch files are anonymous capabilities; a worker has zero access to user destination URIs or host private storage paths.
-   - **Unlinked File Storage Lifecycle:** Scratch files are unlinked from the directory tree at allocation time (`unlink()`), preventing path-based discovery or reuse. Under Linux VFS semantics, unlinking does NOT instantaneously free storage blocks while open descriptors exist; storage blocks remain allocated on disk until all open file descriptors referencing the inode across both host and worker are closed or until the holding processes terminate.
-   - **Temporal Defense, Not Byte Quota:** The host watchdog enforces execution deadlines (30-second `RENDER_DEADLINE_MS` and 120-second `WORKER_DEADLINE_MS`). If a compromised worker hangs or continuously writes dummy bytes, the host unbinds and terminates the worker upon deadline expiry, closing all associated host descriptors and triggering Linux kernel inode block reclamation. This watchdog bounds the *duration* of rogue writes, but does NOT provide a kernel-enforced mathematical byte quota on temporary disk consumption during the active execution window.
+- `OperationScratchBroker` limits its allocated scratch descriptors to `MAX_SCRATCH_FDS` (64), immediately unlinks created files and checks their aggregate logical size in `verifyBudget()` after execution. This is a rejection check, not continuous physical-storage enforcement.
+- `HostOutputTransaction` checks regular-file type, logical sizes and response JSON, creates host-only snapshots, and enforces `MAX_OUTPUT_BYTES` (250 MiB aggregate) before publishing snapshots to destinations. `WorkerResponseValidator` also validates the typed response contract. The host does **not** perform full PDF structural verification; parsing remains isolated.
+- Workers intentionally receive admitted document input descriptors. User destination URIs are kept out of the PDF worker transaction; temporary output descriptors are sent instead. This is scoped capability access, not zero access to user document contents.
+- Unlinking removes directory names; it does not reclaim blocks while descriptors remain open. Closing host descriptors alone does not close copies held by a worker. Reclamation depends on the last reference closing.
 
----
+## Deadline correction
 
-## 2. Evaluation of Potential Mitigations
+`WorkerGate` timers execute in the worker process, with termination callbacks such as `Process.killProcess(Process.myPid())`. The gateway has a response deadline and requests `abortOperation` on failure; that Binder method is `oneway`. The native renderer coordinator's binding timeout covers service acquisition, while renderer execution uses synchronous Binder calls and worker-local timers.
 
-| Mitigation Strategy | Feasibility | Security Efficacy | Architectural Impact | Decision |
-|---|---|---|---|---|
-| **Kernel Filesystem Quotas (f2fs/ext4)** | Infeasible on Android | High | Android does not expose per-process filesystem disk quotas to ordinary non-root applications. | Rejected |
-| **`setrlimit(RLIMIT_FSIZE)`** | Low (Bypassed under RCE) | Low | `setrlimit` must be called in the worker process. A compromised process with arbitrary code execution can call `setrlimit` again to lift the bound. | Rejected |
-| **Host-Mediated Streaming (UNIX domain socket/pipe proxy)** | High Engineering Cost / Non-Seekable | High | PDF writers and format converters (MuPDF/PDFBox) require seekable random-access I/O (`lseek`/`pwrite`). Pipes do not support random access and would require substantial in-memory spooling or an unbounded redesign. | Rejected (violates core mandate) |
-| **Host Pre-Allocation Admission & Post-Execution Verification** | High | Medium (Admission & Publication Boundary) | Already implemented (`verifyBudget()` and storage quotas); prevents host publication of oversized outputs. | Retained & Enforced |
+These are useful defenses for faults in cooperative workers. This review has not demonstrated a non-bypassable 30-120 second lifetime bound against arbitrary native execution in the process containing the timer. The earlier claim that the host guarantees hostile-worker termination within that window is withdrawn. Neither unbinding nor the presence of a timeout alone proves that every hostile descriptor copy has closed. No absolute statement that the security boundary is fully preserved is supported by this assessment.
 
----
+## Mitigation assessment reopened
 
-## 3. Explicit Architectural Evaluation
+| Candidate | Corrected assessment | Required evidence |
+|---|---|---|
+| Hard `RLIMIT_FSIZE` | An unprivileged process cannot raise a lowered hard ceiling without the necessary privilege. The previous claim that arbitrary worker code can simply lift it was incorrect. It limits file length; it is not by itself an aggregate physical-storage quota. | Check actual worker capabilities, install the limit before untrusted parsing, exercise write/truncate/preallocation behavior and multiple descriptors with a small safe budget, then evaluate compatibility and aggregate exposure. |
+| Seekable host-mediated descriptors | Android offers `StorageManager.openProxyFileDescriptor` from API 26, including offset-based callbacks. A blanket rejection based on pipes being non-seekable overlooked this candidate. Feasibility for these native libraries is unverified. | Test cross-UID transfer, seek/pread/pwrite/truncate/fsync and reopen behavior, bounded backing allocation, quota errors, cancellation, recovery and performance. Define an API 24 strategy before claiming coverage. |
+| Filesystem quota | No portable application-controlled filesystem quota has been established for supported devices in this project. | Demonstrate a usable unprivileged API and device coverage before choosing it. |
+| Existing checks and anonymous files | Retain admission, descriptor limits, snapshots and rejection of oversized results. They protect publication and reduce exposure but do not establish the missing hostile allocation bound. | Keep existing regressions; distinguish logical file sizes, allocated blocks, publication limits and descriptor lifetime in new tests. |
 
-### Proposed Architectural Decision: ACCEPT RESIDUAL RISK WITH ENFORCED HOST BOUNDARIES (Pending Formal Owner Approval)
+The hard-limit correction follows [Linux getrlimit/setrlimit documentation](https://man7.org/linux/man-pages/man2/getrlimit.2.html). Seekable proxy feasibility follows the Android references for [StorageManager.openProxyFileDescriptor](https://developer.android.com/reference/android/os/storage/StorageManager#openProxyFileDescriptor(int,%20android.os.ProxyFileDescriptorCallback,%20android.os.Handler)) and [ProxyFileDescriptorCallback](https://developer.android.com/reference/android/os/ProxyFileDescriptorCallback). Those APIs establish candidates, not compatibility or a verified fix for PDFchemy.
 
-1. **Proportionate Defense:** The primary objective of process isolation is preventing data exfiltration, memory compromise of host credentials/keys, and damage to user documents. That primary security boundary is 100% preserved.
-2. **Availability Impact Bounded by Duration, Not Kernel Byte Quota:** An attack can at worst temporarily consume available cache partition space while the worker process runs. Host watchdogs guarantee worker termination within 30–120 seconds, bounding execution duration; however, watchdog timeouts do NOT mathematically limit scratch-file allocation to a fixed byte count during active execution. Disk blocks are reclaimed by Linux VFS once all descriptors close upon worker process termination. This residual availability exposure during execution is strictly distinguished from the host's non-bypassable pre-publication output byte limits (`SecurityLimits.MAX_OUTPUT_BYTES = 250 MiB`), which unconditionally prevent oversized files from reaching user storage.
-3. **No Unbounded Redesign:** Converting random-access scratch storage to host-mediated stream proxies would introduce massive memory overhead, degrade performance on large documents, and destabilize isolated workers without eliminating other potential CPU/battery exhaustion vectors under native compromise.
-4. **Proposed Decision Awaiting Formal Owner Sign-off:** This documented risk assessment represents the engineering rationale and proposed defense-in-depth posture. It is submitted to Andrei Ioan Cucoș (@kiss2oblivion), Product & Security Owner, for formal review and sign-off. Formal sign-off remains a mandatory release gate.
+## Completion gates
 
----
+1. Run controlled hostile-worker storage experiments using a deliberately small budget on isolated emulators; never fill a user's disk to demonstrate exhaustion.
+2. Compare stronger enforcement candidates using actual worker I/O and all supported API levels, recording unsupported operations and error handling.
+3. Choose and verify an implementation, or present the remaining concrete availability exposure for attributable owner review. Do not infer acceptance from this document or earlier engineering recommendations.
+4. Record the final source/artifact identities, results and owner disposition in the release receipt. Until then, SR-01 and release approval remain open.
 
-## 4. Verification & Defense-in-Depth Commitments
-
-1. Keep `SecurityLimits.MAX_SCRATCH_FDS` (64) and `SecurityLimits.MAX_OUTPUT_BYTES` (250 MiB) strictly enforced.
-2. Maintain immediate file unlinking on scratch creation so that descriptor closure / process death triggers kernel VFS block reclamation.
-3. Retain mandatory host-side `verifyBudget()` and strict `HostOutputTransaction` verification prior to any destination publication.
-4. Maintain strict watchdog timeouts (`RENDER_DEADLINE_MS` = 30s, `WORKER_DEADLINE_MS` = 120s) to bound rogue worker execution lifetime.
+Source references: `pdf-ipc/.../jail/OperationScratchBroker.kt`, `pdf-ipc/.../jail/HostOutputTransaction.kt`, `pdf-ipc/.../security/WorkerGate.kt`, `pdf-ipc/src/main/aidl/.../IPdfJailService.aidl`, `app-host/.../logic/PdfGateway.kt`, `app-host/.../sandbox/NativeRendererCoordinator.kt`, and `pdf-renderer/.../engines/NativeRenderWorker.kt`.
