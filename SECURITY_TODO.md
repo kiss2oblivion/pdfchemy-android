@@ -94,7 +94,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [ ] FOLLOW-02 RA-03: preserve cancellation and accurate provider failure diagnosis for single/multi pickers with Vanguard on/off.
 - [ ] FOLLOW-03 Define external VIEW/SEND URI admission separately from trusted internal staged capabilities.
 - [ ] FOLLOW-04 Run separate-sender/provider Android tests for scheme/grant/private-path policy and record actual impact.
-- [ ] FOLLOW-05 Reconcile existing window/startup/billing/consent/audio evidence without assuming closure or rewriting correct fixes.
+- [ ] FOLLOW-05 Reconcile existing window/startup/billing/consent/audio evidence without assuming closure or rewriting correct fixes. Investigate the recorded local API24/WebView 51 host SIGILL from the full suite; clean-state comparison and attribution are in the execution receipt.
 - [x] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims. See updated SR-01 assessment and execution receipt; stronger enforcement and owner disposition remain open.
 - [ ] FOLLOW-07 Record attributable owner risk disposition or implement and verify a stronger boundary.
 
@@ -120,7 +120,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | IMPLEMENTED; CI verification pending | `a1077e47` and `9d7dc22d`, remote-verified | 50 worker unit tests; focused API24/36 passes; full CI API30/34/36 216 tests each pass | API24 same-source CI retry and dependent build; local full-suite WebView crash under investigation |
+| SC-01 | IMPLEMENTED; CI verification pending | Source `a1077e47` / `9d7dc22d`; CI repair `9e03c062`, remote-verified | 50 worker unit tests; local complete API24 suite 216 passes; prior full CI API30/34/36 216 passes each | Fresh complete CI at installation repair and dependent build; original local WebView failure retained under FOLLOW-05 |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

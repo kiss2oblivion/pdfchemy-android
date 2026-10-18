@@ -14,7 +14,7 @@ Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18
 
 | Finding | Implementation | Local verification | Android / CI | Commit / push |
 |---|---|---|---|---|
-| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. Final carrier source: API24/36 four tests pass each. Full CI attempt 1: API24 installation failure, zero tests; other API jobs pending | `a1077e47` and `9d7dc22d` pushed/remote-verified |
+| SC-01 | Implemented: fresh redacted-page resources; shared/inherited and nested pattern/mask resource pruning | 50 worker tests (including nine resource regressions), five host boundary tests, assembly and release lint pass | Final local API24 complete suite: 216 pass. Focused API36 passes; prior complete CI API30/34/36 216 tests each pass. Fresh complete CI at the installation repair is running | Source: `a1077e47` and `9d7dc22d`; CI repair: `9e03c062`, all pushed/remote-verified |
 | SC-02 through SC-09 | Not started | Not run | Not run | None |
 | Retained RA / external URI / SR-01 | Not started | Not run | Not run | None |
 
@@ -54,7 +54,9 @@ Detailed review of the first failed log also identifies `executeRemoteCommand wr
 
 An unfiltered full-suite run on the local Google Play API24 image, after successful non-streaming installation, reports `Process crashed` during method 5 (after four methods completed). The crash buffer identifies host process `com.pdfchemy.app`, `HTMLParserThrea`, SIGILL and `/system/app/Chrome/Chrome.apk`; its bundled WebView version is 51.0.2704.90. This is a failed additional run and does not supersede the earlier focused native passes.
 
-Attribution remains open. An unchanged-baseline APK (`67057835`) passes an eight-method startup/text/redaction selection after application-data clearing. Its subsequent unfiltered diagnostic completes all 216 methods with exactly the three expected new SC-01 assertion failures; no process crash is reported. Those failure logs remain negative vulnerability evidence. A matched clean-state fixed-APK comparison is now running. No new production fix or security-test success is inferred from the Chrome stack alone.
+Attribution remains open. An unchanged-baseline APK (`67057835`) passes an eight-method startup/text/redaction selection after application-data clearing. Its subsequent unfiltered diagnostic completes all 216 methods with exactly the three expected new SC-01 assertion failures in 747.544 seconds; no process crash is reported. Those failure logs remain negative vulnerability evidence.
+
+The matched clean-state fixed APK completes all 216 methods in 740.582 seconds, zero failures/skips, and passes the new runner's complete-result validation. Its crash buffer is empty. Logs are `sc01-api24-full-fixed.log`, the two installation logs, `sc01-api24-full-fixed-runner.log` and the empty `sc01-api24-full-fixed-crash.log`. The isolated emulator was stopped after verification. These are observed test durations, not performance benchmarks. The original WebView SIGILL remains retained and unexplained under FOLLOW-05; a successful retry is not evidence that startup/consent code was repaired.
 
 ## API24 CI installation repair
 
@@ -62,7 +64,11 @@ After two failed installation attempts, the workflow now builds both native-test
 
 The runner rejects unsuccessful installation, nonzero subprocess exits, timeouts, crashes, failed/skipped test status codes, zero tests, inconsistent counts, unmatched starts/completions and missing final instrumentation success. A successful adb shell exit alone cannot pass the gate. Five unit tests pass, including negative cases; the validator also accepts the actual four-test local success log and rejects the real full-run crash and baseline assertion-failure logs. Workflow YAML, unchanged API membership and the folded shell command validate locally. Folding is required because the pinned emulator action executes each script line separately.
 
-Local end-to-end installation through this runner succeeds for both APKs. Its unfiltered fixed native run remains in progress; full CI and the dependent release build are still required. [Android's command-line test documentation](https://developer.android.com/studio/test/command-line) describes direct instrumentation invocation; this workflow retains `-w`, the full runner and strict result checking.
+Local end-to-end installation and the complete 216-test fixed suite pass through this runner. Full CI and the dependent release build are still required. [Android's command-line test documentation](https://developer.android.com/studio/test/command-line) describes direct instrumentation invocation; this workflow retains `-w`, the full runner and strict result checking.
+
+The CI repair is commit `9e03c062f9cb797573430e1b5bd8d7b15f24b696`, pushed to the Android remote with matching SHA. [Run 39160660276](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39160660276) covers that exact head. Its architecture, secret-history, dependency and complete JVM gates pass; API24/30/34/36 jobs are running. Production PDF sources and APK identities are unchanged from the verified carrier fix. The local APK, test APK and resource-helper SHA-256 identities have been rechecked against `carrier-artifact-and-source-hashes.json`.
+
+`sc01/RAW_LOG_XML_SHA256SUMS.txt` records the 39 archived raw log/XML files at this checkpoint, including failed attempts. Scoped Git attributes preserve these raw file bytes across checkouts. APK/source identities are separately recorded in the two JSON manifests; the baseline review's original hash manifest remains separate.
 
 ## Historical documentation reconciliation
 
