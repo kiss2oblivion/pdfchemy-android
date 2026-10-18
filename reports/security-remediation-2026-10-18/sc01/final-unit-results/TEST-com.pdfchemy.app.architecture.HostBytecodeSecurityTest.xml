@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.architecture.HostBytecodeSecurityTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:21:56.004Z" hostname="DESKTOP-N37P7P6" time="3.246">
+  <properties/>
+  <testcase name="everyHostProductionClassIsFreeOfDocumentDecoders" classname="com.pdfchemy.app.architecture.HostBytecodeSecurityTest" time="3.246"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

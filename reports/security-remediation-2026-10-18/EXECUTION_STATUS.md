@@ -14,7 +14,7 @@ Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18
 
 | Finding | Implementation | Local verification | Android / CI | Commit / push |
 |---|---|---|---|---|
-| SC-01 | In progress: fresh redacted-page resources; unused shared/inherited resource pruning | Three resource regressions pass; broader checks running | Actual editor-export regressions added; execution pending | Pending required checks |
+| SC-01 | Implemented: fresh redacted-page resources; unused shared/inherited resource pruning | 48 worker tests (including seven resource regressions), five host boundary tests, assembly and release lint pass | Baseline API24: three expected assertion failures. Fixed final APK: four tests pass on each API24 and API36. Full CI matrix pending | Ready for separate commit/push; CI remains required |
 | SC-02 through SC-09 | Not started | Not run | Not run | None |
 | Retained RA / external URI / SR-01 | Not started | Not run | Not run | None |
 
@@ -22,6 +22,12 @@ Release: **HOLD**. Implementation branch: `codex/security-remediation-2026-10-18
 
 The first focused JVM invocation failed because PDFBox font/glyph assets were unavailable in the worker module's test environment. Failure log/XML are retained in `sc01/`. Enabling Android resources for worker unit tests resolved that fixture problem; all three focused resource tests then passed.
 
-The component regressions verify original Form removal, original image-object removal, and inherited/shared unused-resource removal while retaining unrelated vector text. Android tests invoke the actual Editor → gateway → isolated worker export, inspect saved decoded objects, retain unrelated text, and check opaque output pixels. Adding/compiling a test is not execution evidence.
+The seven component regressions verify original Form/image removal, inherited/shared unused-resource removal while retaining unrelated vector text, nested Forms, resource-less Forms, implicit default color spaces and annotation appearance resources. Android tests invoke the actual Editor → gateway → isolated worker export, inspect saved decoded objects, retain unrelated text, and check opaque output pixels.
+
+The actual baseline APK was assembled from the unchanged review worktree at `67057835`. All three new Android export tests failed at sensitive-data assertions on API24. Installing the fixed APK on the same isolated emulator changed those results to PASS; the existing eight-case mixed-annotation/rotation test also passed (four JUnit methods total, 22.884 seconds).
+
+An earlier API36 iteration passed the same four Android test methods in 50.206 seconds. The final source, including additional resource-preservation cases, was rebuilt and rerun on API36: all four methods pass in 97.478 seconds. These are test durations, not device performance measurements. API30/34 and the complete same-source CI suites remain pending. No physical-device verification is claimed.
+
+Final local build command: `:pdf-jail:testDebugUnitTest :app-host:assembleDebug :app-host:assembleDebugAndroidTest :app-host:lintRelease`, offline, one Gradle worker, in-process Kotlin compilation. Result: BUILD SUCCESSFUL (4 minutes). Release lint reports 629 warnings and 38 unmatched baseline entries, not a warning-free result. Architecture/static host gates and five host boundary tests passed in the preceding broader verification. `sc01/artifact-and-source-hashes.json` identifies baseline/fixed APKs, test APK and changed production sources.
 
 No later finding is advanced before the required SC-01 checks and commit/push/CI evidence. This receipt will be updated with actual outcomes rather than inferred completion.

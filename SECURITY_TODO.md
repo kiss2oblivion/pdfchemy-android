@@ -15,9 +15,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 1. SC-01 — Editor forensic redaction
 
-- [ ] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export.
-- [ ] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior.
-- [ ] SC01-03 Convert the component probe into an absence-of-sensitive-data regression; cover scanned images and shared resources.
+- [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
+- [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Source implemented; remaining matrix gate below remains open.
+- [x] SC01-03 Convert the component probe into an absence-of-sensitive-data regression; cover scanned images and shared resources. Seven production-helper regressions pass.
 - [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36.
 - [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
@@ -120,8 +120,8 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | NOT STARTED | — | — | First implementation batch |
+| SC-01 | IMPLEMENTED; verification in progress | Pending source commit/push | 48 worker unit tests; local native/build/lint evidence in execution receipt | Full same-source CI and API matrix |
 
-Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md). The historical starting rows above do not override that receipt.
+Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
 No implementation, merge, upload or rollout is marked complete by preparation of this checklist.

@@ -1,0 +1,209 @@
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.EditorRedactionResourceSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+Error in inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives(EditorRedactionResourceSecurityTest.kt:90)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives(EditorRedactionResourceSecurityTest.kt:90)
+
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=formCannotSurviveRealEditorRedactionExport
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+Error in formCannotSurviveRealEditorRedactionExport(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.formCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:88)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=formCannotSurviveRealEditorRedactionExport
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.formCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:88)
+
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=originalScanCannotSurviveRealEditorRedactionExport
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+Error in originalScanCannotSurviveRealEditorRedactionExport(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.originalScanCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:89)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=originalScanCannotSurviveRealEditorRedactionExport
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.originalScanCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:89)
+
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1.593
+There were 3 failures:
+1) inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives(EditorRedactionResourceSecurityTest.kt:90)
+2) formCannotSurviveRealEditorRedactionExport(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.formCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:88)
+3) originalScanCannotSurviveRealEditorRedactionExport(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:71)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.originalScanCannotSurviveRealEditorRedactionExport(EditorRedactionResourceSecurityTest.kt:89)
+
+FAILURES!!!
+Tests run: 3,  Failures: 3
+
+
+INSTRUMENTATION_CODE: -1

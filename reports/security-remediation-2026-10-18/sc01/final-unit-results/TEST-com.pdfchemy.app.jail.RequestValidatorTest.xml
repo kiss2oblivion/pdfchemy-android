@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.RequestValidatorTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:31:45.458Z" hostname="DESKTOP-N37P7P6" time="3.176">
+  <properties/>
+  <testcase name="oversizedStringsAndTrailingPayloadsAreRejected" classname="com.pdfchemy.app.jail.RequestValidatorTest" time="3.084"/>
+  <testcase name="bookmarkArrayContractRetainsTheSameBounds" classname="com.pdfchemy.app.jail.RequestValidatorTest" time="0.035"/>
+  <testcase name="deepJsonIsRejectedBeforeTheRecursiveParserRuns" classname="com.pdfchemy.app.jail.RequestValidatorTest" time="0.028"/>
+  <testcase name="escapedBracketsInTextDoNotCountAsNesting" classname="com.pdfchemy.app.jail.RequestValidatorTest" time="0.028"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

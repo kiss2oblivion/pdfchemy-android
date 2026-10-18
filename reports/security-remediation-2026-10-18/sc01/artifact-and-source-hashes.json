@@ -1,0 +1,22 @@
+[
+  {
+    "path": "../PDFchemy-security-review-2026-10-18/app-host/build/outputs/apk/debug/app-host-debug.apk",
+    "sha256": "9983AD9258D1EAB1DC25B664B3B4A788644FE7266F6EE641D9C8200C4D310785"
+  },
+  {
+    "path": "app-host/build/outputs/apk/debug/app-host-debug.apk",
+    "sha256": "A32DA688945414D035A31A52B13A37CB34644116F2004F8EE53813AABA325FBB"
+  },
+  {
+    "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk",
+    "sha256": "876F9A3357D07987E5AE582482CD29F00D1CF64F7B31290472A580BF442C1B11"
+  },
+  {
+    "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt",
+    "sha256": "27761FCC61DDEE9B76BC7B1D9E278D16818528EBCC0462F758EB3FDF1C9550BD"
+  },
+  {
+    "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+    "sha256": "924BFFB3C8D27BD8BE8145DAB2C819629598DB82CBEE8AF88E5C2245A1FF83B5"
+  }
+]

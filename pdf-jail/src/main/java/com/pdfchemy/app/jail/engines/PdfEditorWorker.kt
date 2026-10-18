@@ -90,9 +90,7 @@ object PdfEditorWorker {
                             page.rotation = if (mod.rotationDegrees != 0) (mod.rotationDegrees % 360 + 360) % 360 else 0
                             page.cropBox = null
                             page.mediaBox = PDRectangle(finalW.toFloat(), finalH.toFloat())
-                            page.cosObject.removeItem(com.tom_roush.pdfbox.cos.COSName.ANNOTS)
-
-                            PDPageContentStream(document, page, PDPageContentStream.AppendMode.OVERWRITE, false, false).use { cs ->
+                            RedactionResources.replacePageContent(document!!, page) { cs ->
                                 cs.drawImage(pdImage, 0f, 0f, finalW.toFloat(), finalH.toFloat())
                             }
                             rasterized = true
@@ -168,6 +166,7 @@ object PdfEditorWorker {
                 }
             }
 
+            if (hasAnyRedactions) RedactionResources.pruneUnused(document!!)
             FileOutputStream(targetFd.fileDescriptor).use { out ->
                 document?.save(out)
                 out.flush()
