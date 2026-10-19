@@ -18,8 +18,8 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
 - [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Form-tree cleanup, hidden widgets, shared-stream rasterization and document-carrier removal pass local worker/native checks; full CI remains a separate gate below.
 - [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources, retained form values, metadata/accessibility/embedded originals and outline-linked structure elements. All 22 helper regressions pass within the 63-test worker suite; the extended nine-method native selection passes on API24 and API36. See execution receipt and raw evidence.
-- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Source checkpoints have complete/partial evidence recorded separately. The latest outline-reference source requires fresh full CI; older 221-method passes do not cover its extended fixture.
-- [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Final source `62d1b1e8` passes 221 methods per API (884 total), including all eight Editor security regressions and annotation parity; downloaded artifacts are validated in the execution receipt. Earlier checkpoints remain separate.
+- [x] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Final application/test source `62d1b1e8` is committed and remote-verified; full CI run `39228725164` passes all nine jobs. The following closeout commit contains documentation/evidence only.
 
 ## 2. SC-02 — Search-redaction object graph
 
@@ -120,7 +120,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | Batch / finding | Status | Commit / remote SHA | Evidence level and location | Remaining gate |
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
-| SC-01 | PARTIAL: resource fix verified; additional form-tree leak reproduced | Source `a1077e47` / `9d7dc22d`; CI repair `9e03c062`, remote-verified | Full CI at `9e03c062` passes, including 216 native methods per API and release build; new AcroForm absence probe fails | Form-tree implementation, actual worker verification and refreshed CI; legacy WebView observation remains under FOLLOW-05 |
+| SC-01 | COMPLETE: implementation and batch gates verified | Final source `62d1b1e8`, Android remote verified | 63 worker tests and nine focused local native methods pass; CI run `39228725164` passes 221 methods on each API24/30/34/36 (884 total), all eight Editor regressions included | None for this batch; legacy WebView observation remains separately under FOLLOW-05 and overall release stays HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

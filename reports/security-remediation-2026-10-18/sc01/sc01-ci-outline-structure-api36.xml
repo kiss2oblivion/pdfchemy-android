@@ -1,0 +1,651 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="221" failures="0" errors="0" skipped="0" time="846.479" timestamp="2026-10-19T09:44:16" hostname="localhost">
+  <testsuite name="com.pdfchemy.app.StartupWindowRegressionTest" tests="2" failures="0" errors="0" skipped="0" time="40.399" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="repeatedNormalLaunchAndRecreationInstallsContent" classname="com.pdfchemy.app.StartupWindowRegressionTest" time="36.69" />
+    <testcase name="backgroundAndResumeRetainsContent" classname="com.pdfchemy.app.StartupWindowRegressionTest" time="3.709" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.TextToPdfConverterTest" tests="2" failures="0" errors="0" skipped="0" time="7.794" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testConvertTextToPdfCreatesValidFile" classname="com.pdfchemy.app.TextToPdfConverterTest" time="5.281" />
+    <testcase name="testEmptyTextReturnsFailure" classname="com.pdfchemy.app.TextToPdfConverterTest" time="2.513" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.AcroFormAndRedactionAuditTest" tests="4" failures="0" errors="0" skipped="0" time="19.098" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testSearchRedactionOnRotatedAndCroppedDocuments" classname="com.pdfchemy.app.logic.AcroFormAndRedactionAuditTest" time="5.561" />
+    <testcase name="testSearchRedactionTargetsRetainsInterWordSpaces" classname="com.pdfchemy.app.logic.AcroFormAndRedactionAuditTest" time="8.175" />
+    <testcase name="testSearchRedactionMultilineTargets" classname="com.pdfchemy.app.logic.AcroFormAndRedactionAuditTest" time="2.262" />
+    <testcase name="testCreateAcroFormSetsNeedAppearancesAndHandlesRotation" classname="com.pdfchemy.app.logic.AcroFormAndRedactionAuditTest" time="3.1" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.AdversarialPdfTest" tests="1" failures="0" errors="0" skipped="0" time="0.934" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="malformedPdfIsRejectedWithoutCrashingHost" classname="com.pdfchemy.app.logic.AdversarialPdfTest" time="0.934" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.AnnotationExportParityTest" tests="1" failures="0" errors="0" skipped="0" time="29.74" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="exportedMixedAnnotationsFollowExistingAndAddedRotations" classname="com.pdfchemy.app.logic.AnnotationExportParityTest" time="29.74" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.AnnotationPixelParityTest" tests="1" failures="0" errors="0" skipped="0" time="0.001" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="redactionCoordinatesRemainNormalizedAcrossPreviewAndExportWidths" classname="com.pdfchemy.app.logic.AnnotationPixelParityTest" time="0.001" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.ComicBookEngineTest" tests="1" failures="0" errors="0" skipped="0" time="0.805" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testCbzToPdf_createsPdfFromComicArchive" classname="com.pdfchemy.app.logic.ComicBookEngineTest" time="0.805" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.CorporatePowerFeaturesTest" tests="3" failures="0" errors="0" skipped="0" time="6.154" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testOutlineAndReflowExtraction" classname="com.pdfchemy.app.logic.CorporatePowerFeaturesTest" time="2.11" />
+    <testcase name="testPermanentRedactionSanitizesDocument" classname="com.pdfchemy.app.logic.CorporatePowerFeaturesTest" time="2.135" />
+    <testcase name="testAcroFormModelsAndExtraction" classname="com.pdfchemy.app.logic.CorporatePowerFeaturesTest" time="1.909" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.ImageCompressorTest" tests="7" failures="0" errors="0" skipped="0" time="5.261" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testCompressToTargetSize" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.98" />
+    <testcase name="testCompressJpegReducesFileSize" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.88" />
+    <testcase name="testDecodeImageBounds" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.83" />
+    <testcase name="testCalculateInSampleSize" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.077" />
+    <testcase name="testImageAnalysisAndEstimator" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.807" />
+    <testcase name="testValidationGuardrailDeniesTinyFile" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.806" />
+    <testcase name="testResolutionDownscaling" classname="com.pdfchemy.app.logic.ImageCompressorTest" time="0.881" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.MarkdownEngineTest" tests="2" failures="0" errors="0" skipped="0" time="2.89" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testPdfToMarkdown_extractsStructuredText" classname="com.pdfchemy.app.logic.MarkdownEngineTest" time="1.935" />
+    <testcase name="testMarkdownToPdf_createsValidDocument" classname="com.pdfchemy.app.logic.MarkdownEngineTest" time="0.955" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.OcrProgressIntegrationTest" tests="3" failures="0" errors="0" skipped="0" time="5.002" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="actualWorkerReportsEveryRecognizedPageThenSavesSearchableOutput" classname="com.pdfchemy.app.logic.OcrProgressIntegrationTest" time="1.761" />
+    <testcase name="cancellationAfterAdmissionCannotPublishOutputOrLateProgress" classname="com.pdfchemy.app.logic.OcrProgressIntegrationTest" time="1.784" />
+    <testcase name="malformedPdfIsClassifiedAsUnreadableAndDoesNotClaimExecutableContent" classname="com.pdfchemy.app.logic.OcrProgressIntegrationTest" time="1.457" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.OfficeExportEngineTest" tests="3" failures="0" errors="0" skipped="0" time="3.821" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testExportToWordDocx_generatesValidOpenXmlZip" classname="com.pdfchemy.app.logic.OfficeExportEngineTest" time="0.957" />
+    <testcase name="testExportToExcelXlsx_generatesValidSpreadsheetZip" classname="com.pdfchemy.app.logic.OfficeExportEngineTest" time="0.98" />
+    <testcase name="testExportToPowerPointPptx_generatesValidPresentationZip" classname="com.pdfchemy.app.logic.OfficeExportEngineTest" time="1.884" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PaywallCrusherRound2Test" tests="2" failures="0" errors="0" skipped="0" time="2.017" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testPdfDeskewAngleDetection" classname="com.pdfchemy.app.logic.PaywallCrusherRound2Test" time="0.077" />
+    <testcase name="testPdfTableExtractorEngine" classname="com.pdfchemy.app.logic.PaywallCrusherRound2Test" time="1.94" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfArchiveValidatorEngineTest" tests="1" failures="0" errors="0" skipped="0" time="2.11" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testInspectPdfACompliance" classname="com.pdfchemy.app.logic.PdfArchiveValidatorEngineTest" time="2.11" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfBookmarkEngineTest" tests="1" failures="0" errors="0" skipped="0" time="2.286" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testWriteAndReadBookmarks" classname="com.pdfchemy.app.logic.PdfBookmarkEngineTest" time="2.286" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfCompressorTest" tests="5" failures="0" errors="0" skipped="0" time="6.48" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testAdvancedCompressionOptions" classname="com.pdfchemy.app.logic.PdfCompressorTest" time="2.963" />
+    <testcase name="testAlgorithmEfficiencyMatrix" classname="com.pdfchemy.app.logic.PdfCompressorTest" time="0.0" />
+    <testcase name="testCompressPdfDeduplicatesSharedImagesOnAndroid" classname="com.pdfchemy.app.logic.PdfCompressorTest" time="0.955" />
+    <testcase name="testCompressionReducesFileSize" classname="com.pdfchemy.app.logic.PdfCompressorTest" time="2.561" />
+    <testcase name="testRealDizertatieFiles" classname="com.pdfchemy.app.logic.PdfCompressorTest" time="0.001" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfCropEngineTest" tests="2" failures="0" errors="0" skipped="0" time="0.83" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testDetectContentBounds_withWhiteBorders" classname="com.pdfchemy.app.logic.PdfCropEngineTest" time="0.051" />
+    <testcase name="testCropPdf_customBounds" classname="com.pdfchemy.app.logic.PdfCropEngineTest" time="0.779" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfEditorTest" tests="5" failures="0" errors="0" skipped="0" time="3.092" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testRenderAnnotationOverlayBitmap" classname="com.pdfchemy.app.logic.PdfEditorTest" time="0.001" />
+    <testcase name="testPageModificationHelpers" classname="com.pdfchemy.app.logic.PdfEditorTest" time="0.001" />
+    <testcase name="testExportPdfPageRotationAndDeletion" classname="com.pdfchemy.app.logic.PdfEditorTest" time="0.805" />
+    <testcase name="testExportPdfTrueRedactionDestroysSensitiveTextOnDevice" classname="com.pdfchemy.app.logic.PdfEditorTest" time="1.331" />
+    <testcase name="testExportPdfWithAnnotations" classname="com.pdfchemy.app.logic.PdfEditorTest" time="0.954" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfFindAndReplaceTest" tests="3" failures="0" errors="0" skipped="0" time="3.141" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testFindOccurrences_locatesMatchesAccurately" classname="com.pdfchemy.app.logic.PdfFindAndReplaceTest" time="0.929" />
+    <testcase name="testReplaceAllWithUnicodeRemovesOriginalTextOnDevice" classname="com.pdfchemy.app.logic.PdfFindAndReplaceTest" time="1.106" />
+    <testcase name="testReplaceAllRemovesOriginalTextOnDevice" classname="com.pdfchemy.app.logic.PdfFindAndReplaceTest" time="1.106" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfFlattenEngineTest" tests="1" failures="0" errors="0" skipped="0" time="1.859" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testInspectAndFlattenPdf" classname="com.pdfchemy.app.logic.PdfFlattenEngineTest" time="1.859" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfFontInspectorEngineTest" tests="1" failures="0" errors="0" skipped="0" time="0.904" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testInspectFonts_detectsEmbeddedType1" classname="com.pdfchemy.app.logic.PdfFontInspectorEngineTest" time="0.904" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfGrayscaleEngineTest" tests="2" failures="0" errors="0" skipped="0" time="0.001" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testGrayscaleEnums" classname="com.pdfchemy.app.logic.PdfGrayscaleEngineTest" time="0.001" />
+    <testcase name="testConvertPdf_createsValidOutput" classname="com.pdfchemy.app.logic.PdfGrayscaleEngineTest" time="0.0" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfHeaderFooterEngineTest" tests="2" failures="0" errors="0" skipped="0" time="1.961" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testApplyHeaderFooter_DynamicMacros" classname="com.pdfchemy.app.logic.PdfHeaderFooterEngineTest" time="0.98" />
+    <testcase name="testApplyHeaderFooter_LegalBatesStamping" classname="com.pdfchemy.app.logic.PdfHeaderFooterEngineTest" time="0.981" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfImageReplacerTest" tests="2" failures="0" errors="0" skipped="0" time="3.264" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testReplaceEmbeddedImage_swapsImageSuccessfully" classname="com.pdfchemy.app.logic.PdfImageReplacerTest" time="2.485" />
+    <testcase name="testListEmbeddedImages_returnsDetectedImages" classname="com.pdfchemy.app.logic.PdfImageReplacerTest" time="0.779" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfLinearizeEngineTest" tests="2" failures="0" errors="0" skipped="0" time="1.459" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testOptimizeFastWebView" classname="com.pdfchemy.app.logic.PdfLinearizeEngineTest" time="0.73" />
+    <testcase name="testCheckLinearized" classname="com.pdfchemy.app.logic.PdfLinearizeEngineTest" time="0.729" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfManipulatorTest" tests="4" failures="0" errors="0" skipped="0" time="5.353" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="splitPdf_createsMultipleDocuments" classname="com.pdfchemy.app.logic.PdfManipulatorTest" time="1.532" />
+    <testcase name="mergePdfs_combinesMultiplePdfs" classname="com.pdfchemy.app.logic.PdfManipulatorTest" time="0.83" />
+    <testcase name="rotatePdf_rotatesPagesCorrectly" classname="com.pdfchemy.app.logic.PdfManipulatorTest" time="1.484" />
+    <testcase name="deletePages_removesCorrectPages" classname="com.pdfchemy.app.logic.PdfManipulatorTest" time="1.507" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfMetadataEngineTest" tests="3" failures="0" errors="0" skipped="0" time="3.698" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testUpdateMetadata_updatesSpecificFields" classname="com.pdfchemy.app.logic.PdfMetadataEngineTest" time="1.511" />
+    <testcase name="testReadMetadata" classname="com.pdfchemy.app.logic.PdfMetadataEngineTest" time="0.73" />
+    <testcase name="testSanitizeMetadata_wipesAllProperties" classname="com.pdfchemy.app.logic.PdfMetadataEngineTest" time="1.457" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfMetadataManagerTest" tests="4" failures="0" errors="0" skipped="0" time="3.368" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="clearMetadata_removesAllStandardFields" classname="com.pdfchemy.app.logic.PdfMetadataManagerTest" time="0.729" />
+    <testcase name="getMetadata_returnsCorrectData" classname="com.pdfchemy.app.logic.PdfMetadataManagerTest" time="0.955" />
+    <testcase name="updateMetadata_writesNewData" classname="com.pdfchemy.app.logic.PdfMetadataManagerTest" time="0.93" />
+    <testcase name="clearMetadataOverwrite_removesFieldsInPlace" classname="com.pdfchemy.app.logic.PdfMetadataManagerTest" time="0.754" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfNUpEngineTest" tests="2" failures="0" errors="0" skipped="0" time="1.559" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testGenerateNUpPdf_2Up" classname="com.pdfchemy.app.logic.PdfNUpEngineTest" time="0.779" />
+    <testcase name="testGenerateNUpPdf_4Up" classname="com.pdfchemy.app.logic.PdfNUpEngineTest" time="0.78" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfRedactionEngineTest" tests="2" failures="0" errors="0" skipped="0" time="2.99" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testSearchRedactionTargets" classname="com.pdfchemy.app.logic.PdfRedactionEngineTest" time="0.93" />
+    <testcase name="testApplyRedactions_createsSanitizedFile" classname="com.pdfchemy.app.logic.PdfRedactionEngineTest" time="2.06" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfRepairEngineTest" tests="1" failures="0" errors="0" skipped="0" time="1.534" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testDiagnoseAndRepairPdf" classname="com.pdfchemy.app.logic.PdfRepairEngineTest" time="1.534" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" tests="10" failures="0" errors="0" skipped="0" time="17.731" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testConvertToPdfAAndroid" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="0.754" />
+    <testcase name="testBatesStampingAndroid" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="0.955" />
+    <testcase name="testVanguardZeroTrustBlockOnExecutablePdf" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="2.938" />
+    <testcase name="testVanguardAllowsStandardWebHyperlinksAndDestinations" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="2.26" />
+    <testcase name="testVanguardEmbeddedBenignFilePasses" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="2.21" />
+    <testcase name="testOfficeExportSanitizesInvalidXmlChars" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="1.859" />
+    <testcase name="testVanguardRealRegressionFixture" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="1.507" />
+    <testcase name="testVanguardCleanPdfWithMetadataPasses" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="1.532" />
+    <testcase name="testSanitizeDocumentAndroid" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="1.506" />
+    <testcase name="testVanguardZeroTrustFailClosedOnEncryptedPdf" classname="com.pdfchemy.app.logic.PdfSanitizerAndBatesTest" time="2.21" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfSecurityAndImageExportTest" tests="3" failures="0" errors="0" skipped="0" time="7.985" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testProtectPdfAndUnlockPdf" classname="com.pdfchemy.app.logic.PdfSecurityAndImageExportTest" time="3.967" />
+    <testcase name="testProtectPdf256BitEncryption" classname="com.pdfchemy.app.logic.PdfSecurityAndImageExportTest" time="2.41" />
+    <testcase name="testUnlockWithWrongPasswordFails" classname="com.pdfchemy.app.logic.PdfSecurityAndImageExportTest" time="1.608" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" tests="5" failures="0" errors="0" skipped="0" time="3.847" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testSignatureEngineApplyMultipleSignaturesAndDateStamp" classname="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" time="1.006" />
+    <testcase name="digitalSignatureRetainsLiteralSignerNameAndVerifiesDocumentIntegrity" classname="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" time="0.93" />
+    <testcase name="testSignatureEngineStampBitmaps" classname="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" time="0.026" />
+    <testcase name="testPdfTableExtractorEngineMultiPageIsolation" classname="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" time="0.955" />
+    <testcase name="testPdfFlattenEngineFormsFlattening" classname="com.pdfchemy.app.logic.PdfSigningAndFlattenTest" time="0.93" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfTextExtractorTest" tests="1" failures="0" errors="0" skipped="0" time="0.955" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="extractText_readsRawTextFromPdf" classname="com.pdfchemy.app.logic.PdfTextExtractorTest" time="0.955" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.PdfToEpubEngineTest" tests="1" failures="0" errors="0" skipped="0" time="0.955" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testPdfToEpub_createsCompliantEpubPackage" classname="com.pdfchemy.app.logic.PdfToEpubEngineTest" time="0.955" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.ResourceLeakStressTest" tests="10" failures="0" errors="0" skipped="0" time="192.006" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="test06_largeDocumentEscalation" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="5.597" />
+    <testcase name="test01_repeatedCompressionMemoryLeak" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="22.588" />
+    <testcase name="test10_adversarialRapidFireOperations" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="53.837" />
+    <testcase name="test05_repairEngineTempFileAudit" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="8.132" />
+    <testcase name="test08_cacheDirGrowthUnderSustainedLoad" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="19.2" />
+    <testcase name="test02_repeatedTextExtractionMemoryLeak" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="39.78" />
+    <testcase name="test07_bitmapChurnMemoryPressure" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="1.632" />
+    <testcase name="test03_mergeSplitCycleDiskLeak" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="9.462" />
+    <testcase name="test09_pdDocumentCloseFileDescriptorLeak" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="28.54" />
+    <testcase name="test04_concurrentCompressionBomb" classname="com.pdfchemy.app.logic.ResourceLeakStressTest" time="3.238" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.StressGauntletAndroidTest" tests="7" failures="0" errors="0" skipped="0" time="6.958" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="test05_AndroidAnamorphicGeometry" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.729" />
+    <testcase name="test03_AndroidSeveredSpineAutoRepair" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.754" />
+    <testcase name="test07_AndroidCoroutineConcurrencyBomb" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.753" />
+    <testcase name="test06_AndroidMultilingualUnicode" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.904" />
+    <testcase name="test04_AndroidExtremeCompression" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.955" />
+    <testcase name="test01_AndroidForensicRedaction" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="2.812" />
+    <testcase name="test02_AndroidHighResImageMemoryRecycling" classname="com.pdfchemy.app.logic.StressGauntletAndroidTest" time="0.051" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.TextToPdfConverterTest" tests="2" failures="0" errors="0" skipped="0" time="2.059" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testMultiPageTextConversion" classname="com.pdfchemy.app.logic.TextToPdfConverterTest" time="1.13" />
+    <testcase name="testShortTextConversion" classname="com.pdfchemy.app.logic.TextToPdfConverterTest" time="0.929" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" tests="5" failures="0" errors="0" skipped="0" time="10.42" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testPdfPageOrganizer_ReorderRotateDuplicateBlank" classname="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" time="0.754" />
+    <testcase name="testSignatureEngine_SaveLoadApply" classname="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" time="1.658" />
+    <testcase name="testPdfDiffEngine_CompareDocuments" classname="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" time="5.346" />
+    <testcase name="testPdfLayoutEngine_ResizeAndNUp" classname="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" time="0.779" />
+    <testcase name="testPdfStampAndNumberEngine_WatermarkAndPageNumbers" classname="com.pdfchemy.app.logic.UltimateSuiteFeaturesTest" time="1.883" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.audio.AudioStagingManagerTest" tests="3" failures="0" errors="0" skipped="0" time="0.003" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="sweepStaleJobsRemovesInactiveJobsAndKeepsActiveOnes" classname="com.pdfchemy.app.logic.audio.AudioStagingManagerTest" time="0.001" />
+    <testcase name="createsJobDirectoriesAndFilesCorrectly" classname="com.pdfchemy.app.logic.audio.AudioStagingManagerTest" time="0.001" />
+    <testcase name="clearJobStagingRemovesSpecificJobDirectory" classname="com.pdfchemy.app.logic.audio.AudioStagingManagerTest" time="0.001" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.logic.audio.AudioWavPlatformTest" tests="4" failures="0" errors="0" skipped="0" time="1.971" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="exportServiceIsPrivateAndTtsDiscoveryIsDeclared" classname="com.pdfchemy.app.logic.audio.AudioWavPlatformTest" time="0.001" />
+    <testcase name="assembledWavIsRecognizedByAndroid" classname="com.pdfchemy.app.logic.audio.AudioWavPlatformTest" time="0.051" />
+    <testcase name="hostPublicationWritesCompleteWavThroughContentResolver" classname="com.pdfchemy.app.logic.audio.AudioWavPlatformTest" time="0.0" />
+    <testcase name="foregroundServiceStartsAndCancelsQueuedJobOnActualPlatform" classname="com.pdfchemy.app.logic.audio.AudioWavPlatformTest" time="1.919" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.AttachmentIdentitySecurityTest" tests="4" failures="0" errors="0" skipped="0" time="6.906" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="twoIndependentFileSpecificationsCountTwice" classname="com.pdfchemy.app.security.AttachmentIdentitySecurityTest" time="1.708" />
+    <testcase name="purgingAttachmentsSeversAllCarriersAndReauditsToZero" classname="com.pdfchemy.app.security.AttachmentIdentitySecurityTest" time="2.259" />
+    <testcase name="nameTreeAssociatedFileAndAnnotationShareOneIdentity" classname="com.pdfchemy.app.security.AttachmentIdentitySecurityTest" time="1.482" />
+    <testcase name="oneEmbeddedFileCountsOnce" classname="com.pdfchemy.app.security.AttachmentIdentitySecurityTest" time="1.457" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.BenignPdfCompatibilityTest" tests="14" failures="0" errors="0" skipped="0" time="42.53" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[01-metadata-xmp.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.962" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[02-https-link.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.963" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[03-bookmark-https.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.937" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[04-destination-openaction.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.913" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[05-internal-goto.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.938" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[06-embedded-file.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.937" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[07-shared-af-annotation.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.987" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[08-normal-form-annotations.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.937" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[09-image-font.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.937" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[10-combined-c2pa-carrier.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="2.963" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[11-word-metadata.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="3.013" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[12-word-links-bookmarks.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="3.063" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[13-word-unicode.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="3.265" />
+    <testcase name="auditsCleanPassesVanguardAndOpensInIsolatedRenderer[local-benign-compatibility.pdf]" classname="com.pdfchemy.app.security.BenignPdfCompatibilityTest" time="3.715" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" tests="8" failures="0" errors="0" skipped="0" time="12.156" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.757" />
+    <testcase name="formCannotSurviveRealEditorRedactionExport" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.709" />
+    <testcase name="clippedSharedFormCannotRetainTheHiddenOriginalText" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.908" />
+    <testcase name="unsupportedXfaCannotOverwriteAnExistingDestination" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="0.779" />
+    <testcase name="originalScanCannotSurviveRealEditorRedactionExport" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.683" />
+    <testcase name="documentMetadataAndAccessibilityTextCannotSurviveRedaction" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.682" />
+    <testcase name="formValuesCannotSurviveRealEditorRedactionExport" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="1.733" />
+    <testcase name="catalogReferenceToOriginalStreamCannotOverwriteExistingDestination" classname="com.pdfchemy.app.security.EditorRedactionResourceSecurityTest" time="0.905" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.HostOutputCommitSecurityTest" tests="12" failures="0" errors="0" skipped="0" time="129.557" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="retainedWorkerFdCannotChangeValidatedBytesDuringProviderCommit" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.754" />
+    <testcase name="secondBatchOutputFailureDoesNotCommitFirstWorkerOutput" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.729" />
+    <testcase name="legacyWritersCommitThroughHostSnapshotsAndLeaveFailuresUntouched" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="2.184" />
+    <testcase name="duplicateSuccessCallbacksCommitExactlyOnce" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.704" />
+    <testcase name="workerDeathAndCancellationNeverOpenNonTruncatableProvider" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="1.482" />
+    <testcase name="aggregateOverQuotaIsRejectedBeforeOpeningAnyDestination" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.001" />
+    <testcase name="busyRequestsLeaveTheRunningWorkerAndBothDestinationsUntouched" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.704" />
+    <testcase name="rawCompromisedWorkerOverflowCannotTouchNonTruncatableProvider" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.705" />
+    <testcase name="realSplitAndPdfToImagesPreserveMultiOutputCommit" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="1.557" />
+    <testcase name="realWorkerDeadlineLeavesProviderUntouched" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="120.71" />
+    <testcase name="failedMalformedAndWrongCountResultsAreRejectedBeforeCommit" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.001" />
+    <testcase name="snapshotIgnoresWorkerFileOffsetAndCommitCannotBeRepeated" classname="com.pdfchemy.app.security.HostOutputCommitSecurityTest" time="0.026" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.NativeRendererIsolationSecurityTest" tests="1" failures="0" errors="0" skipped="0" time="31.494" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="nativeRendererHasAnIsolatedUidAndItsOwnHardDeadline" classname="com.pdfchemy.app.security.NativeRendererIsolationSecurityTest" time="31.494" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.OcrExtendedVerificationTest" tests="2" failures="0" errors="0" skipped="0" time="3.415" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="testMultiFontAndDegradedScanOcr" classname="com.pdfchemy.app.security.OcrExtendedVerificationTest" time="1.657" />
+    <testcase name="testConsecutiveOcrRunsWorkerSurvival" classname="com.pdfchemy.app.security.OcrExtendedVerificationTest" time="1.758" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.OcrIsolationCompatibilityTest" tests="1" failures="0" errors="0" skipped="0" time="7.455" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="scannedTextRemainsSearchableThroughTheIsolatedOcrWorker" classname="com.pdfchemy.app.security.OcrIsolationCompatibilityTest" time="7.455" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.OperationOwnershipSecurityTest" tests="12" failures="0" errors="0" skipped="0" time="11.104" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="gatewayRejectsEarlySuccessAndLeavesDestinationUntouched" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.754" />
+    <testcase name="noCrossRequestKillAfterSuccess" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.728" />
+    <testcase name="cancellationAfterAcceptanceIsStale" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.73" />
+    <testcase name="busyHasNoOwnershipToken" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.728" />
+    <testcase name="cancelledBusyRequestCannotKillLeaseholder" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.728" />
+    <testcase name="workerSuccessRemainsExclusiveUntilHostAccepts" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.753" />
+    <testcase name="staleCompletionTokenCannotReleaseCurrentOwner" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.704" />
+    <testcase name="hostRejectionKillsExactOwner" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="1.507" />
+    <testcase name="hostOwnerBinderDeathTerminatesWorker" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="1.457" />
+    <testcase name="fatalWorkerThrowableKillsProcessAndNeverReleasesGate" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="1.532" />
+    <testcase name="staleAbortTokenCannotKillCurrentOwner" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.729" />
+    <testcase name="adversarialEarlySuccessRejectedAndTerminatesWorker" classname="com.pdfchemy.app.security.OperationOwnershipSecurityTest" time="0.754" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.RasterQuotaSecurityTest" tests="3" failures="0" errors="0" skipped="0" time="7.756" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="oversizedImageIsDownsampledByTheIsolatedDecoder" classname="com.pdfchemy.app.security.RasterQuotaSecurityTest" time="3.012" />
+    <testcase name="oversizedSignatureIsRejectedBeforeDecodeAndLeavesHostAlive" classname="com.pdfchemy.app.security.RasterQuotaSecurityTest" time="1.958" />
+    <testcase name="oversizedCbzImageProducesOnlyBoundedPdfImages" classname="com.pdfchemy.app.security.RasterQuotaSecurityTest" time="2.786" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.ReleaseImageOutputCompatibilityTest" tests="1" failures="0" errors="0" skipped="0" time="2.31" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="originalPngModeKeepsPngBytesMimeAndExtension" classname="com.pdfchemy.app.security.ReleaseImageOutputCompatibilityTest" time="2.31" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.SanitizerScopeSecurityTest" tests="2" failures="0" errors="0" skipped="0" time="3.818" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="customPurgesPreserveUnselectedFeaturesAndDefaultPurgesReauditClean" classname="com.pdfchemy.app.security.SanitizerScopeSecurityTest" time="3.064" />
+    <testcase name="attachmentDeduplicationRegressionTest" classname="com.pdfchemy.app.security.SanitizerScopeSecurityTest" time="0.754" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.StagingLifecycleSecurityTest" tests="8" failures="0" errors="0" skipped="0" time="8.719" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="compressionAndAnalysisReclaimSnapshotsAndReportRealImageCount" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="4.468" />
+    <testcase name="mutableUnknownLengthProviderIsOpenedOnceForAnalysisPreviewAndProcessing" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="3.239" />
+    <testcase name="cancellingABlockedCopyClosesItsInputAndRemovesItsPartialSnapshot" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.026" />
+    <testcase name="unknownLengthInputHonorsExactQuotaAndRemovesOverflowPartial" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.957" />
+    <testcase name="releasingASelectedSnapshotWaitsForTheActiveOperationLease" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.001" />
+    <testcase name="failedBatchStagingReclaimsEarlierSnapshots" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.027" />
+    <testcase name="comparisonReclaimsItsFirstSnapshotWhenItsSecondInputFails" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.001" />
+    <testcase name="stagedLookingFilenameCannotForgeProvenance" classname="com.pdfchemy.app.security.StagingLifecycleSecurityTest" time="0.0" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" tests="6" failures="0" errors="0" skipped="0" time="7.485" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="hostProtocolRejectionRecyclesWorkerWithoutOpeningDestination" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="1.507" />
+    <testcase name="legacyWriterFailureCallbackRecyclesWorkerAndNextDocumentSucceeds" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="1.507" />
+    <testcase name="legacyQueryParserFailureRecyclesWorkerAndNextDocumentSucceeds" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="1.481" />
+    <testcase name="busyGatewayLegacyWritersQueriesAndMalformedBatchPreserveAdmittedPid" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="0.754" />
+    <testcase name="admittedEngineFailureCallbackRecyclesWorkerAndNextDocumentSucceeds" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="1.507" />
+    <testcase name="failedWorkerDoesNotReadmitWhileHostRecycleIsPending" classname="com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest" time="0.729" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.WorkerIsolationSecurityTest" tests="7" failures="0" errors="0" skipped="0" time="139.026" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="realPdfParsingAndRenderingUseTheStagedSnapshot" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="1.683" />
+    <testcase name="workerDeathAndCancellationLeaveTheRealDestinationUnchanged" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="2.988" />
+    <testcase name="blockingWorkerDeadlineKillsPidAndNextBindingRecovers" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="121.55" />
+    <testcase name="blockedWorkerRejectsTwelveRequestsWithoutQueuingAndRecoversAfterAbort" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="1.481" />
+    <testcase name="isolatedUidAndAnonymousScratchAreUsable" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="0.704" />
+    <testcase name="batchMissingAndMismatchedMetadataRejectBeforeParsing" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="8.961" />
+    <testcase name="outputQuotaPlusOneByteLeavesTheRealDestinationUnchanged" classname="com.pdfchemy.app.security.WorkerIsolationSecurityTest" time="1.659" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.security.WorkerResponseValidationSecurityTest" tests="4" failures="0" errors="0" skipped="0" time="6.01" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="realSanitizerWorkerAuditMatchesValidatorContract" classname="com.pdfchemy.app.security.WorkerResponseValidationSecurityTest" time="2.243" />
+    <testcase name="busySemanticsPreservedWithoutAbortingWorker" classname="com.pdfchemy.app.security.WorkerResponseValidationSecurityTest" time="0.729" />
+    <testcase name="unknownOperationFailsClosedAndRecyclesWorker" classname="com.pdfchemy.app.security.WorkerResponseValidationSecurityTest" time="1.507" />
+    <testcase name="executeEngineTypedReturnsStrictValidatedContract" classname="com.pdfchemy.app.security.WorkerResponseValidationSecurityTest" time="1.531" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.ui.CompressPdfScreenTest" tests="1" failures="0" errors="0" skipped="0" time="1.211" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="compressPdfScreen_displaysKeyElements" classname="com.pdfchemy.app.ui.CompressPdfScreenTest" time="1.211" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.ui.MainViewModelTest" tests="5" failures="0" errors="0" skipped="0" time="1.839" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="setHapticEnabled_updatesState" classname="com.pdfchemy.app.ui.MainViewModelTest" time="0.001" />
+    <testcase name="initialState_isIdle" classname="com.pdfchemy.app.ui.MainViewModelTest" time="0.0" />
+    <testcase name="resetState_resetsToIdle" classname="com.pdfchemy.app.ui.MainViewModelTest" time="0.026" />
+    <testcase name="compressPdf_updatesUiStateAndReturnsSuccess" classname="com.pdfchemy.app.ui.MainViewModelTest" time="0.831" />
+    <testcase name="extractTextFromPdf_updatesUiStateAndReturnsSuccess" classname="com.pdfchemy.app.ui.MainViewModelTest" time="0.981" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.ui.RemainingUxRuntimeTest" tests="3" failures="0" errors="0" skipped="0" time="3.637" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="enlargedSearchAcceptsQueryAndSelectsReader" classname="com.pdfchemy.app.ui.RemainingUxRuntimeTest" time="1.743" />
+    <testcase name="categoryAndToolLabelsFitAt320dpAndDoubleFontScale" classname="com.pdfchemy.app.ui.RemainingUxRuntimeTest" time="1.135" />
+    <testcase name="preferredSaveWrapperComposesWithoutRecursion" classname="com.pdfchemy.app.ui.RemainingUxRuntimeTest" time="0.759" />
+  </testsuite>
+  <testsuite name="com.pdfchemy.app.ui.VanguardReaderNavigationTest" tests="1" failures="0" errors="0" skipped="0" time="3.421" timestamp="2026-10-19T09:44:16" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554 - 16" />
+      <property name="flavor" value="" />
+      <property name="project" value=":app-host" />
+    </properties>
+    <testcase name="cleanRecentPdfOpensReadableNativeReaderWithVanguardOnAndOff" classname="com.pdfchemy.app.ui.VanguardReaderNavigationTest" time="3.421" />
+  </testsuite>
+</testsuites>

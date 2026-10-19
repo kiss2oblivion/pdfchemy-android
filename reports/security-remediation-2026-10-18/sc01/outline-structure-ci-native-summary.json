@@ -1,0 +1,47 @@
+{
+  "source": "62d1b1e8dca4893d6889ee59a95598bf02b219db",
+  "run": 39228725164,
+  "status": "complete",
+  "native_executions": 884,
+  "apis": [
+    {
+      "api": 24,
+      "tests": 221,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "editor_regressions": 8,
+      "result_sha256": "97bdc5e0278bb6ac203691d7409519c5c7d0b1d77793f2a059fa5dc120df67ac"
+    },
+    {
+      "api": 30,
+      "tests": 221,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "editor_regressions": 8,
+      "result_sha256": "2c76a3f0533d087d0edda894d8beb9bcbe4acb8dde2c44b6f76c9e0e21f219bd"
+    },
+    {
+      "api": 34,
+      "tests": 221,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "editor_regressions": 8,
+      "result_sha256": "d933eb549647c64ce40e60360bd1509e2d4efcb2c6773e86a952576c1b66b3f3"
+    },
+    {
+      "api": 36,
+      "tests": 221,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "editor_regressions": 8,
+      "result_sha256": "45d5d53e1c7cae55600a75ac3f9692872c8d3a8cf88f499551490f6ddaca3a8f"
+    }
+  ],
+  "workflow_conclusion": "success",
+  "release_build": "success",
+  "release_build_job": 117992961163
+}

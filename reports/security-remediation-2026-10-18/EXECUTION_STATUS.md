@@ -1,6 +1,6 @@
 # Android security remediation execution - 2026-10-18
 
-**Release: HOLD. SC-01 remains open pending full CI at the outline-reference follow-up.** Earlier source `414b053a` passes 221 native methods on CI API24/30/36 but retains accessibility text through outline SE references in an extended probe. The latest source detaches that path and passes 63 worker tests, nine focused methods on local API24/36, assembly/static/lint. SC-02 and later source findings have not started.
+**Release: HOLD. SC-01 implementation and required batch verification are complete.** Final source `62d1b1e8` passes 221 native methods on each CI API24/30/34/36 (884 total), including the extended outline-reference fixture. It also passes 63 local worker tests, nine focused methods on local API24/36, assembly/static/lint and unsigned release artifact checks. SC-02 and later source findings have not started.
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
@@ -16,6 +16,7 @@ Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFch
 | Documentation/evidence checkpoint before closeout | `e24999296cfb2ff4b82a7ad89dec708c1d1fe187` |
 | Form-tree / hidden-field / shared-stream follow-up | `593be048fc7b5e2a340940419d8eec0d9c944e3f` |
 | Document metadata / accessibility / attachment follow-up | `414b053ac9c85e806392f7479b8b89b9f7a31d0a` |
+| Outline structure-element reference follow-up / current CI source | `62d1b1e8dca4893d6889ee59a95598bf02b219db` |
 
 Each listed implementation push went only to `kiss2oblivion/pdfchemy-android`, with the remote ref checked against the local SHA. The documentation/evidence checkpoints `1e20f8dc` and `e2499929` do not change application source, tests, scripts or workflows from CI target `9e03c062`. PR #2 remains open/draft on the earlier branch; no merge, upload or release is claimed.
 
@@ -25,7 +26,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 
 | Finding | Status | Remaining gate |
 |---|---|---|
-| SC-01 editor forensic redaction | Outline SE follow-up implemented and locally verified; earlier document-carrier source `414b053a` is a checkpoint | Push latest source and complete its fresh full CI |
+| SC-01 editor forensic redaction | Current `62d1b1e8` is committed, Android-only pushed and remote-SHA verified; local gates and all four full CI native suites pass | None for this batch; later findings and release gates remain open |
 | SC-02 through SC-09 | Not started | Their separate implementation/test/commit batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
@@ -34,7 +35,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 
 Redacted editor pages receive fresh resources and replacement raster content; original annotations, thumbnail, metadata and related page attachments/actions are detached. Used-only resource cleanup removes inherited/shared unused resources and recursively handles Forms, annotation appearances, tiling patterns and soft-mask groups while preserving supported inherited resources and unrelated vector content. Failures abort export rather than publish an unsanitized fallback.
 
-Nine production-helper regressions exercise original Forms/images, shared/inherited dictionaries, nested/resource-less Forms, implicit default color spaces, annotation appearances, used patterns and soft masks. Three Android regressions invoke the real Editor -> gateway -> isolated worker export, inspect saved serialized/decoded objects and text, preserve unrelated vector text, and check opaque redaction pixels. The existing mixed-annotation rotation method covers eight geometry cases.
+The initial resource checkpoint has nine production-helper and three Android regressions. Subsequent confirmed follow-ups extend coverage to 22 helper regressions and eight Android Editor regressions, including form values, XFA rejection, clipped shared streams, fail-closed aliases, document carriers and outline-linked accessibility text. Android tests invoke the real Editor -> gateway -> isolated worker export, inspect saved serialized/decoded objects and text, preserve unrelated vector text, and check opaque redaction pixels. The existing mixed-annotation rotation method covers eight geometry cases.
 
 ## Verification of resource/CI source checkpoint `9e03c062`
 
@@ -154,9 +155,24 @@ Production now records and detaches SE-linked element identities alongside the o
 | Actual Editor export and annotation geometry, API24 | Nine methods pass in 21.587s; strict validator accepts; crash buffer empty | `sc01-outline-structure-api24.log`, install/crash logs |
 | Same selection, API36 | Nine methods pass in 48.921s; strict validator accepts; crash buffer empty | `sc01-outline-structure-api36-retry.log`, retry install/crash logs |
 | Release lint | PASS in 3m 24s | `sc01-outline-structure-lint.log` |
-| Fresh full CI at latest source | Pending push/dispatch | Earlier CI at `414b053a` does not include this extended fixture |
+| Local unsigned minified release | PASS in 3m 43s at `62d1b1e8` | `sc01-outline-structure-release-assembly.log` |
+| Local artifact/static corpus gate | PASS: 14 fixture hashes, 62 smoke-matrix rows and manifest/package hygiene checks | `sc01-outline-structure-release-gate.log`; no signing or execution of 62 UI workflows is claimed |
+| Fresh full CI at latest source | PASS: 221 methods each on API24/30/34/36, 884 total; release lint/build/artifact gates pass | [Run 39228725164](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39228725164), exact pushed/remote-verified `62d1b1e8`; earlier CI at `414b053a` does not include this extended fixture |
 
 Local native installation initially executes zero tests because the latest build uses the isolated ANDROID_USER_HOME and a different debug signing key. Certificate verification confirms the current host/test APKs match each other and differ from the retained baseline. After verifying the owned SC01Api24/SC01Api36 identities, only their synthetic host/test packages are reset and reinstalled. The mismatch, public certificate fingerprints and successful retries are retained. No production signing key is used or changed.
+
+### Final-source CI native matrix at `62d1b1e8`
+
+All four downloaded native artifacts independently validate 221 unique completed methods, zero failures/errors/skips and all eight Editor security regressions. API24 also passes the strict instrumentation-result validator and has an empty crash buffer. Annotation export parity remains covered. This establishes 884 complete native executions on the final SC-01 application/test source; it does not include the earlier checkpoint executions in that total.
+
+| API | Actual execution job | Raw result |
+|---|---|---|
+| 24 | `117983165668` | `sc01-ci-outline-structure-api24-instrumentation.log`, install/crash logs |
+| 30 | `117983165594` | `sc01-ci-outline-structure-api30.xml` |
+| 34 | `117983165554` | `sc01-ci-outline-structure-api34.xml` |
+| 36 | `117983165555` | `sc01-ci-outline-structure-api36.xml` |
+
+Architecture (`117981247016`), secret scanning (`117981247055`), dependency security (`117981247104`) and the complete JVM job (`117983165682`) also pass on this same source. Their raw logs are retained. The dependent release build (`117992961163`) passes in 9m 58s, including release lint, debug/minified unsigned release assembly and the compatibility corpus/smoke-coverage/artifact hygiene gate. The complete workflow is successful; raw build output and final workflow/job identities are retained. No production signing, physical-device workflow or Play acceptance is claimed. `outline-structure-ci-native-summary.json` records the source, result hashes and counts.
 
 ## Failed, superseded and unresolved attempts
 

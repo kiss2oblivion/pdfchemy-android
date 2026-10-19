@@ -1,7 +1,7 @@
 {
   "source": "414b053ac9c85e806392f7479b8b89b9f7a31d0a",
   "run": 39172047026,
-  "status": "api34-retry-and-build-pending",
+  "status": "superseded-outline-reference-followup",
   "native_executions": 663,
   "apis": [
     {
@@ -31,5 +31,14 @@
       "editor_regressions": 8,
       "result_sha256": "0ea265a70587816dcb6ee3d679b770bf607ad7e368452e1966419c0aa0fff47a"
     }
-  ]
+  ],
+  "workflow_conclusion": "cancelled",
+  "api34_retry": {
+    "completed_reported": 219,
+    "declared": 221,
+    "failures_reported": 0,
+    "skipped_reported": 0,
+    "result": "incomplete-cancelled"
+  },
+  "release_build": "not-verified"
 }
