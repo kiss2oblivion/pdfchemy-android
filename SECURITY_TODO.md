@@ -17,8 +17,8 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 - [x] SC01-01 Reproduce retained sensitive Forms/images through the actual editor worker export. Three expected security assertion failures on the unchanged baseline APK, API 24; see execution receipt.
 - [x] SC01-02 Construct sanitized redacted-page resources/object ownership; preserve unrelated content and fail-closed behavior. Form-tree cleanup, hidden widgets, shared-stream rasterization and document-carrier removal pass local worker/native checks; full CI remains a separate gate below.
-- [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources, retained form values and metadata/accessibility/embedded originals. All 21 helper regressions pass within the 62-test worker suite; nine focused native methods pass on API24 and API36. See execution receipt and raw evidence.
-- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Resource-only checkpoint passes 216 native methods per API in full CI; form/shared-stream source passes 220 locally on API24. The latest document-carrier source requires refreshed full CI.
+- [x] SC01-03 Convert component probes into absence-of-sensitive-data regressions; cover scanned images, shared resources, retained form values, metadata/accessibility/embedded originals and outline-linked structure elements. All 22 helper regressions pass within the 63-test worker suite; the extended nine-method native selection passes on API24 and API36. See execution receipt and raw evidence.
+- [ ] SC01-04 Verify saved decoded objects/resources, extraction and pixels; run actual editor export on API 24/30/34/36. Source checkpoints have complete/partial evidence recorded separately. The latest outline-reference source requires fresh full CI; older 221-method passes do not cover its extended fixture.
 - [ ] SC01-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 2. SC-02 — Search-redaction object graph

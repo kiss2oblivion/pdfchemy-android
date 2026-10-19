@@ -82,6 +82,37 @@ class RedactionResourcesTest {
         }
     }
 
+    @Test fun redactionRemovesOutlineStructureReferencesWithoutLosingNavigation() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val structure = COSDictionary().apply { setName(COSName.TYPE, "StructTreeRoot") }
+            // The outline's standard SE reference must not keep its ActualText
+            // alive after the main tree is removed.
+            val element = COSDictionary().apply {
+                setName(COSName.TYPE, "StructElem")
+                setName(COSName.S, "Span"); setItem(COSName.P, structure)
+                setItem(COSName.getPDFName("Pg"), page); setInt(COSName.K, 0)
+                setString(COSName.getPDFName("ActualText"), "PRIVATE_OUTLINE_STRUCTURE_TEXT")
+            }
+            structure.setItem(COSName.K, COSArray().apply { add(element) })
+            doc.documentCatalog.cosObject.setItem(COSName.getPDFName("StructTreeRoot"), structure)
+            val outlines = COSDictionary().apply { setName(COSName.TYPE, "Outlines"); setInt(COSName.COUNT, 1) }
+            val item = COSDictionary().apply {
+                setString(COSName.TITLE, "Keep navigation"); setItem(COSName.PARENT, outlines)
+                setItem(COSName.DEST, COSArray().apply { add(page); add(COSName.getPDFName("Fit")) })
+                setItem(COSName.getPDFName("SE"), element)
+            }
+            outlines.setItem(COSName.FIRST, item); outlines.setItem(COSName.LAST, item)
+            doc.documentCatalog.cosObject.setItem(COSName.OUTLINES, outlines)
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_OUTLINE_STRUCTURE_TEXT")
+            assertEquals("Keep navigation", item.getString(COSName.TITLE))
+            val destination = item.getDictionaryObject(COSName.DEST) as COSArray
+            assertSame(page.cosObject, destination.getObject(0))
+            assertNull(item.getDictionaryObject(COSName.getPDFName("SE")))
+        }
+    }
+
     @Test fun redactionRemovesDocumentInformationStrings() {
         PDDocument().use { doc ->
             val page = PDPage().also(doc::addPage)

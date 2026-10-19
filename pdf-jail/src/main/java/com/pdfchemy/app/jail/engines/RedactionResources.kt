@@ -154,7 +154,9 @@ internal object RedactionResources {
         // references must not retain XMP, private application data or attachments.
         visitGraph(document.document.trailer) { node ->
             if (node is COSDictionary) {
-                for (key in listOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS")) {
+                // Outlines can retain accessibility elements through SE even
+                // after the main StructTreeRoot is detached. Keep their Dest.
+                for (key in listOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS", "SE")) {
                     record(node.getItem(COSName.getPDFName(key)))
                 }
                 if (node.containsKey(COSName.getPDFName("EF"))) record(node)

@@ -1,6 +1,6 @@
 # Android security remediation execution - 2026-10-18
 
-**Release: HOLD. SC-01 remains open pending refreshed full CI.** Resource cleanup and the API24 CI repair pass full CI at `9e03c062`. Form/shared-stream source `593be048` passes the clean-data local 220-method API24 suite. Additional document metadata, accessibility and attachment carriers required a further source follow-up; current verification is tracked below. SC-02 and later source findings have not started.
+**Release: HOLD. SC-01 remains open pending full CI at the outline-reference follow-up.** Earlier source `414b053a` passes 221 native methods on CI API24/30/36 but retains accessibility text through outline SE references in an extended probe. The latest source detaches that path and passes 63 worker tests, nine focused methods on local API24/36, assembly/static/lint. SC-02 and later source findings have not started.
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
@@ -15,6 +15,7 @@ Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFch
 | API24 CI installation repair / prior full CI source | `9e03c062f9cb797573430e1b5bd8d7b15f24b696` |
 | Documentation/evidence checkpoint before closeout | `e24999296cfb2ff4b82a7ad89dec708c1d1fe187` |
 | Form-tree / hidden-field / shared-stream follow-up | `593be048fc7b5e2a340940419d8eec0d9c944e3f` |
+| Document metadata / accessibility / attachment follow-up | `414b053ac9c85e806392f7479b8b89b9f7a31d0a` |
 
 Each listed implementation push went only to `kiss2oblivion/pdfchemy-android`, with the remote ref checked against the local SHA. The documentation/evidence checkpoints `1e20f8dc` and `e2499929` do not change application source, tests, scripts or workflows from CI target `9e03c062`. PR #2 remains open/draft on the earlier branch; no merge, upload or release is claimed.
 
@@ -24,7 +25,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 
 | Finding | Status | Remaining gate |
 |---|---|---|
-| SC-01 editor forensic redaction | Form/shared-stream checkpoint verified locally; document-carrier follow-up passes 62 worker tests, nine focused methods on API24/36, assembly/static/lint | Complete commit/push and refreshed full CI |
+| SC-01 editor forensic redaction | Outline SE follow-up implemented and locally verified; earlier document-carrier source `414b053a` is a checkpoint | Push latest source and complete its fresh full CI |
 | SC-02 through SC-09 | Not started | Their separate implementation/test/commit batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
@@ -115,9 +116,47 @@ The current source strips document information, XMP/private application metadata
 | Actual Editor export and annotation geometry, API24 | Nine methods pass in 28.7s; strict validator accepts; crash buffer empty | `sc01-document-carrier-api24.log`, install/crash logs |
 | Same selection, API36 | Nine methods pass in 67.909s; strict validator accepts; crash buffer empty | `sc01-document-carrier-api36.log`, install/crash logs |
 | Latest release lint | PASS in 3m 41s; 629 warnings and 38 unmatched localization-baseline entries | `sc01-document-carrier-lint.log` |
-| Full CI at this document-carrier source | Not yet dispatched | Earlier complete workflows and the local 220-method run test earlier source |
+| Local unsigned minified release | PASS in 4m 26s, explicit unsigned-verification property | `sc01-document-carrier-release-assembly.log` |
+| Local release artifact/static corpus gate | PASS: 14 fixture hashes, 62 smoke-matrix rows, manifest/permissions/isolation/version and packaged-asset checks | `sc01-document-carrier-release-gate.log`; this checks matrix completeness, not execution of 62 UI workflows |
+| Full CI at this document-carrier source | Superseded and cancelled for the confirmed outline-reference follow-up | [Run 39172047026](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39172047026); complete API24/30/36 results remain checkpoint evidence |
 
 `sc01-ci-shared-stream-superseded.log` retains the cancelled workflow's available job output. Log retrieval exits nonzero only because the never-started dependent build job has no log; the status JSON records that job and the workflow as cancelled. This is not a new build or test assertion failure.
+
+### Document-carrier checkpoint CI evidence at `414b053a`
+
+Attempt 1 passes architecture, secrets, dependencies, the complete JVM job and the full native suites on API24/30/36. Each downloaded native artifact is checked for 221 unique passing methods, zero failures/errors/skips and all eight Editor security regressions; API24 additionally passes strict instrumentation-result validation and has an empty crash buffer. The intermediate summary records 663 native executions across those three APIs.
+
+API34 job `117807981626` fails before app compilation or emulator startup because Gradle cannot resolve the unchanged pinned Foojay resolver plugin `1.0.0`. It executes zero tests. The failure log is retained; this is a dependency-resolution failure, not a failed Android security assertion. No upstream outage cause is established. The immediate targeted retry request is rejected while the workflow is active. After the first workflow completes, failed-job retry is accepted on 2026-10-19; attempt 2 API34 job `117969578196` builds successfully and starts the full suite on the same source. It reports 219/221 completed, zero failures/skips, before intentional cancellation for the confirmed outline-reference source follow-up. It is an incomplete execution and is not counted as a complete pass. Successful first-attempt gates are carried forward rather than counted as additional executions. The dependent CI build was skipped in attempt 1 and never verifies this checkpoint in attempt 2.
+
+The first job-log retrieval is rejected by the CLI because it contains terminal escape sequences. That retrieval error is preserved separately; the actual job output is downloaded with explicit escape-sequence allowance and inspected with terminal controls stripped for display. Raw archived bytes are preserved.
+
+| API / actual execution attempt | Verified tests | Evidence | Original execution job |
+|---|---:|---|---|
+| 24 / attempt 1 | 221, zero failures/skips | `sc01-ci-document-carrier-api24-instrumentation.log`, install/crash logs | `117807981697` |
+| 30 / attempt 1 | 221, zero failures/errors/skips | `sc01-ci-document-carrier-api30.xml` | `117807981610` |
+| 34 / attempt 2 | Incomplete: 219/221 reported before superseding cancellation | `sc01-ci-document-carrier-api34-superseded-retry.log`; attempt 1 executes zero tests | `117969578196` (cancelled) |
+| 36 / attempt 1 | 221, zero failures/errors/skips | `sc01-ci-document-carrier-api36.xml` | `117807981592` |
+
+Signing, physical-device workflows and Play verification remain unperformed. Local unsigned assembly and successful partial CI do not change the release HOLD.
+
+## Additional SC-01 outline structure-element references
+
+An outline can directly reference an accessibility structure element independently of the catalog's structure-tree root; see the primary [PDFBox outline API](https://pdfbox.apache.org/docs/2.0.4/javadocs/org/apache/pdfbox/pdmodel/interactive/documentnavigation/outline/PDOutlineItem.html). The added helper fixture confirms its ActualText survives through SE after the main tree is detached. Both the initial minimal graph and the canonical explicit-Type fixture fail the serialized-data assertion on `414b053a`; their negative XML/logs remain separate.
+
+The completed extended Android test APK also reproduces this through the real API36 Editor export against the retained `414b053a` app. The initial native attempt overlapped test-APK packaging and passed an older fixture; it is explicitly excluded from negative evidence. After the test build completes, a fresh installation and retry fail the private-data assertion after successful export. The retained APK hashes identify the confirmed negative pair.
+
+Production now records and detaches SE-linked element identities alongside the other metadata carriers. The extended native fixture requires both absence of private serialized/decoded content and preservation of the public bookmark title and destination to the sanitized page.
+
+| Latest outline-reference source | Result | Evidence |
+|---|---|---|
+| Worker JVM | 63 pass, including 22 helper regressions | `sc01-outline-structure-validation.log`, `outline-structure-unit-results/` |
+| Debug/test assembly and static checks | PASS | `sc01-outline-structure-validation.log` |
+| Actual Editor export and annotation geometry, API24 | Nine methods pass in 21.587s; strict validator accepts; crash buffer empty | `sc01-outline-structure-api24.log`, install/crash logs |
+| Same selection, API36 | Nine methods pass in 48.921s; strict validator accepts; crash buffer empty | `sc01-outline-structure-api36-retry.log`, retry install/crash logs |
+| Release lint | PASS in 3m 24s | `sc01-outline-structure-lint.log` |
+| Fresh full CI at latest source | Pending push/dispatch | Earlier CI at `414b053a` does not include this extended fixture |
+
+Local native installation initially executes zero tests because the latest build uses the isolated ANDROID_USER_HOME and a different debug signing key. Certificate verification confirms the current host/test APKs match each other and differ from the retained baseline. After verifying the owned SC01Api24/SC01Api36 identities, only their synthetic host/test packages are reset and reinstalled. The mismatch, public certificate fingerprints and successful retries are retained. No production signing key is used or changed.
 
 ## Failed, superseded and unresolved attempts
 

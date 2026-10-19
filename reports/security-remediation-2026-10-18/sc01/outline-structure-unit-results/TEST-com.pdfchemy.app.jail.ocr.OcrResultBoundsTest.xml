@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-19T09:02:18.860Z" hostname="DESKTOP-N37P7P6" time="0.234">
+  <properties/>
+  <testcase name="enforcesBlockAndLineQuotas" classname="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" time="0.118"/>
+  <testcase name="enforcesAggregatePageTextLimit" classname="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" time="0.028"/>
+  <testcase name="clampsBoundingBoxesToPageDimensions" classname="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" time="0.028"/>
+  <testcase name="sanitizesConfidenceScore" classname="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" time="0.034"/>
+  <testcase name="rejectsNonFiniteBoundingBoxCoordinates" classname="com.pdfchemy.app.jail.ocr.OcrResultBoundsTest" time="0.026"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

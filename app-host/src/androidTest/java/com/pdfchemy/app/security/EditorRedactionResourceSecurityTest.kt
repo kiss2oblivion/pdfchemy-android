@@ -78,6 +78,14 @@ class EditorRedactionResourceSecurityTest {
                     doc.documentCatalog.cosObject.setItem(COSName.getPDFName("MarkInfo"), COSDictionary().apply {
                         setBoolean(COSName.getPDFName("Marked"), true)
                     })
+                    val outlines = COSDictionary().apply { setName(COSName.TYPE, "Outlines"); setInt(COSName.COUNT, 1) }
+                    val bookmark = COSDictionary().apply {
+                        setString(COSName.TITLE, "Keep navigation"); setItem(COSName.PARENT, outlines)
+                        setItem(COSName.DEST, COSArray().apply { add(target); add(COSName.getPDFName("Fit")) })
+                        setItem(COSName.getPDFName("SE"), element)
+                    }
+                    outlines.setItem(COSName.FIRST, bookmark); outlines.setItem(COSName.LAST, bookmark)
+                    doc.documentCatalog.cosObject.setItem(COSName.OUTLINES, outlines)
                 }
                 val resources = PDResources()
                 if (inherited) doc.pages.cosObject.setItem(COSName.RESOURCES, resources)
@@ -153,6 +161,14 @@ class EditorRedactionResourceSecurityTest {
                 if (formField) {
                     assertTrue("Unredacted field appearance must survive as visible text", text.contains("KEEP_FORM_VALUE"))
                     assertNull("Redacted exports must not retain interactive form values", saved.documentCatalog.getAcroForm(null))
+                }
+                if (documentCarriers) {
+                    val outlines = saved.documentCatalog.cosObject.getDictionaryObject(COSName.OUTLINES) as COSDictionary
+                    val bookmark = outlines.getDictionaryObject(COSName.FIRST) as COSDictionary
+                    assertEquals("Keep navigation", bookmark.getString(COSName.TITLE))
+                    assertNull(bookmark.getDictionaryObject(COSName.getPDFName("SE")))
+                    val destination = bookmark.getDictionaryObject(COSName.DEST) as COSArray
+                    assertSame("Bookmark must still target the sanitized page", saved.getPage(0).cosObject, destination.getObject(0))
                 }
             }
             val bitmap = requireNotNull(PdfEditor.renderPageBitmap(context, Uri.fromFile(output), 0, 200))

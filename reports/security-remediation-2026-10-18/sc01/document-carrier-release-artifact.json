@@ -1,0 +1,8 @@
+{
+  "assembly_log_sha256": "A150869D6449F19C610F8DECD2C19EF15C7F303CD207FE602F0500F99D6761FE",
+  "sha256": "0E8185E01C3F8364A81588A254224ECFC93AF9D02E45D8AE759109DE4EDC5988",
+  "gate_log_sha256": "5A40DF3C55C59F65215FED956C98AE00CB0788E86317F62C89628A081F5EE205",
+  "scope": "Local unsigned minified release assembly and static artifact checks; no signing or device-install claim",
+  "source": "414b053ac9c85e806392f7479b8b89b9f7a31d0a",
+  "path": "app-host/build/outputs/apk/release/app-host-release-unsigned.apk"
+}

@@ -1,0 +1,599 @@
+﻿2026-10-18T22:24:02.4237883Z Current runner version: '2.337.0'
+2026-10-18T22:24:02.4261779Z ##[group]Runner Image Provisioner
+2026-10-18T22:24:02.4262665Z Hosted Compute Agent
+2026-10-18T22:24:02.4263304Z Version: 20261012.601
+2026-10-18T22:24:02.4264040Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-18T22:24:02.4264793Z Build Date: 2026-10-12T17:48:21Z
+2026-10-18T22:24:02.4265580Z Worker ID: {f24f709d-c499-40f4-ba9c-e92797466e78}
+2026-10-18T22:24:02.4266351Z Region: westus2
+2026-10-18T22:24:02.4266897Z Cloud: Azure
+2026-10-18T22:24:02.4267517Z ##[endgroup]
+2026-10-18T22:24:02.4269413Z ##[group]Operating System
+2026-10-18T22:24:02.4270134Z Ubuntu
+2026-10-18T22:24:02.4270742Z 24.04.5
+2026-10-18T22:24:02.4271478Z LTS
+2026-10-18T22:24:02.4272082Z ##[endgroup]
+2026-10-18T22:24:02.4272688Z ##[group]Runner Image
+2026-10-18T22:24:02.4273382Z Image: ubuntu-24.04
+2026-10-18T22:24:02.4274085Z Version: 20261012.334.1
+2026-10-18T22:24:02.4275370Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-18T22:24:02.4276951Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-18T22:24:02.4277991Z ##[endgroup]
+2026-10-18T22:24:02.4279168Z ##[group]GITHUB_TOKEN Permissions
+2026-10-18T22:24:02.4281716Z Contents: read
+2026-10-18T22:24:02.4282510Z Metadata: read
+2026-10-18T22:24:02.4283234Z ##[endgroup]
+2026-10-18T22:24:02.4285429Z Secret source: Actions
+2026-10-18T22:24:02.4286418Z Cache mode: write
+2026-10-18T22:24:02.4287184Z Prepare workflow directory
+2026-10-18T22:24:02.4626513Z Prepare all required actions
+2026-10-18T22:24:02.4675532Z Getting action download info
+2026-10-18T22:24:02.8165547Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-18T22:24:02.9360498Z Download action repository 'actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+2026-10-18T22:24:03.2190494Z Download action repository 'gradle/actions@ed408507eac070d1f99cc633dbcf757c94c7933a' (SHA:ed408507eac070d1f99cc633dbcf757c94c7933a)
+2026-10-18T22:24:04.0405391Z Complete job name: architecture
+2026-10-18T22:24:04.1326208Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-10-18T22:24:04.1327982Z with:
+2026-10-18T22:24:04.1328867Z   repository: kiss2oblivion/pdfchemy-android
+2026-10-18T22:24:04.1337648Z   token: ***
+2026-10-18T22:24:04.1338491Z   ssh-strict: true
+2026-10-18T22:24:04.1339336Z   ssh-user: git
+2026-10-18T22:24:04.1340194Z   persist-credentials: true
+2026-10-18T22:24:04.1341276Z   clean: true
+2026-10-18T22:24:04.1342143Z   sparse-checkout-cone-mode: true
+2026-10-18T22:24:04.1343157Z   fetch-depth: 1
+2026-10-18T22:24:04.1343981Z   fetch-tags: false
+2026-10-18T22:24:04.1344840Z   show-progress: true
+2026-10-18T22:24:04.1345690Z   lfs: false
+2026-10-18T22:24:04.1346497Z   submodules: false
+2026-10-18T22:24:04.1347395Z   set-safe-directory: true
+2026-10-18T22:24:04.1348403Z   allow-unsafe-pr-checkout: false
+2026-10-18T22:24:04.1349776Z ##[endgroup]
+2026-10-18T22:24:04.2359130Z Syncing repository: kiss2oblivion/pdfchemy-android
+2026-10-18T22:24:04.2362320Z ##[group]Getting Git version info
+2026-10-18T22:24:04.2363876Z Working directory is '/home/runner/work/pdfchemy-android/pdfchemy-android'
+2026-10-18T22:24:04.2366654Z [command]/usr/bin/git version
+2026-10-18T22:24:04.2482528Z git version 2.55.0
+2026-10-18T22:24:04.2516313Z ##[endgroup]
+2026-10-18T22:24:04.2537266Z Temporarily overriding HOME='/home/runner/work/_temp/70173006-b713-4dc1-8cc6-bc081cc9fb68' before making global git config changes
+2026-10-18T22:24:04.2540545Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-18T22:24:04.2544338Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-18T22:24:04.2588245Z Deleting the contents of '/home/runner/work/pdfchemy-android/pdfchemy-android'
+2026-10-18T22:24:04.2593117Z ##[group]Initializing the repository
+2026-10-18T22:24:04.2597650Z [command]/usr/bin/git init /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-18T22:24:04.2722901Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-18T22:24:04.2724991Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-18T22:24:04.2727006Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-18T22:24:04.2728505Z hint: call:
+2026-10-18T22:24:04.2729263Z hint:
+2026-10-18T22:24:04.2730272Z hint: 	git config --global init.defaultBranch <name>
+2026-10-18T22:24:04.2731796Z hint:
+2026-10-18T22:24:04.2733153Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-18T22:24:04.2735341Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-18T22:24:04.2737132Z hint:
+2026-10-18T22:24:04.2738055Z hint: 	git branch -m <name>
+2026-10-18T22:24:04.2739020Z hint:
+2026-10-18T22:24:04.2740544Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-18T22:24:04.2748715Z Initialized empty Git repository in /home/runner/work/pdfchemy-android/pdfchemy-android/.git/
+2026-10-18T22:24:04.2761097Z [command]/usr/bin/git remote add origin https://github.com/kiss2oblivion/pdfchemy-android
+2026-10-18T22:24:04.2812968Z ##[endgroup]
+2026-10-18T22:24:04.2815492Z ##[group]Disabling automatic garbage collection
+2026-10-18T22:24:04.2817760Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-18T22:24:04.2876911Z ##[endgroup]
+2026-10-18T22:24:04.2879319Z ##[group]Setting up auth
+2026-10-18T22:24:04.2882087Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-18T22:24:04.2904398Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-18T22:24:04.3307433Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-18T22:24:04.3345267Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-18T22:24:04.3576941Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-18T22:24:04.3613012Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-18T22:24:04.3835833Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-18T22:24:04.3875921Z ##[endgroup]
+2026-10-18T22:24:04.3878225Z ##[group]Fetching the repository
+2026-10-18T22:24:04.3886645Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +414b053ac9c85e806392f7479b8b89b9f7a31d0a:refs/remotes/origin/codex/security-remediation-2026-10-18
+2026-10-18T22:24:05.8821448Z From https://github.com/kiss2oblivion/pdfchemy-android
+2026-10-18T22:24:05.8827166Z  * [new ref]         414b053ac9c85e806392f7479b8b89b9f7a31d0a -> origin/codex/security-remediation-2026-10-18
+2026-10-18T22:24:05.8829897Z ##[endgroup]
+2026-10-18T22:24:05.8830468Z ##[group]Determining the checkout info
+2026-10-18T22:24:05.8832122Z ##[endgroup]
+2026-10-18T22:24:05.8838360Z [command]/usr/bin/git sparse-checkout disable
+2026-10-18T22:24:05.8896637Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-18T22:24:05.8931555Z ##[group]Checking out the ref
+2026-10-18T22:24:05.8936357Z [command]/usr/bin/git checkout --progress --force -B codex/security-remediation-2026-10-18 refs/remotes/origin/codex/security-remediation-2026-10-18
+2026-10-18T22:24:06.0924660Z Switched to a new branch 'codex/security-remediation-2026-10-18'
+2026-10-18T22:24:06.0928910Z branch 'codex/security-remediation-2026-10-18' set up to track 'origin/codex/security-remediation-2026-10-18'.
+2026-10-18T22:24:06.0942326Z ##[endgroup]
+2026-10-18T22:24:06.0988823Z [command]/usr/bin/git log -1 --format=%H
+2026-10-18T22:24:06.1017533Z 414b053ac9c85e806392f7479b8b89b9f7a31d0a
+2026-10-18T22:24:06.1404551Z ##[group]Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+2026-10-18T22:24:06.1405163Z with:
+2026-10-18T22:24:06.1405536Z   java-version: 21
+2026-10-18T22:24:06.1405915Z   distribution: temurin
+2026-10-18T22:24:06.1406309Z   java-package: jdk
+2026-10-18T22:24:06.1406695Z   check-latest: false
+2026-10-18T22:24:06.1407078Z   server-id: github
+2026-10-18T22:24:06.1407468Z   server-username: GITHUB_ACTOR
+2026-10-18T22:24:06.1407902Z   server-password: GITHUB_TOKEN
+2026-10-18T22:24:06.1408325Z   overwrite-settings: true
+2026-10-18T22:24:06.1408737Z   job-status: success
+2026-10-18T22:24:06.1411620Z   token: ***
+2026-10-18T22:24:06.1412005Z ##[endgroup]
+2026-10-18T22:24:06.3105994Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+2026-10-18T22:24:06.3114687Z ##[group]Installed distributions
+2026-10-18T22:24:06.3476442Z Resolved Java 21.0.12+1 from tool-cache
+2026-10-18T22:24:06.3477473Z Setting Java 21.0.12+1 as the default
+2026-10-18T22:24:06.3488932Z (node:2310) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-18T22:24:06.3490328Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-18T22:24:06.3493654Z Creating toolchains.xml for JDK version 21 from temurin
+2026-10-18T22:24:06.3651975Z Writing to /home/runner/.m2/toolchains.xml
+2026-10-18T22:24:06.3652806Z 
+2026-10-18T22:24:06.3653300Z Java configuration:
+2026-10-18T22:24:06.3653940Z   Distribution: temurin
+2026-10-18T22:24:06.3654618Z   Version: 21.0.12+1
+2026-10-18T22:24:06.3655400Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:06.3656108Z 
+2026-10-18T22:24:06.3656876Z ##[endgroup]
+2026-10-18T22:24:06.3676597Z Creating settings.xml with server-id: github
+2026-10-18T22:24:06.3710584Z Writing to /home/runner/.m2/settings.xml
+2026-10-18T22:24:06.3926394Z ##[group]Run gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a
+2026-10-18T22:24:06.3927938Z with:
+2026-10-18T22:24:06.3928368Z   min-wrapper-count: 1
+2026-10-18T22:24:06.3928850Z   allow-snapshots: false
+2026-10-18T22:24:06.3929303Z env:
+2026-10-18T22:24:06.3929883Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:06.3930811Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:06.3931862Z ##[endgroup]
+2026-10-18T22:24:06.8222509Z Fetched 10 of 67 checksums
+2026-10-18T22:24:06.9118579Z Fetched 20 of 67 checksums
+2026-10-18T22:24:07.0041867Z Fetched 30 of 67 checksums
+2026-10-18T22:24:07.0882146Z Fetched 40 of 67 checksums
+2026-10-18T22:24:07.1693682Z Fetched 50 of 67 checksums
+2026-10-18T22:24:07.2852871Z Fetched 60 of 67 checksums
+2026-10-18T22:24:07.3621117Z Fetched 67 of 67 checksums
+2026-10-18T22:24:07.3623337Z ✓ Found known Gradle Wrapper JAR files:
+2026-10-18T22:24:07.3624268Z   b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13 gradle/wrapper/gradle-wrapper.jar
+2026-10-18T22:24:07.3764268Z ##[group]Run chmod +x gradlew
+2026-10-18T22:24:07.3764614Z [36;1mchmod +x gradlew[0m
+2026-10-18T22:24:07.4039173Z shell: /usr/bin/bash -e {0}
+2026-10-18T22:24:07.4039464Z env:
+2026-10-18T22:24:07.4039803Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.4040362Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.4040855Z   GRADLE_ACTION_ID: gradle/actions/wrapper-validation
+2026-10-18T22:24:07.4041443Z ##[endgroup]
+2026-10-18T22:24:07.4188455Z ##[group]Run python3 -m unittest discover -s scripts -p test_run_android_instrumentation.py
+2026-10-18T22:24:07.4189124Z [36;1mpython3 -m unittest discover -s scripts -p test_run_android_instrumentation.py[0m
+2026-10-18T22:24:07.4249210Z shell: /usr/bin/bash -e {0}
+2026-10-18T22:24:07.4249614Z env:
+2026-10-18T22:24:07.4249918Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.4250408Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.4250836Z   GRADLE_ACTION_ID: gradle/actions/wrapper-validation
+2026-10-18T22:24:07.4251387Z ##[endgroup]
+2026-10-18T22:24:07.4855687Z .....
+2026-10-18T22:24:07.4856143Z ----------------------------------------------------------------------
+2026-10-18T22:24:07.4856760Z Ran 5 tests in 0.001s
+2026-10-18T22:24:07.4857013Z 
+2026-10-18T22:24:07.4857143Z OK
+2026-10-18T22:24:07.4952235Z ##[group]Run ./gradlew :app-host:securityAudit securityArchitecture :app-host:testDebugUnitTest --tests 'com.pdfchemy.app.arch.*' --tests 'com.pdfchemy.app.architecture.*' --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+2026-10-18T22:24:07.4953914Z [36;1m./gradlew :app-host:securityAudit securityArchitecture :app-host:testDebugUnitTest --tests 'com.pdfchemy.app.arch.*' --tests 'com.pdfchemy.app.architecture.*' --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process[0m
+2026-10-18T22:24:07.5017076Z shell: /usr/bin/bash -e {0}
+2026-10-18T22:24:07.5017323Z env:
+2026-10-18T22:24:07.5017626Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.5018130Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-18T22:24:07.5018562Z   GRADLE_ACTION_ID: gradle/actions/wrapper-validation
+2026-10-18T22:24:07.5018866Z ##[endgroup]
+2026-10-18T22:24:08.9317022Z Downloading https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+2026-10-18T22:24:11.8905702Z .............10%.............20%.............30%.............40%.............50%.............60%..............70%.............80%.............90%.............100%
+2026-10-18T22:24:13.7529653Z 
+2026-10-18T22:24:13.7530246Z Welcome to Gradle 9.4.1!
+2026-10-18T22:24:13.7530616Z 
+2026-10-18T22:24:13.7530828Z Here are the highlights of this release:
+2026-10-18T22:24:13.7531584Z  - Java 26 support
+2026-10-18T22:24:13.7532001Z  - Non-class-based JVM tests
+2026-10-18T22:24:13.7532446Z  - Enhanced console progress bar
+2026-10-18T22:24:13.7532737Z 
+2026-10-18T22:24:13.7533091Z For more details see https://docs.gradle.org/9.4.1/release-notes.html
+2026-10-18T22:24:13.7533596Z 
+2026-10-18T22:24:13.8522744Z Starting a Gradle Daemon (subsequent builds will be faster)
+2026-10-18T22:25:09.4514240Z 
+2026-10-18T22:25:09.4531847Z > Configure project :app-host
+2026-10-18T22:25:09.4621918Z WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+2026-10-18T22:25:09.4651461Z The current default is 'true'.
+2026-10-18T22:25:09.4681754Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4683288Z WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+2026-10-18T22:25:09.4711581Z The current default is 'true'.
+2026-10-18T22:25:09.4741670Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4743006Z WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+2026-10-18T22:25:09.4771724Z The current default is 'true'.
+2026-10-18T22:25:09.4801743Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4811844Z WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+2026-10-18T22:25:09.4836200Z The current default is 'true'.
+2026-10-18T22:25:09.4862013Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4891728Z WARNING: The option setting 'android.newDsl=false' is deprecated.
+2026-10-18T22:25:09.4911671Z The current default is 'true'.
+2026-10-18T22:25:09.4932912Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4934195Z WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+2026-10-18T22:25:09.4935225Z The current default is 'false'.
+2026-10-18T22:25:09.4936586Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4937641Z WARNING: The option setting 'android.enableJetifier=true' is deprecated.
+2026-10-18T22:25:09.4938513Z The current default is 'false'.
+2026-10-18T22:25:09.4939229Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4940308Z WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-18T22:25:09.4941758Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4943155Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-18T22:25:09.4944137Z     android.newDsl=false
+2026-10-18T22:25:09.4944759Z to this project's gradle.properties file.
+2026-10-18T22:25:09.4945674Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-18T22:25:09.4946414Z 
+2026-10-18T22:25:09.4947348Z To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-18T22:25:09.4948957Z WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-18T22:25:09.4950151Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4951458Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-18T22:25:09.4952483Z     android.newDsl=false
+2026-10-18T22:25:09.4953362Z to this project's gradle.properties file.
+2026-10-18T22:25:09.4954314Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-18T22:25:09.4955036Z 
+2026-10-18T22:25:09.4955952Z To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-18T22:25:09.4957569Z WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-18T22:25:09.4958824Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:09.4959905Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-18T22:25:09.4960919Z     android.newDsl=false
+2026-10-18T22:25:09.4961821Z to this project's gradle.properties file.
+2026-10-18T22:25:09.4962753Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-18T22:25:09.4963490Z 
+2026-10-18T22:25:09.4964412Z To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-18T22:25:11.9510169Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:11:1: 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+2026-10-18T22:25:11.9513315Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-18T22:25:11.9523998Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:85:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:11.9527650Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:86:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:12.0508273Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:12.0510053Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:12.1515329Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:12.1550444Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:12.1582695Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:12.1591302Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:12.1594047Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:12.1600052Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:14.6511752Z 
+2026-10-18T22:25:14.6541995Z > Configure project :pdf-ipc
+2026-10-18T22:25:14.6552035Z WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-18T22:25:14.6581922Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-18T22:25:14.6611842Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-18T22:25:14.6641516Z     android.newDsl=false
+2026-10-18T22:25:14.6661597Z to this project's gradle.properties file.
+2026-10-18T22:25:14.6671890Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-18T22:25:14.6701599Z 
+2026-10-18T22:25:14.6702537Z To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-18T22:25:14.6704914Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:6:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-18T22:25:14.6707397Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-18T22:25:14.6723541Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:19:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:14.6726899Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:20:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:14.6729579Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:14.6731946Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:14.6734124Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:14.6736290Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:14.6738505Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:14.6739764Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:14.6741200Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:14.6743059Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.0551704Z 
+2026-10-18T22:25:16.0571985Z > Configure project :pdf-jail
+2026-10-18T22:25:16.0602774Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:8:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-18T22:25:16.0632448Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-18T22:25:16.0663062Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:21:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:16.0682762Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:22:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:16.0713033Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.0742404Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.0749110Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.0751579Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.0753878Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.0756180Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.0758440Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.0760707Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.6531518Z 
+2026-10-18T22:25:16.6532559Z > Configure project :pdf-renderer
+2026-10-18T22:25:16.6562936Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:6:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-18T22:25:16.6592223Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-18T22:25:16.6621986Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:19:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:16.6625514Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:20:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-18T22:25:16.6657308Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.6682434Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.6711930Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.6721913Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.6724199Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.6726275Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:16.6728315Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-18T22:25:16.6730331Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-18T22:25:19.2661629Z 
+2026-10-18T22:25:19.2687764Z > Task :app-host:securityAudit
+2026-10-18T22:25:19.2735410Z securityAudit scanned 135 files in app module.
+2026-10-18T22:25:26.3507213Z 
+2026-10-18T22:25:26.3511282Z > Task :securityArchitecture
+2026-10-18T22:25:26.3518023Z > Task :app-host:preBuild
+2026-10-18T22:25:26.3518703Z > Task :app-host:preDebugBuild
+2026-10-18T22:25:26.3519376Z > Task :pdf-ipc:preBuild UP-TO-DATE
+2026-10-18T22:25:26.3520110Z > Task :pdf-ipc:preDebugBuild UP-TO-DATE
+2026-10-18T22:25:27.0508978Z > Task :app-host:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-10-18T22:25:27.0509606Z > Task :app-host:generateDebugBuildConfig
+2026-10-18T22:25:27.0509940Z > Task :pdf-ipc:writeDebugAarMetadata
+2026-10-18T22:25:27.1507956Z 
+2026-10-18T22:25:27.1522163Z > Task :pdf-jail:verifyTesseractAarHash
+2026-10-18T22:25:27.1524250Z verifyTesseractAarHash: Verified tesseract4android-4.9.0-inmemory.aar SHA-256 (d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa) matches pinned policy.
+2026-10-18T22:25:27.1527283Z 
+2026-10-18T22:25:27.1527709Z > Task :pdf-jail:preBuild
+2026-10-18T22:25:27.1528352Z > Task :pdf-jail:preDebugBuild
+2026-10-18T22:25:27.1532468Z > Task :pdf-jail:writeDebugAarMetadata
+2026-10-18T22:25:27.1533464Z > Task :pdf-renderer:preBuild UP-TO-DATE
+2026-10-18T22:25:27.1534202Z > Task :pdf-renderer:preDebugBuild UP-TO-DATE
+2026-10-18T22:25:27.1534930Z > Task :pdf-renderer:writeDebugAarMetadata
+2026-10-18T22:25:34.4508468Z > Task :pdf-ipc:compileDebugAidl
+2026-10-18T22:25:37.3532134Z > Task :app-host:compileDebugAidl NO-SOURCE
+2026-10-18T22:25:37.3555575Z > Task :app-host:generateDebugResValues
+2026-10-18T22:25:37.3581541Z > Task :app-host:checkDebugAarMetadata
+2026-10-18T22:25:37.3611583Z > Task :app-host:processDebugGoogleServices
+2026-10-18T22:25:37.3641566Z > Task :app-host:mapDebugSourceSetPaths
+2026-10-18T22:25:37.3671594Z > Task :pdf-ipc:processDebugNavigationResources
+2026-10-18T22:25:37.3701670Z > Task :pdf-jail:processDebugNavigationResources
+2026-10-18T22:25:37.3731671Z > Task :pdf-renderer:processDebugNavigationResources
+2026-10-18T22:25:37.5526031Z > Task :app-host:processDebugNavigationResources
+2026-10-18T22:25:37.5583813Z > Task :app-host:compileDebugNavigationResources
+2026-10-18T22:25:37.5584450Z > Task :app-host:generateDebugResources
+2026-10-18T22:25:37.5584991Z > Task :pdf-ipc:generateDebugResValues
+2026-10-18T22:25:37.5585513Z > Task :pdf-ipc:generateDebugResources
+2026-10-18T22:25:37.5586051Z > Task :pdf-ipc:packageDebugResources
+2026-10-18T22:25:37.5586585Z > Task :pdf-jail:generateDebugResValues
+2026-10-18T22:25:37.5587135Z > Task :pdf-jail:generateDebugResources
+2026-10-18T22:25:37.6509984Z > Task :pdf-jail:packageDebugResources
+2026-10-18T22:25:37.6511381Z > Task :pdf-renderer:generateDebugResValues
+2026-10-18T22:25:37.6512225Z > Task :pdf-renderer:generateDebugResources
+2026-10-18T22:25:37.6512846Z > Task :pdf-renderer:packageDebugResources
+2026-10-18T22:25:41.0507897Z > Task :app-host:mergeDebugResources
+2026-10-18T22:25:41.2511990Z > Task :app-host:packageDebugResources
+2026-10-18T22:25:42.1508872Z > Task :app-host:createDebugCompatibleScreenManifests
+2026-10-18T22:25:42.1531798Z > Task :app-host:extractDeepLinksDebug
+2026-10-18T22:25:42.1561600Z > Task :pdf-ipc:extractDeepLinksDebug
+2026-10-18T22:25:42.2511481Z 
+2026-10-18T22:25:42.2541976Z > Task :pdf-ipc:processDebugManifest
+2026-10-18T22:25:42.2572608Z package="com.pdfchemy.app.ipc" found in source AndroidManifest.xml: /home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/src/main/AndroidManifest.xml.
+2026-10-18T22:25:42.2602204Z Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+2026-10-18T22:25:42.2632510Z Recommendation: remove package="com.pdfchemy.app.ipc" from the source AndroidManifest.xml: /home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/src/main/AndroidManifest.xml.
+2026-10-18T22:25:42.2634004Z 
+2026-10-18T22:25:42.2661653Z > Task :pdf-jail:extractDeepLinksDebug
+2026-10-18T22:25:42.2666339Z > Task :pdf-jail:processDebugManifest
+2026-10-18T22:25:42.2691640Z > Task :pdf-renderer:extractDeepLinksDebug
+2026-10-18T22:25:42.2707203Z > Task :pdf-renderer:processDebugManifest
+2026-10-18T22:25:42.4508222Z > Task :app-host:parseDebugLocalResources
+2026-10-18T22:25:42.6507828Z > Task :app-host:processDebugMainManifest
+2026-10-18T22:25:42.7508541Z > Task :app-host:processDebugManifest
+2026-10-18T22:25:42.8514552Z > Task :pdf-ipc:mapDebugSourceSetPaths
+2026-10-18T22:25:42.8515722Z > Task :app-host:processDebugManifestForPackage
+2026-10-18T22:25:42.8516615Z > Task :pdf-ipc:compileDebugLibraryResources
+2026-10-18T22:25:42.8517366Z > Task :pdf-jail:mapDebugSourceSetPaths
+2026-10-18T22:25:42.8518152Z > Task :pdf-jail:compileDebugLibraryResources
+2026-10-18T22:25:42.8525180Z > Task :pdf-ipc:parseDebugLocalResources
+2026-10-18T22:25:42.8525943Z > Task :pdf-jail:parseDebugLocalResources
+2026-10-18T22:25:42.8526684Z > Task :pdf-ipc:generateDebugRFile
+2026-10-18T22:25:42.8527390Z > Task :pdf-jail:generateDebugRFile
+2026-10-18T22:25:42.8528105Z > Task :pdf-renderer:mapDebugSourceSetPaths
+2026-10-18T22:25:42.9538546Z > Task :pdf-renderer:compileDebugLibraryResources
+2026-10-18T22:25:42.9561924Z > Task :pdf-ipc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-10-18T22:25:42.9581674Z > Task :pdf-renderer:parseDebugLocalResources
+2026-10-18T22:25:48.6524741Z > Task :pdf-renderer:generateDebugRFile
+2026-10-18T22:25:50.4512409Z > Task :app-host:processDebugResources
+2026-10-18T22:25:50.5509308Z > Task :pdf-ipc:javaPreCompileDebug
+2026-10-18T22:25:50.5510060Z > Task :app-host:javaPreCompileDebug
+2026-10-18T22:25:50.5510731Z > Task :app-host:preDebugUnitTestBuild
+2026-10-18T22:25:50.5511646Z > Task :app-host:javaPreCompileDebugUnitTest
+2026-10-18T22:25:50.5516568Z > Task :app-host:generateDebugAssets UP-TO-DATE
+2026-10-18T22:25:50.5517516Z > Task :pdf-ipc:generateDebugAssets UP-TO-DATE
+2026-10-18T22:25:50.5527192Z > Task :pdf-ipc:mergeDebugAssets
+2026-10-18T22:25:50.5528137Z > Task :pdf-jail:generateDebugAssets UP-TO-DATE
+2026-10-18T22:25:50.6521721Z > Task :pdf-jail:mergeDebugAssets
+2026-10-18T22:25:50.6551781Z > Task :pdf-renderer:generateDebugAssets UP-TO-DATE
+2026-10-18T22:25:50.6581567Z > Task :pdf-renderer:mergeDebugAssets
+2026-10-18T22:25:50.9508275Z > Task :app-host:mergeDebugAssets
+2026-10-18T22:25:51.2534624Z > Task :app-host:packageDebugUnitTestForUnitTest
+2026-10-18T22:25:54.7522227Z > Task :app-host:processDebugUnitTestManifest
+2026-10-18T22:25:54.7532814Z > Task :app-host:generateDebugUnitTestConfig
+2026-10-18T22:25:54.7533434Z > Task :pdf-jail:compileDebugAidl NO-SOURCE
+2026-10-18T22:25:54.7534138Z > Task :pdf-jail:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-10-18T22:25:54.7534840Z > Task :pdf-jail:generateDebugBuildConfig
+2026-10-18T22:25:54.7535362Z > Task :pdf-jail:javaPreCompileDebug
+2026-10-18T22:25:54.7535885Z > Task :pdf-renderer:compileDebugAidl NO-SOURCE
+2026-10-18T22:25:54.7536977Z > Task :pdf-renderer:checkKotlinGradlePluginConfigurationErrors SKIPPED
+2026-10-18T22:25:54.8508221Z > Task :pdf-renderer:generateDebugBuildConfig
+2026-10-18T22:25:54.8521716Z > Task :pdf-renderer:javaPreCompileDebug
+2026-10-18T22:26:02.7521191Z > Task :pdf-ipc:compileDebugKotlin
+2026-10-18T22:26:04.7512291Z warning: [options] source value 8 is obsolete and will be removed in a future release
+2026-10-18T22:26:04.7512920Z 
+2026-10-18T22:26:04.7513320Z > Task :pdf-ipc:compileDebugJavaWithJavac
+2026-10-18T22:26:04.7514865Z Java compiler version 21 has deprecated support for compiling with source/target version 8.
+2026-10-18T22:26:04.7516148Z Try one of the following options:
+2026-10-18T22:26:04.7516992Z     1. [Recommended] Use Java toolchain with a lower language version
+2026-10-18T22:26:04.7517932Z     2. Set a higher source/target version
+2026-10-18T22:26:04.7518872Z     3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+2026-10-18T22:26:04.7520185Z For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+2026-10-18T22:26:04.7522065Z To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+2026-10-18T22:26:04.7532146Z warning: [options] target value 8 is obsolete and will be removed in a future release
+2026-10-18T22:26:04.7552158Z warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+2026-10-18T22:26:05.3552219Z 3 warnings
+2026-10-18T22:26:06.2507272Z 
+2026-10-18T22:26:06.2510791Z > Task :pdf-ipc:bundleLibCompileToJarDebug
+2026-10-18T22:26:06.2513323Z > Task :pdf-ipc:bundleLibRuntimeToJarDebug
+2026-10-18T22:26:11.9519350Z > Task :pdf-ipc:processDebugJavaRes
+2026-10-18T22:26:36.2509211Z > Task :app-host:compileDebugKotlin
+2026-10-18T22:26:41.9551991Z > Task :pdf-jail:compileDebugKotlin
+2026-10-18T22:27:04.0533129Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:68:31 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0562756Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:94:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0592768Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:99:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0622860Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:108:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0645067Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:139:35 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0673999Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:155:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0702780Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:167:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0732739Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:178:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0762774Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:190:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0766102Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:197:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0772823Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:210:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0775810Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:222:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0778709Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:235:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0781888Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfBookletEngineWorker.kt:60:28 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0784956Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfHeaderFooterEngine.kt:106:24 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0787613Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageExtractorEngine.kt:55:41 Condition is always 'true'.
+2026-10-18T22:27:04.0789929Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageReplacerEngine.kt:55:37 Condition is always 'true'.
+2026-10-18T22:27:04.0792454Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:69:17 Condition is always 'false'.
+2026-10-18T22:27:04.0794951Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:128:36 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0797765Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfManipulatorWorker.kt:339:34 'fun setCanPrintDegraded(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0800647Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfNUpEngineWorker.kt:138:16 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0834110Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:271:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0837259Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:273:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0840324Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:288:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0843674Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:290:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0847237Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:59:44 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0850532Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:77:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0874189Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:148:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0877238Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:211:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0880144Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:37:63 Java type mismatch: inferred type is 'Nothing?', but 'String' was expected.
+2026-10-18T22:27:04.0913502Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:80:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+2026-10-18T22:27:04.0916407Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:115:33 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+2026-10-18T22:27:07.6531642Z 
+2026-10-18T22:27:07.6562001Z > Task :pdf-jail:compileDebugJavaWithJavac
+2026-10-18T22:27:07.6582032Z Java compiler version 21 has deprecated support for compiling with source/target version 8.
+2026-10-18T22:27:07.6611674Z Try one of the following options:
+2026-10-18T22:27:07.6621787Z     1. [Recommended] Use Java toolchain with a lower language version
+2026-10-18T22:27:07.6641557Z     2. Set a higher source/target version
+2026-10-18T22:27:07.6671953Z     3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+2026-10-18T22:27:07.6702149Z For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+2026-10-18T22:27:07.6703965Z To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+2026-10-18T22:27:07.7512412Z warning: [options] source value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:07.7535013Z warning: [options] target value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:07.7536106Z warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+2026-10-18T22:27:08.0562161Z 3 warnings
+2026-10-18T22:27:14.7509664Z 
+2026-10-18T22:27:14.7561873Z > Task :pdf-jail:bundleLibRuntimeToJarDebug
+2026-10-18T22:27:14.7591693Z > Task :pdf-jail:processDebugJavaRes
+2026-10-18T22:27:24.2507828Z > Task :pdf-renderer:compileDebugKotlin
+2026-10-18T22:27:24.4522336Z warning: [options] source value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:24.4523001Z 
+2026-10-18T22:27:24.4531812Z warning: [options] target value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:24.4532667Z > Task :pdf-renderer:compileDebugJavaWithJavac
+2026-10-18T22:27:24.4551791Z Java compiler version 21 has deprecated support for compiling with source/target version 8.
+2026-10-18T22:27:24.4571874Z warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+2026-10-18T22:27:24.4581585Z Try one of the following options:
+2026-10-18T22:27:24.4601522Z 3 warnings
+2026-10-18T22:27:24.4611580Z     1. [Recommended] Use Java toolchain with a lower language version
+2026-10-18T22:27:24.4631439Z     2. Set a higher source/target version
+2026-10-18T22:27:24.4641800Z     3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+2026-10-18T22:27:24.4671989Z For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+2026-10-18T22:27:24.4692033Z To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+2026-10-18T22:27:24.4721848Z 
+2026-10-18T22:27:24.4731540Z > Task :pdf-renderer:bundleLibRuntimeToJarDebug
+2026-10-18T22:27:24.4761458Z > Task :pdf-renderer:processDebugJavaRes
+2026-10-18T22:27:32.5514195Z 
+2026-10-18T22:27:32.5538113Z > Task :app-host:compileDebugKotlin
+2026-10-18T22:27:32.5540239Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1768:44 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5543991Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1792:133 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+2026-10-18T22:27:32.5547462Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2090:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+2026-10-18T22:27:32.5550894Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2184:42 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+2026-10-18T22:27:32.5554628Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:50:114 'constructor(p0: Context!): Notification.Builder' is deprecated. Deprecated in Java.
+2026-10-18T22:27:32.5559146Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:59:51 'constructor(p0: Int, p1: CharSequence!, p2: PendingIntent?): Notification.Action.Builder' is deprecated. Deprecated in Java.
+2026-10-18T22:27:32.5564088Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/logic/audio/TtsPcmAssembler.kt:12:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+2026-10-18T22:27:32.5568812Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/AttachmentManagerScreen.kt:272:56 'val Icons.Rounded.InsertDriveFile: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.InsertDriveFile.
+2026-10-18T22:27:32.5573734Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:146:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5578313Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:295:40 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5583234Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:160:42 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+2026-10-18T22:27:32.5587627Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:537:44 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+2026-10-18T22:27:32.5592739Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt:204:75 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5597224Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:101:25 Condition is always 'true'.
+2026-10-18T22:27:32.5600603Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:103:32 Condition is always 'false'.
+2026-10-18T22:27:32.5604917Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/EbookConverterScreen.kt:217:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5614388Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:826:25 Condition is always 'false'.
+2026-10-18T22:27:32.5617891Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:1438:37 Condition is always 'true'.
+2026-10-18T22:27:32.5622458Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/MarkdownStudioScreen.kt:259:56 'val Icons.Rounded.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FormatListBulleted.
+2026-10-18T22:27:32.5627444Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt:204:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+2026-10-18T22:27:32.5632258Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:138:42 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+2026-10-18T22:27:32.5637067Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:155:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5642044Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:163:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5647126Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:180:42 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+2026-10-18T22:27:32.5652312Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:228:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5657125Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:245:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5662021Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:270:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5667077Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:587:49 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+2026-10-18T22:27:32.5672252Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:923:49 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5677078Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt:500:48 'val Icons.Rounded.NoteAdd: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.NoteAdd.
+2026-10-18T22:27:32.5682018Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt:550:85 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5687256Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt:461:65 Condition is always 'true'.
+2026-10-18T22:27:32.5697462Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:558:25 'fun LinearProgressIndicator(progress: Float, modifier: Modifier = ..., color: Color = ..., trackColor: Color = ..., strokeCap: StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda.
+2026-10-18T22:27:32.5710768Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:718:56 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5721546Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:73 'val Icons.Rounded.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeUp.
+2026-10-18T22:27:32.5731935Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:101 'val Icons.Rounded.VolumeMute: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeMute.
+2026-10-18T22:27:32.5737269Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:1110:47 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5740521Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ScanPdfScreen.kt:456:48 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5743861Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:230:181 'val Icons.Rounded.Undo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Undo.
+2026-10-18T22:27:32.5746906Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:231:181 'val Icons.Rounded.Redo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Redo.
+2026-10-18T22:27:32.5749971Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:41:92 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+2026-10-18T22:27:32.5755874Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:49:92 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+2026-10-18T22:27:32.5762023Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:58:80 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+2026-10-18T22:27:32.5767078Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:60:94 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5770333Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:61:96 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5773858Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:63:96 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+2026-10-18T22:27:32.5777130Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:69:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5780282Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:71:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5786571Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:74:82 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+2026-10-18T22:27:32.5793329Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:86:98 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+2026-10-18T22:27:32.5802133Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:90:102 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+2026-10-18T22:27:32.5808511Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:171:48 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+2026-10-18T22:27:32.5812285Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:369:44 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+2026-10-18T22:27:32.5815881Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/main/java/com/pdfchemy/app/ui/textconverter/TextConverterScreen.kt:138:39 'val Icons.Rounded.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.ArrowForward.
+2026-10-18T22:27:34.7532214Z warning: [options] source value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:34.7532860Z 
+2026-10-18T22:27:34.7533338Z warning: [options] target value 8 is obsolete and will be removed in a future release
+2026-10-18T22:27:34.7562077Z warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+2026-10-18T22:27:34.7563258Z > Task :app-host:compileDebugJavaWithJavac
+2026-10-18T22:27:34.7591544Z 3 warnings
+2026-10-18T22:27:34.7592249Z Java compiler version 21 has deprecated support for compiling with source/target version 8.
+2026-10-18T22:27:34.7621711Z Try one of the following options:
+2026-10-18T22:27:34.7651880Z     1. [Recommended] Use Java toolchain with a lower language version
+2026-10-18T22:27:34.7688637Z     2. Set a higher source/target version
+2026-10-18T22:27:34.7711951Z     3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+2026-10-18T22:27:34.7713075Z For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+2026-10-18T22:27:34.7714430Z To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+2026-10-18T22:27:38.5511586Z 
+2026-10-18T22:27:38.5532106Z > Task :app-host:bundleDebugClassesToRuntimeJar
+2026-10-18T22:27:38.5532951Z > Task :app-host:bundleDebugClassesToCompileJar
+2026-10-18T22:27:38.5533634Z > Task :app-host:processDebugJavaRes
+2026-10-18T22:28:00.8512808Z 
+2026-10-18T22:28:00.8542355Z > Task :app-host:compileDebugUnitTestKotlin
+2026-10-18T22:28:00.8574606Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/test/java/com/pdfchemy/app/logic/OutputWorkflowTest.kt:28:76 Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged. This will become an error in a future release.
+2026-10-18T22:28:00.8604997Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:24:20 Check for instance is always 'true'.
+2026-10-18T22:28:00.8623177Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:28:20 Check for instance is always 'true'.
+2026-10-18T22:28:00.8627926Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:33:20 Check for instance is always 'true'.
+2026-10-18T22:28:00.8636749Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:38:20 Check for instance is always 'true'.
+2026-10-18T22:28:00.9507045Z 
+2026-10-18T22:28:00.9522459Z > Task :app-host:compileDebugUnitTestJavaWithJavac NO-SOURCE
+2026-10-18T22:28:00.9551955Z > Task :app-host:processDebugUnitTestJavaRes
+2026-10-18T22:28:30.9507294Z > Task :app-host:testDebugUnitTest
+2026-10-18T22:28:34.3507800Z 
+2026-10-18T22:28:34.3516639Z [Incubating] Problems report is available at: file:///home/runner/work/pdfchemy-android/pdfchemy-android/build/reports/problems/problems-report.html
+2026-10-18T22:28:34.3519358Z 
+2026-10-18T22:28:34.3519731Z BUILD SUCCESSFUL in 4m 25s
+2026-10-18T22:28:34.3520361Z 89 actionable tasks: 89 executed
+2026-10-18T22:28:34.4084739Z Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html
+2026-10-18T22:28:34.7399092Z Post job cleanup.
+2026-10-18T22:28:34.8728051Z (node:2752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-18T22:28:34.8728945Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-18T22:28:34.8914132Z Post job cleanup.
+2026-10-18T22:28:34.9845521Z [command]/usr/bin/git version
+2026-10-18T22:28:34.9895793Z git version 2.55.0
+2026-10-18T22:28:34.9941175Z Temporarily overriding HOME='/home/runner/work/_temp/f73b17f5-276c-41e7-9ca7-629ebf4ef4d6' before making global git config changes
+2026-10-18T22:28:34.9942870Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-18T22:28:34.9948227Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-18T22:28:34.9993148Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-18T22:28:35.0032749Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-18T22:28:35.0350209Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-18T22:28:35.0376772Z http.https://github.com/.extraheader
+2026-10-18T22:28:35.0403423Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-18T22:28:35.0448829Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-18T22:28:35.0803581Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-18T22:28:35.0857354Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-18T22:28:35.1328762Z Cleaning up orphan processes
+2026-10-18T22:28:35.1643653Z Terminate orphan process: pid (2471) (java)
+2026-10-18T22:28:35.1657204Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3, gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
