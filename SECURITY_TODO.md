@@ -26,8 +26,8 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [x] SC02-01 Exercise actual worker search, select returned targets and export the internal-link fixture. The unchanged app fails before publication with closed imported streams; the separate saved-PDF component probe establishes the retained-sensitive-stream leak. See SC02_EXECUTION.md; no successful leaking native export or UI automation is claimed.
 - [x] SC02-02 Keep destinations attached to sanitized page identities and prevent imported original-sensitive references. One live document graph, transitive shared-stream replacement and final reachability checks pass local native tests.
 - [x] SC02-03 Cover direct destinations, GoTo actions, annotations, cross-page links and shared resources. Eight security methods pass within ten-method local API24/36 selections, including crop/rotation pixels and multiline selection. See the SC-02 receipt.
-- [ ] SC02-04 Verify saved objects, extraction, pixels, crop/rotation/multiline cases and safe navigation on Android.
-- [ ] SC02-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC02-04 Verify saved objects, extraction, pixels, crop/rotation/multiline cases and safe navigation on Android. Source `383f193a` passes 229 methods each on CI API24/30/34/36 (916 total), including all eight new security cases; downloaded artifacts are validated in the SC-02 receipt.
+- [x] SC02-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source `383f193a` is committed/remote-verified; run `39236250552` passes all nine jobs after the unchanged secret-check retry. The closeout commit changes only documentation/evidence.
 
 ## 3. SC-03 — Published batch output survives cancellation
 
@@ -122,7 +122,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
 | SC-01 | COMPLETE: implementation and batch gates verified | Final source `62d1b1e8`, Android remote verified | 63 worker tests and nine focused local native methods pass; CI run `39228725164` passes 221 methods on each API24/30/34/36 (884 total), all eight Editor regressions included | None for this batch; legacy WebView observation remains separately under FOLLOW-05 and overall release stays HOLD |
-| SC-02 | Local batch gates complete; full CI pending | Batch after SC-01 closeout `b24f8971`; exact commit/ref recorded in the SC-02 receipt | 63 worker tests, assembly/static/lint, unsigned release/artifact checks and ten-method native selections each on API24/36 pass; negative attempts retained | Complete same-source CI and final receipt |
+| SC-02 | COMPLETE: implementation and batch gates verified | Source `383f193a`, Android remote verified | Local worker/native/build/lint/artifact gates and full same-source CI pass; 229 native methods per API24/30/34/36, 916 total | None for this batch; overall release remains HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

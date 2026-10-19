@@ -1,6 +1,21 @@
 # SC-02 search-redaction page graph
 
-Release: **HOLD**. Batch validation in progress; no later finding has started.
+Release: **HOLD**. Implementation and required batch validation complete; no later finding has started.
+
+SC-02 application/test source is committed at `383f193aa5c5a0f5ebbd01e25f98d0add319c5f7`, pushed only to the Android remote with the remote SHA matched. [Full CI run 39236250552](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39236250552) targets that exact source. Application/test source is frozen while this gate runs.
+
+CI attempt 1 secret job `118005913550` fails: the Aiven detector reports `verified: false`, `verificationError: true` for historical `app/release/app-release.aab` at `17c8f824bb58b49983f1c45bfc490c9d6c277e13`. Six findings are reported; five exact historical matches are reviewed and one is rejected. The gate deliberately rejects every verification error, even at a reviewed location. The previous full SC-01 CI reports six exact matches and zero rejections, but does not verify this attempt. No provider-error cause is established, no candidate value is exposed and no scanner/review policy is changed. Other independent jobs continue; a failed-job retry awaits workflow completion.
+
+Architecture (`118005913837`), dependency security (`118005914050`) and the complete JVM job (`118007884662`) pass. All four downloaded native artifacts validate 229 unique completed methods each, zero failures/errors/skips, all eight Search security regressions and all eight Editor security regressions. API24 additionally passes strict instrumentation-result validation and has an empty crash buffer. This is **916 complete native executions** on source `383f193a`. The immediate targeted secret-job retry is rejected while the workflow is active; that request/result is retained.
+
+| API | Original execution job | Raw result |
+|---|---|---|
+| 24 | `118007884752` | `ci-api24-instrumentation.log`, install/crash logs |
+| 30 | `118007884635` | `ci-api30.xml` |
+| 34 | `118007884667` | `ci-api34.xml` |
+| 36 | `118007884718` | `ci-api36.xml` |
+
+Attempt 1 completes with only the secret verification failure; the dependent release build (`118018811004`) is skipped. The final first-attempt job/status record is retained. Failed-job retry is accepted after workflow completion; attempt 2 secret job `118019242292` passes unchanged with six findings, six exact reviewed historical matches and zero rejected. Successful first-attempt jobs are carried forward, not counted as new executions. The dependent release build (`118019385347`) passes release lint, debug/minified unsigned release assembly and the corpus/matrix/artifact-hygiene gate. Attempt 2 and the complete workflow are successful; the final job/status record and raw build log are retained. No source, scanner version, detector or reviewed-match policy is changed to obtain the retry pass; the original verification-error cause remains unattributed.
 
 SC-01 closes at documentation/evidence commit `b24f897178a9a9355a11929015bcfc2a456d7220`, Android-only pushed with matching remote SHA. Its final application/test source `62d1b1e8dca4893d6889ee59a95598bf02b219db` passes all nine CI jobs in run `39228725164`, including 221 native methods on each API24/30/34/36. This closeout commit changes no application/test/script/workflow source relative to that CI target.
 
@@ -28,4 +43,4 @@ Latest local checks pass: 63 worker methods (zero failures/errors/skips), debug/
 
 The local unsigned minified release build passes in 3m 8s. The artifact gate passes 14 fixture hashes, 62 smoke-matrix rows, production IDs, manifests/version/SDK and packaged-asset hygiene. Matrix completeness is a static check, not execution of 62 UI routes. The first gate invocation passes an unsupported path argument and executes no check; its error log is retained separately from the successful corrected invocation using the script's boolean `--artifact` flag.
 
-Raw logs/XML and artifact/source hashes are recorded under `sc02/`; 35 raw files are hashed and checked against staged bytes. Local gates are complete. Full same-source CI remains pending until explicitly recorded. No physical-device, production-signing or Play acceptance is claimed. Both owned emulators are stopped after verification.
+Raw logs/XML and artifact/source hashes are recorded under `sc02/`; The initial 35 local raw files are hashed and checked against staged bytes; the manifest is extended with all retained CI logs/XML after rechecking earlier hashes. Local gates and full same-source CI are complete at source `383f193a`. No physical-device, production-signing or Play acceptance is claimed. Both owned emulators are stopped after verification.

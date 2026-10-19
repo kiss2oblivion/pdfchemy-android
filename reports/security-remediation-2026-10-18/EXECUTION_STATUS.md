@@ -1,6 +1,6 @@
 # Android security remediation execution - 2026-10-18
 
-**Release: HOLD. SC-01 implementation and required batch verification are complete.** Final source `62d1b1e8` passes 221 native methods on each CI API24/30/34/36 (884 total), including the extended outline-reference fixture. It also passes 63 local worker tests, nine focused methods on local API24/36, assembly/static/lint and unsigned release artifact checks. SC-02 is implemented with local native/lint verification; its release/commit/full-CI gates remain open. See [SC-02 execution](SC02_EXECUTION.md). SC-03 and later source findings have not started.
+**Release: HOLD. SC-01 implementation and required batch verification are complete.** Final source `62d1b1e8` passes 221 native methods on each CI API24/30/34/36 (884 total), including the extended outline-reference fixture. It also passes 63 local worker tests, nine focused methods on local API24/36, assembly/static/lint and unsigned release artifact checks. SC-02 source `383f193a` is committed, Android-only pushed and remote-verified; all required same-source CI gates pass, including 229 native methods on each API24/30/34/36 (916 total). See [SC-02 execution](SC02_EXECUTION.md). SC-03 and later source findings have not started.
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
@@ -27,7 +27,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 | Finding | Status | Remaining gate |
 |---|---|---|
 | SC-01 editor forensic redaction | Current `62d1b1e8` is committed, Android-only pushed and remote-SHA verified; local gates and all four full CI native suites pass | None for this batch; later findings and release gates remain open |
-| SC-02 | Local worker/assembly/static/lint, unsigned release/artifact checks and ten-method native selections on API24/36 pass | Complete same-source CI and final receipt; see [SC-02 receipt](SC02_EXECUTION.md) |
+| SC-02 | COMPLETE: source `383f193a`, all local gates and full same-source CI pass; 916 native executions | None for this batch; see [SC-02 receipt](SC02_EXECUTION.md) for the retained secret-verifier failure and unchanged successful retry |
 | SC-03 through SC-09 | Not started | Their separate implementation/test/commit batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
