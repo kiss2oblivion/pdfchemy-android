@@ -1,0 +1,68 @@
+{
+  "baseline_application_source": "62d1b1e8dca4893d6889ee59a95598bf02b219db",
+  "unit": {
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "native": [
+    {
+      "api": 24,
+      "tests": 10,
+      "failed": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    },
+    {
+      "api": 36,
+      "tests": 10,
+      "failed": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    }
+  ],
+  "full_ci": "not-run",
+  "source_and_artifact_hashes": [
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt",
+      "sha256": "223e35cacad69a0561a67ae444cdf6f5e6c37e032bbd15a16d523749908161f1"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/SearchRedactionObjectSecurityTest.kt",
+      "sha256": "7e1f5c5c42a323ba0e310d4d6fac4511dbe7c419f528853f19f4ab6b76e4b3de"
+    },
+    {
+      "path": ".security-runtime/sc02/baseline.apk",
+      "sha256": "996eaed869340e6a6d4322dd6503206eae8061399c0698f9c76bde635c464c89"
+    },
+    {
+      "path": ".security-runtime/sc02/baseline-test.apk",
+      "sha256": "1d0a422b035c9c15dc0fee7b0ff407351490648dd796b28b306e4e2010ada7d7"
+    },
+    {
+      "path": ".security-runtime/sc02/link-fixed-geometry-baseline.apk",
+      "sha256": "f5e55e4d37000a1a5503632bdef792718108db1f98e27fe34274c338adc97fdd"
+    },
+    {
+      "path": ".security-runtime/sc02/geometry-baseline-test.apk",
+      "sha256": "52c1ba60a720a547638e1caa3c6aaeb5432fedf266857ae9c2f27ffb149e8469"
+    },
+    {
+      "path": ".security-runtime/sc02/final.apk",
+      "sha256": "697c352811d80c1c0640c0776c4f8690ec947f659ec2e64cda59bedcf62835ff"
+    },
+    {
+      "path": ".security-runtime/sc02/final-test.apk",
+      "sha256": "aef017e90681bb84838dd610a9a34d591ef9c4cc7646a5a3f86674f8eae1d557"
+    }
+  ],
+  "unsigned_release": {
+    "status": "pass",
+    "path": ".security-runtime/sc02/release-unsigned.apk",
+    "sha256": "f9b82f31715766d9dab267906092f63be67d372796bac0b001fab03774cf8168",
+    "assembly_seconds": 188,
+    "artifact_gate": "pass",
+    "scope": "Unsigned minified release and static corpus/package verification; no signed/physical/UI acceptance"
+  }
+}

@@ -1,0 +1,2 @@
+usage: check_release_gate.py [-h] [--artifact]
+check_release_gate.py: error: unrecognized arguments: app-host/build/outputs/apk/release/app-host-release-unsigned.apk

@@ -23,9 +23,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 2. SC-02 — Search-redaction object graph
 
-- [ ] SC02-01 Reproduce the internal-link fixture through secure search → review → export.
-- [ ] SC02-02 Remap destinations to sanitized output pages and prevent imported original-sensitive references.
-- [ ] SC02-03 Cover direct destinations, GoTo actions, annotations, cross-page links and shared resources.
+- [x] SC02-01 Exercise actual worker search, select returned targets and export the internal-link fixture. The unchanged app fails before publication with closed imported streams; the separate saved-PDF component probe establishes the retained-sensitive-stream leak. See SC02_EXECUTION.md; no successful leaking native export or UI automation is claimed.
+- [x] SC02-02 Keep destinations attached to sanitized page identities and prevent imported original-sensitive references. One live document graph, transitive shared-stream replacement and final reachability checks pass local native tests.
+- [x] SC02-03 Cover direct destinations, GoTo actions, annotations, cross-page links and shared resources. Eight security methods pass within ten-method local API24/36 selections, including crop/rotation pixels and multiline selection. See the SC-02 receipt.
 - [ ] SC02-04 Verify saved objects, extraction, pixels, crop/rotation/multiline cases and safe navigation on Android.
 - [ ] SC02-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
@@ -97,6 +97,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [ ] FOLLOW-05 Reconcile existing window/startup/billing/consent/audio evidence without assuming closure or rewriting correct fixes. Investigate the recorded local API24/WebView 51 host SIGILL from the full suite; clean-state comparison and attribution are in the execution receipt.
 - [x] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims. See updated SR-01 assessment and execution receipt; stronger enforcement and owner disposition remain open.
 - [ ] FOLLOW-07 Record attributable owner risk disposition or implement and verify a stronger boundary.
+- [ ] FOLLOW-08 Reconcile redaction API count semantics: the worker reports selected-box count, but the shared host standard-output contract currently returns one output. The SC-02 multiline regression verifies every selected line through saved-data absence; no matched-box count correction is claimed.
 
 ## 12. Integrated release verification
 
@@ -121,6 +122,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 |---|---|---|---|---|
 | Baseline review | COMPLETE — findings demonstrated | `670578355c4e408c2468ba1564b0e1a366faaa0c` | Analysis, seven component probes and 34 existing focused tests in reports/security-code-analysis-2026-10-18 | All remediation remains open |
 | SC-01 | COMPLETE: implementation and batch gates verified | Final source `62d1b1e8`, Android remote verified | 63 worker tests and nine focused local native methods pass; CI run `39228725164` passes 221 methods on each API24/30/34/36 (884 total), all eight Editor regressions included | None for this batch; legacy WebView observation remains separately under FOLLOW-05 and overall release stays HOLD |
+| SC-02 | Local batch gates complete; full CI pending | Batch after SC-01 closeout `b24f8971`; exact commit/ref recorded in the SC-02 receipt | 63 worker tests, assembly/static/lint, unsigned release/artifact checks and ten-method native selections each on API24/36 pass; negative attempts retained | Complete same-source CI and final receipt |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

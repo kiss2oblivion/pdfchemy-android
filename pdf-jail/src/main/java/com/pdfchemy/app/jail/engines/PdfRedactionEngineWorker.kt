@@ -9,9 +9,7 @@ import com.pdfchemy.app.logic.RedactionConfig
 import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import com.tom_roush.pdfbox.text.PDFTextStripper
@@ -116,11 +114,13 @@ object PdfRedactionEngineWorker {
 
         private fun addMatch(currentPage: Int, matchPositions: List<TextPosition>) {
             if (matchPositions.isNotEmpty()) {
-                val minX = matchPositions.minOf { it.xDirAdj }
-                val maxX = matchPositions.maxOf { it.xDirAdj + it.widthDirAdj }
+                val minX = matchPositions.minOf { it.xDirAdj } - 1f
+                val maxX = matchPositions.maxOf { it.xDirAdj + it.widthDirAdj } + 1f
                 val width = (maxX - minX).coerceAtLeast(1f)
-                val minY = matchPositions.minOf { it.yDirAdj }
-                val maxY = matchPositions.maxOf { it.yDirAdj + it.heightDir }
+                // yDirAdj is the baseline, not the top of the glyph. Include
+                // ascenders/descenders with conservative padding before rotating.
+                val minY = matchPositions.minOf { it.yDirAdj - it.heightDir * 1.5f } - 1f
+                val maxY = matchPositions.maxOf { it.yDirAdj + it.heightDir * 0.5f } + 1f
                 val height = (maxY - minY).coerceAtLeast(8f)
 
                 val boxObj = JSONObject()
@@ -194,10 +194,18 @@ object PdfRedactionEngineWorker {
 
             val boxObj = JSONObject()
             boxObj.put("pageIndex", pageIndex)
-            boxObj.put("left", normLeft.toDouble())
-            boxObj.put("top", normTop.toDouble())
-            boxObj.put("right", normRight.toDouble())
-            boxObj.put("bottom", normBottom.toDouble())
+            // TextPosition's direction-adjusted coordinates are in the unrotated
+            // crop plane; review/export boxes use the displayed rotated plane.
+            val bounds = when (((page.rotation % 360) + 360) % 360) {
+                90 -> floatArrayOf(1f - normBottom, normLeft, 1f - normTop, normRight)
+                180 -> floatArrayOf(1f - normRight, 1f - normBottom, 1f - normLeft, 1f - normTop)
+                270 -> floatArrayOf(normTop, 1f - normRight, normBottom, 1f - normLeft)
+                else -> floatArrayOf(normLeft, normTop, normRight, normBottom)
+            }
+            boxObj.put("left", bounds[0].toDouble())
+            boxObj.put("top", bounds[1].toDouble())
+            boxObj.put("right", bounds[2].toDouble())
+            boxObj.put("bottom", bounds[3].toDouble())
             boxObj.put("overlayLabel", "REDACTED")
 
             resultMatches.add(boxObj)
@@ -234,6 +242,7 @@ object PdfRedactionEngineWorker {
 
             val font = PDType1Font.HELVETICA_BOLD
             val boxesByPage = boxes.groupBy { it.pageIndex }
+            if (config.forensicSanitize) RedactionResources.prepareForRedaction(document!!)
 
             for ((pageIdx, pageBoxes) in boxesByPage) {
                 if (pageIdx < 0 || pageIdx >= pageCount) continue
@@ -247,9 +256,9 @@ object PdfRedactionEngineWorker {
                 PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                     for (box in pageBoxes) {
                         val drawX = when (rot) {
-                            90 -> cropBox.lowerLeftX + pw - (box.yRatio.coerceIn(0f, 1f) + box.heightRatio.coerceIn(0.01f, 1f)) * pw
+                            90 -> cropBox.lowerLeftX + box.yRatio.coerceIn(0f, 1f) * pw
                             180 -> cropBox.lowerLeftX + pw - (box.xRatio.coerceIn(0f, 1f) + box.widthRatio.coerceIn(0.01f, 1f)) * pw
-                            270 -> cropBox.lowerLeftX + box.yRatio.coerceIn(0f, 1f) * pw
+                            270 -> cropBox.lowerLeftX + pw - (box.yRatio.coerceIn(0f, 1f) + box.heightRatio.coerceIn(0.01f, 1f)) * pw
                             else -> cropBox.lowerLeftX + (box.xRatio.coerceIn(0f, 1f) * pw)
                         }
 
@@ -332,50 +341,64 @@ object PdfRedactionEngineWorker {
                     val memSettings = com.pdfchemy.app.jail.JailMemory.settings()
                     val baseDoc = com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { PDDocument.load(it, memSettings) }
                     
-                    if (renderedPageCount != null) {
-                        newDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
-                        try {
-                            for (i in 0 until renderedPageCount) {
-                                if (boxesByPage.containsKey(i)) {
-                                    val pipe = ParcelFileDescriptor.createPipe()
-                                    val readFd = pipe[0]
-                                    val writeFd = pipe[1]
-                                    var pdImage: com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject? = null
-                                    
-                                    val renderJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).async(Dispatchers.IO) {
-                                        try {
-                                            JailNativeRendererCoordinator.renderPageToJpeg(pfd!!, i, writeFd, rendererBinder)
-                                        } finally {
-                                            try { writeFd.close() } catch (e: Exception) {}
-                                        }
-                                    }
-                                    
+                    // Keep the loaded page identities: annotations/destinations then
+                    // resolve to the very pages whose original streams we replace.
+                    // importPage retains references to the source page graph and its
+                    // streams also become unreadable when that source is closed.
+                    newDoc = baseDoc
+                    if (renderedPageCount != null && renderedPageCount == baseDoc.numberOfPages) {
+                        val plan = RedactionResources.rasterizationPlan(baseDoc, boxesByPage.keys, emptySet())
+                        for (i in 0 until renderedPageCount) {
+                            if (i in plan.pages) {
+                                val pipe = ParcelFileDescriptor.createPipe()
+                                val readFd = pipe[0]
+                                val writeFd = pipe[1]
+                                var pdImage: com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject? = null
+
+                                val renderJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).async(Dispatchers.IO) {
                                     try {
-                                        ParcelFileDescriptor.AutoCloseInputStream(readFd).use { pipeIn ->
-                                            pdImage = JPEGFactory.createFromStream(newDoc, pipeIn)
-                                        }
+                                        JailNativeRendererCoordinator.renderPageToJpeg(pfd!!, i, writeFd, rendererBinder)
                                     } finally {
-                                        renderJob.await()
-                                    }
-                                    
-                                    if (pdImage != null) {
-                                        val pdfPage = PDPage(PDRectangle(pdImage!!.width.toFloat(), pdImage!!.height.toFloat()))
-                                        newDoc!!.addPage(pdfPage)
-                                        PDPageContentStream(newDoc, pdfPage).use { cs ->
-                                            cs.drawImage(pdImage!!, 0f, 0f, pdImage!!.width.toFloat(), pdImage!!.height.toFloat())
-                                        }
-                                    } else {
-                                        throw SecurityException("Native renderer failed to yield valid image data.")
-                                    }
-                                } else {
-                                    if (i < baseDoc.numberOfPages) {
-                                        newDoc!!.importPage(baseDoc.getPage(i))
+                                        try { writeFd.close() } catch (e: Exception) {}
                                     }
                                 }
+
+                                try {
+                                    ParcelFileDescriptor.AutoCloseInputStream(readFd).use { pipeIn ->
+                                        pdImage = JPEGFactory.createFromStream(newDoc, pipeIn)
+                                    }
+                                } finally {
+                                    renderJob.await()
+                                }
+
+                                if (pdImage != null) {
+                                    val pdfPage = baseDoc.getPage(i)
+                                    val crop = pdfPage.cropBox ?: pdfPage.mediaBox
+                                    val rotation = ((pdfPage.rotation % 360) + 360) % 360
+                                    // The renderer returns the rotated crop plane.
+                                    // Preserve PDF coordinates for existing XYZ/Fit
+                                    // destinations instead of rebasing pages to pixels.
+                                    RedactionResources.replacePageContent(baseDoc, pdfPage) { cs ->
+                                        cs.saveGraphicsState()
+                                        val x = crop.lowerLeftX
+                                        val y = crop.lowerLeftY
+                                        val w = crop.width
+                                        val h = crop.height
+                                        when (rotation) {
+                                            90 -> { cs.transform(com.tom_roush.pdfbox.util.Matrix(0f, 1f, -1f, 0f, x + w, y)); cs.drawImage(pdImage!!, 0f, 0f, h, w) }
+                                            180 -> { cs.transform(com.tom_roush.pdfbox.util.Matrix(-1f, 0f, 0f, -1f, x + w, y + h)); cs.drawImage(pdImage!!, 0f, 0f, w, h) }
+                                            270 -> { cs.transform(com.tom_roush.pdfbox.util.Matrix(0f, -1f, 1f, 0f, x, y + h)); cs.drawImage(pdImage!!, 0f, 0f, h, w) }
+                                            else -> cs.drawImage(pdImage!!, x, y, w, h)
+                                        }
+                                        cs.restoreGraphicsState()
+                                    }
+                                } else {
+                                    throw SecurityException("Native renderer failed to yield valid image data.")
+                                }
                             }
-                        } finally {
-                            try { baseDoc.close() } catch (_: Exception) {}
                         }
+                        RedactionResources.pruneUnused(baseDoc)
+                        plan.requireOriginalsDetached(baseDoc)
                         try { pfd?.close() } catch (_: Exception) {}
                         pfd = null
                         
@@ -385,7 +408,6 @@ object PdfRedactionEngineWorker {
                         tempFile.delete()
                         rasterFile
                     } else {
-                        baseDoc.close()
                         try { pfd?.close() } catch (_: Exception) {}
                         tempFile.delete()
                         throw SecurityException("Cannot forensically rasterize the PDF because NativeRendererCoordinator is unavailable. Aborting redaction to ensure maximum security without data loss.")
