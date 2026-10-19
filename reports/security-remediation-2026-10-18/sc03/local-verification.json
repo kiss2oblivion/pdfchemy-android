@@ -1,0 +1,83 @@
+{
+  "baseline_application_source": "383f193aa5c5a0f5ebbd01e25f98d0add319c5f7",
+  "unit": {
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "native": [
+    {
+      "api": 24,
+      "tests": 2,
+      "failures": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    },
+    {
+      "api": 36,
+      "tests": 2,
+      "failures": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    }
+  ],
+  "unsigned_release_lint_build": "pass",
+  "unsigned_release_seconds": 367,
+  "artifact_gate": "pass",
+  "full_ci": "not-run",
+  "source_and_artifact_hashes": [
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+      "sha256": "84fca29c01f3c8317e49f822baea19db8942095294f19447c715316c23678e2a"
+    },
+    {
+      "path": "app-host/src/test/java/com/pdfchemy/app/ui/CancellationPublicationTest.kt",
+      "sha256": "8710e360ff26eafdfab5110601f29168dd1586c038e6eb783bfeafb143b70127"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/PublishedBatchCancellationSecurityTest.kt",
+      "sha256": "5e615ddc2d85ab3fba7e588828588c25e482c528c20786c8c1c76ac985301564"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/BatchOutputProvider.java",
+      "sha256": "b250e83e7a9890a1d4f1a9daddbdcbd0c91495c7abfaf4d24953dade56f17d78"
+    },
+    {
+      "path": "app-host/src/androidTest/AndroidManifest.xml",
+      "sha256": "03b7f42ae801499dd7a6516f30a43bb7ed2490403e98a2cfc281a1e547662a4a"
+    },
+    {
+      "path": ".security-runtime/sc03/baseline.apk",
+      "sha256": "697c352811d80c1c0640c0776c4f8690ec947f659ec2e64cda59bedcf62835ff"
+    },
+    {
+      "path": ".security-runtime/sc03/baseline-test.apk",
+      "sha256": "d0a00cae1a7c4dd139df5535962da9e2551df78c8c86289bfeb4c78a1fee4993"
+    },
+    {
+      "path": ".security-runtime/sc03/granted-baseline-test.apk",
+      "sha256": "9e1ab197bb0dac69faad14997324babb09c2c7f2f3a02b2ae33610fe1c87dda8"
+    },
+    {
+      "path": ".security-runtime/sc03/protected-baseline-test.apk",
+      "sha256": "45ced4ee4616514f80a6dd5bf920dd72af9e704d1cc3f3a9dcaa040f2736e396"
+    },
+    {
+      "path": ".security-runtime/sc03/write-grant-baseline-test.apk",
+      "sha256": "9bae675107850952331be88423c89fc006620db9e13eefe7ce086f20301240e1"
+    },
+    {
+      "path": ".security-runtime/sc03/fixed.apk",
+      "sha256": "5cb9fe097d55fc40998b5795494d1c207d3f833a985623f56fe862e4d1fb1972"
+    },
+    {
+      "path": ".security-runtime/sc03/fixed-test.apk",
+      "sha256": "9bae675107850952331be88423c89fc006620db9e13eefe7ce086f20301240e1"
+    },
+    {
+      "path": ".security-runtime/sc03/release-unsigned.apk",
+      "sha256": "3c627ed7ff7ce781463ad265abd9730a38cae460e967b1f52884795d4030906a"
+    }
+  ]
+}

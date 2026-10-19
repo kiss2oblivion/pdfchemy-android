@@ -30,6 +30,58 @@ class CancellationPublicationTest {
     @Before fun setup() { Dispatchers.setMain(UnconfinedTestDispatcher()) }
     @After fun cleanup() { Dispatchers.resetMain(); unmockkAll() }
 
+    @Test fun publicationRemainsTerminalAcrossLaterLifecycleTransitions() {
+        val tracked = MainViewModel.TrackedOutput(Uri.parse("content://fixture/completed.pdf"),
+            com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY,
+            com.pdfchemy.app.logic.PublicationState.PUBLISHED)
+        for (later in com.pdfchemy.app.logic.PublicationState.values()) {
+            tracked.publicationState = later
+            assertEquals("Completed output cannot become eligible for cleanup again", com.pdfchemy.app.logic.PublicationState.PUBLISHED, tracked.publicationState)
+        }
+    }
+
+    @Test fun staleCancellationPreservesFreshDestinationClaimedByNewerOperation() = runBlocking<Unit> {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+        val shared = Uri.parse("content://fixture/reused.pdf")
+        val sentinel = Uri.parse("content://fixture/old-cleanup-sentinel.pdf")
+        val bytes = File.createTempFile("sc03_reused_", ".pdf", app.cacheDir).apply { writeText("new operation bytes") }
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val cleanupFinished = CompletableDeferred<Unit>()
+        mockkObject(PdfManipulator)
+        mockkStatic(DocumentFile::class)
+        val sharedDocument = mockk<DocumentFile>()
+        val sentinelDocument = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), shared) } returns sharedDocument
+        every { DocumentFile.fromSingleUri(any(), sentinel) } returns sentinelDocument
+        every { sharedDocument.delete() } answers { bytes.delete() }
+        every { sentinelDocument.delete() } answers { cleanupFinished.complete(Unit); true }
+        coEvery { PdfManipulator.mergePdfs(any(), any(), shared) } coAnswers {
+            started.complete(Unit)
+            try { awaitCancellation() }
+            finally { withContext(NonCancellable) { release.await() } }
+        }
+        try {
+            com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(shared)
+            vm.mergePdfs(app, listOf(Uri.parse("content://fixture/input.pdf")), shared)
+            withTimeout(5000) { started.await() }
+            vm.addPendingOutputUri(sentinel, true)
+            vm.cancelOperation(app)
+            vm.addPendingOutputUri(shared, true)
+            release.complete(Unit)
+            withTimeout(5000) { cleanupFinished.await() }
+            assertEquals("new operation bytes", bytes.readText())
+            assertTrue(com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(shared))
+            verify(exactly = 0) { sharedDocument.delete() }
+            vm.markOutputPublished(shared)
+        } finally {
+            release.complete(Unit)
+            com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(shared)
+            bytes.delete()
+        }
+    }
+
     @Test fun cancelledWriterStopsBeforeDestinationIsDeletedAndCannotReplaceIdleWithError() = runBlocking<Unit> {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val viewModel = MainViewModel(application)

@@ -49,11 +49,20 @@ import java.util.concurrent.atomic.AtomicLong
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     
-    data class TrackedOutput(
+    class TrackedOutput(
         val uri: android.net.Uri,
         val provenance: com.pdfchemy.app.logic.DestinationProvenance,
-        @Volatile var publicationState: com.pdfchemy.app.logic.PublicationState = com.pdfchemy.app.logic.PublicationState.PENDING
+        publicationState: com.pdfchemy.app.logic.PublicationState = com.pdfchemy.app.logic.PublicationState.PENDING
     ) {
+        private val publication = java.util.concurrent.atomic.AtomicReference(publicationState)
+        var publicationState: com.pdfchemy.app.logic.PublicationState
+            get() = publication.get()
+            set(value) {
+                // Publication is terminal even when cancellation races its writer.
+                publication.updateAndGet { previous ->
+                    if (previous == com.pdfchemy.app.logic.PublicationState.PUBLISHED) previous else value
+                }
+            }
         val isFreshCopy: Boolean get() = provenance == com.pdfchemy.app.logic.DestinationProvenance.FRESH_COPY
     }
 

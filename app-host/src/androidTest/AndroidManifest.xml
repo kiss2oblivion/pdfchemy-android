@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <provider
+            android:name="com.pdfchemy.app.security.BatchOutputProvider"
+            android:authorities="com.pdfchemy.app.security.batchfixture"
+            android:writePermission="android.permission.MANAGE_DOCUMENTS"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+        <provider
             android:name="com.pdfchemy.app.security.OutputCommitProvider"
             android:authorities="com.pdfchemy.app.security.outputfixture"
             android:exported="true" />

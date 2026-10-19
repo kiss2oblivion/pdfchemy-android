@@ -1,0 +1,185 @@
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=completedImageBatchItemSurvivesCancellationDuringSecondPublication
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+Error in completedImageBatchItemSurvivesCancellationDuringSecondPublication(com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest):
+java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedImageBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:113)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=completedImageBatchItemSurvivesCancellationDuringSecondPublication
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedImageBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:113)
+
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=completedPdfBatchItemSurvivesCancellationDuringSecondPublication
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+Error in completedPdfBatchItemSurvivesCancellationDuringSecondPublication(com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest):
+java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedPdfBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:112)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=completedPdfBatchItemSurvivesCancellationDuringSecondPublication
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedPdfBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:112)
+
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1.035
+There were 2 failures:
+1) completedImageBatchItemSurvivesCancellationDuringSecondPublication(com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest)
+java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedImageBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:113)
+2) completedPdfBatchItemSurvivesCancellationDuringSecondPublication(com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest)
+java.lang.AssertionError: Published item 1 must survive cancellation of item 2
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest$runBatch$1.invokeSuspend(PublishedBatchCancellationSecurityTest.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTaskKt.resume(DispatchedTask.kt:231)
+	at kotlinx.coroutines.DispatchedTaskKt.dispatch(DispatchedTask.kt:164)
+	at kotlinx.coroutines.CancellableContinuationImpl.dispatchResume(CancellableContinuationImpl.kt:466)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl(CancellableContinuationImpl.kt:500)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeImpl$default(CancellableContinuationImpl.kt:489)
+	at kotlinx.coroutines.CancellableContinuationImpl.resumeUndispatched(CancellableContinuationImpl.kt:587)
+	at kotlinx.coroutines.EventLoopImplBase$DelayedResumeTask.run(EventLoop.common.kt:490)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.runBatch(PublishedBatchCancellationSecurityTest.kt:28)
+	at com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest.completedPdfBatchItemSurvivesCancellationDuringSecondPublication(PublishedBatchCancellationSecurityTest.kt:112)
+
+FAILURES!!!
+Tests run: 2,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1
