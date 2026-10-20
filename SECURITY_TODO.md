@@ -38,9 +38,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 4. SC-04 — Successful Warning output survives lifecycle cleanup
 
-- [ ] SC04-01 Finalize publication after successful writing regardless of Warning presentation.
-- [ ] SC04-02 Verify target-missed output survives dismissal, cancellation, ViewModel destruction and reuse.
-- [ ] SC04-03 Verify freshness is retired while true failure still cleans only eligible incomplete output.
+- [x] SC04-01 Finalize publication after successful writing regardless of Warning presentation. Compression success now publishes before result formatting/presentation.
+- [x] SC04-02 Verify target-missed output survives dismissal, cancellation, ViewModel destruction and reuse. Real native regressions fail on baseline API24 and pass on fixed API24/36.
+- [x] SC04-03 Verify freshness is retired while true failure still cleans only eligible incomplete output. Five native methods per API24/36 pass, including fresh/existing failure controls and byte preservation.
 - [ ] SC04-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 5. SC-05 — Direct-screen provenance and completion
@@ -124,6 +124,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-01 | COMPLETE: implementation and batch gates verified | Final source `62d1b1e8`, Android remote verified | 63 worker tests and nine focused local native methods pass; CI run `39228725164` passes 221 methods on each API24/30/34/36 (884 total), all eight Editor regressions included | None for this batch; legacy WebView observation remains separately under FOLLOW-05 and overall release stays HOLD |
 | SC-02 | COMPLETE: implementation and batch gates verified | Source `383f193a`, Android remote verified | Local worker/native/build/lint/artifact gates and full same-source CI pass; 229 native methods per API24/30/34/36, 916 total | None for this batch; overall release remains HOLD |
 | SC-03 | COMPLETE: implementation and batch gates verified | Source `7390523c`, Android remote verified | Local host unit/native/build/lint/artifact checks and full same-source CI pass; 231 native methods per API24/30/34/36, 924 total | None for this batch; overall release remains HOLD |
+| SC-04 | Implementation and all required local checks pass | After SC-03 closeout `c5565c0c`; see SC-04 receipt | Four ownership unit tests, five real native methods per API24/36, debug/test/static/lint/unsigned artifact gates pass | Commit/push/ref and full same-source CI |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

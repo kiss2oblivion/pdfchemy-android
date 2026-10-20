@@ -598,6 +598,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             
             result.onSuccess { report ->
+                // The compressor has closed the completed destination. Publication
+                // must precede result presentation, including a missed-size Warning.
+                markOutputPublished(destUri)
                 if (report.hasSignatures) {
                     _warning.value = context.getString(R.string.msg_compress_warning_signature)
                 }
