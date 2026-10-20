@@ -41,7 +41,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [x] SC04-01 Finalize publication after successful writing regardless of Warning presentation. Compression success now publishes before result formatting/presentation.
 - [x] SC04-02 Verify target-missed output survives dismissal, cancellation, ViewModel destruction and reuse. Real native regressions fail on baseline API24 and pass on fixed API24/36.
 - [x] SC04-03 Verify freshness is retired while true failure still cleans only eligible incomplete output. Five native methods per API24/36 pass, including fresh/existing failure controls and byte preservation.
-- [ ] SC04-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC04-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source `7f7fe757` is Android-remote verified; full CI `39400342318` passes all nine jobs and 944 native executions. Closeout changes documentation/evidence only.
 
 ## 5. SC-05 — Direct-screen provenance and completion
 
@@ -98,6 +98,7 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [x] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims. See updated SR-01 assessment and execution receipt; stronger enforcement and owner disposition remain open.
 - [ ] FOLLOW-07 Record attributable owner risk disposition or implement and verify a stronger boundary.
 - [ ] FOLLOW-08 Reconcile redaction API count semantics: the worker reports selected-box count, but the shared host standard-output contract currently returns one output. The SC-02 multiline regression verifies every selected line through saved-data absence; no matched-box count correction is claimed.
+- [ ] FOLLOW-09 Diagnose the API34 `StartupWindowRegressionTest.backgroundAndResumeRetainsContent` STARTED-state timeout observed in SC-04 CI attempt 1. Preserve the failed result and unchanged retry outcome; do not treat a retry as root-cause attribution or weaken the lifecycle assertion. This is separate from FOLLOW-05's API24/WebView SIGILL.
 
 ## 12. Integrated release verification
 
@@ -124,7 +125,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-01 | COMPLETE: implementation and batch gates verified | Final source `62d1b1e8`, Android remote verified | 63 worker tests and nine focused local native methods pass; CI run `39228725164` passes 221 methods on each API24/30/34/36 (884 total), all eight Editor regressions included | None for this batch; legacy WebView observation remains separately under FOLLOW-05 and overall release stays HOLD |
 | SC-02 | COMPLETE: implementation and batch gates verified | Source `383f193a`, Android remote verified | Local worker/native/build/lint/artifact gates and full same-source CI pass; 229 native methods per API24/30/34/36, 916 total | None for this batch; overall release remains HOLD |
 | SC-03 | COMPLETE: implementation and batch gates verified | Source `7390523c`, Android remote verified | Local host unit/native/build/lint/artifact checks and full same-source CI pass; 231 native methods per API24/30/34/36, 924 total | None for this batch; overall release remains HOLD |
-| SC-04 | Implementation and all required local checks pass | After SC-03 closeout `c5565c0c`; see SC-04 receipt | Four ownership unit tests, five real native methods per API24/36, debug/test/static/lint/unsigned artifact gates pass | Commit/push/ref and full same-source CI |
+| SC-04 | COMPLETE: implementation and batch gates verified | Source `7f7fe757`, Android remote verified | Local unit/native/debug/static/lint/unsigned artifact gates and full same-source CI pass; 236 methods per API24/30/34/36 (944 total) | None for this batch; release remains HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
