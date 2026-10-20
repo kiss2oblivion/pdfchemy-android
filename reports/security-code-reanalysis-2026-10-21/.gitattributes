@@ -1,0 +1,7 @@
+*.log -text -diff
+*.xml -text -whitespace
+*.pdf -text -diff
+*.kt -text
+*.txt -text
+*.json -text
+SOURCE_REVIEW.md -text -whitespace

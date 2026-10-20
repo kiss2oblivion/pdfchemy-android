@@ -4,6 +4,8 @@
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
+Fresh [2026-10-21 reanalysis](../security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) at `857c42b4` confirms five additional unfixed findings, SC-10 through SC-14, through six vulnerability-confirming probes. It changes no production code. SC-10 (nested private payload retained after redaction cleanup) is the next priority before SC-05; the earlier fixed fixtures remain covered but do not establish complete forensic-redaction assurance. The audit is isolated in `PDFchemy-security-reanalysis-2026-10-21`.
+
 ## Candidate and baseline identities
 
 | Identity | Value |
@@ -31,6 +33,7 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 | SC-03 | COMPLETE: source `7390523c`, local gates and full same-source CI pass; 924 native executions | None for this batch; see [SC-03 receipt](SC03_EXECUTION.md) |
 | SC-04 | COMPLETE: source `7f7fe757`, local gates and full same-source CI pass; 944 native executions | None for this batch; see [SC-04 receipt](SC04_EXECUTION.md) |
 | SC-05 through SC-09 | Not started | Their separate implementation/test/commit batches |
+| SC-10 through SC-14 | Fresh analysis confirms five additional defects; NOT IMPLEMENTED | SC-10 next, followed by the remaining planned and additional finding batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
 

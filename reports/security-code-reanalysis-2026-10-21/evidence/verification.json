@@ -1,0 +1,124 @@
+{
+  "reviewed_head": "857c42b438e46ffcbb0a9f9650536446591dabaa",
+  "application_test_source": "7f7fe75766e4ec55461b140faccde101eebb5aa2",
+  "recorded_utc": "2026-10-20T21:36:05.590307+00:00",
+  "production_diff_from_reviewed_head": "empty",
+  "production_diff_from_passing_ci_source": "empty",
+  "interpretation": "Passing final probes confirm vulnerable behavior; no production fixes in this audit.",
+  "final_unique_probes": 6,
+  "jvm": [
+    {
+      "suite": "com.pdfchemy.app.security.FreshReanalysisProbeTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "7.216"
+    },
+    {
+      "suite": "com.pdfchemy.app.jail.engines.FreshRedactionAliasProbeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": "4.324"
+    }
+  ],
+  "native": {
+    "api": 24,
+    "tests": 1,
+    "failures": 0,
+    "skipped": 0,
+    "crash_buffer": "empty",
+    "scope": "Sharing component; not Reader UI or external recipient automation"
+  },
+  "static_audit": {
+    "host_files": 135,
+    "security_architecture": "pass"
+  },
+  "osv": {
+    "resolved_maven_coordinates": 234,
+    "affected": 0,
+    "scope": "Live OSV Maven coordinate/version query; not complete native/OS vulnerability coverage"
+  },
+  "secrets": {
+    "scanner": "TruffleHog 3.97.9",
+    "findings": 6,
+    "exact_reviewed_historical": 6,
+    "rejected": 0
+  },
+  "prior_ci": {
+    "run": 39400342318,
+    "source": "7f7fe75766e4ec55461b140faccde101eebb5aa2",
+    "native_passes": 944,
+    "fresh_full_matrix_for_this_audit": false
+  },
+  "limits": [
+    "No fresh full CI or physical/signed/Play verification",
+    "Redaction proofs use production helper pipeline with a substitute replacement, not a real native export",
+    "Blocked publication proof uses a controlled OutputStream, not a real stalled SAF provider",
+    "Initial two Windows fixture failures are retained and excluded from final proof counts"
+  ],
+  "working_source_sha256": [
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+      "sha256": "4e2f549577802aab6c28fd490ba381d8d6687f32acaa9a12ac04d52a5087b3ba"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+      "sha256": "6a3a0077564e6d69a996cab894fa920b13f84194842caa20ce1636f7ec7c35bd"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt",
+      "sha256": "5dc0a8248336fac3f78a0baeef94b0b24adbf5bf25c88ed496bf462f8c7ad85a"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt",
+      "sha256": "31e2a85d5b386eb548776fbc22e2bc7bda0e63e2fa00bb379d5d3dd819ac2da6"
+    },
+    {
+      "path": "app-host/src/main/res/xml/file_paths.xml",
+      "sha256": "72ecf9d2b937801063cf6af772e97a0906d0138ecad4e6dbd36814d8f74f6337"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/utils/DocumentIdentity.kt",
+      "sha256": "bbe216e714df08dd1221c4c836f64ef25ec13a793066ef0f5fe836cf784caedb"
+    },
+    {
+      "path": "pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt",
+      "sha256": "d77c9fb392f9d767014a83ae78282d847649cdce79e5c547a9d1246e38cead96"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfGateway.kt",
+      "sha256": "2cf85fdafd50219340ae2bcf2043a9b8841337ad205ff66a7fba3b94b5495595"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioOutputPublisher.kt",
+      "sha256": "c0d1e68415a1b345e9f61d2d5f7fc4407e342228841c681a14510bbfc5450a8b"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt",
+      "sha256": "8f9721942f612350c51b431bfcd679718fb5334f7a860f4dc66a7991a3be214e"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+      "sha256": "9c409a4dfb6de884088b92362b28b072fa4f09a5d9faceb47e2b1b54d5687ed9"
+    }
+  ],
+  "native_apks": [
+    {
+      "path": ".security-runtime\\reanalysis\\native-app.apk",
+      "sha256": "9b2653faf51987ed944cba5d2e1ec209f0754944875bb5dee62dd3c664f3e343"
+    },
+    {
+      "path": ".security-runtime\\reanalysis\\native-test.apk",
+      "sha256": "5f430accb1caa776705bc4b590bb3b640bea76513088d1e1fc2a6cae4d3cfca4"
+    }
+  ],
+  "compiled_audit_probes_removed": true,
+  "probe_original_paths": [
+    "app-host/src/test/java/com/pdfchemy/app/security/FreshReanalysisProbeTest.kt",
+    "app-host/src/androidTest/java/com/pdfchemy/app/security/FreshReaderShareProbeTest.kt",
+    "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/FreshRedactionAliasProbeTest.kt"
+  ]
+}

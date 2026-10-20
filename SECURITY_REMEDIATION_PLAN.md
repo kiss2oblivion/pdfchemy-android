@@ -8,7 +8,21 @@ Baseline: `670578355c4e408c2468ba1564b0e1a366faaa0c`.
 
 Evidence: [independent code analysis](reports/security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md). Execution tracker: [SECURITY_TODO.md](SECURITY_TODO.md).
 
-## Starting position
+## Reanalysis update — 2026-10-21
+
+The [fresh analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) reviews `857c42b4`, whose application source matches CI target `7f7fe757`. SC-01 through SC-04 batch gates are complete; SC-05 through SC-09 remain open. Six new vulnerability-confirming probes establish five additional findings, SC-10 through SC-14. Their passing results confirm defects and do not complete remediation.
+
+**Next implementation batch: SC-10, before the previously scheduled SC-05.** It preserves a private metadata/attachment payload after the redaction helper pipeline. Continue the existing open sequence after that, with SC-11 through SC-14 added as separate finding batches before release acceptance. Keep all existing native redaction/navigation regressions and the one-finding commit rule.
+
+- SC-10: remove/reject aliases to complete private payload subgraphs with bounded traversal. Add real Editor and secure Search exports of the retained serialized fixtures; confirm private bytes are absent while legitimate page/navigation data survives.
+- SC-11: coordinate startup cache cleanup with staging ownership. Age a leased snapshot safely and verify cleanup/recreation preserves it; reclaim only eligible unleased data and preserve quota bookkeeping.
+- SC-12: give Reader sharing a permitted bounded capability and appropriate lifetime/read grant. Verify a separate recipient reads the exact document after Reader navigation.
+- SC-13: define bounded host publication resources and supported provider cancellation/recovery. Exercise blocked open/write and repeated retry without volume exhaustion; a coroutine timeout alone is not proof of interruptible provider I/O.
+- SC-14: replace filename/length-only identity with a documented stable identity policy and safe preference migration. Test distinct same-metadata content, supported aliases/renames and ambiguous legacy state.
+
+SC-10 means the previously fixed redaction fixtures are not complete forensic-redaction assurance. SR-01, external URI admission and the two distinct startup follow-ups remain open. A green build does not supersede these findings.
+
+## Original starting position — 2026-10-18
 
 The review produced nine new findings. Seven audit probes confirmed vulnerable component behavior; 34 existing focused tests also passed. The redaction probes recovered sensitive markers from saved PDF streams despite their absence from ordinary extraction. Full Android export reproduction remains outstanding.
 
@@ -159,6 +173,6 @@ The earlier release plan/checklist remain in the sibling `PDFchemy-antigravity` 
 
 ## Completion definition
 
-All nine SC findings and retained open criteria have verified dispositions; secure behavior is covered by regressions and required Android integration tests; final source/artifact identities match the retained evidence; external/device/risk gates have explicit outcomes. Until that evidence exists, **HOLD remains in force**.
+All recorded SC findings (currently SC-01 through SC-14) and retained open criteria have verified dispositions; secure behavior is covered by regressions and required Android integration tests; final source/artifact identities match the retained evidence; external/device/risk gates have explicit outcomes. Until that evidence exists, **HOLD remains in force**.
 
 Merge, upload and rollout are separate explicitly authorized actions. Preparing this plan performs none of them.

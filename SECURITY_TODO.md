@@ -88,6 +88,23 @@ All implementation items start unchecked. The seven existing passing audit probe
 - [ ] SC09-04 Replace the old rejection-named test with assertions that prove policy enforcement.
 - [ ] SC09-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
+## Additional findings — fresh reanalysis 2026-10-21
+
+Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md). SC-10 is the next implementation batch, before SC-05. These findings are confirmed but unfixed.
+
+- [ ] SC10-01 Turn the two retained private-payload alias fixtures into actual native Editor/secure Search failing regressions.
+- [ ] SC10-02 Remove/reject complete private payload aliases using bounded traversal while preserving safe page/navigation references; verify saved strings/streams and output pixels.
+- [ ] SC10-03 Complete focused/full batch checks, separate finding commit, Android-only push, remote SHA and same-source CI evidence.
+- [ ] SC11-01 Make startup cache cleanup respect live staging leases; age an owned snapshot in a deterministic regression and preserve its bytes/lease bookkeeping through cleanup.
+- [ ] SC11-02 Verify recreation, eligible unleased reclamation and quotas; complete the separate implementation/test/commit/remote/CI batch.
+- [ ] SC12-01 Provide Reader share capabilities through a permitted root with bounded lifetime and the correct read grant.
+- [ ] SC12-02 Verify Reader-to-recipient exact-byte reads after navigation and batch build/lint/commit/remote/CI gates.
+- [ ] SC13-01 Define supported cancellation/recovery for blocked destination open/write and bound outstanding host publication resources/concurrency.
+- [ ] SC13-02 Exercise real controlled provider open/write stalls and repeated cancellation/retry with small budgets; stop writers before deletion and state supported platform limits precisely.
+- [ ] SC13-03 Complete separate finding checks, commit/push/ref and required same-source CI; do not equate a timeout wrapper with interruptible I/O.
+- [ ] SC14-01 Define stable document identity and version/migrate saved Reader/Editor state without assigning ambiguous metadata-only state to different content.
+- [ ] SC14-02 Verify different content with identical metadata, supported aliases/renames and legacy state; complete the separate batch gates.
+
 ## 11. Retained findings and risk disposition
 
 - [ ] FOLLOW-01 RA-02: invalidate Reader search on Clear; test delayed completion and scrolling.
@@ -126,6 +143,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-02 | COMPLETE: implementation and batch gates verified | Source `383f193a`, Android remote verified | Local worker/native/build/lint/artifact gates and full same-source CI pass; 229 native methods per API24/30/34/36, 916 total | None for this batch; overall release remains HOLD |
 | SC-03 | COMPLETE: implementation and batch gates verified | Source `7390523c`, Android remote verified | Local host unit/native/build/lint/artifact checks and full same-source CI pass; 231 native methods per API24/30/34/36, 924 total | None for this batch; overall release remains HOLD |
 | SC-04 | COMPLETE: implementation and batch gates verified | Source `7f7fe757`, Android remote verified | Local unit/native/debug/static/lint/unsigned artifact gates and full same-source CI pass; 236 methods per API24/30/34/36 (944 total) | None for this batch; release remains HOLD |
+| Fresh SC-10 through SC-14 | Confirmed; NOT IMPLEMENTED | Review source `857c42b4`; production diff empty | Six unique vulnerability-confirming probes: five JVM and one native API24; two reloaded/saved redaction fixtures; fresh static/OSV/history-secret checks | SC-10 next, then existing sequence and added finding batches; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
