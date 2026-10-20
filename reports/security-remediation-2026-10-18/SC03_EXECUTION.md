@@ -1,6 +1,8 @@
 # SC-03 published batch outputs survive cancellation
 
-Release: **HOLD**. Local implementation/build verification complete; full same-source CI remains open. SC-04 and later findings have not started.
+Release: **HOLD**. Implementation and required local/full-CI batch verification complete. SC-04 and later findings have not started.
+
+SC-03 application/test source is committed at `7390523c61b3eedbf0be91bc9f0696811b0c4626`, pushed only to the Android remote with the remote SHA matched. [Full CI run 39331074041](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39331074041) targets this exact commit. The completed workflow verifies this exact application/test source; the subsequent closeout changes documentation/evidence only.
 
 SC-02 closes at Android-remote-verified `ce58c234b9d728063065699dbf05cd1dca7445ed`. Its application/test source `383f193aa5c5a0f5ebbd01e25f98d0add319c5f7` passes all nine required CI jobs, including 229 native methods per API24/30/34/36 (916 total). The SC-03 baseline APK is the retained local debug APK from that application source.
 
@@ -31,4 +33,19 @@ The stale-operation regression also verifies an old cancelled writer cannot dele
 
 The interrupted local executions were recovered on 2026-10-20: completion logs, strict results and current retained/build-output APK hashes were verified before archiving. No build rerun is claimed for that recovery. `local-verification.json` records raw source/artifact identities. The raw log/XML manifest is checked before extension and against staged bytes before commit.
 
-Full same-source CI, commit/push/ref and final closeout remain separate gates. No production signing, physical-device workflow, SAF-picker UI automation or Play acceptance is claimed.
+Full same-source CI and source commit/push/ref verification are complete. No production signing, physical-device workflow, SAF-picker UI automation or Play acceptance is claimed.
+
+## Complete same-source CI
+
+Run `39331074041` passes all nine jobs at `7390523c`. Architecture (`118329104726`), secrets (`118329104575`), dependencies (`118329104203`) and the complete JVM job (`118330632366`) pass. The dependent CI release job `118343501783` passes lint, debug/minified unsigned release assembly and corpus/matrix/artifact checks.
+
+All downloaded native artifacts independently validate 231 unique completed methods per API24/30/34/36, zero failures/errors/skips, both real batch-cancellation methods and the retained eight Search/eight Editor security methods. This establishes **924 complete native executions** on this source. API24 also passes strict instrumentation-result validation with an empty crash buffer.
+
+| API | Original execution job | Raw result |
+|---|---|---|
+| 24 | `118330632360` | `ci-api24-instrumentation.log`, install/crash logs |
+| 30 | `118330632261` | `ci-api30.xml` |
+| 34 | `118330632329` | `ci-api34.xml` |
+| 36 | `118330632294` | `ci-api36.xml` |
+
+The result hashes and final source/job identities are retained separately from the earlier checkpoints. Release remains HOLD for later findings and external acceptance gates.
