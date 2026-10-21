@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.logic.HistoryRepositoryTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:30.102Z" hostname="DESKTOP-N37P7P6" time="0.497">
+  <properties/>
+  <testcase name="clearHistory_removesAllItems" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.084"/>
+  <testcase name="history_keepsOnly20Items" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.183"/>
+  <testcase name="addHistory_avoidsDuplicatesByUri" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.061"/>
+  <testcase name="addAndGetHistory_worksCorrectly" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.059"/>
+  <testcase name="optingOutRemovesPreviouslyStoredHistory" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.06"/>
+  <testcase name="historyIsDisabledUntilUserOptsIn" classname="com.pdfchemy.app.logic.HistoryRepositoryTest" time="0.05"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

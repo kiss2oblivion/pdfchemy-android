@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.ui.CompressionAnalysisChoiceTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:41.351Z" hostname="DESKTOP-N37P7P6" time="0.542">
+  <properties/>
+  <testcase name="dismissKeepsChoicesAndNewBatchLoadsSavedDefaults" classname="com.pdfchemy.app.ui.CompressionAnalysisChoiceTest" time="0.216"/>
+  <testcase name="viewModelHonorsChoicesMadeWhileAnalysisIsInFlight" classname="com.pdfchemy.app.ui.CompressionAnalysisChoiceTest" time="0.326"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

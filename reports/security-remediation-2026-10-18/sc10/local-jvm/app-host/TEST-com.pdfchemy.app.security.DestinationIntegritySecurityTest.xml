@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.DestinationIntegritySecurityTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:35.840Z" hostname="DESKTOP-N37P7P6" time="3.849">
+  <properties/>
+  <testcase name="fresh incomplete destination is deleted on worker error" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.43"/>
+  <testcase name="audio export existing destination survives rejection and failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.153"/>
+  <testcase name="existing destination seeded with bytes survives cancellation" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.433"/>
+  <testcase name="successful write publishes output and protects it from subsequent cleanup" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.319"/>
+  <testcase name="audio export fresh incomplete destination is cleaned up" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.121"/>
+  <testcase name="stale operation cleanup cannot delete newer operation output" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.377"/>
+  <testcase name="source equals destination is rejected and source is protected" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.166"/>
+  <testcase name="fresh incomplete destination is not deleted when onCleared writer exceeds join timeout until writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.465"/>
+  <testcase name="published URI reused in subsequent operation survives subsequent failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.448"/>
+  <testcase name="fresh incomplete destination is deleted on cancellation after writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.325"/>
+  <testcase name="fresh incomplete destination is deleted on onCleared only after writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.321"/>
+  <testcase name="existing destination seeded with bytes survives pre-publication failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.289"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

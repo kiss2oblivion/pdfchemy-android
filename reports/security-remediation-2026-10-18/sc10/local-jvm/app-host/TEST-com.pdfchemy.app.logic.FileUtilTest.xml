@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.logic.FileUtilTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:29.945Z" hostname="DESKTOP-N37P7P6" time="0.153">
+  <properties/>
+  <testcase name="generateSuggestedName_withNullUri_usesTimestamp" classname="com.pdfchemy.app.logic.FileUtilTest" time="0.037"/>
+  <testcase name="generateSuggestedName_cleansPreviousActions" classname="com.pdfchemy.app.logic.FileUtilTest" time="0.045"/>
+  <testcase name="generateSuggestedName_preservesCustomExtension" classname="com.pdfchemy.app.logic.FileUtilTest" time="0.035"/>
+  <testcase name="generateSuggestedName_withValidUri_appendsAction" classname="com.pdfchemy.app.logic.FileUtilTest" time="0.036"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

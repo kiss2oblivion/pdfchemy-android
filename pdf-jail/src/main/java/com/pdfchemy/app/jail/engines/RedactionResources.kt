@@ -136,31 +136,112 @@ internal object RedactionResources {
     }
 
     private fun removeDocumentCarriers(document: PDDocument) {
-        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        fun record(raw: COSBase?) {
+        val carrierKeys = setOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS", "SE",
+            "StructTreeRoot", "MarkInfo", "Info").mapTo(mutableSetOf(), COSName::getPDFName)
+        val seeds = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val structureSeeds = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun record(raw: COSBase?, structure: Boolean = false) {
             val value = dereference(raw)
             // Never record shared primitive singletons (null, names, numbers).
-            if (value is COSDictionary || value is COSArray || value is COSString) removed.add(value)
+            if (value is COSDictionary || value is COSArray || value is COSString) {
+                (if (structure) structureSeeds else seeds).add(value)
+            }
         }
         val catalog = document.documentCatalog.cosObject
         for (key in listOf("StructTreeRoot", "MarkInfo")) {
-            val name = COSName.getPDFName(key)
-            record(catalog.getItem(name))
-            catalog.removeItem(name)
+            record(catalog.getItem(COSName.getPDFName(key)), key == "StructTreeRoot")
         }
         record(document.document.trailer.getItem(COSName.INFO))
-        document.documentInformation = PDDocumentInformation()
         // Record identities before scrubbing severs standard links. Alternate
-        // references must not retain XMP, private application data or attachments.
+        // references can retain descendants, not just the carrier containers.
         visitGraph(document.document.trailer) { node ->
             if (node is COSDictionary) {
-                // Outlines can retain accessibility elements through SE even
-                // after the main StructTreeRoot is detached. Keep their Dest.
-                for (key in listOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS", "SE")) {
-                    record(node.getItem(COSName.getPDFName(key)))
-                }
+                for (key in carrierKeys) record(node.getItem(key), key.name in setOf("StructTreeRoot", "SE"))
                 if (node.containsKey(COSName.getPDFName("EF"))) record(node)
                 if (node is COSStream && node.getCOSName(COSName.TYPE) == COSName.getPDFName("EmbeddedFile")) record(node)
+            }
+        }
+
+        // Structure elements legitimately point back to their real page. Stop at
+        // document identities, never at a claimed /Type on an untrusted payload.
+        val anchors = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        anchors.add(document.document.trailer)
+        anchors.add(catalog)
+        val pages = document.pages.toList()
+        val pageObjects = pages.mapTo(Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())) { it.cosObject }
+        for (page in pages) {
+            var parent: COSDictionary? = page.cosObject
+            var depth = 0
+            while (parent != null && anchors.add(parent)) {
+                require(++depth <= SecurityLimits.MAX_GRAPH_DEPTH && anchors.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                    "Excessive page hierarchy"
+                }
+                if (parent.getCOSName(COSName.TYPE) == COSName.PAGES) {
+                    (dereference(parent.getItem(COSName.KIDS)) as? COSArray)?.let(anchors::add)
+                }
+                parent = dereference(parent.getItem(COSName.PARENT)) as? COSDictionary
+            }
+        }
+        require(seeds.none { it in anchors } && structureSeeds.none { it in anchors }) {
+            "Private carrier aliases the document hierarchy"
+        }
+
+        fun collect(raw: COSBase?, seen: MutableSet<COSBase>, depth: Int, skipCarriers: Boolean,
+                    structureData: Boolean = false, pageBackReference: Boolean = false) {
+            val node = dereference(raw) ?: return
+            if (node in anchors) {
+                require(skipCarriers || pageBackReference && node in pageObjects) {
+                    "Private payload references the document hierarchy"
+                }
+                return
+            }
+            if (node !is COSDictionary && node !is COSArray && node !is COSString ||
+                !seen.add(node)) return
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                "Private payload graph exceeds redaction limit"
+            }
+            when (node) {
+                is COSDictionary -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive dictionary" }
+                    for (key in node.keySet()) if (!skipCarriers || key !in carrierKeys) {
+                        // Only the standard structure-page backreference is a
+                        // safe private-graph boundary. Arbitrary links reject.
+                        val pageReference = structureData && key.name == "Pg" && node.getNameAsString(COSName.TYPE) in
+                            setOf("StructElem", "MCR", "OBJR")
+                        collect(node.getItem(key), seen, depth + 1, skipCarriers, structureData, pageReference)
+                    }
+                }
+                is COSArray -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive array" }
+                    for (index in 0 until node.size()) collect(node.get(index), seen, depth + 1, skipCarriers, structureData)
+                }
+            }
+        }
+        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        // Strict private roots go first: sharing a structure object must not let
+        // opaque application/attachment data borrow its page-reference exception.
+        for (seed in seeds) collect(seed, removed, 0, false)
+        for (seed in structureSeeds) collect(seed, removed, 0, false, structureData = true)
+
+        // An ambiguous private alias to live content must fail before mutation.
+        // Only explicit rendering/navigation roots are retained: traversing every
+        // unknown catalog key here would protect the very aliases being removed.
+        val retained = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun retain(raw: COSBase?) = collect(raw, retained, 0, true)
+        for (page in pages) retain(page.resources?.cosObject)
+        for (anchor in anchors) if (anchor is COSDictionary && anchor !== catalog && anchor !== document.document.trailer) {
+            for (key in listOf("Contents", "Resources", "Annots", "Thumb", "Group", "MediaBox", "CropBox",
+                    "BleedBox", "TrimBox", "ArtBox", "VP")) retain(anchor.getItem(COSName.getPDFName(key)))
+        }
+        for (key in listOf("AcroForm", "Outlines", "Dests", "Names", "OpenAction", "PageLabels", "OCProperties")) {
+            retain(catalog.getItem(COSName.getPDFName(key)))
+        }
+        require(removed.none { it in retained }) { "Private payload aliases retained content or navigation" }
+
+        for (key in listOf("StructTreeRoot", "MarkInfo")) catalog.removeItem(COSName.getPDFName(key))
+        document.documentInformation = PDDocumentInformation()
+        visitGraph(document.document.trailer) { node ->
+            if (node is COSDictionary) {
                 node.removeItem(COSName.getPDFName("StructParents"))
                 node.removeItem(COSName.getPDFName("StructParent"))
             }

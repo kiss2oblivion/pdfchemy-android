@@ -1,0 +1,57 @@
+Traceback (most recent call last):
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\sc10\run_native.py", line 33, in <module>
+    assert result.count('Saved PDF bytes must omit private carrier data') == 4, result[-4000:]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: l.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.runFixture(PrivatePayloadAliasSecurityTest.kt:37)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.pieceInfoDescendantAliasCannotSurviveEditorExport(PrivatePayloadAliasSecurityTest.kt:226)
+3) untypedAttachmentDescendantAliasCannotSurviveEditorExport(com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest)
+java.lang.AssertionError: Saved PDF bytes must omit private carrier data
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.assertSavedDocument(PrivatePayloadAliasSecurityTest.kt:137)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.access$assertSavedDocument(PrivatePayloadAliasSecurityTest.kt:30)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest$runFixture$1.invokeSuspend(PrivatePayloadAliasSecurityTest.kt:61)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.runFixture(PrivatePayloadAliasSecurityTest.kt:37)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.untypedAttachmentDescendantAliasCannotSurviveEditorExport(PrivatePayloadAliasSecurityTest.kt:227)
+4) pieceInfoDescendantAliasCannotSurviveSecureSearchExport(com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest)
+java.lang.AssertionError: Saved PDF bytes must omit private carrier data
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.assertSavedDocument(PrivatePayloadAliasSecurityTest.kt:137)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.access$assertSavedDocument(PrivatePayloadAliasSecurityTest.kt:30)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest$runFixture$1.invokeSuspend(PrivatePayloadAliasSecurityTest.kt:61)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.runFixture(PrivatePayloadAliasSecurityTest.kt:37)
+	at com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest.pieceInfoDescendantAliasCannotSurviveSecureSearchExport(PrivatePayloadAliasSecurityTest.kt:228)
+
+FAILURES!!!
+Tests run: 4,  Failures: 4
+
+
+INSTRUMENTATION_CODE: -1
+

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" tests="3" skipped="0" failures="3" errors="0" timestamp="2026-10-21T06:50:43.358Z" hostname="DESKTOP-N37P7P6" time="3.414">
+  <properties/>
+  <testcase name="nestedStringsArraysCyclesAndPageBackReferencesAreSanitized" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="3.301">
+    <failure message="java.lang.AssertionError: Private bytes in serialized PDF" type="java.lang.AssertionError">java.lang.AssertionError: Private bytes in serialized PDF
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.assertAbsent(PrivatePayloadAliasTest.kt:35)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.nestedStringsArraysCyclesAndPageBackReferencesAreSanitized(PrivatePayloadAliasTest.kt:84)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</failure>
+  </testcase>
+  <testcase name="retainedUntypedAttachmentFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.065">
+    <failure message="java.lang.AssertionError: Private bytes in serialized PDF" type="java.lang.AssertionError">java.lang.AssertionError: Private bytes in serialized PDF
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.assertAbsent(PrivatePayloadAliasTest.kt:35)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.retainedFixture(PrivatePayloadAliasTest.kt:63)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.retainedUntypedAttachmentFixtureRemovesDescendantAlias(PrivatePayloadAliasTest.kt:67)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</failure>
+  </testcase>
+  <testcase name="retainedPieceInfoFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.045">
+    <failure message="java.lang.AssertionError: Private bytes in serialized PDF" type="java.lang.AssertionError">java.lang.AssertionError: Private bytes in serialized PDF
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.assertAbsent(PrivatePayloadAliasTest.kt:35)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.retainedFixture(PrivatePayloadAliasTest.kt:63)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.retainedPieceInfoFixtureRemovesDescendantAlias(PrivatePayloadAliasTest.kt:66)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

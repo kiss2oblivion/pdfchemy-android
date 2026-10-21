@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.ui.ToolRegistryTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:51.770Z" hostname="DESKTOP-N37P7P6" time="0.216">
+  <properties/>
+  <testcase name="matchingIgnoresWhitespaceOrderAndLocaleCaseRules" classname="com.pdfchemy.app.ui.ToolRegistryTest" time="0.058"/>
+  <testcase name="emptyUnknownAndRepeatedQueriesArePredictable" classname="com.pdfchemy.app.ui.ToolRegistryTest" time="0.056"/>
+  <testcase name="everyFeatureHasExactlyOneDestinationAndAllOfficeFormatsAreCovered" classname="com.pdfchemy.app.ui.ToolRegistryTest" time="0.052"/>
+  <testcase name="conceptualQueriesReachDistinctCorrectTools" classname="com.pdfchemy.app.ui.ToolRegistryTest" time="0.05"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

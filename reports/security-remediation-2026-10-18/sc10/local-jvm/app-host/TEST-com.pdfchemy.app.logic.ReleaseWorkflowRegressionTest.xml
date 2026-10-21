@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:31.972Z" hostname="DESKTOP-N37P7P6" time="1.019">
+  <properties/>
+  <testcase name="sharingOfficeAndImageOutputsUsesTheirActualMimeAndGrantsEveryUri" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.074"/>
+  <testcase name="oversizedPageRangesAreBoundedBeforeExpansion" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.036"/>
+  <testcase name="unreadablePdfCannotReportSuccessfulEmptySplit" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.323"/>
+  <testcase name="originalImageOutputUsesDecodedSourceFormatForMimeAndExtension" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.066"/>
+  <testcase name="mixedOutputsShareWithWildcardInsteadOfPretendingToBePdf" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.064"/>
+  <testcase name="splitAndImageExportDeleteEarlierOutputsIfProviderCreationFails" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.272"/>
+  <testcase name="startupCleanupPreservesSavedScansAndRemovesOnlyStaleCache" classname="com.pdfchemy.app.logic.ReleaseWorkflowRegressionTest" time="0.182"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

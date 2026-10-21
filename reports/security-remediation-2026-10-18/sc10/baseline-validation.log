@@ -1,0 +1,2 @@
+Confirmed: 4 distinct native Editor/Search exports fail the expected private-byte absence assertion; empty crash buffer.
+Initial runner receipt incorrectly counted the repeated diagnostic text; raw instrumentation proof is unchanged.

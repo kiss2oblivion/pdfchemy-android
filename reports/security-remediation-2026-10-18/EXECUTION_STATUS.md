@@ -4,7 +4,7 @@
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
-Fresh [2026-10-21 reanalysis](../security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) at `857c42b4` confirms five additional unfixed findings, SC-10 through SC-14, through six vulnerability-confirming probes. It changes no production code. SC-10 (nested private payload retained after redaction cleanup) is the next priority before SC-05; the earlier fixed fixtures remain covered but do not establish complete forensic-redaction assurance. The audit is isolated in `PDFchemy-security-reanalysis-2026-10-21`.
+Fresh [2026-10-21 reanalysis](../security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) at `857c42b4` confirms five additional findings, SC-10 through SC-14, through six vulnerability-confirming probes. That audit changes no production code. [SC-10 implementation](SC10_EXECUTION.md) now passes local JVM/native/build/lint/artifact gates; Android push/ref and full same-source CI remain pending. SC-11 through SC-14 remain unfixed. Earlier fixed fixtures do not establish complete forensic-redaction assurance.
 
 ## Candidate and baseline identities
 

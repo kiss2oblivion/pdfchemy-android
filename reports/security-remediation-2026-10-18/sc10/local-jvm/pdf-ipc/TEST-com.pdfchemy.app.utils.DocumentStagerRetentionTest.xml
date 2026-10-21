@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.utils.DocumentStagerRetentionTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:00:01.074Z" hostname="DESKTOP-N37P7P6" time="2.966">
+  <properties/>
+  <testcase name="retainByUri_incrementsAndDecrementsCorrectly" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="1.554"/>
+  <testcase name="repeatedOpensDoNotExhaustQuota_returnsToBoundedBaseline" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.474"/>
+  <testcase name="explicitReleaseDeletesImmediatelyWhenUnleased" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.025"/>
+  <testcase name="atomicStageAndRetain_survivesConcurrentFloodingWithoutEviction" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.166"/>
+  <testcase name="releaseIsIdempotent_doesNotThrowOrCorruptState" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.031"/>
+  <testcase name="liveWorkerLeaseProtectsDocumentFromEviction" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.417"/>
+  <testcase name="concurrencyRegression_unleasedSnapshotIsEvicted_atomicallyLeasedSnapshotSurvives" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.107"/>
+  <testcase name="concurrentCoroutinesStagingWithLease_noExpiredStagedCapability" classname="com.pdfchemy.app.utils.DocumentStagerRetentionTest" time="0.192"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" tests="9" skipped="0" failures="1" errors="0" timestamp="2026-10-21T06:55:46.388Z" hostname="DESKTOP-N37P7P6" time="3.953">
+  <properties/>
+  <testcase name="nestedObjectWrappersAndPrivateCyclesTerminate" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="3.483"/>
+  <testcase name="nestedStringsArraysCyclesAndPageBackReferencesAreSanitized" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.04"/>
+  <testcase name="actualDocumentAnchorsCannotBePrivateCarrierRoots" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.04"/>
+  <testcase name="retainedUntypedAttachmentFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.054"/>
+  <testcase name="privateAliasToNavigationRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.044"/>
+  <testcase name="retainedPieceInfoFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.04"/>
+  <testcase name="privateAliasToUsedPageResourceRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.171"/>
+  <testcase name="excessivePrivateDepthRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.042"/>
+  <testcase name="serializedIndirectStringAndContainerAliasesAreRemoved" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.036">
+    <failure message="java.lang.AssertionError: Input control must retain indirect string identity expected same:&lt;COSString{PRIVATE_INDIRECT_STRING_86241}&gt; was not:&lt;COSString{PRIVATE_INDIRECT_STRING_86241}&gt;" type="java.lang.AssertionError">java.lang.AssertionError: Input control must retain indirect string identity expected same:&lt;COSString{PRIVATE_INDIRECT_STRING_86241}&gt; was not:&lt;COSString{PRIVATE_INDIRECT_STRING_86241}&gt;
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotSame(Assert.java:829)
+	at org.junit.Assert.assertSame(Assert.java:772)
+	at com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest.serializedIndirectStringAndContainerAliasesAreRemoved(PrivatePayloadAliasTest.kt:119)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+	at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:588)
+	at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:290)
+	at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:101)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
