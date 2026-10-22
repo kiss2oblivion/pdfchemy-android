@@ -45,7 +45,9 @@ fun RedactionScreen(
     SecureScreenContent()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    BackHandler { onBack() }
+    val uiState by viewModel.uiState.collectAsState()
+    val isProcessing = uiState is MainViewModel.UiState.Processing || uiState is MainViewModel.UiState.BatchProcessing
+    BackHandler(enabled = !isProcessing) { onBack() }
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var searchQuery by remember { mutableStateOf("") }
@@ -59,7 +61,6 @@ fun RedactionScreen(
 
     var foundBoxes by remember { mutableStateOf<List<RedactionBox>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
-    var isProcessing by remember { mutableStateOf(false) }
     val latestSearch = remember { com.pdfchemy.app.logic.LatestRequest() }
     var searchFailed by remember { mutableStateOf(false) }
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -107,34 +108,20 @@ fun RedactionScreen(
         val reviewed = committedTargets
         committedTargets = null
         if (destUri != null && reviewed != null) {
-            coroutineScope.launch {
-                isProcessing = true
-                val config = RedactionConfig(
-                    isBlackout = isBlackout,
-                    defaultOverlayText = overlayText,
-                    forensicSanitize = forensicSanitize
-                )
-
-                val result = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
-                    context = context,
-                    sourceUri = reviewed.first,
-                    destUri = destUri,
-                    redactions = reviewed.second,
-                    config = config
-                )
-                isProcessing = false
-
-                if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_redaction_success),
-                        context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    , destUri)
+            val config = RedactionConfig(
+                isBlackout = isBlackout,
+                defaultOverlayText = overlayText,
+                forensicSanitize = forensicSanitize
+            )
+            viewModel.applyRedactions(
+                context = context,
+                sourceUri = reviewed.first,
+                destUri = destUri,
+                redactions = reviewed.second,
+                config = config
+            ) { success ->
+                if (success) {
                     onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_redaction_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
                 }
             }
         }
@@ -145,7 +132,7 @@ fun RedactionScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.menu_redaction_studio), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, enabled = !isProcessing) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
@@ -195,7 +182,7 @@ fun RedactionScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                    .clickable(enabled = !isProcessing) { filePickerLauncher.launch(arrayOf("application/pdf")) },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -240,9 +227,10 @@ fun RedactionScreen(
                                 },
                                 placeholder = { Text(stringResource(R.string.placeholder_search_redact)) },
                                 modifier = Modifier.weight(1f),
+                                enabled = !isProcessing,
                                 singleLine = true,
                                 trailingIcon = {
-                                    IconButton(onClick = { performSearch(searchQuery, isRegex) }) {
+                                    IconButton(onClick = { performSearch(searchQuery, isRegex) }, enabled = !isProcessing && !isSearching) {
                                         if (isSearching) {
                                             CircularProgressIndicator(modifier = Modifier.size(18.dp))
                                         } else {
@@ -261,6 +249,7 @@ fun RedactionScreen(
                                     isRegex = true
                                     performSearch(searchQuery, true)
                                 },
+                                enabled = !isProcessing,
                                 label = { Text(stringResource(R.string.chip_preset_emails)) }
                             )
                             SuggestionChip(
@@ -269,6 +258,7 @@ fun RedactionScreen(
                                     isRegex = true
                                     performSearch(searchQuery, true)
                                 },
+                                enabled = !isProcessing,
                                 label = { Text(stringResource(R.string.chip_preset_ssn)) }
                             )
                             SuggestionChip(
@@ -277,6 +267,7 @@ fun RedactionScreen(
                                     isRegex = true
                                     performSearch(searchQuery, true)
                                 },
+                                enabled = !isProcessing,
                                 label = { Text(stringResource(R.string.chip_preset_credit_cards)) }
                             )
                             SuggestionChip(
@@ -285,6 +276,7 @@ fun RedactionScreen(
                                     isRegex = true
                                     performSearch(searchQuery, true)
                                 },
+                                enabled = !isProcessing,
                                 label = { Text(stringResource(R.string.chip_preset_phone)) }
                             )
                         }
@@ -418,7 +410,8 @@ fun RedactionScreen(
                                             val mutable = foundBoxes.toMutableList()
                                             mutable.removeAt(idx)
                                             foundBoxes = mutable
-                                        }
+                                        },
+                                        enabled = !isProcessing
                                     ) {
                                         Icon(Icons.Rounded.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
                                     }
@@ -476,6 +469,7 @@ fun RedactionScreen(
                                 committedTargets = selectedPdfUri?.let { it to foundBoxes.toList() }
                                 saveFileLauncher.launch("${base}_redacted.pdf")
                             },
+                            enabled = !isProcessing,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error,
                                 contentColor = MaterialTheme.colorScheme.onError
@@ -485,7 +479,7 @@ fun RedactionScreen(
                         }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showReviewDialog = false }) {
+                        TextButton(onClick = { showReviewDialog = false }, enabled = !isProcessing) {
                             Text(stringResource(R.string.cancel))
                         }
                     }

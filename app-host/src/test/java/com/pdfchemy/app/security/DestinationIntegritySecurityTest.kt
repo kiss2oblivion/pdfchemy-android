@@ -793,5 +793,154 @@ class DestinationIntegritySecurityTest {
         OutputPolicy.finalizeOutput(application, existingFailure, success = false)
         verify(exactly = 0) { existingFailDoc.delete() }
     }
+
+    @Test
+    fun `applyRedactions retains operation ownership and retires fresh copy status on success`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source_redact.pdf")
+        val freshDestination = Uri.parse("content://fixture/fresh_redact_success.pdf")
+
+        OutputPolicy.registerFreshCopy(freshDestination)
+        assertTrue(OutputPolicy.isFreshCopy(freshDestination))
+
+        mockkObject(com.pdfchemy.app.logic.PdfRedactionEngine)
+        coEvery {
+            com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(any(), source, freshDestination, any(), any())
+        } returns Result.success(5)
+
+        val completed = CompletableDeferred<Boolean>()
+        viewModel.applyRedactions(application, source, freshDestination, emptyList()) {
+            completed.complete(it)
+        }
+
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Success }
+        }
+
+        val success = completed.await()
+        assertTrue("Callback must receive success", success)
+        assertFalse("Fresh copy status must be retired after applyRedactions success",
+            OutputPolicy.isFreshCopy(freshDestination))
+    }
+
+    @Test
+    fun `applyRedactions cleans up fresh destination on engine failure without deleting existing destination`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source_redact.pdf")
+        val freshDest = Uri.parse("content://fixture/fresh_redact_fail.pdf")
+        val existingDest = Uri.parse("content://fixture/existing_redact_fail.pdf")
+
+        mockkStatic(DocumentFile::class)
+        val freshDoc = mockk<DocumentFile>()
+        val existingDoc = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshDest) } returns freshDoc
+        every { DocumentFile.fromSingleUri(any(), existingDest) } returns existingDoc
+
+        var freshDeleted = false
+        every { freshDoc.delete() } answers { freshDeleted = true; true }
+        every { existingDoc.delete() } answers {
+            fail("Existing destination must never be deleted!")
+            true
+        }
+
+        mockkObject(com.pdfchemy.app.logic.PdfRedactionEngine)
+        coEvery {
+            com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(any(), any(), any(), any(), any())
+        } returns Result.failure(IOException("Redaction engine failed"))
+
+        // 1. Fresh destination failure
+        OutputPolicy.registerFreshCopy(freshDest)
+        assertTrue(OutputPolicy.isFreshCopy(freshDest))
+
+        val completed1 = CompletableDeferred<Boolean>()
+        viewModel.applyRedactions(application, source, freshDest, emptyList()) {
+            completed1.complete(it)
+        }
+
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+        }
+        assertFalse("Callback must receive false on failure", completed1.await())
+        delay(100)
+        assertTrue("Fresh incomplete destination must be deleted on failure", freshDeleted)
+        assertFalse(OutputPolicy.isFreshCopy(freshDest))
+
+        // 2. Existing destination failure
+        assertFalse(OutputPolicy.isFreshCopy(existingDest))
+        val completed2 = CompletableDeferred<Boolean>()
+        viewModel.applyRedactions(application, source, existingDest, emptyList()) {
+            completed2.complete(it)
+        }
+
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+        }
+        assertFalse("Callback must receive false on failure", completed2.await())
+        verify(exactly = 0) { existingDoc.delete() }
+    }
+
+    @Test
+    fun `applyRedactions rejects same-document destination before processing`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/same_doc.pdf")
+
+        mockkObject(com.pdfchemy.app.logic.PdfRedactionEngine)
+
+        val completed = CompletableDeferred<Boolean>()
+        viewModel.applyRedactions(application, source, source, emptyList()) {
+            completed.complete(it)
+        }
+
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+        }
+
+        assertFalse("Callback must receive false when rejected", completed.await())
+        coVerify(exactly = 0) {
+            com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `applyRedactions cleans up fresh destination on cancelOperation`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source_redact.pdf")
+        val freshDest = Uri.parse("content://fixture/fresh_redact_cancel.pdf")
+
+        mockkStatic(DocumentFile::class)
+        val freshDoc = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshDest) } returns freshDoc
+        var freshDeleted = false
+        every { freshDoc.delete() } answers { freshDeleted = true; true }
+
+        OutputPolicy.registerFreshCopy(freshDest)
+        assertTrue(OutputPolicy.isFreshCopy(freshDest))
+
+        val started = CompletableDeferred<Unit>()
+        val releaseEngine = CompletableDeferred<Unit>()
+
+        mockkObject(com.pdfchemy.app.logic.PdfRedactionEngine)
+        coEvery {
+            com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(any(), source, freshDest, any(), any())
+        } coAnswers {
+            started.complete(Unit)
+            releaseEngine.await()
+            Result.success(1)
+        }
+
+        viewModel.applyRedactions(application, source, freshDest, emptyList())
+        started.await()
+
+        viewModel.cancelOperation(application)
+        releaseEngine.complete(Unit)
+
+        delay(150)
+        assertTrue("Fresh destination must be cleaned up on cancelOperation", freshDeleted)
+        assertFalse(OutputPolicy.isFreshCopy(freshDest))
+    }
 }
 

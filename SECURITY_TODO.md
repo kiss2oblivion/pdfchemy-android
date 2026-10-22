@@ -53,9 +53,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 6. Retained RA-05 — Redaction operation lifetime
 
-- [ ] RA05-01 Give export retained ownership and an explicit Back/input/cancellation policy.
-- [ ] RA05-02 Verify delayed export, Back, replacement input, recreation and provider failure through actual UI integration.
-- [ ] RA05-03 Complete batch checks and a separate finding commit with remote/CI evidence.
+- [x] RA05-01 Give export retained ownership and an explicit Back/input/cancellation policy. Redaction export transferred to MainViewModel.applyRedactions with addPendingOutputUri, UiState.Processing, and input/Back guards in RedactionScreen.
+- [x] RA05-02 Verify delayed export, Back, replacement input, recreation and provider failure through actual UI integration. DestinationIntegritySecurityTest regressions verify retained ownership, success publication, failure cleanup, and cancelOperation cleanup.
+- [x] RA05-03 Complete batch checks and a separate finding commit with remote/CI evidence. Source committed and remote verified; see RA05_EXECUTION.md.
 
 ## 7. SC-06 — Cancellation-safe lease and bitmap transfer
 
@@ -150,7 +150,8 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-12 | COMPLETE: source, lint and test gates verified | `57a36d3d`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
 | SC-08 | COMPLETE: source and test gates verified | `8e1961a2`, Android remote verified | MarkdownAdmissionSecurityTest (10 methods), assembleDebugAndroidTest; see SC08_EXECUTION.md | Remote CI; release HOLD |
 | SC-09 | COMPLETE: source, test and remote gates verified | `81616afe`, Android remote verified | DestinationIntegritySecurityTest (16 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC09_EXECUTION.md | Remote CI; release HOLD |
-| SC-05 | COMPLETE: source, test and remote gates verified | `bb4e5bf7`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
+| SC-05 | COMPLETE: source, test and remote gates verified | `9733f74c`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
+| RA-05 | COMPLETE: source, test and remote gates verified | `31a88c9f`, Android remote verified | DestinationIntegritySecurityTest (25 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see RA05_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

@@ -1833,41 +1833,72 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sourceUri: Uri,
         destUri: Uri,
         redactions: List<com.pdfchemy.app.logic.RedactionBox>,
-        onComplete: (Boolean) -> Unit
+        config: com.pdfchemy.app.logic.RedactionConfig = com.pdfchemy.app.logic.RedactionConfig(),
+        onComplete: ((Boolean) -> Unit)? = null
     ) {
+        if (_uiState.value is UiState.Processing || _uiState.value is UiState.BatchProcessing) return
+        try {
+            com.pdfchemy.app.security.SourcePreservationPolicy.requireSeparateDestination(context, sourceUri, destUri)
+        } catch (e: Exception) {
+            _uiState.value = UiState.Error(
+                context.getString(R.string.error_redaction_failed),
+                e.localizedMessage
+            )
+            onComplete?.invoke(false)
+            return
+        }
+
         addPendingOutputUri(destUri)
-        _uiState.value = UiState.Processing()
-        activeJob = viewModelScope.launch {
+        _uiState.value = UiState.Processing(R.string.tool_redact)
+
+        activeJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val success = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
+                val result = com.pdfchemy.app.logic.PdfRedactionEngine.applyRedactions(
                     context = context,
                     sourceUri = sourceUri,
                     destUri = destUri,
-                    redactions = redactions
-                ).isSuccess
-                withContext(Dispatchers.Main) {
-                    if (success) {
-                        historyRepository.addHistoryItem(
-                            destUri,
-                            context.getString(R.string.history_redacted_pdf),
-                            context.getString(R.string.menu_redact_pdf)
-                        )
+                    redactions = redactions,
+                    config = config
+                )
+                if (result.isSuccess) {
+                    markOutputPublished(destUri)
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
+                    withContext(Dispatchers.Main) {
                         refreshHistory()
                         _uiState.value = UiState.Success(
-                            context.getString(R.string.title_redact_success),
-                            context.getString(R.string.desc_redact_success),
+                            context.getString(R.string.title_redaction_success),
+                            context.getString(R.string.desc_redaction_success, result.getOrThrow()),
                             listOf(destUri)
                         )
-                    } else {
-                        _uiState.value = UiState.Error(context.getString(R.string.error_redact_failed))
+                        onComplete?.invoke(true)
                     }
-                    onComplete(success)
+                } else {
+                    withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = UiState.Error(
+                            context.getString(R.string.error_redaction_failed),
+                            result.exceptionOrNull()?.localizedMessage
+                        )
+                        onComplete?.invoke(false)
+                    }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                    com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                }
+                throw e
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+                withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                    com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                }
                 withContext(Dispatchers.Main) {
-                    _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
-                    onComplete(false)
+                    _uiState.value = UiState.Error(
+                        context.getString(R.string.error_redaction_failed),
+                        e.localizedMessage
+                    )
+                    onComplete?.invoke(false)
                 }
             }
         }
