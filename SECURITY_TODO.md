@@ -95,8 +95,8 @@ Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECU
 - [x] SC10-01 Turn the two retained private-payload alias fixtures into actual native Editor/secure Search failing regressions. Four searchable alias extensions fail on baseline API24; the two exact archived inputs also pass fixed native Editor exports. See [SC-10 receipt](reports/security-remediation-2026-10-18/SC10_EXECUTION.md).
 - [x] SC10-02 Remove/reject complete private payload aliases using bounded traversal while preserving safe page/navigation references; verify saved strings/streams and output pixels. Local 288 JVM tests and 24 native methods per API24/36 pass, including eight new SC-10 cases; ambiguous live-object overlap rejects before mutation.
 - [x] SC10-03 Complete focused/full batch checks, separate finding commit, Android-only push, remote SHA and same-source CI evidence. Source `4ec21c40` is remote-verified; full CI `39590800550` passes all nine jobs, 244 native methods per API24/30/34/36 (976 total). Original API34 startup failure retained; FOLLOW-09 stays open.
-- [ ] SC11-01 Make startup cache cleanup respect live staging leases; age an owned snapshot in a deterministic regression and preserve its bytes/lease bookkeeping through cleanup.
-- [ ] SC11-02 Verify recreation, eligible unleased reclamation and quotas; complete the separate implementation/test/commit/remote/CI batch.
+- [x] SC11-01 Make startup cache cleanup respect live staging leases; age an owned snapshot in a deterministic regression and preserve its bytes/lease bookkeeping through cleanup.
+- [x] SC11-02 Verify recreation, eligible unleased reclamation and quotas; complete the separate implementation/test/commit/remote/CI batch.
 - [x] SC12-01 Provide Reader share capabilities through a permitted root with bounded lifetime and the correct read grant.
 - [x] SC12-02 Verify Reader-to-recipient exact-byte reads after navigation and batch build/lint/commit/remote/CI gates.
 - [ ] SC13-01 Define supported cancellation/recovery for blocked destination open/write and bound outstanding host publication resources/concurrency.
@@ -146,7 +146,8 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-04 | COMPLETE: implementation and batch gates verified | Source `7f7fe757`, Android remote verified | Local unit/native/debug/static/lint/unsigned artifact gates and full same-source CI pass; 236 methods per API24/30/34/36 (944 total) | None for this batch; release remains HOLD |
 | Fresh SC-10 through SC-14 | Historical audit checkpoint: confirmed, not yet implemented at that checkpoint | Review source `857c42b4`; production diff empty | Six unique vulnerability-confirming probes: five JVM and one native API24; two reloaded/saved redaction fixtures; fresh static/OSV/history-secret checks | At that checkpoint SC-10 was next; current completion is recorded below |
 | SC-10 | COMPLETE: source and batch gates verified | `4ec21c40`, Android remote verified | 288 local JVM tests, 48 local native executions and full CI with 976 native executions; see SC10_EXECUTION.md | None for this finding; conservative refusal and open FOLLOW-09/10 are explicit; release HOLD |
-| SC-12 | COMPLETE: source, lint and test gates verified | `4ad47305`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
+| SC-11 | COMPLETE: source and test gates verified | In progress | StagedSessionRetentionTest (3 new methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC11_EXECUTION.md | Remote CI; release HOLD |
+| SC-12 | COMPLETE: source, lint and test gates verified | `57a36d3d`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

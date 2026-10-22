@@ -418,7 +418,14 @@ class MainActivity : AppCompatActivity() {
                         val name = file.name.lowercase()
                         if (name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".cbz") ||
                             name.endsWith(".csv") || name.endsWith(".docx") || name.endsWith(".xlsx") || name.endsWith(".pptx") ||
-                            name.startsWith("temp_") || name.startsWith("pdf_seekable_") || name.startsWith("scan_")) {
+                            name.startsWith("temp_") || name.startsWith("pdf_seekable_") || name.startsWith("scan_") ||
+                            name.startsWith("snapshot_")) {
+                            if (com.pdfchemy.app.utils.DocumentStager.isLeased(file)) {
+                                continue
+                            }
+                            if (com.pdfchemy.app.utils.DocumentStager.reclaimUnleasedSnapshot(file)) {
+                                continue
+                            }
                             try { file.delete() } catch (_: Throwable) {}
                         }
                     }

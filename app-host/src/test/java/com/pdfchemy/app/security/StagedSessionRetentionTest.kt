@@ -1,8 +1,10 @@
 package com.pdfchemy.app.security
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
+import com.pdfchemy.app.MainActivity
 import com.pdfchemy.app.ui.MainViewModel
 import com.pdfchemy.app.utils.DocumentStager
 import org.junit.After
@@ -14,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
@@ -99,5 +102,82 @@ class StagedSessionRetentionTest {
         for (i in 19..50) {
             assertTrue("Recent entry doc_$i must be present", viewModel.readerPositions.containsKey("doc_$i"))
         }
+    }
+
+    private fun cleanupOrphanedCacheFiles(activity: MainActivity, context: Context) {
+        MainActivity::class.java.getDeclaredMethod("cleanupOrphanedCacheFiles", Context::class.java)
+            .apply { isAccessible = true }.invoke(activity, context)
+    }
+
+    @Test
+    fun startupSweepPreservesActivelyLeasedSnapshotEvenWhenAged() {
+        val bytes = samplePdf("leased_snapshot_test")
+        val leased = ByteArrayInputStream(bytes).use {
+            DocumentStager.stageStreamWithLease(application, it, "pdf")
+        }
+        val file = File(leased.document.uri.path!!)
+        val oneHourAndTenMinutesAgo = System.currentTimeMillis() - 4_200_000L
+        try {
+            assertTrue(file.setLastModified(oneHourAndTenMinutesAgo))
+            assertEquals(1, DocumentStager.activeLeases(leased.document))
+            assertTrue(DocumentStager.isLeased(file))
+            assertTrue(file.exists())
+
+            val activity = Robolectric.buildActivity(MainActivity::class.java).get()
+            cleanupOrphanedCacheFiles(activity, application)
+
+            // Verification under SC-11: File must survive, exact bytes intact, lease still active
+            assertTrue("Actively leased staged snapshot must survive startup cache cleanup", file.exists())
+            assertEquals("Exact snapshot bytes must be preserved", bytes.size.toLong(), file.length())
+            assertEquals("Staging lease count must remain intact", 1, DocumentStager.activeLeases(leased.document))
+            assertNotNull("Document must remain tracked in DocumentStager", DocumentStager.stagedFor(leased.document.uri))
+        } finally {
+            leased.close()
+            DocumentStager.release(leased.document)
+        }
+    }
+
+    @Test
+    fun startupSweepReclaimsEligibleUnleasedAgedSnapshot() {
+        val bytes = samplePdf("unleased_aged_snapshot_test")
+        val stagedLease = ByteArrayInputStream(bytes).use {
+            DocumentStager.stageStreamWithLease(application, it, "pdf")
+        }
+        val doc = stagedLease.document
+        val file = File(doc.uri.path!!)
+        stagedLease.close() // release lease, active count becomes 0
+        assertEquals(0, DocumentStager.activeLeases(doc))
+        assertFalse(DocumentStager.isLeased(file))
+
+        val oneHourAndTenMinutesAgo = System.currentTimeMillis() - 4_200_000L
+        file.setLastModified(oneHourAndTenMinutesAgo)
+
+        val activity = Robolectric.buildActivity(MainActivity::class.java).get()
+        cleanupOrphanedCacheFiles(activity, application)
+
+        // Verification under SC-11: Unleased, aged snapshot should be cleanly reclaimed
+        assertFalse("Eligible aged unleased snapshot should be deleted from disk", file.exists())
+        assertNull("Reclaimed snapshot should be removed from DocumentStager tracking", DocumentStager.stagedFor(doc.uri))
+    }
+
+    @Test
+    fun startupSweepPreservesRecentUnleasedSnapshot() {
+        val bytes = samplePdf("unleased_recent_snapshot_test")
+        val stagedLease = ByteArrayInputStream(bytes).use {
+            DocumentStager.stageStreamWithLease(application, it, "pdf")
+        }
+        val doc = stagedLease.document
+        val file = File(doc.uri.path!!)
+        stagedLease.close() // unleased
+        assertEquals(0, DocumentStager.activeLeases(doc))
+
+        // Fresh file (modified just now)
+        val activity = Robolectric.buildActivity(MainActivity::class.java).get()
+        cleanupOrphanedCacheFiles(activity, application)
+
+        // Recent unleased file must NOT be deleted yet (within 1 hour window)
+        assertTrue("Recent unleased snapshot must not be deleted", file.exists())
+        assertNotNull("Recent snapshot should still be tracked in DocumentStager", DocumentStager.stagedFor(doc.uri))
+        DocumentStager.release(doc)
     }
 }
