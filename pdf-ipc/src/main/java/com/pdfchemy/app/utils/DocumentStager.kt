@@ -20,6 +20,7 @@ object DocumentStager {
 
     private val staged = ConcurrentHashMap<String, StagedPdf>()
     private val displayNames = ConcurrentHashMap<String, String>()
+    private val originalSourceUris = ConcurrentHashMap<String, Uri>()
     private val leases = mutableMapOf<String, Int>()
     private val pendingRelease = mutableSetOf<String>()
     private val initializedDirectories = mutableSetOf<String>()
@@ -65,7 +66,12 @@ object DocumentStager {
             onInputOpened(it)
             stageStreamInternal(context, it, name?.substringAfterLast('.')?.lowercase(), checkCancellation, acquireInitialLease)
         }
-        name?.take(512)?.let { displayNames[requireNotNull(stagedLease.document.uri.path)] = it }
+        val path = requireNotNull(stagedLease.document.uri.path)
+        name?.take(512)?.let { displayNames[path] = it }
+        originalSourceUris[path] = sourceUri
+        runCatching { File(path).canonicalPath }.getOrNull()?.let {
+            if (it != path) originalSourceUris[it] = sourceUri
+        }
         return stagedLease
     }
     const val MAX_UNLEASED_DOCUMENTS = 4
@@ -349,11 +355,13 @@ object DocumentStager {
         val path = document.uri.path ?: return
         val removed = staged.remove(path, document)
         displayNames.remove(path)
+        originalSourceUris.remove(path)
         val file = File(path)
         val canonical = runCatching { file.canonicalPath }.getOrNull()
         if (canonical != null && canonical != path) {
             staged.remove(canonical, document)
             displayNames.remove(canonical)
+            originalSourceUris.remove(canonical)
         }
         file.delete()
     }
@@ -375,4 +383,12 @@ object DocumentStager {
         if (uri.scheme == "file") uri.path?.let { staged[it]?.let(::release) }
     }
     fun displayName(uri: Uri): String? = uri.path?.let(displayNames::get)
+    fun originalSourceFor(uri: Uri): Uri? {
+        if (uri.scheme == "file") {
+            val path = uri.path ?: return null
+            return originalSourceUris[path] ?: runCatching { File(path).canonicalPath }.getOrNull()?.let { originalSourceUris[it] }
+        }
+        return null
+    }
+    fun originalSourceFor(document: StagedPdf): Uri? = originalSourceFor(document.uri)
 }

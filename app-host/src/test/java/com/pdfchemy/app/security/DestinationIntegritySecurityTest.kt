@@ -448,26 +448,136 @@ class DestinationIntegritySecurityTest {
     }
 
     @Test
-    fun `source equals destination is rejected and source is protected`() = runBlocking {
+    fun `source equals destination is rejected before destructive open and source bytes remain unchanged`() = runBlocking {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val viewModel = MainViewModel(application)
-        val sameUri = Uri.parse("content://fixture/same_document.pdf")
-
-        mockkStatic(DocumentFile::class)
-        val documentFile = mockk<DocumentFile>()
-        every { DocumentFile.fromSingleUri(any(), sameUri) } returns documentFile
-        every { documentFile.delete() } answers {
-            fail("Source document must never be deleted!")
-            true
+        val testBytes = "PDF-TEST-SEED-BYTES-ORIGINAL-DATA".toByteArray(Charsets.UTF_8)
+        val seedFile = File(application.cacheDir, "test_source_protection_${UUID.randomUUID()}.pdf").apply {
+            writeBytes(testBytes)
         }
+        val sourceUri = Uri.fromFile(seedFile)
+        try {
+            // 1. Direct engine call must fail-closed with SecurityException before opening any stream
+            val compressResult = PdfCompressor.compressPdf(application, sourceUri, sourceUri)
+            assertTrue("Direct compression must fail when source matches destination", compressResult.isFailure)
+            assertTrue("Failure must be SecurityException", compressResult.exceptionOrNull() is SecurityException)
+            assertArrayEquals("Source file bytes must remain 100% untouched after rejected direct compression",
+                testBytes, seedFile.readBytes())
 
-        viewModel.compressPdf(application, sameUri, sameUri)
+            // 2. ViewModel entry point must reject before recording pending output or truncating
+            val viewModel = MainViewModel(application)
+            viewModel.compressPdf(application, sourceUri, sourceUri)
 
-        withTimeout(5_000) {
-            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+            withTimeout(5_000) {
+                viewModel.uiState.first { it is MainViewModel.UiState.Error }
+            }
+
+            assertArrayEquals("Source file bytes must remain 100% untouched after ViewModel rejection",
+                testBytes, seedFile.readBytes())
+        } finally {
+            seedFile.delete()
         }
+    }
 
-        verify(exactly = 0) { documentFile.delete() }
+    @Test
+    fun `canonical file path alias of source as destination is rejected and source bytes remain unchanged`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val testBytes = "SEED_ALIAS_PROTECTED_BYTES".toByteArray(Charsets.UTF_8)
+        val realFile = File(application.cacheDir, "test_alias_${UUID.randomUUID()}.pdf").apply {
+            writeBytes(testBytes)
+        }
+        val sourceUri = Uri.fromFile(realFile)
+        val aliasFile = File(realFile.parentFile, "./${realFile.name}")
+        val aliasUri = Uri.fromFile(aliasFile)
+        try {
+            assertTrue("SourcePreservationPolicy must recognize canonical path alias",
+                SourcePreservationPolicy.isSameDocument(application, sourceUri, aliasUri))
+
+            val compressResult = PdfCompressor.compressPdf(application, sourceUri, aliasUri)
+            assertTrue("Compression must fail on canonical alias destination", compressResult.isFailure)
+            assertTrue("Failure must be SecurityException", compressResult.exceptionOrNull() is SecurityException)
+            assertArrayEquals("Source file bytes must remain untouched after alias overwrite rejection",
+                testBytes, realFile.readBytes())
+        } finally {
+            realFile.delete()
+        }
+    }
+
+    @Test
+    fun `staged capability provenance mapping rejects destination matching original source`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val sourceFile = File(application.cacheDir, "test_staged_${UUID.randomUUID()}.pdf").apply {
+            writeBytes("%PDF-1.4\n%staged provenance test\n%%EOF".toByteArray(Charsets.UTF_8))
+        }
+        val sourceUri = Uri.fromFile(sourceFile)
+        val stagedLease = com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(application, sourceUri)
+        try {
+            val stagedDocUri = stagedLease.document.uri
+            assertTrue("Policy must map staged capability back to original source URI",
+                SourcePreservationPolicy.isSameDocument(application, stagedDocUri, sourceUri))
+            assertTrue("Policy must be symmetric across staged capability and original source",
+                SourcePreservationPolicy.isSameDocument(application, sourceUri, stagedDocUri))
+            var exceptionThrown = false
+            try {
+                SourcePreservationPolicy.requireSeparateDestination(application, stagedDocUri, sourceUri)
+            } catch (e: SecurityException) {
+                exceptionThrown = true
+            }
+            assertTrue("requireSeparateDestination must throw SecurityException for staged capability", exceptionThrown)
+        } finally {
+            stagedLease.lease.close()
+            com.pdfchemy.app.utils.DocumentStager.release(stagedLease.document)
+            sourceFile.delete()
+        }
+    }
+
+    @Test
+    fun `distinct destination is permitted by source preservation policy`() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val sourceFile = File(application.cacheDir, "test_src_${UUID.randomUUID()}.pdf").apply {
+            writeBytes("SOURCE_DATA".toByteArray(Charsets.UTF_8))
+        }
+        val destFile = File(application.cacheDir, "test_dst_${UUID.randomUUID()}.pdf").apply {
+            writeBytes("DISTINCT_DATA".toByteArray(Charsets.UTF_8))
+        }
+        val sourceUri = Uri.fromFile(sourceFile)
+        val destUri = Uri.fromFile(destFile)
+        try {
+            assertFalse("Unrelated distinct files must not be identified as same document",
+                SourcePreservationPolicy.isSameDocument(application, sourceUri, destUri))
+            SourcePreservationPolicy.requireSeparateDestination(application, sourceUri, destUri)
+        } finally {
+            sourceFile.delete()
+            destFile.delete()
+        }
+    }
+
+    @Test
+    fun `merge operation rejects when any input source matches destination`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val testBytes1 = "MERGE_SRC_1".toByteArray(Charsets.UTF_8)
+        val testBytes2 = "MERGE_SRC_2".toByteArray(Charsets.UTF_8)
+        val src1 = File(application.cacheDir, "test_merge1_${UUID.randomUUID()}.pdf").apply {
+            writeBytes(testBytes1)
+        }
+        val src2 = File(application.cacheDir, "test_merge2_${UUID.randomUUID()}.pdf").apply {
+            writeBytes(testBytes2)
+        }
+        val src1Uri = Uri.fromFile(src1)
+        val src2Uri = Uri.fromFile(src2)
+        try {
+            val viewModel = MainViewModel(application)
+            viewModel.mergePdfs(application, listOf(src1Uri, src2Uri), src1Uri)
+            withTimeout(5_000) {
+                viewModel.uiState.first { it is MainViewModel.UiState.Error }
+            }
+            assertArrayEquals("Merge source 1 must remain intact when self-overwrite is attempted",
+                testBytes1, src1.readBytes())
+            assertArrayEquals("Merge source 2 must remain intact when self-overwrite is attempted",
+                testBytes2, src2.readBytes())
+        } finally {
+            src1.delete()
+            src2.delete()
+        }
     }
 
     @Test

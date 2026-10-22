@@ -582,6 +582,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun compressPdf(context: Context, sourceUri: Uri, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
 
+        if (com.pdfchemy.app.security.SourcePreservationPolicy.isSameDocument(context, sourceUri, destUri)) {
+            _uiState.value = UiState.Error("Destination cannot be the same document as source")
+            return
+        }
+
         addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {
             _uiState.value = UiState.Processing()
@@ -981,6 +986,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // =============================================================================================
     fun mergePdfs(context: Context, sourceUris: List<Uri>, destUri: Uri) {
         if (_uiState.value is UiState.Processing) return
+
+        if (sourceUris.any { com.pdfchemy.app.security.SourcePreservationPolicy.isSameDocument(context, it, destUri) }) {
+            _uiState.value = UiState.Error("Destination cannot be the same document as source")
+            return
+        }
 
         addPendingOutputUri(destUri)
         activeJob = viewModelScope.launch {

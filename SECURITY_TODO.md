@@ -82,10 +82,10 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 10. SC-09 — Source preservation
 
-- [ ] SC09-01 Preserve original identity through staging and enforce known same-document rejection before destructive output opens.
-- [ ] SC09-02 Define safe handling of supported aliases and unknown destination freshness.
-- [ ] SC09-03 Seed source bytes and prove equality/known-alias rejection, no destructive open and unchanged bytes; keep unrelated/fresh outputs working.
-- [ ] SC09-04 Replace the old rejection-named test with assertions that prove policy enforcement.
+- [x] SC09-01 Preserve original identity through staging and enforce known same-document rejection before destructive output opens.
+- [x] SC09-02 Define safe handling of supported aliases and unknown destination freshness.
+- [x] SC09-03 Seed source bytes and prove equality/known-alias rejection, no destructive open and unchanged bytes; keep unrelated/fresh outputs working.
+- [x] SC09-04 Replace the old rejection-named test with assertions that prove policy enforcement.
 - [ ] SC09-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## Additional findings — fresh reanalysis 2026-10-21
@@ -149,6 +149,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-11 | COMPLETE: source and test gates verified | `25159229`, Android remote verified | StagedSessionRetentionTest (3 new methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC11_EXECUTION.md | Remote CI; release HOLD |
 | SC-12 | COMPLETE: source, lint and test gates verified | `57a36d3d`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
 | SC-08 | COMPLETE: source and test gates verified | `8e1961a2`, Android remote verified | MarkdownAdmissionSecurityTest (10 methods), assembleDebugAndroidTest; see SC08_EXECUTION.md | Remote CI; release HOLD |
+| SC-09 | COMPLETE: source and test gates verified | `79f3b759`, Android remote pending | DestinationIntegritySecurityTest (16 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC09_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

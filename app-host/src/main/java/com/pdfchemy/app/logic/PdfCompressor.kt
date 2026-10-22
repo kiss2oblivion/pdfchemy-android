@@ -29,6 +29,7 @@ object PdfCompressor {
         var inputLease: java.io.Closeable? = null
         val temporaryFiles = mutableListOf<java.io.File>()
         try {
+            com.pdfchemy.app.security.SourcePreservationPolicy.requireSeparateDestination(context, sourceUri, destUri)
             val stagedLease = DocumentStager.stageDocumentCancellableWithLease(context, sourceUri)
             stagedPdf = stagedLease.document
             inputLease = stagedLease.lease

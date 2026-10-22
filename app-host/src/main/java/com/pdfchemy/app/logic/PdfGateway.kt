@@ -36,6 +36,7 @@ object PdfGateway {
     ): OperationContract = withContext(Dispatchers.IO) {
         SecurityLimits.enforceStringLength(paramsJson, SecurityLimits.MAX_PARAMS_JSON_BYTES, "Request")
         require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
+        com.pdfchemy.app.security.SourcePreservationPolicy.requireSeparateDestinations(context, sources, targets)
         val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
         val inputLeases = mutableListOf<java.io.Closeable>()
         val descriptors = mutableListOf<ParcelFileDescriptor>()
