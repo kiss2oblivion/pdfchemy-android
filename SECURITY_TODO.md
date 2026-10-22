@@ -75,9 +75,9 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 9. SC-08 — Bounded Markdown admission
 
-- [ ] SC08-01 Choose documented byte and decoded-character budgets appropriate to the editor.
-- [ ] SC08-02 Enforce streaming limits, cancellation, input closure and visible rejection without replacing existing editor content.
-- [ ] SC08-03 Test known/unknown-length boundaries, plus-one, multibyte and controlled endless streams safely.
+- [x] SC08-01 Choose documented byte and decoded-character budgets appropriate to the editor.
+- [x] SC08-02 Enforce streaming limits, cancellation, input closure and visible rejection without replacing existing editor content.
+- [x] SC08-03 Test known/unknown-length boundaries, plus-one, multibyte and controlled endless streams safely.
 - [ ] SC08-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
 
 ## 10. SC-09 — Source preservation
@@ -146,8 +146,9 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-04 | COMPLETE: implementation and batch gates verified | Source `7f7fe757`, Android remote verified | Local unit/native/debug/static/lint/unsigned artifact gates and full same-source CI pass; 236 methods per API24/30/34/36 (944 total) | None for this batch; release remains HOLD |
 | Fresh SC-10 through SC-14 | Historical audit checkpoint: confirmed, not yet implemented at that checkpoint | Review source `857c42b4`; production diff empty | Six unique vulnerability-confirming probes: five JVM and one native API24; two reloaded/saved redaction fixtures; fresh static/OSV/history-secret checks | At that checkpoint SC-10 was next; current completion is recorded below |
 | SC-10 | COMPLETE: source and batch gates verified | `4ec21c40`, Android remote verified | 288 local JVM tests, 48 local native executions and full CI with 976 native executions; see SC10_EXECUTION.md | None for this finding; conservative refusal and open FOLLOW-09/10 are explicit; release HOLD |
-| SC-11 | COMPLETE: source and test gates verified | In progress | StagedSessionRetentionTest (3 new methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC11_EXECUTION.md | Remote CI; release HOLD |
+| SC-11 | COMPLETE: source and test gates verified | `25159229`, Android remote verified | StagedSessionRetentionTest (3 new methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC11_EXECUTION.md | Remote CI; release HOLD |
 | SC-12 | COMPLETE: source, lint and test gates verified | `57a36d3d`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
+| SC-08 | COMPLETE: source and test gates verified | `8e1961a2`, Android remote verified | MarkdownAdmissionSecurityTest (10 methods), assembleDebugAndroidTest; see SC08_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

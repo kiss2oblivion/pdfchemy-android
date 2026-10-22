@@ -84,15 +84,29 @@ fun MarkdownStudioScreen(
         if (uri != null) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val text = stream.bufferedReader().readText()
-                        withContext(Dispatchers.Main) {
-                            markdownText = text
-                            documentTitle = FileUtils.getFileName(context, uri)?.removeSuffix(".md") ?: "Document"
-                        }
+                    val stream = context.contentResolver.openInputStream(uri)
+                        ?: throw java.io.IOException("Unable to open selected file")
+                    val text = stream.use {
+                        com.pdfchemy.app.logic.MarkdownAdmission.readBoundedText(it)
+                    }
+                    val fileName = FileUtils.getFileName(context, uri)?.removeSuffix(".md") ?: "Document"
+                    withContext(Dispatchers.Main) {
+                        markdownText = text
+                        documentTitle = fileName
                     }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     AppLogger.e("Failed to open markdown file", e)
+                    withContext(Dispatchers.Main) {
+                        val message = when (e) {
+                            is SecurityException -> e.message ?: "File exceeds maximum permitted size"
+                            else -> "Failed to open document: ${e.localizedMessage ?: "Unknown error"}"
+                        }
+                        viewModel.showErrorToast(
+                            context.getString(R.string.error),
+                            message
+                        )
+                    }
                 }
             }
         }
