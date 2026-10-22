@@ -90,11 +90,11 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## Additional findings — fresh reanalysis 2026-10-21
 
-Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md). SC-10 is the next implementation batch, before SC-05. These findings are confirmed but unfixed.
+Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md). SC-10 was implemented before SC-05. Validate the new source-level FOLLOW-10 candidate before the next source batch, then resume the planned SC-05 sequence unless runtime proof warrants privacy-fix priority. SC-10 batch gates are complete; SC-11 through SC-14 remain unfixed.
 
-- [x] SC10-01 Turn the two retained private-payload alias fixtures into actual native Editor/secure Search failing regressions. Four searchable alias extensions fail on baseline API24; the two exact archived inputs also pass fixed native Editor exports. See SC10_EXECUTION.md.
+- [x] SC10-01 Turn the two retained private-payload alias fixtures into actual native Editor/secure Search failing regressions. Four searchable alias extensions fail on baseline API24; the two exact archived inputs also pass fixed native Editor exports. See [SC-10 receipt](reports/security-remediation-2026-10-18/SC10_EXECUTION.md).
 - [x] SC10-02 Remove/reject complete private payload aliases using bounded traversal while preserving safe page/navigation references; verify saved strings/streams and output pixels. Local 288 JVM tests and 24 native methods per API24/36 pass, including eight new SC-10 cases; ambiguous live-object overlap rejects before mutation.
-- [ ] SC10-03 Complete focused/full batch checks, separate finding commit, Android-only push, remote SHA and same-source CI evidence.
+- [x] SC10-03 Complete focused/full batch checks, separate finding commit, Android-only push, remote SHA and same-source CI evidence. Source `4ec21c40` is remote-verified; full CI `39590800550` passes all nine jobs, 244 native methods per API24/30/34/36 (976 total). Original API34 startup failure retained; FOLLOW-09 stays open.
 - [ ] SC11-01 Make startup cache cleanup respect live staging leases; age an owned snapshot in a deterministic regression and preserve its bytes/lease bookkeeping through cleanup.
 - [ ] SC11-02 Verify recreation, eligible unleased reclamation and quotas; complete the separate implementation/test/commit/remote/CI batch.
 - [ ] SC12-01 Provide Reader share capabilities through a permitted root with bounded lifetime and the correct read grant.
@@ -115,7 +115,8 @@ Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECU
 - [x] FOLLOW-06 Reconcile SR-01 technical guarantees and contradictory approval claims. See updated SR-01 assessment and execution receipt; stronger enforcement and owner disposition remain open.
 - [ ] FOLLOW-07 Record attributable owner risk disposition or implement and verify a stronger boundary.
 - [ ] FOLLOW-08 Reconcile redaction API count semantics: the worker reports selected-box count, but the shared host standard-output contract currently returns one output. The SC-02 multiline regression verifies every selected line through saved-data absence; no matched-box count correction is claimed.
-- [ ] FOLLOW-09 Diagnose the API34 `StartupWindowRegressionTest.backgroundAndResumeRetainsContent` STARTED-state timeout observed in SC-04 CI attempt 1. Preserve the failed result and unchanged retry outcome; do not treat a retry as root-cause attribution or weaken the lifecycle assertion. This is separate from FOLLOW-05's API24/WebView SIGILL.
+- [ ] FOLLOW-09 Diagnose the API34 `StartupWindowRegressionTest.backgroundAndResumeRetainsContent` STARTED-state timeout observed in SC-04 CI attempt 1. Preserve the failed result and unchanged retry outcome; do not treat a retry as root-cause attribution or weaken the lifecycle assertion. This is separate from FOLLOW-05's API24/WebView SIGILL. The same timeout recurred in SC-10 run39590800550 attempt1 (243/244 passed, all eight SC-10 tests passed); one unchanged retry passes, and root cause remains unknown. See SC10_POST_FIX_ANALYSIS.md and retained failure artifacts.
+- [ ] FOLLOW-10 Validate the source-level AcroForm value-descendant alias hypothesis from [SC-10 post-fix analysis](reports/security-remediation-2026-10-18/SC10_POST_FIX_ANALYSIS.md): serialized indirect `/V` string also reachable through a catalog alias, including a NoView field. Runtime probe and real Editor/Search export are pending; do not label this a confirmed leak or close it using PieceInfo/AF tests.
 
 ## 12. Integrated release verification
 
@@ -143,8 +144,8 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-02 | COMPLETE: implementation and batch gates verified | Source `383f193a`, Android remote verified | Local worker/native/build/lint/artifact gates and full same-source CI pass; 229 native methods per API24/30/34/36, 916 total | None for this batch; overall release remains HOLD |
 | SC-03 | COMPLETE: implementation and batch gates verified | Source `7390523c`, Android remote verified | Local host unit/native/build/lint/artifact checks and full same-source CI pass; 231 native methods per API24/30/34/36, 924 total | None for this batch; overall release remains HOLD |
 | SC-04 | COMPLETE: implementation and batch gates verified | Source `7f7fe757`, Android remote verified | Local unit/native/debug/static/lint/unsigned artifact gates and full same-source CI pass; 236 methods per API24/30/34/36 (944 total) | None for this batch; release remains HOLD |
-| Fresh SC-10 through SC-14 | Confirmed; NOT IMPLEMENTED | Review source `857c42b4`; production diff empty | Six unique vulnerability-confirming probes: five JVM and one native API24; two reloaded/saved redaction fixtures; fresh static/OSV/history-secret checks | SC-10 next, then existing sequence and added finding batches; release HOLD |
-| SC-10 | Implementation and local gates PASS; full CI pending | This finding commit | 288 JVM tests, 48 local native executions, debug/static/lint/minified unsigned/artifact gates; see SC10_EXECUTION.md | Android push/ref and complete same-source CI |
+| Fresh SC-10 through SC-14 | Historical audit checkpoint: confirmed, not yet implemented at that checkpoint | Review source `857c42b4`; production diff empty | Six unique vulnerability-confirming probes: five JVM and one native API24; two reloaded/saved redaction fixtures; fresh static/OSV/history-secret checks | At that checkpoint SC-10 was next; current completion is recorded below |
+| SC-10 | COMPLETE: source and batch gates verified | `4ec21c40`, Android remote verified | 288 local JVM tests, 48 local native executions and full CI with 976 native executions; see SC10_EXECUTION.md | None for this finding; conservative refusal and open FOLLOW-09/10 are explicit; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

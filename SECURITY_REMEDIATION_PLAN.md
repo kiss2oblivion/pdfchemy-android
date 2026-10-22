@@ -12,7 +12,7 @@ Evidence: [independent code analysis](reports/security-code-analysis-2026-10-18/
 
 The [fresh analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) reviews `857c42b4`, whose application source matches CI target `7f7fe757`. SC-01 through SC-04 batch gates are complete; SC-05 through SC-09 remain open. Six new vulnerability-confirming probes establish five additional findings, SC-10 through SC-14. Their passing results confirm defects and do not complete remediation.
 
-**Next implementation batch: SC-10, before the previously scheduled SC-05.** It preserves a private metadata/attachment payload after the redaction helper pipeline. Continue the existing open sequence after that, with SC-11 through SC-14 added as separate finding batches before release acceptance. Keep all existing native redaction/navigation regressions and the one-finding commit rule.
+**SC-10 completed before SC-05:** source `4ec21c40`, full CI `39590800550` and 976 native executions pass. Validate source-level FOLLOW-10 before the next source batch, then resume SC-05 unless runtime proof warrants privacy-fix priority; see [post-fix review](reports/security-remediation-2026-10-18/SC10_POST_FIX_ANALYSIS.md). Its saved private metadata/attachment alias leak is covered by the new cleanup and real export regressions. Continue the existing open sequence after that, with SC-11 through SC-14 added as separate finding batches before release acceptance. Keep all existing native redaction/navigation regressions and the one-finding commit rule.
 
 - SC-10: remove/reject aliases to complete private payload subgraphs with bounded traversal. Add real Editor and secure Search exports of the retained serialized fixtures; confirm private bytes are absent while legitimate page/navigation data survives.
 - SC-11: coordinate startup cache cleanup with staging ownership. Age a leased snapshot safely and verify cleanup/recreation preserves it; reclaim only eligible unleased data and preserve quota bookkeeping.
@@ -20,7 +20,7 @@ The [fresh analysis](reports/security-code-reanalysis-2026-10-21/SECURITY_CODE_R
 - SC-13: define bounded host publication resources and supported provider cancellation/recovery. Exercise blocked open/write and repeated retry without volume exhaustion; a coroutine timeout alone is not proof of interruptible provider I/O.
 - SC-14: replace filename/length-only identity with a documented stable identity policy and safe preference migration. Test distinct same-metadata content, supported aliases/renames and ambiguous legacy state.
 
-SC-10 means the previously fixed redaction fixtures are not complete forensic-redaction assurance. SR-01, external URI admission and the two distinct startup follow-ups remain open. A green build does not supersede these findings.
+SC-10's discovery and the new FOLLOW-10 hypothesis show why passing redaction fixtures do not establish complete forensic-redaction assurance. SC-10's bounded batch is complete; SR-01, external URI admission, FOLLOW-10 validation and the two distinct startup follow-ups remain open.
 
 ## Original starting position — 2026-10-18
 

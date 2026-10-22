@@ -1,6 +1,6 @@
 # SC-10 execution receipt
 
-Date: 2026-10-21. Release: **HOLD**. Local verification passes; commit/push and full same-source CI remain pending at this checkpoint.
+Implementation: 2026-10-21. Closeout: 2026-10-22. Release: **HOLD**. SC-10 source, local gates, Android push/ref and complete same-source CI pass. The closeout changes documentation/evidence only.
 
 ## Problem and change
 
@@ -23,7 +23,7 @@ Explicit page rendering, form and navigation roots protect live objects. A priva
 | Debug/test APK and static architecture gates | PASS |
 | Release lint and minified unsigned assembly | PASS with explicit unsigned verification property |
 | Artifact/static corpus gate | PASS: 14 fixture hashes, 62 static route rows, production identifiers/version/SDK/manifests and artifact hygiene |
-| Full same-source CI | PENDING |
+| Full same-source CI | PASS: all nine jobs at `4ec21c40`; 244 native methods per API24/30/34/36, 976 executions |
 | Physical device / signed release / Play | NOT RUN |
 
 The eight SC-10 native methods exercise two byte-identical archived inputs through Editor, four searchable extensions through Editor/Search, and two used-font overlap refusals. Saved raw bytes, COS strings, decoded streams, extracted text, opaque redaction pixels, untouched Search background, independent page pixels/vector text and internal destinations are checked. The original audit inputs contain no searchable text; Search coverage deliberately extends those alias topologies with text and a second page.
@@ -37,3 +37,23 @@ The first native receipt parser expected four copies of an assertion message; in
 The first fixed helper selection passed 30 of 31 methods: the indirect-string fixture's input identity control failed because PDFBox inlined its string wrappers. A genuine serialized indirect-string input replaced that fixture. This was a fixture failure, not a production result; the original XML/log remain retained. Intermediate passing builds precede the final stricter anchor policy and are separate from final verification.
 
 Conservative refusal includes legitimate tagged-PDF OBJR annotation or MCR Form references that overlap live objects. This batch prioritizes safe rejection over detaching live rendering/navigation. The OBJR refusal has a helper regression. Seeded destination preservation is verified for local file outputs; no new SAF-provider behavior is claimed. No universal forensic-redaction guarantee or release approval follows from this bounded fixture coverage. Other SC/RA findings, SR-01 and external release gates remain open.
+
+## Complete same-source CI
+
+Application/test source `4ec21c40a81f7aa9eab9f696ccb755131dc7310c` is pushed and Android-remote verified. [Run 39590800550](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/39590800550) passes all nine jobs after one unchanged API34 failed-job retry. Downloaded native artifacts independently validate 244 distinct completed methods per API24/30/34/36, 976 successful required-matrix executions, zero failures/errors/skips in those passing results. All eight SC-10, eight Editor, eight Search, five Warning and two batch-publication regressions are present per API. API24 strict result validation passes and its crash buffer is empty.
+
+Architecture, reachable-history secret scanning, dependency security, full JVM tests and the dependent lint/debug/minified unsigned/artifact job pass. The first API34 attempt separately retains 244 methods with one startup lifecycle failure and all eight SC-10 methods passing. That failed attempt is excluded from the 976 passing-matrix count. FOLLOW-09 remains open; retry success does not establish its cause. See [post-fix analysis](SC10_POST_FIX_ANALYSIS.md) for that diagnosis and the unverified FOLLOW-10 form-value alias hypothesis.
+
+| Job | Actual execution ID | Final metadata ID | Carried forward |
+|---|---|---|---|
+| android-instrumented-security (34, x86_64) | `119668285587` | `119668285587` | False |
+| dependency-security | `119190957187` | `119668286110` | True |
+| architecture | `119190957380` | `119668286610` | True |
+| android-instrumented-security (36, x86_64) | `119192994737` | `119668286842` | True |
+| secrets | `119190956855` | `119668318232` | True |
+| android-instrumented-security (30, x86_64) | `119192994787` | `119668331420` | True |
+| tests | `119192994584` | `119668331913` | True |
+| android-instrumented-security (24, x86) | `119192994706` | `119668336290` | True |
+| build | `119676275450` | `119676275450` | False |
+
+Carried-forward metadata does not represent an additional job execution or additional native test count. Final closeout source comparison confirms no application/test/build/workflow changes after the tested source. No merge, signing, upload, rollout or physical-device acceptance is performed.

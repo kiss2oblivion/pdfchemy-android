@@ -1,10 +1,10 @@
 # Android security remediation execution - 2026-10-18
 
-**Release: HOLD. SC-01 through SC-04 implementation/batch gates are complete.** Latest full CI at `7f7fe757` passes all nine jobs, including 236 native methods on each API24/30/34/36 (944 total). See [SC-04 execution](SC04_EXECUTION.md). SC-05 and later source findings have not started.
+**Release: HOLD. SC-01 through SC-04 and SC-10 implementation/batch gates are complete.** Latest full CI at `4ec21c40` passes all nine jobs, 244 native methods per API24/30/34/36 (976 total), with one unchanged API34 startup retry retained under FOLLOW-09. See [SC-10 execution](SC10_EXECUTION.md). SC-05 through SC-09 and SC-11 through SC-14 remain open.
 
 Implementation branch: `codex/security-remediation-2026-10-18`. Worktree: `PDFchemy-security-remediation-2026-10-18`. The original checkouts and their tracked/untracked work are preserved.
 
-Fresh [2026-10-21 reanalysis](../security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) at `857c42b4` confirms five additional findings, SC-10 through SC-14, through six vulnerability-confirming probes. That audit changes no production code. [SC-10 implementation](SC10_EXECUTION.md) now passes local JVM/native/build/lint/artifact gates; Android push/ref and full same-source CI remain pending. SC-11 through SC-14 remain unfixed. Earlier fixed fixtures do not establish complete forensic-redaction assurance.
+Fresh [2026-10-21 reanalysis](../security-code-reanalysis-2026-10-21/SECURITY_CODE_REANALYSIS.md) at `857c42b4` confirms five additional findings, SC-10 through SC-14, through six vulnerability-confirming probes. That audit changes no production code. [SC-10 implementation](SC10_EXECUTION.md) passes local gates, Android push/ref and complete same-source CI `39590800550`. SC-11 through SC-14 remain unfixed. Earlier fixed fixtures do not establish complete forensic-redaction assurance.
 
 ## Candidate and baseline identities
 
@@ -33,7 +33,8 @@ The original audit probes, synthetic leaking PDFs, XML and logs are frozen under
 | SC-03 | COMPLETE: source `7390523c`, local gates and full same-source CI pass; 924 native executions | None for this batch; see [SC-03 receipt](SC03_EXECUTION.md) |
 | SC-04 | COMPLETE: source `7f7fe757`, local gates and full same-source CI pass; 944 native executions | None for this batch; see [SC-04 receipt](SC04_EXECUTION.md) |
 | SC-05 through SC-09 | Not started | Their separate implementation/test/commit batches |
-| SC-10 through SC-14 | Fresh analysis confirms five additional defects; NOT IMPLEMENTED | SC-10 next, followed by the remaining planned and additional finding batches |
+| SC-10 | COMPLETE at `4ec21c40`: local gates and full same-source CI pass | See [receipt](SC10_EXECUTION.md); open FOLLOW-09/10 remain separate |
+| SC-11 through SC-14 | Confirmed defects; NOT IMPLEMENTED | Continue the remaining planned finding batches |
 | Retained RA / external URI / SR-01 enforcement | Not started in source | Implementation/verification and risk disposition |
 | FOLLOW-06 SR-01 documentation reconciliation | Complete | Stronger enforcement experiments or attributable owner disposition remain open under FOLLOW-07 |
 

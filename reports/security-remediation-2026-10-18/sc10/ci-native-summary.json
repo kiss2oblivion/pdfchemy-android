@@ -1,0 +1,99 @@
+{
+  "run": 39590800550,
+  "source": "4ec21c40a81f7aa9eab9f696ccb755131dc7310c",
+  "native_executions": 976,
+  "apis": [
+    {
+      "api": 24,
+      "tests": 244,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result_sha256": "9e9b64640abd669dc6fd2894e3e467f58f96060817b3e496946f18bb2e9c392d"
+    },
+    {
+      "api": 30,
+      "tests": 244,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result_sha256": "bfd35c6c55a4866e352258ae238a25b5e4b0f42b59dc7e6dd915e70019c359f3"
+    },
+    {
+      "api": 34,
+      "tests": 244,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result_sha256": "2e4042f7e775c967879699ba15138eb345ed9eaf9efcf344801e94a229192092"
+    },
+    {
+      "api": 36,
+      "tests": 244,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result_sha256": "7d63cf6a89bc34fb6bbc6333e42b9f3cd5e589eda6dfd2b26dc96eab23e2ba16"
+    }
+  ],
+  "status": "complete",
+  "workflow_conclusion": "success",
+  "jobs": [
+    {
+      "name": "android-instrumented-security (34, x86_64)",
+      "execution_id": 119668285587,
+      "final_metadata_id": 119668285587,
+      "carried_forward": false
+    },
+    {
+      "name": "dependency-security",
+      "execution_id": 119190957187,
+      "final_metadata_id": 119668286110,
+      "carried_forward": true
+    },
+    {
+      "name": "architecture",
+      "execution_id": 119190957380,
+      "final_metadata_id": 119668286610,
+      "carried_forward": true
+    },
+    {
+      "name": "android-instrumented-security (36, x86_64)",
+      "execution_id": 119192994737,
+      "final_metadata_id": 119668286842,
+      "carried_forward": true
+    },
+    {
+      "name": "secrets",
+      "execution_id": 119190956855,
+      "final_metadata_id": 119668318232,
+      "carried_forward": true
+    },
+    {
+      "name": "android-instrumented-security (30, x86_64)",
+      "execution_id": 119192994787,
+      "final_metadata_id": 119668331420,
+      "carried_forward": true
+    },
+    {
+      "name": "tests",
+      "execution_id": 119192994584,
+      "final_metadata_id": 119668331913,
+      "carried_forward": true
+    },
+    {
+      "name": "android-instrumented-security (24, x86)",
+      "execution_id": 119192994706,
+      "final_metadata_id": 119668336290,
+      "carried_forward": true
+    },
+    {
+      "name": "build",
+      "execution_id": 119676275450,
+      "final_metadata_id": 119676275450,
+      "carried_forward": false
+    }
+  ],
+  "failed_attempt_retained": "ci-api34-attempt1-summary.json",
+  "retry_disposition": "Single unchanged API34 retry passes; FOLLOW09 remains open with unknown cause."
+}

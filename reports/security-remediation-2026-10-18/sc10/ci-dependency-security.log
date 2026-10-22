@@ -1,0 +1,307 @@
+﻿2026-10-21T11:17:08.1668874Z Current runner version: '2.338.0'
+2026-10-21T11:17:08.1694442Z ##[group]Runner Image Provisioner
+2026-10-21T11:17:08.1695316Z Hosted Compute Agent
+2026-10-21T11:17:08.1695903Z Version: 20261015.610
+2026-10-21T11:17:08.1696713Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+2026-10-21T11:17:08.1697386Z Build Date: 2026-10-14T17:06:54Z
+2026-10-21T11:17:08.1698030Z Worker ID: {3d94e619-0636-455f-8eb3-579fde7f4aa3}
+2026-10-21T11:17:08.1698665Z Region: westus3
+2026-10-21T11:17:08.1699165Z Cloud: Azure
+2026-10-21T11:17:08.1699673Z ##[endgroup]
+2026-10-21T11:17:08.1701092Z ##[group]Operating System
+2026-10-21T11:17:08.1701730Z Ubuntu
+2026-10-21T11:17:08.1702200Z 24.04.5
+2026-10-21T11:17:08.1702686Z LTS
+2026-10-21T11:17:08.1703193Z ##[endgroup]
+2026-10-21T11:17:08.1703703Z ##[group]Runner Image
+2026-10-21T11:17:08.1704252Z Image: ubuntu-24.04
+2026-10-21T11:17:08.1704773Z Version: 20261018.339.1
+2026-10-21T11:17:08.1705968Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261018.339/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-21T11:17:08.1707497Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261018.339
+2026-10-21T11:17:08.1708356Z ##[endgroup]
+2026-10-21T11:17:08.1709393Z ##[group]GITHUB_TOKEN Permissions
+2026-10-21T11:17:08.1711638Z Contents: read
+2026-10-21T11:17:08.1712182Z Metadata: read
+2026-10-21T11:17:08.1712693Z ##[endgroup]
+2026-10-21T11:17:08.1714803Z Secret source: Actions
+2026-10-21T11:17:08.1715706Z Cache mode: write
+2026-10-21T11:17:08.1716611Z Prepare workflow directory
+2026-10-21T11:17:08.2096507Z Prepare all required actions
+2026-10-21T11:17:08.2145531Z Getting action download info
+2026-10-21T11:17:08.5318295Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-21T11:17:08.6190015Z Download action repository 'actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+2026-10-21T11:17:09.4684596Z Complete job name: dependency-security
+2026-10-21T11:17:09.5473159Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+2026-10-21T11:17:09.5474740Z with:
+2026-10-21T11:17:09.5475366Z   repository: kiss2oblivion/pdfchemy-android
+2026-10-21T11:17:09.5479899Z   token: ***
+2026-10-21T11:17:09.5480523Z   ssh-strict: true
+2026-10-21T11:17:09.5481091Z   ssh-user: git
+2026-10-21T11:17:09.5481693Z   persist-credentials: true
+2026-10-21T11:17:09.5482306Z   clean: true
+2026-10-21T11:17:09.5482872Z   sparse-checkout-cone-mode: true
+2026-10-21T11:17:09.5483581Z   fetch-depth: 1
+2026-10-21T11:17:09.5484140Z   fetch-tags: false
+2026-10-21T11:17:09.5484769Z   show-progress: true
+2026-10-21T11:17:09.5485344Z   lfs: false
+2026-10-21T11:17:09.5485874Z   submodules: false
+2026-10-21T11:17:09.5486634Z   set-safe-directory: true
+2026-10-21T11:17:09.5487280Z   allow-unsafe-pr-checkout: false
+2026-10-21T11:17:09.5488319Z ##[endgroup]
+2026-10-21T11:17:09.6729473Z Syncing repository: kiss2oblivion/pdfchemy-android
+2026-10-21T11:17:09.6732799Z ##[group]Getting Git version info
+2026-10-21T11:17:09.6733752Z Working directory is '/home/runner/work/pdfchemy-android/pdfchemy-android'
+2026-10-21T11:17:09.6735128Z [command]/usr/bin/git version
+2026-10-21T11:17:09.6829707Z git version 2.55.0
+2026-10-21T11:17:09.6851678Z ##[endgroup]
+2026-10-21T11:17:09.6868264Z Temporarily overriding HOME='/home/runner/work/_temp/6e51bb89-56c5-40f2-8ba9-da7737f4b70f' before making global git config changes
+2026-10-21T11:17:09.6871142Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-21T11:17:09.6874431Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-21T11:17:09.6932240Z Deleting the contents of '/home/runner/work/pdfchemy-android/pdfchemy-android'
+2026-10-21T11:17:09.6937473Z ##[group]Initializing the repository
+2026-10-21T11:17:09.6943285Z [command]/usr/bin/git init /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-21T11:17:09.7061868Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-21T11:17:09.7063050Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-21T11:17:09.7064134Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-21T11:17:09.7064950Z hint: call:
+2026-10-21T11:17:09.7065401Z hint:
+2026-10-21T11:17:09.7066007Z hint: 	git config --global init.defaultBranch <name>
+2026-10-21T11:17:09.7066926Z hint:
+2026-10-21T11:17:09.7067579Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-21T11:17:09.7068614Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-21T11:17:09.7069430Z hint:
+2026-10-21T11:17:09.7069902Z hint: 	git branch -m <name>
+2026-10-21T11:17:09.7070441Z hint:
+2026-10-21T11:17:09.7071127Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-21T11:17:09.7078216Z Initialized empty Git repository in /home/runner/work/pdfchemy-android/pdfchemy-android/.git/
+2026-10-21T11:17:09.7090194Z [command]/usr/bin/git remote add origin https://github.com/kiss2oblivion/pdfchemy-android
+2026-10-21T11:17:09.7161238Z ##[endgroup]
+2026-10-21T11:17:09.7162942Z ##[group]Disabling automatic garbage collection
+2026-10-21T11:17:09.7165041Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-21T11:17:09.7201500Z ##[endgroup]
+2026-10-21T11:17:09.7203396Z ##[group]Setting up auth
+2026-10-21T11:17:09.7209401Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-21T11:17:09.7247553Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-21T11:17:09.7704301Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-21T11:17:09.7739083Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-21T11:17:09.7940809Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-21T11:17:09.7980774Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-21T11:17:09.8191459Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-21T11:17:09.8232242Z ##[endgroup]
+2026-10-21T11:17:09.8233937Z ##[group]Fetching the repository
+2026-10-21T11:17:09.8245072Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +4ec21c40a81f7aa9eab9f696ccb755131dc7310c:refs/remotes/origin/codex/security-remediation-2026-10-18
+2026-10-21T11:17:11.8932090Z From https://github.com/kiss2oblivion/pdfchemy-android
+2026-10-21T11:17:11.8935577Z  * [new ref]         4ec21c40a81f7aa9eab9f696ccb755131dc7310c -> origin/codex/security-remediation-2026-10-18
+2026-10-21T11:17:11.8941155Z ##[endgroup]
+2026-10-21T11:17:11.8943088Z ##[group]Determining the checkout info
+2026-10-21T11:17:11.8944800Z ##[endgroup]
+2026-10-21T11:17:11.8945763Z [command]/usr/bin/git sparse-checkout disable
+2026-10-21T11:17:11.8995232Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-21T11:17:11.9027614Z ##[group]Checking out the ref
+2026-10-21T11:17:11.9032880Z [command]/usr/bin/git checkout --progress --force -B codex/security-remediation-2026-10-18 refs/remotes/origin/codex/security-remediation-2026-10-18
+2026-10-21T11:17:12.1279548Z Switched to a new branch 'codex/security-remediation-2026-10-18'
+2026-10-21T11:17:12.1282558Z branch 'codex/security-remediation-2026-10-18' set up to track 'origin/codex/security-remediation-2026-10-18'.
+2026-10-21T11:17:12.1299111Z ##[endgroup]
+2026-10-21T11:17:12.1348825Z [command]/usr/bin/git log -1 --format=%H
+2026-10-21T11:17:12.1376235Z 4ec21c40a81f7aa9eab9f696ccb755131dc7310c
+2026-10-21T11:17:12.1673388Z ##[group]Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+2026-10-21T11:17:12.1673819Z with:
+2026-10-21T11:17:12.1674040Z   java-version: 21
+2026-10-21T11:17:12.1674264Z   distribution: temurin
+2026-10-21T11:17:12.1674487Z   java-package: jdk
+2026-10-21T11:17:12.1674709Z   check-latest: false
+2026-10-21T11:17:12.1674926Z   server-id: github
+2026-10-21T11:17:12.1675141Z   server-username: GITHUB_ACTOR
+2026-10-21T11:17:12.1675392Z   server-password: GITHUB_TOKEN
+2026-10-21T11:17:12.1675634Z   overwrite-settings: true
+2026-10-21T11:17:12.1675866Z   job-status: success
+2026-10-21T11:17:12.1678432Z   token: ***
+2026-10-21T11:17:12.1678648Z ##[endgroup]
+2026-10-21T11:17:12.3425700Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+2026-10-21T11:17:12.3433621Z ##[group]Installed distributions
+2026-10-21T11:17:12.3475561Z Resolved Java 21.0.12+1 from tool-cache
+2026-10-21T11:17:12.3476423Z Setting Java 21.0.12+1 as the default
+2026-10-21T11:17:12.3485367Z (node:2305) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-21T11:17:12.3486267Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-21T11:17:12.3489348Z Creating toolchains.xml for JDK version 21 from temurin
+2026-10-21T11:17:12.3563273Z Writing to /home/runner/.m2/toolchains.xml
+2026-10-21T11:17:12.3563708Z 
+2026-10-21T11:17:12.3563867Z Java configuration:
+2026-10-21T11:17:12.3564244Z   Distribution: temurin
+2026-10-21T11:17:12.3564627Z   Version: 21.0.12+1
+2026-10-21T11:17:12.3565143Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:17:12.3565616Z 
+2026-10-21T11:17:12.3566069Z ##[endgroup]
+2026-10-21T11:17:12.3587442Z Creating settings.xml with server-id: github
+2026-10-21T11:17:12.3628447Z Writing to /home/runner/.m2/settings.xml
+2026-10-21T11:17:12.3813750Z ##[group]Run chmod +x gradlew
+2026-10-21T11:17:12.3814363Z [36;1mchmod +x gradlew[0m
+2026-10-21T11:17:12.4077762Z shell: /usr/bin/bash -e {0}
+2026-10-21T11:17:12.4078447Z env:
+2026-10-21T11:17:12.4079037Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:17:12.4080696Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:17:12.4081778Z ##[endgroup]
+2026-10-21T11:17:12.4228104Z ##[group]Run ./gradlew dependencyInventory
+2026-10-21T11:17:12.4228492Z [36;1m./gradlew dependencyInventory[0m
+2026-10-21T11:17:12.4265272Z shell: /usr/bin/bash -e {0}
+2026-10-21T11:17:12.4265560Z env:
+2026-10-21T11:17:12.4265874Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:17:12.4266514Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:17:12.4266884Z ##[endgroup]
+2026-10-21T11:17:12.6691252Z Downloading https://services.gradle.org/distributions/gradle-9.4.1-bin.zip
+2026-10-21T11:17:14.7230089Z .............10%.............20%.............30%.............40%.............50%.............60%..............70%.............80%.............90%.............100%
+2026-10-21T11:17:16.0681026Z 
+2026-10-21T11:17:16.0682118Z Welcome to Gradle 9.4.1!
+2026-10-21T11:17:16.0682714Z 
+2026-10-21T11:17:16.0683153Z Here are the highlights of this release:
+2026-10-21T11:17:16.0683948Z  - Java 26 support
+2026-10-21T11:17:16.0684629Z  - Non-class-based JVM tests
+2026-10-21T11:17:16.0685258Z  - Enhanced console progress bar
+2026-10-21T11:17:16.0685709Z 
+2026-10-21T11:17:16.0686494Z For more details see https://docs.gradle.org/9.4.1/release-notes.html
+2026-10-21T11:17:16.0687228Z 
+2026-10-21T11:17:16.2675986Z Starting a Gradle Daemon (subsequent builds will be faster)
+2026-10-21T11:18:14.7672090Z 
+2026-10-21T11:18:14.7684591Z > Configure project :app-host
+2026-10-21T11:18:14.7685494Z WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+2026-10-21T11:18:14.7686438Z The current default is 'true'.
+2026-10-21T11:18:14.7687656Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7706607Z WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+2026-10-21T11:18:14.7722625Z The current default is 'true'.
+2026-10-21T11:18:14.7723393Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7724426Z WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+2026-10-21T11:18:14.7725141Z The current default is 'true'.
+2026-10-21T11:18:14.7725816Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7726647Z WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+2026-10-21T11:18:14.7727269Z The current default is 'true'.
+2026-10-21T11:18:14.7727760Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7728374Z WARNING: The option setting 'android.newDsl=false' is deprecated.
+2026-10-21T11:18:14.7728922Z The current default is 'true'.
+2026-10-21T11:18:14.7729439Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7730268Z WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+2026-10-21T11:18:14.7731062Z The current default is 'false'.
+2026-10-21T11:18:14.7731587Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.7732288Z WARNING: The option setting 'android.enableJetifier=true' is deprecated.
+2026-10-21T11:18:14.7741838Z The current default is 'false'.
+2026-10-21T11:18:14.7742247Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.9673081Z WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-21T11:18:14.9687002Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.9688220Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-21T11:18:14.9689205Z     android.newDsl=false
+2026-10-21T11:18:14.9689740Z to this project's gradle.properties file.
+2026-10-21T11:18:14.9690628Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-21T11:18:14.9691170Z 
+2026-10-21T11:18:14.9692424Z To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-21T11:18:14.9693827Z WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-21T11:18:14.9694479Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.9694933Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-21T11:18:14.9695340Z     android.newDsl=false
+2026-10-21T11:18:14.9695587Z to this project's gradle.properties file.
+2026-10-21T11:18:14.9695955Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-21T11:18:14.9696249Z 
+2026-10-21T11:18:14.9696945Z To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-21T11:18:14.9698062Z WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-21T11:18:14.9698872Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:14.9699611Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-21T11:18:14.9700220Z     android.newDsl=false
+2026-10-21T11:18:14.9700575Z to this project's gradle.properties file.
+2026-10-21T11:18:14.9701197Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-21T11:18:14.9701647Z 
+2026-10-21T11:18:14.9702297Z To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-21T11:18:17.5673616Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:11:1: 'fun Project.android(configure: Action<BaseAppModuleExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.ApplicationExtension.
+2026-10-21T11:18:17.5676162Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-21T11:18:17.5678349Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:85:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:17.5680450Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/app-host/build.gradle.kts:86:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:17.6672794Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:17.6675162Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:17.7675398Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:17.7678304Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:17.7680774Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:17.7683164Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:17.7685540Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:17.7688341Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:20.0677317Z 
+2026-10-21T11:18:20.0697732Z > Configure project :pdf-ipc
+2026-10-21T11:18:20.0728145Z WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+2026-10-21T11:18:20.0729425Z It will be removed in version 10.0 of the Android Gradle plugin.
+2026-10-21T11:18:20.0757638Z The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+2026-10-21T11:18:20.0787162Z     android.newDsl=false
+2026-10-21T11:18:20.0817257Z to this project's gradle.properties file.
+2026-10-21T11:18:20.0847243Z For more information, see http://developer.android.com/build/r/new-dsl.
+2026-10-21T11:18:20.0848051Z 
+2026-10-21T11:18:20.0877805Z To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+2026-10-21T11:18:20.0908173Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:6:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-21T11:18:20.0937610Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-21T11:18:20.0940630Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:19:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:20.0968207Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-ipc/build.gradle.kts:20:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:20.0998023Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:20.1017993Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:20.1020953Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:20.1023259Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:20.1025539Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:20.1027924Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:20.1030132Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:20.1032529Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:21.4704278Z 
+2026-10-21T11:18:21.4713246Z > Configure project :pdf-jail
+2026-10-21T11:18:21.4715236Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:8:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-21T11:18:21.4717904Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-21T11:18:21.4720772Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:21:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:21.4724428Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-jail/build.gradle.kts:22:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:21.4727503Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:21.4749860Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:21.4764351Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:21.4766736Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:21.4769488Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:21.4771681Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:21.4773810Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:21.4776026Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:22.0672858Z 
+2026-10-21T11:18:22.0698766Z > Configure project :pdf-renderer
+2026-10-21T11:18:22.0700953Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:6:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+2026-10-21T11:18:22.0703621Z This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+2026-10-21T11:18:22.0706700Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:19:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:22.0710292Z w: file:///home/runner/work/pdfchemy-android/pdfchemy-android/pdf-renderer/build.gradle.kts:20:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+2026-10-21T11:18:22.0713209Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:22.0715448Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:22.0717769Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:22.0719962Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:22.0722204Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:22.0724216Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:22.0726442Z WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+2026-10-21T11:18:22.0728987Z To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+2026-10-21T11:18:35.6672081Z 
+2026-10-21T11:18:35.6672686Z > Task :dependencyInventory
+2026-10-21T11:18:35.6673050Z Resolved 234 production dependencies for OSV scanning
+2026-10-21T11:18:35.7345325Z 
+2026-10-21T11:18:35.7387334Z BUILD SUCCESSFUL in 1m 23s
+2026-10-21T11:18:35.7387717Z 1 actionable task: 1 executed
+2026-10-21T11:18:35.7388297Z Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html
+2026-10-21T11:18:36.0651219Z ##[group]Run python3 tools/check_dependencies.py
+2026-10-21T11:18:36.0651810Z [36;1mpython3 tools/check_dependencies.py[0m
+2026-10-21T11:18:36.0686074Z shell: /usr/bin/bash -e {0}
+2026-10-21T11:18:36.0686533Z env:
+2026-10-21T11:18:36.0686852Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:18:36.0687349Z   JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+2026-10-21T11:18:36.0687720Z ##[endgroup]
+2026-10-21T11:18:36.8727702Z Scanned 234 resolved production dependencies; 0 affected packages
+2026-10-21T11:18:36.8948315Z Post job cleanup.
+2026-10-21T11:18:37.0432523Z (node:2625) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-21T11:18:37.0433575Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-21T11:18:37.0646883Z Post job cleanup.
+2026-10-21T11:18:37.1560670Z [command]/usr/bin/git version
+2026-10-21T11:18:37.1601027Z git version 2.55.0
+2026-10-21T11:18:37.1639768Z Temporarily overriding HOME='/home/runner/work/_temp/fdce60f5-dff6-4c50-8fdb-64479474bfe7' before making global git config changes
+2026-10-21T11:18:37.1641634Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-21T11:18:37.1646712Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pdfchemy-android/pdfchemy-android
+2026-10-21T11:18:37.1696717Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-21T11:18:37.1758015Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-21T11:18:37.2047882Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-21T11:18:37.2103871Z http.https://github.com/.extraheader
+2026-10-21T11:18:37.2118110Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-21T11:18:37.2162121Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-21T11:18:37.2468298Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-21T11:18:37.2512051Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-21T11:18:37.2976564Z Cleaning up orphan processes
+2026-10-21T11:18:37.3219336Z Terminate orphan process: pid (2450) (java)
+2026-10-21T11:18:37.3229977Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
