@@ -10,9 +10,9 @@ object ShareUtil {
     fun shareFiles(context: Context, uris: List<Uri>, title: String = "Share PDF") {
         if (uris.isEmpty()) return
 
-        val shareUris = uris.map { uri -> if (uri.scheme == "file") androidx.core.content.FileProvider.getUriForFile(
-            context, "${context.packageName}.fileprovider", java.io.File(requireNotNull(uri.path)), FileUtils.getFileName(context, uri) ?: "Document"
-        ) else uri }
+        val shareUris = uris.map { uri ->
+            DocumentActions.getShareableContentUri(context, uri)
+        }
         val types = shareUris.map { FileUtils.getMimeType(context, it) }.distinct()
         val mimeType = types.singleOrNull() ?: "*/*"
 

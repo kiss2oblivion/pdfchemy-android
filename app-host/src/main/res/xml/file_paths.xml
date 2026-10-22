@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <cache-path name="camera_scans" path="scans/" />
-    <cache-path name="shared_exports" path="exports/" />
-    <files-path name="internal_scans" path="scans/" />
+    <cache-path name="camera_scans" path="scans" />
+    <cache-path name="shared_exports" path="exports" />
+    <files-path name="internal_scans" path="scans" />
 </paths>
 
