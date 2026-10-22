@@ -5,6 +5,7 @@ import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import kotlinx.coroutines.NonCancellable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -118,8 +119,17 @@ fun DeskewScreen(
                 try {
                     val count = PdfDeskewEngine.deskewDocument(context, srcUri, destUri)
                     straightenedCount = count
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                     Toast.makeText(context, context.getString(R.string.deskew_success), Toast.LENGTH_SHORT).show()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
+                    throw cancelled
                 } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     AppLogger.e("Deskew processing failed", e)
                     Toast.makeText(context, "Error straightening document", Toast.LENGTH_SHORT).show()
                 } finally {

@@ -2,6 +2,9 @@ package com.pdfchemy.app.ui
 
 import android.net.Uri
 import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -99,11 +102,21 @@ fun DocumentSanitizerScreen(
                     )
                     sanitizeResult = result
                     if (result != null && result.isSuccess) {
+                        com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                         Toast.makeText(context, context.getString(R.string.sanitizer_success), Toast.LENGTH_SHORT).show()
-                    } else if (result == null) {
+                    } else {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
                         Toast.makeText(context, "Sanitize failed (Timeout or Crash)", Toast.LENGTH_SHORT).show()
                     }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
+                    throw cancelled
                 } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     AppLogger.e("Sanitizing failed", e)
                 } finally {
                     isSanitizing = false

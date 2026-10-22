@@ -45,11 +45,11 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 5. SC-05 — Direct-screen provenance and completion
 
-- [ ] SC05-01 Inventory all destination creators, writers and success/failure/cancel callbacks, including Redaction, Markdown and audio.
-- [ ] SC05-02 Carry operation-scoped provenance and finalize every successful publication.
-- [ ] SC05-03 Verify published direct-screen URI reuse preserves seeded existing bytes on later failure/cancellation.
-- [ ] SC05-04 Verify fresh failed/abandoned destinations are cleaned after writer termination; preserve picker/folder behavior.
-- [ ] SC05-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC05-01 Inventory all destination creators, writers and success/failure/cancel callbacks, including Redaction, Markdown and audio. All direct screen writers (FormBuilder, Deskew, DocumentSanitizer), scanner launcher, MarkdownStudio, and MainViewModel direct workflows inventoried and finalized.
+- [x] SC05-02 Carry operation-scoped provenance and finalize every successful publication. OutputPolicy.finalizeOutput and MainViewModel toast/completion hooks retire freshness on success across all direct screens and methods.
+- [x] SC05-03 Verify published direct-screen URI reuse preserves seeded existing bytes on later failure/cancellation. DestinationIntegritySecurityTest regressions verify existing non-fresh outputs remain untouched while fresh completed outputs retire freshness.
+- [x] SC05-04 Verify fresh failed/abandoned destinations are cleaned after writer termination; preserve picker/folder behavior. Cancellation and error paths trigger deleteIfFresh with NonCancellable; existing files are preserved.
+- [x] SC05-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source committed and remote verified; see SC05_EXECUTION.md.
 
 ## 6. Retained RA-05 — Redaction operation lifetime
 
@@ -150,6 +150,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-12 | COMPLETE: source, lint and test gates verified | `57a36d3d`, Android remote verified | ReaderShareSecurityTest, assembleDebugAndroidTest, ReleaseWorkflowRegressionTest, lintDebug clean; see SC12_EXECUTION.md | Remote CI; release HOLD |
 | SC-08 | COMPLETE: source and test gates verified | `8e1961a2`, Android remote verified | MarkdownAdmissionSecurityTest (10 methods), assembleDebugAndroidTest; see SC08_EXECUTION.md | Remote CI; release HOLD |
 | SC-09 | COMPLETE: source, test and remote gates verified | `81616afe`, Android remote verified | DestinationIntegritySecurityTest (16 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC09_EXECUTION.md | Remote CI; release HOLD |
+| SC-05 | COMPLETE: source, test and remote gates verified | `bb4e5bf7`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

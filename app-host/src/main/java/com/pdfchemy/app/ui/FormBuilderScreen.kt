@@ -11,6 +11,7 @@ import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import kotlinx.coroutines.NonCancellable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -144,17 +145,31 @@ fun FormBuilderScreen(
         if (destUri != null && srcUri != null) {
             isSaving = true
             scope.launch {
-                val success = AcroFormEngine.createAcroFormWithFields(
-                    context = context,
-                    sourceUri = srcUri,
-                    destUri = destUri,
-                    fields = placedFields.toList()
-                )
-                isSaving = false
-                if (success) {
-                    Toast.makeText(context, context.getString(R.string.form_builder_success), Toast.LENGTH_LONG).show()
-                } else {
+                try {
+                    val success = AcroFormEngine.createAcroFormWithFields(
+                        context = context,
+                        sourceUri = srcUri,
+                        destUri = destUri,
+                        fields = placedFields.toList()
+                    )
+                    com.pdfchemy.app.logic.OutputPolicy.finalizeOutput(context, destUri, success)
+                    if (success) {
+                        Toast.makeText(context, context.getString(R.string.form_builder_success), Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show()
+                    }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
+                    throw cancelled
+                } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     Toast.makeText(context, context.getString(R.string.error), Toast.LENGTH_SHORT).show()
+                } finally {
+                    isSaving = false
                 }
             }
         }

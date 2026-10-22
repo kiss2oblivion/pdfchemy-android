@@ -212,6 +212,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             com.pdfchemy.app.logic.OutputPolicy.markPublished(tracked.uri)
                         }
                     }
+                    v.outputUris.forEach { com.pdfchemy.app.logic.OutputPolicy.markPublished(it) }
                     activeJob = null
                     _canCancelOperation.value = false
                     currentOperationId = 0L
@@ -1331,6 +1332,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (result.success) {
+                        markOutputPublished(destUri)
+                        com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                         historyRepository.addHistoryItem(
                             destUri,
                             context.getString(R.string.history_compressed_image),
@@ -1387,6 +1390,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (result.success) {
+                        markOutputPublished(destUri)
+                        com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                         historyRepository.addHistoryItem(
                             destUri,
                             context.getString(R.string.history_compressed_image),
@@ -1549,6 +1554,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             withContext(Dispatchers.Main) {
                 if (result.isSuccess) {
+                    markOutputPublished(destUri)
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                     historyRepository.addHistoryItem(
                         destUri,
                         context.getString(R.string.history_edited_pdf),
@@ -1956,6 +1963,98 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // =============================================================================================
+    // [FEATURE: Markdown Studio] (FEATURES_REGISTRY Android §3: Creation & Conversion)
+    // =============================================================================================
+    fun convertMarkdownToPdf(
+        context: Context,
+        markdownText: String,
+        destUri: Uri,
+        documentTitle: String,
+        onComplete: (Boolean) -> Unit
+    ) {
+        addPendingOutputUri(destUri)
+        _uiState.value = UiState.Processing(R.string.title_md_to_pdf_success)
+        activeJob = viewModelScope.launch {
+            try {
+                val result = com.pdfchemy.app.logic.MarkdownEngine.markdownToPdf(
+                    context = context,
+                    markdownText = markdownText,
+                    destPdfUri = destUri,
+                    documentTitle = documentTitle
+                )
+                withContext(Dispatchers.Main) {
+                    if (result.isSuccess) {
+                        historyRepository.addHistoryItem(
+                            destUri,
+                            documentTitle.ifBlank { "Document.pdf" },
+                            context.getString(R.string.menu_markdown_studio)
+                        )
+                        refreshHistory()
+                        _uiState.value = UiState.Success(
+                            context.getString(R.string.title_md_to_pdf_success),
+                            context.getString(R.string.desc_md_to_pdf_success),
+                            listOf(destUri)
+                        )
+                        onComplete(true)
+                    } else {
+                        _uiState.value = UiState.Error(
+                            context.getString(R.string.error_md_to_pdf_failed),
+                            result.exceptionOrNull()?.localizedMessage ?: ""
+                        )
+                        onComplete(false)
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                withContext(Dispatchers.Main) {
+                    _uiState.value = UiState.Error(e.message ?: context.getString(R.string.msg_error_unknown))
+                    onComplete(false)
+                }
+            }
+        }
+    }
+
+    fun saveMarkdownDocument(
+        context: Context,
+        markdownText: String,
+        destUri: Uri,
+        onComplete: (Boolean) -> Unit
+    ) {
+        addPendingOutputUri(destUri)
+        _uiState.value = UiState.Processing(R.string.title_save_md_success)
+        activeJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open Markdown destination" }.use { out ->
+                    out.write(markdownText.toByteArray(Charsets.UTF_8))
+                }
+                withContext(Dispatchers.Main) {
+                    historyRepository.addHistoryItem(
+                        destUri,
+                        context.getString(R.string.title_save_md_success),
+                        context.getString(R.string.menu_markdown_studio)
+                    )
+                    refreshHistory()
+                    _uiState.value = UiState.Success(
+                        context.getString(R.string.title_save_md_success),
+                        context.getString(R.string.desc_save_md_success),
+                        listOf(destUri)
+                    )
+                    onComplete(true)
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                withContext(Dispatchers.Main) {
+                    _uiState.value = UiState.Error(
+                        context.getString(R.string.error_save_md_failed),
+                        e.localizedMessage ?: ""
+                    )
+                    onComplete(false)
+                }
+            }
+        }
+    }
+
+    // =============================================================================================
     // [FEATURE: Image Replacer] (FEATURES_REGISTRY Android §4: Form Filling & Document Editing)
     // =============================================================================================
     fun replaceEmbeddedImage(
@@ -2040,6 +2139,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun notifySuccess(title: String, message: String, outputUri: Uri) {
         historyRepository.addHistoryItem(outputUri, title, message)
         refreshHistory()
+        markOutputPublished(outputUri)
+        com.pdfchemy.app.logic.OutputPolicy.markPublished(outputUri)
         _uiState.value = UiState.Success(title, message, listOf(outputUri))
     }
 
@@ -2048,11 +2149,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showSuccessToast(title: String, message: String, outputUri: Uri? = null) {
-        outputUri?.let { historyRepository.addHistoryItem(it, title, message); refreshHistory() }
+        outputUri?.let {
+            historyRepository.addHistoryItem(it, title, message)
+            refreshHistory()
+            markOutputPublished(it)
+            com.pdfchemy.app.logic.OutputPolicy.markPublished(it)
+        }
         _uiState.value = UiState.Success(title, message, listOfNotNull(outputUri))
     }
 
-    fun showErrorToast(title: String, message: String, technicalDetails: String? = null) {
+    fun showErrorToast(title: String, message: String, technicalDetails: String? = null, failedOutputUri: Uri? = null) {
+        failedOutputUri?.let { uri ->
+            val context = getApplication<Application>()
+            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, uri)
+        }
         _uiState.value = UiState.Error(if (message.isBlank()) title else "$title: $message", technicalDetails)
     }
 }

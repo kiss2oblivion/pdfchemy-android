@@ -60,6 +60,23 @@ object OutputPolicy {
         return false
     }
 
+    /** Operation completion helper: retires freshness on success, cleans up incomplete output on failure only if fresh. */
+    fun finalizeOutput(context: Context, destination: OutputDestination, success: Boolean): Boolean =
+        finalizeOutput(context, destination.uri, success, destination.isFreshCopy)
+
+    fun finalizeOutput(context: Context, uri: Uri, success: Boolean, isFreshCopy: Boolean = isFreshCopy(uri)): Boolean {
+        if (success) {
+            markPublished(uri)
+            return true
+        } else {
+            if (isFreshCopy) {
+                return deleteIfFresh(context, uri)
+            }
+            return false
+        }
+    }
+
+
     fun safeName(name: String, fallback: String = "Document.pdf"): String = name
         .substringAfterLast('/').substringAfterLast('\\')
         .replace(Regex("[\\p{Cntrl}:*?\"<>|]"), "_").trim().trim('.')

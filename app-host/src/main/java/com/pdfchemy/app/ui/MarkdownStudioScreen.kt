@@ -137,50 +137,23 @@ fun MarkdownStudioScreen(
     // Save as PDF
     val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            coroutineScope.launch {
-                isProcessing = true
-                val result = MarkdownEngine.markdownToPdf(
-                    context = context,
-                    markdownText = markdownText,
-                    destPdfUri = destUri,
-                    documentTitle = documentTitle
-                )
-                isProcessing = false
-                if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_md_to_pdf_success),
-                        context.getString(R.string.desc_md_to_pdf_success)
-                    , destUri)
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_md_to_pdf_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
-                }
-            }
+            viewModel.convertMarkdownToPdf(
+                context = context,
+                markdownText = markdownText,
+                destUri = destUri,
+                documentTitle = documentTitle
+            ) { /* Handled by ViewModel UiState */ }
         }
     }
 
     // Save as .MD file
     val saveMdLauncher = rememberPreferredDocumentCreator("text/markdown") { destUri ->
         if (destUri != null) {
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open Markdown destination" }.use { out ->
-                        out.write(markdownText.toByteArray(Charsets.UTF_8))
-                    }
-                    withContext(Dispatchers.Main) {
-                        viewModel.showSuccessToast(
-                            context.getString(R.string.title_save_md_success),
-                            context.getString(R.string.desc_save_md_success)
-                        , destUri)
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        viewModel.showErrorToast(context.getString(R.string.error_save_md_failed), e.localizedMessage ?: "")
-                    }
-                }
-            }
+            viewModel.saveMarkdownDocument(
+                context = context,
+                markdownText = markdownText,
+                destUri = destUri
+            ) { /* Handled by ViewModel UiState */ }
         }
     }
 

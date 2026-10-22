@@ -7,8 +7,13 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.logic.DestinationProvenance
 import com.pdfchemy.app.logic.OutputDestination
+import com.pdfchemy.app.logic.ImageCompressionResult
+import com.pdfchemy.app.logic.ImageCompressor
+import com.pdfchemy.app.logic.ImageOutputFormat
+import com.pdfchemy.app.logic.MarkdownEngine
 import com.pdfchemy.app.logic.OutputPolicy
 import com.pdfchemy.app.logic.PdfCompressor
+import com.pdfchemy.app.logic.PdfEditor
 import com.pdfchemy.app.logic.PdfManipulator
 import com.pdfchemy.app.logic.PublicationState
 import com.pdfchemy.app.logic.audio.AudioExportDependencies
@@ -627,4 +632,166 @@ class DestinationIntegritySecurityTest {
         verify(exactly = 1) { docFile.delete() }
         AudioExportDependencies.forgetDestination(jobId)
     }
+
+    @Test
+    fun `direct screen showSuccessToast retires fresh copy status in OutputPolicy`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val freshDestination = Uri.parse("content://fixture/direct_screen_toast_dest.pdf")
+
+        OutputPolicy.registerFreshCopy(freshDestination)
+        assertTrue(OutputPolicy.isFreshCopy(freshDestination))
+
+        mockkStatic(DocumentFile::class)
+        val docFile = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshDestination) } returns docFile
+        every { docFile.delete() } answers {
+            fail("Destination published via direct-screen showSuccessToast must NEVER be deleted!")
+            true
+        }
+
+        // Direct screen finishes writing and notifies success
+        viewModel.showSuccessToast("Title", "Saved", freshDestination)
+
+        assertFalse("Fresh copy status must be retired after showSuccessToast publication",
+            OutputPolicy.isFreshCopy(freshDestination))
+
+        // Subsequent cancellation or error must not touch the published direct-screen file
+        viewModel.cancelOperation(application)
+        delay(50)
+        verify(exactly = 0) { docFile.delete() }
+    }
+
+    @Test
+    fun `exportEditedPdf completion retires fresh copy status`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source_edit.pdf")
+        val freshDestination = Uri.parse("content://fixture/fresh_edited.pdf")
+
+        OutputPolicy.registerFreshCopy(freshDestination)
+        assertTrue(OutputPolicy.isFreshCopy(freshDestination))
+
+        mockkObject(PdfEditor)
+        coEvery { PdfEditor.exportModifiedPdf(any(), any(), any(), any()) } returns Result.success(true)
+
+        val completed = CompletableDeferred<Boolean>()
+        viewModel.exportEditedPdf(application, source, freshDestination, emptyMap()) {
+            completed.complete(it)
+        }
+
+        val success = completed.await()
+        assertTrue("exportEditedPdf must complete successfully", success)
+        assertFalse("Fresh copy status must be retired after exportEditedPdf publication",
+            OutputPolicy.isFreshCopy(freshDestination))
+    }
+
+    @Test
+    fun `compressImage completion retires fresh copy status`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val source = Uri.parse("content://fixture/source_img.jpg")
+        val freshDestination = Uri.parse("content://fixture/fresh_compressed_img.jpg")
+
+        OutputPolicy.registerFreshCopy(freshDestination)
+        assertTrue(OutputPolicy.isFreshCopy(freshDestination))
+
+        mockkObject(ImageCompressor)
+        coEvery { ImageCompressor.compressImage(any(), any(), any(), any(), any(), any(), any()) } returns
+            ImageCompressionResult(success = true, originalSize = 5000L, compressedSize = 2500L, width = 100, height = 100, format = "JPEG")
+
+        val completed = CompletableDeferred<ImageCompressionResult>()
+        viewModel.compressImage(application, source, freshDestination, 75, ImageOutputFormat.JPEG, 0, true) {
+            completed.complete(it)
+        }
+
+        val result = completed.await()
+        assertTrue("compressImage must succeed", result.success)
+        assertFalse("Fresh copy status must be retired after compressImage publication",
+            OutputPolicy.isFreshCopy(freshDestination))
+    }
+
+    @Test
+    fun `convertMarkdownToPdf retires fresh copy status on success and deletes on failure`() = runBlocking {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val viewModel = MainViewModel(application)
+        val freshSuccessDest = Uri.parse("content://fixture/fresh_markdown_success.pdf")
+        val freshFailureDest = Uri.parse("content://fixture/fresh_markdown_failure.pdf")
+
+        // 1. Success path
+        OutputPolicy.registerFreshCopy(freshSuccessDest)
+        assertTrue(OutputPolicy.isFreshCopy(freshSuccessDest))
+
+        mockkObject(MarkdownEngine)
+        coEvery { MarkdownEngine.markdownToPdf(any(), any(), freshSuccessDest, any()) } returns Result.success(true)
+
+        viewModel.convertMarkdownToPdf(application, "# Header", freshSuccessDest, "Doc") {}
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Success }
+        }
+
+        assertFalse("Fresh copy status must be retired after successful Markdown export",
+            OutputPolicy.isFreshCopy(freshSuccessDest))
+
+        // 2. Failure path deletes fresh incomplete file
+        OutputPolicy.registerFreshCopy(freshFailureDest)
+        assertTrue(OutputPolicy.isFreshCopy(freshFailureDest))
+
+        mockkStatic(DocumentFile::class)
+        val failureDocFile = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshFailureDest) } returns failureDocFile
+        var deleteCalled = false
+        every { failureDocFile.delete() } answers { deleteCalled = true; true }
+
+        coEvery { MarkdownEngine.markdownToPdf(any(), any(), freshFailureDest, any()) } returns
+            Result.failure(IOException("Markdown conversion failed"))
+
+        viewModel.convertMarkdownToPdf(application, "# Header", freshFailureDest, "Doc") {}
+        withTimeout(5_000) {
+            viewModel.uiState.first { it is MainViewModel.UiState.Error }
+        }
+
+        delay(100)
+        assertTrue("Incomplete fresh Markdown output must be deleted on failure", deleteCalled)
+        verify(atLeast = 1) { failureDocFile.delete() }
+    }
+
+    @Test
+    fun `OutputPolicy finalizeOutput retires freshness on success and cleans only if fresh on failure`() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val freshSuccess = Uri.parse("content://fixture/finalize_fresh_success.pdf")
+        val freshFailure = Uri.parse("content://fixture/finalize_fresh_failure.pdf")
+        val existingFailure = Uri.parse("content://fixture/finalize_existing_failure.pdf")
+
+        mockkStatic(DocumentFile::class)
+        val freshFailDoc = mockk<DocumentFile>()
+        val existingFailDoc = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), freshFailure) } returns freshFailDoc
+        every { DocumentFile.fromSingleUri(any(), existingFailure) } returns existingFailDoc
+        var freshDeleted = false
+        every { freshFailDoc.delete() } answers { freshDeleted = true; true }
+        every { existingFailDoc.delete() } answers {
+            fail("Existing destination must never be deleted!")
+            true
+        }
+
+        // 1. Success retires freshness
+        OutputPolicy.registerFreshCopy(freshSuccess)
+        assertTrue(OutputPolicy.isFreshCopy(freshSuccess))
+        OutputPolicy.finalizeOutput(application, freshSuccess, success = true)
+        assertFalse(OutputPolicy.isFreshCopy(freshSuccess))
+
+        // 2. Fresh failure deletes incomplete file
+        OutputPolicy.registerFreshCopy(freshFailure)
+        assertTrue(OutputPolicy.isFreshCopy(freshFailure))
+        OutputPolicy.finalizeOutput(application, freshFailure, success = false)
+        assertTrue("Fresh incomplete file must be deleted on failure", freshDeleted)
+        assertFalse(OutputPolicy.isFreshCopy(freshFailure))
+
+        // 3. Existing failure preserves file
+        assertFalse(OutputPolicy.isFreshCopy(existingFailure))
+        OutputPolicy.finalizeOutput(application, existingFailure, success = false)
+        verify(exactly = 0) { existingFailDoc.delete() }
+    }
 }
+

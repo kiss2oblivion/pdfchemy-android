@@ -1930,10 +1930,17 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                             }
                         }
                     }
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                     Toast.makeText(context, context.getString(R.string.msg_scanned_pdf_exported), Toast.LENGTH_SHORT).show()
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     throw cancelled
                 } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     AppLogger.e("Exception caught in MainActivity", e)
                     Toast.makeText(context, context.getString(R.string.msg_failed_export), Toast.LENGTH_SHORT).show()
                 }
