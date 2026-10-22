@@ -1,0 +1,73 @@
+--------- beginning of system
+10-22 14:33:36.537   635   675 W ActivityManager: Dumping Java threads failed, initiating native stack dump.
+10-22 14:33:40.099   635   675 W ActivityManager: Native stack dump failed!
+10-22 14:33:40.361   635   675 I ActivityManager: Collecting stacks for pid 996
+10-22 14:33:52.506   635   675 W ActivityManager: Dumping Java threads failed, initiating native stack dump.
+10-22 14:33:56.795   635   675 W ActivityManager: Native stack dump failed!
+10-22 14:33:58.238   635   675 E ActivityManager: Aborting stack trace dump (current firstPid=996); deadline exceeded.
+10-22 14:34:11.287   635  4370 I ActivityManager: Force stopping com.pdfchemy.app appid=10219 user=0: start instr
+10-22 14:34:17.986   635  4370 W ActivityManager: Slow operation: 377ms so far, now at startProcess: done updating cpu stats
+10-22 14:34:18.118   635  4370 W ActivityManager: Slow operation: 509ms so far, now at startProcess: getting gids from package manager
+10-22 14:34:18.122   635  4370 W ActivityManager: Slow operation: 515ms so far, now at startProcess: building args
+10-22 14:34:18.631   635   681 W ActivityManager: Slow operation: 1024ms so far, now at startProcess: asking zygote to start proc
+10-22 14:34:20.807   635   681 W ActivityManager: Slow operation: 3200ms so far, now at startProcess: returned from zygote!
+10-22 14:34:20.850   635   681 W ActivityManager: Slow operation: 3244ms so far, now at startProcess: done updating battery stats
+10-22 14:34:20.851   635   681 W ActivityManager: Slow operation: 3245ms so far, now at startProcess: building log message
+10-22 14:34:21.134   635   681 I ActivityManager: Start proc 6056:com.pdfchemy.app/u0a219 for added application com.pdfchemy.app
+10-22 14:34:21.143   635   681 W ActivityManager: Slow operation: 3537ms so far, now at startProcess: starting to update pids map
+10-22 14:34:21.147   635   681 I ActivityManager: ProcessObserver broadcast disabled
+10-22 14:34:21.148   635   681 W ActivityManager: Slow operation: 3541ms so far, now at startProcess: done updating pids map
+10-22 14:34:37.321   635  1787 W ActivityManager: Slow operation: 109ms so far, now at attachApplicationLocked: immediately before bindApplication
+10-22 14:34:37.326   635  1787 W ActivityManager: Slow operation: 114ms so far, now at attachApplicationLocked: immediately after bindApplication
+10-22 14:34:37.329   635  1787 W ActivityManager: Slow operation: 117ms so far, now at attachApplicationLocked: after updateLruProcessLocked
+10-22 14:34:37.473   635  1787 W ActivityManager: Slow operation: 261ms so far, now at attachApplicationLocked: after updateOomAdjLocked
+10-22 14:34:53.590   635   680 I ActivityManager: Extending process start timeout by 14897ms for ProcessRecord{6769006 6056:com.pdfchemy.app/u0a219}
+10-22 14:35:09.270   635  6092 I ActivityManager: Collecting stacks for pid 6056 into temporary file temp_anr_2616478463491930769.txt
+10-22 14:35:17.959   635  6093 I ActivityManager: dumpStackTraces pids=null
+10-22 14:35:18.034   635  6093 I ActivityManager: Dumping to /data/anr/anr_2026-10-22-14-35-17-978
+10-22 14:35:21.198   635  6092 W ActivityManager: Dumping Java threads failed, initiating native stack dump.
+10-22 14:35:23.490   635  6092 W ActivityManager: Native stack dump failed!
+10-22 14:35:23.491   635  6092 E ActivityManager: Aborted stack trace dump (current primary pid=6056); deadline exceeded.
+10-22 14:35:24.437   635  6093 I ActivityManager: dumpStackTraces nativepids=null
+10-22 14:35:24.437   635  6093 I ActivityManager: dumpStackTraces extraPids=null
+10-22 14:35:24.437   635  6093 I ActivityManager: Done dumping
+10-22 14:35:26.501   635  6093 E ActivityManager: ANR in com.pdfchemy.app
+10-22 14:35:26.501   635  6093 E ActivityManager: PID: 6056
+10-22 14:35:26.501   635  6093 E ActivityManager: Reason: Process ProcessRecord{6769006 6056:com.pdfchemy.app/u0a219} failed to complete startup
+10-22 14:35:26.501   635  6093 E ActivityManager: ErrorId: 58fbbe4b-7080-45b2-81d7-bbe04853f4dc
+10-22 14:35:26.501   635  6093 E ActivityManager: Frozen: false
+10-22 14:35:26.501   635  6093 E ActivityManager: Load: 0.0 / 0.0 / 0.0
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- Output from /proc/pressure/memory -----
+10-22 14:35:26.501   635  6093 E ActivityManager: some avg10=9.76 avg60=10.69 avg300=7.38 total=95631900
+10-22 14:35:26.501   635  6093 E ActivityManager: full avg10=3.08 avg60=2.57 avg300=1.75 total=32210974
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- End output from /proc/pressure/memory -----
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- Output from /proc/pressure/cpu -----
+10-22 14:35:26.501   635  6093 E ActivityManager: some avg10=89.33 avg60=86.75 avg300=50.32 total=873677340
+10-22 14:35:26.501   635  6093 E ActivityManager: full avg10=0.00 avg60=0.00 avg300=0.00 total=0
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- End output from /proc/pressure/cpu -----
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- Output from /proc/pressure/io -----
+10-22 14:35:26.501   635  6093 E ActivityManager: some avg10=6.85 avg60=6.45 avg300=3.96 total=88424464
+10-22 14:35:26.501   635  6093 E ActivityManager: full avg10=0.00 avg60=0.12 avg300=0.19 total=11369507
+10-22 14:35:26.501   635  6093 E ActivityManager: ----- End output from /proc/pressure/io -----
+10-22 14:35:26.501   635  6093 E ActivityManager: 
+10-22 14:35:26.501   635  6093 E ActivityManager: CPU usage from 79ms to 15241ms later (2026-10-22 14:35:09.277 to 2026-10-22 14:35:24.439):
+10-22 14:35:26.501   635  6093 E ActivityManager:   56% 452/android.hardware.sensors-service.multihal: 0% user + 56% kernel
+10-22 14:35:26.501   635  6093 E ActivityManager:   57% 635/system_server: 0% user + 57% kernel / faults: 1222 minor 8 major
+10-22 14:35:26.501   635  6093 E ActivityManager:   18% 464/android.hardware.graphics.composer3-service.ranchu: 0.1% user + 18% kernel
+10-22 14:35:26.501   635  6093 E ActivityManager:   10% 2632/com.google.android.gms: 2.5% user + 7.9% kernel / faults: 152 minor 4 major
+10-22 14:35:26.501   635  6093 E ActivityManager:   8.2% 6056/com.pdfchemy.app: 0% user + 8.2% kernel / faults: 877 minor 1 major
+10-22 14:35:26.501   635  6093 E ActivityManager:   5.9% 1281/com.google.android.apps.wellbeing: 0.9% user + 4.9% kernel / faults: 94 minor 5 major
+10-22 14:35:26.501   635  6093 E ActivityManager:   4.8% 508/surfaceflinger: 0.4% user + 4.4% kernel
+10-22 14:35:26.501   635  6093 E ActivityManager:   2.7% 45/kswapd0: 0% user + 2.7% kernel
+10-22 14:35:26.501   635  6093 E ActivityManager:   3.9% 949/com.android.networkstack.process: 0.4% user + 3.5% kernel / faults: 9 minor
+10-22 14:35:26.501   635  6093 E ActivityManager:   3.5% 882/com.android.systemui: 0% user + 3.5% kernel / faults: 24 minor
+10-22 14:35:26.501   635  6093 E ActivityManager: 99% TOTAL: 8.5% user + 85% kernel + 0.1% iowait + 5.6% softirq
+10-22 14:35:26.501   635  6093 E ActivityManager: CPU usage from 15826414ms to 15826414ms ago (1970-01-01 02:00:00.000 to 1970-01-01 02:00:00.000) with 0% awake:
+10-22 14:35:26.501   635  6093 E ActivityManager: 0% TOTAL: 0% user + 0% kernel
+10-22 14:35:26.885   635   682 I ActivityManager: Process PhantomProcessRecord {c9a51c3 6110:6056:crash_dump64/u0a219} died
+10-22 14:35:27.040   635  6093 I ActivityManager: Killing 6056:com.pdfchemy.app/u0a219 (adj 0): bg anr
+10-22 14:35:27.577   635   682 I ActivityManager: Process PhantomProcessRecord {c0fad26 6111:6056:crash_dump64/u0a219} died
+10-22 14:35:28.638   635  1127 W ActivityManager: Crash of app com.pdfchemy.app running instrumentation ComponentInfo{com.pdfchemy.app.test/androidx.test.runner.AndroidJUnitRunner}
+10-22 14:35:28.667   635  1127 I ActivityManager: Force stopping com.pdfchemy.app appid=10219 user=0: finished inst
+10-22 14:35:31.261   635   680 W ActivityManager: pid 635 system sent binder code 18 with flags 1 to frozen apps and got error -32
+10-22 14:35:31.263   635   680 W ActivityManager: Error shutting down UiAutomationConnection

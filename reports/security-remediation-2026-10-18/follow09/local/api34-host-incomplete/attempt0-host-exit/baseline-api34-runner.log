@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\follow09\run_native.py", line 28, in <module>
+    text = run(['shell','am','instrument','-w','-r','-e','class','com.pdfchemy.app.StartupWindowRegressionTest',
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\follow09\run_native.py", line 17, in run
+    assert result.returncode == 0,(label,text[-1000:])
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('run1', 'INSTRUMENTATION_STATUS: class=com.pdfchemy.app.StartupWindowRegressionTest\nINSTRUMENTATION_STATUS: current=1\nINSTRUMENTATION_STATUS: id=AndroidJUnitRunner\nINSTRUMENTATION_STATUS: numtests=2\nINSTRUMENTATION_STATUS: stream=\ncom.pdfchemy.app.StartupWindowRegressionTest:\nINSTRUMENTATION_STATUS: test=repeatedNormalLaunchAndRecreationInstallsContent\nINSTRUMENTATION_STATUS_CODE: 1\n')

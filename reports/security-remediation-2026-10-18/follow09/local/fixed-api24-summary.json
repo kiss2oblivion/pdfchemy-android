@@ -1,0 +1,13 @@
+{
+  "api": 24,
+  "mode": "fixed",
+  "runs": [
+    {
+      "run": 1,
+      "tests": 2,
+      "result": "pass"
+    }
+  ],
+  "observed_home_cycles": 10,
+  "crash_buffer": "empty"
+}

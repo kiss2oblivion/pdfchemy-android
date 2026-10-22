@@ -1,0 +1,412 @@
+--------- beginning of main
+--------- beginning of system
+10-22 14:28:22.404  5690  5709 I TestRunner: run started: 2 tests
+10-22 14:28:22.405  5690  5709 I TestRunner: started: repeatedNormalLaunchAndRecreationInstallsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 14:28:22.604  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: PRE_ON_CREATE
+10-22 14:28:22.605  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:22.880  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: CREATED
+10-22 14:28:22.880  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 14:28:22.882  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: STARTED
+10-22 14:28:22.882  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 14:28:22.884  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: RESUMED
+10-22 14:28:22.884  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 14:28:27.566  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: PAUSED
+10-22 14:28:27.566  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 14:28:27.582  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: STOPPED
+10-22 14:28:27.583  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 14:28:27.633  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: DESTROYED
+10-22 14:28:27.633  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:27.637  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: PRE_ON_CREATE
+10-22 14:28:27.638  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:27.654  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: CREATED
+10-22 14:28:27.654  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@9f2d0bb
+10-22 14:28:27.654  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: STARTED
+10-22 14:28:27.654  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@9f2d0bb
+10-22 14:28:27.657  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: RESUMED
+10-22 14:28:27.657  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@9f2d0bb
+10-22 14:28:28.920  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: PAUSED
+10-22 14:28:28.920  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@9f2d0bb
+10-22 14:28:29.289  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: STOPPED
+10-22 14:28:29.289  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@9f2d0bb
+10-22 14:28:29.393  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9f2d0bb in: DESTROYED
+10-22 14:28:29.393  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:29.522  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: PRE_ON_CREATE
+10-22 14:28:29.523  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:29.562  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: CREATED
+10-22 14:28:29.563  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@84c055b
+10-22 14:28:29.563  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: STARTED
+10-22 14:28:29.563  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@84c055b
+10-22 14:28:29.565  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: RESUMED
+10-22 14:28:29.565  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@84c055b
+10-22 14:28:30.409  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: PAUSED
+10-22 14:28:30.410  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@84c055b
+10-22 14:28:30.413  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: STOPPED
+10-22 14:28:30.413  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@84c055b
+10-22 14:28:30.450  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@84c055b in: DESTROYED
+10-22 14:28:30.450  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:30.455  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: PRE_ON_CREATE
+10-22 14:28:30.455  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:30.478  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: CREATED
+10-22 14:28:30.478  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@fed9f8a
+10-22 14:28:30.479  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: STARTED
+10-22 14:28:30.479  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@fed9f8a
+10-22 14:28:30.480  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: RESUMED
+10-22 14:28:30.480  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@fed9f8a
+10-22 14:28:31.068  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: PAUSED
+10-22 14:28:31.069  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@fed9f8a
+10-22 14:28:31.326  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: STOPPED
+10-22 14:28:31.326  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@fed9f8a
+10-22 14:28:31.351  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@fed9f8a in: DESTROYED
+10-22 14:28:31.352  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:31.417  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: PRE_ON_CREATE
+10-22 14:28:31.417  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:31.469  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: CREATED
+10-22 14:28:31.470  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@102d708
+10-22 14:28:31.470  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: STARTED
+10-22 14:28:31.470  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@102d708
+10-22 14:28:31.471  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: RESUMED
+10-22 14:28:31.471  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@102d708
+10-22 14:28:32.132  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: PAUSED
+10-22 14:28:32.132  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@102d708
+10-22 14:28:32.134  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: STOPPED
+10-22 14:28:32.134  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@102d708
+10-22 14:28:32.144  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@102d708 in: DESTROYED
+10-22 14:28:32.145  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:32.148  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: PRE_ON_CREATE
+10-22 14:28:32.148  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:32.166  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: CREATED
+10-22 14:28:32.166  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@dc3714b
+10-22 14:28:32.166  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: STARTED
+10-22 14:28:32.166  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@dc3714b
+10-22 14:28:32.168  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: RESUMED
+10-22 14:28:32.168  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@dc3714b
+10-22 14:28:32.724  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: PAUSED
+10-22 14:28:32.724  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@dc3714b
+10-22 14:28:33.067  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: STOPPED
+10-22 14:28:33.067  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@dc3714b
+10-22 14:28:33.082  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@dc3714b in: DESTROYED
+10-22 14:28:33.082  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:33.116  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: PRE_ON_CREATE
+10-22 14:28:33.116  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:33.141  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: CREATED
+10-22 14:28:33.141  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@2da63e2
+10-22 14:28:33.142  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: STARTED
+10-22 14:28:33.142  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@2da63e2
+10-22 14:28:33.146  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: RESUMED
+10-22 14:28:33.146  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@2da63e2
+10-22 14:28:33.771  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: PAUSED
+10-22 14:28:33.771  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@2da63e2
+10-22 14:28:33.774  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: STOPPED
+10-22 14:28:33.774  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@2da63e2
+10-22 14:28:33.781  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2da63e2 in: DESTROYED
+10-22 14:28:33.781  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:33.785  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: PRE_ON_CREATE
+10-22 14:28:33.786  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:33.813  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: CREATED
+10-22 14:28:33.813  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@2b2d76
+10-22 14:28:33.814  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: STARTED
+10-22 14:28:33.814  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@2b2d76
+10-22 14:28:33.815  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: RESUMED
+10-22 14:28:33.815  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@2b2d76
+10-22 14:28:34.543  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: PAUSED
+10-22 14:28:34.544  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@2b2d76
+10-22 14:28:34.990  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: STOPPED
+10-22 14:28:34.990  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@2b2d76
+10-22 14:28:34.998  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@2b2d76 in: DESTROYED
+10-22 14:28:34.998  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:35.052  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: PRE_ON_CREATE
+10-22 14:28:35.052  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:35.073  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: CREATED
+10-22 14:28:35.073  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@bf6cbd4
+10-22 14:28:35.073  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: STARTED
+10-22 14:28:35.073  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@bf6cbd4
+10-22 14:28:35.074  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: RESUMED
+10-22 14:28:35.074  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@bf6cbd4
+10-22 14:28:35.456  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: PAUSED
+10-22 14:28:35.456  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@bf6cbd4
+10-22 14:28:35.462  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: STOPPED
+10-22 14:28:35.462  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@bf6cbd4
+10-22 14:28:35.470  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bf6cbd4 in: DESTROYED
+10-22 14:28:35.470  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:35.476  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: PRE_ON_CREATE
+10-22 14:28:35.476  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:35.562  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: CREATED
+10-22 14:28:35.562  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@956a265
+10-22 14:28:35.568  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: STARTED
+10-22 14:28:35.568  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@956a265
+10-22 14:28:35.570  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: RESUMED
+10-22 14:28:35.570  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@956a265
+10-22 14:28:36.460  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: PAUSED
+10-22 14:28:36.460  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@956a265
+10-22 14:28:36.813  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: STOPPED
+10-22 14:28:36.813  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@956a265
+10-22 14:28:36.822  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@956a265 in: DESTROYED
+10-22 14:28:36.822  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:36.876  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: PRE_ON_CREATE
+10-22 14:28:36.876  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:36.899  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: CREATED
+10-22 14:28:36.899  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@edb3a4d
+10-22 14:28:36.899  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: STARTED
+10-22 14:28:36.899  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@edb3a4d
+10-22 14:28:36.901  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: RESUMED
+10-22 14:28:36.901  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@edb3a4d
+10-22 14:28:37.656  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: PAUSED
+10-22 14:28:37.656  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@edb3a4d
+10-22 14:28:37.658  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: STOPPED
+10-22 14:28:37.658  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@edb3a4d
+10-22 14:28:37.664  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@edb3a4d in: DESTROYED
+10-22 14:28:37.664  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:37.667  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: PRE_ON_CREATE
+10-22 14:28:37.667  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:37.697  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: CREATED
+10-22 14:28:37.697  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@7f47004
+10-22 14:28:37.697  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: STARTED
+10-22 14:28:37.697  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@7f47004
+10-22 14:28:37.698  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: RESUMED
+10-22 14:28:37.698  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@7f47004
+10-22 14:28:38.088  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: PAUSED
+10-22 14:28:38.088  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@7f47004
+10-22 14:28:38.469  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: STOPPED
+10-22 14:28:38.469  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@7f47004
+10-22 14:28:38.658  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7f47004 in: DESTROYED
+10-22 14:28:38.659  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:38.754  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: PRE_ON_CREATE
+10-22 14:28:38.754  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:38.795  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: CREATED
+10-22 14:28:38.795  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@60223db
+10-22 14:28:38.797  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: STARTED
+10-22 14:28:38.797  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@60223db
+10-22 14:28:38.798  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: RESUMED
+10-22 14:28:38.798  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@60223db
+10-22 14:28:39.120  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: PAUSED
+10-22 14:28:39.120  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@60223db
+10-22 14:28:39.124  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: STOPPED
+10-22 14:28:39.125  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@60223db
+10-22 14:28:39.135  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@60223db in: DESTROYED
+10-22 14:28:39.136  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:39.143  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: PRE_ON_CREATE
+10-22 14:28:39.143  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:39.178  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: CREATED
+10-22 14:28:39.179  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@35916bd
+10-22 14:28:39.180  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: STARTED
+10-22 14:28:39.180  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@35916bd
+10-22 14:28:39.183  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: RESUMED
+10-22 14:28:39.183  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@35916bd
+10-22 14:28:40.026  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: PAUSED
+10-22 14:28:40.026  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@35916bd
+10-22 14:28:40.310  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: STOPPED
+10-22 14:28:40.310  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@35916bd
+10-22 14:28:40.497  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@35916bd in: DESTROYED
+10-22 14:28:40.498  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:40.694  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: PRE_ON_CREATE
+10-22 14:28:40.695  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:40.718  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: CREATED
+10-22 14:28:40.718  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@d579fa5
+10-22 14:28:40.719  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: STARTED
+10-22 14:28:40.719  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@d579fa5
+10-22 14:28:40.720  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: RESUMED
+10-22 14:28:40.720  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@d579fa5
+10-22 14:28:41.052  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: PAUSED
+10-22 14:28:41.052  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@d579fa5
+10-22 14:28:41.054  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: STOPPED
+10-22 14:28:41.054  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@d579fa5
+10-22 14:28:41.060  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d579fa5 in: DESTROYED
+10-22 14:28:41.060  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:41.070  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: PRE_ON_CREATE
+10-22 14:28:41.070  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:41.119  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: CREATED
+10-22 14:28:41.119  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@bde542
+10-22 14:28:41.119  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: STARTED
+10-22 14:28:41.119  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@bde542
+10-22 14:28:41.121  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: RESUMED
+10-22 14:28:41.121  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@bde542
+10-22 14:28:41.807  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: PAUSED
+10-22 14:28:41.807  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@bde542
+10-22 14:28:42.253  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: STOPPED
+10-22 14:28:42.253  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@bde542
+10-22 14:28:42.265  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@bde542 in: DESTROYED
+10-22 14:28:42.265  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:42.373  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: PRE_ON_CREATE
+10-22 14:28:42.373  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:42.394  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: CREATED
+10-22 14:28:42.394  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@a30e675
+10-22 14:28:42.394  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: STARTED
+10-22 14:28:42.395  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@a30e675
+10-22 14:28:42.396  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: RESUMED
+10-22 14:28:42.396  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@a30e675
+10-22 14:28:42.753  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: PAUSED
+10-22 14:28:42.753  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@a30e675
+10-22 14:28:42.757  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: STOPPED
+10-22 14:28:42.758  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@a30e675
+10-22 14:28:42.765  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a30e675 in: DESTROYED
+10-22 14:28:42.765  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:42.774  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: PRE_ON_CREATE
+10-22 14:28:42.774  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:42.815  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: CREATED
+10-22 14:28:42.815  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@7b3c1d2
+10-22 14:28:42.817  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: STARTED
+10-22 14:28:42.817  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@7b3c1d2
+10-22 14:28:42.818  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: RESUMED
+10-22 14:28:42.818  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@7b3c1d2
+10-22 14:28:43.537  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: PAUSED
+10-22 14:28:43.537  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@7b3c1d2
+10-22 14:28:43.990  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: STOPPED
+10-22 14:28:43.990  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@7b3c1d2
+10-22 14:28:44.009  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@7b3c1d2 in: DESTROYED
+10-22 14:28:44.010  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:44.140  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: PRE_ON_CREATE
+10-22 14:28:44.140  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:44.229  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: CREATED
+10-22 14:28:44.229  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@ee54945
+10-22 14:28:44.230  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: STARTED
+10-22 14:28:44.230  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@ee54945
+10-22 14:28:44.232  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: RESUMED
+10-22 14:28:44.232  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@ee54945
+10-22 14:28:44.729  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: PAUSED
+10-22 14:28:44.729  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@ee54945
+10-22 14:28:44.732  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: STOPPED
+10-22 14:28:44.732  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@ee54945
+10-22 14:28:44.752  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ee54945 in: DESTROYED
+10-22 14:28:44.752  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:44.760  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: PRE_ON_CREATE
+10-22 14:28:44.761  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 14:28:44.860  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: CREATED
+10-22 14:28:44.861  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@e3d0a62
+10-22 14:28:44.861  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: STARTED
+10-22 14:28:44.861  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@e3d0a62
+10-22 14:28:44.873  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: RESUMED
+10-22 14:28:44.873  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@e3d0a62
+10-22 14:28:46.040  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: PAUSED
+10-22 14:28:46.040  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@e3d0a62
+10-22 14:28:46.607  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: STOPPED
+10-22 14:28:46.607  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@e3d0a62
+10-22 14:28:46.619  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e3d0a62 in: DESTROYED
+10-22 14:28:46.619  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:28:46.620  5690  5709 I TestRunner: finished: repeatedNormalLaunchAndRecreationInstallsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 14:28:46.639  5690  5709 I TestRunner: started: backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 14:28:46.691  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PRE_ON_CREATE
+10-22 14:28:46.691  5690  5690 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 14:28:46.744  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: CREATED
+10-22 14:28:46.745  5690  5690 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:46.746  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:28:46.746  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:46.748  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:28:46.748  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:47.754  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:28:47.755  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:47.758  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:28:47.758  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:52.330  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:28:52.331  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:52.333  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:28:52.333  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:52.334  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:28:52.334  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:52.533  5690  5690 I StartupWindowRegression: cycle=1 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:28:52.548  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:28:52.548  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:52.643  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:28:52.643  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:57.600  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:28:57.600  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:57.601  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:28:57.601  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:57.601  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:28:57.601  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:57.797  5690  5690 I StartupWindowRegression: cycle=2 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:28:57.843  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:28:57.843  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:28:57.949  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:28:57.949  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:02.840  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:02.841  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:02.843  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:02.844  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:02.845  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:02.845  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:03.112  5690  5690 I StartupWindowRegression: cycle=3 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:03.162  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:03.162  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:03.204  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:03.204  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:08.143  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:08.143  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:08.144  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:08.144  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:08.145  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:08.145  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:08.377  5690  5690 I StartupWindowRegression: cycle=4 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:08.423  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:08.423  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:08.519  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:08.519  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:13.435  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:13.436  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:13.436  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:13.436  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:13.438  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:13.438  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:13.595  5690  5690 I StartupWindowRegression: cycle=5 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:13.615  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:13.615  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:13.802  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:13.802  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:18.683  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:18.683  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:18.685  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:18.685  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:18.686  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:18.686  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:18.811  5690  5690 I StartupWindowRegression: cycle=6 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:18.821  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:18.821  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:18.861  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:18.861  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:23.857  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:23.857  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:23.859  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:23.860  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:23.860  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:23.860  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:23.953  5690  5690 I StartupWindowRegression: cycle=7 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:23.995  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:23.995  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:24.070  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:24.070  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:29.016  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:29.016  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:29.017  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:29.017  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:29.019  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:29.019  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:29.192  5690  5690 I StartupWindowRegression: cycle=8 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:29.199  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:29.199  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:29.259  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:29.260  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:34.230  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:34.230  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:34.231  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:34.231  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:34.231  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:34.231  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:34.363  5690  5690 I StartupWindowRegression: cycle=9 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:34.372  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:34.372  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:34.397  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:34.397  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:39.445  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESTARTED
+10-22 14:29:39.445  5690  5690 V ActivityScenario: Update currentActivityStage to RESTARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:39.446  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STARTED
+10-22 14:29:39.446  5690  5690 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:39.447  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: RESUMED
+10-22 14:29:39.447  5690  5690 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:39.593  5690  5690 I StartupWindowRegression: cycle=10 stages=PAUSED->STOPPED->STARTED->RESUMED activity=206161941 task=44 content=199619716 children=1
+10-22 14:29:39.600  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: PAUSED
+10-22 14:29:39.600  5690  5690 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:40.077  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: STOPPED
+10-22 14:29:40.077  5690  5690 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c49c815
+10-22 14:29:40.086  5690  5690 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c49c815 in: DESTROYED
+10-22 14:29:40.086  5690  5690 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 14:29:40.086  5690  5709 I TestRunner: finished: backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 14:29:40.094  5690  5709 I TestRunner: run finished: 2 tests, 0 failed, 0 ignored

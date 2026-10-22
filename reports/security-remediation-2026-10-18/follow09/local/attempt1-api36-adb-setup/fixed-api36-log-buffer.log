@@ -1,0 +1,5 @@
+* daemon not running; starting now at tcp:5037
+could not read ok from ADB Server
+* failed to start daemon
+- waiting for device -
+error: cannot connect to daemon

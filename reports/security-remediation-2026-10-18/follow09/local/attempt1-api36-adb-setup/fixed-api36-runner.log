@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\follow09\run_native.py", line 26, in <module>
+    run(['logcat','-G','16M'],'log-buffer')
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\follow09\run_native.py", line 17, in run
+    assert result.returncode == 0,(label,text[-1000:])
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('log-buffer', '* daemon not running; starting now at tcp:5037\ncould not read ok from ADB Server\n* failed to start daemon\n- waiting for device -\nerror: cannot connect to daemon\n')

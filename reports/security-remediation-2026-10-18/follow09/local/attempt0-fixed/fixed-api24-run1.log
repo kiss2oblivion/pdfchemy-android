@@ -1,0 +1,61 @@
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.StartupWindowRegressionTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=repeatedNormalLaunchAndRecreationInstallsContent
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.StartupWindowRegressionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=repeatedNormalLaunchAndRecreationInstallsContent
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.StartupWindowRegressionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=backgroundAndResumeRetainsContent
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.StartupWindowRegressionTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+Error in backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest):
+java.lang.AssertionError: Activity never becomes requested state "[DESTROYED]" (last lifecycle transition = "STOPPED")
+	at androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:449)
+	at androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:684)
+	at androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:416)
+	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+	at com.pdfchemy.app.StartupWindowRegressionTest.backgroundAndResumeRetainsContent(StartupWindowRegressionTest.kt:59)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=backgroundAndResumeRetainsContent
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.StartupWindowRegressionTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Activity never becomes requested state "[DESTROYED]" (last lifecycle transition = "STOPPED")
+	at androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:449)
+	at androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:684)
+	at androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:416)
+	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+	at com.pdfchemy.app.StartupWindowRegressionTest.backgroundAndResumeRetainsContent(StartupWindowRegressionTest.kt:59)
+
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 134.04
+There was 1 failure:
+1) backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+java.lang.AssertionError: Activity never becomes requested state "[DESTROYED]" (last lifecycle transition = "STOPPED")
+	at androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:449)
+	at androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:684)
+	at androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:416)
+	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+	at com.pdfchemy.app.StartupWindowRegressionTest.backgroundAndResumeRetainsContent(StartupWindowRegressionTest.kt:59)
+
+FAILURES!!!
+Tests run: 2,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1
