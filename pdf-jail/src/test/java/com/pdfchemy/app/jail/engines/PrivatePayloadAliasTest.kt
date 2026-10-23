@@ -382,4 +382,122 @@ class PrivatePayloadAliasTest {
             assertSame(annotation.cosObject, page.annotations.single().cosObject)
         }
     }
+
+    private val formMarker = "PRIVATE_FORM_VALUE_482719"
+    private val formAlias = COSName.getPDFName("AlternatePayload")
+
+    private fun field(document: PDDocument): com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField {
+        val page = PDPage().also(document::addPage)
+        val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(document)
+        document.documentCatalog.acroForm = form
+        form.defaultResources = PDResources().apply { put(COSName.getPDFName("Helv"), PDType1Font.HELVETICA) }
+        form.defaultAppearance = "/Helv 12 Tf 0 g"
+        return com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form).also { field ->
+            field.partialName = "privateField"
+            form.fields.add(field)
+            field.widgets.single().apply {
+                rectangle = com.tom_roush.pdfbox.pdmodel.common.PDRectangle(10f, 50f, 180f, 30f)
+                this.page = page
+                isNoView = true
+                page.annotations.add(this)
+            }
+        }
+    }
+
+    private fun sanitizedForm(document: PDDocument, secret: String = formMarker): ByteArray {
+        RedactionResources.prepareForRedaction(document)
+        RedactionResources.replacePageContent(document, document.getPage(0)) {
+            it.addRect(0f, 0f, 300f, 300f); it.fill()
+        }
+        RedactionResources.pruneUnused(document)
+        val bytes = ByteArrayOutputStream().also(document::save).toByteArray()
+        assertFalse("Private field payload survives in saved bytes", String(bytes, Charsets.ISO_8859_1).contains(secret))
+        PDDocument.load(bytes).use { saved ->
+            assertNull("Private value alias must be detached", saved.documentCatalog.cosObject.getItem(formAlias))
+            assertNull(saved.documentCatalog.cosObject.getItem(COSName.ACRO_FORM))
+        }
+        return bytes
+    }
+
+    @Test fun hiddenFieldNameAliasIsRemoved() {
+        PDDocument().use { document ->
+            val privateField = field(document)
+            privateField.partialName = formMarker
+            val name = privateField.cosObject.getItem(COSName.getPDFName("T"))
+            assertTrue(name is COSString)
+            document.documentCatalog.cosObject.setItem(formAlias, name)
+            sanitizedForm(document)
+        }
+    }
+
+    @Test fun privateValueKidsDescendantAliasIsRemoved() {
+        PDDocument().use { document ->
+            val value = COSString(formMarker)
+            field(document).cosObject.setItem(COSName.V, COSDictionary().apply {
+                setItem(COSName.KIDS, COSArray().apply { add(value) })
+            })
+            document.documentCatalog.cosObject.setItem(formAlias, value)
+            sanitizedForm(document)
+        }
+    }
+
+    @Test fun privateValueParentDescendantAliasIsRemoved() {
+        PDDocument().use { document ->
+            val value = COSString(formMarker)
+            field(document).cosObject.setItem(COSName.V, COSDictionary().apply { setItem(COSName.PARENT, value) })
+            document.documentCatalog.cosObject.setItem(formAlias, value)
+            sanitizedForm(document)
+        }
+    }
+
+    @Test fun privateValuePageBackReferenceRejects() {
+        PDDocument().use { document ->
+            val privateField = field(document)
+            privateField.cosObject.setItem(COSName.V, COSDictionary().apply {
+                setItem(COSName.P, document.getPage(0).cosObject)
+            })
+            assertThrows(IllegalArgumentException::class.java) { RedactionResources.prepareForRedaction(document) }
+        }
+    }
+
+    @Test fun malformedFieldParentCannotLeavePrivateAlias() {
+        PDDocument().use { document ->
+            val privateField = field(document)
+            val value = COSString(formMarker)
+            privateField.cosObject.setItem(COSName.PARENT, value)
+            document.documentCatalog.cosObject.setItem(formAlias, value)
+            assertThrows(IllegalArgumentException::class.java) { RedactionResources.prepareForRedaction(document) }
+        }
+    }
+
+    @Test fun explicitNullParentKeepsValidFormSupported() {
+        PDDocument().use { document ->
+            val privateField = field(document)
+            privateField.cosObject.setItem(COSName.PARENT, COSNull.NULL)
+            assertNull(privateField.cosObject.getDictionaryObject(COSName.PARENT))
+            val value = COSString(formMarker)
+            privateField.cosObject.setItem(COSName.V, value)
+            document.documentCatalog.cosObject.setItem(formAlias, value)
+            sanitizedForm(document)
+        }
+    }
+
+    @Test fun privateValueRoleUpgradeAfterFieldTraversalRejects() {
+        PDDocument().use { document ->
+            val privateField = field(document)
+            val form = document.documentCatalog.getAcroForm(null)!!
+            val other = com.tom_roush.pdfbox.pdmodel.interactive.form.PDTextField(form)
+            other.partialName = "otherField"
+            form.fields.add(other)
+            other.widgets.single().apply {
+                rectangle = com.tom_roush.pdfbox.pdmodel.common.PDRectangle(10f, 100f, 180f, 30f)
+                page = document.getPage(0)
+                isNoView = true
+                document.getPage(0).annotations.add(this)
+            }
+            form.cosObject.setItem(COSName.getPDFName("EarlierFieldAlias"), other.cosObject)
+            privateField.cosObject.setItem(COSName.V, other.cosObject)
+            assertThrows(IllegalArgumentException::class.java) { RedactionResources.prepareForRedaction(document) }
+        }
+    }
 }

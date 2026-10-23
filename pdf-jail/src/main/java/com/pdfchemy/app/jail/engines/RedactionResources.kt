@@ -136,6 +136,7 @@ internal object RedactionResources {
         val retained = collectRetained(document, anchors, carrierKeys = emptySet(), includeAcroForm = false,
             excluded = formTreeNodes)
         val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val valueDescendants = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val valueKeys = setOf(
             COSName.V, COSName.DV, COSName.RV, COSName.TU, COSName.TM, COSName.getPDFName("T"),
             COSName.getPDFName("DS"), COSName.OPT, COSName.getPDFName("I"), COSName.getPDFName("TI"),
@@ -156,17 +157,32 @@ internal object RedactionResources {
                 }
                 return
             }
-            if (node !is COSDictionary && node !is COSArray && node !is COSString ||
-                !removed.add(node)) return
+            if (node !is COSDictionary && node !is COSArray && node !is COSString) return
+            val firstVisit = removed.add(node)
+            // A widget visited through form structure can later be aliased by /V.
+            // Revisit it with the stricter value role instead of retaining its
+            // structural back-reference allowances through the earlier visit.
+            val firstValueVisit = isValueDescendant && valueDescendants.add(node)
+            if (!firstVisit && !firstValueVisit) return
             require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && removed.size <= SecurityLimits.MAX_GRAPH_NODES) {
                 "Form graph exceeds redaction limit"
             }
             when (node) {
                 is COSDictionary -> {
                     require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive dictionary" }
+                    val fieldStructure = !isValueDescendant && node in fieldNodes
                     for (key in node.keySet()) {
-                        if (key == COSName.PARENT || key == COSName.KIDS) continue
-                        val isPageRef = key == COSName.P
+                        if (fieldStructure && key == COSName.PARENT) {
+                            val parent = dereference(node.getItem(key))
+                            require(parent == null || parent is COSNull || parent is COSDictionary && parent in fieldNodes) {
+                                "Invalid form parent reference"
+                            }
+                            continue
+                        }
+                        // Only captured field-tree nodes have structural /Kids.
+                        // The same key inside a value dictionary is private data.
+                        if (fieldStructure && key == COSName.KIDS) continue
+                        val isPageRef = fieldStructure && key == COSName.P
                         val isVal = isValueDescendant || key in valueKeys
                         collectFormPayload(node.getItem(key), depth + 1, isVal, isPageRef)
                     }

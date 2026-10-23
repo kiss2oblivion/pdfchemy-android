@@ -25,6 +25,7 @@ Previously, `DocumentStager.stageDocument`, `stageDocumentWithLease`, `stageStre
    - `releaseReservation(recordedInFlightBytes)`: Short synchronized method executed in `finally` blocks upon failure or cancellation to cleanly decrement `inFlightSlots` and `inFlightBytes`.
    - `cleanupUnpublishedFile(file)`: Short synchronized helper that cleans up partial temporary files and any stray registry mappings.
    - Hardened file removal: Calls `file.setWritable(true)` prior to `file.delete()` to ensure reliable cross-platform snapshot deletion on Windows NT and POSIX filesystems.
+   - **Shutdown Quota Retention (`releaseAll`):** `DocumentStager.releaseAll()` clears registered staged files and active leases but strictly retains in-flight counters (`inFlightSlots` and `inFlightBytes`). This ensures that finishing activities or session resets do not zero out reservations while background streaming transfers are still active, allowing streaming `finally` blocks to decrement quota cleanly without underflow or capacity corruption.
 
 3. **Atomic Publication & Initial Lease Protection (`publishStagedSnapshot`):**
    - Once a snapshot is fully written, synced, hashed, and sealed, `publishStagedSnapshot` executes under a short `@Synchronized` block:
@@ -39,6 +40,7 @@ Previously, `DocumentStager.stageDocument`, `stageDocumentWithLease`, `stageStre
 |---|---|---|
 | Unit Regression Suite | PASS: 5 methods in `StagingSynchronizationSecurityTest.kt`: stalled provider query does not block Main-thread lease operations or unrelated sessions (sc07_01); stalled provider openFile does not block Main-thread lease operations or unrelated sessions (sc07_02); stalled stream read loop does not block Main-thread operations or unrelated staging, tracks in-flight reservations (sc07_03); cancellation during stalled read reclaims slot and byte reservations and deletes partial files (sc07_04); concurrent staging of 16 leased and 20 unleased documents preserves aggregate quotas, unleased bounds, and CI46-01 atomic lease eviction immunity (sc07_05) | `app-host/src/test/java/com/pdfchemy/app/security/StagingSynchronizationSecurityTest.kt` |
 | IPC Stager Retention Suite | PASS: 8 methods in `DocumentStagerRetentionTest.kt` (sequential and concurrent retention, LRU trimming, atomic leasing, active lease eviction protection) | Gradle task log (`:pdf-ipc:testDebugUnitTest`) |
+| IPC Shutdown Retention Suite | PASS: 2 methods in `DocumentStagerShutdownTest.kt` (preserves live reservations across `releaseAll()`, enforces 64 document quota during and after shutdown) | Gradle task log (`:pdf-ipc:testDebugUnitTest`) |
 | Host Staged Session Retention | PASS: `StagedSessionRetentionTest.kt` (3 methods) & `StagingTransferSecurityTest.kt` (6 methods) | Gradle task log (`:app-host:testDebugUnitTest`) |
 | Release Workflow Regressions | PASS (`ReleaseWorkflowRegressionTest.kt`) | Gradle task log (`:app-host:testDebugUnitTest`) |
 | Test APK Assembly & Dexing | PASS (`assembleDebugAndroidTest`) | Gradle task log |

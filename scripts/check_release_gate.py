@@ -97,7 +97,8 @@ def main():
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in (b"Lcom/pdfchemy/app/security/OutputCommitProvider;", b"Lcom/pdfchemy/app/security/MutableInputProvider;", b"Lcom/pdfchemy/app/security/BenignPdfCompatibilityTest;",
                            b"Lcom/pdfchemy/app/security/CrossUidSenderFixture", b"Lcom/pdfchemy/app/security/CrossUidAdmissionSecurityTest;",
-                           b"Lcom/pdfchemy/app/security/RedactionCountSecurityTest;"):
+                           b"Lcom/pdfchemy/app/security/RedactionCountSecurityTest;",
+                           b"Lcom/pdfchemy/app/security/FormValueAliasSecurityTest;"):
                 check(marker not in dex, "Instrumentation class leaked into production DEX")
         report.update(version="2.1.0 (14)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
     print(json.dumps(report, indent=2))
