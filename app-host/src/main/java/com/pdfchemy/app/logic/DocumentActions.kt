@@ -19,6 +19,9 @@ object DocumentActions {
             setDataAndType(output, com.pdfchemy.app.utils.FileUtils.getMimeType(context, output))
             clipData = android.content.ClipData.newUri(context.contentResolver, "Document", output)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            if (context !is android.app.Activity) {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
         }
         context.startActivity(intent)
     }
