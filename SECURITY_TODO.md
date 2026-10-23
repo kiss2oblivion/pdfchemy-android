@@ -106,7 +106,7 @@ Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECU
 
 ## 11. Retained findings and risk disposition
 
-- [ ] FOLLOW-01 RA-02: invalidate Reader search on Clear; test delayed completion and scrolling.
+- [x] FOLLOW-01 RA-02: invalidate Reader search on Clear; test delayed completion and scrolling. ReaderSearchCoordinator cancels active jobs and invalidates generation on Clear, dismiss, edit, and exit; ReaderSearchSecurityTest (10 methods) verifies rejection of delayed results/scrolling; see FOLLOW01_EXECUTION.md.
 - [ ] FOLLOW-02 RA-03: preserve cancellation and accurate provider failure diagnosis for single/multi pickers with Vanguard on/off.
 - [ ] FOLLOW-03 Define external VIEW/SEND URI admission separately from trusted internal staged capabilities.
 - [ ] FOLLOW-04 Run separate-sender/provider Android tests for scheme/grant/private-path policy and record actual impact.
@@ -155,6 +155,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-07 | COMPLETE: source, test and remote gates verified | `8ef7e92e`, Android remote verified | StagingSynchronizationSecurityTest (5 methods), DocumentStagerRetentionTest (8 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC07_EXECUTION.md | Remote CI; release HOLD |
 | SC-13 | COMPLETE: source, test and remote gates verified | `90251eb8`, Android remote verified | PublicationCancellationSecurityTest (5 methods), DestinationIntegritySecurityTest (25 methods), StagingSynchronizationSecurityTest (5 methods), assembleDebugAndroidTest; see SC13_EXECUTION.md | Remote CI; release HOLD |
 | SC-14 | COMPLETE: source, test and remote gates verified | `16e9498b`, Android remote verified | DocumentIdentitySecurityTest (6 methods), PublicationCancellationSecurityTest (5 methods), DestinationIntegritySecurityTest (25 methods), assembleDebugAndroidTest; see SC14_EXECUTION.md | Remote CI; release HOLD |
+| FOLLOW-01 (RA-02) | COMPLETE: source, test and remote gates verified | `72883d32`, Android remote verified | ReaderSearchSecurityTest (10 methods), 86 unit tests in :app-host:testDebugUnitTest, assembleDebugAndroidTest; see FOLLOW01_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
