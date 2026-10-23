@@ -124,11 +124,24 @@ private fun PdfReaderDocument(
     val drawerState = androidx.compose.material3.rememberDrawerState(initialValue = androidx.compose.material3.DrawerValue.Closed)
     var bookmarks by remember { mutableStateOf<List<com.pdfchemy.app.logic.OutlineBookmark>>(emptyList()) }
     var isSearchMode by remember { mutableStateOf(false) }
+    val searchCoordinator = remember { com.pdfchemy.app.logic.ReaderSearchCoordinator() }
     var searchQuery by remember { mutableStateOf("") }
     var searchMatches by remember { mutableStateOf<List<com.pdfchemy.app.logic.TextMatchOccurrence>>(emptyList()) }
     var currentMatchIndex by remember { mutableStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
-    val searchGeneration = remember { com.pdfchemy.app.logic.LatestRequest() }
+
+    DisposableEffect(searchCoordinator) {
+        searchCoordinator.onStateChanged = {
+            searchQuery = searchCoordinator.query
+            searchMatches = searchCoordinator.matches
+            currentMatchIndex = searchCoordinator.currentMatchIndex
+            isSearching = searchCoordinator.isSearching
+        }
+        onDispose {
+            searchCoordinator.onStateChanged = null
+            searchCoordinator.dispose()
+        }
+    }
     
     // Vanguard Threat state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -157,6 +170,7 @@ private fun PdfReaderDocument(
 
     DisposableEffect(Unit) {
         onDispose {
+            searchCoordinator.dispose()
             stagingTransferOwner.close()
             activeSessionLease?.close()
             activeSessionLease = null
@@ -405,7 +419,13 @@ private fun PdfReaderDocument(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isSearchMode = !isSearchMode }) {
+                    IconButton(onClick = {
+                        val nextMode = !isSearchMode
+                        isSearchMode = nextMode
+                        if (!nextMode) {
+                            searchCoordinator.clear()
+                        }
+                    }) {
                         Icon(Icons.Rounded.Search, contentDescription = "Search")
                     }
                     IconButton(enabled = totalPages > 0, onClick = { jumpInput = "${listState.firstVisibleItemIndex + 1}"; showNavigation = true }) {
@@ -451,37 +471,35 @@ private fun PdfReaderDocument(
                     ) {
                         OutlinedTextField(
                             value = searchQuery,
-                            onValueChange = { searchQuery = it; searchGeneration.invalidate(); searchMatches = emptyList(); isSearching = false },
+                            onValueChange = { searchCoordinator.onQueryChanged(it) },
                             modifier = Modifier.weight(1f),
                             placeholder = { Text("Search document...") },
                             singleLine = true,
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = ""; searchMatches = emptyList() }) {
+                                    IconButton(onClick = { searchCoordinator.clear() }) {
                                         Icon(Icons.Rounded.Close, contentDescription = "Clear")
                                     }
                                 }
                             },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
                             keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
-                                if (searchQuery.isNotBlank() && initialUri != null) {
-                                    val query = searchQuery
-                                    val ticket = searchGeneration.begin()
-                                    isSearching = true
-                                    coroutineScope.launch {
-                                        try {
-                                            val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, initialUri, query)
-                                            if (!searchGeneration.isCurrent(ticket)) return@launch
-                                            searchMatches = summary.occurrences
-                                            currentMatchIndex = 0
-                                            if (searchMatches.isNotEmpty()) {
-                                                listState.animateScrollToItem(searchMatches[0].pageIndex)
-                                            }
-                                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                                        catch (_: Exception) { if (searchGeneration.isCurrent(ticket)) viewModel.notifyError("Search failed. Check document access and retry.") }
-                                        finally { if (searchGeneration.isCurrent(ticket)) isSearching = false }
+                                searchCoordinator.submitSearch(
+                                    scope = coroutineScope,
+                                    searcher = {
+                                        com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(
+                                            context,
+                                            initialUri,
+                                            searchCoordinator.query
+                                        ).occurrences
+                                    },
+                                    onScrollToMatch = { pageIndex ->
+                                        listState.animateScrollToItem(pageIndex)
+                                    },
+                                    onError = {
+                                        viewModel.notifyError("Search failed. Check document access and retry.")
                                     }
-                                }
+                                )
                             })
                         )
                         if (isSearching) {
@@ -494,14 +512,14 @@ private fun PdfReaderDocument(
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 )
                                 IconButton(onClick = {
-                                    val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
-                                    currentMatchIndex = newIdx
-                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                    searchCoordinator.previousMatch { pageIndex ->
+                                        coroutineScope.launch { listState.animateScrollToItem(pageIndex) }
+                                    }
                                 }) { Icon(Icons.Rounded.KeyboardArrowUp, "Previous match") }
                                 IconButton(onClick = {
-                                    val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
-                                    currentMatchIndex = newIdx
-                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                    searchCoordinator.nextMatch { pageIndex ->
+                                        coroutineScope.launch { listState.animateScrollToItem(pageIndex) }
+                                    }
                                 }) { Icon(Icons.Rounded.KeyboardArrowDown, "Next match") }
                             }
                         }
