@@ -579,7 +579,8 @@ fun MainApp(
     fun returnFromTool(fallback: Screen) {
         val source = readerReturnUri
         readerReturnUri = null
-        viewModel.setContinuityUri(null)
+        // The returning Reader consumes this lease after acquiring its own.
+        if (source == null) viewModel.clearContinuityUri()
         currentScreen = source?.let { Screen.PdfReader(Uri.parse(it)) } ?: fallback
     }
     val uiState by viewModel.uiState.collectAsState()
@@ -925,8 +926,14 @@ fun MainApp(
                     com.pdfchemy.app.ui.PdfReaderScreen(
                         viewModel = viewModel,
                         initialUri = readerScreen.initialPdfUri,
-                        onBack = { currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory },
-                        onNavigateToTool = { screen -> readerReturnUri = viewModel.readerSourceUri?.toString(); currentScreen = screen }
+                        onBack = {
+                            viewModel.clearContinuityUri()
+                            currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
+                        },
+                        onNavigateToTool = { screen ->
+                            readerReturnUri = (viewModel.continuityDocumentUri.value ?: viewModel.readerSourceUri)?.toString()
+                            currentScreen = screen
+                        }
                     )
                 }
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)

@@ -84,6 +84,54 @@ class StagedSessionRetentionTest {
     }
 
     @Test
+    fun refreshingSameContinuityUriCannotDeletePendingSnapshot() {
+        val snapshot = DocumentStager.stageStream(application, ByteArrayInputStream(samplePdf()), "pdf")
+        viewModel.setContinuityUri(snapshot.uri)
+        DocumentStager.release(snapshot)
+        assertTrue(DocumentStager.isPendingRelease(snapshot.uri))
+
+        viewModel.setContinuityUri(snapshot.uri)
+
+        assertTrue("Refreshing the handoff must not unlink its document", File(snapshot.uri.path!!).exists())
+        assertEquals(1, DocumentStager.activeLeases(snapshot))
+        viewModel.clearContinuityUri()
+        assertFalse(File(snapshot.uri.path!!).exists())
+    }
+
+    @Test
+    fun returningReaderConsumesOnlyAfterAcquiringItsOwnLease() {
+        val snapshot = DocumentStager.stageStream(application, ByteArrayInputStream(samplePdf()), "pdf")
+        val uri = snapshot.uri
+        viewModel.setContinuityUri(uri)
+        DocumentStager.release(snapshot)
+        val returningReader = DocumentStager.stageDocumentWithLease(application, uri)
+
+        viewModel.clearContinuityUri(uri)
+
+        assertNull(viewModel.continuityDocumentUri.value)
+        assertEquals(1, DocumentStager.activeLeases(snapshot))
+        assertTrue(File(uri.path!!).exists())
+        returningReader.close()
+        assertFalse(File(uri.path!!).exists())
+    }
+
+    @Test
+    fun staleReaderCannotClearAnotherDocumentsHandoff() {
+        val first = DocumentStager.stageStream(application, ByteArrayInputStream(samplePdf("first")), "pdf")
+        val second = DocumentStager.stageStream(application, ByteArrayInputStream(samplePdf("second")), "pdf")
+        viewModel.setContinuityUri(first.uri)
+        viewModel.setContinuityUri(second.uri)
+
+        viewModel.clearContinuityUri(first.uri)
+
+        assertEquals(second.uri, viewModel.continuityDocumentUri.value)
+        assertEquals(1, DocumentStager.activeLeases(second))
+        assertTrue(File(second.uri.path!!).exists())
+        viewModel.clearContinuityUri(second.uri)
+        assertFalse(File(second.uri.path!!).exists())
+    }
+
+    @Test
     fun readerPositionsMap_isStrictlyBoundedTo32Entries() {
         // Populate 50 distinct positions
         for (i in 1..50) {

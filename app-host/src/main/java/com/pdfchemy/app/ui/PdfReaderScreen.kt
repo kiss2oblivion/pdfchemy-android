@@ -198,6 +198,7 @@ private fun PdfReaderDocument(
             val oldUri = selectedPdfUri
             activeSessionLease = newLease
             selectedPdfUri = stagedUri
+            viewModel.clearContinuityUri(stagedUri)
             oldLease?.close()
             if (oldUri != null && oldUri != stagedUri && viewModel.continuityDocumentUri.value != oldUri) {
                 withContext(Dispatchers.IO) { DocumentStager.release(oldUri) }
@@ -208,14 +209,6 @@ private fun PdfReaderDocument(
             documentId = docId
             personalBookmarks = com.pdfchemy.app.utils.DocumentIdentity.getSavedBookmarks(context, docId)
             
-            // Fetch bookmarks asynchronously
-            coroutineScope.launch {
-                try {
-                    bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, initialUri)
-                } catch (e: Exception) {
-                    // Ignore
-                }
-            }
             fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
             
             if (isVanguardEnabled) {
@@ -243,6 +236,11 @@ private fun PdfReaderDocument(
                 totalPages = PdfEditor.getPageCount(context, stagedUri)
             }
             
+            // Outline, audit and page-count operations share a single-flight
+            // worker. Finish them in sequence before enabling Reader actions.
+            if (totalPages > 0) {
+                bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
+            }
             loading = false
             if (totalPages == 0 && !showVanguardBlockedDialog && !showVanguardEncryptedDialog && !showVanguardDamagedDialog) {
                 loadFailure = "No readable pages were found. Try Repair PDF or select another document."
@@ -450,7 +448,10 @@ private fun PdfReaderDocument(
                             }, enabled = totalPages > 0)
                         }
                     }
-                    IconButton(onClick = { onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri)) }) {
+                    IconButton(onClick = {
+                        viewModel.setContinuityUri(selectedPdfUri)
+                        onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri))
+                    }, enabled = !loading && totalPages > 0) {
                         Icon(Icons.Rounded.Edit, contentDescription = "Edit")
                     }
                 },
