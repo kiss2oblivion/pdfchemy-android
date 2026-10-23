@@ -157,14 +157,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch(Dispatchers.IO) {
             // A provider write must finish/abort before its document is deleted.
-            cancelledJob?.join()
+            val stopped = kotlinx.coroutines.withTimeoutOrNull(com.pdfchemy.app.security.PublicationCoordinator.stopTimeoutMs) {
+                cancelledJob?.join()
+                true
+            } ?: false
+            if (!stopped) {
+                // Writer did not terminate within grace period (uninterruptible provider open/write).
+                // Do not delete partial destination while writer is still active; preserve quarantine.
+                return@launch
+            }
             // Only proven fresh incomplete destinations may be deleted; existing/unknown destinations remain intact.
             opRecord?.outputs?.forEach { tracked ->
                 if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
                     val claimedByNewerOp = activeOperations.values.any { other ->
                         other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
                     }
-                    if (!claimedByNewerOp) {
+                    if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
                         com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
                         runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
                     }
@@ -189,13 +197,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     currentOperationId = 0L
                     val context = getApplication<Application>()
                     viewModelScope.launch(Dispatchers.IO) {
-                        jobToJoin?.join()
+                        val stopped = kotlinx.coroutines.withTimeoutOrNull(com.pdfchemy.app.security.PublicationCoordinator.stopTimeoutMs) {
+                            jobToJoin?.join()
+                            true
+                        } ?: false
+                        if (!stopped) {
+                            return@launch
+                        }
                         opRecord?.outputs?.forEach { tracked ->
                             if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
                                 val claimedByNewerOp = activeOperations.values.any { other ->
                                     other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
                                 }
-                                if (!claimedByNewerOp) {
+                                if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
                                     com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
                                     try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
                                 }

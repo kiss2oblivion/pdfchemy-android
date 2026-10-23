@@ -6,8 +6,7 @@ import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
 import com.pdfchemy.app.security.SecurityLimits
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.Closeable
@@ -117,28 +116,55 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
         validated = true
     }
 
-    suspend fun commit() {
+    suspend fun commit() = kotlinx.coroutines.coroutineScope {
         check(!closed && validated && !commitStarted) { "Outputs must be validated and committed only once" }
         currentCoroutineContext().ensureActive()
         commitStarted = true
-        val buffer = ByteArray(64 * 1024)
-        var committed = 0L
-        for (index in targets.indices) {
-            currentCoroutineContext().ensureActive()
-            // SAF may supply a pipe. No seek/truncate operation is performed on
-            // its FD, and no real provider capability crosses the worker boundary.
-            requireNotNull(context.contentResolver.openOutputStream(targets[index], "wt")).use { output ->
-                var offset = 0L
-                while (offset < sizes[index]) {
-                    currentCoroutineContext().ensureActive()
-                    val count = Os.pread(snapshots[index].fileDescriptor, buffer, 0,
-                        minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
-                    if (count <= 0) throw IOException("Incomplete commit snapshot")
-                    require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
-                    output.write(buffer, 0, count)
-                    offset += count; committed += count
+        val totalBytes = snapshots.sumOf(::size)
+        val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, totalBytes)
+        var completedNormally = false
+        val watcher = launch(Dispatchers.IO) {
+            try {
+                awaitCancellation()
+            } finally {
+                if (!completedNormally) {
+                    handle.abort()
                 }
             }
+        }
+        val job = currentCoroutineContext()[kotlinx.coroutines.Job]
+        if (job != null) {
+            handle.attachJob(job)
+        }
+        try {
+            val buffer = ByteArray(64 * 1024)
+            var committed = 0L
+            for (index in targets.indices) {
+                currentCoroutineContext().ensureActive()
+                // SAF may supply a pipe. No seek/truncate operation is performed on
+                // its FD, and no real provider capability crosses the worker boundary.
+                val stream = requireNotNull(context.contentResolver.openOutputStream(targets[index], "wt")) {
+                    "Unable to open destination: ${targets[index]}"
+                }
+                handle.registerStream(stream).use {
+                    stream.use { output ->
+                        var offset = 0L
+                        while (offset < sizes[index]) {
+                            currentCoroutineContext().ensureActive()
+                            val count = Os.pread(snapshots[index].fileDescriptor, buffer, 0,
+                                minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
+                            if (count <= 0) throw IOException("Incomplete commit snapshot")
+                            require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
+                            output.write(buffer, 0, count)
+                            offset += count; committed += count
+                        }
+                    }
+                }
+            }
+            completedNormally = true
+        } finally {
+            watcher.cancel()
+            handle.close()
         }
     }
 
