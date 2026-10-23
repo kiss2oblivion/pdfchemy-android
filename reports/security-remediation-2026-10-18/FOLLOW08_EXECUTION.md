@@ -35,12 +35,22 @@ Previously:
 2. **`PdfRedactionEngine.kt` (`applyRedactions`):**
    - Simplified return to `Result.success(contract.count)`, directly propagating the worker's verified applied redaction count to host callers and UI notifications.
 
-3. **Deterministic Unit Regression Suite (`WorkerResponseValidatorTest.kt`):**
+3. **`PdfRedactionEngineWorker.kt` (`redact`):**
+   - Added preflight page-bounds validation before modifying any form data or painting:
+     `require(boxes.all { it.pageIndex in 0 until pageCount }) { "Redaction page is outside the document" }`
+   - Refuses the entire request fail-closed if any requested page index is out of bounds, preventing silent skips from becoming successful partial exports.
+
+4. **Deterministic Unit Regression Suite (`WorkerResponseValidatorTest.kt`):**
    - Added `standardOutputCountSemanticsValidated`:
      - Explicit multi-box count (`{"count": 7}`) returns `StandardOutputContract(count = 7)`.
      - Zero count (`{"count": 0}`) returns `StandardOutputContract(count = 0)`.
      - Negative count (`{"count": -1}`) throws `IllegalArgumentException` fail-closed.
      - Omitted count defaults to `1`.
+
+5. **Android Instrumented Security Regressions (`RedactionCountSecurityTest.kt`):**
+   - `twoAppliedBoxesReturnTwo`: verifies returning 2 applied redactions.
+   - `zeroSelectedBoxesReturnZero`: verifies returning 0 applied redactions without mutating content.
+   - `invalidPageFailsWithoutPublishingPartialRedaction`: verifies nonexistent page fails closed and preserves destination.
 
 ## Verification
 

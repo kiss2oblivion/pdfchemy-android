@@ -15,8 +15,15 @@ import java.io.FileOutputStream
 object DocumentActions {
     fun view(context: Context, uri: Uri, displayName: String? = null) {
         val output = getShareableContentUri(context, uri, displayName)
+        val mimeType = com.pdfchemy.app.utils.FileUtils.getMimeType(context, output)
+        val internalReaderType = mimeType in setOf("application/pdf", "application/epub+zip",
+            "application/vnd.comicbook+zip", "application/x-cbz", "application/vnd.comicbook-rar")
+        if (internalReaderType && com.pdfchemy.app.security.ExternalUriAdmission.isAppOwnedContentUri(context, output)) {
+            context.startActivity(com.pdfchemy.app.security.InternalDocumentIntents.create(context, output))
+            return
+        }
         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-            setDataAndType(output, com.pdfchemy.app.utils.FileUtils.getMimeType(context, output))
+            setDataAndType(output, mimeType)
             clipData = android.content.ClipData.newUri(context.contentResolver, "Document", output)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (context !is android.app.Activity) {

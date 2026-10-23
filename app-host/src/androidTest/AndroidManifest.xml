@@ -14,5 +14,14 @@
             android:name="com.pdfchemy.app.security.MutableInputProvider"
             android:authorities="com.pdfchemy.app.security.mutablefixture"
             android:exported="true" />
+        <activity
+            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$SenderActivity"
+            android:exported="true"
+            android:process=":foreign_sender_uid" />
+        <provider
+            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$ProtectedProvider"
+            android:authorities="com.pdfchemy.app.test.cross_uid_protected"
+            android:exported="true"
+            android:process=":foreign_sender_uid" />
     </application>
 </manifest>

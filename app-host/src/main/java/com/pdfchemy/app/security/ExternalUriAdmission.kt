@@ -204,6 +204,14 @@ object ExternalUriAdmission {
                 return AdmissionResult.Rejected("Malicious authority syntax in content URI: $authority", uri)
             }
 
+            // The exported Activity opens inputs with our UID. URI text and Intent
+            // grant flags cannot authorize a foreign caller to claim our providers.
+            // ContentResolver also accepts encoded user-qualified authorities, so
+            // compare the installed provider identity after removing that qualifier.
+            if (isAppOwnedContentUri(context, uri)) {
+                return AdmissionResult.Rejected("External intent cannot claim an app-owned provider: $authority", uri)
+            }
+
             val path = uri.path
             if (path != null && (path.contains("..") || path.contains("%2e%2e", ignoreCase = true) || path.contains("\\"))) {
                 return AdmissionResult.Rejected("Path traversal pattern rejected in content URI: $path", uri)
@@ -218,5 +226,12 @@ object ExternalUriAdmission {
         }
 
         return AdmissionResult.Rejected("Unhandled admission state for URI: $uri", uri)
+    }
+
+    internal fun isAppOwnedContentUri(context: Context, uri: Uri): Boolean {
+        if (!uri.scheme.equals("content", ignoreCase = true)) return false
+        val authority = uri.authority?.substringAfterLast('@') ?: return false
+        val provider = context.packageManager.resolveContentProvider(authority, 0)
+        return provider?.applicationInfo?.uid == context.applicationInfo.uid
     }
 }
