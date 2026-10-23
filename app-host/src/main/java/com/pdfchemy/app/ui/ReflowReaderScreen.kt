@@ -244,9 +244,15 @@ fun ReflowReaderScreen(
 
     var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
     var currentStagedUri by remember { mutableStateOf<Uri?>(null) }
+    val stagingTransferOwner = remember {
+        com.pdfchemy.app.utils.ResourceTransferOwner<com.pdfchemy.app.utils.DocumentStager.StagedLease> { uncommitted ->
+            uncommitted.discard(initialUri)
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
+            stagingTransferOwner.close()
             activeSessionLease?.close()
             activeSessionLease = null
             currentStagedUri?.let { uri ->
@@ -265,7 +271,11 @@ fun ReflowReaderScreen(
         }) {
             if (initialUri != null) {
                 val originalUri = initialUri
-                val stagedLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, originalUri) }
+                val stagedLease = com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellationSafe(
+                    context = context,
+                    sourceUri = originalUri,
+                    transferOwner = stagingTransferOwner
+                )
                 val staged = stagedLease.document
                 val initialUri = staged.uri
                 val newLease = stagedLease.lease

@@ -149,9 +149,15 @@ private fun PdfReaderDocument(
     
     val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
     var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+    val stagingTransferOwner = remember {
+        com.pdfchemy.app.utils.ResourceTransferOwner<DocumentStager.StagedLease> { uncommitted ->
+            uncommitted.discard(initialUri)
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
+            stagingTransferOwner.close()
             activeSessionLease?.close()
             activeSessionLease = null
             selectedPdfUri?.let { uri ->
@@ -171,7 +177,7 @@ private fun PdfReaderDocument(
             isVanguardScanning = false
         }) {
             val docId = withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri) }
-            val stagedLease = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellableWithLease(context, initialUri) }
+            val stagedLease = DocumentStager.stageDocumentCancellationSafe(context, initialUri, stagingTransferOwner)
             val staged = stagedLease.document
             val stagedUri = staged.uri
             val newLease = stagedLease.lease
@@ -593,21 +599,44 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int, requestedWidth
     var bitmap by remember(uri, pageIndex) { mutableStateOf<Bitmap?>(null) }
     var failed by remember(uri, pageIndex) { mutableStateOf(false) }
     var retryPage by remember(uri, pageIndex) { mutableIntStateOf(0) }
-    
+    val bitmapTransferOwner = remember(uri, pageIndex) {
+        com.pdfchemy.app.utils.ResourceTransferOwner<Bitmap> { uncommitted ->
+            if (!uncommitted.isRecycled) uncommitted.recycle()
+        }
+    }
+
+    DisposableEffect(uri, pageIndex) {
+        onDispose {
+            bitmapTransferOwner.close()
+        }
+    }
+
     LaunchedEffect(uri, pageIndex, retryPage) {
         val targetWidth = requestedWidth ?: (context.resources.displayMetrics.widthPixels * 1.5).toInt()
         failed = false
         var newlyRendered: Bitmap? = null
         try {
-            newlyRendered = NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            newlyRendered = NativeRendererCoordinator.renderUriToBitmap(
+                context = context,
+                uri = uri,
+                pageIndex = pageIndex,
+                width = targetWidth,
+                transferOwner = bitmapTransferOwner
+            )
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            val oldBitmap = bitmap
             bitmap = newlyRendered
+            if (oldBitmap != null && oldBitmap != newlyRendered && !oldBitmap.isRecycled) {
+                oldBitmap.recycle()
+            }
             newlyRendered = null
             failed = bitmap == null
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            bitmapTransferOwner.discard()
             newlyRendered?.let { if (!it.isRecycled) it.recycle() }
             throw cancelled
         } catch (_: Exception) {
+            bitmapTransferOwner.discard()
             newlyRendered?.let { if (!it.isRecycled) it.recycle() }
             failed = true
         }

@@ -306,9 +306,15 @@ fun PdfEditorScreen(
     )
 
     var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
+    val stagingTransferOwner = remember {
+        com.pdfchemy.app.utils.ResourceTransferOwner<com.pdfchemy.app.utils.DocumentStager.StagedLease> { uncommitted ->
+            uncommitted.discard(selectedPdfUri)
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {
+            stagingTransferOwner.close()
             activeSessionLease?.close()
             activeSessionLease = null
             selectedPdfUri?.let { uri ->
@@ -329,9 +335,11 @@ fun PdfEditorScreen(
             isVanguardScanning = false
         }) {
             selectedPdfUri?.let { originalUri ->
-                val stagedLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, originalUri)
-                }
+                val stagedLease = com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellationSafe(
+                    context = context,
+                    sourceUri = originalUri,
+                    transferOwner = stagingTransferOwner
+                )
                 val staged = stagedLease.document
                 val uri = staged.uri
                 val newLease = stagedLease.lease

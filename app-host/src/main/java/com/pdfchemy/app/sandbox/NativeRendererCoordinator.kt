@@ -8,6 +8,7 @@ import com.pdfchemy.app.security.*
 import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import com.pdfchemy.app.utils.ResourceTransferOwner
 import java.io.File
 
 object NativeRendererCoordinator {
@@ -22,22 +23,45 @@ object NativeRendererCoordinator {
         try { block(withTimeout(10_000) { channel.receive() }) }
         finally { context.unbindService(connection) }
     }
-    suspend fun renderUriToBitmap(context: Context, uri: Uri, pageIndex: Int, width: Int): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
-        val (staged, inputLease) = DocumentStager.stageDocumentCancellableWithLease(context, uri)
-        var file: File? = null
+    suspend fun renderUriToBitmap(
+        context: Context,
+        uri: Uri,
+        pageIndex: Int,
+        width: Int,
+        transferOwner: ResourceTransferOwner<android.graphics.Bitmap>? = null
+    ): android.graphics.Bitmap? {
+        val owner = transferOwner ?: ResourceTransferOwner { if (!it.isRecycled) it.recycle() }
         try {
-            val pixels = File.createTempFile("pixels_", ".argb", context.cacheDir)
-            file = pixels
-            context.contentResolver.openFileDescriptor(staged.uri, "r")!!.use { source ->
-                ParcelFileDescriptor.open(pixels, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
-                    withRenderer(context) { it.renderPageToPixels(source, pageIndex, dest, staged.sha256, staged.size, width) }
+            withContext(Dispatchers.IO) {
+                val (staged, inputLease) = DocumentStager.stageDocumentCancellableWithLease(context, uri)
+                var file: File? = null
+                var bitmap: android.graphics.Bitmap? = null
+                try {
+                    val pixels = File.createTempFile("pixels_", ".argb", context.cacheDir)
+                    file = pixels
+                    context.contentResolver.openFileDescriptor(staged.uri, "r")!!.use { source ->
+                        ParcelFileDescriptor.open(pixels, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
+                            withRenderer(context) { it.renderPageToPixels(source, pageIndex, dest, staged.sha256, staged.size, width) }
+                        }
+                    }
+                    bitmap = pixels.inputStream().use(PixelWire::read)
+                    if (bitmap != null) {
+                        owner.stage(bitmap)
+                    }
+                    bitmap
+                } catch (t: Throwable) {
+                    bitmap?.let { if (!it.isRecycled) it.recycle() }
+                    throw t
+                } finally {
+                    file?.delete()
+                    if (staged.uri != uri) DocumentStager.release(staged)
+                    inputLease.close()
                 }
             }
-            pixels.inputStream().use(PixelWire::read)
-        } finally {
-            file?.delete()
-            if (staged.uri != uri) DocumentStager.release(staged)
-            inputLease.close()
+            return owner.commit()
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
         }
     }
     suspend fun getPageCount(context: Context, pdfPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Int? = withContext(Dispatchers.IO) {
@@ -45,15 +69,40 @@ object NativeRendererCoordinator {
         if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).getPageCount(pdfPfd, hash, size)
         else withRenderer(context) { it.getPageCount(pdfPfd, hash, size) }
     }
-    suspend fun renderPageToBitmap(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, scaleWidth: Int = 0): android.graphics.Bitmap? = withContext(Dispatchers.IO) {
-        val (hash, size) = StagedIdentity.identity(pdfPfd)
-        val file = File.createTempFile("pixels_", ".argb", context.cacheDir)
+    suspend fun renderPageToBitmap(
+        context: Context,
+        pdfPfd: ParcelFileDescriptor,
+        pageIndex: Int,
+        scaleWidth: Int = 0,
+        transferOwner: ResourceTransferOwner<android.graphics.Bitmap>? = null
+    ): android.graphics.Bitmap? {
+        val owner = transferOwner ?: ResourceTransferOwner { if (!it.isRecycled) it.recycle() }
         try {
-            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE).use { target ->
-                withRenderer(context) { it.renderPageToPixels(pdfPfd, pageIndex, target, hash, size, if (scaleWidth > 0) scaleWidth else SecurityLimits.MAX_RENDER_DIMENSION) }
+            withContext(Dispatchers.IO) {
+                val (hash, size) = StagedIdentity.identity(pdfPfd)
+                val file = File.createTempFile("pixels_", ".argb", context.cacheDir)
+                var bitmap: android.graphics.Bitmap? = null
+                try {
+                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE).use { target ->
+                        withRenderer(context) { it.renderPageToPixels(pdfPfd, pageIndex, target, hash, size, if (scaleWidth > 0) scaleWidth else SecurityLimits.MAX_RENDER_DIMENSION) }
+                    }
+                    bitmap = file.inputStream().use(PixelWire::read)
+                    if (bitmap != null) {
+                        owner.stage(bitmap)
+                    }
+                    bitmap
+                } catch (t: Throwable) {
+                    bitmap?.let { if (!it.isRecycled) it.recycle() }
+                    throw t
+                } finally {
+                    file.delete()
+                }
             }
-            file.inputStream().use(PixelWire::read)
-        } finally { file.delete() }
+            return owner.commit()
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
+        }
     }
     suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Boolean? = withContext(Dispatchers.IO) {
         val (hash, size) = StagedIdentity.identity(pdfPfd)

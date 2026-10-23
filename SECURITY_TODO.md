@@ -59,11 +59,11 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 7. SC-06 — Cancellation-safe lease and bitmap transfer
 
-- [ ] SC06-01 Cover cancellation after resource acquisition but before caller dispatcher resumption.
-- [ ] SC06-02 Fix staging transfer across Reader/Editor/Reflow without leaking leases or snapshots.
-- [ ] SC06-03 Verify/fix the analogous native-rendered bitmap transfer and disposal boundary.
-- [ ] SC06-04 Repeat cancellation/navigation/retry/recreation without quota drift; preserve active borrowers.
-- [ ] SC06-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC06-01 Cover cancellation after resource acquisition but before caller dispatcher resumption. StagingTransferSecurityTest (sc06_01) asserts that cancellation before dispatcher resumption releases the acquired lease and cleans up the snapshot.
+- [x] SC06-02 Fix staging transfer across Reader/Editor/Reflow without leaking leases or snapshots. Introduced ResourceTransferOwner and stageDocumentCancellationSafe; Reader, Editor, and Reflow screens use retained owners that discard uncommitted leases on cancellation or disposal.
+- [x] SC06-03 Verify/fix the analogous native-rendered bitmap transfer and disposal boundary. NativeRendererCoordinator.renderUriToBitmap and renderPageToBitmap transfer bitmaps via ResourceTransferOwner and recycle discarded bitmaps on cancellation; verified in sc06_03.
+- [x] SC06-04 Repeat cancellation/navigation/retry/recreation without quota drift; preserve active borrowers. StagingTransferSecurityTest (sc06_04) executes 10 repeated cancellation cycles while an active borrower lease is held; zero quota drift and borrower lease remains 1.
+- [x] SC06-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source committed and remote verified; see SC06_EXECUTION.md.
 
 ## 8. SC-07 — Staging synchronization and stalled providers
 
@@ -152,6 +152,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-09 | COMPLETE: source, test and remote gates verified | `81616afe`, Android remote verified | DestinationIntegritySecurityTest (16 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC09_EXECUTION.md | Remote CI; release HOLD |
 | SC-05 | COMPLETE: source, test and remote gates verified | `9733f74c`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
 | RA-05 | COMPLETE: source, test and remote gates verified | `31a88c9f`, Android remote verified | DestinationIntegritySecurityTest (25 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see RA05_EXECUTION.md | Remote CI; release HOLD |
+| SC-06 | COMPLETE: source, test and remote gates verified | `b1932de1`, Android remote verified | StagingTransferSecurityTest (6 methods), ReleaseWorkflowRegressionTest, StagedSessionRetentionTest, DocumentStagerRetentionTest, assembleDebugAndroidTest; see SC06_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

@@ -16,6 +16,13 @@ object DocumentStager {
         val lease: java.io.Closeable
     ) : java.io.Closeable {
         override fun close() = lease.close()
+
+        fun discard(borrowedUri: Uri? = null) {
+            if (borrowedUri == null || document.uri != borrowedUri) {
+                release(document)
+            }
+            lease.close()
+        }
     }
 
     private val staged = ConcurrentHashMap<String, StagedPdf>()
@@ -291,6 +298,42 @@ object DocumentStager {
         return copyCancellableWithLease(null) { checkpoint, opened ->
             opened(input)
             stageStreamWithLease(context, input, checkCancellation = checkpoint)
+        }
+    }
+    suspend fun stageDocumentCancellationSafe(
+        context: Context,
+        sourceUri: Uri,
+        transferOwner: ResourceTransferOwner<StagedLease>? = null
+    ): StagedLease {
+        val owner = transferOwner ?: ResourceTransferOwner { it.discard(sourceUri) }
+        try {
+            withContext(Dispatchers.IO) {
+                val stagedLease = stageDocumentCancellableWithLease(context, sourceUri)
+                owner.stage(stagedLease)
+                stagedLease
+            }
+            return checkNotNull(owner.commit()) { "Staged lease transfer not committed" }
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
+        }
+    }
+    suspend fun stageStreamCancellationSafe(
+        context: Context,
+        input: InputStream,
+        transferOwner: ResourceTransferOwner<StagedLease>? = null
+    ): StagedLease {
+        val owner = transferOwner ?: ResourceTransferOwner { it.discard(null) }
+        try {
+            withContext(Dispatchers.IO) {
+                val stagedLease = stageStreamCancellableWithLease(context, input)
+                owner.stage(stagedLease)
+                stagedLease
+            }
+            return checkNotNull(owner.commit()) { "Staged stream lease transfer not committed" }
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
         }
     }
     private suspend fun copyCancellable(borrowedUri: Uri?, copy: (() -> Unit, (InputStream) -> Unit) -> StagedPdf): StagedPdf {
