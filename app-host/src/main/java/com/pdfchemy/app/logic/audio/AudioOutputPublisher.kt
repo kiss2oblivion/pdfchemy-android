@@ -60,7 +60,7 @@ object AudioOutputPublisher {
     ) = kotlinx.coroutines.coroutineScope {
         val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, wav.length())
         var completedNormally = false
-        val watcher = launch(Dispatchers.IO) {
+        val watcher = launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
             try {
                 awaitCancellation()
             } finally {

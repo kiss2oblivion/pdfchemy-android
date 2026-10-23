@@ -26,9 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
-
+import com.pdfchemy.app.logic.PickerOutcome
+import com.pdfchemy.app.logic.VanguardPickerProcessor
 import com.pdfchemy.app.logic.VanguardThreatResult
 import com.pdfchemy.app.utils.FileUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -269,52 +271,40 @@ fun rememberVanguardPdfPicker(
         contract = ActivityResultContracts.OpenDocument()
     ) { originalUri: Uri? ->
         if (originalUri != null) {
-            if (isVanguardEnabled) {
-                isScanning = true
-                scanningFileName = FileUtils.getFileName(context, originalUri)
-                scope.launch {
-                    try {
-                        val stagedUri = withContext(Dispatchers.IO) {
-                            com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
+            scope.launch {
+                if (isVanguardEnabled) {
+                    isScanning = true
+                    scanningFileName = FileUtils.getFileName(context, originalUri)
+                }
+                try {
+                    when (val outcome = VanguardPickerProcessor.processSingle(context, originalUri, isVanguardEnabled)) {
+                        is PickerOutcome.Selected -> {
+                            onPdfSelected(outcome.stagedUris.first())
                         }
-                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
-                        withContext(Dispatchers.Main) {
-                            when (threat) {
-                                is VanguardThreatResult.Clean -> {
-                                    onPdfSelected(stagedUri)
-                                }
-                                is VanguardThreatResult.EncryptedCannotVerify -> {
-                                    encryptedPendingUri = stagedUri
-                                    showEncryptedDialog = true
-                                }
-                                is VanguardThreatResult.ExecutableThreat -> {
-                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
-                                    blockedReasonResId = when {
-                                        threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
-                                        threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
-                                        threat.report.otherActionsCount > 0 -> R.string.vanguard_blocked_message_other
-                                        threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
-                                        else -> R.string.vanguard_blocked_message_default
-                                    }
-                                    showBlockedDialog = true
-                                }
-                                is VanguardThreatResult.ParseFailed -> {
-                                    com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
-                                    showDamagedDialog = true
-                                }
-                            }
+                        is PickerOutcome.BlockedThreat -> {
+                            blockedReasonResId = outcome.reasonResId
+                            showBlockedDialog = true
                         }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
+                        is PickerOutcome.Encrypted -> {
+                            encryptedPendingUri = outcome.stagedUri
+                            showEncryptedDialog = true
+                        }
+                        is PickerOutcome.Damaged -> {
+                            showDamagedDialog = true
+                        }
+                        is PickerOutcome.ProviderError -> {
                             showProviderErrorDialog = true
                         }
-                    } finally {
-                        isScanning = false
-                        scanningFileName = null
+                        is PickerOutcome.Cancelled -> {
+                            // Cancelled - no error dialog
+                        }
                     }
+                } catch (_: CancellationException) {
+                    // Staging or scope cancelled - no error dialog
+                } finally {
+                    isScanning = false
+                    scanningFileName = null
                 }
-            } else {
-                scope.launch { try { onPdfSelected(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }) } catch (e: Exception) { showBlockedDialog = true } }
             }
         }
     }
@@ -549,83 +539,46 @@ fun rememberVanguardMultiplePdfPicker(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
-            if (isVanguardEnabled) {
-                scope.launch {
-                    var allClean = true
-                    val stagedUris = mutableListOf<Uri>()
-                    for (originalUri in uris) {
-                        isScanning = true
-                        scanningFileName = FileUtils.getFileName(context, originalUri)
-                        try {
-                            val stagedUri = withContext(Dispatchers.IO) {
-                                com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri
+            scope.launch {
+                try {
+                    val outcome = VanguardPickerProcessor.processMultiple(
+                        context = context,
+                        uris = uris,
+                        isVanguardEnabled = isVanguardEnabled,
+                        onItemScanning = { itemUri ->
+                            if (isVanguardEnabled) {
+                                isScanning = true
+                                scanningFileName = FileUtils.getFileName(context, itemUri)
                             }
-                            stagedUris.add(stagedUri)
-                            val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
-                            var stopBatch = false
-                            withContext(Dispatchers.Main) {
-                                when (threat) {
-                                    is VanguardThreatResult.Clean -> {
-                                        // verified clean, proceed to next
-                                    }
-                                    is VanguardThreatResult.EncryptedCannotVerify -> {
-                                        encryptedPendingUri = stagedUri
-                                        showEncryptedDialog = true
-                                        allClean = false
-                                        stopBatch = true
-                                    }
-                                    is VanguardThreatResult.ExecutableThreat -> {
-                                        blockedReasonResId = when {
-                                            threat.report.jsCount > 0 -> R.string.vanguard_blocked_message_js
-                                            threat.report.launchActionsCount > 0 -> R.string.vanguard_blocked_message_launch
-                                        threat.report.otherActionsCount > 0 -> R.string.vanguard_blocked_message_other
-                                            threat.report.untrustedUriCount > 0 -> R.string.vanguard_blocked_message_uri
-                                            else -> R.string.vanguard_blocked_message_default
-                                        }
-                                        showBlockedDialog = true
-                                        allClean = false
-                                        stopBatch = true
-                                    }
-                                    is VanguardThreatResult.ParseFailed -> {
-                                        showDamagedDialog = true
-                                        allClean = false
-                                        stopBatch = true
-                                    }
-                                }
-                            }
-                            if (stopBatch) break
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                showProviderErrorDialog = true
-                                allClean = false
-                            }
-                            break
-                        } finally {
-                            isScanning = false
-                            scanningFileName = null
+                        }
+                    )
+                    when (outcome) {
+                        is PickerOutcome.Selected -> {
+                            onPdfsSelected(outcome.stagedUris)
+                        }
+                        is PickerOutcome.BlockedThreat -> {
+                            blockedReasonResId = outcome.reasonResId
+                            showBlockedDialog = true
+                        }
+                        is PickerOutcome.Encrypted -> {
+                            encryptedPendingUri = outcome.stagedUri
+                            showEncryptedDialog = true
+                        }
+                        is PickerOutcome.Damaged -> {
+                            showDamagedDialog = true
+                        }
+                        is PickerOutcome.ProviderError -> {
+                            showProviderErrorDialog = true
+                        }
+                        is PickerOutcome.Cancelled -> {
+                            // Cancelled - no error dialog
                         }
                     }
-                    if (allClean) {
-                        withContext(Dispatchers.Main) {
-                            onPdfsSelected(stagedUris)
-                        }
-                    } else {
-                        stagedUris.filter { it != encryptedPendingUri }.forEach(com.pdfchemy.app.utils.DocumentStager::release)
-                    }
-                }
-            } else {
-                scope.launch {
-                    val stagedUris = mutableListOf<Uri>()
-                    try {
-                        for (uri in uris) stagedUris.add(withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri })
-                        onPdfsSelected(stagedUris)
-                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
-                        throw cancelled
-                    } catch (_: Exception) {
-                        stagedUris.forEach(com.pdfchemy.app.utils.DocumentStager::release)
-                        showBlockedDialog = true
-                    }
+                } catch (_: CancellationException) {
+                    // Staging or scope cancelled - no error dialog
+                } finally {
+                    isScanning = false
+                    scanningFileName = null
                 }
             }
         }
