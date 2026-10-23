@@ -101,9 +101,8 @@ Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECU
 - [x] SC12-02 Verify Reader-to-recipient exact-byte reads after navigation and batch build/lint/commit/remote/CI gates.
 - [x] SC13-01 Define supported cancellation/recovery for blocked destination open/write and bound outstanding host publication resources/concurrency. PublicationCoordinator tracks and bounds concurrent publications and aggregate byte budgets; awaitCancellation watcher triggers prompt stream closure.
 - [x] SC13-02 Exercise real controlled provider open/write stalls and repeated cancellation/retry with small budgets; stop writers before deletion and state supported platform limits precisely. PublicationCancellationSecurityTest exercises stalled streams, writer-stop safety before deletion, destination collision prevention, and backpressure against volume exhaustion; see SC13_EXECUTION.md.
-- [x] SC13-03 Complete separate finding checks, commit/push/ref and required same-source CI; do not equate a timeout wrapper with interruptible I/O. Source committed and remote verified; see SC13_EXECUTION.md.
-- [ ] SC14-01 Define stable document identity and version/migrate saved Reader/Editor state without assigning ambiguous metadata-only state to different content.
-- [ ] SC14-02 Verify different content with identical metadata, supported aliases/renames and legacy state; complete the separate batch gates.
+- [x] SC14-01 Define stable document identity and version/migrate saved Reader/Editor state without assigning ambiguous metadata-only state to different content. DocumentIdentity anchors identity in cryptographic content SHA-256 (pre-computed via StagedPdf or direct stream), namespaces versioned state under doc_v2_, and performs single-claim atomic migration while retiring legacy keys.
+- [x] SC14-02 Verify different content with identical metadata, supported aliases/renames and legacy state; complete the separate batch gates. DocumentIdentitySecurityTest passes all 6 methods; verified on Android test APK assembly and full unit suites; see SC14_EXECUTION.md.
 
 ## 11. Retained findings and risk disposition
 
@@ -155,6 +154,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-06 | COMPLETE: source, test and remote gates verified | `b1932de1`, Android remote verified | StagingTransferSecurityTest (6 methods), ReleaseWorkflowRegressionTest, StagedSessionRetentionTest, DocumentStagerRetentionTest, assembleDebugAndroidTest; see SC06_EXECUTION.md | Remote CI; release HOLD |
 | SC-07 | COMPLETE: source, test and remote gates verified | `8ef7e92e`, Android remote verified | StagingSynchronizationSecurityTest (5 methods), DocumentStagerRetentionTest (8 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC07_EXECUTION.md | Remote CI; release HOLD |
 | SC-13 | COMPLETE: source, test and remote gates verified | `90251eb8`, Android remote verified | PublicationCancellationSecurityTest (5 methods), DestinationIntegritySecurityTest (25 methods), StagingSynchronizationSecurityTest (5 methods), assembleDebugAndroidTest; see SC13_EXECUTION.md | Remote CI; release HOLD |
+| SC-14 | COMPLETE: source, test and remote gates verified | `16e9498b`, Android remote verified | DocumentIdentitySecurityTest (6 methods), PublicationCancellationSecurityTest (5 methods), DestinationIntegritySecurityTest (25 methods), assembleDebugAndroidTest; see SC14_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 

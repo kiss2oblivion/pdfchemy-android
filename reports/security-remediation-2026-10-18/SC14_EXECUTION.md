@@ -1,6 +1,6 @@
 # SC-14 execution receipt: Content-derived document identity, capability policy, and safe state migration
 
-Date: 2026-10-23. Release: **HOLD**. Retained SC-14 content/capability document identity, alias and rename stability, atomic legacy state migration, ambiguous legacy collision rejection, deterministic test suite, and Android build gates are complete.
+Date: 2026-10-23. Commit: `16e9498b`. Release: **HOLD**. Retained SC-14 content/capability document identity, alias and rename stability, atomic legacy state migration, ambiguous legacy collision rejection, deterministic test suite, and Android build gates are complete.
 
 ## Problem and change
 
