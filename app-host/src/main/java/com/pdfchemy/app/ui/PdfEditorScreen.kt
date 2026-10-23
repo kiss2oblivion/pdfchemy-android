@@ -354,10 +354,9 @@ fun PdfEditorScreen(
                 }
                 if (uri != originalUri) { selectedPdfUri = uri; return@LaunchedEffect }
                 documentId = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, viewModel.editorSourceUri ?: uri)
+                    com.pdfchemy.app.utils.DocumentIdentity.getOrMigrateDocumentId(context, viewModel.editorSourceUri ?: uri, staged)
                 }
-                if (rememberPosition) currentPageIndex = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
-                    .getInt("editor_page_$documentId", currentPageIndex).coerceAtLeast(0)
+                if (rememberPosition) currentPageIndex = com.pdfchemy.app.utils.DocumentIdentity.getSavedEditorPage(context, documentId, currentPageIndex)
                 if (isVanguardEnabled) {
                     isVanguardScanning = true
                     vanguardScanningFileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
@@ -401,7 +400,7 @@ fun PdfEditorScreen(
 
     LaunchedEffect(currentPageIndex, documentLoading, rememberPosition) {
         if (!documentLoading && totalPages > 0 && rememberPosition && documentId.isNotEmpty()) {
-            context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit().putInt("editor_page_$documentId", currentPageIndex).apply()
+            com.pdfchemy.app.utils.DocumentIdentity.saveEditorPage(context, documentId, currentPageIndex)
         }
     }
     // Render current page(s) with immediate recycling

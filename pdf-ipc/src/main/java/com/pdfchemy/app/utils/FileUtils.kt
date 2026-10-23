@@ -30,9 +30,12 @@ object FileUtils {
                 if (result.contains('/')) {
                     result = result.substringAfterLast('/')
                 }
+                if (result.contains('\\')) {
+                    result = result.substringAfterLast('\\')
+                }
             } else {
                 result = uri.path
-                val cut = result?.lastIndexOf('/') ?: -1
+                val cut = maxOf(result?.lastIndexOf('/') ?: -1, result?.lastIndexOf('\\') ?: -1)
                 if (cut != -1) {
                     result = result?.substring(cut + 1)
                 }

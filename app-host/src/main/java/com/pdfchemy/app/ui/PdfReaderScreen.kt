@@ -176,7 +176,6 @@ private fun PdfReaderDocument(
             loading = false
             isVanguardScanning = false
         }) {
-            val docId = withContext(Dispatchers.IO) { com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri) }
             val stagedLease = DocumentStager.stageDocumentCancellationSafe(context, initialUri, stagingTransferOwner)
             val staged = stagedLease.document
             val stagedUri = staged.uri
@@ -189,9 +188,11 @@ private fun PdfReaderDocument(
             if (oldUri != null && oldUri != stagedUri && viewModel.continuityDocumentUri.value != oldUri) {
                 withContext(Dispatchers.IO) { DocumentStager.release(oldUri) }
             }
+            val docId = withContext(Dispatchers.IO) {
+                com.pdfchemy.app.utils.DocumentIdentity.getOrMigrateDocumentId(context, initialUri, staged)
+            }
             documentId = docId
-            personalBookmarks = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
-                .getStringSet("bookmarks_$docId", emptySet()).orEmpty().mapNotNull { it.toIntOrNull() }.toSet()
+            personalBookmarks = com.pdfchemy.app.utils.DocumentIdentity.getSavedBookmarks(context, docId)
             
             // Fetch bookmarks asynchronously
             coroutineScope.launch {
@@ -233,10 +234,10 @@ private fun PdfReaderDocument(
                 loadFailure = "No readable pages were found. Try Repair PDF or select another document."
             }
             if (totalPages > 0) {
-                val prefs = context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE)
                 val sessionPosition = viewModel.readerPositions[initialUri.toString()]
-                val savedPage = sessionPosition?.page ?: if (isRememberPositionEnabled) prefs.getInt("page_$docId", 0) else 0
-                val offset = sessionPosition?.offset ?: if (isRememberPositionEnabled) prefs.getInt("offset_$docId", 0) else 0
+                val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId)
+                val savedPage = sessionPosition?.page ?: if (isRememberPositionEnabled) savedPos.first else 0
+                val offset = sessionPosition?.offset ?: if (isRememberPositionEnabled) savedPos.second else 0
                 listState.scrollToItem(savedPage.coerceIn(0, totalPages - 1), offset.coerceAtLeast(0))
             }
         }
@@ -248,8 +249,7 @@ private fun PdfReaderDocument(
             val offset = listState.firstVisibleItemScrollOffset
             viewModel.readerPositions[initialUri.toString()] = MainViewModel.ReaderPosition(page, offset)
             if (isRememberPositionEnabled && documentId.isNotEmpty()) {
-                context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit()
-                    .putInt("page_$documentId", page).putInt("offset_$documentId", offset).apply()
+                com.pdfchemy.app.utils.DocumentIdentity.saveReaderPosition(context, documentId, page, offset)
             }
         }
     }
@@ -419,7 +419,7 @@ private fun PdfReaderDocument(
                             DropdownMenuItem(text = { Text(if (listState.firstVisibleItemIndex in personalBookmarks) "Remove bookmark" else "Bookmark page") }, onClick = {
                                 val page = listState.firstVisibleItemIndex
                                 personalBookmarks = if (page in personalBookmarks) personalBookmarks - page else personalBookmarks + page
-                                context.getSharedPreferences("reader_prefs", Context.MODE_PRIVATE).edit().putStringSet("bookmarks_$documentId", personalBookmarks.map { it.toString() }.toSet()).apply()
+                                com.pdfchemy.app.utils.DocumentIdentity.saveBookmarks(context, documentId, personalBookmarks)
                                 showMore = false
                             }, enabled = totalPages > 0)
                             DropdownMenuItem(text = { Text("Share") }, onClick = {
