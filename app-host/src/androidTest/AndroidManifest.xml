@@ -1,5 +1,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <!-- A real foreign UID/process; none of these components ship in the app. -->
+        <activity
+            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$SenderActivity"
+            android:process=":crossUidSender"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <provider
+            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$ReceiptProvider"
+            android:authorities="com.pdfchemy.app.test.crossuid.receipt"
+            android:process=":crossUidSender"
+            android:exported="true" />
+        <provider
+            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$ReadProvider"
+            android:authorities="com.pdfchemy.app.test.crossuid.input"
+            android:process=":crossUidSender"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <provider
             android:name="com.pdfchemy.app.security.BatchOutputProvider"
             android:authorities="com.pdfchemy.app.security.batchfixture"
@@ -14,14 +31,6 @@
             android:name="com.pdfchemy.app.security.MutableInputProvider"
             android:authorities="com.pdfchemy.app.security.mutablefixture"
             android:exported="true" />
-        <activity
-            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$SenderActivity"
-            android:exported="true"
-            android:process=":foreign_sender_uid" />
-        <provider
-            android:name="com.pdfchemy.app.security.CrossUidSenderFixture$ProtectedProvider"
-            android:authorities="com.pdfchemy.app.test.cross_uid_protected"
-            android:exported="true"
-            android:process=":foreign_sender_uid" />
     </application>
 </manifest>
+
