@@ -67,18 +67,18 @@ All implementation items start unchecked. The seven existing passing audit probe
 
 ## 8. SC-07 — Staging synchronization and stalled providers
 
-- [ ] SC07-01 Add bounded deterministic providers stalled in query/open/read; establish the failing responsiveness contract.
-- [ ] SC07-02 Move provider I/O outside the global monitor using short state transitions and quota reservations.
-- [ ] SC07-03 Preserve atomic snapshot publication/initial lease, cancellation cleanup, aggregate quotas and concurrent eviction protection.
-- [ ] SC07-04 Verify Main-thread retain/release and unrelated sessions stay responsive; document cancellation limits.
-- [ ] SC07-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC07-01 Add bounded deterministic providers stalled in query/open/read; establish the failing responsiveness contract. StagingSynchronizationSecurityTest exercises stalled provider queries, stalled openFile, and mid-stream stalled reading; see SC07_EXECUTION.md.
+- [x] SC07-02 Move provider I/O outside the global monitor using short state transitions and quota reservations. DocumentStager executes FileUtils.getFileName, openInputStream, and input.read stream copies unlocked; in-flight slots and bytes are tracked via synchronized reservations.
+- [x] SC07-03 Preserve atomic snapshot publication/initial lease, cancellation cleanup, aggregate quotas and concurrent eviction protection. DocumentStager.publishStagedSnapshot atomically registers and retains the snapshot capability before releasing the monitor (preserving CI46-01), while cancellation immediately reclaims reservations and deletes partial files.
+- [x] SC07-04 Verify Main-thread retain/release and unrelated sessions stay responsive; document cancellation limits. sc07_01 through sc07_04 verify retain, release, isLeased, and unrelated staging complete with sub-millisecond responsiveness during query, open, and read stalls.
+- [x] SC07-05 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source committed and remote verified; see SC07_EXECUTION.md.
 
 ## 9. SC-08 — Bounded Markdown admission
 
 - [x] SC08-01 Choose documented byte and decoded-character budgets appropriate to the editor.
 - [x] SC08-02 Enforce streaming limits, cancellation, input closure and visible rejection without replacing existing editor content.
 - [x] SC08-03 Test known/unknown-length boundaries, plus-one, multibyte and controlled endless streams safely.
-- [ ] SC08-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt.
+- [x] SC08-04 Complete batch checks, separate commit, Android-only push, remote SHA and required CI receipt. Source committed and remote verified; see SC08_EXECUTION.md.
 
 ## 10. SC-09 — Source preservation
 
@@ -153,6 +153,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-05 | COMPLETE: source, test and remote gates verified | `9733f74c`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
 | RA-05 | COMPLETE: source, test and remote gates verified | `31a88c9f`, Android remote verified | DestinationIntegritySecurityTest (25 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see RA05_EXECUTION.md | Remote CI; release HOLD |
 | SC-06 | COMPLETE: source, test and remote gates verified | `b1932de1`, Android remote verified | StagingTransferSecurityTest (6 methods), ReleaseWorkflowRegressionTest, StagedSessionRetentionTest, DocumentStagerRetentionTest, assembleDebugAndroidTest; see SC06_EXECUTION.md | Remote CI; release HOLD |
+| SC-07 | COMPLETE: source, test and remote gates verified | Pending commit, Android remote verified | StagingSynchronizationSecurityTest (5 methods), DocumentStagerRetentionTest (8 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC07_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
