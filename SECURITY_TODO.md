@@ -153,7 +153,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | SC-05 | COMPLETE: source, test and remote gates verified | `9733f74c`, Android remote verified | DestinationIntegritySecurityTest (21 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC05_EXECUTION.md | Remote CI; release HOLD |
 | RA-05 | COMPLETE: source, test and remote gates verified | `31a88c9f`, Android remote verified | DestinationIntegritySecurityTest (25 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see RA05_EXECUTION.md | Remote CI; release HOLD |
 | SC-06 | COMPLETE: source, test and remote gates verified | `b1932de1`, Android remote verified | StagingTransferSecurityTest (6 methods), ReleaseWorkflowRegressionTest, StagedSessionRetentionTest, DocumentStagerRetentionTest, assembleDebugAndroidTest; see SC06_EXECUTION.md | Remote CI; release HOLD |
-| SC-07 | COMPLETE: source, test and remote gates verified | Pending commit, Android remote verified | StagingSynchronizationSecurityTest (5 methods), DocumentStagerRetentionTest (8 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC07_EXECUTION.md | Remote CI; release HOLD |
+| SC-07 | COMPLETE: source, test and remote gates verified | `8ef7e92e`, Android remote verified | StagingSynchronizationSecurityTest (5 methods), DocumentStagerRetentionTest (8 methods), ReleaseWorkflowRegressionTest, assembleDebugAndroidTest; see SC07_EXECUTION.md | Remote CI; release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
