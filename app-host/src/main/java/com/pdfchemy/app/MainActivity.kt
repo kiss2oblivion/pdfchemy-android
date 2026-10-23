@@ -380,7 +380,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingIntent(intent: Intent?) {
-        when (val result = com.pdfchemy.app.security.ExternalUriAdmission.admit(this, intent)) {
+        val internalUri = com.pdfchemy.app.security.InternalDocumentIntents.extractTrustedUri(this, intent)
+        val admission = if (internalUri != null) {
+            com.pdfchemy.app.security.ExternalUriAdmission.AdmissionResult.Admitted(internalUri)
+        } else com.pdfchemy.app.security.ExternalUriAdmission.admit(this, intent)
+        when (val result = admission) {
             is com.pdfchemy.app.security.ExternalUriAdmission.AdmissionResult.Admitted -> {
                 incomingPdfUriState.value = result.uri
             }

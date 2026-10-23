@@ -73,7 +73,7 @@ class SeparateSenderAdmissionSecurityTest {
             DocumentStager.stageDocument(context, fileUri)
             fail("DocumentStager must refuse to stage private shared_prefs file")
         } catch (expected: SecurityException) {
-            assertTrue(expected.message!!.contains("private application storage is forbidden"))
+            assertTrue(expected.message!!.contains("private application path"))
         } finally {
             prefsFile.delete()
         }
@@ -98,7 +98,7 @@ class SeparateSenderAdmissionSecurityTest {
             DocumentStager.stageDocument(context, fileUri)
             fail("DocumentStager must refuse to stage private databases file")
         } catch (expected: SecurityException) {
-            assertTrue(expected.message!!.contains("private application storage is forbidden"))
+            assertTrue(expected.message!!.contains("private application path"))
         } finally {
             dbFile.delete()
         }
@@ -265,7 +265,7 @@ class SeparateSenderAdmissionSecurityTest {
 
     @Test
     fun separateProvider_failingOrMissingProvider_failsGracefullyWithoutOrphans() {
-        val missingUri = Uri.parse("content://com.pdfchemy.app.security.outputfixture/missing_doc_${System.nanoTime()}")
+        val missingUri = Uri.parse("content://com.pdfchemy.app.security.missingfixture${System.nanoTime()}/document")
         val beforeSnapshots = File(context.cacheDir, "staged").listFiles().orEmpty().map { it.name }.toSet()
 
         val intent = Intent(Intent.ACTION_VIEW).apply { data = missingUri }

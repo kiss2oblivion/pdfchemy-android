@@ -1,5 +1,7 @@
 # FOLLOW-04 execution receipt: Separate-sender/provider Android tests for scheme/grant/private-path policy and actual impact assessment
 
+Superseded boundary claim: the original twelve methods call app-process admission or a direct test hook; their compilation did not prove actual foreign-UID launch/grant behavior. Independent real launches later reproduced app-owned-provider admission and automatic private-input staging. See [cross-UID correction receipt](FOLLOW04_CROSS_UID_EXECUTION.md) for original/fixed evidence and current gates. The historical receipt below is preserved.
+
 Date: 2026-10-23. Commit: `5d9fd684`. Release: **HOLD**. Retained FOLLOW-04 separate-sender and provider Android test suite, scheme/grant/private-path admission verification, factual exploitability and impact assessment, and Android build gates are complete.
 
 ## Problem and threat analysis
