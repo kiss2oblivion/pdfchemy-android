@@ -374,35 +374,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingIntent(intent: Intent?) {
-        val uri = extractPdfUri(intent)
-        if (uri != null) {
-            incomingPdfUriState.value = uri
+        when (val result = com.pdfchemy.app.security.ExternalUriAdmission.admit(this, intent)) {
+            is com.pdfchemy.app.security.ExternalUriAdmission.AdmissionResult.Admitted -> {
+                incomingPdfUriState.value = result.uri
+            }
+            is com.pdfchemy.app.security.ExternalUriAdmission.AdmissionResult.Rejected -> {
+                AppLogger.w("External URI admission rejected: ${result.reason} for intent: $intent")
+                incomingPdfUriState.value = null
+            }
         }
     }
 
     private fun extractPdfUri(intent: Intent?): Uri? {
-        if (intent == null) return null
-        val action = intent.action
-        if (Intent.ACTION_VIEW == action) {
-            return intent.data
-        } else if (Intent.ACTION_SEND == action) {
-            val streamUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-            }
-            return streamUri ?: intent.data
-        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
-            val list = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-            }
-            return list?.firstOrNull() ?: intent.data
-        }
-        return null
+        return if (intent != null) com.pdfchemy.app.security.ExternalUriAdmission.extractCandidateUri(intent) else null
     }
 
     private fun cleanupOrphanedCacheFiles(context: Context) {
