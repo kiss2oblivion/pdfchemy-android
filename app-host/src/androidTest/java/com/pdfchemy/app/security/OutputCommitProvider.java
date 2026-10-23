@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -39,10 +40,10 @@ public class OutputCommitProvider extends ContentProvider {
         result.putBoolean("written", state.written.getCount() == 0);
         return result;
     }
-    @Override public ParcelFileDescriptor openFile(Uri uri, String mode) {
+    @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
         final State state;
         synchronized (states) { state = states.get(uri.getLastPathSegment()); }
-        if (state == null || !"wt".equals(mode)) throw new IllegalArgumentException("Write fixture only");
+        if (state == null || !"wt".equals(mode)) throw new FileNotFoundException("Write fixture only: " + uri);
         synchronized (state) { state.opens++; }
         try {
             if (state.block && !state.release.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("Open fixture timed out");

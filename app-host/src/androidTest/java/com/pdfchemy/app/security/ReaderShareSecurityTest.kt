@@ -93,8 +93,9 @@ class ReaderShareSecurityTest {
     @Test
     fun exportsFileReusesDirectFileProviderUriWithoutRedundantCopy() {
         val exportsDir = File(application.cacheDir, "exports").apply { mkdirs() }
+        val sample = samplePdf("direct_export")
         val exportFile = File(exportsDir, "already_exported.pdf").apply {
-            writeBytes(samplePdf("direct_export"))
+            writeBytes(sample)
         }
         val fileUri = Uri.fromFile(exportFile)
 
@@ -103,7 +104,7 @@ class ReaderShareSecurityTest {
         assertEquals("${application.packageName}.fileprovider", shareUri.authority)
 
         val readBytes = application.contentResolver.openInputStream(shareUri)!!.use { it.readBytes() }
-        assertArrayEquals(samplePdf("direct_export"), readBytes)
+        assertArrayEquals(sample, readBytes)
     }
 
     @Test

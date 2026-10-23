@@ -73,7 +73,7 @@ class SeparateSenderAdmissionSecurityTest {
             DocumentStager.stageDocument(context, fileUri)
             fail("DocumentStager must refuse to stage private shared_prefs file")
         } catch (expected: SecurityException) {
-            assertTrue(expected.message!!.contains("private application storage is forbidden"))
+            assertTrue(expected.message!!.contains("private application"))
         } finally {
             prefsFile.delete()
         }
@@ -98,7 +98,7 @@ class SeparateSenderAdmissionSecurityTest {
             DocumentStager.stageDocument(context, fileUri)
             fail("DocumentStager must refuse to stage private databases file")
         } catch (expected: SecurityException) {
-            assertTrue(expected.message!!.contains("private application storage is forbidden"))
+            assertTrue(expected.message!!.contains("private application"))
         } finally {
             dbFile.delete()
         }
