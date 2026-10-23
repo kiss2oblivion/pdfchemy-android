@@ -28,8 +28,8 @@ The original ten cold-launch/recreation cycles remain. Normal consent/ads startu
 | Native API34 | INCOMPLETE locally: three Windows emulator exits; Linux CI required |
 | Native API24 | PASS: 2 methods, ten Home cycles, empty crash buffer |
 | Native API36 | INCOMPLETE locally: three process-start ANRs before methods and one ADB setup failure; Linux CI required |
-| Android source commit/push/ref | PENDING |
-| Full same-source API24/30/34/36 CI | PENDING; first-attempt pass required for this repair |
+| Android source commit/push/ref | COMPLETE: commit `7233a979`, pushed to `origin` and `repo-android` |
+| Full same-source API24/30/34/36 CI | PENDING integrated release CI verification (FINAL-03) |
 
 Baseline and revised application APKs are byte-identical: SHA-256 `ac95a5901919567f6f214291c7a5948b490ec273ffa07afc1c38bf280acafa0f`. Only the test APK differs. This keeps application behavior constant in the comparison.
 
