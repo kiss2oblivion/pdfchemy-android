@@ -58,6 +58,13 @@ object DocumentStager {
         checkCancellation()
         findBorrowedSnapshot(context, sourceUri, acquireInitialLease)?.let { return it }
 
+        if (sourceUri.scheme == "file") {
+            val path = sourceUri.path
+            if (path != null && isPrivateAppPath(context, File(path), includeCacheAndFiles = false)) {
+                throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+            }
+        }
+
         // Provider display name query runs outside the global monitor
         val name = FileUtils.getFileName(context, sourceUri)
         checkCancellation()
@@ -75,6 +82,106 @@ object DocumentStager {
         }
         registerDocumentMetadata(stagedLease.document, sourceUri, name)
         return stagedLease
+    }
+
+    fun isTrustedStagedCapability(context: Context, uri: Uri): Boolean {
+        if (uri.scheme != "file") return false
+        val path = uri.path ?: return false
+        val file = runCatching { File(path).canonicalFile }.getOrNull() ?: return false
+        val directory = runCatching { File(context.cacheDir, "staged").canonicalFile }.getOrNull() ?: return false
+        if (file.parentFile != directory) return false
+        val candidate = staged[file.path] ?: return false
+        return file.length() == candidate.size
+    }
+
+    fun isPrivateAppPath(context: Context, file: File, includeCacheAndFiles: Boolean = true): Boolean {
+        val canonicalFile = runCatching { file.canonicalFile }.getOrNull() ?: return true
+        val canonicalPath = canonicalFile.path
+
+        val privateRoots = mutableListOf<File>()
+
+        if (includeCacheAndFiles) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                runCatching { context.dataDir }.getOrNull()?.let { privateRoots.add(it) }
+            }
+            runCatching { context.applicationInfo?.dataDir?.let { File(it) } }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.filesDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.noBackupFilesDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.codeCacheDir }.getOrNull()?.let { privateRoots.add(it) }
+        }
+
+        runCatching { context.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
+        runCatching {
+            val dataDir = context.applicationInfo?.dataDir
+            if (dataDir != null) File(dataDir, "shared_prefs") else null
+        }.getOrNull()?.let { privateRoots.add(it) }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            val dps = runCatching { context.createDeviceProtectedStorageContext() }.getOrNull()
+            if (dps != null) {
+                runCatching { dps.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
+                runCatching { File(dps.dataDir, "shared_prefs") }.getOrNull()?.let { privateRoots.add(it) }
+                if (includeCacheAndFiles) {
+                    runCatching { dps.dataDir }.getOrNull()?.let { privateRoots.add(it) }
+                    runCatching { dps.filesDir }.getOrNull()?.let { privateRoots.add(it) }
+                    runCatching { dps.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
+                }
+            }
+        }
+
+        for (root in privateRoots) {
+            val canonicalRoot = runCatching { root.canonicalFile }.getOrNull() ?: continue
+            if (isDescendantOf(canonicalFile, canonicalRoot)) {
+                return true
+            }
+        }
+
+        val pkg = context.packageName
+        if (!includeCacheAndFiles) {
+            val sensitivePatterns = listOf(
+                "/data/data/$pkg/shared_prefs",
+                "/data/data/$pkg/databases",
+                "/data/data/$pkg/app_prefs",
+                "/data/user/"
+            )
+            for (p in sensitivePatterns) {
+                if (canonicalPath.startsWith(p)) {
+                    if (p == "/data/user/") {
+                        val after = canonicalPath.substring(p.length)
+                        val parts = after.split('/')
+                        if (parts.size >= 3 && parts[1] == pkg && (parts[2] == "shared_prefs" || parts[2] == "databases")) {
+                            return true
+                        }
+                    } else {
+                        return true
+                    }
+                }
+            }
+        } else {
+            if (canonicalPath.startsWith("/data/data/$pkg/") || canonicalPath == "/data/data/$pkg") {
+                return true
+            }
+            val dataUserPrefix = "/data/user/"
+            if (canonicalPath.startsWith(dataUserPrefix)) {
+                val after = canonicalPath.substring(dataUserPrefix.length)
+                val parts = after.split('/')
+                if (parts.size >= 2 && parts[1] == pkg) {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private fun isDescendantOf(file: File, ancestor: File): Boolean {
+        var current: File? = file
+        while (current != null) {
+            if (current == ancestor) return true
+            current = current.parentFile
+        }
+        return false
     }
 
     @Synchronized
