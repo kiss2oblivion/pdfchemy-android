@@ -87,7 +87,7 @@ object PdfRedactionEngine {
 
             val contract = com.pdfchemy.app.logic.PdfGateway.executeEngineTyped<StandardOutputContract>(context, "REDACT", sourceUri, destUri, params.toString())
             if (contract.success) {
-                Result.success(if (contract.count > 0) contract.count else redactions.size)
+                Result.success(contract.count)
             } else {
                 Result.failure(Exception("Unknown redaction failure"))
             }
