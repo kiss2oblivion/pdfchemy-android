@@ -210,6 +210,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Explicit in-app opens retain private provider access; foreign UIDs cannot enter. -->
+        <activity-alias
+            android:name="com.pdfchemy.app.InternalDocumentOpen"
+            android:targetActivity="com.pdfchemy.app.MainActivity"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
