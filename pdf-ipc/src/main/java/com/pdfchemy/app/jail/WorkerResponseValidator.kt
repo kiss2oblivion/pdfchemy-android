@@ -738,7 +738,12 @@ object WorkerResponseValidator {
                 } else {
                     0L
                 }
-                return StandardOutputContract(success = true, size = size)
+                val count = if (root.has("count") && !root.isNull("count")) {
+                    root.requireInt("count", min = 0)
+                } else {
+                    1
+                }
+                return StandardOutputContract(success = true, size = size, count = count)
             }
             is Boolean -> {
                 require(root) { "Worker reported boolean false" }

@@ -1,0 +1,134 @@
+{
+  "status": "PASS",
+  "scope": "Three actual API36 count/publication regressions; startup and release gates separate",
+  "fixture_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+  "unchanged_test_apk": "31c46f8f8967541e075882875d52bbddb077c472ef91ead85e28351fa3716c9d",
+  "baseline_apk": "a4d3eea535521e07138f3411a0754567545a3160e6e2bbc9387b9ad37c898dc1",
+  "corrected_apk": "18109fbbaaab93456ffd7d37ac307ef7f9dfd8c3ca087d7b2760e6943cea306c",
+  "baseline_failures": 3,
+  "corrected_passes": 3,
+  "original_destination_preserved_on_invalid_page": true,
+  "output_sha256": {
+    "baseline2": {
+      "invalid": "59ca83200993fbd5080adaf4acb8896f5771ee9a8fa0a31c7720519b63edbf13",
+      "two": "8a4309ec1fb2e415bcfb81d2bdd42d53a1da77142ef1baab8c93b280ee157370",
+      "zero": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84"
+    },
+    "fixed1": {
+      "invalid": "59dd5e2ba530f2e61cc76c978552ab382f03a4defafa3e3b9448e268ae490183",
+      "two": "4367dff5969bf230910e111d60b51790036338ce0eb5b7626860f22fe4fadf6f",
+      "zero": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84"
+    }
+  },
+  "baseline_records": [
+    {
+      "file": "fixtures\\invalid-9ec285c4-070d-459d-bfa4-98cbf41efeba\\receipt.json",
+      "kind": "invalid",
+      "requested_boxes": 2,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": true,
+      "returned_count": 1,
+      "error_class": null,
+      "destination_unchanged": false,
+      "saved_text_contains_left": false,
+      "saved_text_contains_right": false
+    },
+    {
+      "file": "fixtures\\two-de561435-6537-455d-a3f4-4231d4d97994\\receipt.json",
+      "kind": "two",
+      "requested_boxes": 2,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": true,
+      "returned_count": 1,
+      "error_class": null,
+      "destination_unchanged": false,
+      "saved_text_contains_left": false,
+      "saved_text_contains_right": false
+    },
+    {
+      "file": "fixtures\\zero-7d5ceef3-174b-446e-80af-3571e9ee57c7\\receipt.json",
+      "kind": "zero",
+      "requested_boxes": 0,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": true,
+      "returned_count": 1,
+      "error_class": null,
+      "destination_unchanged": false,
+      "saved_text_contains_left": true,
+      "saved_text_contains_right": true
+    }
+  ],
+  "corrected_records": [
+    {
+      "file": "fixtures\\invalid-e38e9f1c-2b47-4b99-b4e7-9231244ab118\\receipt.json",
+      "kind": "invalid",
+      "requested_boxes": 2,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": false,
+      "returned_count": null,
+      "error_class": "WorkerFailure",
+      "destination_unchanged": true
+    },
+    {
+      "file": "fixtures\\two-1ee41b6c-f571-4907-9826-edd90e936ec9\\receipt.json",
+      "kind": "two",
+      "requested_boxes": 2,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": true,
+      "returned_count": 2,
+      "error_class": null,
+      "destination_unchanged": false,
+      "saved_text_contains_left": false,
+      "saved_text_contains_right": false
+    },
+    {
+      "file": "fixtures\\zero-db8ce5a3-805a-46b2-b38e-40d988c98bb1\\receipt.json",
+      "kind": "zero",
+      "requested_boxes": 0,
+      "source_sha256": "6d11321b4996b7e77f2e3a7c9ceb6e2f315180f38a1d7aa30e1113e733b0ec84",
+      "success": true,
+      "returned_count": 0,
+      "error_class": null,
+      "destination_unchanged": false,
+      "saved_text_contains_left": true,
+      "saved_text_contains_right": true
+    }
+  ],
+  "corrected_source_files": {
+    "app-host/src/main/java/com/pdfchemy/app/logic/PdfRedactionEngine.kt": "7ac9a904836bd7d7404225d364911269718bd42d8a20aa6e0e47f78b6e4066b1",
+    "pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt": "842fcf927ade415f6befb3520920449ac6eab145e3b15cc8301f8f3fe6c40ef9",
+    "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt": "a620595f133bbc4f6eee9a41351ab605b0a925082e57826ea264877b23e37b80",
+    "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt": "88c29c4fa4d931a32f2bbb92ab9367a704c9fa5a4de25c5767732c65c3563cf2",
+    "pdf-jail/src/main/java/com/pdfchemy/app/jail/RequestValidator.kt": "73ea89d8b41171c24b37dec063f48de58d4f65819d8a83f967a2b0261331dd48",
+    "app-host/src/androidTest/java/com/pdfchemy/app/security/RedactionCountSecurityTest.kt": "e61daebd8f26e2a7ff88fe990d624283fe082857eb7f8ecceaeef59c553e4408"
+  },
+  "unit": {
+    "pdf-ipc": {
+      "tests": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "pdf-jail": {
+      "tests": 83,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app-host": {
+      "tests": 265,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "total_unit_methods": 399,
+  "release_lint": {
+    "errors": 0,
+    "warnings": 660
+  },
+  "source_parent": "f4e17eb8fafb1ed7a33cf6f01475dec8e1c4269c",
+  "count_propagation_origin": "b56af03f657ef96d95ffff62fca800c482295333",
+  "remote_and_ci": "pending at source receipt snapshot",
+  "release_decision": "HOLD"
+}

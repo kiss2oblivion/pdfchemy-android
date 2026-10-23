@@ -238,6 +238,9 @@ object PdfRedactionEngineWorker {
                 document = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
             }
             val pageCount = document!!.numberOfPages
+            // Refuse the entire request before changing form data or painting.
+            // Silently skipped pages must never become a successful partial export.
+            require(boxes.all { it.pageIndex in 0 until pageCount }) { "Redaction page is outside the document" }
             if (pageCount == 0) return 0
 
             val font = PDType1Font.HELVETICA_BOLD

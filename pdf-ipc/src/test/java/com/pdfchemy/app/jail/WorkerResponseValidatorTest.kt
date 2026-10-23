@@ -407,6 +407,27 @@ class WorkerResponseValidatorTest {
     }
 
     @Test
+    fun standardOutputCountSemanticsValidated() {
+        // Redaction reporting box count (FOLLOW-08)
+        val cRedact = WorkerResponseValidator.validate("REDACT", "{\"success\": true, \"size\": 4096, \"count\": 7}") as StandardOutputContract
+        assertTrue(cRedact.success)
+        assertEquals(4096L, cRedact.size)
+        assertEquals(7, cRedact.count)
+
+        // Zero redactions
+        val cRedactZero = WorkerResponseValidator.validate("REDACT", "{\"success\": true, \"count\": 0}") as StandardOutputContract
+        assertTrue(cRedactZero.success)
+        assertEquals(0, cRedactZero.count)
+
+        // Negative count must be rejected fail-closed
+        assertRejected { WorkerResponseValidator.validate("REDACT", "{\"success\": true, \"count\": -1}") }
+
+        // Operations omitting count default to 1 output
+        val cDefault = WorkerResponseValidator.validate("ROTATE", "{\"success\": true, \"size\": 1024}") as StandardOutputContract
+        assertEquals(1, cDefault.count)
+    }
+
+    @Test
     fun metadataReadValidatedStrictly() {
         val json = """{
             "title": "Report", "author": "Alice", "subject": "Quarterly", "keywords": "audit",
