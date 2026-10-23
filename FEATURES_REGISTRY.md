@@ -131,7 +131,7 @@
 ---
 
 ## 🌍 Supported Locales (20 Languages / 21 Locales)
-The application supports the following locales. Android release lint tracks 38 inherited `MissingTranslation` findings in the exact `app-host/lint-localization-baseline.xml`; those entries currently fall back to English. Security and correctness lint errors remain fatal. Full translation coverage is still pending.
+The application supports the following locales. The 38 previously baselined release messages now have language-specific text across 20 language/region resource sets, including both Portuguese and Chinese variants. This replaces 725 English placeholders while preserving existing translations and format arguments. The localization lint baseline is empty; security, correctness and translation errors remain fatal. Broader translation coverage remains a separate review task. See [localization verification](reports/security-remediation-2026-10-18/LOCALIZATION_EXECUTION.md).
 1. `en` (English)
 2. `ro` (Română)
 3. `de` (Deutsch)

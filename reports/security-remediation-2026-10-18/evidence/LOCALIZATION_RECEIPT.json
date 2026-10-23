@@ -1,0 +1,449 @@
+{
+  "base_commit": "3be961ca9da9f74ca8eac7a2f64210d91f95925b",
+  "covered_keys": [
+    "alt_free_ram_btn",
+    "alt_free_ram_desc",
+    "alt_free_ram_title",
+    "alt_lightweight_btn",
+    "alt_lightweight_desc",
+    "alt_lightweight_title",
+    "alt_range_btn",
+    "alt_range_desc",
+    "alt_range_title",
+    "alt_split_btn",
+    "alt_split_desc",
+    "alt_split_title",
+    "btn_proceed_anyway",
+    "btn_select_file",
+    "desc_file_inaccessible",
+    "device_guard_desc",
+    "device_guard_title",
+    "editor_rendering_page",
+    "error_file_inaccessible",
+    "flip_fullscreen_mode",
+    "flip_tabletop_active_badge",
+    "flip_tabletop_mode",
+    "flip_tabletop_mode_desc",
+    "msg_circuit_breaker_paused",
+    "reader_dual_page_spread",
+    "reader_single_page",
+    "run_on_device_ocr",
+    "running_ocr",
+    "scanned_pdf_desc",
+    "scanned_pdf_title",
+    "select_epub_for_pdf",
+    "settings_default_pdf_app",
+    "settings_default_pdf_app_desc",
+    "settings_default_pdf_dialog_body",
+    "settings_default_pdf_dialog_title",
+    "settings_open_android_settings",
+    "tab_epub_to_pdf",
+    "text_to_pdf"
+  ],
+  "resource_qualifiers": 20,
+  "coverage_pairs": 760,
+  "english_placeholders_replaced": 725,
+  "placeholder_types_and_indices": "PASS",
+  "unrelated_strings_changed": 0,
+  "baseline_findings_retired": 38,
+  "locales": [
+    {
+      "qualifier": "ar",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-ar/release_stabilization_strings.xml",
+          "sha256": "f69e705c3184559a893dc87903bf3c16420df0d9d7dc46f529ceae7c30da00b5"
+        },
+        {
+          "path": "app-host/src/main/res/values-ar/strings.xml",
+          "sha256": "998da74cd6341126e27b0d4b08f5f513a9bf47a18fb33da69c74510bf49d56df"
+        },
+        {
+          "path": "app-host/src/main/res/values-ar/vanguard_release_strings.xml",
+          "sha256": "c8ee91f87b61574c35f56138b882152657edf005880af618fc4720f2b8f0b675"
+        }
+      ]
+    },
+    {
+      "qualifier": "de",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 37,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-de/release_stabilization_strings.xml",
+          "sha256": "cdfa2d373b479f55482c094d4604ccd57972384924404985e69737874b956282"
+        },
+        {
+          "path": "app-host/src/main/res/values-de/strings.xml",
+          "sha256": "58f92931481f3a76b65e313c76b5a43614b9f7dca3d63ddf9b8ce0c1eeef7c5d"
+        },
+        {
+          "path": "app-host/src/main/res/values-de/vanguard_release_strings.xml",
+          "sha256": "1e4fcbb655dd0da98525d6b07146590a3f0107caa540f8abecc5fd7ecbf03a8e"
+        }
+      ]
+    },
+    {
+      "qualifier": "es",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-es/release_stabilization_strings.xml",
+          "sha256": "317ce4e19384d24ba9614623a50d751aa6c994b78ff76dff7af26c4b738e25c6"
+        },
+        {
+          "path": "app-host/src/main/res/values-es/strings.xml",
+          "sha256": "bcc9ff2965d2c62f55141132f5721f65941e024b70814dc0b0f15f51f3a5b88c"
+        },
+        {
+          "path": "app-host/src/main/res/values-es/vanguard_release_strings.xml",
+          "sha256": "00b05a55efe66dd7444ffe61c7685411e9a41f0b17aa37edf4492084eae2376b"
+        }
+      ]
+    },
+    {
+      "qualifier": "fr",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-fr/release_stabilization_strings.xml",
+          "sha256": "8582ab7c78591ee304486716d88370a2147f2349696bf26d6bf50d216f4a801c"
+        },
+        {
+          "path": "app-host/src/main/res/values-fr/strings.xml",
+          "sha256": "3bbeefa3be120eba46f113735e7356a2c6d38a7318e085ad1a8ad9bb2f69fbdc"
+        },
+        {
+          "path": "app-host/src/main/res/values-fr/vanguard_release_strings.xml",
+          "sha256": "c8b92348b00e5995bf44fa0171b05205539e88c6050dd78deefbbd34b81abaa4"
+        }
+      ]
+    },
+    {
+      "qualifier": "hi",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 35,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-hi/release_stabilization_strings.xml",
+          "sha256": "047cba16e00de4bdb8def8b114e53d733603145c8af30a88049b0dc63716db33"
+        },
+        {
+          "path": "app-host/src/main/res/values-hi/strings.xml",
+          "sha256": "e795b87423a98a2a34921e4df9615c73588661d43aa6faff61fc30c62b29b801"
+        },
+        {
+          "path": "app-host/src/main/res/values-hi/vanguard_release_strings.xml",
+          "sha256": "70430fab9d20b9742ef8e1f38808cd8e80b07b218c460d4344171c047af00fe6"
+        }
+      ]
+    },
+    {
+      "qualifier": "in",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 37,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-in/release_stabilization_strings.xml",
+          "sha256": "09637591cfb1ccaf9c07b179bbdb7cfc37cb254add85cd019661bbdb57dbc270"
+        },
+        {
+          "path": "app-host/src/main/res/values-in/strings.xml",
+          "sha256": "19a37dbad32c4bc79c7f18a5494cb7c4fd391caf469f444de0b6190c43ffee19"
+        },
+        {
+          "path": "app-host/src/main/res/values-in/vanguard_release_strings.xml",
+          "sha256": "3cf704e241c572264e59a011011883a174c0826a8ad3e4ee94ca89b59cc7667e"
+        }
+      ]
+    },
+    {
+      "qualifier": "it",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 37,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-it/release_stabilization_strings.xml",
+          "sha256": "9f9cd5412485ba776a1c75865f6362e038cf09ab6f06b2ed7f2c56f4911016d5"
+        },
+        {
+          "path": "app-host/src/main/res/values-it/strings.xml",
+          "sha256": "8b9bd89cdfc2b986fb8f08db4240ff82ff54ebc9a9810ec91a9e633719688e2f"
+        },
+        {
+          "path": "app-host/src/main/res/values-it/vanguard_release_strings.xml",
+          "sha256": "ac99d5990c5bb1ce033d71bf9e093c4c65f9b2f7cb2f22cba92bfd85962daa61"
+        }
+      ]
+    },
+    {
+      "qualifier": "ja",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-ja/release_stabilization_strings.xml",
+          "sha256": "96a9b3a2094e59356d85effb9d5ada65fce8721b21d42d7743ec006d44c3393d"
+        },
+        {
+          "path": "app-host/src/main/res/values-ja/strings.xml",
+          "sha256": "266c8e2c99ff4bf1ee03ab38ae279b4e3cb816954631e39d5504971ddeb63642"
+        },
+        {
+          "path": "app-host/src/main/res/values-ja/vanguard_release_strings.xml",
+          "sha256": "e7b9e00beccfa81415093e8a9b757043364a242993912979436be298655386a2"
+        }
+      ]
+    },
+    {
+      "qualifier": "ko",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 35,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-ko/release_stabilization_strings.xml",
+          "sha256": "11b2d912cd877f2a07220d0d99af8f52e7d4792dbdbeaf9ccf012edbb8730e5f"
+        },
+        {
+          "path": "app-host/src/main/res/values-ko/strings.xml",
+          "sha256": "af29aa268c1b3d1274a8c38445c2d4e1fe54da6d67fc87426ec3aedc8926f1ed"
+        },
+        {
+          "path": "app-host/src/main/res/values-ko/vanguard_release_strings.xml",
+          "sha256": "eb8733951d76e2623f0e217d426e438296eafdff96c076220b03806cbc279b93"
+        }
+      ]
+    },
+    {
+      "qualifier": "nl",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-nl/release_stabilization_strings.xml",
+          "sha256": "6c31442557ebf4936014be340bf3d502fa888263f693ed778f3bd92a86653e6b"
+        },
+        {
+          "path": "app-host/src/main/res/values-nl/strings.xml",
+          "sha256": "02e15d0c01631ea139526c42d868a902b270086b36e63a8c65376302a9e2da0a"
+        },
+        {
+          "path": "app-host/src/main/res/values-nl/vanguard_release_strings.xml",
+          "sha256": "4077c71aabda7744274cff81b46a611f7406631241856aa9bc5e6db0311c6dfa"
+        }
+      ]
+    },
+    {
+      "qualifier": "pl",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-pl/release_stabilization_strings.xml",
+          "sha256": "99ce34555c2172f64624c326edd94ee354e57f7d67191cc7ed48a89de370b20f"
+        },
+        {
+          "path": "app-host/src/main/res/values-pl/strings.xml",
+          "sha256": "3e795c4031ff8dc0f4d451315f8b72c24ae0a6eed33138ddaaf59f2a75aaf9f3"
+        },
+        {
+          "path": "app-host/src/main/res/values-pl/vanguard_release_strings.xml",
+          "sha256": "144059a11583e45b0f9fca488cdc9059946837efd9116094b7ec3a456e32b4e5"
+        }
+      ]
+    },
+    {
+      "qualifier": "pt",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 37,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-pt/release_stabilization_strings.xml",
+          "sha256": "cc34887266a4fda366abba2479874e053fca7d5e20727eaf4a58aac890715ffa"
+        },
+        {
+          "path": "app-host/src/main/res/values-pt/strings.xml",
+          "sha256": "a2b30813bfd8984a60268a3c84004fcf09a2790eba13611dc1baa8bc7ea053b8"
+        },
+        {
+          "path": "app-host/src/main/res/values-pt/vanguard_release_strings.xml",
+          "sha256": "40fdce1a26bedac8dbf626be9841fd33dc6e32f83218163f1ad6ca5a685a0d0e"
+        }
+      ]
+    },
+    {
+      "qualifier": "pt-rBR",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 38,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-pt-rBR/release_stabilization_strings.xml",
+          "sha256": "cc34887266a4fda366abba2479874e053fca7d5e20727eaf4a58aac890715ffa"
+        },
+        {
+          "path": "app-host/src/main/res/values-pt-rBR/strings.xml",
+          "sha256": "54fd0da4db0f43ecdea9e29d84f359728af4f86b657e00d072861a7822c7fb03"
+        },
+        {
+          "path": "app-host/src/main/res/values-pt-rBR/vanguard_release_strings.xml",
+          "sha256": "bede28b20690d398934414d32c433fe5968736b9848dd18ee06b60666bfdd6ea"
+        }
+      ]
+    },
+    {
+      "qualifier": "ro",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 38,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-ro/release_stabilization_strings.xml",
+          "sha256": "6b12598173d9211107f63e913d723610599a380f5082b42d8ffbc5616bbb1096"
+        },
+        {
+          "path": "app-host/src/main/res/values-ro/strings.xml",
+          "sha256": "49599b4a64b53a6a5dccaf5e5657397be6ef2619d99365c4f05e0293b806e9b1"
+        },
+        {
+          "path": "app-host/src/main/res/values-ro/vanguard_release_strings.xml",
+          "sha256": "564efc555fc818dbaceb6e7de1011bd730b4fc7cd1e7c254b89fa6fec900a845"
+        }
+      ]
+    },
+    {
+      "qualifier": "ru",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 35,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-ru/release_stabilization_strings.xml",
+          "sha256": "bf750898447801613f0e1332449cc767d1c716a1ac3dea9ab40ab32db3c938a6"
+        },
+        {
+          "path": "app-host/src/main/res/values-ru/strings.xml",
+          "sha256": "087b41120e476d7d43cbd19b72e0766fc1a6e078d79b4a1b28761051a88598ec"
+        },
+        {
+          "path": "app-host/src/main/res/values-ru/vanguard_release_strings.xml",
+          "sha256": "ce853f18db791dae687f06142ca51239363489e2445efac757ce749280694cdf"
+        }
+      ]
+    },
+    {
+      "qualifier": "th",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-th/release_stabilization_strings.xml",
+          "sha256": "7e14d9ac8c5cf03a3260afd977bd99752776281b4775c232bd0005d8193229cb"
+        },
+        {
+          "path": "app-host/src/main/res/values-th/strings.xml",
+          "sha256": "9e2dc59101d0fa61553e4f73dfefcca8ee00beb9c1792e92088d1ba3479c05e2"
+        },
+        {
+          "path": "app-host/src/main/res/values-th/vanguard_release_strings.xml",
+          "sha256": "83f566f0173c6a58fe1ba926411f6a0f1d9865366bf033e8aaa93e1334e58643"
+        }
+      ]
+    },
+    {
+      "qualifier": "tr",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-tr/release_stabilization_strings.xml",
+          "sha256": "33dc8cbe10f9e862e8d1796af4924c8ade2bd7a7cd8cdc556f01abb0ee6d2e58"
+        },
+        {
+          "path": "app-host/src/main/res/values-tr/strings.xml",
+          "sha256": "5284a8e19bb2bb1c31a13a40b2b6d12b918591156a9a5f3511795e60985570d7"
+        },
+        {
+          "path": "app-host/src/main/res/values-tr/vanguard_release_strings.xml",
+          "sha256": "69e5d3f1319223c4ccfd4d7e2c21fa1be00de0cdb3acf2c9635e0927f6d01030"
+        }
+      ]
+    },
+    {
+      "qualifier": "vi",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-vi/release_stabilization_strings.xml",
+          "sha256": "7386106329290e1b8577463c9be9de8b2a7e8b1dd28674696412dce001e110d0"
+        },
+        {
+          "path": "app-host/src/main/res/values-vi/strings.xml",
+          "sha256": "e5702c8685255cc107ff2373aed7ddeb7e4e079600becb284c798e16188375c3"
+        },
+        {
+          "path": "app-host/src/main/res/values-vi/vanguard_release_strings.xml",
+          "sha256": "59431c5466181161b9ca30208dacaedfd009923b414b68275bd9438efaa93433"
+        }
+      ]
+    },
+    {
+      "qualifier": "zh-rCN",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-zh-rCN/release_stabilization_strings.xml",
+          "sha256": "64951a207afc7ba4b1e08b538c3deb28c005f3f19499a85ad303e31384c20a19"
+        },
+        {
+          "path": "app-host/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "e61d5d76fcf67c3d3ef9dc368a13977ef6ccaefcaea07af1bb4c31b3ea25075f"
+        },
+        {
+          "path": "app-host/src/main/res/values-zh-rCN/vanguard_release_strings.xml",
+          "sha256": "31a81dbd7d74067386d64059a97b715874a65cd321ceed43f700a6c20f5d5c25"
+        }
+      ]
+    },
+    {
+      "qualifier": "zh-rTW",
+      "covered_keys": 38,
+      "english_placeholders_replaced": 36,
+      "files": [
+        {
+          "path": "app-host/src/main/res/values-zh-rTW/release_stabilization_strings.xml",
+          "sha256": "1aec6013755dd715f59ff062dad16db5d692db8bca0e97aa8a90aa92d0fb71e2"
+        },
+        {
+          "path": "app-host/src/main/res/values-zh-rTW/strings.xml",
+          "sha256": "625cfc076fa00157e41b26c56352d752fdea713561f6b1d8a4db41f0ee0635e9"
+        },
+        {
+          "path": "app-host/src/main/res/values-zh-rTW/vanguard_release_strings.xml",
+          "sha256": "8a96440dacea3ed5bf4bcc951741a39ef2101404cb7d559e857c80100c472562"
+        }
+      ]
+    }
+  ],
+  "compiled_resource_tests": 2,
+  "host_tests": {
+    "tests": 264,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "release_lint": {
+    "errors": 0,
+    "warnings": 640
+  },
+  "source_release_gate": {
+    "corpus_files": 14,
+    "smoke_routes": 62,
+    "fixture_hashes": "PASS",
+    "production_ad_ids": "PASS",
+    "lint_baseline_issue_types": []
+  }
+}
