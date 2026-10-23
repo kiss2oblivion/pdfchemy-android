@@ -12,6 +12,8 @@ Known compatibility limit: valid tagged-PDF OBJR annotation/MCR Form references 
 
 ## New source-level follow-up: AcroForm value aliases
 
+2026-10-23 update: FOLLOW-10 is now confirmed by both real Editor and secure Search exports on source `005489bf`; the saved outputs retain the serialized private value alias. A separate correction and its resulting-source validation are recorded in [FOLLOW10_EXECUTION.md](FOLLOW10_EXECUTION.md). The following paragraphs preserve the original hypothesis and the evidence available when this analysis was written.
+
 **FOLLOW-10: potential confidentiality gap, runtime probe pending.** The unchanged AcroForm branch in `RedactionResources.prepareForRedaction` collects field dictionaries and the form dictionary, then detaches those identities. It does not collect field value descendants. A proposed fixture has a hidden/NoView field `/V 7 0 R` and catalog `/AlternatePayload 7 0 R`, where object 7 is an indirect private COSString. Removing the form and field dictionaries would leave the catalog alias outside that removal set.
 
 This path predates SC-10's changed carrier cleanup. It is a source-derived hypothesis, not a confirmed saved-output leak: no new runtime probe, worker export or device result was executed for it while source was frozen for CI. Validate a serialized/reloaded input with identity controls, then actual Editor and secure Search output before assigning a confirmed finding ID or marking remediation complete. Keep supported form appearance and navigation behavior covered. This follow-up is separate from completed PieceInfo/AF fixture coverage.

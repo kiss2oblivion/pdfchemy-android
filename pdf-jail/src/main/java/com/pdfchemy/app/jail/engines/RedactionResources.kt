@@ -98,11 +98,14 @@ internal object RedactionResources {
         removeDocumentCarriers(document)
         if (form == null) return
         val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val privateValues = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val valueKeys = listOf("V", "DV", "RV", "Opt").map(COSName::getPDFName)
         fun collect(raw: COSBase?, depth: Int) {
             val field = dereference(raw) as? COSDictionary
                 ?: throw IllegalArgumentException("Invalid form field")
             require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && removed.add(field) &&
                 removed.size <= SecurityLimits.MAX_GRAPH_NODES) { "Invalid or excessive form hierarchy" }
+            for (key in valueKeys) field.getItem(key)?.let(privateValues::add)
             val children = field.getDictionaryObject(COSName.KIDS)
             require(children == null || children is COSArray) { "Invalid form children" }
             if (children is COSArray) for (index in 0 until children.size()) collect(children.get(index), depth + 1)
@@ -133,9 +136,13 @@ internal object RedactionResources {
         // Actions/calculation arrays can reference detached fields independently of
         // AcroForm. Remove those references throughout the reachable document graph.
         detachReferences(document, removed)
+        // Values and their descendants can have independent aliases outside the
+        // detached form. Collect them only after flattening has preserved visible
+        // appearances and removed AcroForm from the retained-content roots.
+        removeDocumentCarriers(document, privateValues)
     }
 
-    private fun removeDocumentCarriers(document: PDDocument) {
+    private fun removeDocumentCarriers(document: PDDocument, privateValues: Collection<COSBase> = emptyList()) {
         val carrierKeys = setOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS", "SE",
             "StructTreeRoot", "MarkInfo", "Info").mapTo(mutableSetOf(), COSName::getPDFName)
         val seeds = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
@@ -147,6 +154,7 @@ internal object RedactionResources {
                 (if (structure) structureSeeds else seeds).add(value)
             }
         }
+        for (value in privateValues) record(value)
         val catalog = document.documentCatalog.cosObject
         for (key in listOf("StructTreeRoot", "MarkInfo")) {
             record(catalog.getItem(COSName.getPDFName(key)), key == "StructTreeRoot")
