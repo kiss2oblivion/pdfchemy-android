@@ -1,6 +1,5 @@
 package com.pdfchemy.app.logic
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -35,7 +34,7 @@ object ShareUtil {
             shareUris.drop(1).forEach { addItem(ClipData.Item(it)) }
         }
         val chooser = Intent.createChooser(intent, title).apply {
-            if (context !is Activity) {
+            if (!context.hasActivityContext()) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         }
@@ -49,7 +48,7 @@ object ShareUtil {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         val chooser = Intent.createChooser(intent, title).apply {
-            if (context !is Activity) {
+            if (!context.hasActivityContext()) {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         }

@@ -26,7 +26,7 @@ object DocumentActions {
             setDataAndType(output, mimeType)
             clipData = android.content.ClipData.newUri(context.contentResolver, "Document", output)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            if (context !is android.app.Activity) {
+            if (!context.hasActivityContext()) {
                 addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             }
         }

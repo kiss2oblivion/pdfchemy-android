@@ -1,0 +1,37 @@
+{
+  "base_commit": "c973ff64988a2c2e312dbb888b32e77577f82870",
+  "baseline_tests": 4,
+  "baseline_assertion_failures": 4,
+  "corrected_context_tests": 4,
+  "context_action_combinations": 16,
+  "internal_open_controls": 5,
+  "host_suite": {
+    "tests": 268,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "release_lint": {
+    "Warning": 640
+  },
+  "files": [
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/ContextLaunch.kt",
+      "sha256": "ea678daa8009e21b4e1738e7034e541648627c98f1f6d7efdb6607de25d13ac4"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/ShareUtil.kt",
+      "sha256": "651153edd9758fb3f826c11cbf5747c49a66beb8ae79debf4e9459f9f02990e1"
+    },
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt",
+      "sha256": "440daf9fb045e206a562b00cc104453fdbabddebcd5317d0adfd9d93f366b679"
+    },
+    {
+      "path": "app-host/src/test/java/com/pdfchemy/app/logic/ShareContextLaunchTest.kt",
+      "sha256": "82ce0d042ff59130d2313e10c8334ff8b77c0589cd6d0aed2c84501a9e3acd71"
+    }
+  ],
+  "same_source_ci": "PENDING at commit snapshot",
+  "release": "HOLD"
+}
