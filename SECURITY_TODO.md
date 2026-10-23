@@ -119,11 +119,11 @@ Evidence: [fresh code analysis](reports/security-code-reanalysis-2026-10-21/SECU
 
 ## 12. Integrated release verification
 
-- [ ] FINAL-01 Architecture/host-boundary gates and required module unit suites pass on the resulting candidate.
-- [ ] FINAL-02 Debug/Android-test assembly and release lint/minified build pass; record remaining warnings/baselines.
+- [x] FINAL-01 Architecture/host-boundary gates and required module unit suites pass on the resulting candidate. Verified locally: securityArchitecture passed, securityAudit passed (140 files), :pdf-jail:testDebugUnitTest passed (80 tests), :pdf-ipc:testDebugUnitTest passed, :app-host:testDebugUnitTest passed (254 tests), ReleaseWorkflowRegressionTest passed.
+- [x] FINAL-02 Debug/Android-test assembly and release lint/minified build pass; record remaining warnings/baselines. Verified locally: assembleDebug passed, assembleDebugAndroidTest passed, lintDebug passed (0 errors, 661 warnings, 38 baseline fixed entries), lintVitalRelease passed (0 errors), assembleRelease -PunsignedReleaseVerification=true passed (R8 minification and resource shrinking complete, app-host-release-unsigned.apk packaged).
 - [ ] FINAL-03 Complete same-candidate API 24/30/34/36 instrumentation passes, including real secure exports and lifecycle/provider/concurrency cases.
-- [ ] FINAL-04 Current resolved-dependency and complete reachable-history secret gates pass or have explicit finding dispositions.
-- [ ] FINAL-05 Corpus provenance/hashes, current route coverage, manifests, production IDs and artifact hygiene pass.
+- [x] FINAL-04 Current resolved-dependency and complete reachable-history secret gates pass or have explicit finding dispositions. Verified locally: dependencyInventory generated 234 resolved dependencies; check_dependencies.py scanned 234 packages via OSV API with 0 affected; test_check_secrets.py (10 tests) passed; check_secrets.py TruffleHog 3.97.9 scanned complete git history with 6 findings, 6 exact reviewed historical matches, 0 rejected.
+- [x] FINAL-05 Corpus provenance/hashes, current route coverage, manifests, production IDs and artifact hygiene pass. Verified locally: check_release_gate.py --artifact verified 14 corpus files, 62 smoke routes, fixture hashes, production AdMob IDs, merged release manifest (not debuggable, not testOnly, allowBackup=false, minSdk 24, targetSdk 36, versionCode 14, versionName 2.1.0, isolatedProcess worker services), and clean artifact hygiene with zero leaked test classes.
 - [ ] FINAL-06 Signed APK/AAB source/version/hash/signature identities are recorded; Play version-code and upload-key checks are complete.
 - [ ] FINAL-07 Signed physical workflow, corpus, 15 audio scenarios and screenshot/task-snapshot checks have actual results.
 - [ ] FINAL-08 Forensic inspection of final real export outputs confirms absence of original sensitive content/resources/references.
@@ -164,6 +164,7 @@ Retain failed attempts alongside successful verification. Use NOT RUN, FAIL, BLO
 | FOLLOW-08 | COMPLETE: source, test and batch gates verified | `b56af03f`, Android remote verified | WorkerResponseValidatorTest (standardOutputCountSemanticsValidated), :pdf-ipc:testDebugUnitTest, 254 unit tests in :app-host:testDebugUnitTest, assembleDebugAndroidTest; see FOLLOW08_EXECUTION.md | Remote CI; release HOLD |
 | FOLLOW-09 | COMPLETE: test driver repaired and verified | `7233a979`, Android remote verified | StartupWindowRegressionTest (Home/launcher driver), assembleDebugAndroidTest, API24 local verification; see FOLLOW09_EXECUTION.md | Remote CI; release HOLD |
 | FOLLOW-10 | COMPLETE: source, test and batch gates verified | `2308523d`, Android remote verified | PrivatePayloadAliasTest (4 new AcroForm methods, 16 total), :pdf-jail:testDebugUnitTest (80 tests), 254 unit tests in :app-host:testDebugUnitTest, assembleDebugAndroidTest; see FOLLOW10_EXECUTION.md | Remote CI; release HOLD |
+| Integrated release verification (local gates) | COMPLETE: FINAL-01, FINAL-02, FINAL-04, FINAL-05 verified | Documentation commit, Android remote verified | Unit suites (334 tests pass), assembleDebug/AndroidTest pass, lintDebug (0 errors), R8 minification/shrinking pass, dependency OSV scan (234 packages clean), TruffleHog full-history scan (clean), check_release_gate.py pass | Remote CI (FINAL-03), production signing & physical gates (FINAL-06..12); release HOLD |
 
 Current evidence/status: [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
 
