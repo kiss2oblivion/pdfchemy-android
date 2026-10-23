@@ -367,6 +367,12 @@ class MainActivity : AppCompatActivity() {
 
     private val incomingPdfUriState = MutableStateFlow<Uri?>(null)
 
+    @androidx.annotation.VisibleForTesting
+    internal val incomingPdfUriForTesting: kotlinx.coroutines.flow.StateFlow<Uri?> get() = incomingPdfUriState.asStateFlow()
+
+    @androidx.annotation.VisibleForTesting
+    internal fun handleIncomingIntentForTesting(intent: Intent?) = handleIncomingIntent(intent)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
