@@ -1,6 +1,8 @@
 package com.pdfchemy.app.logic
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import android.content.ClipData
@@ -33,8 +35,7 @@ object ShareUtil {
         intent.clipData = ClipData.newUri(context.contentResolver, title, shareUris.first()).apply {
             shareUris.drop(1).forEach { addItem(ClipData.Item(it)) }
         }
-        val chooser = Intent.createChooser(intent, title)
-        context.startActivity(chooser)
+        launchChooser(context, intent, title)
     }
 
     fun shareFile(context: Context, uri: Uri, mimeType: String = "image/jpeg", title: String = "Share Image") {
@@ -43,7 +44,17 @@ object ShareUtil {
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        launchChooser(context, intent, title)
+    }
+
+    private fun launchChooser(context: Context, intent: Intent, title: String) {
         val chooser = Intent.createChooser(intent, title)
+        var owner = context
+        val visited = java.util.Collections.newSetFromMap(java.util.IdentityHashMap<Context, Boolean>())
+        while (owner is ContextWrapper && owner !is Activity && visited.add(owner)) {
+            owner = owner.baseContext
+        }
+        if (owner !is Activity) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }
 }

@@ -523,8 +523,8 @@ object DocumentStager {
         trimUnleasedToBound()
     }
     @Synchronized fun releaseAll() {
-        inFlightSlots = 0
-        inFlightBytes = 0L
+        // Copies run outside this monitor and retire their own reservations on completion.
+        // Session shutdown must not erase the quota still occupied by those live copies.
         staged.values.toList().forEach(::release)
         trimUnleasedToBound(0)
     }

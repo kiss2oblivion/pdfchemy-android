@@ -1,9 +1,15 @@
 package com.pdfchemy.app.security
 
 import android.content.Context
+import android.app.Activity
+import android.app.Instrumentation
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.pdfchemy.app.logic.DocumentActions
 import com.pdfchemy.app.utils.DocumentStager
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
@@ -82,8 +88,21 @@ class ReaderShareSecurityTest {
             val afterNavBytes = application.contentResolver.openInputStream(shareUri)!!.use { it.readBytes() }
             assertArrayEquals("Recipient must still read exact bytes after Reader lease release", originalBytes, afterNavBytes)
 
-            // 5. Verify share action executes without throwing root resolution error
-            DocumentActions.share(application, stagedUri, "AnnualReport.pdf")
+            // Share the surviving capability after the original staging lease is gone.
+            // Block only the system chooser UI; ContextImpl still enforces its task flags.
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            val monitor = instrumentation.addMonitor(
+                IntentFilter(Intent.ACTION_CHOOSER),
+                Instrumentation.ActivityResult(Activity.RESULT_CANCELED, null), true
+            )
+            try {
+                instrumentation.runOnMainSync {
+                    DocumentActions.share(application, shareUri, "AnnualReport.pdf")
+                }
+                assertEquals("Share must reach the chooser launch", 1, monitor.hits)
+            } finally {
+                instrumentation.removeMonitor(monitor)
+            }
         } finally {
             leased.lease.close()
             DocumentStager.release(leased.document)
@@ -93,17 +112,19 @@ class ReaderShareSecurityTest {
     @Test
     fun exportsFileReusesDirectFileProviderUriWithoutRedundantCopy() {
         val exportsDir = File(application.cacheDir, "exports").apply { mkdirs() }
+        val originalBytes = samplePdf("direct_export")
         val exportFile = File(exportsDir, "already_exported.pdf").apply {
-            writeBytes(samplePdf("direct_export"))
+            writeBytes(originalBytes)
         }
         val fileUri = Uri.fromFile(exportFile)
 
         val shareUri = DocumentActions.getShareableContentUri(application, fileUri, "Exported.pdf")
         assertEquals("content", shareUri.scheme)
         assertEquals("${application.packageName}.fileprovider", shareUri.authority)
+        assertEquals(FileProvider.getUriForFile(application, "${application.packageName}.fileprovider", exportFile), shareUri)
 
         val readBytes = application.contentResolver.openInputStream(shareUri)!!.use { it.readBytes() }
-        assertArrayEquals(samplePdf("direct_export"), readBytes)
+        assertArrayEquals(originalBytes, readBytes)
     }
 
     @Test
