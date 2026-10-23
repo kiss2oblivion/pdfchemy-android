@@ -262,13 +262,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var continuityLease: java.io.Closeable? = null
 
     fun setContinuityUri(uri: Uri?) {
-        continuityLease?.close()
-        continuityLease = null
         val previousUri = _continuityDocumentUri.value
+        if (previousUri == uri) return
+        // Acquire the next capability before releasing the previous owner. Closing
+        // the last lease may immediately unlink a snapshot pending release.
+        val nextLease = uri?.let { com.pdfchemy.app.utils.DocumentStager.retain(it) }
+        val previousLease = continuityLease
+        continuityLease = nextLease
         _continuityDocumentUri.value = uri
-        if (uri != null) {
-            continuityLease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
-        }
+        previousLease?.close()
         if (previousUri != null && previousUri != uri) {
             com.pdfchemy.app.utils.DocumentStager.release(previousUri)
         }
@@ -276,6 +278,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearContinuityUri() {
         setContinuityUri(null)
+    }
+
+    fun clearContinuityUri(expectedUri: Uri) {
+        if (_continuityDocumentUri.value == expectedUri) clearContinuityUri()
     }
 
     private val vmCleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob())

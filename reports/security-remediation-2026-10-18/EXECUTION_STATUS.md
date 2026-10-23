@@ -1,4 +1,6 @@
-# Android security remediation execution - 2026-10-18
+# Historical Android security remediation execution - 2026-10-18
+
+> This file preserves dated implementation checkpoints. Its old latest/pending/not-implemented statements are historical. Use [CURRENT_RELEASE_STATUS.md](../../CURRENT_RELEASE_STATUS.md) and the current checklist for the resulting candidate; later SC/FOLLOW corrections and full CI supersede the checkpoint below.
 
 **Release: HOLD. SC-01 through SC-04 and SC-10 implementation/batch gates are complete.** Latest full CI at `4ec21c40` passes all nine jobs, 244 native methods per API24/30/34/36 (976 total), with one unchanged API34 startup retry retained under FOLLOW-09. See [SC-10 execution](SC10_EXECUTION.md). SC-05 through SC-09 and SC-11 through SC-14 remain open.
 
@@ -24,7 +26,7 @@ Each listed implementation push went only to `kiss2oblivion/pdfchemy-android`, w
 
 The original audit probes, synthetic leaking PDFs, XML and logs are frozen under [the independent analysis](../security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md), with `evidence/BASELINE_SHA256SUMS.txt` recording their original review-relative identities. Archived vulnerability-confirming probe sources are outside compiled tests. Historical baseline run `38270216907` is not verification of these fixes.
 
-## Finding status
+## Historical finding status at the recorded SC-10 checkpoint
 
 | Finding | Status | Remaining gate |
 |---|---|---|
