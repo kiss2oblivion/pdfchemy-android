@@ -1,6 +1,6 @@
 # SC-13 execution receipt: Publication lifetime, bounded host resources, and provider cancellation
 
-Date: 2026-10-23. Release: **HOLD**. Retained SC-13 publication lifetime bounds, cooperative stream cancellation, writer-stop safety before deletion, destination collision prevention, deterministic test suite, and Android build gates are complete.
+Date: 2026-10-23. Commit: `90251eb8`. Release: **HOLD**. Retained SC-13 publication lifetime bounds, cooperative stream cancellation, writer-stop safety before deletion, destination collision prevention, deterministic test suite, and Android build gates are complete.
 
 ## Problem and change
 
