@@ -97,20 +97,19 @@ internal object RedactionResources {
         require(form?.hasXFA() != true) { "Secure redaction does not support XFA forms" }
         removeDocumentCarriers(document)
         if (form == null) return
-        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        fun collect(raw: COSBase?, depth: Int) {
+        val fieldNodes = Collections.newSetFromMap(IdentityHashMap<COSDictionary, Boolean>())
+        fun collectFields(raw: COSBase?, depth: Int) {
             val field = dereference(raw) as? COSDictionary
                 ?: throw IllegalArgumentException("Invalid form field")
-            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && removed.add(field) &&
-                removed.size <= SecurityLimits.MAX_GRAPH_NODES) { "Invalid or excessive form hierarchy" }
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && fieldNodes.add(field) &&
+                fieldNodes.size <= SecurityLimits.MAX_GRAPH_NODES) { "Invalid or excessive form hierarchy" }
             val children = field.getDictionaryObject(COSName.KIDS)
             require(children == null || children is COSArray) { "Invalid form children" }
-            if (children is COSArray) for (index in 0 until children.size()) collect(children.get(index), depth + 1)
+            if (children is COSArray) for (index in 0 until children.size()) collectFields(children.get(index), depth + 1)
         }
         val roots = form.cosObject.getDictionaryObject(COSName.FIELDS)
         require(roots == null || roots is COSArray) { "Invalid form roots" }
-        if (roots is COSArray) for (index in 0 until roots.size()) collect(roots.get(index), 0)
-        removed.add(form.cosObject)
+        if (roots is COSArray) for (index in 0 until roots.size()) collectFields(roots.get(index), 0)
 
         // Flatten before replacing any page: doing it afterward could paint a private
         // widget back over the redaction. Other pages keep static, selectable values.
@@ -130,9 +129,130 @@ internal object RedactionResources {
         form.flatten(fields, false)
         catalog.cosObject.removeItem(COSName.ACRO_FORM)
 
+        val (anchors, pageObjects) = buildAnchors(document)
+        val formTreeNodes = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        formTreeNodes.add(form.cosObject)
+        formTreeNodes.addAll(fieldNodes)
+        val retained = collectRetained(document, anchors, carrierKeys = emptySet(), includeAcroForm = false,
+            excluded = formTreeNodes)
+        val removed = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        val valueKeys = setOf(
+            COSName.V, COSName.DV, COSName.RV, COSName.TU, COSName.TM, COSName.getPDFName("T"),
+            COSName.getPDFName("DS"), COSName.OPT, COSName.getPDFName("I"), COSName.getPDFName("TI"),
+            COSName.AA, COSName.A, COSName.getPDFName("Lock"), COSName.getPDFName("SV")
+        )
+
+        fun collectFormPayload(raw: COSBase?, depth: Int, isValueDescendant: Boolean, pageReference: Boolean = false) {
+            val node = dereference(raw) ?: return
+            if (node in anchors) {
+                require(pageReference && node in pageObjects) {
+                    "Private form payload references the document hierarchy"
+                }
+                return
+            }
+            if (node in retained) {
+                require(!isValueDescendant) {
+                    "Private form payload aliases retained content or navigation"
+                }
+                return
+            }
+            if (node !is COSDictionary && node !is COSArray && node !is COSString ||
+                !removed.add(node)) return
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && removed.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                "Form graph exceeds redaction limit"
+            }
+            when (node) {
+                is COSDictionary -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive dictionary" }
+                    for (key in node.keySet()) {
+                        if (key == COSName.PARENT || key == COSName.KIDS) continue
+                        val isPageRef = key == COSName.P
+                        val isVal = isValueDescendant || key in valueKeys
+                        collectFormPayload(node.getItem(key), depth + 1, isVal, isPageRef)
+                    }
+                }
+                is COSArray -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive array" }
+                    for (index in 0 until node.size()) {
+                        collectFormPayload(node.get(index), depth + 1, isValueDescendant)
+                    }
+                }
+            }
+        }
+
+        removed.add(form.cosObject)
+        for (key in form.cosObject.keySet()) {
+            if (key == COSName.FIELDS || key == COSName.DR) continue
+            collectFormPayload(form.cosObject.getItem(key), 0, isValueDescendant = false)
+        }
+        for (field in fieldNodes) {
+            collectFormPayload(field, 0, isValueDescendant = false)
+        }
+
         // Actions/calculation arrays can reference detached fields independently of
         // AcroForm. Remove those references throughout the reachable document graph.
         detachReferences(document, removed)
+    }
+
+    private fun buildAnchors(document: PDDocument): Pair<Set<COSBase>, Set<COSBase>> {
+        val catalog = document.documentCatalog.cosObject
+        val anchors = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        anchors.add(document.document.trailer)
+        anchors.add(catalog)
+        val pages = document.pages.toList()
+        val pageObjects = pages.mapTo(Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())) { it.cosObject }
+        for (page in pages) {
+            var parent: COSDictionary? = page.cosObject
+            var depth = 0
+            while (parent != null && anchors.add(parent)) {
+                require(++depth <= SecurityLimits.MAX_GRAPH_DEPTH && anchors.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                    "Excessive page hierarchy"
+                }
+                if (parent.getCOSName(COSName.TYPE) == COSName.PAGES) {
+                    (dereference(parent.getItem(COSName.KIDS)) as? COSArray)?.let(anchors::add)
+                }
+                parent = dereference(parent.getItem(COSName.PARENT)) as? COSDictionary
+            }
+        }
+        return Pair(anchors, pageObjects)
+    }
+
+    private fun collectRetained(
+        document: PDDocument,
+        anchors: Set<COSBase>,
+        carrierKeys: Set<COSName>,
+        includeAcroForm: Boolean,
+        excluded: Set<COSBase> = emptySet()
+    ): Set<COSBase> {
+        val catalog = document.documentCatalog.cosObject
+        val retained = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
+        fun collect(raw: COSBase?, depth: Int) {
+            val node = dereference(raw) ?: return
+            if (node in anchors || node in excluded || (node !is COSDictionary && node !is COSArray && node !is COSString) ||
+                !retained.add(node)) return
+            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && retained.size <= SecurityLimits.MAX_GRAPH_NODES) {
+                "Retained graph exceeds limit"
+            }
+            when (node) {
+                is COSDictionary -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive dictionary" }
+                    for (key in node.keySet()) if (key !in carrierKeys) collect(node.getItem(key), depth + 1)
+                }
+                is COSArray -> {
+                    require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive array" }
+                    for (index in 0 until node.size()) collect(node.get(index), depth + 1)
+                }
+            }
+        }
+        for (page in document.pages) collect(page.resources?.cosObject, 0)
+        for (anchor in anchors) if (anchor is COSDictionary && anchor !== catalog && anchor !== document.document.trailer) {
+            for (key in listOf("Contents", "Resources", "Annots", "Thumb", "Group", "MediaBox", "CropBox",
+                    "BleedBox", "TrimBox", "ArtBox", "VP")) collect(anchor.getItem(COSName.getPDFName(key)), 0)
+        }
+        val navKeys = mutableListOf("Outlines", "Dests", "Names", "OpenAction", "PageLabels", "OCProperties")
+        if (includeAcroForm) navKeys.add("AcroForm")
+        for (key in navKeys) collect(catalog.getItem(COSName.getPDFName(key)), 0)
+        return retained
     }
 
     private fun removeDocumentCarriers(document: PDDocument) {
@@ -164,24 +284,7 @@ internal object RedactionResources {
 
         // Structure elements legitimately point back to their real page. Stop at
         // document identities, never at a claimed /Type on an untrusted payload.
-        val anchors = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        anchors.add(document.document.trailer)
-        anchors.add(catalog)
-        val pages = document.pages.toList()
-        val pageObjects = pages.mapTo(Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())) { it.cosObject }
-        for (page in pages) {
-            var parent: COSDictionary? = page.cosObject
-            var depth = 0
-            while (parent != null && anchors.add(parent)) {
-                require(++depth <= SecurityLimits.MAX_GRAPH_DEPTH && anchors.size <= SecurityLimits.MAX_GRAPH_NODES) {
-                    "Excessive page hierarchy"
-                }
-                if (parent.getCOSName(COSName.TYPE) == COSName.PAGES) {
-                    (dereference(parent.getItem(COSName.KIDS)) as? COSArray)?.let(anchors::add)
-                }
-                parent = dereference(parent.getItem(COSName.PARENT)) as? COSDictionary
-            }
-        }
+        val (anchors, pageObjects) = buildAnchors(document)
         require(seeds.none { it in anchors } && structureSeeds.none { it in anchors }) {
             "Private carrier aliases the document hierarchy"
         }
@@ -226,16 +329,7 @@ internal object RedactionResources {
         // An ambiguous private alias to live content must fail before mutation.
         // Only explicit rendering/navigation roots are retained: traversing every
         // unknown catalog key here would protect the very aliases being removed.
-        val retained = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        fun retain(raw: COSBase?) = collect(raw, retained, 0, true)
-        for (page in pages) retain(page.resources?.cosObject)
-        for (anchor in anchors) if (anchor is COSDictionary && anchor !== catalog && anchor !== document.document.trailer) {
-            for (key in listOf("Contents", "Resources", "Annots", "Thumb", "Group", "MediaBox", "CropBox",
-                    "BleedBox", "TrimBox", "ArtBox", "VP")) retain(anchor.getItem(COSName.getPDFName(key)))
-        }
-        for (key in listOf("AcroForm", "Outlines", "Dests", "Names", "OpenAction", "PageLabels", "OCProperties")) {
-            retain(catalog.getItem(COSName.getPDFName(key)))
-        }
+        val retained = collectRetained(document, anchors, carrierKeys, includeAcroForm = true)
         require(removed.none { it in retained }) { "Private payload aliases retained content or navigation" }
 
         for (key in listOf("StructTreeRoot", "MarkInfo")) catalog.removeItem(COSName.getPDFName(key))

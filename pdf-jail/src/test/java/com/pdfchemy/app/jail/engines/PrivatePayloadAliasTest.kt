@@ -134,6 +134,130 @@ class PrivatePayloadAliasTest {
         }
     }
 
+    @Test fun serializedAcroFormValueDescendantAliasIsSanitized() {
+        val marker = "PRIVATE_ACROFORM_VALUE_99214"
+        val objects = listOf(
+            "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [4 0 R] /DA (/Helv 12 Tf 0 g) >> /AlternatePayload 5 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>",
+            "<< /FT /Tx /T (SecretField) /V 5 0 R /F 2 >>",
+            "($marker)"
+        )
+        val input = ByteArrayOutputStream().apply {
+            fun text(value: String) { write(value.toByteArray(Charsets.ISO_8859_1)) }
+            text("%PDF-1.4\n")
+            val offsets = objects.mapIndexed { index, body ->
+                val offset = size()
+                text("${index + 1} 0 obj\n$body\nendobj\n")
+                offset
+            }
+            val xref = size()
+            text("xref\n0 6\n0000000000 65535 f \n")
+            offsets.forEach { text("%010d 00000 n \n".format(java.util.Locale.ROOT, it)) }
+            text("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n$xref\n%%EOF\n")
+        }.toByteArray()
+        PDDocument.load(input).use { document ->
+            val catalog = document.documentCatalog.cosObject
+            val form = catalog.getDictionaryObject(COSName.ACRO_FORM) as COSDictionary
+            val fields = form.getDictionaryObject(COSName.FIELDS) as COSArray
+            val field = fields.getObject(0) as COSDictionary
+            assertSame("Input control must retain indirect string identity", field.getItem(COSName.V),
+                catalog.getItem(COSName.getPDFName("AlternatePayload")))
+            val output = sanitize(document)
+            assertAbsent(output, marker)
+            PDDocument.load(output).use { saved ->
+                assertNull(saved.documentCatalog.cosObject.getItem(COSName.getPDFName("AlternatePayload")))
+            }
+        }
+    }
+
+    @Test fun acroFormValueAliasingPageResourceRejectsBeforeMutation() {
+        PDDocument().use { document ->
+            val page = PDPage().also(document::addPage)
+            PDPageContentStream(document, page).use {
+                it.beginText(); it.setFont(PDType1Font.HELVETICA, 12f); it.showText("Keep"); it.endText()
+            }
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(document)
+            document.documentCatalog.acroForm = form
+            form.cosObject.setString(COSName.DA, "/Helv 12 Tf 0 g")
+            val field = COSDictionary().apply {
+                setName(COSName.TYPE, "Annot")
+                setName(COSName.SUBTYPE, "Widget")
+                setName(COSName.FT, "Tx")
+                setString(COSName.T, "HostileField")
+                setInt(COSName.F, 2)
+                setItem(COSName.V, page.resources.cosObject)
+            }
+            form.cosObject.setItem(COSName.FIELDS, COSArray().apply { add(field) })
+            val ex = assertThrows(IllegalArgumentException::class.java) {
+                RedactionResources.prepareForRedaction(document)
+            }
+            assertTrue("Expected rejection message but got: ${ex.message}",
+                ex.message.orEmpty().contains("Private form payload aliases retained content or navigation"))
+        }
+    }
+
+    @Test fun acroFormValueAliasingDocumentAnchorRejectsBeforeMutation() {
+        PDDocument().use { document ->
+            val page = PDPage().also(document::addPage)
+            val form = com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm(document)
+            document.documentCatalog.acroForm = form
+            form.cosObject.setString(COSName.DA, "/Helv 12 Tf 0 g")
+            val field = COSDictionary().apply {
+                setName(COSName.TYPE, "Annot")
+                setName(COSName.SUBTYPE, "Widget")
+                setName(COSName.FT, "Tx")
+                setString(COSName.T, "HostileAnchorField")
+                setInt(COSName.F, 2)
+                setItem(COSName.V, document.documentCatalog.cosObject)
+            }
+            form.cosObject.setItem(COSName.FIELDS, COSArray().apply { add(field) })
+            val ex = assertThrows(IllegalArgumentException::class.java) {
+                RedactionResources.prepareForRedaction(document)
+            }
+            assertTrue("Expected rejection message but got: ${ex.message}",
+                ex.message.orEmpty().contains("Private form payload references the document hierarchy"))
+        }
+    }
+
+    @Test fun acroFormHiddenAppearanceAliasIsSanitized() {
+        val marker = "HIDDEN_APPEARANCE_SECRET_88412"
+        val objects = listOf(
+            "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [4 0 R] >> /AlternatePayload 5 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] >>",
+            "<< /Type /Annot /Subtype /Widget /FT /Tx /T (HiddenField) /F 2 /AP << /N 5 0 R >> >>",
+            "<< /Type /XObject /Subtype /Form /BBox [0 0 10 10] /Length 30 >>\nstream\n($marker)\nendstream"
+        )
+        val input = ByteArrayOutputStream().apply {
+            fun text(value: String) { write(value.toByteArray(Charsets.ISO_8859_1)) }
+            text("%PDF-1.4\n")
+            val offsets = objects.mapIndexed { index, body ->
+                val offset = size()
+                text("${index + 1} 0 obj\n$body\nendobj\n")
+                offset
+            }
+            val xref = size()
+            text("xref\n0 6\n0000000000 65535 f \n")
+            offsets.forEach { text("%010d 00000 n \n".format(java.util.Locale.ROOT, it)) }
+            text("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n$xref\n%%EOF\n")
+        }.toByteArray()
+        PDDocument.load(input).use { document ->
+            val catalog = document.documentCatalog.cosObject
+            assertSame("Input control must retain indirect appearance identity",
+                catalog.getItem(COSName.getPDFName("AlternatePayload")),
+                ((catalog.getDictionaryObject(COSName.ACRO_FORM) as COSDictionary)
+                    .getDictionaryObject(COSName.FIELDS) as COSArray).getObject(0)
+                    .let { (it as COSDictionary).getDictionaryObject(COSName.AP) as COSDictionary }
+                    .getItem(COSName.N))
+            val output = sanitize(document)
+            assertAbsent(output, marker)
+            PDDocument.load(output).use { saved ->
+                assertNull(saved.documentCatalog.cosObject.getItem(COSName.getPDFName("AlternatePayload")))
+            }
+        }
+    }
+
     @Test fun nestedObjectWrappersAndPrivateCyclesTerminate() {
         PDDocument().use { document ->
             document.addPage(PDPage())
