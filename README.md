@@ -1,6 +1,6 @@
 # PDFchemy Tools (Shrink PDF) 📄✨
 
-> **Android 2.1.0 release candidate — HOLD (2026-10-18).** Current security work is tracked in the [remediation plan](SECURITY_REMEDIATION_PLAN.md), [checklist](SECURITY_TODO.md), and [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md). The [independent analysis](reports/security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md) identifies open release blockers.
+> **Android 2.1.0 release candidate — HOLD (2026-10-23).** See the [current source, verification and remaining release gates](CURRENT_RELEASE_STATUS.md), [remediation checklist](SECURITY_TODO.md), and dated execution receipts.
 
 > **The emergency document utility for the people.**
 > 100% Free • 100% Offline & Private • Zero Ads on Desktop • Original-Safe

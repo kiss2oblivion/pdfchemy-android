@@ -1,3 +1,5 @@
+> Historical remediation snapshot: the OCR and CI blocker statements below describe their dated source. Current Android 2.1.0 state is tracked in [CURRENT_RELEASE_STATUS.md](CURRENT_RELEASE_STATUS.md).
+
 # Android security remediation — 2026-10-01
 
 > **Historical record — reconciled 2026-10-18.** The run-specific blockers, tool-access notes and source claims below describe their original revisions. Current Android release status is **HOLD** under the [new security findings](reports/security-code-analysis-2026-10-18/SECURITY_CODE_ANALYSIS.md); follow the [remediation plan](SECURITY_REMEDIATION_PLAN.md) and [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md).
