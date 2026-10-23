@@ -73,17 +73,17 @@ class ReaderShareSecurityTest {
             val initialBytes = application.contentResolver.openInputStream(shareUri)!!.use { it.readBytes() }
             assertArrayEquals("Recipient must read exact bytes", originalBytes, initialBytes)
 
-            // 3. Simulate Reader navigation / exit: release lease and stager registration
+            // 3. Verify share action executes on active staged document without throwing root resolution error
+            DocumentActions.share(application, stagedUri, "AnnualReport.pdf")
+
+            // 4. Simulate Reader navigation / exit: release lease and stager registration
             leased.lease.close()
             DocumentStager.release(leased.document)
             assertEquals("Leases must be zero after Reader exit", 0, DocumentStager.activeLeases(leased.document))
 
-            // 4. Verify recipient reads exact bytes AFTER Reader exit / lease release
+            // 5. Verify recipient reads exact bytes AFTER Reader exit / lease release
             val afterNavBytes = application.contentResolver.openInputStream(shareUri)!!.use { it.readBytes() }
             assertArrayEquals("Recipient must still read exact bytes after Reader lease release", originalBytes, afterNavBytes)
-
-            // 5. Verify share action executes without throwing root resolution error
-            DocumentActions.share(application, stagedUri, "AnnualReport.pdf")
         } finally {
             leased.lease.close()
             DocumentStager.release(leased.document)
