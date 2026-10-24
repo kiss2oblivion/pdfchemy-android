@@ -265,23 +265,43 @@ class SeparateSenderAdmissionSecurityTest {
 
     @Test
     fun separateProvider_failingOrMissingProvider_failsGracefullyWithoutOrphans() {
-        val missingUri = Uri.parse("content://com.pdfchemy.app.security.outputfixture/missing_doc_${System.nanoTime()}")
-        val beforeSnapshots = File(context.cacheDir, "staged").listFiles().orEmpty().map { it.name }.toSet()
-
-        val intent = Intent(Intent.ACTION_VIEW).apply { data = missingUri }
-        val admission = ExternalUriAdmission.admit(context, intent)
-        assertTrue("URI syntax passes admission", admission is AdmissionResult.Admitted)
-
-        // Staging attempt must catch FileNotFoundException and leave no orphaned files
-        try {
-            DocumentStager.stageDocument(context, (admission as AdmissionResult.Admitted).uri)
-            fail("Nonexistent provider URI must fail staging")
-        } catch (expected: FileNotFoundException) {
-            // Expected
+        val protectedBytes = samplePdfBytes("leased_cleanup_control")
+        val preserved = protectedBytes.inputStream().use { DocumentStager.stageStreamWithLease(context, it, "pdf") }
+        val retired = samplePdfBytes("retired_cleanup_control").inputStream().use {
+            DocumentStager.stageStream(context, it, "pdf")
         }
+        try {
+            val missingUri = Uri.parse("content://com.pdfchemy.app.security.outputfixture/missing_doc_${System.nanoTime()}")
+            val beforeSnapshots = File(context.cacheDir, "staged").listFiles().orEmpty().map { it.name }.toSet()
 
-        val afterSnapshots = File(context.cacheDir, "staged").listFiles().orEmpty().map { it.name }.toSet()
-        assertEquals("Failed staging must clean up and leave zero orphaned snapshots", beforeSnapshots, afterSnapshots)
+            // Model legitimate asynchronous cleanup of an unleased earlier session.
+            // A failed new operation must not require that retired file to survive.
+            DocumentStager.release(retired)
+            assertFalse(File(retired.uri.path!!).exists())
+
+            val intent = Intent(Intent.ACTION_VIEW).apply { data = missingUri }
+            val admission = ExternalUriAdmission.admit(context, intent)
+            assertTrue("URI syntax passes admission", admission is AdmissionResult.Admitted)
+
+            // Staging attempt must catch FileNotFoundException and leave no orphaned files.
+            try {
+                DocumentStager.stageDocument(context, (admission as AdmissionResult.Admitted).uri)
+                fail("Nonexistent provider URI must fail staging")
+            } catch (expected: FileNotFoundException) {
+                // Expected
+            }
+
+            val afterSnapshots = File(context.cacheDir, "staged").listFiles().orEmpty().map { it.name }.toSet()
+            assertTrue("Failed staging must leave no new orphaned snapshots: ${afterSnapshots - beforeSnapshots}",
+                (afterSnapshots - beforeSnapshots).isEmpty())
+            assertTrue("Failed staging must preserve a separately leased session", File(preserved.document.uri.path!!).exists())
+            assertEquals(1, DocumentStager.activeLeases(preserved.document))
+            assertArrayEquals(protectedBytes, File(preserved.document.uri.path!!).readBytes())
+        } finally {
+            preserved.close()
+            DocumentStager.release(preserved.document)
+            DocumentStager.release(retired)
+        }
     }
 
     @Test
