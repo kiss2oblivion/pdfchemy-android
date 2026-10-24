@@ -14,12 +14,36 @@ import com.pdfchemy.app.BuildConfig
 
 object AdManager {
     private var interstitialAd: InterstitialAd? = null
+    @Volatile
+    private var isLoading = false
     private var lastAdShownTime: Long = 0
     private const val COOLDOWN_MILLIS = 60_000L // 60 seconds cooldown
-    fun loadInterstitial(context: Context) {
-        if (!com.google.android.ump.UserMessagingPlatform.getConsentInformation(context).canRequestAds()) return
-        if (interstitialAd != null) return // Already loaded
 
+    fun clearAd() {
+        interstitialAd = null
+        isLoading = false
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal fun isAdLoaded(): Boolean = interstitialAd != null
+
+    @androidx.annotation.VisibleForTesting
+    internal fun setLastAdShownTimeForTesting(time: Long) {
+        lastAdShownTime = time
+    }
+
+    fun loadInterstitial(context: Context, isPremium: Boolean = false) {
+        if (isPremium) {
+            clearAd()
+            return
+        }
+        if (!com.google.android.ump.UserMessagingPlatform.getConsentInformation(context).canRequestAds()) {
+            clearAd()
+            return
+        }
+        if (interstitialAd != null || isLoading) return // Already loaded or loading in flight
+
+        isLoading = true
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -29,11 +53,13 @@ object AdManager {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     AppLogger.d("Failed to load interstitial ad: ${adError.message}")
                     interstitialAd = null
+                    isLoading = false
                 }
 
                 override fun onAdLoaded(ad: InterstitialAd) {
                     AppLogger.d("Interstitial ad loaded successfully.")
                     interstitialAd = ad
+                    isLoading = false
                 }
             }
         )
@@ -45,6 +71,7 @@ object AdManager {
         onAdDismissed: () -> Unit
     ) {
         if (isPremium || !com.google.android.ump.UserMessagingPlatform.getConsentInformation(activity).canRequestAds()) {
+            clearAd()
             onAdDismissed()
             return
         }
@@ -62,8 +89,8 @@ object AdManager {
                     AppLogger.d("Ad was dismissed.")
                     interstitialAd = null
                     lastAdShownTime = System.currentTimeMillis()
-                    // Pre-load the next ad
-                    loadInterstitial(activity)
+                    // Pre-load the next ad safely
+                    loadInterstitial(activity, isPremium)
                     onAdDismissed()
                 }
 
@@ -82,7 +109,7 @@ object AdManager {
             interstitialAd?.show(activity)
         } else {
             AppLogger.d("Ad was not ready. Starting load and skipping show.")
-            loadInterstitial(activity)
+            loadInterstitial(activity, isPremium)
             onAdDismissed()
         }
     }

@@ -499,6 +499,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         billingManager?.launchPurchaseFlow(activity)
     }
 
+    fun restorePurchases() {
+        billingManager?.restorePurchases()
+    }
+
     fun setUseGrayscale(value: Boolean) {
         compressionDefaults.userChanged(com.pdfchemy.app.logic.CompressionChoice.GRAYSCALE)
         _useGrayscale.value = value
