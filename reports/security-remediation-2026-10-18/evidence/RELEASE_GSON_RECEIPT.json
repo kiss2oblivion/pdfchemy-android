@@ -1,0 +1,106 @@
+{
+  "base_commit": "1e3d09b9af7e04f129c7ff54b77d938a16bdf3d6",
+  "signed_prototype": {
+    "status": "SIGNED_TEST_PROTOTYPE",
+    "base_commit": "1e3d09b9af7e04f129c7ff54b77d938a16bdf3d6",
+    "uncommitted_configuration": true,
+    "proguard_sha256": "6d81bde5fb1f8b90c4df1e741389ed721ed91b58e08778939fff5da9588a95f0",
+    "artifacts": [
+      {
+        "file": "app.apk",
+        "sha256": "7ddc27c03e61dc8d45caa9ccb55ec9df780aa89db5c9cdf50a17033f83199a52"
+      },
+      {
+        "file": "app.aab",
+        "sha256": "e950b0e1d67fea004a359093cfdd90d4c3cecfe968ede25f03a6aaabafe620bd"
+      },
+      {
+        "file": "mapping.txt",
+        "sha256": "c797a0cb2b6108eb5b35093e0b46c2b844a42c3a4b47647dc22a1dfacea2fe3c"
+      }
+    ],
+    "gson_runtime_contract": {
+      "status": "PASS",
+      "editor_type_tokens": [
+        "Lcom/pdfchemy/app/jail/PdfJailService$binder$1$exportModifiedPdf$1$type$1;",
+        "Lcom/pdfchemy/app/jail/PdfJailService$dispatch$type$1;"
+      ],
+      "preserved_wire_models": 17,
+      "preserved_collection_signatures": 6,
+      "apk_sha256": "7ddc27c03e61dc8d45caa9ccb55ec9df780aa89db5c9cdf50a17033f83199a52"
+    }
+  },
+  "parser_tests": 5,
+  "actual_signed_editor_exports": [
+    {
+      "status": "PASS",
+      "apk_sha256": "7ddc27c03e61dc8d45caa9ccb55ec9df780aa89db5c9cdf50a17033f83199a52",
+      "input_sha256": "3dbaf3ead5ea96d34b39aa01a1f239ee7ed632079a71c3c06e56cdb222a53abb",
+      "output_sha256": "78b1fdb6e6a334969768fc173d63c8557259b74372425bd68508d902eefe51f1",
+      "input_marker_locations": 2,
+      "output_marker_locations": 0,
+      "inspected_output_objects": 8,
+      "acroform_present": false,
+      "payload_alias_present": false,
+      "raw_marker_present": false,
+      "page_geometry": {
+        "input": [
+          0.0,
+          0.0,
+          300.0,
+          200.0
+        ],
+        "output": [
+          0.0,
+          0.0,
+          750.0,
+          500.0
+        ]
+      },
+      "selected_region_dark_fraction": {
+        "input": 0.07023809523809524,
+        "output": 0.9831043956043956
+      },
+      "pypdf_version": "6.21.2",
+      "pymupdf_version": "2.0",
+      "scope": "One actual signed public-UI Editor redaction export of a known synthetic NoView form-alias fixture; all decoded serialized objects, text, raw bytes and rendered redaction region checked; physical and other routes remain separate"
+    },
+    {
+      "status": "PASS",
+      "apk_sha256": "7ddc27c03e61dc8d45caa9ccb55ec9df780aa89db5c9cdf50a17033f83199a52",
+      "input_sha256": "fbf749b9b6fcc620329142c4efea751d7b8c5de5edfd19b350cd23a1ec6f12eb",
+      "output_sha256": "bffc0355647f4ad1bb13cc0ab1490245eb19dc13c550455c22243259256b3260",
+      "input_marker_locations": 2,
+      "output_marker_locations": 0,
+      "inspected_output_objects": 8,
+      "acroform_present": false,
+      "payload_alias_present": false,
+      "raw_marker_present": false,
+      "page_geometry": {
+        "input": [
+          0.0,
+          0.0,
+          300.0,
+          200.0
+        ],
+        "output": [
+          0.0,
+          0.0,
+          750.0,
+          500.0
+        ]
+      },
+      "selected_region_dark_fraction": {
+        "input": 0.07023809523809524,
+        "output": 0.9831043956043956
+      },
+      "pypdf_version": "6.21.2",
+      "pymupdf_version": "2.0",
+      "scope": "One actual signed public-UI Editor redaction export of a known synthetic NoView form-alias fixture; all decoded serialized objects, text, raw bytes and rendered redaction region checked; physical and other routes remain separate"
+    }
+  ],
+  "ci_artifact_guard": "REQUIRED",
+  "resulting_source_ci": "PENDING",
+  "page_geometry": "OPEN: separate existing raster point/pixel defect",
+  "release_decision": "HOLD"
+}

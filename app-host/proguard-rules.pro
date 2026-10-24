@@ -15,6 +15,34 @@
 -dontwarn com.fasterxml.jackson.dataformat.**
 -keepattributes *Annotation*,EnclosingMethod,Signature,InnerClasses
 
+# Gson 2.10.1 does not supply the full-mode TypeToken rules. Both editor
+# entrypoints recover Map<Integer, PageModification> from anonymous subclasses.
+# https://google.github.io/gson/Troubleshooting.html#illegalstateexception-typetoken-must-be-created-with-a-type-argument
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# These shared DTOs are reflected by Gson across the host/worker wire. Preserve
+# their field names, constructors and nested collection signatures. Worker JSON
+# validation also reads the result keys literally; broad application keeps are
+# unnecessary. scripts/check_release_gson_contract.py checks the actual DEX.
+-keep class com.pdfchemy.app.logic.PageModification { *; }
+-keep class com.pdfchemy.app.logic.DrawingPoint { *; }
+-keep class com.pdfchemy.app.logic.DrawingPath { *; }
+-keep class com.pdfchemy.app.logic.TextAnnotation { *; }
+-keep class com.pdfchemy.app.logic.StampAnnotation { *; }
+-keep class com.pdfchemy.app.logic.StampType { *; }
+-keep class com.pdfchemy.app.logic.RedactionBox { *; }
+-keep class com.pdfchemy.app.logic.BatesConfig { *; }
+-keep class com.pdfchemy.app.logic.StampConfig { *; }
+-keep class com.pdfchemy.app.logic.HeaderFooterPosition { *; }
+-keep class com.pdfchemy.app.logic.ImageAnalysis { *; }
+-keep class com.pdfchemy.app.logic.ImageValidationStatus { *; }
+-keep class com.pdfchemy.app.logic.PerceivedQualityLoss { *; }
+-keep class com.pdfchemy.app.logic.ImageCompressionResult { *; }
+-keep class com.pdfchemy.app.logic.TextMatchOccurrence { *; }
+-keep class com.pdfchemy.app.logic.FindReplaceSummary { *; }
+-keep class com.pdfchemy.app.logic.EmbeddedImageInfo { *; }
+
 # Bouncy Castle Cryptographic Providers (PKI Digital Signatures)
 -keep class org.bouncycastle.jce.provider.** { *; }
 -keep class org.bouncycastle.jcajce.provider.** { *; }

@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 A = "{http://schemas.android.com/apk/res/android}"
 
@@ -100,6 +101,8 @@ def main():
                            b"Lcom/pdfchemy/app/security/RedactionCountSecurityTest;",
                            b"Lcom/pdfchemy/app/security/FormValueAliasSecurityTest;"):
                 check(marker not in dex, "Instrumentation class leaked into production DEX")
+        from check_release_gson_contract import inspect_apk
+        report["gson_runtime_contract"] = inspect_apk(apk)
         report.update(version="2.1.0 (14)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
     print(json.dumps(report, indent=2))
 
