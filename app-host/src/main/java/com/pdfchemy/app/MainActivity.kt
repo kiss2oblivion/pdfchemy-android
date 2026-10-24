@@ -303,6 +303,7 @@ fun playFeedback(view: android.view.View, isHaptic: Boolean, isSfx: Boolean) {
 
 class MainActivity : AppCompatActivity() {
     private var consentStartupRequested = false
+    private val isMobileAdsInitialized = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun onPostResume() {
         super.onPostResume()
@@ -314,24 +315,47 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeConsentAndAds() {
+    internal fun isUserEntitledToPremium(): Boolean {
+        return try {
+            val masterKey = androidx.security.crypto.MasterKey.Builder(this)
+                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            androidx.security.crypto.EncryptedSharedPreferences.create(
+                this,
+                com.pdfchemy.app.billing.BillingManager.PREFS_NAME,
+                masterKey,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            ).getBoolean(com.pdfchemy.app.billing.BillingManager.KEY_IS_PREMIUM, false)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    internal fun initializeMobileAdsIfPermitted() {
+        if (isUserEntitledToPremium()) {
+            AdManager.clearAd()
+            return
+        }
         val consentInformation = UserMessagingPlatform.getConsentInformation(this)
         if (consentInformation.canRequestAds()) {
-            MobileAds.initialize(this) {
-                AdManager.loadInterstitial(this)
+            if (isMobileAdsInitialized.compareAndSet(false, true)) {
+                MobileAds.initialize(this) {
+                    AdManager.loadInterstitial(this, isPremium = false)
+                }
+            } else {
+                AdManager.loadInterstitial(this, isPremium = false)
             }
+        } else {
+            AdManager.clearAd()
         }
+    }
 
-        val debugSettings = ConsentDebugSettings.Builder(this)
-            .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
-            .addTestDeviceHashedId("TEST-EMULATOR")
-            .build()
+    private fun initializeConsentAndAds() {
+        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        initializeMobileAdsIfPermitted()
 
-        val params = ConsentRequestParameters.Builder()
-            // Uncomment the next line to force the GDPR form for testing
-            // .setConsentDebugSettings(debugSettings)
-            .build()
-
+        val params = ConsentRequestParameters.Builder().build()
         consentInformation.requestConsentInfoUpdate(
             this,
             params,
@@ -342,20 +366,12 @@ class MainActivity : AppCompatActivity() {
                     if (loadAndShowError != null) {
                         Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
                     }
-                    if (consentInformation.canRequestAds()) {
-                        MobileAds.initialize(this) {
-                            AdManager.loadInterstitial(this)
-                        }
-                    }
+                    initializeMobileAdsIfPermitted()
                 }
             },
             { requestConsentError ->
                 Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
-                if (consentInformation.canRequestAds()) {
-                    MobileAds.initialize(this) {
-                        AdManager.loadInterstitial(this)
-                    }
-                }
+                initializeMobileAdsIfPermitted()
             }
         )
     }
@@ -3498,7 +3514,11 @@ fun SettingsScreen(
                     TextButton(onClick = {
                         showPrivacyPolicyDialog = false
                         UserMessagingPlatform.showPrivacyOptionsForm(activity) { error ->
-                            if (error != null) Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+                            if (error != null) {
+                                Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+                            } else {
+                                (activity as? MainActivity)?.initializeMobileAdsIfPermitted()
+                            }
                         }
                     }) { Text(stringResource(R.string.privacy_choices)) }
                 }
@@ -4401,7 +4421,8 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val isPremium by viewModel.isPremium.collectAsState()
     val price by viewModel.premiumPrice.collectAsState()
     val billingUi by viewModel.billingUi.collectAsState()
-    val context = LocalContext.current as android.app.Activity
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         PremiumTopAppBar(title = stringResource(R.string.premium_title), onBack = onBack)
@@ -4427,7 +4448,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = if (isPremium) "You are a Premium User!" else "Support PDFchemy",
+                text = if (isPremium) stringResource(R.string.premium_title) else stringResource(R.string.desc_go_premium),
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center
             )
@@ -4435,32 +4456,43 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             
             if (isPremium) {
                 Text(
-                    text = "Thank you for supporting our mission of privacy-first, offline document tools. All ads have been permanently removed.",
+                    text = stringResource(R.string.premium_thanks),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text(
-                    text = "Unlock the ultimate offline PDF experience.\n\n• No Banner Ads\n• No Interstitial Ads\n• 100% Offline Privacy\n• One-time lifetime purchase",
+                    text = stringResource(R.string.premium_features),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = { viewModel.purchasePremium(context) },
+                    onClick = { if (activity != null) viewModel.purchasePremium(activity) },
                     enabled = billingUi.canPurchase,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text(
-                        text = if (price.isNotEmpty()) "Unlock Lifetime for $price" else "Loading price...",
+                        text = if (price.isNotEmpty()) "Unlock Lifetime · $price" else stringResource(R.string.label_preview_loading),
                         style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { viewModel.restorePurchases() },
+                    enabled = !billingUi.loading,
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text(
+                        text = "Restore Purchases",
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Text(billingUi.message, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
                 if (billingUi.loading) CircularProgressIndicator(Modifier.padding(12.dp))
-                if (billingUi.canRetry) TextButton(onClick = { viewModel.retryBilling(context) }) { Text("Retry Google Play") }
+                if (billingUi.canRetry) TextButton(onClick = { viewModel.retryBilling(context) }) { Text(stringResource(R.string.action_retry)) }
             }
         }
     }
