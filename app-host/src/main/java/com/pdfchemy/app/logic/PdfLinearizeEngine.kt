@@ -35,6 +35,12 @@ object PdfLinearizeEngine {
         try {
             val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "LINEARIZE_OPTIMIZE", sourcePdfUri, destPdfUri, "{}")
             
+            // Independently verify linearized output before reporting success
+            val verifyStatus = checkLinearized(context, destPdfUri).getOrNull()
+            if (verifyStatus?.isLinearized != true) {
+                throw UnsupportedOperationException("Linearization (Fast Web View generation) is not supported by the local engine")
+            }
+
             val historyRepo = HistoryRepository(context)
             historyRepo.addHistoryItem(destPdfUri, FileUtils.getFileName(context, destPdfUri) ?: "web_optimized.pdf", "Fast Web View Stream Optimizer")
             

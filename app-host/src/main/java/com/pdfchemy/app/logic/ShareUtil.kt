@@ -13,6 +13,11 @@ object ShareUtil {
         val shareUris = uris.map { uri ->
             DocumentActions.getShareableContentUri(context, uri)
         }
+        launchShareIntent(context, shareUris, title)
+    }
+
+    fun launchShareIntent(context: Context, shareUris: List<Uri>, title: String = "Share PDF") {
+        if (shareUris.isEmpty()) return
         val types = shareUris.map { FileUtils.getMimeType(context, it) }.distinct()
         val mimeType = types.singleOrNull() ?: "*/*"
 

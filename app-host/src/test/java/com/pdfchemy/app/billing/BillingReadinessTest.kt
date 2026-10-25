@@ -57,6 +57,7 @@ class BillingReadinessTest {
             manager.retry()
             val details = mockk<ProductDetails>()
             every { details.productId } returns BillingManager.PREMIUM_PRODUCT_ID
+            every { details.oneTimePurchaseOfferDetails } returns null
             val found = mockk<QueryProductDetailsResult>()
             every { found.productDetailsList } returns listOf(details)
             products.captured.onProductDetailsResponse(result(BillingClient.BillingResponseCode.OK), found)
@@ -225,5 +226,194 @@ class BillingReadinessTest {
             unmockkStatic(BillingClient::class)
         }
     }
+
+    @Test fun queryProductDetailsUpdatesLocalizedPriceFromOneTimePurchaseOffer() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences("billing-price-test", 0)
+        prefs.edit().clear().commit()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val builder = mockk<BillingClient.Builder>()
+        val client = mockk<BillingClient>()
+        val setup = slot<BillingClientStateListener>()
+        val products = slot<ProductDetailsResponseListener>()
+        mockkStatic(BillingClient::class)
+        mockkStatic(EncryptedSharedPreferences::class)
+        mockkConstructor(MasterKey.Builder::class)
+        try {
+            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
+            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
+            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { BillingClient.newBuilder(any()) } returns builder
+            every { builder.setListener(any()) } returns builder
+            every { builder.enablePendingPurchases(any()) } returns builder
+            every { builder.build() } returns client
+            every { client.isReady } returns true
+            every { client.startConnection(capture(setup)) } just Runs
+            every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
+            every { client.queryProductDetailsAsync(any(), capture(products)) } just Runs
+
+            val manager = BillingManager(context, scope)
+            setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
+
+            val details = mockk<ProductDetails>()
+            every { details.productId } returns BillingManager.PREMIUM_PRODUCT_ID
+            val offer = mockk<ProductDetails.OneTimePurchaseOfferDetails>()
+            every { offer.formattedPrice } returns "€4.99"
+            every { details.oneTimePurchaseOfferDetails } returns offer
+
+            val queryResult = mockk<QueryProductDetailsResult>()
+            every { queryResult.productDetailsList } returns listOf(details)
+
+            products.captured.onProductDetailsResponse(result(BillingClient.BillingResponseCode.OK), queryResult)
+
+            assertEquals("Localized formatted price should update from ProductDetails offer", "€4.99", manager.premiumPrice.value)
+            assertTrue(manager.billingUi.value.canPurchase)
+            assertEquals("One-time purchase through Google Play.", manager.billingUi.value.message)
+        } finally {
+            scope.cancel()
+            unmockkConstructor(MasterKey.Builder::class)
+            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkStatic(BillingClient::class)
+        }
+    }
+
+    @Test fun restorePurchasesRestoresActivePurchaseAndUpdatesUiState() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences("billing-restore-test", 0)
+        prefs.edit().clear().commit()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val builder = mockk<BillingClient.Builder>()
+        val client = mockk<BillingClient>()
+        val setup = slot<BillingClientStateListener>()
+        val purchasesListener = slot<PurchasesResponseListener>()
+        mockkStatic(BillingClient::class)
+        mockkStatic(EncryptedSharedPreferences::class)
+        mockkConstructor(MasterKey.Builder::class)
+        try {
+            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
+            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
+            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { BillingClient.newBuilder(any()) } returns builder
+            every { builder.setListener(any()) } returns builder
+            every { builder.enablePendingPurchases(any()) } returns builder
+            every { builder.build() } returns client
+            every { client.isReady } returns true
+            every { client.startConnection(capture(setup)) } just Runs
+            every { client.queryProductDetailsAsync(any(), any()) } just Runs
+            every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
+
+            val manager = BillingManager(context, scope)
+            setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
+
+            assertFalse(manager.isPremium.value)
+
+            // Trigger user-initiated restore
+            manager.restorePurchases()
+
+            val activePurchase = mockk<Purchase>()
+            every { activePurchase.purchaseState } returns Purchase.PurchaseState.PURCHASED
+            every { activePurchase.products } returns listOf(BillingManager.PREMIUM_PRODUCT_ID)
+            every { activePurchase.isAcknowledged } returns true
+
+            purchasesListener.captured.onQueryPurchasesResponse(result(BillingClient.BillingResponseCode.OK), listOf(activePurchase))
+
+            assertTrue("Active purchase must be restored as Premium", manager.isPremium.value)
+            assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
+            assertTrue(manager.billingUi.value.message.contains("restored successfully"))
+        } finally {
+            scope.cancel()
+            unmockkConstructor(MasterKey.Builder::class)
+            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkStatic(BillingClient::class)
+        }
+    }
+
+    @Test fun restorePurchasesReportsNoPurchasesWhenListIsEmpty() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences("billing-restore-empty-test", 0)
+        prefs.edit().clear().commit()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val builder = mockk<BillingClient.Builder>()
+        val client = mockk<BillingClient>()
+        val setup = slot<BillingClientStateListener>()
+        val purchasesListener = slot<PurchasesResponseListener>()
+        mockkStatic(BillingClient::class)
+        mockkStatic(EncryptedSharedPreferences::class)
+        mockkConstructor(MasterKey.Builder::class)
+        try {
+            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
+            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
+            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { BillingClient.newBuilder(any()) } returns builder
+            every { builder.setListener(any()) } returns builder
+            every { builder.enablePendingPurchases(any()) } returns builder
+            every { builder.build() } returns client
+            every { client.isReady } returns true
+            every { client.startConnection(capture(setup)) } just Runs
+            every { client.queryProductDetailsAsync(any(), any()) } just Runs
+            every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
+
+            val manager = BillingManager(context, scope)
+            setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
+
+            manager.restorePurchases()
+
+            purchasesListener.captured.onQueryPurchasesResponse(result(BillingClient.BillingResponseCode.OK), emptyList())
+
+            assertFalse(manager.isPremium.value)
+            assertTrue(manager.billingUi.value.message.contains("No previous purchases found"))
+        } finally {
+            scope.cancel()
+            unmockkConstructor(MasterKey.Builder::class)
+            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkStatic(BillingClient::class)
+        }
+    }
+
+    @Test fun pendingUpdateDoesNotRevokeAlreadyEntitledUser() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val prefs = context.getSharedPreferences("billing-pending-entitled-test", 0)
+        prefs.edit().putBoolean(BillingManager.KEY_IS_PREMIUM, true).commit()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val builder = mockk<BillingClient.Builder>()
+        val client = mockk<BillingClient>()
+        val setup = slot<BillingClientStateListener>()
+        mockkStatic(BillingClient::class)
+        mockkStatic(EncryptedSharedPreferences::class)
+        mockkConstructor(MasterKey.Builder::class)
+        try {
+            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
+            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
+            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { BillingClient.newBuilder(any()) } returns builder
+            every { builder.setListener(any()) } returns builder
+            every { builder.enablePendingPurchases(any()) } returns builder
+            every { builder.build() } returns client
+            every { client.isReady } returns true
+            every { client.startConnection(capture(setup)) } just Runs
+            every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
+            every { client.queryProductDetailsAsync(any(), any()) } just Runs
+
+            val manager = BillingManager(context, scope)
+            assertTrue("Initial entitlement from securePrefs should be active", manager.isPremium.value)
+
+            val pendingPurchase = mockk<Purchase>()
+            every { pendingPurchase.purchaseState } returns Purchase.PurchaseState.PENDING
+            every { pendingPurchase.products } returns listOf(BillingManager.PREMIUM_PRODUCT_ID)
+
+            // Delta update receives pending purchase
+            manager.onPurchasesUpdated(result(BillingClient.BillingResponseCode.OK), mutableListOf(pendingPurchase))
+
+            // Invariant: Delta pending purchase must NOT revoke existing entitlement!
+            assertTrue("Pending delta update must not revoke existing Premium entitlement!", manager.isPremium.value)
+            assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
+        } finally {
+            scope.cancel()
+            unmockkConstructor(MasterKey.Builder::class)
+            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkStatic(BillingClient::class)
+        }
+    }
+
     private fun result(code: Int) = BillingResult.newBuilder().setResponseCode(code).build()
 }

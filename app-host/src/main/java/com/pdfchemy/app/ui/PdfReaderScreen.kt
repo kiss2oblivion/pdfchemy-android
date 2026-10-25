@@ -441,7 +441,17 @@ private fun PdfReaderDocument(
                                 showMore = false
                             }, enabled = totalPages > 0)
                             DropdownMenuItem(text = { Text("Share") }, onClick = {
-                                runCatching { com.pdfchemy.app.logic.DocumentActions.share(context, selectedPdfUri!!, fileName) }.onFailure { viewModel.notifyError("No sharing app is available. Save a copy and try again.") }; showMore = false
+                                val uriToShare = selectedPdfUri
+                                if (uriToShare != null) {
+                                    coroutineScope.launch {
+                                        runCatching {
+                                            com.pdfchemy.app.logic.DocumentActions.shareAsync(context, uriToShare, fileName)
+                                        }.onFailure {
+                                            viewModel.notifyError("No sharing app is available. Save a copy and try again.")
+                                        }
+                                    }
+                                }
+                                showMore = false
                             }, enabled = totalPages > 0)
                             DropdownMenuItem(text = { Text("Print") }, onClick = {
                                 runCatching { com.pdfchemy.app.logic.DocumentActions.print(context, selectedPdfUri!!, fileName) }.onFailure { viewModel.notifyError("Printing is unavailable. Check your print service and try again.") }; showMore = false
