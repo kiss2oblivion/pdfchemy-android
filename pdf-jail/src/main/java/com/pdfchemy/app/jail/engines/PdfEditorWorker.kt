@@ -13,7 +13,6 @@ import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import com.tom_roush.pdfbox.util.Matrix
 import kotlinx.coroutines.Dispatchers
@@ -103,11 +102,27 @@ object PdfEditorWorker {
                             finally { overlay.recycle() }
 
                             val pdImage = LosslessFactory.createFromImage(document, baseBmp)
-                            page.rotation = if (mod.rotationDegrees != 0) (mod.rotationDegrees % 360 + 360) % 360 else 0
-                            page.cropBox = null
-                            page.mediaBox = PDRectangle(finalW.toFloat(), finalH.toFloat())
+                            val crop = page.cropBox ?: page.mediaBox
+                            val originalRotation = (page.rotation % 360 + 360) % 360
+                            // PdfRenderer already applied the crop and original rotation.
+                            // Map its display-plane pixels back into PDF points, retaining
+                            // both boxes and their offsets (including navigation coordinates).
                             RedactionResources.replacePageContent(document!!, page) { cs ->
-                                cs.drawImage(pdImage, 0f, 0f, finalW.toFloat(), finalH.toFloat())
+                                cs.saveGraphicsState()
+                                val x = crop.lowerLeftX
+                                val y = crop.lowerLeftY
+                                val w = crop.width
+                                val h = crop.height
+                                when (originalRotation) {
+                                    90 -> { cs.transform(Matrix(0f, 1f, -1f, 0f, x + w, y)); cs.drawImage(pdImage, 0f, 0f, h, w) }
+                                    180 -> { cs.transform(Matrix(-1f, 0f, 0f, -1f, x + w, y + h)); cs.drawImage(pdImage, 0f, 0f, w, h) }
+                                    270 -> { cs.transform(Matrix(0f, -1f, 1f, 0f, x, y + h)); cs.drawImage(pdImage, 0f, 0f, h, w) }
+                                    else -> cs.drawImage(pdImage, x, y, w, h)
+                                }
+                                cs.restoreGraphicsState()
+                            }
+                            if (mod.rotationDegrees != 0) {
+                                page.rotation = ((originalRotation + mod.rotationDegrees) % 360 + 360) % 360
                             }
                             rasterized = true
                         } catch (e: Exception) {

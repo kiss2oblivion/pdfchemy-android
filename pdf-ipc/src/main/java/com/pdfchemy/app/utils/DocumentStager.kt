@@ -568,6 +568,9 @@ object DocumentStager {
             }
         } catch (error: Throwable) {
             result?.takeIf { it.uri != borrowedUri }?.let(::release)
+            // Closing a cancelled input can unblock read() with IOException.
+            // Preserve cancellation without masking failures of an active job.
+            if (error is java.io.IOException) job?.ensureActive()
             throw error
         }
     }
@@ -601,6 +604,8 @@ object DocumentStager {
                 }
                 it.lease.close()
             }
+            // A close-induced read failure must not fail the cancelled job's parent.
+            if (error is java.io.IOException) job?.ensureActive()
             throw error
         }
     }
