@@ -41,15 +41,24 @@ class PdfLinearizeEngineTest {
         assertTrue(checkRes.isSuccess)
         val status = checkRes.getOrThrow()
         assertEquals(2, status.pageCount)
+        assertFalse("Sample document should not be reported as linearized", status.isLinearized)
     }
 
     @Test
-    fun testOptimizeFastWebView() = runBlocking {
+    fun testOptimizeFastWebViewFailsExplicitlyWhenLinearizationUnsupported() = runBlocking {
         val destFile = File(context.cacheDir, "optimized_stream.pdf")
+        if (destFile.exists()) destFile.delete()
         val destUri = Uri.fromFile(destFile)
 
         val optRes = PdfLinearizeEngine.optimizeFastWebView(context, samplePdfUri, destUri)
-        assertTrue(optRes.isSuccess)
-        assertTrue(destFile.exists() && destFile.length() > 0)
+        // Must never publish an ordinary unlinearized save as successful linearization
+        if (optRes.isSuccess) {
+            val checkOut = PdfLinearizeEngine.checkLinearized(context, destUri).getOrThrow()
+            assertTrue("If optimize reports success, output must actually be linearized", checkOut.isLinearized)
+        } else {
+            val ex = optRes.exceptionOrNull()
+            assertTrue("Expected failure explaining unsupported linearization, got: $ex",
+                ex is UnsupportedOperationException || ex?.message?.contains("not supported", ignoreCase = true) == true)
+        }
     }
 }

@@ -15,10 +15,7 @@ object PdfLinearizeEngineWorker {
             val fis = FileInputStream(sourceFd.fileDescriptor)
             val currentPos = android.system.Os.lseek(sourceFd.fileDescriptor, 0, android.system.OsConstants.SEEK_CUR)
             
-            val headerBytes = ByteArray(2048)
-            val bytesRead = fis.read(headerBytes)
-            val headerString = if (bytesRead > 0) String(headerBytes, 0, bytesRead, Charsets.US_ASCII) else ""
-            val isLinear = headerString.contains("/Linearized")
+            val isLinear = isLinearizedStream(sourceFd)
             
             // Restore channel position to read document
             android.system.Os.lseek(sourceFd.fileDescriptor, currentPos, android.system.OsConstants.SEEK_SET)
@@ -34,6 +31,29 @@ object PdfLinearizeEngineWorker {
         }
     }
 
+    internal fun isLinearizedStream(fd: ParcelFileDescriptor): Boolean {
+        val currentPos = android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_CUR)
+        return try {
+            android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+            val fis = FileInputStream(fd.fileDescriptor)
+            val headerBytes = ByteArray(2048)
+            val bytesRead = fis.read(headerBytes)
+            val headerString = if (bytesRead > 0) String(headerBytes, 0, bytesRead, Charsets.US_ASCII) else ""
+            headerString.contains("/Linearized")
+        } finally {
+            android.system.Os.lseek(fd.fileDescriptor, currentPos, android.system.OsConstants.SEEK_SET)
+        }
+    }
+
+    internal fun isLinearizedFile(file: File): Boolean {
+        return file.inputStream().use { stream ->
+            val headerBytes = ByteArray(2048)
+            val bytesRead = stream.read(headerBytes)
+            val headerString = if (bytesRead > 0) String(headerBytes, 0, bytesRead, Charsets.US_ASCII) else ""
+            headerString.contains("/Linearized")
+        }
+    }
+
     fun optimizeFastWebView(sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
         try {
@@ -43,6 +63,13 @@ object PdfLinearizeEngineWorker {
             val tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("linear_worker", ".pdf")
             try {
                 com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { document.save(it) }
+
+                // Independently validate that the output is actually linearized before publishing.
+                val isLinear = isLinearizedFile(tempFile)
+                if (!isLinear) {
+                    throw UnsupportedOperationException("Linearization (Fast Web View generation) is not supported by the local engine")
+                }
+
                 val outBytes = tempFile.length()
                 com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { inp ->
                     FileOutputStream(destFd.fileDescriptor).use { out ->
