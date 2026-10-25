@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.logic.PageModification
+import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
@@ -150,11 +151,12 @@ object PdfEditorWorker {
 
                     val dispW = if (rot == 90 || rot == 270) pageHeightPts else pageWidthPts
                     val dispH = if (rot == 90 || rot == 270) pageWidthPts else pageHeightPts
+                    val (overlayWidth, overlayHeight) = SecurityLimits.safeRenderSize(dispW.toDouble(), dispH.toDouble())
 
                     val overlayBmp = renderAnnotationOverlayBitmap(
                         mod = mod,
-                        targetWidth = (dispW * 2).toInt(),
-                        targetHeight = (dispH * 2).toInt()
+                        targetWidth = overlayWidth,
+                        targetHeight = overlayHeight
                     )
 
                     if (overlayBmp != null) {
