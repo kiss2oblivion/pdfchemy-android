@@ -14,15 +14,23 @@ import java.io.File
 import java.io.IOException
 
 /** Worker capabilities and host-only commit snapshots never name a user destination. */
-class HostOutputTransaction(private val context: Context, targets: List<Uri>) : Closeable {
+class HostOutputTransaction(
+    private val context: Context,
+    targets: List<Uri>,
+    storage: BoundedWorkerStorage? = null
+) : Closeable {
+    private val ownsStorage = storage == null
+    private val storage = storage ?: BoundedWorkerStorage(context)
     private val targets = targets.toList()
+    private val producers = mutableListOf<BoundedWorkerStorage.Sink>()
     private val temporary = mutableListOf<ParcelFileDescriptor>()
     private val snapshots = mutableListOf<ParcelFileDescriptor>()
     private var sizes = emptyList<Long>()
     private var validated = false
     private var commitStarted = false
     private var closed = false
-    val workerDescriptors: List<ParcelFileDescriptor> get() = temporary.toList()
+    val workerDescriptors: List<ParcelFileDescriptor> get() = producers.map { it.writer }
+    fun releaseWorkerDescriptors() { producers.forEach { runCatching { it.writer.close() } } }
     val validatedBytes: Long get() {
         check(validated && !closed)
         return sizes.sum()
@@ -31,7 +39,7 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
-        try { repeat(targets.size) { temporary.add(anonymousFile()) } }
+        try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
 
@@ -84,13 +92,19 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
     suspend fun validateAndSnapshot(result: String) {
         check(!closed && !validated && !commitStarted)
         validateResult(result)
+        require(producers.size == targets.size) { "Output count mismatch" }
+        releaseWorkerDescriptors()
+        producers.forEach { producer ->
+            currentCoroutineContext().ensureActive()
+            temporary.add(storage.snapshotCancellable(producer.id))
+        }
         require(temporary.size == targets.size) { "Output count mismatch" }
         sizes = temporary.map(::size)
         require(sizes.sum() <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate output quota exceeded" }
         val buffer = ByteArray(64 * 1024)
         // Snapshot every output before opening even the first real destination.
-        // The worker can still hold/seek/write its FDs; pread uses explicit offsets
-        // and these new snapshot capabilities are never sent to that process.
+        // Every pipe has reached EOF; producer readback is read-only. These new
+        // commit snapshots are host-only and are never sent to another process.
         for (index in temporary.indices) {
             currentCoroutineContext().ensureActive()
             val snapshot = anonymousFile().also(snapshots::add)
@@ -171,6 +185,8 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
     override fun close() {
         closed = true
         (snapshots + temporary).forEach { runCatching { it.close() } }
+        releaseWorkerDescriptors()
         snapshots.clear(); temporary.clear()
+        if (ownsStorage) storage.close()
     }
 }

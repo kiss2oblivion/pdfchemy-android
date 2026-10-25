@@ -132,7 +132,7 @@ class HostOutputCommitSecurityTest {
                 withTimeout(15_000) { while (state(target).getInt("opens") == 0) delay(25) }
                 // Provider open proves all host-only snapshots were made first.
                 assertEquals("existing destination", String(state(target).getByteArray("bytes")!!))
-                assertTrue(probe(worker, true) > 0)
+                assertTrue("Retained output must be read-only", runCatching { probe(worker, true) }.isFailure)
                 context.contentResolver.call(target, "release", target.lastPathSegment, null)
                 withTimeout(15_000) { request.await() }
                 assertEquals("original worker bytes", String(bytes(target)))
@@ -151,11 +151,16 @@ class HostOutputCommitSecurityTest {
 
     @Test fun aggregateOverQuotaIsRejectedBeforeOpeningAnyDestination() = runBlocking {
         val targets = listOf(fixture(), fixture())
-        HostOutputTransaction(context, targets).use { transaction ->
-            transaction.workerDescriptors.forEach { Os.ftruncate(it.fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES / 2 + 1) }
+        BoundedWorkerStorage(context, 32 * 1024L, 32 * 1024L, 64 * 1024L).use { storage ->
+          HostOutputTransaction(context, targets, storage).use { transaction ->
+            transaction.workerDescriptors.forEach { fd ->
+                runCatching { repeat(4) { Os.write(fd.fileDescriptor, ByteArray(8192), 0, 8192) } }
+            }
             val result = runCatching { transaction.validateAndSnapshot("{\"success\":true}") }
-            assertTrue(result.exceptionOrNull()?.message.orEmpty().contains("Aggregate output quota"))
+            assertTrue(result.isFailure)
+            assertTrue(storage.peakStoredBytes <= 32 * 1024L)
             targets.forEach(::untouched)
+          }
         }
     }
 
@@ -174,16 +179,30 @@ class HostOutputCommitSecurityTest {
         }
     }
 
+    @Test fun retainedPipeWriterFailsClosedBeforeOpeningDestination() = runBlocking {
+        val target = fixture()
+        BoundedWorkerStorage(context, 4096, 4096, 8192, timeoutMs = 1_000).use { storage ->
+            HostOutputTransaction(context, listOf(target), storage).use { transaction ->
+                transaction.workerDescriptors.single().dup().use { retained ->
+                    write(retained, "unfinished")
+                    assertTrue(runCatching { transaction.validateAndSnapshot("true") }.isFailure)
+                    assertTrue(runCatching { transaction.commit() }.isFailure)
+                    untouched(target)
+                }
+            }
+        }
+    }
+
     @Test fun snapshotIgnoresWorkerFileOffsetAndCommitCannotBeRepeated() = runBlocking {
         val target = fixture()
         val transaction = HostOutputTransaction(context, listOf(target))
         val workerFd = transaction.workerDescriptors.single()
         try {
             write(workerFd, "original")
-            Os.lseek(workerFd.fileDescriptor, 0, OsConstants.SEEK_END)
+            assertTrue(runCatching { Os.lseek(workerFd.fileDescriptor, 0, OsConstants.SEEK_END) }.isFailure)
             transaction.validateAndSnapshot("true")
-            Os.ftruncate(workerFd.fileDescriptor, 0)
-            write(workerFd, "changed")
+            assertTrue(runCatching { Os.ftruncate(workerFd.fileDescriptor, 0) }.isFailure)
+            assertTrue(runCatching { write(workerFd, "changed") }.isFailure)
             transaction.commit()
             assertEquals("original", String(bytes(target)))
             assertTrue(runCatching { transaction.commit() }.isFailure)

@@ -12,7 +12,13 @@ import java.io.OutputStream
 object CapabilityIo {
     fun fd(file: File): ParcelFileDescriptor {
         require(file.path.startsWith("/proc/self/fd/")) { "Descriptor capability required" }
-        return ParcelFileDescriptor.fromFd(file.name.toInt())
+        val number = file.name.toInt()
+        return JailScratch.readDescriptor(number) ?: ParcelFileDescriptor.fromFd(number)
+    }
+    fun writableFd(file: File): ParcelFileDescriptor {
+        require(file.path.startsWith("/proc/self/fd/")) { "Descriptor capability required" }
+        val number = file.name.toInt()
+        return JailScratch.writeDescriptor(number) ?: ParcelFileDescriptor.fromFd(number)
     }
     fun input(file: File): InputStream = fd(file).use { input(it.fileDescriptor) }
     fun input(path: String): InputStream = input(File(path))
@@ -23,10 +29,11 @@ object CapabilityIo {
             return ParcelFileDescriptor.AutoCloseInputStream(duplicate)
         } catch (error: Exception) { duplicate.close(); throw error }
     }
-    fun output(file: File): OutputStream = fd(file).use { boundedFileOutput(it.fileDescriptor) }
+    fun output(file: File): OutputStream = boundedFileOutput(file)
     fun input(context: Context, uri: Uri): InputStream = input(File(requireNotNull(uri.path)))
     fun output(context: Context, uri: Uri): OutputStream = output(File(requireNotNull(uri.path)))
-    fun descriptor(context: Context, uri: Uri, mode: String): ParcelFileDescriptor = fd(File(requireNotNull(uri.path)))
+    fun descriptor(context: Context, uri: Uri, mode: String): ParcelFileDescriptor =
+        if (mode.contains('w')) writableFd(File(requireNotNull(uri.path))) else fd(File(requireNotNull(uri.path)))
 }
 
 fun capabilityInput(file: File) = CapabilityIo.input(file)
