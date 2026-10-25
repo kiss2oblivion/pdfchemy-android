@@ -16,6 +16,7 @@ import android.graphics.Canvas
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.utils.AppLogger
+import com.pdfchemy.app.utils.ResourceTransferOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,10 +37,21 @@ object PdfEditor {
         leftIndex: Int,
         rightIndex: Int,
         targetWidth: Int = 720
-    ): DualPageBitmaps = withContext(Dispatchers.IO) {
-        val leftBmp = renderPageBitmap(context, uri, leftIndex, targetWidth)
-        val rightBmp = if (rightIndex >= 0) renderPageBitmap(context, uri, rightIndex, targetWidth) else null
-        DualPageBitmaps(leftPage = leftBmp, rightPage = rightBmp)
+    ): DualPageBitmaps {
+        val recycle: (Bitmap) -> Unit = { if (!it.isRecycled) it.recycle() }
+        // Keep ownership outside IO until the caller actually resumes. A later
+        // render failure or prompt cancellation must also reclaim earlier pages.
+        return ResourceTransferOwner(recycle).use { left ->
+            ResourceTransferOwner(recycle).use { right ->
+                withContext(Dispatchers.IO) {
+                    renderPageBitmap(context, uri, leftIndex, targetWidth)?.let(left::stage)
+                    if (rightIndex >= 0) {
+                        renderPageBitmap(context, uri, rightIndex, targetWidth)?.let(right::stage)
+                    }
+                }
+                DualPageBitmaps(leftPage = left.commit(), rightPage = right.commit())
+            }
+        }
     }
 
     suspend fun exportModifiedPdf(

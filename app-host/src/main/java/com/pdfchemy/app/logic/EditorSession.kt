@@ -35,7 +35,9 @@ class EditorSession(
      * True if the document has modifications compared to its baseline state.
      */
     val isDirty: Boolean
-        get() = currentModifications != baselineModifications && currentModifications.values.any { it.hasChanges }
+        // Default page entries are equivalent to absence, on either side of a save.
+        get() = currentModifications.filterValues { it.hasChanges } !=
+            baselineModifications.filterValues { it.hasChanges }
 
     fun getModifications(): Map<Int, PageModification> = currentModifications
 
