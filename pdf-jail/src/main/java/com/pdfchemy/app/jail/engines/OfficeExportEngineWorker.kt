@@ -41,7 +41,7 @@ object OfficeExportEngineWorker {
                 try { doc?.close() } catch (_: Exception) {}
             }
             
-            val outSize = targetFd.statSize
+            val outSize = com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor)
             val obj = JSONObject()
             obj.put("success", true)
             obj.put("pageCount", pageCount)
@@ -74,7 +74,7 @@ object OfficeExportEngineWorker {
                 try { doc?.close() } catch (_: Exception) {}
             }
             
-            val outSize = targetFd.statSize
+            val outSize = com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor)
             val obj = JSONObject()
             obj.put("success", true)
             obj.put("pageCount", pageCount)
@@ -145,7 +145,7 @@ object OfficeExportEngineWorker {
                 slideImages.forEach { it.delete() }
             }
             
-            val outSize = targetFd.statSize
+            val outSize = com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor)
             val obj = JSONObject()
             obj.put("success", true)
             obj.put("pageCount", pageCount)

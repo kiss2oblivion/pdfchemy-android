@@ -16,6 +16,7 @@ class PdfJailService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val gate = WorkerGate { Process.killProcess(Process.myPid()) }
     @Volatile private var debugOutput: ParcelFileDescriptor? = null
+    @Volatile private var debugOutputBytes = 0L
 
     private fun submit(
         operationId: Long,
@@ -55,7 +56,7 @@ class PdfJailService : Service() {
                 JailScratch.begin(scratchBinder, targets)
                 sources.indices.forEach { StagedIdentity.verifyAndRewind(sources[it], hashes[it], sizes[it]) }
                 result = SecurityLimits.enforceResultSize(task())
-                require(targets.sumOf { it.statSize.coerceAtLeast(0) } <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate output storage quota exceeded" }
+                require(targets.sumOf { JailScratch.outputSize(it.fileDescriptor) } <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate output storage quota exceeded" }
                 if (result.trimStart().startsWith("{")) {
                     val response = org.json.JSONObject(result)
                     check(!response.has("error") && (!response.has("success") || response.optBoolean("success")) && (!response.has("isSuccess") || response.optBoolean("isSuccess"))) { response.optString("error", "Operation failed") }
@@ -121,13 +122,15 @@ class PdfJailService : Service() {
             check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
             val fd = debugOutput
             if (fd == null) { callback.onSuccess(0); return }
-            if (rewrite) {
+            try {
+              if (rewrite) {
                 android.system.Os.ftruncate(fd.fileDescriptor, 0)
                 android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
                 val bytes = "late worker mutation".toByteArray()
                 android.system.Os.write(fd.fileDescriptor, bytes, 0, bytes.size)
-            }
-            callback.onSuccess(fd.statSize)
+              }
+              callback.onSuccess(if (fd.statSize >= 0) fd.statSize else debugOutputBytes)
+            } catch (error: Exception) { callback.onFailure(1, error.toString()) }
         }
 
         override fun compressPdf(
@@ -176,7 +179,7 @@ class PdfJailService : Service() {
                 val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
                 val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(modificationsJson, type) ?: emptyMap()
                 check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, sourceFd, targetFd, modifications))
-                org.json.JSONObject().put("size", targetFd.statSize).toString()
+                org.json.JSONObject().put("size", JailScratch.outputSize(targetFd.fileDescriptor)).toString()
             }
         }
 
@@ -198,7 +201,8 @@ class PdfJailService : Service() {
                     return@submit "{\"success\":true,\"duplicateSuccess\":true}"
                 }
                 if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && engineName == "DEBUG_UNTRUSTED_OUTPUT_OVERFLOW") {
-                    android.system.Os.ftruncate(requireNotNull(targetFd).fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES + 1)
+                    try { android.system.Os.ftruncate(requireNotNull(targetFd).fileDescriptor, SecurityLimits.MAX_OUTPUT_BYTES + 1) }
+                    catch (error: android.system.ErrnoException) { throw SecurityException("Output storage quota rejects sparse growth", error) }
                     callback.onSuccess("{\"success\":true}")
                     while (true) Thread.sleep(1000)
                 }
@@ -282,7 +286,7 @@ class PdfJailService : Service() {
                 val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
                 val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(paramsJson, type)
                 check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, requireNotNull(sourceFd), requireNotNull(targetFd), modifications))
-                org.json.JSONObject().put("size", requireNotNull(targetFd).statSize).toString()
+                org.json.JSONObject().put("size", JailScratch.outputSize(requireNotNull(targetFd).fileDescriptor)).toString()
             }
             "DEBUG_IDENTITY" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); org.json.JSONObject().put("pid", Process.myPid()).put("uid", Process.myUid()).toString() }
             "DEBUG_FAIL" -> { check(com.pdfchemy.pdfjail.BuildConfig.DEBUG); error("Deliberate admitted engine failure") }
@@ -291,6 +295,7 @@ class PdfJailService : Service() {
             "DEBUG_OUTPUT_BLOCK" -> {
                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
                 boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("partial".toByteArray()) }
+                debugOutputBytes = JailScratch.outputSize(targetFd.fileDescriptor)
                 debugOutput?.close(); debugOutput = targetFd.dup()
                 while (true) Thread.sleep(1000)
                 error("unreachable")
@@ -298,7 +303,8 @@ class PdfJailService : Service() {
             "DEBUG_RETAIN_OUTPUT" -> {
                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
                 boundedFileOutput(requireNotNull(targetFd).fileDescriptor).use { it.write("original worker bytes".toByteArray()) }
-                debugOutput?.close(); debugOutput = targetFd.dup()
+                debugOutput?.close()
+                debugOutput = CapabilityIo.fd(java.io.File("/proc/self/fd/${targetFd.fd}"))
                 "{\"success\":true}"
             }
             "DEBUG_OUTPUT_OVERFLOW" -> {
@@ -312,15 +318,39 @@ class PdfJailService : Service() {
             }
             "DEBUG_SCRATCH" -> {
                 check(com.pdfchemy.pdfjail.BuildConfig.DEBUG)
+                if (org.json.JSONObject(paramsJson).optBoolean("rawOutput")) {
+                    val fd = requireNotNull(targetFd).fileDescriptor
+                    check(android.system.OsConstants.S_ISFIFO(android.system.Os.fstat(fd).st_mode))
+                    try {
+                        val bytes = ByteArray(8192)
+                        repeat(32) {
+                            var offset = 0
+                            while (offset < bytes.size) offset += android.system.Os.write(fd, bytes, offset, bytes.size - offset)
+                        }
+                    } catch (error: android.system.ErrnoException) {
+                        throw SecurityException("Raw storage producer uid=${Process.myUid()} rejected", error)
+                    }
+                    error("Raw producer escaped host quota")
+                }
                 val file = JailScratch.createTempFile("probe_", ".tmp")
+                boundedFileOutput(file).use { it.write("scratch".toByteArray()) }
                 com.pdfchemy.app.jail.CapabilityIo.fd(file).use { fd ->
-                    com.pdfchemy.app.jail.boundedFileOutput(fd.fileDescriptor).use { it.write("scratch".toByteArray()) }
-                    android.system.Os.fsync(fd.fileDescriptor)
                     android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
                     val read = ByteArray(7)
                     check(android.system.Os.read(fd.fileDescriptor, read, 0, 7) == 7 && String(read) == "scratch")
+                    check(android.system.Os.fcntlInt(fd.fileDescriptor, android.system.OsConstants.F_GETFL, 0) and android.system.OsConstants.O_ACCMODE == android.system.OsConstants.O_RDONLY)
+                    var rejected = false
+                    try { android.system.Os.write(fd.fileDescriptor, byteArrayOf(1), 0, 1) }
+                    catch (_: android.system.ErrnoException) { rejected = true }
+                    check(rejected) { "Scratch readback remained writable" }
+                    rejected = false
+                    try {
+                        val reopened = android.system.Os.open("/proc/self/fd/${fd.fd}", android.system.OsConstants.O_RDWR, 0)
+                        android.system.Os.close(reopened)
+                    } catch (_: android.system.ErrnoException) { rejected = true }
+                    check(rejected) { "Isolated UID reopened host backing for write" }
                 }
-                org.json.JSONObject().put("scratchCapability", true).toString()
+                org.json.JSONObject().put("scratchCapability", true).put("uid", Process.myUid()).put("readOnly", true).toString()
             }
 
             "METADATA_READ" -> com.pdfchemy.app.jail.engines.PdfMetadataEngineWorker.readMetadata(sourceFd!!)
@@ -376,11 +406,19 @@ class PdfJailService : Service() {
                 val json = org.json.JSONObject(paramsJson)
                 val bookTitle = json.optString("bookTitle", "Untitled E-Book")
                 val authorName = json.optString("authorName", "Unknown Author")
-                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.pdfToEpub(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor), bookTitle, authorName).getOrThrow()
+                val success = capabilityInput(sourceFd!!.fileDescriptor).use { input ->
+                    boundedFileOutput(targetFd!!.fileDescriptor).use { output ->
+                        com.pdfchemy.app.jail.engines.PdfToEpubEngine.pdfToEpub(this@PdfJailService, input, output, bookTitle, authorName).getOrThrow()
+                    }
+                }
                 org.json.JSONObject().put("isSuccess", success).toString()
             }
             "EPUB_TO_PDF" -> {
-                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.epubToPdf(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor)).getOrThrow()
+                val success = capabilityInput(sourceFd!!.fileDescriptor).use { input ->
+                    boundedFileOutput(targetFd!!.fileDescriptor).use { output ->
+                        com.pdfchemy.app.jail.engines.PdfToEpubEngine.epubToPdf(this@PdfJailService, input, output).getOrThrow()
+                    }
+                }
                 org.json.JSONObject().put("isSuccess", success).toString()
             }
             else -> com.pdfchemy.app.jail.engines.MigratedEngineDispatch.execute(this@PdfJailService, engineName, sourceFd, targetFd, null, paramsJson)
