@@ -51,7 +51,11 @@ object PdfJailClient {
         invoke: (IPdfJailService, Long, ParcelFileDescriptor, ParcelFileDescriptor, IBinder, IPdfJailCallback) -> Unit
     ): Long = withContext(Dispatchers.IO) {
         val scratch = OperationScratchBroker(context)
-        val output = HostOutputTransaction(context, listOf(destUri), scratch.storage)
+        val output = try { HostOutputTransaction(context, listOf(destUri), scratch.storage) }
+        catch (error: Throwable) {
+            runCatching { scratch.close() }.exceptionOrNull()?.let(error::addSuppressed)
+            throw error
+        }
         val bound = CompletableDeferred<IBinder>()
         val response = CompletableDeferred<Unit>()
         var isBound = false

@@ -44,7 +44,11 @@ object PdfGateway {
         var jail: IPdfJailService? = null
         var operationToken: Long = 0L
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
-        val outputTransaction = HostOutputTransaction(context, targets, scratch.storage)
+        val outputTransaction = try { HostOutputTransaction(context, targets, scratch.storage) }
+        catch (error: Throwable) {
+            runCatching { scratch.close() }.exceptionOrNull()?.let(error::addSuppressed)
+            throw error
+        }
         try {
             sources.forEach {
                 val stagedLease = DocumentStager.stageDocumentCancellableWithLease(context, it)

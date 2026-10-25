@@ -57,8 +57,10 @@ boundary; the renderer receives no writable host destination descriptor.
 - `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfServiceEngineWorker.kt`
 - `pdf-ipc/src/test/java/com/pdfchemy/app/jail/WorkerStorageQuotaTest.kt`
 - `app-host/src/androidTest/java/com/pdfchemy/app/security/WorkerStorageBoundarySecurityTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/security/WorkerStorageAllocationFailureSecurityTest.kt`
 - `app-host/src/androidTest/java/com/pdfchemy/app/security/RendererStorageBoundarySecurityTest.kt`
 - `app-host/src/androidTest/java/com/pdfchemy/app/security/HostOutputCommitSecurityTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfToEpubEngineTest.kt`
 - `reports/worker-storage-boundary-2026-10-25/SR01_EXECUTION.md`
 
 The three engine edits only replace regular-file size metadata with tracked
@@ -72,7 +74,7 @@ errors or skips. Seven new quota tests cover aggregate categories, overflow,
 lower-only configuration and global byte/file bounds without allocating large
 files.
 
-The final focused native run passes all 45 methods on the owned offline API36
+The initial integrated focused native run passes all 45 methods on the owned offline API36
 emulator, with zero failures/errors/skips/crashes and unchanged source hashes
 throughout the run. Its receipt binds all 19 changed source/test files and both
 APKs. Ten collector tests include raw seek/truncate rejection, read-only seekable
@@ -107,6 +109,45 @@ integration run passed all 38 test methods, but its final receipt checker reject
 source changes made while the next probes were being added. That run is retained
 as an incomplete verification envelope. The final 45-method run passes both the
 tests and the unchanged-source receipt check.
+
+Final source review then identified an allocation-failure cleanup edge in
+`20ba6b91`: shared storage was created before the request's try/finally, so a
+partially constructed output transaction could leave its collector alive until
+the deadline. A new bounded native probe occupies 95 empty descriptor slots,
+allows the request to create its first output, then rejects its second output.
+On the initial implementation the next collector fails because the first slot
+is still held. That exact baseline failure is retained under
+`sr01-native-allocation-baseline/`, with a byte-identical production APK to the
+earlier 45-method run. The fixture allocates no payload and never binds a worker.
+
+PdfGateway and the legacy client now close their shared scratch/storage owner
+if transaction construction throws, preserving the original exception and
+attaching any cleanup error. The new method also requires both destinations to
+remain untouched. Subsequent verification for this followup must supersede the
+earlier source/artifact identities rather than treating the earlier pass as a
+current-head receipt.
+
+The first four-API CI run, [40204805131](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40204805131),
+then failed PDF-to-EPUB conversion on API24 (307 of 308 methods passed). The
+service created a duplicated output stream without closing it; the converter
+correctly leaves its caller-owned output stream open. A pipe therefore could not
+reach EOF until garbage collection closed that duplicate. Both PDF-to-EPUB and
+EPUB-to-PDF dispatch now scope their input/output capabilities with use, including
+exception paths. The existing EPUB test reports the underlying exception on
+failure; a new actual PDF-to-EPUB-to-PDF round trip checks both pipelines and
+retained chapter text. The independent redaction engine is unchanged.
+
+All three targeted followup native methods pass on the owned offline API36
+emulator with unchanged source identities: the allocation-pressure regression,
+the existing compliant EPUB-package test and the new round trip. Evidence is in
+`sr01-native-transport-cleanup-targeted/`; the initial API24 job log is retained
+as `sr01-initial-api24-job.log`. Full final-source native/CI and signed receipts
+are post-commit gates, rather than inferred from earlier source results.
+
+The followup also passes all 439 unit tests, security audit and architecture,
+debug app/test assembly, release lint (zero errors, 640 warnings), and diff
+checks. The source-bound local receipt is
+`sr01-transport-cleanup-targeted-local-verification/receipt.json`.
 
 Security audit and architecture checks pass. Release lint has zero errors and
 639 warnings. Debug app/test assembly and git diff checks pass. These results are

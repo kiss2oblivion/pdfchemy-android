@@ -406,11 +406,19 @@ class PdfJailService : Service() {
                 val json = org.json.JSONObject(paramsJson)
                 val bookTitle = json.optString("bookTitle", "Untitled E-Book")
                 val authorName = json.optString("authorName", "Unknown Author")
-                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.pdfToEpub(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor), bookTitle, authorName).getOrThrow()
+                val success = capabilityInput(sourceFd!!.fileDescriptor).use { input ->
+                    boundedFileOutput(targetFd!!.fileDescriptor).use { output ->
+                        com.pdfchemy.app.jail.engines.PdfToEpubEngine.pdfToEpub(this@PdfJailService, input, output, bookTitle, authorName).getOrThrow()
+                    }
+                }
                 org.json.JSONObject().put("isSuccess", success).toString()
             }
             "EPUB_TO_PDF" -> {
-                val success = com.pdfchemy.app.jail.engines.PdfToEpubEngine.epubToPdf(this@PdfJailService, com.pdfchemy.app.jail.capabilityInput(sourceFd!!.fileDescriptor), com.pdfchemy.app.jail.boundedFileOutput(targetFd!!.fileDescriptor)).getOrThrow()
+                val success = capabilityInput(sourceFd!!.fileDescriptor).use { input ->
+                    boundedFileOutput(targetFd!!.fileDescriptor).use { output ->
+                        com.pdfchemy.app.jail.engines.PdfToEpubEngine.epubToPdf(this@PdfJailService, input, output).getOrThrow()
+                    }
+                }
                 org.json.JSONObject().put("isSuccess", success).toString()
             }
             else -> com.pdfchemy.app.jail.engines.MigratedEngineDispatch.execute(this@PdfJailService, engineName, sourceFd, targetFd, null, paramsJson)
