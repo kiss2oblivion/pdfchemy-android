@@ -14,7 +14,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PDF Compressor** | `CompressScreen.kt` | `PdfCompressor.kt` | ✅ Live | 4 Presets (Extreme, Recommended, High Quality, Custom DPI/Quality), Flate & JBIG2 |
 | **Grayscale Optimizer** | `GrayscaleOptimizerScreen.kt` | `PdfCompressor.kt` | ✅ Live | Converts color PDF pages to monochrome/grayscale to drastically reduce size |
-| **Linearize (Fast Web View)** | `LinearizePdfScreen.kt` | `PdfManipulator.kt` | ✅ Live | Restructures PDF dictionary and stream orders for instant first-page web/mobile streaming |
+| **Fast Web View information** | `LinearizePdfScreen.kt` | `PdfLinearizeEngine.kt` | Inspection only | Reports PDF page information with linearization NOT_VERIFIED; generation is explicitly unsupported and disabled |
 | **Flatten PDF** | `FlattenPdfScreen.kt` | `PdfFlattenEngine.kt` | ✅ Live | Forensic annotation baking: bakes AcroForms via `acroForm.flatten()` and non-widget annotations via high-res `RENDER_MODE_FOR_PRINT` rasterization without destroying user highlights or drawings |
 
 ---

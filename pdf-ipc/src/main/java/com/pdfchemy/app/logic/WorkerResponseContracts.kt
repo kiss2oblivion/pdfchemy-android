@@ -91,7 +91,8 @@ data class CheckEncryptionContract(
  */
 data class LinearizeCheckContract(
     val isLinearized: Boolean,
-    val pageCount: Int
+    val pageCount: Int,
+    val verificationStatus: String
 ) : OperationContract
 
 /**

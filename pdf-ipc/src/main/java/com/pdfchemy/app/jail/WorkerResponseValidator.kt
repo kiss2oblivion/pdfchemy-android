@@ -52,6 +52,9 @@ object WorkerResponseValidator {
 
     fun validate(operation: String, rawJson: String, targetCount: Int = 0): OperationContract {
         validateOperation(operation)
+        if (operation == "LINEARIZE_OPTIMIZE") {
+            throw UnsupportedOperationException("Fast Web View generation is not supported by the local engine")
+        }
         SecurityLimits.enforceResultSize(rawJson)
 
         // 1. Structural check: balanced quotes, braces, brackets, and nesting depth
@@ -300,8 +303,11 @@ object WorkerResponseValidator {
     private fun parseLinearizeCheck(root: Any?): LinearizeCheckContract {
         val obj = requireObject(root)
         val isLinearized = obj.requireBoolean("isLinearized")
-        val pageCount = obj.requireInt("pageCount", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
-        return LinearizeCheckContract(isLinearized = isLinearized, pageCount = pageCount)
+        require(!isLinearized) { "Linearization cannot be certified by this engine" }
+        val status = obj.requireString("verificationStatus", maxLength = 32)
+        require(status == "NOT_VERIFIED") { "Invalid linearization verification status" }
+        val pageCount = obj.requireInt("pageCount", min = 1, max = SecurityLimits.MAX_PAGE_COUNT)
+        return LinearizeCheckContract(isLinearized = false, pageCount = pageCount, verificationStatus = status)
     }
 
     private fun parseArchiveInspect(root: Any?): ArchiveInspectContract {
