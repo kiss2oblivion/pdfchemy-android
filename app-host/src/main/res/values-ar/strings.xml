@@ -170,6 +170,9 @@
 <string name="recent_activity">النشاط الأخير</string>
 <string name="premium_title">الترقية إلى بريميوم</string>
 <string name="premium_thanks">شكراً لدعمك لمهمتنا في تقديم أدوات مستندات آمنة وبدون اتصال بالإنترنت!</string>
+    <string name="price_available_in_google_play">السعر متاح في Google Play</string>
+    <string name="unlock_lifetime_with_price">فتح مدى الحياة · %1$s</string>
+    <string name="restore_purchases">استعادة المشتريات</string>
     <string name="premium_features">احصل على تجربة PDF المتكاملة بدون إنترنت.
 
 ✓ بدون إعلانات

@@ -177,6 +177,9 @@
 <string name="recent_activity">Recent Activity</string>
 <string name="premium_title">Premium Upgrade</string>
 <string name="premium_thanks">Thank you for supporting our mission of privacy-first, offline document tools!</string>
+    <string name="price_available_in_google_play">Price available in Google Play</string>
+    <string name="unlock_lifetime_with_price">Unlock Lifetime · %1$s</string>
+    <string name="restore_purchases">Restore Purchases</string>
     <string name="premium_features">Unlock the ultimate offline PDF experience.
 
 ✓ No Banner Ads

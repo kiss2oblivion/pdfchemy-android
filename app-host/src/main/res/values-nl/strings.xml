@@ -170,6 +170,9 @@
 <string name="recent_activity">Recente Activiteit</string>
 <string name="premium_title">Premium Versie</string>
 <string name="premium_thanks">Bedankt voor het ondersteunen van onze privacygerichte, offline documenttools!</string>
+    <string name="price_available_in_google_play">Prijs beschikbaar in Google Play</string>
+    <string name="unlock_lifetime_with_price">Levenslang ontgrendelen · %1$s</string>
+    <string name="restore_purchases">Aankopen herstellen</string>
     <string name="premium_features">Ontgrendel de complete offline PDF-ervaring.
 
 ✓ Geen advertenties

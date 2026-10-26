@@ -170,6 +170,9 @@
 <string name="recent_activity">हाल की गतिविधि</string>
 <string name="premium_title">प्रीमियम अपग्रेड</string>
 <string name="premium_thanks">गोपनीयता-प्रथम, ऑफ़लाइन दस्तावेज़ टूल्स का समर्थन करने के लिए धन्यवाद!</string>
+    <string name="price_available_in_google_play">Google Play में मूल्य उपलब्ध है</string>
+    <string name="unlock_lifetime_with_price">लाइफटाइम अनलॉक करें · %1$s</string>
+    <string name="restore_purchases">खरीदारियां पुनर्स्थापित करें</string>
     <string name="premium_features">सर्वश्रेष्ठ ऑफ़लाइन PDF अनुभव अनलॉक करें।
 
 ✓ कोई विज्ञापन नहीं

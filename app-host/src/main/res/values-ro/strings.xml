@@ -178,6 +178,9 @@
 <string name="recent_activity">Activitate Recentă</string>
 <string name="premium_title">Upgrade Premium</string>
 <string name="premium_thanks">Mulțumim pentru susținerea uneltelor noastre offline!</string>
+    <string name="price_available_in_google_play">Preț disponibil în Google Play</string>
+    <string name="unlock_lifetime_with_price">Deblochează pe viață · %1$s</string>
+    <string name="restore_purchases">Restaurează achizițiile</string>
     <string name="premium_features">Deblochează experiența PDF supremă.
 
 ✓ Fără Reclame

@@ -170,6 +170,9 @@
 <string name="recent_activity">Hoạt động gần đây</string>
 <string name="premium_title">Nâng cấp Premium</string>
 <string name="premium_thanks">Cảm ơn bạn đã ủng hộ công cụ tài liệu ngoại tuyến bảo mật của chúng tôi!</string>
+    <string name="price_available_in_google_play">Giá có sẵn trên Google Play</string>
+    <string name="unlock_lifetime_with_price">Mở khóa trọn đời · %1$s</string>
+    <string name="restore_purchases">Khôi phục giao dịch mua</string>
     <string name="premium_features">Mở khóa trải nghiệm PDF ngoại tuyến trọn vẹn.
 
 ✓ Không quảng cáo

@@ -178,6 +178,9 @@
 <string name="recent_activity">Aktivitas Terbaru</string>
 <string name="premium_title">Peningkatan Premium</string>
 <string name="premium_thanks">Terima kasih telah mendukung alat offline kami!</string>
+    <string name="price_available_in_google_play">Harga tersedia di Google Play</string>
+    <string name="unlock_lifetime_with_price">Buka Seumur Hidup · %1$s</string>
+    <string name="restore_purchases">Pulihkan Pembelian</string>
     <string name="premium_features">Buka pengalaman PDF terbaik.
 
 ✓ Tanpa Iklan

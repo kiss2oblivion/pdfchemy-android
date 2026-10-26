@@ -170,6 +170,9 @@
 <string name="recent_activity">최근 활동</string>
 <string name="premium_title">프리미엄 업그레이드</string>
 <string name="premium_thanks">개인정보 중심 오프라인 도구를 지원해 주셔서 감사합니다!</string>
+    <string name="price_available_in_google_play">Google Play에서 가격 확인 가능</string>
+    <string name="unlock_lifetime_with_price">평생 이용권 잠금 해제 · %1$s</string>
+    <string name="restore_purchases">구매 항목 복원</string>
     <string name="premium_features">최고의 오프라인 PDF 환경을 누려보세요.
 
 ✓ 광고 없음

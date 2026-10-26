@@ -178,6 +178,9 @@
 <string name="recent_activity">Atividade Recente</string>
 <string name="premium_title">Upgrade Premium</string>
 <string name="premium_thanks">Obrigado por apoiar nossas ferramentas offline!</string>
+    <string name="price_available_in_google_play">Preço disponível no Google Play</string>
+    <string name="unlock_lifetime_with_price">Desbloquear vitalício · %1$s</string>
+    <string name="restore_purchases">Restaurar compras</string>
     <string name="premium_features">Desbloqueie a melhor experiência PDF.
 
 ✓ Sem Anúncios

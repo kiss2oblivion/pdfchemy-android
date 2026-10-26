@@ -377,6 +377,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        AdManager.clearAd()
         if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
         super.onDestroy()
     }
@@ -4471,11 +4472,15 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = { if (activity != null) viewModel.purchasePremium(activity) },
-                    enabled = billingUi.canPurchase,
+                    enabled = billingUi.canPurchase && price.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text(
-                        text = if (price.isNotEmpty()) "Unlock Lifetime · $price" else stringResource(R.string.label_preview_loading),
+                        text = if (price.isNotBlank()) {
+                            stringResource(R.string.unlock_lifetime_with_price, price)
+                        } else {
+                            stringResource(R.string.price_available_in_google_play)
+                        },
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -4486,7 +4491,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     Text(
-                        text = "Restore Purchases",
+                        text = stringResource(R.string.restore_purchases),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

@@ -170,6 +170,9 @@
 <string name="recent_activity">最近活動</string>
 <string name="premium_title">升級至專業版</string>
 <string name="premium_thanks">感謝您支持我們堅持隱私第一、完全離線文件工具的理念！</string>
+    <string name="price_available_in_google_play">價格可在 Google Play 中查看</string>
+    <string name="unlock_lifetime_with_price">永久解鎖 · %1$s</string>
+    <string name="restore_purchases">恢復購買</string>
     <string name="premium_features">解鎖純淨離線 PDF 終極體驗。
 
 ✓ 無廣告干擾

@@ -170,6 +170,9 @@
 <string name="recent_activity">Ostatnia aktywność</string>
 <string name="premium_title">Wersja Premium</string>
 <string name="premium_thanks">Dziękujemy za wspieranie bezpiecznych narzędzi offline!</string>
+    <string name="price_available_in_google_play">Cena dostępna w Google Play</string>
+    <string name="unlock_lifetime_with_price">Odblokuj na zawsze · %1$s</string>
+    <string name="restore_purchases">Przywróć zakupy</string>
     <string name="premium_features">Odblokuj pełnię możliwości PDFchemy.
 
 ✓ Brak reklam

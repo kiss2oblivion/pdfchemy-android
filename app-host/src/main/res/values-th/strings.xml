@@ -170,6 +170,9 @@
 <string name="recent_activity">กิจกรรมล่าสุด</string>
 <string name="premium_title">อัปเกรดเป็นพรีเมียม</string>
 <string name="premium_thanks">ขอบคุณที่สนับสนุนเครื่องมือจัดการเอกสารออฟไลน์ที่เน้นความเป็นส่วนตัว!</string>
+    <string name="price_available_in_google_play">ราคาดูได้ใน Google Play</string>
+    <string name="unlock_lifetime_with_price">ปลดล็อกตลอดชีพ · %1$s</string>
+    <string name="restore_purchases">กู้คืนการซื้อ</string>
     <string name="premium_features">ปลดล็อกประสบการณ์ PDF ออฟไลน์เต็มรูปแบบ
 
 ✓ ไม่มีโฆษณา

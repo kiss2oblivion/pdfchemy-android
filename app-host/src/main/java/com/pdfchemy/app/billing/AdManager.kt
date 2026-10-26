@@ -48,11 +48,9 @@ object AdManager {
 
     @androidx.annotation.VisibleForTesting
     internal fun setPremiumForTesting(isPremium: Boolean?) {
-        synchronized(lock) {
-            premiumOverride = isPremium
-            if (isPremium == true) {
-                clearAdLocked()
-            }
+        premiumOverride = isPremium
+        if (isPremium == true) {
+            clearAd()
         }
     }
 
@@ -66,6 +64,16 @@ object AdManager {
         }
     }
 
+    private fun isUserPremium(isPremium: Boolean): Boolean {
+        return isPremium || (premiumOverride == true) || (isPremiumProvider?.invoke() == true)
+    }
+
+    private fun canRequestAds(context: Context): Boolean {
+        return runCatching {
+            com.google.android.ump.UserMessagingPlatform.getConsentInformation(context).canRequestAds()
+        }.getOrDefault(false)
+    }
+
     fun loadInterstitial(
         context: Context,
         isPremium: Boolean = false,
@@ -73,22 +81,15 @@ object AdManager {
     ) {
         val appContext = context.applicationContext ?: context
         if (isPremiumProvider != null) {
-            synchronized(lock) {
-                this.isPremiumProvider = isPremiumProvider
-            }
+            this.isPremiumProvider = isPremiumProvider
         }
 
-        val effectivePremium = isPremium || (premiumOverride == true) || (this.isPremiumProvider?.invoke() == true)
-        if (effectivePremium) {
+        if (isUserPremium(isPremium)) {
             clearAd()
             return
         }
 
-        val consentGranted = runCatching {
-            com.google.android.ump.UserMessagingPlatform.getConsentInformation(appContext).canRequestAds()
-        }.getOrDefault(false)
-
-        if (!consentGranted) {
+        if (!canRequestAds(appContext)) {
             clearAd()
             return
         }
@@ -119,18 +120,22 @@ object AdManager {
                 }
 
                 override fun onAdLoaded(ad: InterstitialAd) {
+                    val isStale = synchronized(lock) { requestGeneration != currentGeneration }
+                    if (isStale) {
+                        AppLogger.d("Ignoring stale onAdLoaded from generation $requestGeneration (current: $currentGeneration)")
+                        return
+                    }
+
+                    // Check consent and premium state OUTSIDE synchronized(lock) to avoid contested locks and deadlocks
+                    val currentConsent = canRequestAds(appContext)
+                    val latePremium = isUserPremium(isPremium)
+
                     synchronized(lock) {
                         if (requestGeneration != currentGeneration) {
-                            AppLogger.d("Ignoring stale onAdLoaded from generation $requestGeneration (current: $currentGeneration)")
+                            AppLogger.d("Ignoring stale onAdLoaded after re-checks from generation $requestGeneration (current: $currentGeneration)")
                             return
                         }
                         isLoading = false
-                        val currentConsent = runCatching {
-                            com.google.android.ump.UserMessagingPlatform.getConsentInformation(appContext).canRequestAds()
-                        }.getOrDefault(false)
-
-                        val latePremium = isPremium || (premiumOverride == true) || (this@AdManager.isPremiumProvider?.invoke() == true)
-
                         if (!currentConsent || latePremium) {
                             AppLogger.d("Ad loaded but consent was revoked or user is premium; dropping ad.")
                             interstitialAd = null
@@ -155,11 +160,8 @@ object AdManager {
             return
         }
 
-        val consentGranted = runCatching {
-            com.google.android.ump.UserMessagingPlatform.getConsentInformation(activity).canRequestAds()
-        }.getOrDefault(false)
-
-        val effectivePremium = isPremium || (premiumOverride == true) || (isPremiumProvider?.invoke() == true)
+        val consentGranted = canRequestAds(activity)
+        val effectivePremium = isUserPremium(isPremium)
 
         if (effectivePremium || !consentGranted) {
             clearAd()
@@ -169,17 +171,25 @@ object AdManager {
 
         val currentTime = System.currentTimeMillis()
         val adToShow: InterstitialAd?
+        val inCooldown: Boolean
         synchronized(lock) {
-            if (currentTime - lastAdShownTime < COOLDOWN_MILLIS) {
-                AppLogger.d("Ad cooldown active. Not showing ad.")
-                onAdDismissed()
-                return
+            inCooldown = (currentTime - lastAdShownTime < COOLDOWN_MILLIS)
+            if (inCooldown) {
+                adToShow = null
+            } else {
+                adToShow = interstitialAd
+                if (adToShow != null) {
+                    interstitialAd = null
+                    lastAdShownTime = currentTime
+                }
             }
-            adToShow = interstitialAd
-            if (adToShow != null) {
-                interstitialAd = null
-                lastAdShownTime = currentTime
-            }
+        }
+
+        // Invoke user callback OUTSIDE the internal lock
+        if (inCooldown) {
+            AppLogger.d("Ad cooldown active. Not showing ad.")
+            onAdDismissed()
+            return
         }
 
         if (adToShow != null) {
@@ -190,8 +200,12 @@ object AdManager {
                     synchronized(lock) {
                         lastAdShownTime = System.currentTimeMillis()
                     }
-                    // Pre-load the next ad safely
-                    loadInterstitial(activity, isPremium)
+                    if (!activity.isFinishing && !activity.isDestroyed) {
+                        val currentPrem = isUserPremium(isPremium)
+                        if (!currentPrem && canRequestAds(activity)) {
+                            loadInterstitial(activity, isPremium = false)
+                        }
+                    }
                     onAdDismissed()
                 }
 
@@ -212,7 +226,9 @@ object AdManager {
             adToShow.show(activity)
         } else {
             AppLogger.d("Ad was not ready. Starting load and skipping show.")
-            loadInterstitial(activity, isPremium)
+            if (!activity.isFinishing && !activity.isDestroyed) {
+                loadInterstitial(activity, effectivePremium)
+            }
             onAdDismissed()
         }
     }

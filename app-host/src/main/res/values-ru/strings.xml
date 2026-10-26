@@ -170,6 +170,9 @@
 <string name="recent_activity">Недавние действия</string>
 <string name="premium_title">Премиум версия</string>
 <string name="premium_thanks">Спасибо за поддержку безопасных офлайн инструментов!</string>
+    <string name="price_available_in_google_play">Цена доступна в Google Play</string>
+    <string name="unlock_lifetime_with_price">Разблокировать навсегда · %1$s</string>
+    <string name="restore_purchases">Восстановить покупки</string>
     <string name="premium_features">Разблокируйте все возможности PDFchemy.
 
 ✓ Без рекламы

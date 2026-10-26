@@ -178,6 +178,9 @@
 <string name="recent_activity">Letzte Aktivität</string>
 <string name="premium_title">Premium-Upgrade</string>
 <string name="premium_thanks">Danke für die Unterstützung unserer Offline-Werkzeuge!</string>
+    <string name="price_available_in_google_play">Preis verfügbar in Google Play</string>
+    <string name="unlock_lifetime_with_price">Lebenslang freischalten · %1$s</string>
+    <string name="restore_purchases">Käufe wiederherstellen</string>
     <string name="premium_features">Das ultimative PDF-Erlebnis freischalten.
 
 ✓ Keine Banner-Werbung

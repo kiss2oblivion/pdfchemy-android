@@ -170,6 +170,9 @@
 <string name="recent_activity">Son Etkinlikler</string>
 <string name="premium_title">Premium Sürüm</string>
 <string name="premium_thanks">Gizlilik odaklı, çevrimdışı belge araçlarımızı desteklediğiniz için teşekkürler!</string>
+    <string name="price_available_in_google_play">Fiyat Google Play\'de mevcut</string>
+    <string name="unlock_lifetime_with_price">Ömür Boyu Aç · %1$s</string>
+    <string name="restore_purchases">Satın Almaları Geri Yükle</string>
     <string name="premium_features">Eksiksiz çevrimdışı PDF deneyiminin kilidini açın.
 
 ✓ Reklamsız

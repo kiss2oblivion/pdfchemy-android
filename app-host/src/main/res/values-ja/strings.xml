@@ -170,6 +170,9 @@
 <string name="recent_activity">最近のアクティビティ</string>
 <string name="premium_title">プレミアムアップグレード</string>
 <string name="premium_thanks">プライバシー保護のオフラインドキュメントツールをご支援いただきありがとうございます！</string>
+    <string name="price_available_in_google_play">Google Playで価格を確認</string>
+    <string name="unlock_lifetime_with_price">買い切りで解除 · %1$s</string>
+    <string name="restore_purchases">購入を復元</string>
     <string name="premium_features">最高のオフラインPDF環境をアンロック。
 
 ✓ 広告なし
