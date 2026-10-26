@@ -216,7 +216,7 @@
 <string name="title_compress_pdf">PDF Sıkıştır</string>
 <string name="msg_compress_warning_signature">Uyarı: Sıkıştırma işlemi dijital imzayı geçersiz kılabilir.</string>
 <string name="msg_compress_slightly_larger">Çıktı orijinalden biraz daha büyük oldu. Bu PDF zaten yüksek düzeyde optimize edilmiş olabilir.\n\n</string>
-<string name="msg_compress_reduced">%%1$d küçültüldü (%2$s tasarruf edildi!)\n\n</string>
+<string name="msg_compress_reduced">%%%1$d küçültüldü (%2$s tasarruf edildi!)\n\n</string>
 <string name="msg_compress_verdict_no_benefit">Sıkıştırma kazancı yok</string>
 <string name="msg_compress_verdict_excellent">Mükemmel sıkıştırma</string>
 <string name="msg_compress_verdict_good">İyi sıkıştırma</string>
@@ -395,7 +395,7 @@
 <string name="label_original">Orijinal</string>
 <string name="label_compressed">Sıkıştırılmış</string>
 <string name="image_batch_completed_title">Toplu Sıkıştırma Tamamlandı!</string>
-<string name="image_batch_completed_summary">%1$d / %2$d görsel başarıyla sıkıştırıldı.\nOrijinal: %3$s → Sıkıştırılmış: %4$s (%%5$d tasarruf).</string>
+<string name="image_batch_completed_summary">%1$d / %2$d görsel başarıyla sıkıştırıldı.\nOrijinal: %3$s → Sıkıştırılmış: %4$s (%%%5$d tasarruf).</string>
 <string name="mode_quality_slider">Kalite Kaydırıcısı (%%)</string>
 <string name="mode_target_size">Hedef Boyut (MB)</string>
 <string name="target_size_preset_title">Hedef Boyut</string>
@@ -557,7 +557,7 @@
 <string name="watermark_subtitle">Özel metin, opaklık, açı ve döşeme seçenekleriyle belgeleri koruyun.</string>
 <string name="select_pdf_to_watermark">Filigran Eklenecek PDF\'i Seç</string>
 <string name="label_watermark_text">Filigran Metni</string>
-<string name="label_opacity">Filigran Opaklığı: %%1$d</string>
+<string name="label_opacity">Filigran Opaklığı: %%%1$d</string>
 <string name="label_watermark_angle">Filigran Açısı</string>
 <string name="label_tile_pattern">3x3 Döşeme Matrisi</string>
 <string name="desc_tile_pattern">Filigranı tüm sayfada tekrarla</string>

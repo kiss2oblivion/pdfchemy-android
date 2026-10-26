@@ -157,13 +157,31 @@ class BillingManager(
             val details = list.firstOrNull { it.productId == PREMIUM_PRODUCT_ID }
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && details != null) {
                 premiumProductDetails = details
+                val offer = details.oneTimePurchaseOfferDetails
+                val formattedPrice = offer?.formattedPrice
+                if (!formattedPrice.isNullOrBlank()) {
+                    _premiumPrice.value = formattedPrice
+                }
                 _billingUi.value = available("One-time purchase through Google Play.")
-                // We intentionally don't update _premiumPrice.value here because the user wants it hardcoded to $4.99
             } else _billingUi.value = available("Purchase details are unavailable. Check Google Play and retry.")
         }
     }
 
-    private fun queryPurchases() {
+    fun restorePurchases() {
+        if (!billingClient.isReady) {
+            _billingUi.value = BillingUiState(
+                loading = false,
+                message = "Google Play is connecting. Tap retry if it does not connect.",
+                canRetry = true
+            )
+            connectToPlayBilling()
+            return
+        }
+        _billingUi.value = BillingUiState(loading = true, message = "Checking previous purchases…")
+        queryPurchases(isUserInitiated = true)
+    }
+
+    private fun queryPurchases(isUserInitiated: Boolean = false) {
         if (!billingClient.isReady) {
             return
         }
@@ -175,7 +193,20 @@ class BillingManager(
             
         billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                processPurchases(purchasesList)
+                processPurchases(purchasesList, isFullInventory = true)
+                if (isUserInitiated) {
+                    val hasActive = purchasesList.any {
+                        it.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                            it.products.contains(PREMIUM_PRODUCT_ID)
+                    }
+                    _billingUi.value = if (hasActive) {
+                        available("Premium entitlement restored successfully.")
+                    } else {
+                        available("No previous purchases found for this Google account.")
+                    }
+                }
+            } else if (isUserInitiated) {
+                _billingUi.value = available("Could not restore purchases. Check Google Play and retry.")
             }
         }
     }
@@ -185,7 +216,7 @@ class BillingManager(
             _billingUi.value = if (purchases.any { it.purchaseState == Purchase.PurchaseState.PENDING })
                 BillingUiState(loading = false, message = "Payment is pending. Premium unlocks when Google Play confirms it.")
             else available("Purchase received. Google Play is confirming your entitlement.")
-            processPurchases(purchases)
+            processPurchases(purchases, isFullInventory = false)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
             _billingUi.value = available("Purchase cancelled. You can continue using PDFchemy.")
         } else {
@@ -193,23 +224,27 @@ class BillingManager(
         }
     }
 
-    private fun processPurchases(purchases: List<Purchase>) {
+    private fun processPurchases(purchases: List<Purchase>, isFullInventory: Boolean = false) {
         coroutineScope.launch {
-            var hasPremium = false
+            var hasPremiumInBatch = false
             val unacknowledged = mutableListOf<Purchase>()
             for (purchase in purchases) {
                 if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
                     purchase.products.contains(PREMIUM_PRODUCT_ID)
                 ) {
-                    hasPremium = true
+                    hasPremiumInBatch = true
                     if (!purchase.isAcknowledged) {
                         unacknowledged.add(purchase)
                     }
                 }
             }
-            // Centralize entitlement logic: Update cache with source of truth from Play Store immediately
-            securePrefs.edit().putBoolean(KEY_IS_PREMIUM, hasPremium).apply()
-            _isPremium.value = hasPremium
+            if (hasPremiumInBatch) {
+                securePrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
+                _isPremium.value = true
+            } else if (isFullInventory) {
+                securePrefs.edit().putBoolean(KEY_IS_PREMIUM, false).apply()
+                _isPremium.value = false
+            }
 
             for (purchase in unacknowledged) {
                 acknowledgePurchase(purchase)

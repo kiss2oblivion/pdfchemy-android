@@ -9,6 +9,10 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.print.*
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
@@ -31,6 +35,74 @@ object DocumentActions {
             }
         }
         context.startActivity(intent)
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal var copyHookForTesting: (() -> Unit)? = null
+
+    suspend fun shareAsync(context: Context, uri: Uri, displayName: String? = null) {
+        val shareUri = getShareableContentUriAsync(context, uri, displayName)
+        withContext(Dispatchers.Main) {
+            ShareUtil.launchShareIntent(context, listOf(shareUri), title = displayName ?: "Share PDF")
+        }
+    }
+
+    suspend fun getShareableContentUriAsync(
+        context: Context,
+        uri: Uri,
+        customDisplayName: String? = null
+    ): Uri = withContext(Dispatchers.IO) {
+        if (uri.scheme != "file") return@withContext uri
+        val path = uri.path ?: return@withContext uri
+        val sourceFile = File(path)
+        if (!sourceFile.exists()) return@withContext uri
+
+        // 1. If sourceFile is already inside a configured FileProvider root (e.g. cache/exports, cache/scans),
+        // FileProvider resolves it directly.
+        try {
+            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", sourceFile)
+        } catch (_: IllegalArgumentException) {
+            // Source is outside configured roots (e.g. internal cache/staged/ snapshot).
+            // Fall through to produce a bounded export copy.
+        }
+
+        val lease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
+        var exportFile: File? = null
+        var copySuccess = false
+        try {
+            val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
+            pruneOldShareCopies(exportsDir, maxRetained = 5)
+
+            val rawName = customDisplayName?.takeIf { it.isNotBlank() }
+                ?: com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
+                ?: sourceFile.name
+            val safeBase = rawName.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
+            val cleanName = if (safeBase.endsWith(".pdf", ignoreCase = true)) safeBase else "$safeBase.pdf"
+            val target = File(exportsDir, "shared_${System.currentTimeMillis()}_$cleanName")
+            exportFile = target
+
+            sourceFile.inputStream().use { input ->
+                target.outputStream().use { output ->
+                    val buffer = ByteArray(8192)
+                    while (true) {
+                        currentCoroutineContext().ensureActive()
+                        copyHookForTesting?.invoke()
+                        val bytesRead = input.read(buffer)
+                        if (bytesRead == -1) break
+                        currentCoroutineContext().ensureActive()
+                        output.write(buffer, 0, bytesRead)
+                    }
+                    output.flush()
+                }
+            }
+            copySuccess = true
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target)
+        } finally {
+            if (!copySuccess && exportFile != null) {
+                runCatching { exportFile.delete() }
+            }
+            lease?.close()
+        }
     }
 
     fun share(context: Context, uri: Uri, displayName: String? = null) {
