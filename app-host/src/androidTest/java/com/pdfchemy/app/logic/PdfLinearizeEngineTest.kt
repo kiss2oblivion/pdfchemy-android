@@ -2,13 +2,15 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.junit.Assert.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,49 +18,80 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class PdfLinearizeEngineTest {
-
-    private lateinit var context: Context
-    private lateinit var samplePdfFile: File
-    private lateinit var samplePdfUri: Uri
-
-    @Before
-    fun setUp() {
-        context = ApplicationProvider.getApplicationContext()
+    private val context: Context get() = ApplicationProvider.getApplicationContext()
+    private lateinit var input: File
+    private lateinit var output: File
+    @Before fun setUp() {
         PDFBoxResourceLoader.init(context)
-
-        samplePdfFile = File(context.cacheDir, "sample_linear.pdf")
-        val doc = PDDocument()
-        doc.addPage(PDPage())
-        doc.addPage(PDPage())
-        doc.save(samplePdfFile)
-        doc.close()
-        samplePdfUri = Uri.fromFile(samplePdfFile)
+        input = File.createTempFile("linearize_input_", ".pdf", context.cacheDir)
+        output = File(context.cacheDir, "linearize_output_${System.nanoTime()}.pdf")
+        PDDocument().use { doc -> doc.addPage(PDPage()); doc.addPage(PDPage()); doc.save(input) }
     }
-
-    @Test
-    fun testCheckLinearized() = runBlocking {
-        val checkRes = PdfLinearizeEngine.checkLinearized(context, samplePdfUri)
-        assertTrue(checkRes.isSuccess)
-        val status = checkRes.getOrThrow()
-        assertEquals(2, status.pageCount)
-        assertFalse("Sample document should not be reported as linearized", status.isLinearized)
+    @After fun cleanup() { input.delete(); output.delete() }
+    @Test fun testCheckLinearized() = runBlocking {
+        val report = PdfLinearizeEngine.checkLinearized(context, Uri.fromFile(input)).getOrThrow()
+        assertEquals(2, report.pageCount)
+        assertFalse(report.isLinearized)
+        assertEquals("NOT_VERIFIED", report.verificationStatus)
     }
-
-    @Test
-    fun testOptimizeFastWebViewFailsExplicitlyWhenLinearizationUnsupported() = runBlocking {
-        val destFile = File(context.cacheDir, "optimized_stream.pdf")
-        if (destFile.exists()) destFile.delete()
-        val destUri = Uri.fromFile(destFile)
-
-        val optRes = PdfLinearizeEngine.optimizeFastWebView(context, samplePdfUri, destUri)
-        // Must never publish an ordinary unlinearized save as successful linearization
-        if (optRes.isSuccess) {
-            val checkOut = PdfLinearizeEngine.checkLinearized(context, destUri).getOrThrow()
-            assertTrue("If optimize reports success, output must actually be linearized", checkOut.isLinearized)
-        } else {
-            val ex = optRes.exceptionOrNull()
-            assertTrue("Expected failure explaining unsupported linearization, got: $ex",
-                ex is UnsupportedOperationException || ex?.message?.contains("not supported", ignoreCase = true) == true)
+    @Test fun testOptimizeFastWebViewFailsExplicitlyWhenLinearizationUnsupported() = runBlocking {
+        val result = PdfLinearizeEngine.optimizeFastWebView(context, Uri.fromFile(input), Uri.fromFile(output))
+        assertTrue(result.exceptionOrNull() is UnsupportedOperationException)
+        assertFalse("Unsupported generation must not create a misleading file", output.exists())
+    }
+    @Test fun metadataMarkerDoesNotReportFastWebViewEnabled() = runBlocking {
+        PDDocument.load(input).use { doc ->
+            doc.documentInformation.subject = "Unrelated /Linearized marker"
+            doc.save(input)
         }
+        val report = PdfLinearizeEngine.checkLinearized(context, Uri.fromFile(input)).getOrThrow()
+        assertFalse(report.isLinearized)
+        assertEquals("NOT_VERIFIED", report.verificationStatus)
+    }
+    @Test fun missingInputInspectionFails() = runBlocking {
+        assertTrue(input.delete())
+        assertTrue(PdfLinearizeEngine.checkLinearized(context, Uri.fromFile(input)).isFailure)
+    }
+    @Test fun zeroPageInspectionFails() = runBlocking {
+        PDDocument().use { it.save(input) }
+        assertTrue(PdfLinearizeEngine.checkLinearized(context, Uri.fromFile(input)).isFailure)
+    }
+    @Test fun unsupportedGenerationPreservesExistingTargetAndSource() = runBlocking {
+        val original = input.readBytes()
+        val existing = "private existing destination".toByteArray()
+        output.writeBytes(existing)
+        assertTrue(PdfLinearizeEngine.optimizeFastWebView(context, Uri.fromFile(input), Uri.fromFile(output)).exceptionOrNull() is UnsupportedOperationException)
+        assertArrayEquals(existing, output.readBytes())
+        assertArrayEquals(original, input.readBytes())
+    }
+    @Test fun actualIsolatedWorkerRejectsBeforeOpeningProvider() = runBlocking {
+        val id = "linearize_${System.nanoTime()}"
+        val target = Uri.parse("content://com.pdfchemy.app.security.outputfixture/$id")
+        context.contentResolver.call(target, "configure", id, Bundle())
+        val result = runCatching { PdfGateway.executeEngine(context, "LINEARIZE_OPTIMIZE", Uri.fromFile(input), target, "{}") }
+        assertTrue("Worker must explain unsupported generation: $result", result.exceptionOrNull()?.message.orEmpty().contains("not supported"))
+        val state = requireNotNull(context.contentResolver.call(target, "state", id, null))
+        assertEquals(0, state.getInt("opens"))
+        assertEquals("existing destination", String(state.getByteArray("bytes")!!))
+    }
+    @Test fun malformedInputCannotCauseTargetPublication() = runBlocking {
+        input.writeText("%PDF-1.4\n/Linearized 1\nnot a valid PDF")
+        output.writeText("existing target")
+        assertTrue(runCatching { PdfGateway.executeEngine(context, "LINEARIZE_OPTIMIZE", Uri.fromFile(input), Uri.fromFile(output), "{}") }.isFailure)
+        assertEquals("existing target", output.readText())
+    }
+    @Test fun cancelledCallPropagatesCancellationAndPreservesTarget() = runBlocking {
+        output.writeText("existing target")
+        var observed = false
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            currentCoroutineContext().cancel()
+            try {
+                PdfLinearizeEngine.optimizeFastWebView(context, Uri.fromFile(input), Uri.fromFile(output))
+                fail("Cancellation was swallowed")
+            } catch (_: CancellationException) { observed = true }
+        }
+        job.join()
+        assertTrue(observed)
+        assertEquals("existing target", output.readText())
     }
 }
