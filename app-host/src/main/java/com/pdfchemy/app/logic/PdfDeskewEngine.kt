@@ -75,7 +75,8 @@ object PdfDeskewEngine {
         }
 
         var bestAngle = 0.0f
-        var maxVariance = -1.0
+        // A blank page or tied projection must remain at zero, not -15 degrees.
+        var maxVariance = computeVarianceForAngle(0f)
         var coarseAngle = -15.0f
         while (coarseAngle <= 15.0f) {
             val variance = computeVarianceForAngle(coarseAngle)
@@ -114,17 +115,15 @@ object PdfDeskewEngine {
             params.put("targetPages", arr)
         }
 
-        return try {
-            val contract = PdfGateway.executeEngineTyped<DeskewContract>(
+        // Zero is a successful export with no corrections. Errors (including
+        // coroutine cancellation) must reach the publication owner unchanged.
+        val contract = PdfGateway.executeEngineTyped<DeskewContract>(
                 context,
                 "DESKEW",
                 sourceUri,
                 destUri,
                 params.toString()
             )
-            contract.straightenedCount
-        } catch (e: Exception) {
-            0
-        }
+        return contract.straightenedCount
     }
 }

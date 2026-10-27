@@ -114,13 +114,14 @@ fun DeskewScreen(
     val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
+            straightenedCount = -1
             isProcessing = true
             scope.launch {
                 try {
                     val count = PdfDeskewEngine.deskewDocument(context, srcUri, destUri)
                     straightenedCount = count
                     com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
-                    Toast.makeText(context, context.getString(R.string.deskew_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(if (count == 0) R.string.deskew_no_tilt else R.string.deskew_success), Toast.LENGTH_SHORT).show()
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
                         com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
@@ -266,8 +267,10 @@ fun DeskewScreen(
                             Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(stringResource(R.string.deskew_success), fontWeight = FontWeight.Bold)
-                                Text(stringResource(R.string.deskew_success_desc), style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(if (straightenedCount == 0) R.string.deskew_no_tilt else R.string.deskew_success), fontWeight = FontWeight.Bold)
+                                if (straightenedCount > 0) {
+                                    Text(stringResource(R.string.deskew_success_desc), style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }

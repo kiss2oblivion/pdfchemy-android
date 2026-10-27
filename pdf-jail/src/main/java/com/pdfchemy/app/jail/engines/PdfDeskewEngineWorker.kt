@@ -49,6 +49,8 @@ object PdfDeskewEngineWorker {
             document = com.pdfchemy.app.jail.CapabilityIo.input(tempSourceFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
 
             val totalPages = document.numberOfPages
+            require(totalPages in 1..com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) { "Invalid page count" }
+            require(targetPages == null || targetPages.all { it in 0 until totalPages }) { "Invalid target page" }
             for (i in 0 until totalPages) {
                 if (targetPages != null && i !in targetPages) continue
 
@@ -60,8 +62,6 @@ object PdfDeskewEngineWorker {
                     bmp.eraseColor(Color.WHITE)
                     page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     detectSkewAngle(bmp)
-                } catch (e: Exception) {
-                    0.0f
                 } finally {
                     bmp?.recycle()
                     page?.close()
@@ -69,13 +69,14 @@ object PdfDeskewEngineWorker {
 
                 if (abs(angle) >= 0.5f) {
                     val pdPage = document.getPage(i)
-                    applyDeskewTransform(document, pdPage, -angle)
+                    // Renderer Y increases downward; PDF Y increases upward.
+                    applyDeskewTransform(document, pdPage, angle)
                     straightenedCount++
                 }
             }
 
             tempDestFile = com.pdfchemy.app.jail.JailScratch.createTempFile("deskew_dest", ".pdf")
-            document.save(tempDestFile)
+            com.pdfchemy.app.jail.CapabilityIo.output(tempDestFile).use { document.save(it) }
             document.close()
             document = null
             renderer.close()
@@ -159,7 +160,8 @@ object PdfDeskewEngineWorker {
         }
 
         var bestAngle = 0.0f
-        var maxVariance = -1.0
+        // Keep empty pages and tied projections at zero.
+        var maxVariance = computeVarianceForAngle(0f)
         var coarseAngle = -15.0f
         while (coarseAngle <= 15.0f) {
             val variance = computeVarianceForAngle(coarseAngle)
@@ -190,9 +192,9 @@ object PdfDeskewEngineWorker {
         val cos = cos(rad).toFloat()
         val sin = sin(rad).toFloat()
 
-        val mb = page.mediaBox
-        val cx = mb.width / 2f
-        val cy = mb.height / 2f
+        val box = page.cropBox
+        val cx = box.lowerLeftX + box.width / 2f
+        val cy = box.lowerLeftY + box.height / 2f
 
         PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, false, false).use { cs ->
             cs.saveGraphicsState()
