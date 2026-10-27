@@ -111,29 +111,33 @@ fun DeskewScreen(
         analyzeDocument(uri)
     }
 
-    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
+    var requestedOutputName by remember { mutableStateOf("straightened.pdf") }
+    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { folderUri ->
         val srcUri = selectedPdfUri
-        if (destUri != null && srcUri != null) {
+        if (folderUri != null && srcUri != null) {
             straightenedCount = -1
             isProcessing = true
-            scope.launch {
+            scope.launch(Dispatchers.Main.immediate) {
+                var createdUri: Uri? = null
                 try {
+                    val destUri = withContext(Dispatchers.IO) {
+                        val directory = checkNotNull(androidx.documentfile.provider.DocumentFile.fromTreeUri(context, folderUri))
+                        com.pdfchemy.app.logic.OutputPolicy.createCopy(directory, "application/pdf", requestedOutputName).uri
+                            .also { createdUri = it }
+                    }
                     val count = PdfDeskewEngine.deskewDocument(context, srcUri, destUri)
                     straightenedCount = count
                     com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                     Toast.makeText(context, context.getString(if (count == 0) R.string.deskew_no_tilt else R.string.deskew_success), Toast.LENGTH_SHORT).show()
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
-                    }
                     throw cancelled
                 } catch (e: Exception) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
-                    }
                     AppLogger.e("Deskew processing failed", e)
                     Toast.makeText(context, "Error straightening document", Toast.LENGTH_SHORT).show()
                 } finally {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        createdUri?.let { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, it) }
+                    }
                     isProcessing = false
                 }
             }
@@ -165,6 +169,7 @@ fun DeskewScreen(
         ) {
             Button(
                 onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                enabled = !isProcessing,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Rounded.UploadFile, contentDescription = null)
@@ -282,7 +287,8 @@ fun DeskewScreen(
                             selectedPdfUri,
                             "straightened"
                         )
-                        saveFileLauncher.launch(suggestedName)
+                        requestedOutputName = suggestedName
+                        saveFileLauncher.launch(null)
                     },
                     enabled = !isProcessing,
                     modifier = Modifier.fillMaxWidth()
@@ -296,6 +302,7 @@ fun DeskewScreen(
                     }
                     Text(stringResource(R.string.deskew_action_straighten))
                 }
+                Text("A new copy is saved in the folder you choose.", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

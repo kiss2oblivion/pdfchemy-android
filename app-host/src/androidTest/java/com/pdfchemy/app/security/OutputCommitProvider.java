@@ -21,6 +21,7 @@ public class OutputCommitProvider extends ContentProvider {
         boolean block;
         final CountDownLatch release = new CountDownLatch(1);
         final CountDownLatch written = new CountDownLatch(1);
+        final CountDownLatch opened = new CountDownLatch(1);
     }
     private final Map<String, State> states = new HashMap<>();
     @Override public boolean onCreate() { return true; }
@@ -35,6 +36,10 @@ public class OutputCommitProvider extends ContentProvider {
         }
         if (state == null) throw new IllegalStateException("Missing fixture");
         if ("release".equals(method)) state.release.countDown();
+        try {
+            if ("awaitOpen".equals(method) && !state.opened.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output open");
+            if ("awaitWritten".equals(method) && !state.written.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output close");
+        } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
         Bundle result = new Bundle();
         synchronized (state) { result.putInt("opens", state.opens); result.putByteArray("bytes", state.bytes); }
         result.putBoolean("written", state.written.getCount() == 0);
@@ -45,6 +50,7 @@ public class OutputCommitProvider extends ContentProvider {
         synchronized (states) { state = states.get(uri.getLastPathSegment()); }
         if (state == null || !"wt".equals(mode)) throw new FileNotFoundException("Write fixture only: " + uri);
         synchronized (state) { state.opens++; }
+        state.opened.countDown();
         try {
             if (state.block && !state.release.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("Open fixture timed out");
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();

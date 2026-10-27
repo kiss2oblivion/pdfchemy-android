@@ -3,6 +3,8 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 import org.json.JSONObject
 import kotlin.math.cos
@@ -108,6 +110,12 @@ object PdfDeskewEngine {
         destUri: Uri,
         targetPages: Set<Int>? = null
     ): Int {
+        currentCoroutineContext().ensureActive()
+        // Arbitrary SAF providers cannot roll back a truncate/write failure.
+        // Only a host-created fresh copy may enter the publication transaction.
+        if (!OutputPolicy.isFreshCopy(destUri)) {
+            throw UnsupportedOperationException("Deskew requires a newly created output copy; choose an output folder")
+        }
         val params = JSONObject()
         if (targetPages != null) {
             val arr = org.json.JSONArray()

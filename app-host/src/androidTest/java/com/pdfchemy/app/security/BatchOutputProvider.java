@@ -24,7 +24,7 @@ public class BatchOutputProvider extends ContentProvider {
     private final Map<String, String[]> documents = new LinkedHashMap<>();
     private File directory;
     private CountDownLatch release = new CountDownLatch(1);
-    private int sequence, writes;
+    private int sequence, writes, deleted;
     private String firstId, blockedId;
     @Override public boolean onCreate() {
         directory = new File(getContext().getCacheDir(), "sc03-batch-fixture");
@@ -45,7 +45,7 @@ public class BatchOutputProvider extends ContentProvider {
             if ("configure".equals(method)) {
                 release.countDown(); release = new CountDownLatch(1);
                 for (File file : directory.listFiles()) file.delete();
-                documents.clear(); sequence = writes = 0; firstId = blockedId = null;
+                documents.clear(); sequence = writes = deleted = 0; firstId = blockedId = null;
                 documents.put("existing", new String[]{"existing.pdf", "application/pdf"});
                 try (FileOutputStream output = new FileOutputStream(new File(directory, "existing"))) {
                     output.write("existing destination bytes".getBytes(StandardCharsets.UTF_8));
@@ -61,6 +61,7 @@ public class BatchOutputProvider extends ContentProvider {
             if ("release".equals(method)) release.countDown();
             Bundle result = new Bundle();
             result.putString("firstId", firstId); result.putString("blockedId", blockedId);
+            result.putInt("createdCount", sequence); result.putInt("deletedCount", deleted);
             return result;
         } catch (Exception error) { throw new IllegalStateException(error); }
     }
@@ -74,7 +75,7 @@ public class BatchOutputProvider extends ContentProvider {
     }
     public synchronized void deleteDocument(String id) throws FileNotFoundException {
         if (!documents.containsKey(id)) throw new FileNotFoundException();
-        new File(directory, id).delete();
+        if (new File(directory, id).delete()) deleted++;
     }
     private static final String[] COLUMNS = {Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME,
         Document.COLUMN_MIME_TYPE, Document.COLUMN_FLAGS, Document.COLUMN_SIZE, Document.COLUMN_LAST_MODIFIED};

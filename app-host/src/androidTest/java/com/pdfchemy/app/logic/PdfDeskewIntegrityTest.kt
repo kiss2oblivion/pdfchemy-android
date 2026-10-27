@@ -37,7 +37,12 @@ class PdfDeskewIntegrityTest {
         fixture(false)
     }
 
-    @After fun cleanup() { input.delete(); output.delete() }
+    @After fun cleanup() { OutputPolicy.unregisterFreshCopy(Uri.fromFile(output)); input.delete(); output.delete() }
+
+    private fun freshTarget() {
+        check(output.delete())
+        OutputPolicy.registerFreshCopy(Uri.fromFile(output))
+    }
 
     private fun fixture(tilted: Boolean) {
         PDDocument().use { doc ->
@@ -56,6 +61,7 @@ class PdfDeskewIntegrityTest {
 
     @Test fun successfulDeskewPublishesReadableCorrectedPdfAndPreservesSource() = runBlocking {
         fixture(true)
+        freshTarget()
         val source = input.readBytes()
         assertEquals(1, execute())
         PDDocument.load(output).use { doc ->
@@ -72,40 +78,49 @@ class PdfDeskewIntegrityTest {
     }
 
     @Test fun zeroCorrectionsStillPublishesAValidPdf() = runBlocking {
+        freshTarget()
         val source = input.readBytes()
         assertEquals(0, execute())
         PDDocument.load(output).use { assertEquals(1, it.numberOfPages) }
         assertArrayEquals(source, input.readBytes())
     }
 
-    @Test fun malformedInputPropagatesFailureAndPreservesBothFiles() = runBlocking {
+    @Test fun malformedInputPropagatesFailureWithoutPublishing() = runBlocking {
+        freshTarget()
         input.writeText("%PDF-1.4\nmalformed private source")
         val source = input.readBytes()
         assertTrue("Malformed input must fail", runCatching { execute() }.isFailure)
-        assertArrayEquals(originalTarget, output.readBytes())
+        assertFalse("Failed export must not create output", output.exists())
+        assertTrue("Failure must not mark output published", OutputPolicy.isFreshCopy(Uri.fromFile(output)))
         assertArrayEquals(source, input.readBytes())
     }
 
     @Test fun unavailableOutputPropagatesFailureWithoutChangingSourceOrOldTarget() = runBlocking {
         val source = input.readBytes()
         val unavailable = Uri.parse("content://com.pdfchemy.missing.provider/output")
-        assertTrue(runCatching { PdfDeskewEngine.deskewDocument(context, Uri.fromFile(input), unavailable) }.isFailure)
+        OutputPolicy.registerFreshCopy(unavailable)
+        try {
+            assertTrue(runCatching { PdfDeskewEngine.deskewDocument(context, Uri.fromFile(input), unavailable) }.isFailure)
+        } finally { OutputPolicy.unregisterFreshCopy(unavailable) }
         assertArrayEquals(source, input.readBytes())
         assertArrayEquals(originalTarget, output.readBytes())
     }
 
     @Test fun workerBindingFailureCannotBecomeZeroCorrections() = runBlocking {
+        freshTarget()
         val source = input.readBytes()
         val unavailableWorker = object : ContextWrapper(context) {
             override fun bindService(service: Intent, conn: ServiceConnection, flags: Int): Boolean = false
         }
         val error = runCatching { execute(unavailableWorker) }.exceptionOrNull()
         assertTrue("Expected worker failure, got $error", error is PdfGateway.WorkerBindingException)
-        assertArrayEquals(originalTarget, output.readBytes())
+        assertFalse(output.exists())
+        assertTrue(OutputPolicy.isFreshCopy(Uri.fromFile(output)))
         assertArrayEquals(source, input.readBytes())
     }
 
     @Test fun workerRenderFailureAbortsBeforeDestinationPublication() = runBlocking {
+        freshTarget()
         PDDocument().use { doc ->
             doc.addPage(PDPage(PDRectangle(10f, 10000f)))
             doc.save(input)
@@ -114,8 +129,44 @@ class PdfDeskewIntegrityTest {
         val error = runCatching { execute() }.exceptionOrNull()
         assertTrue("Rendering quota failure must propagate: $error", error is PdfGateway.WorkerFailure)
         assertTrue(error!!.message.orEmpty().contains("Raster quota"))
+        assertFalse(output.exists())
+        assertTrue(OutputPolicy.isFreshCopy(Uri.fromFile(output)))
+        assertArrayEquals(source, input.readBytes())
+    }
+
+    @Test fun existingFileDestinationIsRejectedWithoutChangingEitherFile() = runBlocking {
+        val source = input.readBytes()
+        assertTrue(runCatching { execute() }.exceptionOrNull() is UnsupportedOperationException)
         assertArrayEquals(originalTarget, output.readBytes())
         assertArrayEquals(source, input.readBytes())
+    }
+
+    @Test fun cancellationDuringWorkerBindingReleasesUnpublishedOutput() = runBlocking {
+        freshTarget()
+        val source = input.readBytes()
+        val bound = CompletableDeferred<Unit>()
+        val connections = java.util.concurrent.ConcurrentHashMap<ServiceConnection, ServiceConnection>()
+        val blocked = object : ContextWrapper(context) {
+            override fun bindService(service: Intent, conn: ServiceConnection, flags: Int): Boolean {
+                val held = object : ServiceConnection {
+                    override fun onServiceConnected(name: android.content.ComponentName?, binder: android.os.IBinder?) { bound.complete(Unit) }
+                    override fun onServiceDisconnected(name: android.content.ComponentName?) {}
+                }
+                connections[conn] = held
+                return super.bindService(service, held, flags)
+            }
+            override fun unbindService(conn: ServiceConnection) { super.unbindService(connections.remove(conn) ?: conn) }
+        }
+        val operation = async(Dispatchers.IO) { execute(blocked) }
+        try {
+            withTimeout(30_000) { bound.await() }
+            operation.cancelAndJoin()
+            assertTrue(operation.isCancelled)
+            assertTrue(connections.isEmpty())
+            assertFalse(output.exists())
+            assertTrue(OutputPolicy.isFreshCopy(Uri.fromFile(output)))
+            assertArrayEquals(source, input.readBytes())
+        } finally { operation.cancelAndJoin() }
     }
 
     @Test fun cancellationPropagatesAndPreservesBothFiles() = runBlocking {
