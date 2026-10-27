@@ -185,24 +185,39 @@ class ShareCopyIntegrityTest {
             val receiver = Uri.parse("content://com.pdfchemy.app.test.sharerecipient")
             fun remote(method: String, argument: String? = null, extras: android.os.Bundle? = null) =
                 requireNotNull(context.contentResolver.call(receiver, method, argument, extras))
+            fun shellBytes(command: String): ByteArray = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+            ).use { it.readBytes() }
             val first = DocumentActions.getShareableContentUriAsync(context, source, "${tag}_first.pdf")
             val second = DocumentActions.getShareableContentUri(context, source, "${tag}_second.pdf")
             try {
                 val denied = remote("read", first.toString())
                 assertNotEquals(android.os.Process.myUid(), denied.getInt("uid"))
                 assertEquals("SecurityException", denied.getString("error"))
+                val shellUid = String(shellBytes("id -u")).trim().toInt()
+                assertEquals(2000, shellUid)
+                assertNotEquals(denied.getInt("uid"), shellUid)
                 listOf(first, second).forEachIndexed { index, uri ->
                     context.grantUriPermission("com.pdfchemy.app.test", uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     assertNull(remote("open", "consumer$index", android.os.Bundle().apply { putString("uri", uri.toString()) }).getString("error"))
                 }
+                // A second real receiving UID reads while the first receiver
+                // holds both streams. Only the completed export is granted.
+                context.grantUriPermission("com.android.shell", second, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                // UiAutomation tokenizes this command directly; shell quote
+                // characters would become part of the URI and miss its grant.
+                check(second.toString().none { it.isWhitespace() })
+                assertArrayEquals(bytes, shellBytes("content read --uri $second"))
                 repeat(8) { DocumentActions.getShareableContentUriAsync(context, source, "${tag}_later$it.pdf") }
                 DocumentActions.cleanupAbandonedShareCopies(context)
                 repeat(2) { assertArrayEquals(bytes, remote("readOpen", "consumer$it").getByteArray("bytes")) }
                 assertArrayEquals(bytes, remote("read", first.toString()).getByteArray("bytes"))
                 assertArrayEquals(bytes, remote("read", second.toString()).getByteArray("bytes"))
+                assertArrayEquals(bytes, shellBytes("content read --uri $second"))
                 context.revokeUriPermission(first, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 assertEquals("SecurityException", remote("read", first.toString()).getString("error"))
                 assertArrayEquals(bytes, remote("read", second.toString()).getByteArray("bytes"))
+                assertArrayEquals(bytes, shellBytes("content read --uri $second"))
                 assertFalse(first.toString().contains("staged"))
             } finally { remote("close") }
         }
