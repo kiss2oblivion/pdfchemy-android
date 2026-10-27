@@ -201,7 +201,9 @@ class ReaderShareAsyncTest {
         } finally {
             release.countDown()
             request.cancel()
-            while (true) (queue.poll() ?: break).run()
+            while (!request.isCompleted) {
+                requireNotNull(queue.poll(10, java.util.concurrent.TimeUnit.SECONDS)) { "Cancelled share did not resume" }.run()
+            }
             request.join()
             lease.close()
         }
