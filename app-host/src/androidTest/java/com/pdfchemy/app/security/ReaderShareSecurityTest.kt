@@ -26,18 +26,24 @@ import java.io.File
 class ReaderShareSecurityTest {
 
     private val application: Context get() = ApplicationProvider.getApplicationContext()
+    private var previousCopies = emptySet<File>()
+    private fun copies() = listOf(File(application.cacheDir, "exports"), File(application.filesDir, "shared_copies"))
+        .flatMap { it.listFiles().orEmpty().toList() }.filter { it.name.startsWith("shared_") }
 
     @Before
     fun setUp() {
         PDFBoxResourceLoader.init(application)
         DocumentStager.releaseAll()
+        previousCopies = copies().toSet()
     }
 
     @After
     fun tearDown() {
         DocumentStager.releaseAll()
-        File(application.cacheDir, "exports").listFiles()?.forEach {
-            if (it.name.startsWith("shared_")) it.delete()
+        copies().filter { it !in previousCopies }.forEach {
+            val uri = androidx.core.content.FileProvider.getUriForFile(application, "${application.packageName}.fileprovider", it)
+            application.revokeUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            it.delete()
         }
     }
 

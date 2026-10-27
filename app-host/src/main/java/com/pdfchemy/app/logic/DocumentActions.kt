@@ -15,6 +15,10 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InterruptedIOException
+import com.pdfchemy.app.security.SecurityLimits
+import com.pdfchemy.app.utils.ResourceTransferOwner
 
 object DocumentActions {
     fun view(context: Context, uri: Uri, displayName: String? = null) {
@@ -51,58 +55,15 @@ object DocumentActions {
         context: Context,
         uri: Uri,
         customDisplayName: String? = null
-    ): Uri = withContext(Dispatchers.IO) {
-        if (uri.scheme != "file") return@withContext uri
-        val path = uri.path ?: return@withContext uri
-        val sourceFile = File(path)
-        if (!sourceFile.exists()) return@withContext uri
-
-        // 1. If sourceFile is already inside a configured FileProvider root (e.g. cache/exports, cache/scans),
-        // FileProvider resolves it directly.
-        try {
-            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", sourceFile)
-        } catch (_: IllegalArgumentException) {
-            // Source is outside configured roots (e.g. internal cache/staged/ snapshot).
-            // Fall through to produce a bounded export copy.
+    ): Uri = ResourceTransferOwner<PreparedShare> { it.discard() }.use { owner ->
+        val result = withContext(Dispatchers.IO) {
+            val jobContext = currentCoroutineContext()
+            prepareShare(context, uri, customDisplayName) { jobContext.ensureActive() }.also(owner::stage)
         }
-
-        val lease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
-        var exportFile: File? = null
-        var copySuccess = false
-        try {
-            val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-            pruneOldShareCopies(exportsDir, maxRetained = 5)
-
-            val rawName = customDisplayName?.takeIf { it.isNotBlank() }
-                ?: com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
-                ?: sourceFile.name
-            val safeBase = rawName.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
-            val cleanName = if (safeBase.endsWith(".pdf", ignoreCase = true)) safeBase else "$safeBase.pdf"
-            val target = File(exportsDir, "shared_${System.currentTimeMillis()}_$cleanName")
-            exportFile = target
-
-            sourceFile.inputStream().use { input ->
-                target.outputStream().use { output ->
-                    val buffer = ByteArray(8192)
-                    while (true) {
-                        currentCoroutineContext().ensureActive()
-                        copyHookForTesting?.invoke()
-                        val bytesRead = input.read(buffer)
-                        if (bytesRead == -1) break
-                        currentCoroutineContext().ensureActive()
-                        output.write(buffer, 0, bytesRead)
-                    }
-                    output.flush()
-                }
-            }
-            copySuccess = true
-            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target)
-        } finally {
-            if (!copySuccess && exportFile != null) {
-                runCatching { exportFile.delete() }
-            }
-            lease?.close()
-        }
+        // withContext may discard a result on prompt cancellation. Retain only
+        // after the caller has resumed; otherwise the owner deletes this copy.
+        owner.commit()?.retain()
+        result.uri
     }
 
     fun share(context: Context, uri: Uri, displayName: String? = null) {
@@ -110,48 +71,105 @@ object DocumentActions {
         ShareUtil.shareFiles(context, listOf(shareUri), title = displayName ?: "Share PDF")
     }
 
-    fun getShareableContentUri(context: Context, uri: Uri, customDisplayName: String? = null): Uri {
-        if (uri.scheme != "file") return uri
-        val path = uri.path ?: return uri
-        val sourceFile = File(path)
-        if (!sourceFile.exists()) return uri
+    /** Blocking compatibility API; callers can interrupt or supply a cancellation signal. */
+    fun getShareableContentUri(
+        context: Context, uri: Uri, customDisplayName: String? = null,
+        cancellation: CancellationSignal? = null
+    ): Uri = prepareShare(context, uri, customDisplayName) { cancellation?.throwIfCanceled() }
+        .also { it.retain() }.uri
 
-        // 1. If sourceFile is already inside a configured FileProvider root (e.g. cache/exports, cache/scans),
-        // FileProvider resolves it directly.
-        try {
-            return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", sourceFile)
-        } catch (_: IllegalArgumentException) {
-            // Source is outside configured roots (e.g. internal cache/staged/ snapshot).
-            // Fall through to produce a bounded export copy.
-        }
+    internal const val MAX_RETAINED_SHARE_COPIES = 64
+    internal const val MAX_RETAINED_SHARE_BYTES = SecurityLimits.MAX_OUTPUT_BYTES
+    private val shareLock = Any()
+    private val activeCopies = mutableSetOf<File>()
+    private val reservations = mutableMapOf<File, Long>()
 
-        val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-        pruneOldShareCopies(exportsDir, maxRetained = 5)
-
-        val rawName = customDisplayName?.takeIf { it.isNotBlank() }
-            ?: com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
-            ?: sourceFile.name
-        val safeBase = rawName.replace("[^a-zA-Z0-9._-]".toRegex(), "_")
-        val cleanName = if (safeBase.endsWith(".pdf", ignoreCase = true)) safeBase else "$safeBase.pdf"
-        val exportFile = File(exportsDir, "shared_${System.currentTimeMillis()}_$cleanName")
-
-        sourceFile.inputStream().use { input ->
-            exportFile.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", exportFile)
+    private class PreparedShare(val uri: Uri, private val file: File? = null) {
+        fun retain() = synchronized(shareLock) { activeCopies.remove(file); Unit }
+        fun discard() = synchronized(shareLock) { activeCopies.remove(file); file?.delete(); Unit }
     }
 
-    private fun pruneOldShareCopies(exportsDir: File, maxRetained: Int = 5) {
+    /**
+     * Never infer expiry of another app's URI grant from age or file count.
+     * Completed copies remain immutable in private files storage, outside OS
+     * cache eviction. At the budget limit new copies fail without evicting any
+     * recipient's copy. Only unreturned partial copies are eligible for cleanup.
+     */
+    internal fun cleanupAbandonedShareCopies(context: Context) = synchronized(shareLock) {
+        File(context.filesDir, "shared_copies").listFiles()?.filter {
+            it.name.startsWith(".pending_") && it !in activeCopies
+        }?.forEach { check(it.delete()) { "Unable to clean incomplete share copy" } }
+    }
+
+    private fun prepareShare(context: Context, uri: Uri, displayName: String?, checkCancellation: () -> Unit): PreparedShare {
+        fun checkActive() {
+            checkCancellation()
+            if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Share copy interrupted")
+        }
+        checkActive()
+        if (uri.scheme != "file") return PreparedShare(uri)
+        val source = File(uri.path ?: throw IOException("Source path unavailable"))
+        val lease = com.pdfchemy.app.utils.DocumentStager.retain(uri)
+        var working: File? = null
         try {
-            val shareFiles = exportsDir.listFiles { f -> f.name.startsWith("shared_") } ?: return
-            if (shareFiles.size >= maxRetained) {
-                shareFiles.sortedBy { it.lastModified() }
-                    .take(shareFiles.size - maxRetained + 1)
-                    .forEach { runCatching { it.delete() } }
+            if (!source.isFile) throw IOException("Share source unavailable")
+            try {
+                return PreparedShare(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", source))
+            } catch (_: IllegalArgumentException) { /* Private staged source needs a separate export. */ }
+            val size = source.length()
+            require(size in 1..SecurityLimits.MAX_PDF_FILESIZE) { "Share source exceeds size limit" }
+            val raw = displayName?.takeIf { it.isNotBlank() }
+                ?: com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: source.name
+            val base = raw.replace("[^a-zA-Z0-9._-]".toRegex(), "_").take(120).ifBlank { "Document.pdf" }
+            val name = if (base.endsWith(".pdf", true)) base else "$base.pdf"
+            val directory = File(context.filesDir, "shared_copies")
+            val pending = synchronized(shareLock) {
+                check(directory.isDirectory || directory.mkdirs()) { "Share storage unavailable" }
+                cleanupAbandonedShareCopies(context)
+                val retained = directory.listFiles().orEmpty().filter { it.name.startsWith("shared_") } +
+                    File(context.cacheDir, "exports").listFiles().orEmpty().filter { it.name.startsWith("shared_") }
+                require(retained.size + reservations.size < MAX_RETAINED_SHARE_COPIES &&
+                    retained.sumOf { it.length() } + reservations.values.sum() <= MAX_RETAINED_SHARE_BYTES - size) {
+                    "Share storage is full; existing recipient copies have been preserved"
+                }
+                File.createTempFile(".pending_", "_$name", directory).also {
+                    working = it; activeCopies.add(it); reservations[it] = size
+                }
             }
-        } catch (_: Throwable) {}
+            source.inputStream().use { input ->
+                pending.outputStream().use { output ->
+                    val buffer = ByteArray(8192)
+                    var copied = 0L
+                    while (true) {
+                        checkActive()
+                        copyHookForTesting?.invoke()
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        checkActive()
+                        require(copied <= size - count) { "Share source changed or exceeds size limit" }
+                        output.write(buffer, 0, count)
+                        copied += count
+                    }
+                    require(copied == size) { "Share source changed during copy" }
+                    output.flush()
+                }
+            }
+            checkActive()
+            val target = File(directory, "shared_${pending.name.removePrefix(".pending_")}")
+            synchronized(shareLock) {
+                check(!target.exists() && pending.renameTo(target)) { "Unable to complete share copy" }
+                reservations.remove(pending); activeCopies.remove(pending); activeCopies.add(target)
+                working = target
+            }
+            val result = PreparedShare(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target), target)
+            checkActive()
+            return result
+        } catch (error: Throwable) {
+            synchronized(shareLock) {
+                working?.let { reservations.remove(it); activeCopies.remove(it); it.delete() }
+            }
+            throw error
+        } finally { lease?.close() }
     }
 
     fun print(context: Context, uri: Uri, name: String) {

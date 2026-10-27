@@ -32,11 +32,13 @@ class ReaderShareAsyncTest {
                 val canonicalFile = file.canonicalFile
                 val exports = File(context.cacheDir, "exports").canonicalFile
                 val scans = File(context.cacheDir, "scans").canonicalFile
+                val retainedPath = File(context.filesDir, "shared_copies").canonicalPath.replace('\\', '/')
                 val exportsPath = exports.path.replace('\\', '/')
                 val scansPath = scans.path.replace('\\', '/')
                 val filePath = canonicalFile.path.replace('\\', '/')
 
                 return when {
+                    filePath.startsWith("$retainedPath/") -> Uri.parse("content://$authority/retained_share_copies/${canonicalFile.name}")
                     filePath.startsWith("$exportsPath/") || filePath == exportsPath -> {
                         val rel = filePath.removePrefix(exportsPath).trimStart('/')
                         Uri.parse("content://$authority/shared_exports/$rel")
@@ -66,17 +68,18 @@ class ReaderShareAsyncTest {
         DocumentStager.releaseAll()
         File(app.cacheDir, "exports").deleteRecursively()
         File(app.cacheDir, "staged").deleteRecursively()
+        File(app.filesDir, "shared_copies").deleteRecursively()
     }
 
     @Test
-    fun stagedFileCopiedToExportsWithLeaseRetention() = runBlocking {
+    fun stagedFileCopiedToRetainedStorageWithLeaseRetention() = runBlocking {
         val content = "TEST_PDF_READER_SHARE_CONTENT_829104".toByteArray()
         val lease = DocumentStager.stageStreamWithLease(app, ByteArrayInputStream(content), "pdf")
         val stagedUri = lease.document.uri
 
         assertEquals(1, DocumentStager.activeLeases(stagedUri))
 
-        val exportsDir = File(app.cacheDir, "exports").apply { mkdirs() }
+        val exportsDir = File(app.filesDir, "shared_copies").apply { mkdirs() }
         val shareUri = DocumentActions.getShareableContentUriAsync(app, stagedUri, "document.pdf")
         assertEquals("content", shareUri.scheme)
         assertTrue(shareUri.authority?.contains("fileprovider") == true)
@@ -116,7 +119,7 @@ class ReaderShareAsyncTest {
         val lease = DocumentStager.stageStreamWithLease(app, ByteArrayInputStream(content), "pdf")
         val stagedUri = lease.document.uri
 
-        val exportsDir = File(app.cacheDir, "exports").apply { mkdirs() }
+        val exportsDir = File(app.filesDir, "shared_copies").apply { mkdirs() }
 
         DocumentActions.copyHookForTesting = {
             throw CancellationException("Simulated cancellation during copy")
@@ -130,7 +133,7 @@ class ReaderShareAsyncTest {
         }
 
         // Verify incomplete export file is not left behind
-        val remainingShared = exportsDir.listFiles { f -> f.name.startsWith("shared_") }?.toList().orEmpty()
+        val remainingShared = exportsDir.listFiles()?.toList().orEmpty()
         assertTrue("Incomplete export file must be deleted on cancellation, found: $remainingShared", remainingShared.isEmpty())
 
         // Lease held by getShareableContentUriAsync must be released
@@ -144,7 +147,7 @@ class ReaderShareAsyncTest {
         val lease = DocumentStager.stageStreamWithLease(app, ByteArrayInputStream(content), "pdf")
         val stagedUri = lease.document.uri
 
-        val exportsDir = File(app.cacheDir, "exports").apply { mkdirs() }
+        val exportsDir = File(app.filesDir, "shared_copies").apply { mkdirs() }
 
         DocumentActions.copyHookForTesting = {
             throw IOException("Simulated disk full or I/O interruption")
@@ -157,10 +160,50 @@ class ReaderShareAsyncTest {
             // Expected
         }
 
-        val remainingShared = exportsDir.listFiles { f -> f.name.startsWith("shared_") }?.toList().orEmpty()
+        val remainingShared = exportsDir.listFiles()?.toList().orEmpty()
         assertTrue("Incomplete export file must be deleted on failure, found: $remainingShared", remainingShared.isEmpty())
 
         assertEquals(1, DocumentStager.activeLeases(stagedUri))
         lease.close()
+    }
+
+    @Test fun cancellationBeforeCallerResumptionRemovesUnreturnedCompleteCopy() = runBlocking<Unit> {
+        val lease = DocumentStager.stageStreamWithLease(app, ByteArrayInputStream("Queued share".toByteArray()), "pdf")
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val first = java.util.concurrent.atomic.AtomicBoolean(true)
+        val queue = java.util.concurrent.LinkedBlockingQueue<Runnable>()
+        val caller = object : CoroutineDispatcher() {
+            override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) { queue.add(block) }
+        }
+        DocumentActions.copyHookForTesting = {
+            if (first.compareAndSet(true, false)) {
+                entered.countDown()
+                check(release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+            }
+        }
+        var delivered = false
+        val request = async(caller, start = CoroutineStart.UNDISPATCHED) {
+            DocumentActions.getShareableContentUriAsync(app, lease.document.uri, "queued.pdf").also { delivered = true }
+        }
+        try {
+            assertTrue(entered.await(10, java.util.concurrent.TimeUnit.SECONDS))
+            // The producer was blocked until async returned: the caller has
+            // necessarily suspended before a successful copy can finish.
+            release.countDown()
+            val resume = requireNotNull(queue.poll(10, java.util.concurrent.TimeUnit.SECONDS))
+            request.cancel()
+            resume.run()
+            withTimeout(10_000) { request.join() }
+            assertFalse(delivered)
+            assertTrue(File(app.filesDir, "shared_copies").listFiles().isNullOrEmpty())
+            assertEquals(1, DocumentStager.activeLeases(lease.document.uri))
+        } finally {
+            release.countDown()
+            request.cancel()
+            while (true) (queue.poll() ?: break).run()
+            request.join()
+            lease.close()
+        }
     }
 }
