@@ -299,6 +299,7 @@ class BillingManager(
             if (hasPremiumInBatch) {
                 securePrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
                 _isPremium.value = true
+                AdManager.clearAd()
             } else if (isFullInventory) {
                 if (requestTicket == null || purchaseRequests.isCurrent(requestTicket)) {
                     securePrefs.edit().putBoolean(KEY_IS_PREMIUM, false).apply()

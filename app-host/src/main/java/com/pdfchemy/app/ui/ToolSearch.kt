@@ -151,7 +151,7 @@ fun ToolSearchBar(
         return
     }
 
-    SearchBar(
+    DockedSearchBar(
         query = query,
         onQueryChange = { query = it },
         onSearch = { active = false },
@@ -177,7 +177,9 @@ fun ToolSearchBar(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 360.dp),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

@@ -60,45 +60,115 @@ fun TableExtractorScreen(
     var isExtracting by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
     var isSpreadsheetSafeCsv by remember { mutableStateOf(false) }
+    var extractionError by remember { mutableStateOf<String?>(null) }
+    val extractionRequests = remember { com.pdfchemy.app.logic.LatestRequest() }
+    var activeExtractionJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     fun parseCsvRows(csv: String): List<List<String>> {
         if (csv.isBlank()) return emptyList()
-        return csv.lineSequence()
-            .filter { it.isNotBlank() }
-            .map { line ->
-                val tokens = mutableListOf<String>()
-                var current = StringBuilder()
-                var inQuotes = false
-                for (ch in line) {
-                    if (ch == '\"') {
-                        inQuotes = !inQuotes
-                    } else if (ch == ',' && !inQuotes) {
-                        tokens.add(current.toString().trim())
-                        current = StringBuilder()
+        val rows = mutableListOf<List<String>>()
+        val currentRow = mutableListOf<String>()
+        val currentCell = StringBuilder()
+        var inQuotes = false
+        var i = 0
+        val len = csv.length
+
+        while (i < len) {
+            val ch = csv[i]
+            if (inQuotes) {
+                if (ch == '\"') {
+                    if (i + 1 < len && csv[i + 1] == '\"') {
+                        // Escaped quote inside quoted field: "" -> "
+                        currentCell.append('\"')
+                        i += 2
                     } else {
-                        current.append(ch)
+                        // Closing quote
+                        inQuotes = false
+                        i++
+                    }
+                } else {
+                    currentCell.append(ch)
+                    i++
+                }
+            } else {
+                when (ch) {
+                    '\"' -> {
+                        inQuotes = true
+                        i++
+                    }
+                    ',' -> {
+                        currentRow.add(currentCell.toString().trim())
+                        currentCell.clear()
+                        i++
+                    }
+                    '\r' -> {
+                        if (i + 1 < len && csv[i + 1] == '\n') {
+                            i++ // Skip \r in \r\n
+                        }
+                        currentRow.add(currentCell.toString().trim())
+                        currentCell.clear()
+                        if (currentRow.any { it.isNotBlank() }) {
+                            rows.add(currentRow.toList())
+                        }
+                        currentRow.clear()
+                        i++
+                    }
+                    '\n' -> {
+                        currentRow.add(currentCell.toString().trim())
+                        currentCell.clear()
+                        if (currentRow.any { it.isNotBlank() }) {
+                            rows.add(currentRow.toList())
+                        }
+                        currentRow.clear()
+                        i++
+                    }
+                    else -> {
+                        currentCell.append(ch)
+                        i++
                     }
                 }
-                tokens.add(current.toString().trim())
-                tokens
-            }.toList()
+            }
+        }
+
+        if (currentCell.isNotEmpty() || currentRow.isNotEmpty()) {
+            currentRow.add(currentCell.toString().trim())
+            if (currentRow.any { it.isNotBlank() }) {
+                rows.add(currentRow.toList())
+            }
+        }
+
+        return rows
     }
 
     val parsedRows = remember(extractedCsv) { parseCsvRows(extractedCsv) }
 
     fun extractTables(uri: Uri) {
         selectedPdfUri = uri
+        activeExtractionJob?.cancel()
+        val ticket = extractionRequests.begin()
         isExtracting = true
+        extractionError = null
         extractedCsv = ""
-        scope.launch {
+        activeExtractionJob = scope.launch {
             try {
                 val csv = PdfTableExtractorEngine.extractTablesToCsv(context, uri, safeMode = isSpreadsheetSafeCsv)
-                extractedCsv = csv
+                if (extractionRequests.isCurrent(ticket)) {
+                    extractedCsv = csv
+                    extractionError = null
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 AppLogger.e("Table extraction failed", e)
-                Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
+                if (extractionRequests.isCurrent(ticket)) {
+                    extractionError = e.message ?: "Failed to extract tables"
+                    extractedCsv = ""
+                    Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
+                }
             } finally {
-                isExtracting = false
+                if (extractionRequests.isCurrent(ticket)) {
+                    isExtracting = false
+                }
             }
         }
     }
@@ -302,6 +372,49 @@ fun TableExtractorScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     Text(stringResource(R.string.table_extractor_action_export))
+                }
+            } else if (extractionError != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Rounded.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Table Extraction Failed",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = extractionError ?: "An unexpected error occurred during table extraction.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        selectedPdfUri?.let { uri ->
+                            Button(
+                                onClick = { extractTables(uri) },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(Icons.Rounded.Refresh, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Retry Extraction")
+                            }
+                        }
+                    }
                 }
             } else if (selectedPdfUri != null) {
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {

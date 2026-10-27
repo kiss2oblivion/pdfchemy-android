@@ -341,10 +341,18 @@ class MainActivity : AppCompatActivity() {
         if (consentInformation.canRequestAds()) {
             if (isMobileAdsInitialized.compareAndSet(false, true)) {
                 MobileAds.initialize(this) {
-                    AdManager.loadInterstitial(this, isPremium = false)
+                    AdManager.loadInterstitial(
+                        this,
+                        isPremium = isUserEntitledToPremium(),
+                        isPremiumProvider = { isUserEntitledToPremium() }
+                    )
                 }
             } else {
-                AdManager.loadInterstitial(this, isPremium = false)
+                AdManager.loadInterstitial(
+                    this,
+                    isPremium = isUserEntitledToPremium(),
+                    isPremiumProvider = { isUserEntitledToPremium() }
+                )
             }
         } else {
             AdManager.clearAd()
@@ -377,8 +385,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        AdManager.clearAd()
-        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        if (isFinishing) {
+            AdManager.clearAd()
+            com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        }
         super.onDestroy()
     }
 
@@ -767,7 +777,13 @@ fun MainApp(
     }
 
     val isPremiumRaw by viewModel.isPremium.collectAsState()
-    val isPremium = isPremiumRaw || isScreenshotRun
+    val isPremium = isPremiumRaw || isScreenshotRun || (context as? MainActivity)?.isUserEntitledToPremium() == true
+
+    LaunchedEffect(isPremium) {
+        if (isPremium) {
+            AdManager.clearAd()
+        }
+    }
 
     val safeguardAssessment by viewModel.safeguardAssessment.collectAsState()
     safeguardAssessment?.let { assessment ->

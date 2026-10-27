@@ -203,7 +203,7 @@ object AdManager {
                     if (!activity.isFinishing && !activity.isDestroyed) {
                         val currentPrem = isUserPremium(isPremium)
                         if (!currentPrem && canRequestAds(activity)) {
-                            loadInterstitial(activity, isPremium = false)
+                            loadInterstitial(activity, isPremium = currentPrem, isPremiumProvider = isPremiumProvider)
                         }
                     }
                     onAdDismissed()

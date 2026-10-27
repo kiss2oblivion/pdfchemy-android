@@ -33,6 +33,12 @@ This report delivers the implementation of Play Billing, Google Mobile Ads, and 
    - Established complete manual test matrix for real Google Play sandbox and internal test tracks.
    - In accordance with our inviolable ethical guidelines, all checks requiring Play Console human access or physical hardware are explicitly labeled **UNVERIFIED**, not PASS.
 
+4. **GEM-04 (P0) through GEM-07 (P1) — Application Acceptance (See GEMINI_APPLICATION_ACCEPTANCE.md):**
+   - **GEM-04 (P0):** Resolved unbounded measurement crash in `ToolSearch.kt` inside scrolling containers using `DockedSearchBar` and `.heightIn(max = 360.dp)`.
+   - **GEM-05 (P0):** Completed live premium provider wiring, startup re-check on ad load completion, activity recreation ad retention, and immediate ad purge on purchase.
+   - **GEM-06 (P1):** Fixed asynchronous UI correctness in `TableExtractorScreen.kt` (`LatestRequest` ticket invalidation, active job cancellation, RFC 4180 CSV parser, error UI).
+   - **GEM-07 (P1):** Harmonized Fast Web View (8 keys) and PDF/A (5 keys) honesty contracts across all 20 localized resource directories.
+
 ---
 
 ## 2. Exclusive File Ownership & Scope of Changes
