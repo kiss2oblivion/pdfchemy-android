@@ -39,28 +39,22 @@ fun PdfAValidatorScreen(
 ) {
     SecureScreenContent()
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var report by remember { mutableStateOf<PdfAReport?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 
-    fun runAudit() {
-        val uri = selectedPdfUri ?: return
-        coroutineScope.launch {
-            isChecking = true
-            val result = PdfArchiveValidatorEngine.inspectPdfACompliance(context, uri)
-            isChecking = false
-            if (result.isSuccess) {
-                report = result.getOrThrow()
-            }
-        }
-    }
-
-    LaunchedEffect(selectedPdfUri) {
-        if (selectedPdfUri != null) {
-            runAudit()
+    var auditGeneration by remember { mutableStateOf(0) }
+    LaunchedEffect(selectedPdfUri, auditGeneration) {
+        report = null
+        val uri = selectedPdfUri ?: return@LaunchedEffect
+        val requestedGeneration = auditGeneration
+        isChecking = true
+        try {
+            report = PdfArchiveValidatorEngine.inspectPdfACompliance(context, uri).getOrNull()
+        } finally {
+            if (selectedPdfUri == uri && auditGeneration == requestedGeneration) isChecking = false
         }
     }
 
@@ -79,7 +73,7 @@ fun PdfAValidatorScreen(
                 },
                 actions = {
                     if (selectedPdfUri != null) {
-                        IconButton(onClick = { runAudit() }) {
+                        IconButton(onClick = { auditGeneration++ }) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "Re-scan")
                         }
                     }
@@ -104,7 +98,7 @@ fun PdfAValidatorScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Rounded.VerifiedUser,
+                        Icons.Rounded.Info,
                         contentDescription = null,
                         modifier = Modifier.size(36.dp),
                         tint = MaterialTheme.colorScheme.secondary
@@ -172,8 +166,7 @@ fun PdfAValidatorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (r.isCompliant) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                                else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                             )
                         ) {
                             Row(
@@ -185,22 +178,21 @@ fun PdfAValidatorScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = r.pdfaVersionDetected,
+                                        text = r.certificationStatus,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = if (r.isCompliant) stringResource(R.string.status_archival_ready)
-                                        else stringResource(R.string.status_compliance_issues_found),
+                                        text = stringResource(R.string.pdfa_headline),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = if (r.isCompliant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Text(
-                                    text = "${r.complianceScore}%",
+                                    text = "${r.checks.count { it.isPassed }}/${r.checks.size}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (r.isCompliant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }

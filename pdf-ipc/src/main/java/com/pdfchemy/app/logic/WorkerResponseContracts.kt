@@ -112,7 +112,9 @@ data class ArchiveInspectContract(
     val pdfaVersionDetected: String,
     val complianceScore: Int,
     val checks: List<ArchiveCheckItemContract>,
-    val isCompliant: Boolean
+    val isCompliant: Boolean,
+    val certificationStatus: String,
+    val assessmentScope: String
 ) : OperationContract
 
 /**

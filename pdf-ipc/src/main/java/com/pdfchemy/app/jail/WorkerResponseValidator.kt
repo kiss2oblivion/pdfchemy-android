@@ -52,8 +52,9 @@ object WorkerResponseValidator {
 
     fun validate(operation: String, rawJson: String, targetCount: Int = 0): OperationContract {
         validateOperation(operation)
-        if (operation == "LINEARIZE_OPTIMIZE") {
-            throw UnsupportedOperationException("Fast Web View generation is not supported by the local engine")
+        when (operation) {
+            "LINEARIZE_OPTIMIZE" -> throw UnsupportedOperationException("Fast Web View generation is not supported by the local engine")
+            "ARCHIVE_CONVERT" -> throw UnsupportedOperationException("PDF/A conversion is not supported by the local engine")
         }
         SecurityLimits.enforceResultSize(rawJson)
 
@@ -315,6 +316,12 @@ object WorkerResponseValidator {
         val version = obj.requireString("pdfaVersionDetected", maxLength = 64)
         val score = obj.requireInt("complianceScore", min = 0, max = 100)
         val isCompliant = obj.requireBoolean("isCompliant")
+        require(!isCompliant) { "Preliminary checks cannot certify PDF/A" }
+        val status = obj.requireString("certificationStatus", maxLength = 32)
+        require(status == "NOT_CERTIFIED") { "Invalid PDF/A certification status" }
+        val scope = obj.requireString("assessmentScope", maxLength = 32)
+        require(scope == "PRELIMINARY_PDF_A_CHECKS") { "Invalid PDF/A assessment scope" }
+        require(version == "Unknown (not certified)") { "Unverified PDF/A version claim" }
         val checksArray = obj.requireArray("checks", maxItems = 100)
         val checks = mutableListOf<ArchiveCheckItemContract>()
         for (i in 0 until checksArray.length()) {
@@ -330,7 +337,9 @@ object WorkerResponseValidator {
             pdfaVersionDetected = version,
             complianceScore = score,
             checks = checks,
-            isCompliant = isCompliant
+            isCompliant = false,
+            certificationStatus = status,
+            assessmentScope = scope
         )
     }
 

@@ -46,9 +46,42 @@ CORE-01 changed files, excluding this execution report:
 
 Final CORE-01 debug APK SHA-256: `3fd8b8835bc47c3a17bc5e019d87a781f15d92a1bfce6c9bd0eec8b93537e395`; test APK `3e9a1f84dbce1f7cc06bb5bc900d34b078981cce0d933dd2dd0efd2bd51f4d89`. Actual final-source file hashes, all ten method identities and signed-APK restoration are in `core26-evidence/core01-resource-fixed/`. These supersede the earlier resource-ID checkpoint above. Locale text updates are assigned to Gemini using the existing resource keys; no translated XML was edited here.
 
-## CORE-02 and CORE-03
+CORE-01 source commit: `8fc81091069ed4a3e096846f53b5ac2f19130153`, pushed and remote verified. [CI run 40390220523](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40390220523) completed all nine jobs successfully on that exact SHA, including API24/30/34/36. Native artifacts have been downloaded and their ZIP digests verified; detailed method/count reconciliation is recorded separately. Draft PR: https://github.com/kiss2oblivion/pdfchemy-android/pull/13 against the shared integration branch.
 
-Pending in separate subsequent batches. PDF/A preliminary checks must not become a certification claim: [veraPDF's primary validation documentation](https://docs.verapdf.org/cli/validation/) describes validation profiles for the applicable PDF/A parts and conformance levels. Metadata tagging alone will not be retained as a conversion implementation.
+## CORE-02: preliminary PDF/A checks and unsupported conversion
+
+The old worker inferred a PDF/A version from untrusted metadata and its conversion path rewrote metadata without a conformant conversion backend. [veraPDF's primary validation documentation](https://docs.verapdf.org/cli/validation/) describes validation profiles for the applicable PDF/A parts and conformance levels. This hotfix introduces no authoritative validator or converter.
+
+Inspection now reports `assessmentScope=PRELIMINARY_PDF_A_CHECKS`, `certificationStatus=NOT_CERTIFIED`, `isCompliant=false` and an unknown version even when all preliminary checks pass. The five checks describe their narrow scope: encryption, profile-stream presence, metadata-stream presence, direct page-font embedding and catalog action entries. They do not validate ICC contents, XMP schemas, nested font resources or full ISO 19005 requirements. Legacy score fields remain compatibility data; the screen displays a count, no compliance percentage or archival-ready badge. Host validation rejects affirmative, ambiguous and forged success responses. Worker and facade conversion throw UnsupportedOperationException before descriptor access, scratch allocation, history or publication. Existing targets and originals are preserved.
+
+Baseline probes on CORE-01 source: the first three-method run completed with one failure rather than the collector's expected two, so it is retained as a collector failure, not a passing receipt. Conversion returned success and changed the old target. Spoofed XMP produced a false PDF/A-1 version classification but `isCompliant` was already false for that fixture; no affirmative-compliance reproduction is claimed. The strengthened version-classification assertion then reproduced two failures and one pass with an EXPECTED_BASELINE_FAILURE receipt in `core26-evidence/core02-baseline-strengthened/`.
+
+Focused fixed verification:
+- IPC ArchiveClaimSecurityTest: 6 pass; preserved linearization contract tests: 4 pass.
+- Worker PdfArchivePreliminaryChecksTest: 7 pass; preserved linearization tests: 5 pass. Total focused JVM: 22 pass, zero failures/errors/skips; XML snapshot `core26-evidence/core02-unit/`.
+- Actual native PdfArchiveValidatorEngineTest (10), CorePdfAHonestyTest (1) and both CORE-01 classes (10): 21 pass, zero failures/errors/skips; empty crash buffer. `core26-evidence/core02-fixed/receipt.json` records all method identities and complete tested source-file hashes. HEAD was CORE-01 with the CORE-02 source changes present; this is not represented as a clean committed-source receipt.
+- Security audit, architecture, compilation and release lint pass. Release lint has zero errors and 642 warnings. Initial compilation failed because PDOutputIntent.cosObject is COSBase; corrected with a checked COSDictionary cast, then the full focused command passed. Logs: `core02-focused-validation.log` (failure), `core02-focused-fixed-validation.log` (pass).
+- Adversarial cases include missing ICC, nonembedded font, spoofed XMP/pdfaid, a fake profile stream, catalog JavaScript/action, invalid bytes, zero pages, forged worker certification/conversion, existing and absent destinations, cancellation and an unopened SAF fixture provider. UI checks exercise the actual worker report.
+
+Fixed debug application SHA-256: `a54433b8b04d9ad93c8a9438e873bd1b389eb1ab19f16b25ae881af7ad71b3c5`; test APK: `2cf21ae88b0f386ac92eb084e8e1c7fd43880e341d3f878a08edccc4bffa10d3`. These are diagnostic, non-minified artifacts signed with the existing configured certificate. The original signed APK was restored and its installed digest verified. No signed minified CORE-02 artifact has yet been tested.
+
+CORE-02 changed files, excluding this report:
+- `FEATURES_REGISTRY.md`
+- `app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngineTest.kt`
+- `app-host/src/androidTest/java/com/pdfchemy/app/ui/CorePdfAHonestyTest.kt`
+- `app-host/src/main/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngine.kt`
+- `app-host/src/main/java/com/pdfchemy/app/ui/PdfAValidatorScreen.kt`
+- `app-host/src/main/res/values/core_pdfa.xml`
+- `app-host/src/main/res/values/strings.xml` (core English only)
+- `pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt`
+- `pdf-ipc/src/main/java/com/pdfchemy/app/logic/WorkerResponseContracts.kt`
+- `pdf-ipc/src/test/java/com/pdfchemy/app/jail/ArchiveClaimSecurityTest.kt`
+- `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfArchiveValidatorEngineWorker.kt`
+- `pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfArchivePreliminaryChecksTest.kt`
+
+## CORE-03 and shared integration
+
+Full final-source checks and separate combined-source integration remain pending. Gemini PR12 uses the exact shared baseline and its current source head is `8d7c24cfb61c363389a1b2f94775b9101d70b18d`. The baseline and core string meanings were delivered in the shared handoff file and an authorized comment on new PR12; subsequent coordination uses the shared file per owner instruction. Translated claims and independent Gemini follow-ups still require review.
 
 ## Open gates
 
