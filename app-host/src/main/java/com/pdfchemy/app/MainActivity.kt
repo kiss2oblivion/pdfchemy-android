@@ -161,6 +161,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.pdfchemy.app.billing.AdManager
+import com.pdfchemy.app.billing.BillingManager
 
 // --- Color Palette ---
 val md_theme_light_primary = Color(0xFF0072B2)
@@ -324,19 +325,21 @@ class MainActivity : AppCompatActivity() {
             AdManager.clearAd()
             return
         }
-        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        val appCtx = this.applicationContext ?: this
+        val consentInformation = UserMessagingPlatform.getConsentInformation(appCtx)
         if (consentInformation.canRequestAds()) {
+            val currentlyEntitled = isUserEntitledToPremium()
             if (isMobileAdsInitialized.compareAndSet(false, true)) {
-                MobileAds.initialize(this) {
+                MobileAds.initialize(appCtx) {
                     AdManager.loadInterstitial(
-                        this,
-                        isPremium = isUserEntitledToPremium()
+                        appCtx,
+                        isPremium = currentlyEntitled
                     )
                 }
             } else {
                 AdManager.loadInterstitial(
-                    this,
-                    isPremium = isUserEntitledToPremium()
+                    appCtx,
+                    isPremium = currentlyEntitled
                 )
             }
         } else {

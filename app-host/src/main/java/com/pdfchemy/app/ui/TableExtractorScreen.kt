@@ -52,8 +52,10 @@ fun TableExtractorScreen(
     val scope = rememberCoroutineScope()
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    var hasHandledInitialUri by remember { mutableStateOf(false) }
     var extractedCsv by remember { mutableStateOf("") }
     var isExtracting by remember { mutableStateOf(false) }
+    var isParsingCsv by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
     var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
     var extractionError by remember { mutableStateOf<String?>(null) }
@@ -61,7 +63,19 @@ fun TableExtractorScreen(
     val extractionRequests = remember { com.pdfchemy.app.logic.LatestRequest() }
     var activeExtractionJob by remember { mutableStateOf<Job?>(null) }
 
-    val parsedRows = remember(extractedCsv) { CsvParser.parse(extractedCsv) }
+    var parsedRows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
+
+    LaunchedEffect(extractedCsv) {
+        if (extractedCsv.isEmpty()) {
+            parsedRows = emptyList()
+        } else {
+            isParsingCsv = true
+            parsedRows = withContext(Dispatchers.Default) {
+                runCatching { CsvParser.parse(extractedCsv) }.getOrDefault(emptyList())
+            }
+            isParsingCsv = false
+        }
+    }
 
     fun extractTables(uri: Uri) {
         selectedPdfUri = uri
@@ -89,8 +103,8 @@ fun TableExtractorScreen(
                         is TableExtractionResult.Failure -> {
                             extractedCsv = ""
                             isEmptyResult = false
-                            extractionError = result.cause.message ?: "Failed to extract tables"
-                            Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
+                            extractionError = result.cause.message ?: context.getString(R.string.table_extractor_error_extract)
+                            Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
                         }
                         is TableExtractionResult.Cancelled -> {
                             // Cancelled, do not mutate state
@@ -102,10 +116,10 @@ fun TableExtractorScreen(
             } catch (e: Exception) {
                 AppLogger.e("Table extraction failed", e)
                 if (extractionRequests.isCurrent(ticket)) {
-                    extractionError = e.message ?: "Failed to extract tables"
+                    extractionError = e.message ?: context.getString(R.string.table_extractor_error_extract)
                     extractedCsv = ""
                     isEmptyResult = false
-                    Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
                 }
             } finally {
                 if (extractionRequests.isCurrent(ticket)) {
@@ -115,14 +129,26 @@ fun TableExtractorScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri, isSpreadsheetSafeCsv) {
-        val uri = initialPdfUri ?: selectedPdfUri
-        if (uri != null) {
-            extractTables(uri)
+    // Initial document extraction only runs once on entry
+    LaunchedEffect(initialPdfUri) {
+        if (initialPdfUri != null && !hasHandledInitialUri) {
+            hasHandledInitialUri = true
+            selectedPdfUri = initialPdfUri
+            extractTables(initialPdfUri)
+        }
+    }
+
+    // Toggling safe mode re-extracts the currently selected authoritative document
+    LaunchedEffect(isSpreadsheetSafeCsv) {
+        if (hasHandledInitialUri || selectedPdfUri != null) {
+            selectedPdfUri?.let { uri ->
+                extractTables(uri)
+            }
         }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
+        hasHandledInitialUri = true
         extractTables(uri)
     }
 
@@ -141,7 +167,7 @@ fun TableExtractorScreen(
                             Toast.makeText(context, context.getString(R.string.table_extractor_no_tables), Toast.LENGTH_SHORT).show()
                         }
                         is TableExtractionResult.Failure -> {
-                            Toast.makeText(context, "Failed to save CSV", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.table_extractor_error_save), Toast.LENGTH_SHORT).show()
                         }
                         is TableExtractionResult.Cancelled -> {}
                     }
@@ -149,7 +175,7 @@ fun TableExtractorScreen(
                     // Export cancelled
                 } catch (e: Exception) {
                     AppLogger.e("CSV export failed", e)
-                    Toast.makeText(context, "Failed to save CSV", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.table_extractor_error_save), Toast.LENGTH_SHORT).show()
                 } finally {
                     isExporting = false
                 }
@@ -175,16 +201,6 @@ fun TableExtractorScreen(
                                 try {
                                     val shareUri = withContext(Dispatchers.IO) {
                                         val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                        // Prune old share copies matching Codex DocumentActions convention (maxRetained = 5)
-                                        try {
-                                            val shareFiles = exportsDir.listFiles { f -> f.name.startsWith("shared_") }
-                                            if (shareFiles != null && shareFiles.size >= 5) {
-                                                shareFiles.sortedBy { it.lastModified() }
-                                                    .take(shareFiles.size - 5 + 1)
-                                                    .forEach { runCatching { it.delete() } }
-                                            }
-                                        } catch (_: Throwable) {}
-
                                         val tempFile = File(exportsDir, "shared_table_${UUID.randomUUID()}.csv")
                                         try {
                                             FileOutputStream(tempFile).use { it.write(extractedCsv.toByteArray(Charsets.UTF_8)) }
@@ -283,7 +299,7 @@ fun TableExtractorScreen(
                 }
             }
 
-            if (isExtracting) {
+            if (isExtracting || isParsingCsv) {
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }

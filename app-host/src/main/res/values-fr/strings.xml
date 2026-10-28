@@ -1171,4 +1171,6 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Échec de l\'enregistrement du fichier CSV.</string>
+    <string name="table_extractor_error_extract">Échec de l\'extraction des données tabulaires du document.</string>
 </resources>

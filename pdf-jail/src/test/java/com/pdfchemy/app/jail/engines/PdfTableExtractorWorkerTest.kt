@@ -185,4 +185,38 @@ class PdfTableExtractorWorkerTest {
         assertEquals(0, json.getInt("rowCount"))
         assertEquals(0, json.getInt("count"))
     }
+
+    @Test
+    fun workerExtractedCsvValidatesAndParsesThroughCsvParser() {
+        val pdfFile = tempFolder.newFile("e2e_table.pdf")
+        val outputFile = tempFolder.newFile("e2e_output.csv")
+        createTestPdf(
+            pdfFile,
+            listOf(
+                listOf("First Name", "Last Name", "Department"),
+                listOf("Alice", "Smith", "Engineering"),
+                listOf("Bob", "Jones", "Finance")
+            )
+        )
+
+        val sourceFd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        val targetFd = ParcelFileDescriptor.open(outputFile, ParcelFileDescriptor.MODE_READ_WRITE)
+
+        val resultJson = PdfTableExtractorWorker.extractText(sourceFd, targetFd, "{}")
+        sourceFd.close()
+        targetFd.close()
+
+        val contract = com.pdfchemy.app.jail.WorkerResponseValidator.validate("TABLE_EXTRACT", resultJson, targetCount = 1)
+        assertTrue(contract is com.pdfchemy.app.logic.TableExtractContract)
+        val tableContract = contract as com.pdfchemy.app.logic.TableExtractContract
+        assertEquals(3, tableContract.rowCount)
+        assertFalse(tableContract.empty)
+
+        val csvText = com.pdfchemy.app.jail.WorkerResponseValidator.parseCsvTableFile(outputFile)
+        val parsed = com.pdfchemy.app.logic.CsvParser.parse(csvText)
+        assertEquals(3, parsed.size)
+        assertEquals(listOf("First Name", "Last Name", "Department"), parsed[0])
+        assertEquals(listOf("Alice", "Smith", "Engineering"), parsed[1])
+        assertEquals(listOf("Bob", "Jones", "Finance"), parsed[2])
+    }
 }

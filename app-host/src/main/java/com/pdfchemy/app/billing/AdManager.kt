@@ -66,6 +66,7 @@ object AdManager {
             premiumOverride = null
             entitlementSource = null
         }
+        BillingManager.resetCacheForTesting()
     }
 
     private fun isUserPremium(isPremium: Boolean, context: Context? = null): Boolean {

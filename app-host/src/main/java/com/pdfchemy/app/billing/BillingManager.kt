@@ -57,9 +57,18 @@ class BillingManager(
         internal const val PREFS_NAME = "billing_prefs_secured"
         internal const val KEY_IS_PREMIUM = "is_premium_entitled"
 
-        fun isUserEntitled(context: Context): Boolean {
+        @Volatile
+        private var cachedPrefs: SharedPreferences? = null
+
+        @Volatile
+        private var cachedEntitled: Boolean? = null
+
+        @Synchronized
+        internal fun getSecurePrefs(context: Context): SharedPreferences {
+            val existing = cachedPrefs
+            if (existing != null) return existing
             val appContext = context.applicationContext ?: context
-            return try {
+            return runCatching {
                 val masterKey = MasterKey.Builder(appContext)
                     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                     .build()
@@ -69,29 +78,43 @@ class BillingManager(
                     masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                ).getBoolean(KEY_IS_PREMIUM, false)
+                ).also { cachedPrefs = it }
+            }.getOrElse {
+                appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).also { cachedPrefs = it }
+            }
+        }
+
+        fun isUserEntitled(context: Context): Boolean {
+            cachedEntitled?.let { return it }
+            return try {
+                val entitled = getSecurePrefs(context).getBoolean(KEY_IS_PREMIUM, false)
+                cachedEntitled = entitled
+                entitled
             } catch (_: Exception) {
                 false
             }
         }
+
+        internal fun updateCachedEntitlement(entitled: Boolean) {
+            cachedEntitled = entitled
+        }
+
+        @androidx.annotation.VisibleForTesting
+        internal fun resetCacheForTesting() {
+            cachedPrefs = null
+            cachedEntitled = false
+        }
     }
     
     private val securePrefs: SharedPreferences by lazy {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        getSecurePrefs(context)
     }
 
     init {
         // Fallback to secure cached value immediately for offline support
-        _isPremium.value = securePrefs.getBoolean(KEY_IS_PREMIUM, false)
+        val initialEntitled = securePrefs.getBoolean(KEY_IS_PREMIUM, false)
+        _isPremium.value = initialEntitled
+        updateCachedEntitlement(initialEntitled)
         initializeBillingClient()
     }
 
@@ -316,11 +339,13 @@ class BillingManager(
             }
             if (hasPremiumInBatch) {
                 securePrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
+                updateCachedEntitlement(true)
                 _isPremium.value = true
                 AdManager.clearAd()
             } else if (isFullInventory) {
                 if (requestTicket == null || purchaseRequests.isCurrent(requestTicket)) {
                     securePrefs.edit().putBoolean(KEY_IS_PREMIUM, false).apply()
+                    updateCachedEntitlement(false)
                     _isPremium.value = false
                 }
             }

@@ -45,7 +45,7 @@ object PdfTableExtractorEngine {
                 }
             }
 
-            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
+            val contract = PdfGateway.executeEngineTyped<TableExtractContract>(
                 context,
                 "TABLE_EXTRACT",
                 sourceUri,
@@ -57,6 +57,10 @@ object PdfTableExtractorEngine {
                 return@withContext TableExtractionResult.Failure(
                     IllegalStateException("Worker reported table extraction failure")
                 )
+            }
+
+            if (contract.empty || contract.rowCount == 0) {
+                return@withContext TableExtractionResult.Empty(pageIndex)
             }
 
             if (!tempFile.exists() || tempFile.length() == 0L) {
@@ -73,7 +77,7 @@ object PdfTableExtractorEngine {
                 return@withContext TableExtractionResult.Empty(pageIndex)
             }
 
-            TableExtractionResult.Success(csv, rows.size)
+            TableExtractionResult.Success(csv, contract.rowCount)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (t: Throwable) {
@@ -103,7 +107,7 @@ object PdfTableExtractorEngine {
         }
 
         try {
-            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
+            val contract = PdfGateway.executeEngineTyped<TableExtractContract>(
                 context,
                 "TABLE_EXTRACT",
                 sourceUri,
@@ -117,14 +121,10 @@ object PdfTableExtractorEngine {
                 )
             }
 
-            val length = runCatching {
-                context.contentResolver.openFileDescriptor(destUri, "r")?.use { it.statSize } ?: 0L
-            }.getOrDefault(0L)
-
-            if (length == 0L || contract.count == 0) {
+            if (contract.empty || contract.rowCount == 0) {
                 TableExtractionResult.Empty(pageIndex)
             } else {
-                TableExtractionResult.Success("", contract.count)
+                TableExtractionResult.Success("", contract.rowCount)
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

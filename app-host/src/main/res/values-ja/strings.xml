@@ -1161,4 +1161,6 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">CSVファイルの保存に失敗しました。</string>
+    <string name="table_extractor_error_extract">ドキュメントから表データを抽出できませんでした。</string>
 </resources>

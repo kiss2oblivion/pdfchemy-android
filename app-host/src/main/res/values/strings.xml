@@ -1041,6 +1041,8 @@
     <string name="table_extractor_preview">Detected Tabular Data</string>
     <string name="table_extractor_no_tables">No tabular data detected on this page.</string>
     <string name="table_extractor_success">Tables Exported to CSV!</string>
+    <string name="table_extractor_error_save">Failed to save CSV file.</string>
+    <string name="table_extractor_error_extract">Failed to extract tabular data from document.</string>
 
     <string name="menu_doc_sanitizer">Threat &amp; Security Sanitizer</string>
     <string name="menu_doc_sanitizer_desc">Strip embedded JavaScript, tracking beacons, and malicious launch triggers</string>
