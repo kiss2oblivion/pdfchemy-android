@@ -73,7 +73,7 @@ class DeskewCopyPublicationTest {
             if (malformed) {
                 compose.waitUntil(30_000) { state().getInt("createdCount") == 1 && state().getInt("deletedCount") == 1 }
                 assertNull(state().getString("firstId"))
-                compose.onAllNodesWithText(app.getString(R.string.deskew_no_tilt)).assertCountEquals(1)
+                compose.onAllNodesWithText(app.getString(R.string.deskew_no_tilt)).assertCountEquals(0)
                 val failed = DocumentsContract.buildDocumentUriUsingTree(tree, "doc_1")
                 assertFalse(DocumentFile.fromSingleUri(app, failed)!!.exists())
                 assertFalse(OutputPolicy.isFreshCopy(failed))

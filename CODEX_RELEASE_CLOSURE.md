@@ -45,10 +45,27 @@ Output PPTX SHA-256: `045e3ebf706567cb8fc6a2417849147c7fdfdd8dc4310ee714c615f771
 
 Office batch files: `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt`, new `app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt`, and this report. The [Microsoft PresentationML documentation](https://learn.microsoft.com/en-us/office/open-xml/presentation/how-to-create-a-presentation-document-by-providing-a-file-name) and [python-pptx picture API](https://python-pptx.readthedocs.io/en/latest/api/shapes.html) informed the package/parser checks.
 
+## Deskew preview ownership — implementation and native verification complete
+
+Root causes: independent preview coroutines shared bitmap/angle/loading state without a request identity. An old result could overwrite a newer document, replacement failures retained the previous bitmap, and a bitmap returned after composable disposal had no owner to recycle it. The generic exception handler also absorbed cancellation.
+
+Correction: `DeskewPreviewOwner` cancels superseded requests, immediately retires the previous bitmap/angle, binds state to a document/request generation, and stages produced bitmaps in ResourceTransferOwner before leaving IO. Only the current request can commit or finish loading; rejected/cancelled results are recycled. Disposal cancels and closes ownership. The default producer recycles its bitmap if angle computation throws. Failed analysis displays an error, without claiming a successful no-tilt preview. The previously verified Deskew export algorithm is unchanged.
+
+Controlled original-routine run `core26-evidence/closure28-preview-numeric-original`: **4 native UI cases, 3 expected failures, zero errors/skips**. Reproduced out-of-order bitmap/angle replacement, retaining the previous document after a failed replacement, and leaking a result delivered after disposal. Disposal after successful publication already passed. A scoped loader seam controls completion order; the original routine retains its original ownership/cancellation behavior. Numeric accessibility state distinguishes the actual preview angles without depending on localized label formatting.
+
+Accepted run `core26-evidence/closure28-preview-accepted`: **16/16 native cases passed**, zero failures/errors/skips, 64.405 seconds. Includes four actual Compose ownership cases, all nine existing Deskew engine integrity cases, two actual copy-publication UI cases and the existing SAF preservation test. Source and destination checks and geometric/export behavior remain intact. All 312 app-host JVM tests passed during this batch; architecture/security checks and debug/test builds passed. APK SHA-256 `ab8d51d22c685e1847c6f16c00a8951333f14569adf33619e65475fbcabf1a2f`; test APK `9382d126f62d24741d0e615586ed5dcfe5e2a5905473504e18b5d4cebcca0ce7`. Original signed APK restored and hash verified.
+
+Verification correction: initial original run `closure28-preview-original` had three failures; initial fixed run `closure28-preview-fixed` had one failure because both test angles rendered through the same escaped `%%1$.1f` label. Replaced that ambiguous test observation with the image's numeric accessibility state and reran both original and fixed routines. No sleep or timeout increase was introduced; failed attempts remain recorded.
+
+Gemini-owned UI contract: `deskew_detected_angle` contains `%%1$.1f` in default/localized XML, so its visual label does not substitute the angle. Confirmed still present on Gemini head `ea7d239337be641a647c7de602c9198a5564efb3`; no localized resources changed here. The preview's numeric accessibility state is correct; Gemini should repair the resource placeholder. PowerPoint descriptions should describe visual page reproduction, without promising editable reconstructed text.
+
+Preview batch files: new `app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt`, `app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt`, new `app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt`, and this report.
+
 ## Remaining closure work
 
 - [x] Correct and independently parse PDF-to-PowerPoint slide image placement.
-- [ ] Deskew preview latest-request/cancellation/disposal ownership and native regressions.
+- [x] Deskew preview latest-request/cancellation/disposal ownership and native regressions.
+- [ ] Verify provider deletion cannot block unrelated ownership checks during cleanup.
 - [ ] Retained-share statistics and explicit cleanup API, active-transfer protection and partial-failure reporting.
 - [ ] Complete JVM suite, API24/30/34/36 native suites, architecture/security checks and release build on final source.
 - [ ] Final SHA, exact aggregate file list, CI links and PR #14 closeout.

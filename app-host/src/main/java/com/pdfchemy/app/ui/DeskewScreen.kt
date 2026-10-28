@@ -1,9 +1,7 @@
 package com.pdfchemy.app.ui
 
-import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import android.net.Uri
-import android.os.ParcelFileDescriptor
 import android.widget.Toast
 import kotlinx.coroutines.NonCancellable
 import androidx.activity.compose.BackHandler
@@ -29,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,12 +36,17 @@ import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.FileUtil
 import com.pdfchemy.app.logic.PdfDeskewEngine
+import com.pdfchemy.app.logic.DeskewPreviewLoader
+import com.pdfchemy.app.logic.DeskewPreviewOwner
+import com.pdfchemy.app.logic.defaultDeskewPreviewLoader
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+
+internal val LocalDeskewPreviewLoader = staticCompositionLocalOf<DeskewPreviewLoader?> { null }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,58 +58,37 @@ fun DeskewScreen(
     BackHandler { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val suppliedPreviewLoader = LocalDeskewPreviewLoader.current
+    val appContext = context.applicationContext
+    val previewLoader = remember(appContext, suppliedPreviewLoader) { suppliedPreviewLoader ?: defaultDeskewPreviewLoader(appContext) }
+    val previewOwner = remember(scope, previewLoader) { DeskewPreviewOwner(scope, previewLoader) }
+    val preview by previewOwner.state.collectAsState()
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
-    var detectedAngle by remember { mutableFloatStateOf(0.0f) }
-    var isAnalyzing by remember { mutableStateOf(false) }
+    val detectedAngle = preview.angle
+    val isAnalyzing = preview.loading
     var isProcessing by remember { mutableStateOf(false) }
-    var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val previewBitmap = preview.bitmap
     var straightenedCount by remember { mutableIntStateOf(-1) }
 
     fun analyzeDocument(uri: Uri) {
         selectedPdfUri = uri
         straightenedCount = -1
-        isAnalyzing = true
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    var pfd: ParcelFileDescriptor? = null
-                    try {
-                        pfd = context.contentResolver.openFileDescriptor(uri, "r")
-                        if (pfd != null) {
-                            val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, 0, 360)
-                            if (bmp != null) {
-                                val angle = PdfDeskewEngine.detectSkewAngle(bmp)
-                                withContext(Dispatchers.Main) {
-                                    previewBitmap?.recycle()
-                                    previewBitmap = bmp
-                                    detectedAngle = angle
-                                }
-                            }
-                        }
-                    } finally {
-                        pfd?.close()
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("Failed to analyze PDF for deskew", e)
-            } finally {
-                isAnalyzing = false
-            }
-        }
+        previewOwner.analyze(uri)
     }
 
-    LaunchedEffect(initialPdfUri) {
+    LaunchedEffect(initialPdfUri, previewOwner) {
         if (initialPdfUri != null) {
             analyzeDocument(initialPdfUri)
+        } else {
+            selectedPdfUri = null
+            straightenedCount = -1
+            previewOwner.clear()
         }
     }
 
-    val currentPreviewBmp by rememberUpdatedState(previewBitmap)
-    DisposableEffect(Unit) {
-        onDispose {
-            currentPreviewBmp?.let { if (!it.isRecycled) it.recycle() }
-        }
+    DisposableEffect(previewOwner) {
+        onDispose { previewOwner.close() }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
@@ -202,8 +186,9 @@ fun DeskewScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else if (selectedPdfUri != null) {
+                if (preview.failed) Text("Unable to analyze this document", color = MaterialTheme.colorScheme.error)
                 // Detected Tilt Badge
-                Card(
+                if (previewBitmap != null) Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = if (abs(detectedAngle) >= 0.5f)
@@ -255,7 +240,9 @@ fun DeskewScreen(
                         Image(
                             bitmap = bmp.asImageBitmap(),
                             contentDescription = "Page Preview",
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(8.dp).semantics {
+                                stateDescription = String.format(java.util.Locale.getDefault(), "%.1f°", detectedAngle)
+                            }
                         )
                     }
                 }
