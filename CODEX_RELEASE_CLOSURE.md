@@ -73,11 +73,59 @@ Intermediate same-source CI for SAF implementation commit `5b674709d291ff082be4f
 
 Cleanup addendum files: `pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java`, new `app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt`, and this report.
 
-## Remaining closure work
+## Retained-share management — implementation and native verification complete
+
+Baseline `core26-evidence/closure28-share-original`, commit `4bbf706c78425600e068e1b07f8dd397a1127109`: **13/13 existing share/reader cases passed**, zero failures/errors/skips, 12.783 seconds. Source inspection confirms there was no retained-copy count/storage inspection or explicit completed-copy cleanup API. This is a missing management contract; the already-correct retention behavior was preserved rather than presenting it as a new data-loss defect.
+
+Added blocking `@WorkerThread` APIs `DocumentActions.inspectRetainedShares(context)` and `cleanupRetainedShares(context, selectedSnapshotIds, cancellationSignal)`. Inspection reports logical bytes/counts, partials, legacy candidates, reservations and active readers. Cleanup returns actual deleted IDs/bytes, protected reasons, failures, missing IDs, unprocessed IDs and cancellation status. Only valid opaque snapshot IDs select files; paths/URIs are rejected. Files created after the snapshot are not implicitly selected. Store inspection fails explicitly if ownership cannot be safely established.
+
+The existing FileProvider authority/roots remain unchanged. A narrow subclass tracks read descriptors for completed copies, releases protection on descriptor closure and rejects writes to those copies. Active copies and readers are excluded from cleanup under the same local storage lock. Descriptor tracking admits at most 64 active managed reads, refusing overflow while existing transfers remain intact. The existing 64-copy/250 MiB storage budgets and synchronous/async copy cancellation and partial cleanup remain enforced. No completed-copy expiry or production grant revocation was added.
+
+Accepted run `core26-evidence/closure28-share-accepted`: **30/30 native cases passed**, zero failures/errors/skips. Includes nine management cases, ten original share-integrity cases, three reader-sharing cases and all eight real cross-UID admission cases. Verified logical counts/bytes; selected and repeated cleanup; genuine foreign open readers; descriptor quota/refusal/recovery; grant preservation after explicit deletion; partial writer protection; read-only/inaccessible partial URIs; failed/throwing deletes with actual partial results; pre/mid-operation cancellation; legacy/original preservation; and restoring copy capacity without evicting other shares. Every management fixture preserves its staged source bytes. Original signed APK restored and hash verified.
+
+Earlier management run `closure28-share-fixed` passed 29/29; the final run adds descriptor-budget coverage. The first build had a FileProvider return-nullability mismatch, corrected to match AndroidX before native verification. All 312 app-host JVM tests, architecture/security checks and debug/test builds passed during the batch. Accepted APK SHA-256 `fffae08640124a00a68b2b91697819ea906ad3c272ae83a2b068fe47e6f345a3`; test APK `1316625bef814e6497561a26dc4bd979d06683a36424c5bd50304d6be60c58e9`.
+
+The [Gemini Settings API contract](reports/RETAINED_SHARE_API.md) supplies integration code and result semantics without MainActivity/ViewModel/translation edits. Legacy `cache/exports/shared_*` candidates are counted but protected because a name alone cannot establish disposable-copy ownership. Android cannot enumerate all future temporary-grant consumers; currently open descriptors/copies are protected, while an explicit deletion of an inactive copy prevents future opens. Grants themselves are not revoked. Named-file logical bytes do not claim physical accounting for unlinked duplicated descriptors.
+
+## Final verification and review contract
 
 - [x] Correct and independently parse PDF-to-PowerPoint slide image placement.
 - [x] Deskew preview latest-request/cancellation/disposal ownership and native regressions.
 - [x] Verify provider deletion cannot block unrelated ownership checks during cleanup.
-- [ ] Retained-share statistics and explicit cleanup API, active-transfer protection and partial-failure reporting.
-- [ ] Complete JVM suite, API24/30/34/36 native suites, architecture/security checks and release build on final source.
-- [ ] Final SHA, exact aggregate file list, CI links and PR #14 closeout.
+- [x] Retained-share statistics and explicit cleanup API, active-transfer protection and partial-failure reporting.
+
+The batch results above are historical receipts for their exact recorded source bindings. Final same-head acceptance requires the full JVM suite, API24/30/34/36 native matrix, architecture/security/secrets/dependency checks, release lint/build and artifact hygiene. **The final SHA, exact final test totals, CI run links and acceptance outcome are recorded in PR #14's release-closure body after those checks complete.** Keeping that final receipt in PR metadata avoids changing the tested source SHA solely to insert its own SHA or CI result.
+
+Remaining owner/integration boundaries: Gemini wires Settings and repairs its localized Deskew placeholder/Office feature claims; arbitrary SAF rollback and forced provider deletion are not promised; unverified legacy share candidates remain protected; signed/minified runtime, physical-device and Play-owner gates are not closed by debug-native and unsigned-release build evidence. No main/integration merge, release tag, deployment or Play action is included.
+
+## Exact changed files since the requested starting SHA
+
+27 files:
+
+- [CODEX_RELEASE_CLOSURE.md](CODEX_RELEASE_CLOSURE.md)
+- [app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedShareManagementTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedShareManagementTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/security/HostOutputCommitSecurityTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/security/HostOutputCommitSecurityTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java](app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java)
+- [app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/security/SafExistingDestinationIntegrityTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/security/SafExistingDestinationIntegrityTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/security/SafFreshCopyPublicationTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/security/SafFreshCopyPublicationTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt)
+- [app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyPublicationTest.kt](app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyPublicationTest.kt)
+- [app-host/src/main/AndroidManifest.xml](app-host/src/main/AndroidManifest.xml)
+- [app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt](app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt)
+- [app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt](app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt)
+- [app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt](app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt)
+- [app-host/src/main/java/com/pdfchemy/app/logic/PdfManipulator.kt](app-host/src/main/java/com/pdfchemy/app/logic/PdfManipulator.kt)
+- [app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareFileProvider.kt](app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareFileProvider.kt)
+- [app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareStorage.kt](app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareStorage.kt)
+- [app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt](app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt)
+- [app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt](app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt)
+- [app-host/src/test/java/com/pdfchemy/app/logic/ReleaseWorkflowRegressionTest.kt](app-host/src/test/java/com/pdfchemy/app/logic/ReleaseWorkflowRegressionTest.kt)
+- [pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt](pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt)
+- [pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt](pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt)
+- [pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt](pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt)
+- [reports/RETAINED_SHARE_API.md](reports/RETAINED_SHARE_API.md)
+- [reports/SAF_PUBLICATION_INVENTORY.md](reports/SAF_PUBLICATION_INVENTORY.md)

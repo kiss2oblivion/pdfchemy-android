@@ -17,6 +17,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicBoolean
 import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.utils.ResourceTransferOwner
 
@@ -79,10 +81,122 @@ object DocumentActions {
         .also { it.retain() }.uri
 
     internal const val MAX_RETAINED_SHARE_COPIES = 64
+    internal const val MAX_ACTIVE_SHARE_READERS = 64
     internal const val MAX_RETAINED_SHARE_BYTES = SecurityLimits.MAX_OUTPUT_BYTES
     private val shareLock = Any()
     private val activeCopies = mutableSetOf<File>()
     private val reservations = mutableMapOf<File, Long>()
+    private val activeReaders = mutableMapOf<String, Int>()
+    @androidx.annotation.VisibleForTesting
+    internal var retainedDeleteForTesting: ((File) -> Boolean)? = null
+
+    private data class RetainedFile(val file: File, val kind: RetainedShareKind, val root: String)
+
+    private fun retainedId(record: RetainedFile): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest((record.root + ":" + record.file.name).toByteArray(Charsets.UTF_8))
+        val hex = "0123456789abcdef"
+        return buildString(64) { for (byte in digest) { append(hex[(byte.toInt() ushr 4) and 15]); append(hex[byte.toInt() and 15]) } }
+    }
+
+    /** Dedicated files storage proves ownership; historical cache names alone do not. */
+    private fun retainedFiles(context: Context): List<RetainedFile> = listOf(
+        Triple("retained", context.filesDir, "shared_copies"),
+        Triple("legacy", context.cacheDir, "exports")
+    ).flatMap { (root, parent, name) ->
+        val directory = File(parent.canonicalFile, name)
+        if (!directory.exists()) emptyList() else {
+            if (!directory.isDirectory || directory.canonicalFile != directory) throw IOException("Share storage unavailable")
+            val files = directory.listFiles() ?: throw IOException("Unable to inspect share storage")
+            files.filter { it.name.startsWith("shared_") || (root == "retained" && it.name.startsWith(".pending_")) }.map { file ->
+                if (!file.isFile || file.canonicalFile != file.absoluteFile) throw IOException("Unrecognized share storage entry")
+                val kind = when {
+                    root == "legacy" -> RetainedShareKind.LEGACY_UNVERIFIED
+                    file.name.startsWith(".pending_") -> RetainedShareKind.INCOMPLETE_COPY
+                    else -> RetainedShareKind.RETAINED_COPY
+                }
+                RetainedFile(file, kind, root)
+            }
+        }
+    }
+
+    private fun protections(record: RetainedFile): Set<RetainedShareProtection> = buildSet {
+        if (record.kind == RetainedShareKind.LEGACY_UNVERIFIED) add(RetainedShareProtection.UNVERIFIED_LEGACY_OWNERSHIP)
+        if (activeCopies.any { it.canonicalFile == record.file }) add(RetainedShareProtection.ACTIVE_COPY)
+        if ((activeReaders[record.file.path] ?: 0) > 0) add(RetainedShareProtection.ACTIVE_READER)
+    }
+
+    /** Logical bytes, including active partials and separately identified legacy candidates. Call off Main. */
+    @androidx.annotation.WorkerThread
+    fun inspectRetainedShares(context: Context): RetainedShareStorage = synchronized(shareLock) {
+        RetainedShareStorage(retainedFiles(context).map { record ->
+            RetainedShareEntry(retainedId(record), record.file.name, record.kind, record.file.length(), protections(record))
+        }, reservations.values.sum(), activeReaders.values.sum())
+    }
+
+    /**
+     * Explicit removal of selected snapshot IDs only. No expiry and no URI-grant revocation.
+     * Active writers/readers and unproven legacy ownership are protected. A signal or
+     * thread interruption returns actual partial results, without deleting further files.
+     */
+    @androidx.annotation.WorkerThread
+    fun cleanupRetainedShares(context: Context, ids: Set<String>, cancellation: CancellationSignal? = null): RetainedShareCleanupResult {
+        require(ids.size <= SecurityLimits.MAX_OUTPUT_FILES) { "Too many retained-copy selections" }
+        require(ids.all { id -> id.length == 64 && id.all { it in '0'..'9' || it in 'a'..'f' } }) { "Invalid retained-copy selection" }
+        val selected = ids.toSet()
+        return synchronized(shareLock) {
+            // Fail before deletion if either store cannot be safely inventoried.
+            val records = retainedFiles(context).associateBy(::retainedId)
+            val deleted = linkedMapOf<String, Long>()
+            val protected = linkedMapOf<String, Set<RetainedShareProtection>>()
+            val failed = linkedMapOf<String, String>()
+            val missing = linkedSetOf<String>()
+            val unprocessed = selected.toMutableSet()
+            var cancelled = false
+            for (id in selected) {
+                if (cancellation?.isCanceled == true || Thread.currentThread().isInterrupted) { cancelled = true; break }
+                unprocessed.remove(id)
+                val record = records[id]
+                if (record == null) { missing.add(id); continue }
+                val protection = protections(record)
+                if (protection.isNotEmpty()) { protected[id] = protection; continue }
+                val bytes = record.file.length()
+                val removed = runCatching { retainedDeleteForTesting?.invoke(record.file) ?: record.file.delete() }.getOrDefault(false)
+                if (removed) deleted[id] = bytes else failed[id] = "Unable to delete retained copy"
+            }
+            RetainedShareCleanupResult(deleted.toMap(), protected.toMap(), failed.toMap(), missing.toSet(), unprocessed.toSet(), cancelled)
+        }
+    }
+
+    /** Narrow FileProvider hook: only immutable completed copies in the existing shared roots. */
+    internal fun openRetainedShare(context: Context, uri: Uri, mode: String): ParcelFileDescriptor? = synchronized(shareLock) {
+        if (uri.scheme != "content" || uri.authority?.substringAfterLast('@') != "${context.packageName}.fileprovider") return null
+        val segments = uri.pathSegments
+        val root = when (segments.firstOrNull()) {
+            "retained_share_copies" -> File(context.filesDir.canonicalFile, "shared_copies")
+            "shared_exports" -> {
+                if (segments.getOrNull(1)?.startsWith("shared_") != true) return null
+                File(context.cacheDir.canonicalFile, "exports")
+            }
+            else -> return null
+        }
+        fun unavailable(): Nothing = throw java.io.FileNotFoundException("Retained share is unavailable")
+        if (mode != "r" || segments.size != 2 || !segments[1].startsWith("shared_") || root.canonicalFile != root) unavailable()
+        val file = File(root, segments[1])
+        if (file.canonicalFile != file.absoluteFile || file.parentFile != root || !file.isFile) unavailable()
+        if (activeReaders.values.sum() >= MAX_ACTIVE_SHARE_READERS) throw java.io.FileNotFoundException("Share reader limit exceeded")
+        val key = file.path
+        activeReaders[key] = (activeReaders[key] ?: 0) + 1
+        val released = AtomicBoolean()
+        fun release() {
+            if (released.compareAndSet(false, true)) synchronized(shareLock) {
+                val remaining = (activeReaders[key] ?: 1) - 1
+                if (remaining == 0) activeReaders.remove(key) else activeReaders[key] = remaining
+            }
+        }
+        try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY, Handler(Looper.getMainLooper())) { release() }
+        } catch (error: Throwable) { release(); throw error }
+    }
 
     private class PreparedShare(val uri: Uri, private val file: File? = null) {
         fun retain() = synchronized(shareLock) { activeCopies.remove(file); Unit }
@@ -96,9 +210,8 @@ object DocumentActions {
      * recipient's copy. Only unreturned partial copies are eligible for cleanup.
      */
     internal fun cleanupAbandonedShareCopies(context: Context) = synchronized(shareLock) {
-        File(context.filesDir, "shared_copies").listFiles()?.filter {
-            it.name.startsWith(".pending_") && it !in activeCopies
-        }?.forEach { check(it.delete()) { "Unable to clean incomplete share copy" } }
+        retainedFiles(context).filter { it.kind == RetainedShareKind.INCOMPLETE_COPY && protections(it).isEmpty() }
+            .forEach { check(it.file.delete()) { "Unable to clean incomplete share copy" } }
     }
 
     private fun prepareShare(context: Context, uri: Uri, displayName: String?, checkCancellation: () -> Unit): PreparedShare {
@@ -126,8 +239,7 @@ object DocumentActions {
             val pending = synchronized(shareLock) {
                 check(directory.isDirectory || directory.mkdirs()) { "Share storage unavailable" }
                 cleanupAbandonedShareCopies(context)
-                val retained = directory.listFiles().orEmpty().filter { it.name.startsWith("shared_") } +
-                    File(context.cacheDir, "exports").listFiles().orEmpty().filter { it.name.startsWith("shared_") }
+                val retained = retainedFiles(context).filter { it.kind != RetainedShareKind.INCOMPLETE_COPY }.map { it.file }
                 require(retained.size + reservations.size < MAX_RETAINED_SHARE_COPIES &&
                     retained.sumOf { it.length() } + reservations.values.sum() <= MAX_RETAINED_SHARE_BYTES - size) {
                     "Share storage is full; existing recipient copies have been preserved"
