@@ -29,9 +29,25 @@ Fresh local JVM verification: **312 app-host + 71 IPC tests passed**, zero failu
 
 Limits: this prevents publication to arbitrary existing SAF documents; it does not provide arbitrary-provider rollback. Provider deletion refusal may leave an unpublished fresh partial copy. Private file temporaries and legacy caller-owned stream adapters are separately classified in the inventory. Physical/Play/signing-owner gates remain pending. Gemini should review the shared helper's folder-selection wording/translation contract in its branch; no Gemini-owned screen was edited.
 
+## PDF-to-PowerPoint — implementation and independent verification complete
+
+Root causes: the archive stored JPEGs and image relationships without placing a `p:pic` / `a:blip` on any slide. It generated speculative text boxes instead, with unrecognized generic-shape XML. Text extraction also controlled slide count and invented a slide for zero-page input. Missing renderers, mismatched page counts and truncated image payloads could still report success.
+
+Correction: one page maps to one visible picture. Image extents fit the original visible page aspect ratio (including crop/rotation), centered on the slide. All picture, layout, master and theme relationships resolve. Rendering uses one pipe at a time, with real JPEG frame/bounds validation, complete SOI/EOI checks, page-count agreement, cancellation checks, pixel limits and an aggregate image-byte budget. No page-image scratch files accumulate. Missing, failed, incomplete or inconsistent rendering reports an error before destination publication. Word/Excel generation and independent renderer code are unchanged.
+
+Original native run `core26-evidence/closure28-office-original`, starting at SAF commit `5b674709d291ff082be4f0969cdf877bf4a1c9ba`: **9 cases, 6 expected assertion failures, zero errors/skips**. Both placement tests found no picture; zero-page input reported success; missing renderer, mismatched page count and a truncated JPEG reported success. The real renderer-exception case and Word/Excel tests already passed. Independent python-pptx inspection found four slides with picture counts `[0,0,0,0]` in PPTX SHA-256 `5f07327a27087c63827185526fb9abf7489f3323c3c75c867bdde55510c6f880`.
+
+Fixed native run `core26-evidence/closure28-office-fixed`: **9/9 passed**, zero failures/errors/skips, 31.225 seconds. Includes actual isolated worker execution, real rendered pages, original/destination preservation on malformed/zero-page and renderer failures, and generated PPTX image correspondence. All 106 worker JVM tests, architecture/security checks and debug/test builds passed. Original installed signed APK restored with hash verification.
+
+Independent validation of the actual collected output used **python-pptx 1.0.2**, Pillow image decoding and **PyMuPDF 2.0** source inspection: four page-matching pictures, 17 resolved internal relationships, a valid master/blank layout, correct aspect ratios for landscape/portrait/90-degree rotation/nonzero crop offsets, bounded centered extents and pixel-color correspondence. Parser save/reopen preserved image bytes and placement. Inspected the four parser-based slide previews visually. This is parser verification, not a PowerPoint application runtime claim.
+
+Output PPTX SHA-256: `045e3ebf706567cb8fc6a2417849147c7fdfdd8dc4310ee714c615f7712bdd44`. Input PDF SHA-256: `524e60f5f30a95a62d11da8a17eab981c8c0293fd8ce792868a9753c134a6d27`. Debug APK SHA-256: `c4db3dc5b407acdc0fc3370957927455f59cc31d9c6e685e59165fcd74cba94f`; test APK: `a42fdb422991008227e4ae0ac43bb9d6f99b8fb880955a2513648dcdd5f83b6f`.
+
+Office batch files: `pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt`, new `app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt`, and this report. The [Microsoft PresentationML documentation](https://learn.microsoft.com/en-us/office/open-xml/presentation/how-to-create-a-presentation-document-by-providing-a-file-name) and [python-pptx picture API](https://python-pptx.readthedocs.io/en/latest/api/shapes.html) informed the package/parser checks.
+
 ## Remaining closure work
 
-- [ ] Correct and independently parse PDF-to-PowerPoint slide image placement.
+- [x] Correct and independently parse PDF-to-PowerPoint slide image placement.
 - [ ] Deskew preview latest-request/cancellation/disposal ownership and native regressions.
 - [ ] Retained-share statistics and explicit cleanup API, active-transfer protection and partial-failure reporting.
 - [ ] Complete JVM suite, API24/30/34/36 native suites, architecture/security checks and release build on final source.
