@@ -28,7 +28,9 @@ class HostOutputTransaction(
     private var sizes = emptyList<Long>()
     private var validated = false
     private var commitStarted = false
+    private var published = false
     private var closed = false
+    private val publicationOwner = Any()
     val workerDescriptors: List<ParcelFileDescriptor> get() = producers.map { it.writer }
     fun releaseWorkerDescriptors() { producers.forEach { runCatching { it.writer.close() } } }
     val validatedBytes: Long get() {
@@ -39,6 +41,7 @@ class HostOutputTransaction(
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
+        com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
         try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
@@ -134,6 +137,9 @@ class HostOutputTransaction(
         check(!closed && validated && !commitStarted) { "Outputs must be validated and committed only once" }
         currentCoroutineContext().ensureActive()
         commitStarted = true
+        // Opening "wt" may destroy old bytes even when the provider subsequently
+        // throws. Only host-created fresh SAF copies may enter publication.
+        com.pdfchemy.app.security.FreshOutputRegistry.requireSafeSafTargets(targets, publicationOwner)
         val totalBytes = snapshots.sumOf(::size)
         val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, totalBytes)
         var completedNormally = false
@@ -176,6 +182,8 @@ class HostOutputTransaction(
                 }
             }
             completedNormally = true
+            published = true
+            com.pdfchemy.app.security.FreshOutputRegistry.published(targets, publicationOwner)
         } finally {
             watcher.cancel()
             handle.close()
@@ -188,5 +196,6 @@ class HostOutputTransaction(
         releaseWorkerDescriptors()
         snapshots.clear(); temporary.clear()
         if (ownsStorage) storage.close()
+        if (!published) com.pdfchemy.app.security.FreshOutputRegistry.abandon(context, targets, publicationOwner)
     }
 }

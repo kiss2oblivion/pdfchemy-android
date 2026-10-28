@@ -84,6 +84,11 @@ class DeskewCopyPublicationTest {
                 }
                 val output = DocumentsContract.buildDocumentUriUsingTree(tree, state().getString("firstId")!!)
                 PDDocument.load(bytes(output)).use { assertEquals(1, it.numberOfPages) }
+                // Host publication can finish before the caller resumes and
+                // Compose displays the export result. Wait for that actual UI state.
+                compose.waitUntil(30_000) {
+                    compose.onAllNodesWithText(app.getString(R.string.deskew_no_tilt)).fetchSemanticsNodes().size == 2
+                }
                 compose.onAllNodesWithText(app.getString(R.string.deskew_no_tilt)).assertCountEquals(2)
             }
             assertArrayEquals(old, bytes(existing))
