@@ -21,6 +21,9 @@ public class OutputCommitProvider extends ContentProvider {
         boolean block;
         String failure;
         boolean allowDelete, deleted;
+        boolean blockDelete;
+        final CountDownLatch deleteEntered = new CountDownLatch(1);
+        final CountDownLatch deleteRelease = new CountDownLatch(1);
         final CountDownLatch release = new CountDownLatch(1);
         final CountDownLatch written = new CountDownLatch(1);
         final CountDownLatch opened = new CountDownLatch(1);
@@ -34,6 +37,7 @@ public class OutputCommitProvider extends ContentProvider {
                 State fresh = new State(); fresh.block = extras != null && extras.getBoolean("block");
                 fresh.failure = extras == null ? null : extras.getString("failure");
                 fresh.allowDelete = extras != null && extras.getBoolean("allowDelete");
+                fresh.blockDelete = extras != null && extras.getBoolean("blockDelete");
                 states.put(arg, fresh);
             }
             state = states.get(arg);
@@ -41,7 +45,10 @@ public class OutputCommitProvider extends ContentProvider {
         if (state == null) throw new IllegalStateException("Missing fixture");
         if ("release".equals(method)) state.release.countDown();
         if ("publicationFinished".equals(method)) state.opened.countDown();
+        if ("releaseDelete".equals(method)) state.deleteRelease.countDown();
+        if ("allowDelete".equals(method)) state.allowDelete = true;
         try {
+            if ("awaitDelete".equals(method) && !state.deleteEntered.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No provider deletion");
             if ("awaitOpen".equals(method) && !state.opened.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output open");
             if ("awaitWritten".equals(method) && !state.written.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output close");
         } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
@@ -87,6 +94,11 @@ public class OutputCommitProvider extends ContentProvider {
         final State state;
         synchronized (states) { state = states.get(uri.getLastPathSegment()); }
         if (state == null || !state.allowDelete) throw new UnsupportedOperationException();
+        state.deleteEntered.countDown();
+        if (state.blockDelete) {
+            try { if (!state.deleteRelease.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("Delete fixture timed out"); }
+            catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
+        }
         synchronized (state) { state.deleted = true; state.bytes = new byte[0]; }
         return 1;
     }

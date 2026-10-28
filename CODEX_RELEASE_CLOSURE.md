@@ -61,11 +61,23 @@ Gemini-owned UI contract: `deskew_detected_angle` contains `%%1$.1f` in default/
 
 Preview batch files: new `app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt`, `app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt`, new `app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt`, and this report.
 
+## SAF cleanup progress — verified hardening addendum
+
+Review found that keeping the registry monitor held across provider deletion could block unrelated ownership reads when a provider stalled. Native reproduction `core26-evidence/closure28-cleanup-original` confirmed it: **2 cases, 1 expected failure**, where an unrelated lookup could not finish within the five-second progress watchdog. Cleanup retry already passed.
+
+Deletion now atomically claims a per-URI owner, performs provider I/O outside the global monitor, then removes provenance on success or restores pending provenance on failure. Other operations cannot reclaim, delete or retire the deleting URI; unrelated lookups continue. No arbitrary provider completion/rollback guarantee is claimed.
+
+Accepted native run `core26-evidence/closure28-cleanup-fixed`: **35/35 passed**, zero failures/errors/skips, 247.107 seconds. Includes both cleanup cases and the full 33-case publication regression set. Fresh local JVM **312 app-host + 71 IPC passed**; architecture/security and debug/test builds passed. APK SHA-256 `012ff1873c7b88696474728a54fecf0f7961e05c01865e68cdecdc21563cd4b3`; test APK `3fd53a5b466e6a60f0b818a38978e7063abbbfc2d206e13b7fb4cc55cec6cd26`. Original signed APK restored and hash verified.
+
+Intermediate same-source CI for SAF implementation commit `5b674709d291ff082be4f0969cdf877bf4a1c9ba`: [all nine jobs passed](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40666427702). Downloaded artifact SHA-256 digests and source bindings verified; **360 native cases on each API24/30/34/36, 1,440 executions, zero failures/errors/skips**. Verified the ten new SAF case identities and required geometry, privacy, storage, lifecycle and EPUB suites. This intermediate run precedes Office/preview/cleanup follow-ups; final combined-source CI remains required.
+
+Cleanup addendum files: `pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt`, `app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java`, new `app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt`, and this report.
+
 ## Remaining closure work
 
 - [x] Correct and independently parse PDF-to-PowerPoint slide image placement.
 - [x] Deskew preview latest-request/cancellation/disposal ownership and native regressions.
-- [ ] Verify provider deletion cannot block unrelated ownership checks during cleanup.
+- [x] Verify provider deletion cannot block unrelated ownership checks during cleanup.
 - [ ] Retained-share statistics and explicit cleanup API, active-transfer protection and partial-failure reporting.
 - [ ] Complete JVM suite, API24/30/34/36 native suites, architecture/security checks and release build on final source.
 - [ ] Final SHA, exact aggregate file list, CI links and PR #14 closeout.
