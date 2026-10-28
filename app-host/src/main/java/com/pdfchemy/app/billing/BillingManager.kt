@@ -56,6 +56,24 @@ class BillingManager(
         const val PREMIUM_PRODUCT_ID = "premium_upgrade"
         internal const val PREFS_NAME = "billing_prefs_secured"
         internal const val KEY_IS_PREMIUM = "is_premium_entitled"
+
+        fun isUserEntitled(context: Context): Boolean {
+            val appContext = context.applicationContext ?: context
+            return try {
+                val masterKey = MasterKey.Builder(appContext)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+                EncryptedSharedPreferences.create(
+                    appContext,
+                    PREFS_NAME,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                ).getBoolean(KEY_IS_PREMIUM, false)
+            } catch (_: Exception) {
+                false
+            }
+        }
     }
     
     private val securePrefs: SharedPreferences by lazy {

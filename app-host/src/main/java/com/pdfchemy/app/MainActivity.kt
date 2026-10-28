@@ -316,20 +316,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun isUserEntitledToPremium(): Boolean {
-        return try {
-            val masterKey = androidx.security.crypto.MasterKey.Builder(this)
-                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            androidx.security.crypto.EncryptedSharedPreferences.create(
-                this,
-                com.pdfchemy.app.billing.BillingManager.PREFS_NAME,
-                masterKey,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            ).getBoolean(com.pdfchemy.app.billing.BillingManager.KEY_IS_PREMIUM, false)
-        } catch (_: Exception) {
-            false
-        }
+        return com.pdfchemy.app.billing.BillingManager.isUserEntitled(applicationContext)
     }
 
     internal fun initializeMobileAdsIfPermitted() {
@@ -343,15 +330,13 @@ class MainActivity : AppCompatActivity() {
                 MobileAds.initialize(this) {
                     AdManager.loadInterstitial(
                         this,
-                        isPremium = isUserEntitledToPremium(),
-                        isPremiumProvider = { isUserEntitledToPremium() }
+                        isPremium = isUserEntitledToPremium()
                     )
                 }
             } else {
                 AdManager.loadInterstitial(
                     this,
-                    isPremium = isUserEntitledToPremium(),
-                    isPremiumProvider = { isUserEntitledToPremium() }
+                    isPremium = isUserEntitledToPremium()
                 )
             }
         } else {

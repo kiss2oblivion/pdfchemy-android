@@ -8,7 +8,6 @@ import org.json.JSONObject
 import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.io.OutputStreamWriter
-import java.io.File
 
 object PdfTableExtractorWorker {
 
@@ -22,24 +21,29 @@ object PdfTableExtractorWorker {
 
     fun extractText(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor?, paramsJson: String): String {
         val params = JSONObject(paramsJson)
-        val safeMode = params.optBoolean("safeMode", false)
+        val safeMode = params.optBoolean("safeMode", true)
         val pageIndex = if (params.has("pageIndex") && !params.isNull("pageIndex")) params.getInt("pageIndex") else null
 
         var document: PDDocument? = null
-        var tempFile: File? = null
         try {
-            tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("table_extract", ".pdf")
-            FileOutputStream(tempFile).use { out ->
-                FileInputStream(sourceFd.fileDescriptor).use { inp ->
-                    inp.copyTo(out)
-                }
+            val inStream = runCatching {
+                FileInputStream(sourceFd.fileDescriptor)
+            }.getOrElse {
+                ParcelFileDescriptor.AutoCloseInputStream(sourceFd.dup())
             }
 
-            document = com.pdfchemy.app.jail.CapabilityIo.input(tempFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
-            val csv = extractFromDocument(document, pageIndex, safeMode)
+            document = inStream.use {
+                PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+            }
+            val (csv, rowCount) = extractFromDocument(document, pageIndex, safeMode)
 
             if (targetFd != null) {
-                FileOutputStream(targetFd.fileDescriptor).use { out ->
+                val outStream = runCatching {
+                    FileOutputStream(targetFd.fileDescriptor)
+                }.getOrElse {
+                    ParcelFileDescriptor.AutoCloseOutputStream(targetFd.dup())
+                }
+                outStream.use { out ->
                     OutputStreamWriter(out, Charsets.UTF_8).use { writer ->
                         writer.write(csv)
                     }
@@ -47,20 +51,27 @@ object PdfTableExtractorWorker {
             }
 
             val result = JSONObject()
-            result.put("success", csv.isNotBlank())
+            result.put("success", true)
+            result.put("empty", csv.isBlank())
+            result.put("count", if (csv.isBlank()) 0 else 1)
+            result.put("rowCount", rowCount)
             return result.toString()
         } finally {
             try { document?.close() } catch (e: Exception) {}
-            tempFile?.delete()
         }
     }
 
-    private fun extractFromDocument(doc: PDDocument, pageIndex: Int? = null, safeMode: Boolean = false): String {
+    private fun extractFromDocument(doc: PDDocument, pageIndex: Int? = null, safeMode: Boolean = true): Pair<String, Int> {
         val totalPages = doc.numberOfPages
-        if (totalPages == 0) return ""
+        if (pageIndex != null) {
+            require(pageIndex in 0 until totalPages) {
+                "Invalid pageIndex $pageIndex: document has $totalPages page(s) (valid range: 0..${totalPages - 1})"
+            }
+        }
+        if (totalPages == 0) return Pair("", 0)
 
-        val startPage = if (pageIndex != null) (pageIndex + 1).coerceIn(1, totalPages) else 1
-        val endPage = if (pageIndex != null) (pageIndex + 1).coerceIn(1, totalPages) else totalPages
+        val startPage = if (pageIndex != null) pageIndex + 1 else 1
+        val endPage = if (pageIndex != null) pageIndex + 1 else totalPages
 
         val allRows = mutableListOf<List<String>>()
 
@@ -71,7 +82,7 @@ object PdfTableExtractorWorker {
             }
         }
 
-        if (allRows.isEmpty()) return ""
+        if (allRows.isEmpty()) return Pair("", 0)
 
         val sb = StringBuilder()
         for (row in allRows) {
@@ -95,7 +106,7 @@ object PdfTableExtractorWorker {
             sb.append(rowStr).append("\r\n")
         }
 
-        return sb.toString()
+        return Pair(sb.toString(), allRows.size)
     }
 
     private fun extractPageRows(doc: PDDocument, pageNumber1Based: Int): List<List<String>> {

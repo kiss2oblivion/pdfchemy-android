@@ -3,19 +3,13 @@ package com.pdfchemy.app.ui
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -23,7 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -31,18 +24,21 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
+import com.pdfchemy.app.logic.CsvParser
 import com.pdfchemy.app.logic.FileUtil
 import com.pdfchemy.app.logic.PdfTableExtractorEngine
 import com.pdfchemy.app.logic.ShareUtil
+import com.pdfchemy.app.logic.TableExtractionResult
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,88 +55,13 @@ fun TableExtractorScreen(
     var extractedCsv by remember { mutableStateOf("") }
     var isExtracting by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
-    var isSpreadsheetSafeCsv by remember { mutableStateOf(false) }
+    var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
     var extractionError by remember { mutableStateOf<String?>(null) }
+    var isEmptyResult by remember { mutableStateOf(false) }
     val extractionRequests = remember { com.pdfchemy.app.logic.LatestRequest() }
-    var activeExtractionJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var activeExtractionJob by remember { mutableStateOf<Job?>(null) }
 
-    fun parseCsvRows(csv: String): List<List<String>> {
-        if (csv.isBlank()) return emptyList()
-        val rows = mutableListOf<List<String>>()
-        val currentRow = mutableListOf<String>()
-        val currentCell = StringBuilder()
-        var inQuotes = false
-        var i = 0
-        val len = csv.length
-
-        while (i < len) {
-            val ch = csv[i]
-            if (inQuotes) {
-                if (ch == '\"') {
-                    if (i + 1 < len && csv[i + 1] == '\"') {
-                        // Escaped quote inside quoted field: "" -> "
-                        currentCell.append('\"')
-                        i += 2
-                    } else {
-                        // Closing quote
-                        inQuotes = false
-                        i++
-                    }
-                } else {
-                    currentCell.append(ch)
-                    i++
-                }
-            } else {
-                when (ch) {
-                    '\"' -> {
-                        inQuotes = true
-                        i++
-                    }
-                    ',' -> {
-                        currentRow.add(currentCell.toString().trim())
-                        currentCell.clear()
-                        i++
-                    }
-                    '\r' -> {
-                        if (i + 1 < len && csv[i + 1] == '\n') {
-                            i++ // Skip \r in \r\n
-                        }
-                        currentRow.add(currentCell.toString().trim())
-                        currentCell.clear()
-                        if (currentRow.any { it.isNotBlank() }) {
-                            rows.add(currentRow.toList())
-                        }
-                        currentRow.clear()
-                        i++
-                    }
-                    '\n' -> {
-                        currentRow.add(currentCell.toString().trim())
-                        currentCell.clear()
-                        if (currentRow.any { it.isNotBlank() }) {
-                            rows.add(currentRow.toList())
-                        }
-                        currentRow.clear()
-                        i++
-                    }
-                    else -> {
-                        currentCell.append(ch)
-                        i++
-                    }
-                }
-            }
-        }
-
-        if (currentCell.isNotEmpty() || currentRow.isNotEmpty()) {
-            currentRow.add(currentCell.toString().trim())
-            if (currentRow.any { it.isNotBlank() }) {
-                rows.add(currentRow.toList())
-            }
-        }
-
-        return rows
-    }
-
-    val parsedRows = remember(extractedCsv) { parseCsvRows(extractedCsv) }
+    val parsedRows = remember(extractedCsv) { CsvParser.parse(extractedCsv) }
 
     fun extractTables(uri: Uri) {
         selectedPdfUri = uri
@@ -148,13 +69,33 @@ fun TableExtractorScreen(
         val ticket = extractionRequests.begin()
         isExtracting = true
         extractionError = null
+        isEmptyResult = false
         extractedCsv = ""
         activeExtractionJob = scope.launch {
             try {
-                val csv = PdfTableExtractorEngine.extractTablesToCsv(context, uri, safeMode = isSpreadsheetSafeCsv)
+                val result = PdfTableExtractorEngine.extractTables(context, uri, safeMode = isSpreadsheetSafeCsv)
                 if (extractionRequests.isCurrent(ticket)) {
-                    extractedCsv = csv
-                    extractionError = null
+                    when (result) {
+                        is TableExtractionResult.Success -> {
+                            extractedCsv = result.csv
+                            isEmptyResult = false
+                            extractionError = null
+                        }
+                        is TableExtractionResult.Empty -> {
+                            extractedCsv = ""
+                            isEmptyResult = true
+                            extractionError = null
+                        }
+                        is TableExtractionResult.Failure -> {
+                            extractedCsv = ""
+                            isEmptyResult = false
+                            extractionError = result.cause.message ?: "Failed to extract tables"
+                            Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
+                        }
+                        is TableExtractionResult.Cancelled -> {
+                            // Cancelled, do not mutate state
+                        }
+                    }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -163,6 +104,7 @@ fun TableExtractorScreen(
                 if (extractionRequests.isCurrent(ticket)) {
                     extractionError = e.message ?: "Failed to extract tables"
                     extractedCsv = ""
+                    isEmptyResult = false
                     Toast.makeText(context, "Error extracting tables", Toast.LENGTH_SHORT).show()
                 }
             } finally {
@@ -190,14 +132,24 @@ fun TableExtractorScreen(
             isExporting = true
             scope.launch {
                 try {
-                    val success = PdfTableExtractorEngine.extractTablesToCsvFile(context, srcUri, destUri, safeMode = isSpreadsheetSafeCsv)
-                    if (success) {
-                        Toast.makeText(context, context.getString(R.string.table_extractor_success), Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Failed to save CSV", Toast.LENGTH_SHORT).show()
+                    val result = PdfTableExtractorEngine.extractTablesToFile(context, srcUri, destUri, safeMode = isSpreadsheetSafeCsv)
+                    when (result) {
+                        is TableExtractionResult.Success -> {
+                            Toast.makeText(context, context.getString(R.string.table_extractor_success), Toast.LENGTH_SHORT).show()
+                        }
+                        is TableExtractionResult.Empty -> {
+                            Toast.makeText(context, context.getString(R.string.table_extractor_no_tables), Toast.LENGTH_SHORT).show()
+                        }
+                        is TableExtractionResult.Failure -> {
+                            Toast.makeText(context, "Failed to save CSV", Toast.LENGTH_SHORT).show()
+                        }
+                        is TableExtractionResult.Cancelled -> {}
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Export cancelled
                 } catch (e: Exception) {
                     AppLogger.e("CSV export failed", e)
+                    Toast.makeText(context, "Failed to save CSV", Toast.LENGTH_SHORT).show()
                 } finally {
                     isExporting = false
                 }
@@ -221,17 +173,37 @@ fun TableExtractorScreen(
                         IconButton(onClick = {
                             scope.launch {
                                 try {
-                                    val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                    val tempFile = File(exportsDir, "extracted_tables_${System.currentTimeMillis()}.csv")
-                                    FileOutputStream(tempFile).use { it.write(extractedCsv.toByteArray(Charsets.UTF_8)) }
-                                    val contentUri = androidx.core.content.FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        tempFile
-                                    )
-                                    ShareUtil.shareFile(context, contentUri, "text/csv")
+                                    val shareUri = withContext(Dispatchers.IO) {
+                                        val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                                        // Prune old share copies matching Codex DocumentActions convention (maxRetained = 5)
+                                        try {
+                                            val shareFiles = exportsDir.listFiles { f -> f.name.startsWith("shared_") }
+                                            if (shareFiles != null && shareFiles.size >= 5) {
+                                                shareFiles.sortedBy { it.lastModified() }
+                                                    .take(shareFiles.size - 5 + 1)
+                                                    .forEach { runCatching { it.delete() } }
+                                            }
+                                        } catch (_: Throwable) {}
+
+                                        val tempFile = File(exportsDir, "shared_table_${UUID.randomUUID()}.csv")
+                                        try {
+                                            FileOutputStream(tempFile).use { it.write(extractedCsv.toByteArray(Charsets.UTF_8)) }
+                                            androidx.core.content.FileProvider.getUriForFile(
+                                                context,
+                                                "${context.packageName}.fileprovider",
+                                                tempFile
+                                            )
+                                        } catch (e: Exception) {
+                                            if (tempFile.exists()) {
+                                                runCatching { tempFile.delete() }
+                                            }
+                                            throw e
+                                        }
+                                    }
+                                    ShareUtil.shareFile(context, shareUri, "text/csv")
                                 } catch (e: Exception) {
                                     AppLogger.e("Share CSV failed", e)
+                                    Toast.makeText(context, "Failed to share CSV", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }) {
@@ -273,31 +245,38 @@ fun TableExtractorScreen(
                         Text(fileName, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
                     }
                 }
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     Checkbox(
                         checked = isSpreadsheetSafeCsv,
-                        onCheckedChange = { 
+                        onCheckedChange = {
                             isSpreadsheetSafeCsv = it
                         }
                     )
-                    Text("Spreadsheet-Safe Export", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        if (isSpreadsheetSafeCsv) "Spreadsheet-Safe Export (Recommended)" else "Raw Data Export",
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
                 Text(
-                    "CSV files can contain formulas that spreadsheet applications may execute when opened. PDFchemy can preserve extracted values exactly, or sanitize formula-like values for safer spreadsheet use. For structured spreadsheet output, use the native XLSX export.",
+                    if (isSpreadsheetSafeCsv)
+                        "Spreadsheet-Safe mode sanitizes formula-like characters (=, +, -, @) with a leading single quote to prevent spreadsheet applications from executing formulas when opened."
+                    else
+                        "Raw Data mode preserves extracted cell values exactly as found in the PDF without sanitization.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 if (isSpreadsheetSafeCsv) {
-                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(6.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(6.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "Spreadsheet-Safe Export enabled. Formula-like values may be prefixed to prevent spreadsheet applications from evaluating them.",
+                                "Spreadsheet-Safe Export enabled. Formula-like values are prefixed to prevent external spreadsheet apps from evaluating them.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -336,7 +315,8 @@ fun TableExtractorScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     row.forEach { cell ->
                                         Text(
@@ -414,6 +394,39 @@ fun TableExtractorScreen(
                                 Text("Retry Extraction")
                             }
                         }
+                    }
+                }
+            } else if (isEmptyResult) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Rounded.TableChart,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            stringResource(R.string.table_extractor_no_tables),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "No tabular data was detected in this document.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                     }
                 }
             } else if (selectedPdfUri != null) {

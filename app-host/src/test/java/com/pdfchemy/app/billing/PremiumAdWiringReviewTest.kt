@@ -58,6 +58,7 @@ class PremiumAdWiringReviewTest {
         every { InterstitialAd.load(any(), any(), any(), capture(callbacks)) } just Runs
 
         AdManager.resetForTesting()
+        AdManager.setEntitlementSource { premium }
         activity.initializeMobileAdsIfPermitted()
         assertEquals(1, callbacks.size)
 
@@ -113,7 +114,8 @@ class PremiumAdWiringReviewTest {
 
         var isPremium = false
         AdManager.resetForTesting()
-        AdManager.loadInterstitial(context, isPremium = isPremium, isPremiumProvider = { isPremium })
+        AdManager.setEntitlementSource { isPremium }
+        AdManager.loadInterstitial(context, isPremium = isPremium)
         assertEquals(1, callbacks.size)
         callbacks.single().onAdLoaded(dummyAd)
         assertTrue(AdManager.isAdLoaded())
@@ -133,5 +135,50 @@ class PremiumAdWiringReviewTest {
         }
         assertTrue("showInterstitialIfReady must complete immediately without showing ad to premium user", callbackInvoked)
         assertFalse(AdManager.isAdLoaded())
+    }
+
+    @Test
+    fun adManagerRetainsZeroActivityReferencesAfterStartup() {
+        mockkStatic(UserMessagingPlatform::class)
+        mockkStatic(MobileAds::class)
+        mockkStatic(InterstitialAd::class)
+        val consent = mockk<ConsentInformation>()
+        every { UserMessagingPlatform.getConsentInformation(any()) } returns consent
+        every { consent.canRequestAds() } returns true
+        every { consent.requestConsentInfoUpdate(any(), any(), any(), any()) } just Runs
+        every { MobileAds.initialize(any(), any<OnInitializationCompleteListener>()) } answers {
+            secondArg<OnInitializationCompleteListener>().onInitializationComplete(mockk(relaxed = true))
+        }
+        every { InterstitialAd.load(any(), any(), any(), any()) } just Runs
+
+        AdManager.resetForTesting()
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+
+        // Inspect all declared fields of AdManager singleton
+        val fields = AdManager::class.java.declaredFields
+        for (field in fields) {
+            field.isAccessible = true
+            val value = field.get(AdManager)
+            if (value != null) {
+                assertFalse("AdManager field '${field.name}' must not directly reference an Activity",
+                    android.app.Activity::class.java.isAssignableFrom(value.javaClass))
+
+                // If it's a custom class/closure, check that it does not hold an outer Activity instance
+                val className = value.javaClass.name
+                if (!className.startsWith("java.") && !className.startsWith("android.")) {
+                    for (innerField in value.javaClass.declaredFields) {
+                        try {
+                            innerField.isAccessible = true
+                            val innerVal = innerField.get(value)
+                            if (innerVal != null) {
+                                assertFalse("AdManager field '${field.name}' must not capture an Activity in '${innerField.name}'",
+                                    android.app.Activity::class.java.isAssignableFrom(innerVal.javaClass))
+                            }
+                        } catch (_: Throwable) {}
+                    }
+                }
+            }
+        }
+        controller.destroy()
     }
 }

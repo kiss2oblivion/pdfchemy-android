@@ -22,7 +22,11 @@ object AdManager {
     @Volatile
     private var premiumOverride: Boolean? = null
     @Volatile
-    private var isPremiumProvider: (() -> Boolean)? = null
+    private var entitlementSource: (() -> Boolean)? = null
+
+    fun setEntitlementSource(source: (() -> Boolean)?) {
+        entitlementSource = source
+    }
 
     fun clearAd() {
         synchronized(lock) {
@@ -60,12 +64,18 @@ object AdManager {
             clearAdLocked()
             lastAdShownTime = 0L
             premiumOverride = null
-            isPremiumProvider = null
+            entitlementSource = null
         }
     }
 
-    private fun isUserPremium(isPremium: Boolean): Boolean {
-        return isPremium || (premiumOverride == true) || (isPremiumProvider?.invoke() == true)
+    private fun isUserPremium(isPremium: Boolean, context: Context? = null): Boolean {
+        if (isPremium || (premiumOverride == true) || (entitlementSource?.invoke() == true)) {
+            return true
+        }
+        if (context != null) {
+            return BillingManager.isUserEntitled(context)
+        }
+        return false
     }
 
     private fun canRequestAds(context: Context): Boolean {
@@ -81,10 +91,10 @@ object AdManager {
     ) {
         val appContext = context.applicationContext ?: context
         if (isPremiumProvider != null) {
-            this.isPremiumProvider = isPremiumProvider
+            this.entitlementSource = isPremiumProvider
         }
 
-        if (isUserPremium(isPremium)) {
+        if (isUserPremium(isPremium, appContext)) {
             clearAd()
             return
         }
@@ -128,7 +138,7 @@ object AdManager {
 
                     // Check consent and premium state OUTSIDE synchronized(lock) to avoid contested locks and deadlocks
                     val currentConsent = canRequestAds(appContext)
-                    val latePremium = isUserPremium(isPremium)
+                    val latePremium = isUserPremium(isPremium, appContext)
 
                     synchronized(lock) {
                         if (requestGeneration != currentGeneration) {
@@ -161,7 +171,7 @@ object AdManager {
         }
 
         val consentGranted = canRequestAds(activity)
-        val effectivePremium = isUserPremium(isPremium)
+        val effectivePremium = isUserPremium(isPremium, activity)
 
         if (effectivePremium || !consentGranted) {
             clearAd()
@@ -201,9 +211,9 @@ object AdManager {
                         lastAdShownTime = System.currentTimeMillis()
                     }
                     if (!activity.isFinishing && !activity.isDestroyed) {
-                        val currentPrem = isUserPremium(isPremium)
+                        val currentPrem = isUserPremium(isPremium, activity)
                         if (!currentPrem && canRequestAds(activity)) {
-                            loadInterstitial(activity, isPremium = currentPrem, isPremiumProvider = isPremiumProvider)
+                            loadInterstitial(activity, isPremium = currentPrem)
                         }
                     }
                     onAdDismissed()
