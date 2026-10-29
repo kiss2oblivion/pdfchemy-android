@@ -52,7 +52,6 @@ fun TableExtractorScreen(
     val scope = rememberCoroutineScope()
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
-    var hasHandledInitialUri by remember { mutableStateOf(false) }
     var extractedCsv by remember { mutableStateOf("") }
     var isExtracting by remember { mutableStateOf(false) }
     var isParsingCsv by remember { mutableStateOf(false) }
@@ -60,8 +59,8 @@ fun TableExtractorScreen(
     var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
     var extractionError by remember { mutableStateOf<String?>(null) }
     var isEmptyResult by remember { mutableStateOf(false) }
+    var retryTrigger by remember { mutableStateOf(0) }
     val extractionRequests = remember { com.pdfchemy.app.logic.LatestRequest() }
-    var activeExtractionJob by remember { mutableStateOf<Job?>(null) }
 
     var parsedRows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
 
@@ -77,79 +76,59 @@ fun TableExtractorScreen(
         }
     }
 
-    fun extractTables(uri: Uri) {
-        selectedPdfUri = uri
-        activeExtractionJob?.cancel()
+    // Authoritative extraction effect: responds to document selection, mode toggle, or retry
+    LaunchedEffect(selectedPdfUri, isSpreadsheetSafeCsv, retryTrigger) {
+        val uri = selectedPdfUri ?: return@LaunchedEffect
         val ticket = extractionRequests.begin()
         isExtracting = true
         extractionError = null
         isEmptyResult = false
         extractedCsv = ""
-        activeExtractionJob = scope.launch {
-            try {
-                val result = PdfTableExtractorEngine.extractTables(context, uri, safeMode = isSpreadsheetSafeCsv)
-                if (extractionRequests.isCurrent(ticket)) {
-                    when (result) {
-                        is TableExtractionResult.Success -> {
-                            extractedCsv = result.csv
-                            isEmptyResult = false
-                            extractionError = null
-                        }
-                        is TableExtractionResult.Empty -> {
-                            extractedCsv = ""
-                            isEmptyResult = true
-                            extractionError = null
-                        }
-                        is TableExtractionResult.Failure -> {
-                            extractedCsv = ""
-                            isEmptyResult = false
-                            extractionError = result.cause.message ?: context.getString(R.string.table_extractor_error_extract)
-                            Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
-                        }
-                        is TableExtractionResult.Cancelled -> {
-                            // Cancelled, do not mutate state
-                        }
+        try {
+            val result = PdfTableExtractorEngine.extractTables(context, uri, safeMode = isSpreadsheetSafeCsv)
+            if (extractionRequests.isCurrent(ticket)) {
+                when (result) {
+                    is TableExtractionResult.Success -> {
+                        extractedCsv = result.csv
+                        isEmptyResult = false
+                        extractionError = null
+                    }
+                    is TableExtractionResult.Empty -> {
+                        extractedCsv = ""
+                        isEmptyResult = true
+                        extractionError = null
+                    }
+                    is TableExtractionResult.Failure -> {
+                        extractedCsv = ""
+                        isEmptyResult = false
+                        extractionError = result.cause.message ?: context.getString(R.string.table_extractor_error_extract)
+                        Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
+                    }
+                    is TableExtractionResult.Cancelled -> {
+                        // Cancelled, do not mutate state
                     }
                 }
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                AppLogger.e("Table extraction failed", e)
-                if (extractionRequests.isCurrent(ticket)) {
-                    extractionError = e.message ?: context.getString(R.string.table_extractor_error_extract)
-                    extractedCsv = ""
-                    isEmptyResult = false
-                    Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
-                }
-            } finally {
-                if (extractionRequests.isCurrent(ticket)) {
-                    isExtracting = false
-                }
             }
-        }
-    }
-
-    // Initial document extraction only runs once on entry
-    LaunchedEffect(initialPdfUri) {
-        if (initialPdfUri != null && !hasHandledInitialUri) {
-            hasHandledInitialUri = true
-            selectedPdfUri = initialPdfUri
-            extractTables(initialPdfUri)
-        }
-    }
-
-    // Toggling safe mode re-extracts the currently selected authoritative document
-    LaunchedEffect(isSpreadsheetSafeCsv) {
-        if (hasHandledInitialUri || selectedPdfUri != null) {
-            selectedPdfUri?.let { uri ->
-                extractTables(uri)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AppLogger.e("Table extraction failed", e)
+            if (extractionRequests.isCurrent(ticket)) {
+                extractionError = e.message ?: context.getString(R.string.table_extractor_error_extract)
+                extractedCsv = ""
+                isEmptyResult = false
+                Toast.makeText(context, context.getString(R.string.table_extractor_error_extract), Toast.LENGTH_SHORT).show()
+            }
+        } finally {
+            if (extractionRequests.isCurrent(ticket)) {
+                isExtracting = false
             }
         }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
-        hasHandledInitialUri = true
-        extractTables(uri)
+        // Setting selectedPdfUri cleanly triggers extraction without duplicate effect execution
+        selectedPdfUri = uri
     }
 
     val saveCsvLauncher = rememberPreferredDocumentCreator("text/csv") { destUri ->
@@ -400,9 +379,9 @@ fun TableExtractorScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Spacer(Modifier.height(16.dp))
-                        selectedPdfUri?.let { uri ->
+                        selectedPdfUri?.let { _ ->
                             Button(
-                                onClick = { extractTables(uri) },
+                                onClick = { retryTrigger++ },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                             ) {
                                 Icon(Icons.Rounded.Refresh, contentDescription = null)

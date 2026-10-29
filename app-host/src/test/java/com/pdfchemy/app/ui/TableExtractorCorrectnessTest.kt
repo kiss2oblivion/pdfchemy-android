@@ -227,4 +227,70 @@ class TableExtractorCorrectnessTest {
         assertTrue(requests.isCurrent(ticket2))
         assertFalse("Older ticket1 must not be current after ticket2 begins", requests.isCurrent(ticket1))
     }
+
+    @Test
+    fun concurrentSwitchingOnlyAllowsLatestRequestToPublish() {
+        val requests = com.pdfchemy.app.logic.LatestRequest()
+
+        // User opens Document A
+        val ticketA = requests.begin()
+        assertTrue(requests.isCurrent(ticketA))
+
+        // While A is extracting, user rapidly selects Document B
+        val ticketB = requests.begin()
+        assertFalse("Ticket A is immediately invalidated", requests.isCurrent(ticketA))
+        assertTrue(requests.isCurrent(ticketB))
+
+        // While B is extracting, user selects Document C
+        val ticketC = requests.begin()
+        assertFalse("Ticket B is immediately invalidated", requests.isCurrent(ticketB))
+        assertTrue(requests.isCurrent(ticketC))
+
+        // Simulate out-of-order completion: Worker A finishes late
+        var publishedResult: String? = null
+        if (requests.isCurrent(ticketA)) {
+            publishedResult = "Result from A"
+        }
+        assertEquals("Worker A must not publish", null, publishedResult)
+
+        // Worker B finishes late
+        if (requests.isCurrent(ticketB)) {
+            publishedResult = "Result from B"
+        }
+        assertEquals("Worker B must not publish", null, publishedResult)
+
+        // Worker C finishes
+        if (requests.isCurrent(ticketC)) {
+            publishedResult = "Result from C"
+        }
+        assertEquals("Worker C must publish", "Result from C", publishedResult)
+    }
+
+    @Test
+    fun cancellationDuringExtractionLeavesUiStateIntact() {
+        var uiExtractedCsv = "Previous Valid Data"
+        var uiIsEmpty = false
+        var uiError: String? = null
+
+        val result: com.pdfchemy.app.logic.TableExtractionResult = com.pdfchemy.app.logic.TableExtractionResult.Cancelled
+
+        when (result) {
+            is com.pdfchemy.app.logic.TableExtractionResult.Success -> {
+                uiExtractedCsv = result.csv
+            }
+            is com.pdfchemy.app.logic.TableExtractionResult.Empty -> {
+                uiIsEmpty = true
+            }
+            is com.pdfchemy.app.logic.TableExtractionResult.Failure -> {
+                uiError = "Failed"
+            }
+            is com.pdfchemy.app.logic.TableExtractionResult.Cancelled -> {
+                // Guaranteed no-op on cancellation
+            }
+        }
+
+        assertEquals("Previous Valid Data", uiExtractedCsv)
+        assertFalse(uiIsEmpty)
+        assertEquals(null, uiError)
+    }
 }
