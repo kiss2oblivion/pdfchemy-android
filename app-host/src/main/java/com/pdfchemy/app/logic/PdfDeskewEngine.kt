@@ -3,6 +3,8 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 import org.json.JSONObject
 import kotlin.math.cos
@@ -75,7 +77,8 @@ object PdfDeskewEngine {
         }
 
         var bestAngle = 0.0f
-        var maxVariance = -1.0
+        // A blank page or tied projection must remain at zero, not -15 degrees.
+        var maxVariance = computeVarianceForAngle(0f)
         var coarseAngle = -15.0f
         while (coarseAngle <= 15.0f) {
             val variance = computeVarianceForAngle(coarseAngle)
@@ -107,6 +110,12 @@ object PdfDeskewEngine {
         destUri: Uri,
         targetPages: Set<Int>? = null
     ): Int {
+        currentCoroutineContext().ensureActive()
+        // Arbitrary SAF providers cannot roll back a truncate/write failure.
+        // Only a host-created fresh copy may enter the publication transaction.
+        if (!OutputPolicy.isFreshCopy(destUri)) {
+            throw UnsupportedOperationException("Deskew requires a newly created output copy; choose an output folder")
+        }
         val params = JSONObject()
         if (targetPages != null) {
             val arr = org.json.JSONArray()
@@ -114,17 +123,15 @@ object PdfDeskewEngine {
             params.put("targetPages", arr)
         }
 
-        return try {
-            val contract = PdfGateway.executeEngineTyped<DeskewContract>(
+        // Zero is a successful export with no corrections. Errors (including
+        // coroutine cancellation) must reach the publication owner unchanged.
+        val contract = PdfGateway.executeEngineTyped<DeskewContract>(
                 context,
                 "DESKEW",
                 sourceUri,
                 destUri,
                 params.toString()
             )
-            contract.straightenedCount
-        } catch (e: Exception) {
-            0
-        }
+        return contract.straightenedCount
     }
 }

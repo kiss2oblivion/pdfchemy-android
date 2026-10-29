@@ -131,7 +131,7 @@ object PdfGateway {
             // Acceptance handshake:
             // For output operations: validate and snapshot into private FDs, validate typed response, then ACK before committing to SAF.
             if (targets.isNotEmpty()) {
-                outputTransaction.validateAndSnapshot(rawResult)
+                outputTransaction.validateAndSnapshot(rawResult, operation)
                 val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
                 check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released

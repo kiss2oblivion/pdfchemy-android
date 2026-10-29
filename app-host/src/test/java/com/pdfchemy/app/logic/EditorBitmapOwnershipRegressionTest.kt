@@ -68,16 +68,28 @@ class EditorBitmapOwnershipRegressionTest {
     @Test fun cancellationBeforeCallerResumptionRecyclesBothBitmaps() = runBlocking<Unit> {
         val left = bitmap()
         val right = bitmap()
+        val secondEntered = CompletableDeferred<Unit>()
+        val allowCompletion = CompletableDeferred<Unit>()
         coEvery { NativeRendererCoordinator.renderUriToBitmap(context, uri, 0, 720) } returns left
-        coEvery { NativeRendererCoordinator.renderUriToBitmap(context, uri, 1, 720) } returns right
+        coEvery { NativeRendererCoordinator.renderUriToBitmap(context, uri, 1, 720) } coAnswers {
+            secondEntered.complete(Unit)
+            allowCompletion.await()
+            right
+        }
         val caller = QueuedDispatcher()
         var delivered = false
         val request = async(caller, start = CoroutineStart.UNDISPATCHED) {
             PdfEditor.renderDualPageBitmaps(context, uri, 0, 1).also { delivered = true }
         }
         try {
+            withTimeout(10_000) { secondEntered.await() }
+            // async has returned while the producer is blocked: withContext
+            // has necessarily suspended. Only now let the producer finish.
+            allowCompletion.complete(Unit)
             // The producer has finished, but its result is queued on the caller dispatcher.
-            val resumption = requireNotNull(caller.queue.poll(10, TimeUnit.SECONDS)) { "No caller resumption queued" }
+            val resumption = requireNotNull(caller.queue.poll(10, TimeUnit.SECONDS)) {
+                "No caller resumption queued; completed=${request.isCompleted}, delivered=$delivered, leftRecycled=${left.isRecycled}, rightRecycled=${right.isRecycled}"
+            }
             request.cancel()
             resumption.run()
             withTimeout(10_000) { request.join() }
@@ -85,8 +97,18 @@ class EditorBitmapOwnershipRegressionTest {
             assertTrue("Queued left page has no consumer", left.isRecycled)
             assertTrue("Queued right page has no consumer", right.isRecycled)
         } finally {
+            allowCompletion.complete(Unit)
             request.cancel()
-            while (true) { (caller.queue.poll() ?: break).run() }
+            while (!request.isCompleted) {
+                requireNotNull(caller.queue.poll(10, TimeUnit.SECONDS)) { "Cancelled caller did not resume" }.run()
+            }
+        }
+    }
+
+    @Test fun queuedCancellationRemainsCorrectAcross200Requests() {
+        repeat(200) { iteration ->
+            try { cancellationBeforeCallerResumptionRecyclesBothBitmaps() }
+            catch (error: Throwable) { throw AssertionError("Repeated request $iteration", error) }
         }
     }
 
