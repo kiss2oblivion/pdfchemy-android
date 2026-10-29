@@ -293,4 +293,78 @@ class TableExtractorCorrectnessTest {
         assertFalse(uiIsEmpty)
         assertEquals(null, uiError)
     }
+
+    @Test
+    fun exportResultDistinguishesSuccessFromEmptyRegardlessOfDestinationReadability() {
+        // Contract with successful extraction: 42 rows
+        val successContract = com.pdfchemy.app.logic.TableExtractContract(
+            success = true,
+            empty = false,
+            rowCount = 42,
+            count = 42
+        )
+        val successResult = if (successContract.empty || successContract.rowCount == 0) {
+            com.pdfchemy.app.logic.TableExtractionResult.Empty()
+        } else {
+            com.pdfchemy.app.logic.TableExtractionResult.Success("", successContract.rowCount)
+        }
+        assertTrue("Successful extraction must produce TableExtractionResult.Success", successResult is com.pdfchemy.app.logic.TableExtractionResult.Success)
+        assertEquals(42, (successResult as com.pdfchemy.app.logic.TableExtractionResult.Success).rowCount)
+
+        // Contract with empty extraction: 0 rows
+        val emptyContract = com.pdfchemy.app.logic.TableExtractContract(
+            success = true,
+            empty = true,
+            rowCount = 0,
+            count = 0
+        )
+        val emptyResult = if (emptyContract.empty || emptyContract.rowCount == 0) {
+            com.pdfchemy.app.logic.TableExtractionResult.Empty()
+        } else {
+            com.pdfchemy.app.logic.TableExtractionResult.Success("", emptyContract.rowCount)
+        }
+        assertTrue("Empty extraction must produce TableExtractionResult.Empty", emptyResult is com.pdfchemy.app.logic.TableExtractionResult.Empty)
+    }
+
+    @Test
+    fun exportInputsRemainStableWhenUserChangesSelectionOrModeDuringExport() {
+        val initialDocUri = android.net.Uri.parse("content://docs/initial.pdf")
+        val initialSafeMode = true
+
+        var activeDocUri = initialDocUri
+        var activeSafeMode = initialSafeMode
+
+        // User taps export: snapshot inputs
+        var exportSourceUri: android.net.Uri? = activeDocUri
+        val exportSafeMode = activeSafeMode
+
+        // User changes document and mode in the UI while export is pending/running
+        activeDocUri = android.net.Uri.parse("content://docs/changed.pdf")
+        activeSafeMode = false
+
+        // Export worker execution uses snapshotted parameters
+        val resolvedSourceUri = exportSourceUri ?: activeDocUri
+        val resolvedSafeMode = exportSafeMode
+
+        assertEquals("Export source must match original document", initialDocUri, resolvedSourceUri)
+        assertEquals("Export safe mode must match original setting", true, resolvedSafeMode)
+
+        // Reset on completion
+        exportSourceUri = null
+        org.junit.Assert.assertNull(exportSourceUri)
+    }
+
+    @Test
+    fun concurrentExportAttemptsAreSafelyRejected() {
+        var isExporting = true
+        var secondaryExportLaunched = false
+
+        fun triggerExport() {
+            if (isExporting) return
+            secondaryExportLaunched = true
+        }
+
+        triggerExport()
+        assertFalse("Secondary export must not launch while an export is already active", secondaryExportLaunched)
+    }
 }

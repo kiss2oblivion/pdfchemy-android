@@ -56,6 +56,8 @@ fun TableExtractorScreen(
     var isExtracting by remember { mutableStateOf(false) }
     var isParsingCsv by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
+    var exportSourceUri by remember { mutableStateOf<Uri?>(null) }
+    var exportSafeMode by remember { mutableStateOf(true) }
     var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
     var extractionError by remember { mutableStateOf<String?>(null) }
     var isEmptyResult by remember { mutableStateOf(false) }
@@ -141,12 +143,14 @@ fun TableExtractorScreen(
     }
 
     val saveCsvLauncher = rememberPreferredDocumentCreator("text/csv") { destUri ->
-        val srcUri = selectedPdfUri
+        val srcUri = exportSourceUri ?: selectedPdfUri
+        val safeMode = exportSafeMode
         if (destUri != null && srcUri != null) {
+            if (isExporting) return@rememberPreferredDocumentCreator
             isExporting = true
             scope.launch {
                 try {
-                    val result = PdfTableExtractorEngine.extractTablesToFile(context, srcUri, destUri, safeMode = isSpreadsheetSafeCsv)
+                    val result = PdfTableExtractorEngine.extractTablesToFile(context, srcUri, destUri, safeMode = safeMode)
                     when (result) {
                         is TableExtractionResult.Success -> {
                             Toast.makeText(context, context.getString(R.string.table_extractor_success), Toast.LENGTH_SHORT).show()
@@ -166,8 +170,11 @@ fun TableExtractorScreen(
                     Toast.makeText(context, context.getString(R.string.table_extractor_error_save), Toast.LENGTH_SHORT).show()
                 } finally {
                     isExporting = false
+                    exportSourceUri = null
                 }
             }
+        } else {
+            exportSourceUri = null
         }
     }
 
@@ -342,10 +349,13 @@ fun TableExtractorScreen(
 
                 Button(
                     onClick = {
+                        if (isExporting) return@Button
+                        exportSourceUri = selectedPdfUri
+                        exportSafeMode = isSpreadsheetSafeCsv
                         val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
                         saveCsvLauncher.launch(suggestedName)
                     },
-                    enabled = !isExporting,
+                    enabled = !isExporting && selectedPdfUri != null && parsedRows.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     if (isExporting) {
