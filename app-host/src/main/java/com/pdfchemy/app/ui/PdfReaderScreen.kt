@@ -1,5 +1,7 @@
 package com.pdfchemy.app.ui
 
+import android.app.ActivityManager
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
@@ -16,10 +18,12 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -41,13 +45,19 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.Screen
 import com.pdfchemy.app.logic.BoundedPageBitmapCache
 import com.pdfchemy.app.logic.PdfEditor
+import com.pdfchemy.app.logic.ReaderAccessibilityLayout
 import com.pdfchemy.app.logic.ReaderBackAction
 import com.pdfchemy.app.logic.ReaderCommandAction
 import com.pdfchemy.app.logic.ReaderCommandCentreCatalog
@@ -142,8 +152,31 @@ private fun PdfReaderDocument(
     var fitPage by rememberSaveable { mutableStateOf(false) }
     var activePointerCount by remember { mutableIntStateOf(1) }
     val listState = rememberLazyListState()
-    val bitmapCache = remember(initialUri) { BoundedPageBitmapCache(maxEntries = 6, maxBytes = 32L * 1024L * 1024L) }
+    val bitmapCache = remember(initialUri, context) {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val (maxEntries, maxBytes) = BoundedPageBitmapCache.computeAdaptiveBudget(
+            maxMemoryBytes = Runtime.getRuntime().maxMemory(),
+            isLowRamDevice = am?.isLowRamDevice == true
+        )
+        BoundedPageBitmapCache(maxEntries = maxEntries, maxBytes = maxBytes)
+    }
     val renderGate = remember(initialUri) { ReaderRenderGate() }
+
+    DisposableEffect(context, bitmapCache) {
+        val callbacks = object : ComponentCallbacks2 {
+            override fun onConfigurationChanged(newConfig: Configuration) = Unit
+            override fun onLowMemory() {
+                bitmapCache.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL)
+            }
+            override fun onTrimMemory(level: Int) {
+                bitmapCache.onTrimMemory(level)
+            }
+        }
+        context.registerComponentCallbacks(callbacks)
+        onDispose {
+            context.unregisterComponentCallbacks(callbacks)
+        }
+    }
     
     // Saveable Tap-to-Reveal & Overlay Controls state
     var showControls by rememberSaveable { mutableStateOf(true) }
@@ -177,6 +210,7 @@ private fun PdfReaderDocument(
     var searchMatches by remember { mutableStateOf<List<com.pdfchemy.app.logic.TextMatchOccurrence>>(emptyList()) }
     var currentMatchIndex by rememberSaveable { mutableIntStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
+    var hasExecutedSearch by rememberSaveable { mutableStateOf(false) }
     
     // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -185,6 +219,7 @@ private fun PdfReaderDocument(
     var showVanguardDamagedDialog by remember { mutableStateOf(false) }
     var showAccessErrorDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
+    var isDocumentLoading by remember(initialUri) { mutableStateOf(true) }
     
     BackHandler {
         val (action, nextState) = currentControlsState().resolveBackAction(ReaderZoomCalculator.isZoomed(scale))
@@ -219,8 +254,10 @@ private fun PdfReaderDocument(
     }
     
     LaunchedEffect(initialUri) {
+        isDocumentLoading = true
         guardDocumentLoadWithCause(onFailure = { err ->
             isVanguardScanning = false
+            isDocumentLoading = false
             val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
             if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
                 viewModel.removeHistoryItem(initialUri.toString())
@@ -229,59 +266,63 @@ private fun PdfReaderDocument(
                 showVanguardDamagedDialog = true
             }
         }) {
-            val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
-            val newLease = DocumentStager.retain(staged)
-            val oldLease = activeSessionLease
-            activeSessionLease = newLease
-            oldLease?.close()
-            val stagedUri = staged.uri
-            selectedPdfUri = stagedUri
-            viewModel.readerNavigation.onEnterReader(stagedUri)
-            fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
-            
-            if (isVanguardEnabled) {
-                isVanguardScanning = true
-                try {
-                    val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
-                    when (threat) {
-                        is VanguardThreatResult.Clean -> {
-                            totalPages = PdfEditor.getPageCount(context, stagedUri)
-                            if (totalPages <= 0) {
+            try {
+                val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
+                val newLease = DocumentStager.retain(staged)
+                val oldLease = activeSessionLease
+                activeSessionLease = newLease
+                oldLease?.close()
+                val stagedUri = staged.uri
+                selectedPdfUri = stagedUri
+                viewModel.readerNavigation.onEnterReader(stagedUri)
+                fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
+                
+                if (isVanguardEnabled) {
+                    isVanguardScanning = true
+                    try {
+                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
+                        when (threat) {
+                            is VanguardThreatResult.Clean -> {
+                                totalPages = PdfEditor.getPageCount(context, stagedUri)
+                                if (totalPages <= 0) {
+                                    showVanguardDamagedDialog = true
+                                }
+                            }
+                            is VanguardThreatResult.EncryptedCannotVerify -> {
+                                showVanguardEncryptedDialog = true
+                            }
+                            is VanguardThreatResult.ExecutableThreat -> {
+                                showVanguardBlockedDialog = true
+                            }
+                            is VanguardThreatResult.ParseFailed -> {
                                 showVanguardDamagedDialog = true
                             }
                         }
-                        is VanguardThreatResult.EncryptedCannotVerify -> {
-                            showVanguardEncryptedDialog = true
-                        }
-                        is VanguardThreatResult.ExecutableThreat -> {
-                            showVanguardBlockedDialog = true
-                        }
-                        is VanguardThreatResult.ParseFailed -> {
-                            showVanguardDamagedDialog = true
-                        }
+                    } finally {
+                        isVanguardScanning = false
                     }
-                } finally {
-                    isVanguardScanning = false
+                } else {
+                    totalPages = PdfEditor.getPageCount(context, stagedUri)
+                    if (totalPages <= 0) {
+                        showVanguardDamagedDialog = true
+                    }
                 }
-            } else {
-                totalPages = PdfEditor.getPageCount(context, stagedUri)
-                if (totalPages <= 0) {
-                    showVanguardDamagedDialog = true
-                }
-            }
 
-            if (totalPages > 0) {
-                viewModel.recordReaderHistory(initialUri, fileName)
-                try {
-                    bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
-                } catch (_: Exception) {
+                if (totalPages > 0) {
+                    viewModel.recordReaderHistory(initialUri, fileName)
+                    try {
+                        bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
+                    } catch (_: Exception) {
+                    }
                 }
-            }
-            
-            if (isRememberPositionEnabled && totalPages > 0) {
-                val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, stagedUri)
-                val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, totalPages)
-                listState.scrollToItem(savedPos.pageIndex, savedPos.scrollOffsetPx)
+                
+                if (isRememberPositionEnabled && totalPages > 0) {
+                    val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, stagedUri)
+                    val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, totalPages)
+                    listState.scrollToItem(savedPos.pageIndex, savedPos.scrollOffsetPx)
+                }
+            } finally {
+                isDocumentLoading = false
             }
         }
     }
@@ -372,13 +413,30 @@ private fun PdfReaderDocument(
     val stablePadding = remember(isLandscape) {
         ReaderControlsUiState.computeStableViewportPadding(isLandscape)
     }
+    val barLayout = remember(configuration.screenWidthDp, isLandscape, configuration.fontScale) {
+        ReaderAccessibilityLayout.computeBarLayout(
+            screenWidthDp = configuration.screenWidthDp,
+            isLandscape = isLandscape,
+            fontScale = configuration.fontScale
+        )
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFE5E5E5)) // Neutral reading background
     ) {
-        if (totalPages > 0 && selectedPdfUri != null) {
+        if (isDocumentLoading && totalPages == 0) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        } else if (totalPages > 0 && selectedPdfUri != null) {
             // Interactive Reader Surface
             Box(
                 modifier = Modifier
@@ -476,12 +534,15 @@ private fun PdfReaderDocument(
         }
 
         // Non-intrusive floating page badge when controls are hidden in reading mode
+        val currentPageOneBased = listState.firstVisibleItemIndex + 1
+        val fullPageIndicatorText = stringResource(R.string.reader_page_indicator, currentPageOneBased, totalPages)
         AnimatedVisibility(
             visible = !showControls && totalPages > 0,
             enter = fadeIn(tween(180)),
             exit = fadeOut(tween(180)),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
                 .padding(end = 16.dp, bottom = 24.dp)
         ) {
             Surface(
@@ -489,25 +550,35 @@ private fun PdfReaderDocument(
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
                 tonalElevation = 4.dp,
                 shadowElevation = 4.dp,
-                modifier = Modifier.clickable { applyControlsState(currentControlsState().onCanvasTap()) }
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = fullPageIndicatorText
+                        role = Role.Button
+                    }
+                    .clickable { applyControlsState(currentControlsState().onCanvasTap()) }
             ) {
-                Text(
-                    text = "${listState.firstVisibleItemIndex + 1} / $totalPages",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                    Text(
+                        text = stringResource(R.string.reader_page_badge_compact, currentPageOneBased, totalPages),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
             }
         }
 
         // Quick zoom reset pill when zoomed in
+        val resetZoomLabel = stringResource(R.string.reader_reset_zoom_fmt, scale)
         AnimatedVisibility(
             visible = ReaderZoomCalculator.isZoomed(scale),
             enter = fadeIn(tween(180)),
             exit = fadeOut(tween(180)),
             modifier = Modifier
                 .align(Alignment.BottomStart)
+                .navigationBarsPadding()
                 .padding(start = 16.dp, bottom = if (showControls) 132.dp else 24.dp)
         ) {
             Surface(
@@ -515,19 +586,27 @@ private fun PdfReaderDocument(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 tonalElevation = 4.dp,
                 shadowElevation = 4.dp,
-                modifier = Modifier.clickable {
-                    scale = 1f
-                    offsetX = 0f
-                    offsetY = 0f
-                }
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = resetZoomLabel
+                        role = Role.Button
+                    }
+                    .clickable {
+                        scale = 1f
+                        offsetX = 0f
+                        offsetY = 0f
+                    }
             ) {
-                Text(
-                    text = String.format(java.util.Locale.US, "%.1fx • Reset", scale),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                    Text(
+                        text = resetZoomLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1
+                    )
+                }
             }
         }
 
@@ -550,7 +629,10 @@ private fun PdfReaderDocument(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.desc_back)
+                        )
                     }
                 },
                 actions = {
@@ -562,15 +644,17 @@ private fun PdfReaderDocument(
                     }) {
                         Icon(
                             imageVector = if (fitPage) Icons.Rounded.FitScreen else Icons.Rounded.Fullscreen,
-                            contentDescription = if (fitPage) "Fit Width" else "Fit Page"
+                            contentDescription = stringResource(
+                                if (fitPage) R.string.reader_fit_width else R.string.reader_fit_page
+                            )
                         )
                     }
                     IconButton(onClick = { applyControlsState(currentControlsState().onToggleSearch()) }) {
-                        Icon(Icons.Rounded.Search, contentDescription = "Search")
+                        Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.reader_action_search))
                     }
                     if (bookmarks.isNotEmpty()) {
                         IconButton(onClick = { applyControlsState(currentControlsState().onOpenToc()) }) {
-                            Icon(Icons.Rounded.Menu, contentDescription = "Table of Contents")
+                            Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.reader_toc_title))
                         }
                     }
                     IconButton(onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) }) {
@@ -589,65 +673,98 @@ private fun PdfReaderDocument(
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     tonalElevation = 4.dp
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier.weight(1f),
-                            placeholder = { Text("Search document...") },
-                            singleLine = true,
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = ""; searchMatches = emptyList() }) {
-                                        Icon(Icons.Rounded.Close, contentDescription = "Clear")
-                                    }
-                                }
-                            },
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
-                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
-                                val targetSearchUri = selectedPdfUri ?: initialUri
-                                if (searchQuery.isNotBlank()) {
-                                    isSearching = true
-                                    coroutineScope.launch {
-                                        try {
-                                            val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, targetSearchUri, searchQuery)
-                                            searchMatches = summary.occurrences
-                                            currentMatchIndex = 0
-                                            if (searchMatches.isNotEmpty()) {
-                                                listState.animateScrollToItem(searchMatches[0].pageIndex)
-                                            }
-                                        } finally {
-                                            isSearching = false
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = {
+                                    searchQuery = it
+                                    hasExecutedSearch = false
+                                },
+                                modifier = Modifier.weight(1f),
+                                placeholder = { Text(stringResource(R.string.reader_search_hint)) },
+                                singleLine = true,
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            searchQuery = ""
+                                            searchMatches = emptyList()
+                                            hasExecutedSearch = false
+                                        }) {
+                                            Icon(
+                                                Icons.Rounded.Close,
+                                                contentDescription = stringResource(R.string.reader_action_clear_search)
+                                            )
                                         }
                                     }
+                                },
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
+                                    val targetSearchUri = selectedPdfUri ?: initialUri
+                                    if (searchQuery.isNotBlank()) {
+                                        isSearching = true
+                                        coroutineScope.launch {
+                                            try {
+                                                val summary = com.pdfchemy.app.logic.PdfFindAndReplaceEngine.findOccurrences(context, targetSearchUri, searchQuery)
+                                                searchMatches = summary.occurrences
+                                                hasExecutedSearch = true
+                                                currentMatchIndex = 0
+                                                if (searchMatches.isNotEmpty()) {
+                                                    listState.animateScrollToItem(searchMatches[0].pageIndex)
+                                                }
+                                            } finally {
+                                                isSearching = false
+                                            }
+                                        }
+                                    }
+                                })
+                            )
+                            if (isSearching) {
+                                CircularProgressIndicator(modifier = Modifier.padding(start = 12.dp).size(24.dp))
+                            } else if (searchMatches.isNotEmpty()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "${currentMatchIndex + 1}/${searchMatches.size}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    IconButton(onClick = {
+                                        val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
+                                        currentMatchIndex = newIdx
+                                        coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                    }) {
+                                        Icon(
+                                            Icons.Rounded.KeyboardArrowUp,
+                                            contentDescription = stringResource(R.string.previous_match)
+                                        )
+                                    }
+                                    IconButton(onClick = {
+                                        val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
+                                        currentMatchIndex = newIdx
+                                        coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
+                                    }) {
+                                        Icon(
+                                            Icons.Rounded.KeyboardArrowDown,
+                                            contentDescription = stringResource(R.string.next_match)
+                                        )
+                                    }
                                 }
-                            })
-                        )
-                        if (isSearching) {
-                            CircularProgressIndicator(modifier = Modifier.padding(start = 12.dp).size(24.dp))
-                        } else if (searchMatches.isNotEmpty()) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "${currentMatchIndex + 1}/${searchMatches.size}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                IconButton(onClick = {
-                                    val newIdx = if (currentMatchIndex > 0) currentMatchIndex - 1 else searchMatches.size - 1
-                                    currentMatchIndex = newIdx
-                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
-                                }) { Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = "Previous Match") }
-                                IconButton(onClick = {
-                                    val newIdx = if (currentMatchIndex < searchMatches.size - 1) currentMatchIndex + 1 else 0
-                                    currentMatchIndex = newIdx
-                                    coroutineScope.launch { listState.animateScrollToItem(searchMatches[newIdx].pageIndex) }
-                                }) { Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = "Next Match") }
                             }
+                        }
+                        if (!isSearching && hasExecutedSearch && searchQuery.isNotBlank() && searchMatches.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.reader_search_no_matches),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 6.dp, start = 4.dp)
+                            )
                         }
                     }
                 }
@@ -669,21 +786,31 @@ private fun PdfReaderDocument(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(
+                            horizontal = barLayout.horizontalPaddingDp.dp,
+                            vertical = barLayout.verticalPaddingDp.dp
+                        )
                 ) {
-                    // Page indicator
-                    val firstVisible = listState.firstVisibleItemIndex
                     Text(
-                        text = "${firstVisible + 1} of $totalPages",
+                        text = fullPageIndicatorText,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp)
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = if (barLayout.compactLandscape) 4.dp else 8.dp)
                     )
                     
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         ContinuityToolButton(
                             icon = Icons.Rounded.Compress, 
@@ -722,6 +849,7 @@ private fun PdfReaderDocument(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -752,7 +880,9 @@ private fun PdfReaderDocument(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 },
-                                modifier = Modifier.clickable { launchCommandAction(action) }
+                                modifier = Modifier
+                                    .defaultMinSize(minHeight = 48.dp)
+                                    .clickable { launchCommandAction(action) }
                             )
                         }
                     }
@@ -768,10 +898,11 @@ private fun PdfReaderDocument(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Table of Contents",
+                        text = stringResource(R.string.reader_toc_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp)
@@ -791,15 +922,17 @@ private fun PdfReaderDocument(
                                     )
                                 },
                                 supportingContent = {
-                                    Text("Page ${bookmark.pageNumber.coerceAtLeast(1)}")
+                                    Text(stringResource(R.string.reader_page_content_desc, bookmark.pageNumber.coerceAtLeast(1)))
                                 },
-                                modifier = Modifier.clickable {
-                                    applyControlsState(currentControlsState().onDismissToc())
-                                    val targetPage = (bookmark.pageNumber - 1).coerceIn(0, (totalPages - 1).coerceAtLeast(0))
-                                    coroutineScope.launch {
-                                        listState.scrollToItem(targetPage)
+                                modifier = Modifier
+                                    .defaultMinSize(minHeight = 48.dp)
+                                    .clickable {
+                                        applyControlsState(currentControlsState().onDismissToc())
+                                        val targetPage = (bookmark.pageNumber - 1).coerceIn(0, (totalPages - 1).coerceAtLeast(0))
+                                        coroutineScope.launch {
+                                            listState.scrollToItem(targetPage)
+                                        }
                                     }
-                                }
                             )
                         }
                     }
@@ -838,13 +971,29 @@ private fun readerCommandPresentation(
 fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
+            .defaultMinSize(
+                minWidth = ReaderAccessibilityLayout.MIN_TOUCH_TARGET_DP.dp,
+                minHeight = ReaderAccessibilityLayout.MIN_TOUCH_TARGET_DP.dp
+            )
+            .semantics(mergeDescendants = true) {
+                contentDescription = label
+                role = Role.Button
+            }
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -865,11 +1014,14 @@ fun PdfReaderPageItem(
         ReaderPageKey(uri.toString(), pageIndex, targetWidth, fitPage)
     }
     var bitmap by remember(pageKey) { mutableStateOf<Bitmap?>(null) }
+    var renderFailed by remember(pageKey) { mutableStateOf(false) }
+    var retryAttempt by remember(pageKey) { mutableIntStateOf(0) }
 
     DisposableEffect(pageKey) {
         val cached = bitmapCache.acquire(pageKey)
         if (cached != null) {
             bitmap = cached
+            renderFailed = false
         }
         onDispose {
             renderGate.cancelPage(pageIndex)
@@ -878,20 +1030,28 @@ fun PdfReaderPageItem(
         }
     }
 
-    LaunchedEffect(pageKey) {
+    LaunchedEffect(pageKey, retryAttempt) {
         if (bitmap != null && !bitmap!!.isRecycled) return@LaunchedEffect
+        renderFailed = false
         val token = renderGate.beginRender(pageIndex)
         if (token < 0L) return@LaunchedEffect
         val rendered = withContext(Dispatchers.IO) {
             if (!renderGate.isCurrent(pageIndex, token)) return@withContext null
-            NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            try {
+                NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
+            } catch (_: Exception) {
+                null
+            }
         }
         if (rendered != null) {
             if (renderGate.isCurrent(pageIndex, token)) {
                 bitmap = bitmapCache.putAndAcquire(pageKey, rendered)
+                renderFailed = false
             } else if (!rendered.isRecycled) {
                 rendered.recycle()
             }
+        } else if (renderGate.isCurrent(pageIndex, token)) {
+            renderFailed = true
         }
     }
 
@@ -912,10 +1072,31 @@ fun PdfReaderPageItem(
         if (activeBitmap != null) {
             Image(
                 bitmap = activeBitmap.asImageBitmap(),
-                contentDescription = "Page ${pageIndex + 1}",
+                contentDescription = stringResource(R.string.reader_page_content_desc, pageIndex + 1),
                 contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth()
             )
+        } else if (renderFailed) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(0.7f)
+                    .background(Color.White)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.page_render_failed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(onClick = { retryAttempt++ }) {
+                    Text(stringResource(R.string.retry))
+                }
+            }
         } else {
             // Placeholder while loading
             Box(

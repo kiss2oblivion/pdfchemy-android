@@ -1,5 +1,6 @@
 package com.pdfchemy.app.logic
 
+import android.content.ComponentCallbacks2
 import android.graphics.Bitmap
 import java.util.LinkedHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -115,6 +116,28 @@ class BoundedPageBitmapCache(
     @Synchronized
     fun activeReferenceCount(bitmap: Bitmap): Int = refCounts[bitmap] ?: 0
 
+    @Synchronized
+    fun onTrimMemory(level: Int) {
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL ||
+            level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND
+        ) {
+            clear()
+            return
+        }
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+            val iterator = entries.entries.iterator()
+            while (iterator.hasNext()) {
+                val candidate = iterator.next()
+                val refs = refCounts[candidate.value.bitmap] ?: 0
+                if (refs <= 0) {
+                    iterator.remove()
+                    evictionCount++
+                    retireBitmap(candidate.value.bitmap)
+                }
+            }
+        }
+    }
+
     private fun trimToBudget(protectedKey: ReaderPageKey? = null) {
         val iterator = entries.entries.iterator()
         while (iterator.hasNext() && (entries.size > maxEntries || totalBytes() > maxBytes)) {
@@ -138,6 +161,16 @@ class BoundedPageBitmapCache(
             }
         } else {
             pendingRecycle.add(bitmap)
+        }
+    }
+
+    companion object {
+        fun computeAdaptiveBudget(maxMemoryBytes: Long, isLowRamDevice: Boolean): Pair<Int, Long> {
+            return if (isLowRamDevice || maxMemoryBytes <= 128L * 1024L * 1024L) {
+                3 to (12L * 1024L * 1024L)
+            } else {
+                6 to (32L * 1024L * 1024L)
+            }
         }
     }
 }

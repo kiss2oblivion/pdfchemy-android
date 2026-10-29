@@ -9,6 +9,34 @@ data class ReaderViewportPaddingDp(
     val horizontalDp: Int
 )
 
+data class ReaderBarLayoutSpec(
+    val minTouchTargetDp: Int = 48,
+    val horizontalPaddingDp: Int,
+    val verticalPaddingDp: Int,
+    val compactLandscape: Boolean,
+    val useHorizontalScrollForBottomActions: Boolean
+)
+
+object ReaderAccessibilityLayout {
+    const val MIN_TOUCH_TARGET_DP = 48
+
+    fun computeBarLayout(
+        screenWidthDp: Int,
+        isLandscape: Boolean,
+        fontScale: Float
+    ): ReaderBarLayoutSpec {
+        val isSmallScreen = screenWidthDp <= 360
+        val isLargeFont = fontScale >= 1.3f
+        return ReaderBarLayoutSpec(
+            minTouchTargetDp = MIN_TOUCH_TARGET_DP,
+            horizontalPaddingDp = if (isSmallScreen) 8 else 16,
+            verticalPaddingDp = if (isLandscape) 6 else 10,
+            compactLandscape = isLandscape,
+            useHorizontalScrollForBottomActions = isSmallScreen || isLargeFont || isLandscape
+        )
+    }
+}
+
 enum class ReaderBackAction {
     CLOSE_COMMAND_CENTRE,
     CLOSE_TOC,
