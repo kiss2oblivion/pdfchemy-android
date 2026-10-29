@@ -1174,4 +1174,18 @@
     <string name="table_extractor_no_tables_desc">ตรวจไม่พบข้อมูลตารางในเอกสารนี้</string>
     <string name="table_extractor_error_share">แชร์ไฟล์ CSV ไม่สำเร็จ</string>
     <string name="table_extractor_share_desc">แชร์ CSV</string>
+    <string name="menu_more_tools">เครื่องมือทั้งหมด</string>
+    <string name="reader_action_search">ค้นหาในเอกสาร</string>
+    <string name="reader_toc_title">สารบัญ</string>
+    <string name="reader_fit_width">พอดีความกว้าง</string>
+    <string name="reader_fit_page">พอดีหน้า</string>
+    <string name="reader_search_hint">ค้นหาในเอกสาร…</string>
+    <string name="reader_action_clear_search">ล้างการค้นหา</string>
+    <string name="reader_search_no_matches">ไม่พบรายการที่ตรงกัน</string>
+    <string name="reader_page_indicator">หน้า %1$d จาก %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">หน้า %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • รีเซ็ต</string>
+    <string name="previous_match">รายการก่อนหน้า</string>
+    <string name="next_match">รายการถัดไป</string>
 </resources>

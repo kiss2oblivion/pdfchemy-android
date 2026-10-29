@@ -1184,4 +1184,18 @@
     <string name="table_extractor_no_tables_desc">Tidak ada data tabel yang terdeteksi dalam dokumen ini.</string>
     <string name="table_extractor_error_share">Gagal membagikan file CSV.</string>
     <string name="table_extractor_share_desc">Bagikan CSV</string>
+    <string name="menu_more_tools">Semua Alat</string>
+    <string name="reader_action_search">Cari Dokumen</string>
+    <string name="reader_toc_title">Daftar Isi</string>
+    <string name="reader_fit_width">Sesuaikan Lebar</string>
+    <string name="reader_fit_page">Sesuaikan Halaman</string>
+    <string name="reader_search_hint">Cari dokumen…</string>
+    <string name="reader_action_clear_search">Hapus Pencarian</string>
+    <string name="reader_search_no_matches">Tidak ada kecocokan ditemukan</string>
+    <string name="reader_page_indicator">Halaman %1$d dari %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Halaman %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Atur Ulang</string>
+    <string name="previous_match">Kecocokan Sebelumnya</string>
+    <string name="next_match">Kecocokan Berikutnya</string>
 </resources>

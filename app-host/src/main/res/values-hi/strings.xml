@@ -1174,4 +1174,18 @@
     <string name="table_extractor_no_tables_desc">इस दस्तावेज़ में कोई सारणीबद्ध डेटा नहीं मिला।</string>
     <string name="table_extractor_error_share">CSV फ़ाइल साझा करने में विफल।</string>
     <string name="table_extractor_share_desc">CSV साझा करें</string>
+    <string name="menu_more_tools">सभी टूल्स</string>
+    <string name="reader_action_search">दस्तावेज़ में खोजें</string>
+    <string name="reader_toc_title">विषय-सूची</string>
+    <string name="reader_fit_width">चौड़ाई में फ़िट करें</string>
+    <string name="reader_fit_page">पृष्ठ में फ़िट करें</string>
+    <string name="reader_search_hint">दस्तावेज़ में खोजें…</string>
+    <string name="reader_action_clear_search">खोज साफ़ करें</string>
+    <string name="reader_search_no_matches">कोई मिलान नहीं मिला</string>
+    <string name="reader_page_indicator">पृष्ठ %1$d / %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">पृष्ठ %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • रीसेट</string>
+    <string name="previous_match">पिछला मिलान</string>
+    <string name="next_match">अगला मिलान</string>
 </resources>

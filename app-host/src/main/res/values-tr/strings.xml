@@ -1174,4 +1174,18 @@
     <string name="table_extractor_no_tables_desc">Bu belgede tablo verisi tespit edilmedi.</string>
     <string name="table_extractor_error_share">CSV dosyası paylaşılamadı.</string>
     <string name="table_extractor_share_desc">CSV Paylaş</string>
+    <string name="menu_more_tools">Tüm Araçlar</string>
+    <string name="reader_action_search">Belgede Ara</string>
+    <string name="reader_toc_title">İçindekiler</string>
+    <string name="reader_fit_width">Genişliğe Sığdır</string>
+    <string name="reader_fit_page">Sayfaya Sığdır</string>
+    <string name="reader_search_hint">Belgede ara…</string>
+    <string name="reader_action_clear_search">Aramayı Temizle</string>
+    <string name="reader_search_no_matches">Eşleşme bulunamadı</string>
+    <string name="reader_page_indicator">Sayfa %1$d / %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Sayfa %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Sıfırla</string>
+    <string name="previous_match">Önceki Eşleşme</string>
+    <string name="next_match">Sonraki Eşleşme</string>
 </resources>

@@ -1172,4 +1172,18 @@
     <string name="table_extractor_no_tables_desc">此文件中未偵測到表格資料。</string>
     <string name="table_extractor_error_share">分享 CSV 檔案失敗。</string>
     <string name="table_extractor_share_desc">分享 CSV</string>
+    <string name="menu_more_tools">所有工具</string>
+    <string name="reader_action_search">搜尋文件</string>
+    <string name="reader_toc_title">目錄</string>
+    <string name="reader_fit_width">符合寬度</string>
+    <string name="reader_fit_page">符合頁面</string>
+    <string name="reader_search_hint">搜尋文件…</string>
+    <string name="reader_action_clear_search">清除搜尋</string>
+    <string name="reader_search_no_matches">找不到相符項目</string>
+    <string name="reader_page_indicator">第 %1$d / %2$d 頁</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">第 %1$d 頁</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • 重設</string>
+    <string name="previous_match">上一個相符項目</string>
+    <string name="next_match">下一個相符項目</string>
 </resources>

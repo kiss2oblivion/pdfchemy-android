@@ -1174,4 +1174,18 @@
     <string name="table_extractor_no_tables_desc">Không tìm thấy dữ liệu bảng trong tài liệu này.</string>
     <string name="table_extractor_error_share">Không thể chia sẻ tệp CSV.</string>
     <string name="table_extractor_share_desc">Chia sẻ CSV</string>
+    <string name="menu_more_tools">Tất cả công cụ</string>
+    <string name="reader_action_search">Tìm trong tài liệu</string>
+    <string name="reader_toc_title">Mục lục</string>
+    <string name="reader_fit_width">Vừa chiều rộng</string>
+    <string name="reader_fit_page">Vừa trang</string>
+    <string name="reader_search_hint">Tìm trong tài liệu…</string>
+    <string name="reader_action_clear_search">Xóa tìm kiếm</string>
+    <string name="reader_search_no_matches">Không tìm thấy kết quả</string>
+    <string name="reader_page_indicator">Trang %1$d / %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Trang %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Đặt lại</string>
+    <string name="previous_match">Kết quả trước</string>
+    <string name="next_match">Kết quả tiếp</string>
 </resources>

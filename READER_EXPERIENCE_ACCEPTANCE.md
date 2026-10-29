@@ -1,13 +1,15 @@
 # PDFchemy Reader Experience — Next Development Cycle Acceptance Report (`R01`–`R06`)
 
+**Repository:** `kiss2oblivion/pdfchemy-android`
 **Branch:** `gemini/next-reader-experience`
+**Pull Request:** https://github.com/kiss2oblivion/pdfchemy-android/pull/15
 **Base Branch:** `main` (`4b3c157f3458f7df00ea94044258d33c7449ced9`)
 **Worktree:** `E:\backup_ext_hdd\android-projects-2026-07-30\reader-next-cycle`
 **Scope:** `:app-host` & root documentation only (zero modifications to `:pdf-ipc`, `:pdf-jail`, `:pdf-renderer`, Billing, Ads, Deskew, or Office export engines)
 
 ---
 
-## 1. Repository & Release Isolation Verification (Phase 1)
+## 1. Repository & Release Isolation Verification
 
 - **2.1.0 Play Acceptance Worktree (`E:\backup_ext_hdd\android-projects-2026-07-30\release-validation-2.1.0-2026-10-23\play-acceptance`):**
   - Verified clean working tree (`git status --short` empty).
@@ -23,16 +25,18 @@
 
 ---
 
-## 2. Implemented Commits (`R01`–`R06`)
+## 2. Implemented Commits (`R01`–`R06` & Remediation)
 
-| Task | Commit SHA | Summary | Regression Test Suite |
-| :--- | :--- | :--- | :--- |
-| **R01** | `47bf3d78` | `feat(reader): R01 - implement consistent Reader-first navigation and tool continuity` | `ReaderNavigationTest`, `ScreenRestorationTest` |
-| **R02** | `26a80f82` | `perf(reader): R02 - enable native inertial scrolling, smooth zoom, and bounded page bitmap cache` | `ReaderViewportAndCacheTest` |
-| **R03** | `6594c6d6` | `feat(reader): R03 - refine tap-to-reveal overlay controls with stable viewport padding` | `ReaderControlsStateTest` |
-| **R04** | `32cc3928` | `feat(reader): R04 - expand Reader command centre for 1-2 tap access to core PDF tools` | `ReaderCommandCentreTest` |
-| **R05** | `cd435d8d` | `fix(reader): R05 - stabilize document identity, restore exact scroll offset, and handle revoked SAF access` | `ReaderHistoryAndPositionTest` |
-| **R06** | `55965e65` | `fix(reader): R06 - harden accessibility semantics, small-screen landscape layout, font scaling, and error recovery` | `ReaderAccessibilityAndResilienceTest` |
+| Task | Commit SHA | Summary | Regression Test Suite | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **R01** | `47bf3d78` | `feat(reader): R01 - implement consistent Reader-first navigation and tool continuity` | `ReaderNavigationTest`, `ScreenRestorationTest` | ✅ Accepted |
+| **R02** | `26a80f82` | `perf(reader): R02 - enable native inertial scrolling, smooth zoom, and bounded page bitmap cache` | `ReaderViewportAndCacheTest` | ✅ Accepted |
+| **R03** | `6594c6d6` | `feat(reader): R03 - refine tap-to-reveal overlay controls with stable viewport padding` | `ReaderControlsStateTest` | ✅ Accepted |
+| **R04** | `32cc3928` | `feat(reader): R04 - expand Reader command centre for 1-2 tap access to core PDF tools` | `ReaderCommandCentreTest` | ✅ Accepted |
+| **R05** | `cd435d8d` | `fix(reader): R05 - stabilize document identity, restore exact scroll offset, and handle revoked SAF access` | `ReaderHistoryAndPositionTest` | ✅ Accepted |
+| **R06** | `55965e65` | `fix(reader): R06 - harden accessibility semantics, small-screen landscape layout, font scaling, and error recovery` | `ReaderAccessibilityAndResilienceTest` | ✅ Accepted |
+| **Docs** | `d336eb13` | `docs(reader): add READER_EXPERIENCE_ACCEPTANCE.md for R01-R06 cycle` | CI Run `40885512390` (8/9 jobs passed) | ✅ Superseded by Lint Remediation |
+| **Lint Remediation** | `HEAD` (`gemini/next-reader-experience`) | `fix(reader): resolve release lint failures and validate R01-R06` | `ReaderAccessibilityAndResilienceTest` (20-locale matrix) + `:app-host:lintRelease` (`0 errors`) | ✅ Verified |
 
 ---
 
@@ -96,7 +100,7 @@
   - Bottom command bar buttons lacked minimum `48dp` touch target constraints, explicit merged button semantics, and horizontal scroll fallback for small screens (`320dp`), landscape mode, or `200%` system font scale.
   - `BoundedPageBitmapCache` did not subscribe to Android `ComponentCallbacks2` memory pressure callbacks, and per-page render failures left an indefinite spinner with no retry path.
 - **After:**
-  - Localized all Reader UI strings and format specifiers in `strings.xml` (`reader_action_search`, `reader_toc_title`, `reader_fit_width`, `reader_fit_page`, `reader_search_hint`, `reader_action_clear_search`, `reader_search_no_matches`, `reader_page_indicator`, `reader_page_badge_compact`, `reader_page_content_desc`, `reader_reset_zoom_fmt`, `previous_match`, `next_match`).
+  - Localized all Reader UI strings and format specifiers in `strings.xml` (`reader_action_search`, `reader_toc_title`, `reader_fit_width`, `reader_fit_page`, `reader_search_hint`, `reader_action_clear_search`, `reader_search_no_matches`, `reader_page_indicator`, `reader_page_badge_compact`, `reader_page_content_desc`, `reader_reset_zoom_fmt`, `previous_match`, `next_match`) across `values/strings.xml` and all 20 localized `values-*/strings.xml` directories.
   - Enforced `48dp` minimum touch targets (`ReaderAccessibilityLayout.MIN_TOUCH_TARGET_DP`), explicit `Role.Button` + merged `contentDescription` semantics, `navigationBarsPadding()`, and adaptive horizontal scrolling for small screens (`<= 360dp`), landscape orientation, and `>= 1.3x` / `2.0x` font scaling.
   - Added `BoundedPageBitmapCache.computeAdaptiveBudget` and `onTrimMemory(level)` wired via `ComponentCallbacks2`, plus explicit initial document loading state, "No matches found" search state, and per-page render failure recovery (`Retry` button).
 
@@ -115,7 +119,67 @@
 
 ---
 
-## 5. Remaining UX Defects & Next-Cycle Opportunities (Ranked by Severity)
+## 5. Release Lint Remediation Report (PR #15 CI Run `40885512390`)
+
+### A. Complete Accounting of All 14 Original Lint Errors
+
+On commit `d336eb13d1cccc9ff987728e2c60b77fc88a9caa` (CI run https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40885512390), 8 of 9 CI jobs (`secrets`, `architecture`, `dependency-security`, `tests`, and all 4 `android-instrumented-security` matrix jobs on API 24, 30, 34, and 36) passed. The `build` job failed in `:app-host:lintRelease` with **14 errors** (`0` security, API, accessibility, or resource-integrity errors; all **14** were `MissingTranslation` errors in `app-host/src/main/res/values/strings.xml` lines 1156–1169):
+
+| # | Lint ID | Classification | Source Location | String Key | Default Value (`values/strings.xml`) | Resolution |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1156` | `menu_more_tools` | `All Tools` | Translated across all 20 `values-*` locale directories |
+| 2 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1157` | `reader_action_search` | `Search Document` | Translated across all 20 `values-*` locale directories |
+| 3 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1158` | `reader_toc_title` | `Table of Contents` | Translated across all 20 `values-*` locale directories |
+| 4 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1159` | `reader_fit_width` | `Fit Width` | Translated across all 20 `values-*` locale directories |
+| 5 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1160` | `reader_fit_page` | `Fit Page` | Translated across all 20 `values-*` locale directories |
+| 6 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1161` | `reader_search_hint` | `Search document…` | Translated across all 20 `values-*` locale directories |
+| 7 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1162` | `reader_action_clear_search` | `Clear Search` | Translated across all 20 `values-*` locale directories |
+| 8 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1163` | `reader_search_no_matches` | `No matches found` | Translated across all 20 `values-*` locale directories |
+| 9 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1164` | `reader_page_indicator` | `Page %1$d of %2$d` | Translated across all 20 `values-*` locale directories preserving `%1$d` and `%2$d` |
+| 10 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1165` | `reader_page_badge_compact` | `%1$d / %2$d` | Added across all 20 `values-*` locale directories preserving `%1$d` and `%2$d` |
+| 11 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1166` | `reader_page_content_desc` | `Page %1$d` | Translated across all 20 `values-*` locale directories preserving `%1$d` |
+| 12 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1167` | `reader_reset_zoom_fmt` | `%1$.1fx • Reset` | Translated across all 20 `values-*` locale directories preserving `%1$.1f` |
+| 13 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1168` | `previous_match` | `Previous Match` | Translated across all 20 `values-*` locale directories |
+| 14 | `MissingTranslation` | Resource localization | `app-host/src/main/res/values/strings.xml:1169` | `next_match` | `Next Match` | Translated across all 20 `values-*` locale directories |
+
+### B. Files Changed During Remediation
+
+- `app-host/src/main/res/values-ar/strings.xml`
+- `app-host/src/main/res/values-de/strings.xml`
+- `app-host/src/main/res/values-es/strings.xml`
+- `app-host/src/main/res/values-fr/strings.xml`
+- `app-host/src/main/res/values-hi/strings.xml`
+- `app-host/src/main/res/values-in/strings.xml`
+- `app-host/src/main/res/values-it/strings.xml`
+- `app-host/src/main/res/values-ja/strings.xml`
+- `app-host/src/main/res/values-ko/strings.xml`
+- `app-host/src/main/res/values-nl/strings.xml`
+- `app-host/src/main/res/values-pl/strings.xml`
+- `app-host/src/main/res/values-pt/strings.xml`
+- `app-host/src/main/res/values-pt-rBR/strings.xml`
+- `app-host/src/main/res/values-ro/strings.xml`
+- `app-host/src/main/res/values-ru/strings.xml`
+- `app-host/src/main/res/values-th/strings.xml`
+- `app-host/src/main/res/values-tr/strings.xml`
+- `app-host/src/main/res/values-vi/strings.xml`
+- `app-host/src/main/res/values-zh-rCN/strings.xml`
+- `app-host/src/main/res/values-zh-rTW/strings.xml`
+- `app-host/src/test/java/com/pdfchemy/app/ui/ReaderAccessibilityAndResilienceTest.kt`
+- `READER_EXPERIENCE_ACCEPTANCE.md`
+
+### C. Commands Executed and Actual Validation Results
+
+| Verification Step | Command Executed | Actual Result |
+| :--- | :--- | :--- |
+| **Release Lint & APK Build** | `./gradlew :app-host:lintRelease :app-host:assembleDebug :app-host:assembleRelease --max-workers=2 "-Pkotlin.compiler.execution.strategy=in-process" "-PunsignedReleaseVerification=true" --stacktrace` | `BUILD SUCCESSFUL` (`:app-host:lintReportRelease`: `0 errors, 626 warnings`) |
+| **Release Gate & Artifact Hygiene** | `python scripts/check_release_gate.py --artifact` | `PASS` (`corpus_files: 14`, `smoke_routes: 61`, `fixture_hashes: PASS`, `production_ad_ids: PASS`, `artifact_hygiene: PASS`) |
+| **Secrets Audit** | `python -m unittest discover -s tools -p test_check_secrets.py && python tools/check_secrets.py` | `Ran 10 tests in 0.001s — OK`; `TruffleHog 3.97.9: 6 findings; 6 exact reviewed historical matches; 0 rejected` |
+| **Security Architecture & OSV Audit** | `./gradlew :app-host:securityAudit securityArchitecture dependencyInventory && python tools/check_dependencies.py` | `BUILD SUCCESSFUL`; `securityAudit scanned 122 files`; `Scanned 234 resolved production dependencies; 0 affected packages` |
+| **R01–R06 & 20-Locale Unit Tests** | `./gradlew :app-host:testDebugUnitTest --tests "com.pdfchemy.app.ui.ReaderAccessibilityAndResilienceTest" --tests "com.pdfchemy.app.ui.ReaderNavigationTest" --tests "com.pdfchemy.app.ui.ReaderViewportAndCacheTest" --tests "com.pdfchemy.app.ui.ReaderControlsStateTest" --tests "com.pdfchemy.app.ui.ReaderCommandCentreTest" --tests "com.pdfchemy.app.logic.ReaderHistoryAndPositionTest"` | `BUILD SUCCESSFUL` |
+
+---
+
+## 6. Remaining Known Limitations & Next-Cycle Opportunities (Ranked by Severity)
 
 1. **Low Severity — In-Page Visual Highlighting of Search Occurrences:**
    - *Current State:* In-document search (`PdfFindAndReplaceEngine.findOccurrences`) accurately locates matches and scrolls directly to the matching page (`listState.animateScrollToItem`) with `current/total` navigation and "No matches found" feedback, but does not draw yellow bounding-box overlays on the rasterized page bitmap.

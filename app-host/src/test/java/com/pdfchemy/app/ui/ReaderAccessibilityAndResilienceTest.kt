@@ -133,5 +133,30 @@ class ReaderAccessibilityAndResilienceTest {
         assertEquals("2.5x • Reset", context.getString(R.string.reader_reset_zoom_fmt, 2.5f))
         assertTrue(context.getString(R.string.previous_match).isNotBlank())
         assertTrue(context.getString(R.string.next_match).isNotBlank())
+
+        val supportedTags = listOf(
+            "ar", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "nl",
+            "pl", "pt", "pt-BR", "ro", "ru", "th", "tr", "vi", "zh-CN", "zh-TW"
+        )
+        for (tag in supportedTags) {
+            val locale = java.util.Locale.forLanguageTag(tag)
+            val config = android.content.res.Configuration(context.resources.configuration)
+            config.setLocale(locale)
+            val localizedContext = context.createConfigurationContext(config)
+            assertTrue("Missing menu_more_tools in $tag", localizedContext.getString(R.string.menu_more_tools).isNotBlank())
+            assertTrue("Missing reader_action_search in $tag", localizedContext.getString(R.string.reader_action_search).isNotBlank())
+            assertTrue("Missing reader_toc_title in $tag", localizedContext.getString(R.string.reader_toc_title).isNotBlank())
+            assertTrue("Missing reader_fit_width in $tag", localizedContext.getString(R.string.reader_fit_width).isNotBlank())
+            assertTrue("Missing reader_fit_page in $tag", localizedContext.getString(R.string.reader_fit_page).isNotBlank())
+            assertTrue("Missing reader_search_hint in $tag", localizedContext.getString(R.string.reader_search_hint).isNotBlank())
+            assertTrue("Missing reader_action_clear_search in $tag", localizedContext.getString(R.string.reader_action_clear_search).isNotBlank())
+            assertTrue("Missing reader_search_no_matches in $tag", localizedContext.getString(R.string.reader_search_no_matches).isNotBlank())
+            assertTrue("Missing reader_page_indicator in $tag", localizedContext.getString(R.string.reader_page_indicator, 3, 12).isNotBlank())
+            assertTrue("Missing reader_page_badge_compact in $tag", localizedContext.getString(R.string.reader_page_badge_compact, 3, 12).isNotBlank())
+            assertTrue("Missing reader_page_content_desc in $tag", localizedContext.getString(R.string.reader_page_content_desc, 5).isNotBlank())
+            assertTrue("Missing reader_reset_zoom_fmt in $tag", localizedContext.getString(R.string.reader_reset_zoom_fmt, 2.5f).isNotBlank())
+            assertTrue("Missing previous_match in $tag", localizedContext.getString(R.string.previous_match).isNotBlank())
+            assertTrue("Missing next_match in $tag", localizedContext.getString(R.string.next_match).isNotBlank())
+        }
     }
 }
