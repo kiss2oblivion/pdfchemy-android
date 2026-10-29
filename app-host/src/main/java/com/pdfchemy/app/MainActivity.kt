@@ -591,7 +591,13 @@ fun MainApp(
     onOpenTour: () -> Unit = {}
 ) {
     var currentScreen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Home) }
+    var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
     fun returnFromTool(fallback: Screen) {
+        val savedSource = readerReturnUri?.let(Uri::parse)
+        readerReturnUri = null
+        if (savedSource != null && viewModel.readerNavigation.readerReturnUri == null) {
+            viewModel.navigateFromReaderToTool(savedSource, currentScreen)
+        }
         currentScreen = viewModel.returnFromTool(fallback)
     }
     val uiState by viewModel.uiState.collectAsState()
@@ -949,6 +955,7 @@ fun MainApp(
                         viewModel = viewModel,
                         initialUri = readerScreen.initialPdfUri,
                         onBack = {
+                            readerReturnUri = null
                             viewModel.readerNavigation.onExitReader()
                             viewModel.clearContinuityUri()
                             currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
@@ -958,6 +965,7 @@ fun MainApp(
                                 viewModel.readerNavigation.activeReaderUri ?: readerScreen.initialPdfUri,
                                 screen
                             )
+                            readerReturnUri = viewModel.readerNavigation.readerReturnUri?.toString()
                         }
                     )
                 }
@@ -1127,6 +1135,7 @@ fun MainApp(
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
+                                    readerReturnUri = null
                                     viewModel.readerNavigation.onExitReader()
                                     currentScreen = Screen.Home
                                 },
