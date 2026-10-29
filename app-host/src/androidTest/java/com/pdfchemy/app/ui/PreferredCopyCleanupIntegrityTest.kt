@@ -66,4 +66,3 @@ class PreferredCopyCleanupIntegrityTest {
         assertEquals("existing destination bytes", oldBytes().toString(Charsets.UTF_8))
     }
 }
-
