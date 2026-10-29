@@ -590,7 +590,8 @@ fun MainApp(
     onChangeThemeMode: (String) -> Unit = {},
     onOpenTour: () -> Unit = {}
 ) {
-    var currentScreen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Home) }
+    val screenSaver = remember(viewModel) { readerAwareScreenSaver(viewModel) }
+    var currentScreen by rememberSaveable(stateSaver = screenSaver) { mutableStateOf<Screen>(Screen.Home) }
     var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
     fun returnFromTool(fallback: Screen) {
         val savedSource = readerReturnUri?.let(Uri::parse)
@@ -1452,6 +1453,14 @@ sealed class Screen {
     // [FEATURE: Reflow Reader Studio & Offline TTS] — E-reader reflow & 100% offline TTS
     data class ReflowReader(val initialUri: Uri? = null) : Screen()
 }
+
+internal fun readerAwareScreenSaver(viewModel: MainViewModel): Saver<Screen, String> = Saver(
+    save = { screen ->
+        val scope = this
+        with(ScreenSaver) { scope.save(viewModel.readerScreenForStateSave(screen)) }
+    },
+    restore = { ScreenSaver.restore(it) }
+)
 
 val ScreenSaver: Saver<Screen, String> = Saver(
     save = { screen ->

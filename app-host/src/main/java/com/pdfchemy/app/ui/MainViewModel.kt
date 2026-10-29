@@ -270,6 +270,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     val readerNavigation = com.pdfchemy.app.logic.ReaderNavigationCoordinator()
 
+    internal fun readerScreenForStateSave(screen: com.pdfchemy.app.Screen): com.pdfchemy.app.Screen {
+        if (screen !is com.pdfchemy.app.Screen.PdfReader) return screen
+        val owned = readerSourceUri ?: return screen
+        if (readerSourceLease == null) return screen
+        val requested = screen.initialPdfUri
+        // Cold recovery can restage a saved cache URI into a new owned snapshot.
+        // Persist that live capability, but never substitute a previous document
+        // while a different request is still loading.
+        if (requested != null && requested != owned &&
+            com.pdfchemy.app.utils.DocumentStager.originalSourceFor(owned) != requested) return screen
+        if (requested != null && requested != owned) {
+            readerPositions[requested.toString()]?.let { readerPositions[owned.toString()] = it }
+        }
+        return com.pdfchemy.app.Screen.PdfReader(owned)
+    }
+
     fun exitReader() {
         readerNavigation.onExitReader()
         readerSourceUri = null
