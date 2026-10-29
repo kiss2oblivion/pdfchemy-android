@@ -210,13 +210,100 @@ class PdfTableExtractorWorkerTest {
         assertTrue(contract is com.pdfchemy.app.logic.TableExtractContract)
         val tableContract = contract as com.pdfchemy.app.logic.TableExtractContract
         assertEquals(3, tableContract.rowCount)
+        assertEquals("count must equal rowCount for TABLE_EXTRACT", 3, tableContract.count)
         assertFalse(tableContract.empty)
 
         val csvText = com.pdfchemy.app.jail.WorkerResponseValidator.parseCsvTableFile(outputFile)
         val parsed = com.pdfchemy.app.logic.CsvParser.parse(csvText)
         assertEquals(3, parsed.size)
+        assertEquals(tableContract.rowCount, parsed.size)
         assertEquals(listOf("First Name", "Last Name", "Department"), parsed[0])
         assertEquals(listOf("Alice", "Smith", "Engineering"), parsed[1])
         assertEquals(listOf("Bob", "Jones", "Finance"), parsed[2])
+    }
+
+    @Test
+    fun spreadsheetSafeSanitizationCoversFormulaTriggersAndLeadingWhitespace() {
+        // Direct trigger characters
+        assertEquals("'=SUM(A1:A5)", PdfTableExtractorWorker.sanitizeCell("=SUM(A1:A5)", safeMode = true))
+        assertEquals("'+1234", PdfTableExtractorWorker.sanitizeCell("+1234", safeMode = true))
+        assertEquals("'-50.00", PdfTableExtractorWorker.sanitizeCell("-50.00", safeMode = true))
+        assertEquals("'@SUM", PdfTableExtractorWorker.sanitizeCell("@SUM", safeMode = true))
+        assertEquals("'\tcommand", PdfTableExtractorWorker.sanitizeCell("\tcommand", safeMode = true))
+        assertEquals("'\rdata", PdfTableExtractorWorker.sanitizeCell("\rdata", safeMode = true))
+
+        // Leading whitespace before formula triggers
+        assertEquals("'   =1+1", PdfTableExtractorWorker.sanitizeCell("   =1+1", safeMode = true))
+        assertEquals("' \t+42", PdfTableExtractorWorker.sanitizeCell(" \t+42", safeMode = true))
+        assertEquals("'  -calc", PdfTableExtractorWorker.sanitizeCell("  -calc", safeMode = true))
+        assertEquals("'   @admin", PdfTableExtractorWorker.sanitizeCell("   @admin", safeMode = true))
+
+        // Safe cell values without formula triggers
+        assertEquals("Normal Text", PdfTableExtractorWorker.sanitizeCell("Normal Text", safeMode = true))
+        assertEquals("   Indented Text", PdfTableExtractorWorker.sanitizeCell("   Indented Text", safeMode = true))
+        assertEquals("", PdfTableExtractorWorker.sanitizeCell("", safeMode = true))
+    }
+
+    @Test
+    fun rawModePreservesCellValuesVerbatim() {
+        assertEquals("=SUM(A1:A5)", PdfTableExtractorWorker.sanitizeCell("=SUM(A1:A5)", safeMode = false))
+        assertEquals("+1234", PdfTableExtractorWorker.sanitizeCell("+1234", safeMode = false))
+        assertEquals("-50.00", PdfTableExtractorWorker.sanitizeCell("-50.00", safeMode = false))
+        assertEquals("@SUM", PdfTableExtractorWorker.sanitizeCell("@SUM", safeMode = false))
+        assertEquals("   =1+1", PdfTableExtractorWorker.sanitizeCell("   =1+1", safeMode = false))
+        assertEquals("  -calc", PdfTableExtractorWorker.sanitizeCell("  -calc", safeMode = false))
+        assertEquals("Normal Text", PdfTableExtractorWorker.sanitizeCell("Normal Text", safeMode = false))
+    }
+
+    @Test
+    fun endToEndExtractionDefaultsToSafeModeAndRespectsRawMode() {
+        val pdfFile = tempFolder.newFile("formula_table.pdf")
+        val safeCsvFile = tempFolder.newFile("safe_output.csv")
+        val rawCsvFile = tempFolder.newFile("raw_output.csv")
+
+        createTestPdf(
+            pdfFile,
+            listOf(
+                listOf("Formula", "Payload"),
+                listOf("=cmd", "-calc")
+            )
+        )
+
+        // 1. Default safe mode (safeMode not passed)
+        val sourceFdSafe = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        val targetFdSafe = ParcelFileDescriptor.open(safeCsvFile, ParcelFileDescriptor.MODE_READ_WRITE)
+        val safeResultJson = PdfTableExtractorWorker.extractText(sourceFdSafe, targetFdSafe, "{}")
+        sourceFdSafe.close()
+        targetFdSafe.close()
+
+        val safeContract = com.pdfchemy.app.jail.WorkerResponseValidator.validate("TABLE_EXTRACT", safeResultJson, targetCount = 1)
+        val safeTable = safeContract as com.pdfchemy.app.logic.TableExtractContract
+        assertEquals(2, safeTable.rowCount)
+        assertEquals(2, safeTable.count)
+
+        val safeCsvText = com.pdfchemy.app.jail.WorkerResponseValidator.parseCsvTableFile(safeCsvFile)
+        val safeParsed = com.pdfchemy.app.logic.CsvParser.parse(safeCsvText)
+        assertEquals(2, safeParsed.size)
+        assertEquals(listOf("Formula", "Payload"), safeParsed[0])
+        assertEquals(listOf("'=cmd", "'-calc"), safeParsed[1])
+
+        // 2. Explicit Raw mode (safeMode = false)
+        val sourceFdRaw = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
+        val targetFdRaw = ParcelFileDescriptor.open(rawCsvFile, ParcelFileDescriptor.MODE_READ_WRITE)
+        val rawParams = JSONObject().apply { put("safeMode", false) }.toString()
+        val rawResultJson = PdfTableExtractorWorker.extractText(sourceFdRaw, targetFdRaw, rawParams)
+        sourceFdRaw.close()
+        targetFdRaw.close()
+
+        val rawContract = com.pdfchemy.app.jail.WorkerResponseValidator.validate("TABLE_EXTRACT", rawResultJson, targetCount = 1)
+        val rawTable = rawContract as com.pdfchemy.app.logic.TableExtractContract
+        assertEquals(2, rawTable.rowCount)
+        assertEquals(2, rawTable.count)
+
+        val rawCsvText = com.pdfchemy.app.jail.WorkerResponseValidator.parseCsvTableFile(rawCsvFile)
+        val rawParsed = com.pdfchemy.app.logic.CsvParser.parse(rawCsvText)
+        assertEquals(2, rawParsed.size)
+        assertEquals(listOf("Formula", "Payload"), rawParsed[0])
+        assertEquals(listOf("=cmd", "-calc"), rawParsed[1])
     }
 }

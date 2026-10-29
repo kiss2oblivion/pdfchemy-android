@@ -53,12 +53,27 @@ object PdfTableExtractorWorker {
             val result = JSONObject()
             result.put("success", true)
             result.put("empty", csv.isBlank())
-            result.put("count", if (csv.isBlank()) 0 else 1)
+            result.put("count", if (csv.isBlank()) 0 else rowCount)
             result.put("rowCount", rowCount)
             return result.toString()
         } finally {
             try { document?.close() } catch (e: Exception) {}
         }
+    }
+
+    fun sanitizeCell(cell: String, safeMode: Boolean): String {
+        var finalCell = cell
+        if (safeMode && finalCell.isNotEmpty()) {
+            val trimmed = finalCell.trimStart(' ', '\t', '\r', '\n')
+            val firstChar = finalCell[0]
+            val isFormulaTrigger = firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' ||
+                    firstChar == '\t' || firstChar == '\r' || firstChar == '\u0000' ||
+                    (trimmed.isNotEmpty() && (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@'))
+            if (isFormulaTrigger) {
+                finalCell = "'$finalCell"
+            }
+        }
+        return finalCell
     }
 
     private fun extractFromDocument(doc: PDDocument, pageIndex: Int? = null, safeMode: Boolean = true): Pair<String, Int> {
@@ -87,15 +102,7 @@ object PdfTableExtractorWorker {
         val sb = StringBuilder()
         for (row in allRows) {
             val rowStr = row.joinToString(",") { cell ->
-                var finalCell = cell
-                
-                if (safeMode && finalCell.isNotEmpty()) {
-                    val firstChar = finalCell[0]
-                    if (firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' || firstChar == '\t' || firstChar == '\r' || firstChar == '\u0000') {
-                        finalCell = "'$finalCell"
-                    }
-                }
-
+                val finalCell = sanitizeCell(cell, safeMode)
                 val escaped = finalCell.replace("\"", "\"\"")
                 if (escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n") || escaped.contains("\r")) {
                     "\"$escaped\""
