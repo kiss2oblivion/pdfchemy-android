@@ -58,15 +58,9 @@ class BillingManager(
         internal const val KEY_IS_PREMIUM = "is_premium_entitled"
 
         @Volatile
-        private var cachedPrefs: SharedPreferences? = null
-
-        @Volatile
         private var cachedEntitled: Boolean? = null
 
-        @Synchronized
         internal fun getSecurePrefs(context: Context): SharedPreferences {
-            val existing = cachedPrefs
-            if (existing != null) return existing
             val appContext = context.applicationContext ?: context
             return runCatching {
                 val masterKey = MasterKey.Builder(appContext)
@@ -78,9 +72,9 @@ class BillingManager(
                     masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                ).also { cachedPrefs = it }
+                )
             }.getOrElse {
-                appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).also { cachedPrefs = it }
+                appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             }
         }
 
@@ -101,8 +95,7 @@ class BillingManager(
 
         @androidx.annotation.VisibleForTesting
         internal fun resetCacheForTesting() {
-            cachedPrefs = null
-            cachedEntitled = false
+            cachedEntitled = null
         }
     }
     

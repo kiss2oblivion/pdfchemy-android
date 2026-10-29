@@ -17,6 +17,16 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33])
 class BillingReadinessTest {
 
+    @org.junit.Before
+    fun setup() {
+        BillingManager.resetCacheForTesting()
+    }
+
+    @org.junit.After
+    fun tearDown() {
+        BillingManager.resetCacheForTesting()
+    }
+
     @Test
     fun initialPriceNeverExposesUnverifiedUsdFallback() {
         val context = ApplicationProvider.getApplicationContext<Context>()
