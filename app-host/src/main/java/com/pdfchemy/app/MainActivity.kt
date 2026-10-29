@@ -4030,11 +4030,47 @@ fun RecentFilesSection(
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
+    var showFileInaccessibleDialog by remember { mutableStateOf(false) }
+    var showDamagedPdfDialog by remember { mutableStateOf(false) }
     var vanguardPendingEncryptedUri by remember { mutableStateOf<Uri?>(null) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    if (showFileInaccessibleDialog) {
+        AlertDialog(
+            onDismissRequest = { showFileInaccessibleDialog = false },
+            title = { Text(stringResource(R.string.vanguard_provider_error_title)) },
+            text = { Text(stringResource(R.string.vanguard_provider_error_message)) },
+            confirmButton = {
+                Button(onClick = { showFileInaccessibleDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedPdfDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedPdfDialog = false },
+            title = { Text(stringResource(R.string.vanguard_damaged_title)) },
+            text = { Text(stringResource(R.string.vanguard_damaged_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showDamagedPdfDialog = false
+                    onNavigate?.invoke(Screen.RepairPdf)
+                }) {
+                    Text(stringResource(R.string.menu_repair_pdf))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDamagedPdfDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     if (showVanguardBlockedDialog) {
         AlertDialog(
@@ -4155,10 +4191,16 @@ fun RecentFilesSection(
                                         onNavigate(Screen.ReflowReader(uri))
                                     } else if (ext == "pdf" && onNavigate != null) {
                                         scope.launch {
-                                            com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
-                                                showVanguardBlockedDialog = true
+                                            com.pdfchemy.app.ui.guardDocumentLoadWithCause(onFailure = { err ->
                                                 isVanguardScanning = false
                                                 vanguardScanningFileName = null
+                                                val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
+                                                if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
+                                                    viewModel.removeHistoryItem(item.uriString)
+                                                    showFileInaccessibleDialog = true
+                                                } else {
+                                                    showDamagedPdfDialog = true
+                                                }
                                             }) {
                                                 val stagedUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri }
                                                 if (isVanguardEnabled) {
@@ -4174,10 +4216,13 @@ fun RecentFilesSection(
                                                                 vanguardPendingEncryptedUri = stagedUri
                                                                 showVanguardEncryptedDialog = true
                                                             }
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
                                                                 com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
                                                                 showVanguardBlockedDialog = true
+                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                                com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                showDamagedPdfDialog = true
                                                             }
                                                         }
                                                     } finally {

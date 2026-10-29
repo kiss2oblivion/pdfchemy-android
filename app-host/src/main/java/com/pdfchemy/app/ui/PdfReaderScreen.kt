@@ -178,11 +178,12 @@ private fun PdfReaderDocument(
     var currentMatchIndex by rememberSaveable { mutableIntStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
     
-    // Vanguard Threat state
+    // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var showVanguardDamagedDialog by remember { mutableStateOf(false) }
+    var showAccessErrorDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     
     BackHandler {
@@ -218,9 +219,15 @@ private fun PdfReaderDocument(
     }
     
     LaunchedEffect(initialUri) {
-        guardDocumentLoad(onFailure = {
-            showVanguardBlockedDialog = true
+        guardDocumentLoadWithCause(onFailure = { err ->
             isVanguardScanning = false
+            val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
+            if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
+                viewModel.removeHistoryItem(initialUri.toString())
+                showAccessErrorDialog = true
+            } else {
+                showVanguardDamagedDialog = true
+            }
         }) {
             val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
             val newLease = DocumentStager.retain(staged)
@@ -239,6 +246,9 @@ private fun PdfReaderDocument(
                     when (threat) {
                         is VanguardThreatResult.Clean -> {
                             totalPages = PdfEditor.getPageCount(context, stagedUri)
+                            if (totalPages <= 0) {
+                                showVanguardDamagedDialog = true
+                            }
                         }
                         is VanguardThreatResult.EncryptedCannotVerify -> {
                             showVanguardEncryptedDialog = true
@@ -255,9 +265,13 @@ private fun PdfReaderDocument(
                 }
             } else {
                 totalPages = PdfEditor.getPageCount(context, stagedUri)
+                if (totalPages <= 0) {
+                    showVanguardDamagedDialog = true
+                }
             }
 
             if (totalPages > 0) {
+                viewModel.recordReaderHistory(initialUri, fileName)
                 try {
                     bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
                 } catch (_: Exception) {
@@ -265,30 +279,84 @@ private fun PdfReaderDocument(
             }
             
             if (isRememberPositionEnabled && totalPages > 0) {
-                val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
-                val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
-                val savedPage = prefs.getInt("page_$docId", 0)
-                if (savedPage in 0 until totalPages) {
-                    listState.scrollToItem(savedPage)
-                }
+                val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, stagedUri)
+                val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, totalPages)
+                listState.scrollToItem(savedPos.pageIndex, savedPos.scrollOffsetPx)
             }
         }
     }
     
-    // Save position continuously
-    LaunchedEffect(listState.firstVisibleItemIndex, isRememberPositionEnabled) {
+    // Save position (page index + scroll offset) continuously
+    LaunchedEffect(
+        listState.firstVisibleItemIndex,
+        listState.firstVisibleItemScrollOffset,
+        isRememberPositionEnabled,
+        totalPages
+    ) {
+        val activeUri = selectedPdfUri ?: initialUri
         if (isRememberPositionEnabled && totalPages > 0) {
-            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
-            val prefs = context.getSharedPreferences("reader_prefs", android.content.Context.MODE_PRIVATE)
-            prefs.edit().putInt("page_$docId", listState.firstVisibleItemIndex).apply()
+            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, activeUri)
+            com.pdfchemy.app.utils.DocumentIdentity.saveReaderPosition(
+                context = context,
+                docId = docId,
+                pageIndex = listState.firstVisibleItemIndex,
+                scrollOffsetPx = listState.firstVisibleItemScrollOffset
+            )
         }
     }
 
-    if (showVanguardBlockedDialog || showVanguardDamagedDialog || showVanguardEncryptedDialog) {
+    if (showAccessErrorDialog) {
+        AlertDialog(
+            onDismissRequest = onBack,
+            title = { Text(stringResource(R.string.vanguard_provider_error_title)) },
+            text = { Text(stringResource(R.string.vanguard_provider_error_message)) },
+            confirmButton = { Button(onClick = onBack) { Text(stringResource(R.string.ok)) } }
+        )
+        return
+    }
+
+    if (showVanguardEncryptedDialog) {
+        AlertDialog(
+            onDismissRequest = onBack,
+            title = { Text(stringResource(R.string.vanguard_encrypted_title)) },
+            text = { Text(stringResource(R.string.vanguard_encrypted_message)) },
+            confirmButton = {
+                Button(onClick = { onNavigateToTool(Screen.UnlockPdf(selectedPdfUri ?: initialUri)) }) {
+                    Text(stringResource(R.string.vanguard_action_unlock))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onBack) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+        return
+    }
+
+    if (showVanguardDamagedDialog) {
+        AlertDialog(
+            onDismissRequest = onBack,
+            title = { Text(stringResource(R.string.vanguard_damaged_title)) },
+            text = { Text(stringResource(R.string.vanguard_damaged_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.setContinuityUri(selectedPdfUri ?: initialUri)
+                    onNavigateToTool(Screen.RepairPdf)
+                }) {
+                    Text(stringResource(R.string.menu_repair_pdf))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onBack) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+        return
+    }
+
+    if (showVanguardBlockedDialog) {
         AlertDialog(
             onDismissRequest = onBack,
             title = { Text(stringResource(R.string.vanguard_blocked_title)) },
-            text = { Text("This document cannot be read safely.") },
+            text = { Text(stringResource(R.string.vanguard_blocked_message)) },
             confirmButton = { Button(onClick = onBack) { Text(stringResource(R.string.ok)) } }
         )
         return

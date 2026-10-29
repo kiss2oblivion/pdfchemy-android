@@ -137,6 +137,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _historyList.value = items
         }
     }
+
+    fun removeHistoryItem(uriString: String) {
+        if (uriString.isBlank()) return
+        historyRepository.removeHistoryItem(uriString)
+        _historyList.value = historyRepository.getHistory()
+    }
+
+    fun recordReaderHistory(uri: Uri, name: String, actionLabel: String = "Read PDF") {
+        if (!_isHistoryEnabled.value) return
+        // Avoid recording transient staged snapshot paths into long-term history if the URI is inside cacheDir/staged_documents
+        val path = uri.path ?: ""
+        if (uri.scheme == "file" && path.contains("staged_documents")) return
+        historyRepository.addHistoryItem(uri, name, actionLabel)
+        _historyList.value = historyRepository.getHistory()
+    }
     private val _isHapticEnabled = MutableStateFlow(prefs.getBoolean("haptic", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
 
