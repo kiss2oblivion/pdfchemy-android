@@ -9,8 +9,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -38,7 +42,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.Screen
+import com.pdfchemy.app.logic.BoundedPageBitmapCache
 import com.pdfchemy.app.logic.PdfEditor
+import com.pdfchemy.app.logic.ReaderPageKey
+import com.pdfchemy.app.logic.ReaderRenderGate
+import com.pdfchemy.app.logic.ReaderZoomCalculator
 import com.pdfchemy.app.logic.VanguardThreatResult
 import com.pdfchemy.app.sandbox.NativeRendererCoordinator
 import com.pdfchemy.app.utils.DocumentStager
@@ -119,11 +127,15 @@ private fun PdfReaderDocument(
     var totalPages by remember { mutableIntStateOf(0) }
     var fileName by remember { mutableStateOf("") }
     
-    // Zoom and Pan state
+    // Zoom, Pan, and Bounded Bitmap Cache state
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
+    var fitPage by remember { mutableStateOf(false) }
+    var activePointerCount by remember { mutableIntStateOf(1) }
     val listState = rememberLazyListState()
+    val bitmapCache = remember(initialUri) { BoundedPageBitmapCache(maxEntries = 6, maxBytes = 32L * 1024L * 1024L) }
+    val renderGate = remember(initialUri) { ReaderRenderGate() }
     
     // Command Centre state
     var showControls by remember { mutableStateOf(true) }
@@ -145,7 +157,7 @@ private fun PdfReaderDocument(
     var isVanguardScanning by remember { mutableStateOf(false) }
     
     BackHandler {
-        if (scale > 1f) {
+        if (ReaderZoomCalculator.isZoomed(scale)) {
             scale = 1f
             offsetX = 0f
             offsetY = 0f
@@ -158,6 +170,8 @@ private fun PdfReaderDocument(
 
     DisposableEffect(initialUri) {
         onDispose {
+            renderGate.close()
+            bitmapCache.clear()
             activeSessionLease?.close()
             activeSessionLease = null
             selectedPdfUri?.let { uri ->
@@ -263,39 +277,65 @@ private fun PdfReaderDocument(
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onTap = { showControls = !showControls },
-                            onDoubleTap = {
-                                if (scale > 1f) {
-                                    scale = 1f
-                                    offsetX = 0f
-                                    offsetY = 0f
-                                } else {
-                                    scale = 2.5f
-                                }
+                            onDoubleTap = { tapOffset ->
+                                val result = ReaderZoomCalculator.toggleDoubleTapZoom(
+                                    currentScale = scale,
+                                    tapX = tapOffset.x,
+                                    tapY = tapOffset.y,
+                                    viewportWidth = size.width.toFloat(),
+                                    viewportHeight = size.height.toFloat()
+                                )
+                                scale = result.scale
+                                offsetX = result.offsetX
+                                offsetY = result.offsetY
                             }
                         )
                     }
                     .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            val newScale = (scale * zoom).coerceIn(1f, 5f)
-                            if (newScale == 1f && scale == 1f) {
-                                // Delegate pan to LazyColumn scrolling when not zoomed
-                                coroutineScope.launch {
-                                    listState.scrollBy(-pan.y)
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            do {
+                                val event = awaitPointerEvent()
+                                val pressedCount = event.changes.count { it.pressed }
+                                activePointerCount = pressedCount.coerceAtLeast(1)
+                                val zoomChange = event.calculateZoom()
+                                val panChange = event.calculatePan()
+                                val shouldHandleTransform = pressedCount >= 2 ||
+                                    ReaderZoomCalculator.isZoomed(scale) ||
+                                    kotlin.math.abs(zoomChange - 1f) > 0.01f
+                                if (shouldHandleTransform) {
+                                    val result = ReaderZoomCalculator.applyGesture(
+                                        currentScale = scale,
+                                        currentOffsetX = offsetX,
+                                        currentOffsetY = offsetY,
+                                        zoomChange = zoomChange,
+                                        panX = panChange.x,
+                                        panY = panChange.y,
+                                        viewportWidth = size.width.toFloat(),
+                                        viewportHeight = size.height.toFloat()
+                                    )
+                                    scale = result.scale
+                                    offsetX = result.offsetX
+                                    offsetY = result.offsetY
+                                    if (result.verticalScrollDelta != 0f) {
+                                        coroutineScope.launch {
+                                            listState.scrollBy(result.verticalScrollDelta)
+                                        }
+                                    }
+                                    event.changes.forEach { change ->
+                                        if (change.positionChanged()) {
+                                            change.consume()
+                                        }
+                                    }
                                 }
-                            } else {
-                                // Calculate bounding offsets to keep document in view
-                                val maxOffsetX = (size.width * newScale - size.width) / 2
-                                val maxOffsetY = (size.height * newScale - size.height) / 2
-                                offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
-                                offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
-                            }
-                            scale = newScale
+                            } while (event.changes.any { it.pressed })
+                            activePointerCount = 1
                         }
                     }
             ) {
                 LazyColumn(
                     state = listState,
-                    userScrollEnabled = false, // We control scroll via transform gestures for perfect sync
+                    userScrollEnabled = ReaderZoomCalculator.isNativeScrollEnabled(scale, activePointerCount),
                     contentPadding = PaddingValues(top = 80.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
@@ -308,7 +348,14 @@ private fun PdfReaderDocument(
                         )
                 ) {
                     items(totalPages, key = { it }) { index ->
-                        PdfReaderPageItem(context, selectedPdfUri!!, index)
+                        PdfReaderPageItem(
+                            context = context,
+                            uri = selectedPdfUri!!,
+                            pageIndex = index,
+                            fitPage = fitPage,
+                            bitmapCache = bitmapCache,
+                            renderGate = renderGate
+                        )
                     }
                 }
             }
@@ -337,6 +384,17 @@ private fun PdfReaderDocument(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        fitPage = !fitPage
+                        scale = 1f
+                        offsetX = 0f
+                        offsetY = 0f
+                    }) {
+                        Icon(
+                            imageVector = if (fitPage) Icons.Rounded.FitScreen else Icons.Rounded.Fullscreen,
+                            contentDescription = if (fitPage) "Fit Width" else "Fit Page"
+                        )
+                    }
                     IconButton(onClick = { isSearchMode = !isSearchMode }) {
                         Icon(Icons.Rounded.Search, contentDescription = "Search")
                     }
@@ -507,37 +565,71 @@ fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 }
 
 @Composable
-fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    
-    LaunchedEffect(uri, pageIndex) {
-        val targetWidth = (context.resources.displayMetrics.widthPixels * 1.5).toInt()
-        val bmp = withContext(Dispatchers.IO) {
+fun PdfReaderPageItem(
+    context: Context,
+    uri: Uri,
+    pageIndex: Int,
+    fitPage: Boolean = false,
+    bitmapCache: BoundedPageBitmapCache,
+    renderGate: ReaderRenderGate
+) {
+    val targetWidth = remember(context, fitPage) {
+        val baseWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(360)
+        if (fitPage) baseWidth else (baseWidth * 1.35f).toInt()
+    }
+    val pageKey = remember(uri, pageIndex, targetWidth, fitPage) {
+        ReaderPageKey(uri.toString(), pageIndex, targetWidth, fitPage)
+    }
+    var bitmap by remember(pageKey) { mutableStateOf<Bitmap?>(null) }
+
+    DisposableEffect(pageKey) {
+        val cached = bitmapCache.acquire(pageKey)
+        if (cached != null) {
+            bitmap = cached
+        }
+        onDispose {
+            renderGate.cancelPage(pageIndex)
+            bitmapCache.release(bitmap)
+            bitmap = null
+        }
+    }
+
+    LaunchedEffect(pageKey) {
+        if (bitmap != null && !bitmap!!.isRecycled) return@LaunchedEffect
+        val token = renderGate.beginRender(pageIndex)
+        if (token < 0L) return@LaunchedEffect
+        val rendered = withContext(Dispatchers.IO) {
+            if (!renderGate.isCurrent(pageIndex, token)) return@withContext null
             NativeRendererCoordinator.renderUriToBitmap(context, uri, pageIndex, targetWidth)
         }
-        bitmap = bmp
-    }
-    
-    DisposableEffect(bitmap) {
-        onDispose {
-            bitmap?.let { if (!it.isRecycled) it.recycle() }
+        if (rendered != null) {
+            if (renderGate.isCurrent(pageIndex, token)) {
+                bitmap = bitmapCache.putAndAcquire(pageKey, rendered)
+            } else if (!rendered.isRecycled) {
+                rendered.recycle()
+            }
         }
     }
-    
+
+    val maxPageHeightDp = with(LocalDensity.current) {
+        (context.resources.displayMetrics.heightPixels * 0.82f).toDp()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .then(if (fitPage) Modifier.heightIn(max = maxPageHeightDp) else Modifier.wrapContentHeight())
             .shadow(4.dp, RoundedCornerShape(4.dp))
             .background(Color.White)
             .clip(RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (bitmap != null) {
+        val activeBitmap = bitmap?.takeIf { !it.isRecycled }
+        if (activeBitmap != null) {
             Image(
-                bitmap = bitmap!!.asImageBitmap(),
+                bitmap = activeBitmap.asImageBitmap(),
                 contentDescription = "Page ${pageIndex + 1}",
-                contentScale = ContentScale.FillWidth,
+                contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
@@ -545,7 +637,7 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.7f) // approximate portrait ratio
+                    .aspectRatio(0.7f)
                     .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
