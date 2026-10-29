@@ -1133,4 +1133,18 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="menu_more_tools">Tous les outils</string>
+    <string name="reader_action_search">Rechercher dans le document</string>
+    <string name="reader_toc_title">Table des matières</string>
+    <string name="reader_fit_width">Ajuster à la largeur</string>
+    <string name="reader_fit_page">Ajuster à la page</string>
+    <string name="reader_search_hint">Rechercher dans le document…</string>
+    <string name="reader_action_clear_search">Effacer la recherche</string>
+    <string name="reader_search_no_matches">Aucun résultat trouvé</string>
+    <string name="reader_page_indicator">Page %1$d sur %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Page %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Réinitialiser</string>
+    <string name="previous_match">Occurrence précédente</string>
+    <string name="next_match">Occurrence suivante</string>
 </resources>

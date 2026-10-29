@@ -1130,4 +1130,18 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="menu_more_tools">Todas as ferramentas</string>
+    <string name="reader_action_search">Pesquisar no documento</string>
+    <string name="reader_toc_title">Índice</string>
+    <string name="reader_fit_width">Ajustar à largura</string>
+    <string name="reader_fit_page">Ajustar à página</string>
+    <string name="reader_search_hint">Pesquisar no documento…</string>
+    <string name="reader_action_clear_search">Limpar pesquisa</string>
+    <string name="reader_search_no_matches">Nenhuma correspondência encontrada</string>
+    <string name="reader_page_indicator">Página %1$d de %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Página %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Repor</string>
+    <string name="previous_match">Correspondência anterior</string>
+    <string name="next_match">Correspondência seguinte</string>
 </resources>
