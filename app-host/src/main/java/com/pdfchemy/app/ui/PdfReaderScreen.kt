@@ -241,14 +241,15 @@ private fun PdfReaderDocument(
     var showAccessErrorDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var isDocumentLoading by remember(initialUri) { mutableStateOf(true) }
+    var isRestoringPosition by remember(initialUri) { mutableStateOf(false) }
     val actionsEnabled = ReaderControlsUiState.canExecuteDocumentAction(
-        isDocumentLoading = isDocumentLoading,
+        isDocumentLoading = isDocumentLoading || isRestoringPosition,
         isVanguardScanning = isVanguardScanning,
         totalPages = totalPages
     )
 
     fun launchCommandAction(action: ReaderCommandAction) {
-        if (!ReaderControlsUiState.canExecuteDocumentAction(isDocumentLoading, isVanguardScanning, totalPages)) return
+        if (!ReaderControlsUiState.canExecuteDocumentAction(isDocumentLoading || isRestoringPosition, isVanguardScanning, totalPages)) return
         applyControlsState(currentControlsState().onDismissCommandCentre())
         viewModel.setContinuityUri(selectedPdfUri)
         onNavigateToTool(ReaderCommandCentreCatalog.resolveScreen(action, selectedPdfUri))
@@ -341,9 +342,15 @@ private fun PdfReaderDocument(
                     val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, documentId, totalPages)
                     val page = sessionPosition?.page ?: if (isRememberPositionEnabled) savedPos.pageIndex else 0
                     val offset = sessionPosition?.offset ?: if (isRememberPositionEnabled) savedPos.scrollOffsetPx else 0
+                    // scrollToItem waits for the list's first layout. Show the list
+                    // after worker startup, while keeping tools and persistence gated
+                    // until the requested position has actually been restored.
+                    isRestoringPosition = true
+                    isDocumentLoading = false
                     listState.scrollToItem(page.coerceIn(0, totalPages - 1), offset.coerceAtLeast(0))
                 }
             } finally {
+                isRestoringPosition = false
                 isDocumentLoading = false
             }
         }
@@ -351,8 +358,8 @@ private fun PdfReaderDocument(
     
     // Keep the session position even when persistent reading history is disabled.
     LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset,
-        isRememberPositionEnabled, totalPages, isDocumentLoading, documentId) {
-        if (!isDocumentLoading && totalPages > 0) {
+        isRememberPositionEnabled, totalPages, isDocumentLoading, isRestoringPosition, documentId) {
+        if (!isDocumentLoading && !isRestoringPosition && totalPages > 0) {
             val page = listState.firstVisibleItemIndex
             val offset = listState.firstVisibleItemScrollOffset
             viewModel.readerPositions[initialUri.toString()] = MainViewModel.ReaderPosition(page, offset)

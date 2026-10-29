@@ -16,11 +16,18 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.pdfchemy.app.MainApp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.utils.DocumentStager
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.pdmodel.PDPage
+import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
+import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.ByteArrayOutputStream
 
 /** Exercises the actual Reader and navigation, rather than just the recent-file destination. */
 class ReaderDocumentLifecycleTest {
@@ -145,6 +152,62 @@ class ReaderDocumentLifecycleTest {
             compose.runOnUiThread { store.clear() }
             prefs.edit().apply {
                 if (previous is Boolean) putBoolean("vanguard_enabled", previous) else remove("vanguard_enabled")
+            }.commit()
+            DocumentStager.release(staged)
+        }
+    }
+
+    @Test fun nonzeroSessionPositionRestoresAfterTheListBecomesVisible() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val prefs = app.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
+        val previous = prefs.all.filterKeys { it in setOf("vanguard_enabled", "remember_position") }
+        PDFBoxResourceLoader.init(app)
+        val bytes = ByteArrayOutputStream().use { output ->
+            PDDocument().use { document ->
+                repeat(4) { pageIndex ->
+                    val page = PDPage(PDRectangle(300f, 400f)).also(document::addPage)
+                    PDPageContentStream(document, page).use { stream ->
+                        stream.beginText(); stream.setFont(PDType1Font.HELVETICA, 18f)
+                        stream.newLineAtOffset(40f, 250f); stream.showText("Reader page ${pageIndex + 1}"); stream.endText()
+                    }
+                }
+                document.save(output)
+            }
+            output.toByteArray()
+        }
+        val staged = DocumentStager.stageStream(app, bytes.inputStream(), "pdf")
+        val source = File(staged.uri.path!!)
+        val store = ViewModelStore()
+        lateinit var model: MainViewModel
+        val visible = mutableStateOf(true)
+        val incoming = MutableStateFlow<Uri?>(staged.uri)
+        try {
+            compose.runOnUiThread {
+                model = MainViewModel(app).also { store.put("reader-position-layout", it) }
+                model.setVanguardEnabled(true); model.setRememberPositionEnabled(true)
+                model.readerPositions[staged.uri.toString()] = MainViewModel.ReaderPosition(2, 73)
+            }
+            compose.setContent { MaterialTheme {
+                if (visible.value) MainApp(viewModel = model, incomingPdfUriState = incoming, isScreenshotRun = true)
+            } }
+            val indicator = app.getString(R.string.reader_page_indicator, 3, 4)
+            compose.waitUntil(30_000) { compose.onAllNodesWithText(indicator).fetchSemanticsNodes().size == 1 }
+            compose.onNodeWithText(indicator).assertIsDisplayed()
+            compose.waitUntil(30_000) {
+                runCatching { compose.onNodeWithContentDescription("Page 3").assertIsDisplayed() }.isSuccess
+            }
+            compose.onNodeWithContentDescription("Page 3").assertIsDisplayed()
+            compose.runOnIdle {
+                assertEquals(MainViewModel.ReaderPosition(2, 73), model.readerPositions[staged.uri.toString()])
+            }
+            assertArrayEquals("Restoring position must not mutate the PDF", bytes, source.readBytes())
+        } finally {
+            compose.runOnIdle { visible.value = false }; compose.waitForIdle()
+            compose.runOnUiThread { store.clear() }
+            prefs.edit().apply {
+                for (key in setOf("vanguard_enabled", "remember_position")) {
+                    if (previous[key] is Boolean) putBoolean(key, previous[key] as Boolean) else remove(key)
+                }
             }.commit()
             DocumentStager.release(staged)
         }
