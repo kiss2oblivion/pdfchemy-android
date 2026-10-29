@@ -47,6 +47,24 @@ class RemainingUxRuntimeTest {
         compose.runOnIdle { assertTrue(destination is com.pdfchemy.app.Screen.PdfReader) }
     }
 
+    @Test fun normalFontSearchInsideVerticalScrollAcceptsQueryAndSelectsReader() {
+        var destination: com.pdfchemy.app.Screen? = null
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1f)) {
+                MaterialTheme {
+                    Column(Modifier.width(360.dp).verticalScroll(rememberScrollState())) {
+                        ToolSearchBar(onToolSelected = { destination = it })
+                    }
+                }
+            }
+        }
+        compose.onNode(hasSetTextAction()).performTextInput("read pdf")
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val title = context.getString(ToolRegistry.allTools.first { it.screen is com.pdfchemy.app.Screen.PdfReader }.nameRes)
+        compose.onNodeWithText(title).performScrollTo().assertIsDisplayed().performClick()
+        compose.runOnIdle { assertTrue(destination is com.pdfchemy.app.Screen.PdfReader) }
+    }
+
     @Test fun categoryAndToolLabelsFitAt320dpAndDoubleFontScale() {
         compose.setContent {
             val density = LocalDensity.current.density

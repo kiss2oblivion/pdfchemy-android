@@ -161,6 +161,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.pdfchemy.app.billing.AdManager
+import com.pdfchemy.app.billing.BillingManager
 
 // --- Color Palette ---
 val md_theme_light_primary = Color(0xFF0072B2)
@@ -316,20 +317,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun isUserEntitledToPremium(): Boolean {
-        return try {
-            val masterKey = androidx.security.crypto.MasterKey.Builder(this)
-                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            androidx.security.crypto.EncryptedSharedPreferences.create(
-                this,
-                com.pdfchemy.app.billing.BillingManager.PREFS_NAME,
-                masterKey,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            ).getBoolean(com.pdfchemy.app.billing.BillingManager.KEY_IS_PREMIUM, false)
-        } catch (_: Exception) {
-            false
-        }
+        return com.pdfchemy.app.billing.BillingManager.isUserEntitled(applicationContext)
     }
 
     internal fun initializeMobileAdsIfPermitted() {
@@ -337,14 +325,22 @@ class MainActivity : AppCompatActivity() {
             AdManager.clearAd()
             return
         }
-        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        val appCtx = this.applicationContext ?: this
+        val consentInformation = UserMessagingPlatform.getConsentInformation(appCtx)
         if (consentInformation.canRequestAds()) {
+            val currentlyEntitled = isUserEntitledToPremium()
             if (isMobileAdsInitialized.compareAndSet(false, true)) {
-                MobileAds.initialize(this) {
-                    AdManager.loadInterstitial(this, isPremium = false)
+                MobileAds.initialize(appCtx) {
+                    AdManager.loadInterstitial(
+                        appCtx,
+                        isPremium = currentlyEntitled
+                    )
                 }
             } else {
-                AdManager.loadInterstitial(this, isPremium = false)
+                AdManager.loadInterstitial(
+                    appCtx,
+                    isPremium = currentlyEntitled
+                )
             }
         } else {
             AdManager.clearAd()
@@ -377,7 +373,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        if (isFinishing) {
+            AdManager.clearAd()
+            com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        }
         super.onDestroy()
     }
 
@@ -766,7 +765,13 @@ fun MainApp(
     }
 
     val isPremiumRaw by viewModel.isPremium.collectAsState()
-    val isPremium = isPremiumRaw || isScreenshotRun
+    val isPremium = isPremiumRaw || isScreenshotRun || (context as? MainActivity)?.isUserEntitledToPremium() == true
+
+    LaunchedEffect(isPremium) {
+        if (isPremium) {
+            AdManager.clearAd()
+        }
+    }
 
     val safeguardAssessment by viewModel.safeguardAssessment.collectAsState()
     safeguardAssessment?.let { assessment ->
@@ -4471,11 +4476,15 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = { if (activity != null) viewModel.purchasePremium(activity) },
-                    enabled = billingUi.canPurchase,
+                    enabled = billingUi.canPurchase && price.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text(
-                        text = if (price.isNotEmpty()) "Unlock Lifetime · $price" else stringResource(R.string.label_preview_loading),
+                        text = if (price.isNotBlank()) {
+                            stringResource(R.string.unlock_lifetime_with_price, price)
+                        } else {
+                            stringResource(R.string.price_available_in_google_play)
+                        },
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -4486,7 +4495,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     Text(
-                        text = "Restore Purchases",
+                        text = stringResource(R.string.restore_purchases),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

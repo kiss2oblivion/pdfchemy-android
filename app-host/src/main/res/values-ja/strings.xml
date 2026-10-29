@@ -170,6 +170,9 @@
 <string name="recent_activity">最近のアクティビティ</string>
 <string name="premium_title">プレミアムアップグレード</string>
 <string name="premium_thanks">プライバシー保護のオフラインドキュメントツールをご支援いただきありがとうございます！</string>
+    <string name="price_available_in_google_play">Google Playで価格を確認</string>
+    <string name="unlock_lifetime_with_price">買い切りで解除 · %1$s</string>
+    <string name="restore_purchases">購入を復元</string>
     <string name="premium_features">最高のオフラインPDF環境をアンロック。
 
 ✓ 広告なし
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Fast Web View 情報</string>
+<string name="menu_fast_web_view_desc">PDF情報を検査します。Fast Web Viewの生成は利用できません</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">このバージョンでは Fast Web View PDF の生成や認定は行えません。出力ファイルは作成されません。</string>
+<string name="select_pdf_for_linearize">検査するPDFを選択</string>
+<string name="label_diagnostic_status">PDF情報</string>
+<string name="label_fast_web_view_enabled">線形化:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">未検証</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">最適化は利用不可</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">PDF/A 予備検証</string>
+<string name="menu_pdfa_validator_desc">予備チェックを実行します。PDF/A適合性は認証されません</string>
+<string name="pdfa_headline">予備チェックのみ（未認証）</string>
+<string name="pdfa_subtitle">このチェックは ISO 19005 準拠を認定するものではありません。このバージョンでは PDF/A 変換は利用できません。</string>
+<string name="select_pdf_for_pdfa">予備チェック用PDFを選択</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">CSVファイルの保存に失敗しました。</string>
+    <string name="table_extractor_error_extract">ドキュメントから表データを抽出できませんでした。</string>
+    <string name="table_extractor_safe_mode">スプレッドシート保護エクスポート（推奨）</string>
+    <string name="table_extractor_raw_mode">未加工データエクスポート</string>
+    <string name="table_extractor_safe_mode_desc">保護モードでは、数式に似た文字（=、+、-、@）の先頭に引用符を付加し、ファイルを開いたときにスプレッドシートアプリが数式を実行するのを防ぎます。</string>
+    <string name="table_extractor_raw_mode_desc">未加工データモードでは、抽出されたセルの値を加工せず、PDF 内のそのままの状態で保持します。</string>
+    <string name="table_extractor_safe_banner">スプレッドシート保護エクスポートが有効です。数式に似た値にプレフィックスを付加し、外部アプリによる実行を防ぎます。</string>
+    <string name="table_extractor_error_title">表の抽出に失敗しました</string>
+    <string name="table_extractor_error_fallback">表の抽出中に予期しないエラーが発生しました。</string>
+    <string name="table_extractor_retry">抽出を再試行</string>
+    <string name="table_extractor_no_tables_desc">このドキュメントから表データは検出されませんでした。</string>
+    <string name="table_extractor_error_share">CSVファイルの共有に失敗しました。</string>
+    <string name="table_extractor_share_desc">CSVを共有</string>
 </resources>

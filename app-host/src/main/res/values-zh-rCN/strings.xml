@@ -170,6 +170,9 @@
 <string name="recent_activity">最近活动</string>
 <string name="premium_title">升级至专业版</string>
 <string name="premium_thanks">感谢您支持我们坚持隐私第一、完全离线文档工具的理念！</string>
+    <string name="price_available_in_google_play">价格可在 Google Play 中查看</string>
+    <string name="unlock_lifetime_with_price">永久解锁 · %1$s</string>
+    <string name="restore_purchases">恢复购买</string>
     <string name="premium_features">解锁纯净离线 PDF 终极体验。
 
 ✓ 无广告干扰
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Fast Web View 信息</string>
+<string name="menu_fast_web_view_desc">检查 PDF 信息；Fast Web View 生成功能不可用</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">此版本无法生成或认证 Fast Web View PDF。不会创建任何输出文件。</string>
+<string name="select_pdf_for_linearize">选择要检查的 PDF</string>
+<string name="label_diagnostic_status">PDF 信息</string>
+<string name="label_fast_web_view_enabled">线性化：</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">未验证</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">优化不可用</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">PDF/A 初步检查</string>
+<string name="menu_pdfa_validator_desc">运行初步检查；PDF/A 合规性未获得认证</string>
+<string name="pdfa_headline">仅初步检查；未经认证</string>
+<string name="pdfa_subtitle">这些检查不代表认证符合 ISO 19005 标准。此版本中不可进行 PDF/A 转换。</string>
+<string name="select_pdf_for_pdfa">选择要进行初步检查的 PDF</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">保存 CSV 文件失败。</string>
+    <string name="table_extractor_error_extract">从文档中提取表格数据失败。</string>
+    <string name="table_extractor_safe_mode">电子表格安全导出（推荐）</string>
+    <string name="table_extractor_raw_mode">原始数据导出</string>
+    <string name="table_extractor_safe_mode_desc">安全模式会在公式类字符（=、+、-、@）前加上前置单引号，防止电子表格应用在打开时执行公式。</string>
+    <string name="table_extractor_raw_mode_desc">原始数据模式将原样保留从 PDF 中提取的单元格值，不进行任何转义过滤。</string>
+    <string name="table_extractor_safe_banner">已启用电子表格安全导出。公式类值已添加前缀，防止外部电子表格应用对其求值。</string>
+    <string name="table_extractor_error_title">表格提取失败</string>
+    <string name="table_extractor_error_fallback">提取表格时发生意外错误。</string>
+    <string name="table_extractor_retry">重试提取</string>
+    <string name="table_extractor_no_tables_desc">此文档中未检测到表格数据。</string>
+    <string name="table_extractor_error_share">共享 CSV 文件失败。</string>
+    <string name="table_extractor_share_desc">共享 CSV</string>
 </resources>

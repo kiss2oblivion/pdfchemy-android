@@ -170,6 +170,9 @@
 <string name="recent_activity">Hoạt động gần đây</string>
 <string name="premium_title">Nâng cấp Premium</string>
 <string name="premium_thanks">Cảm ơn bạn đã ủng hộ công cụ tài liệu ngoại tuyến bảo mật của chúng tôi!</string>
+    <string name="price_available_in_google_play">Giá có sẵn trên Google Play</string>
+    <string name="unlock_lifetime_with_price">Mở khóa trọn đời · %1$s</string>
+    <string name="restore_purchases">Khôi phục giao dịch mua</string>
     <string name="premium_features">Mở khóa trải nghiệm PDF ngoại tuyến trọn vẹn.
 
 ✓ Không quảng cáo
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Thông tin Fast Web View</string>
+<string name="menu_fast_web_view_desc">Kiểm tra thông tin PDF; tính năng tạo Fast Web View hiện không khả dụng</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">Phiên bản này không thể tạo hoặc chứng nhận tệp PDF Fast Web View. Không có tệp đầu ra nào được tạo.</string>
+<string name="select_pdf_for_linearize">Chọn PDF để kiểm tra</string>
+<string name="label_diagnostic_status">Thông tin PDF</string>
+<string name="label_fast_web_view_enabled">Tuyến tính hóa:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">Chưa xác minh</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">Tối ưu hóa không khả dụng</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">Kiểm tra sơ bộ PDF/A</string>
+<string name="menu_pdfa_validator_desc">Chạy kiểm tra sơ bộ; sự tuân thủ PDF/A chưa được chứng nhận</string>
+<string name="pdfa_headline">Chỉ kiểm tra sơ bộ; chưa chứng nhận</string>
+<string name="pdfa_subtitle">Các kiểm tra này không chứng nhận sự tuân thủ ISO 19005. Chuyển đổi PDF/A hiện không khả dụng trong phiên bản này.</string>
+<string name="select_pdf_for_pdfa">Chọn PDF để kiểm tra sơ bộ</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Không thể lưu tệp CSV.</string>
+    <string name="table_extractor_error_extract">Không thể trích xuất dữ liệu bảng từ tài liệu.</string>
+    <string name="table_extractor_safe_mode">Xuất an toàn cho bảng tính (Được khuyến nghị)</string>
+    <string name="table_extractor_raw_mode">Xuất dữ liệu thô</string>
+    <string name="table_extractor_safe_mode_desc">Chế độ an toàn chuẩn hóa các ký tự giống công thức (=, +, -, @) bằng dấu nháy đơn ở đầu để ngăn các ứng dụng bảng tính thực thi công thức khi mở.</string>
+    <string name="table_extractor_raw_mode_desc">Chế độ dữ liệu thô giữ nguyên giá trị ô được trích xuất chính xác như trong PDF mà không qua xử lý.</string>
+    <string name="table_extractor_safe_banner">Đã bật xuất an toàn cho bảng tính. Các giá trị giống công thức được thêm tiền tố để ngăn ứng dụng bên ngoài tính toán.</string>
+    <string name="table_extractor_error_title">Trích xuất bảng thất bại</string>
+    <string name="table_extractor_error_fallback">Đã xảy ra lỗi không mong muốn trong quá trình trích xuất bảng.</string>
+    <string name="table_extractor_retry">Thử lại trích xuất</string>
+    <string name="table_extractor_no_tables_desc">Không tìm thấy dữ liệu bảng trong tài liệu này.</string>
+    <string name="table_extractor_error_share">Không thể chia sẻ tệp CSV.</string>
+    <string name="table_extractor_share_desc">Chia sẻ CSV</string>
 </resources>

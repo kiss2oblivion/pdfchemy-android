@@ -148,6 +148,7 @@ object WorkerResponseValidator {
             "COMPRESS" -> parseCompress(root)
             "ANALYZE_PDF" -> parsePdfAnalysis(root)
             "OFFICE_WORD", "OFFICE_EXCEL", "OFFICE_PPT" -> parseOfficeExport(root)
+            "TABLE_EXTRACT" -> parseTableExtract(root, targetCount)
 
             // Standard output / status operations
             "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
@@ -155,7 +156,7 @@ object WorkerResponseValidator {
             "ARCHIVE_CONVERT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
             "CROP", "FLATTEN_APPLY", "REDACT",
             "ATTACHMENT_EXTRACT", "ATTACHMENT_REMOVE", "ATTACHMENT_EMBED", "BOOKLET_GENERATE",
-            "TABLE_EXTRACT", "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
+            "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
             "NUP_GENERATE", "OCR_PROCESS",
             "SIGNATURE_DIGITAL", "PDF_TO_EPUB", "EPUB_TO_PDF", "EDITOR_EXPORT",
             "SPLIT", "MERGE", "IMAGES_TO_PDF", "PDF_TO_IMAGES", "LAYOUT_RESIZE",
@@ -512,6 +513,30 @@ object WorkerResponseValidator {
         )
     }
 
+    private fun parseTableExtract(root: Any?, targetCount: Int): TableExtractContract {
+        val obj = requireObject(root)
+        require(!obj.has("error")) { "Worker reported error" }
+        val success = if (obj.has("success")) obj.requireBoolean("success") else true
+        require(success) { "Worker reported failure: success=false" }
+        val empty = if (obj.has("empty")) obj.requireBoolean("empty") else false
+        val rowCount = obj.requireInt("rowCount", min = 0, max = CsvParser.MAX_ROWS)
+        val count = if (obj.has("count") && !obj.isNull("count")) {
+            obj.requireInt("count", min = 0)
+        } else {
+            if (empty) 0 else 1
+        }
+        if (empty) {
+            require(rowCount == 0) { "Table extraction marked empty but rowCount is $rowCount" }
+        }
+        return TableExtractContract(
+            success = true,
+            empty = empty,
+            rowCount = rowCount,
+            count = count
+        )
+    }
+
+
     private fun parseImageAnalyze(root: Any?): ImageAnalysisContract {
         val obj = requireObject(root)
         val size = obj.requireLong("originalSizeBytes", min = 0)
@@ -858,36 +883,7 @@ object WorkerResponseValidator {
     }
 
     fun validateCsvTable(csvText: String): String {
-        require(csvText.length <= MAX_FILE_RESULT_BYTES) { "CSV text exceeds limit" }
-        var rowCount = 0
-        var totalCells = 0
-        csvText.lineSequence().forEach { line ->
-            if (line.isNotBlank()) {
-                rowCount++
-                require(rowCount <= 5000) { "CSV row limit exceeded (max 5000)" }
-                var inQuotes = false
-                var colCount = 0
-                var cellCharCount = 0
-                for (ch in line) {
-                    if (ch == '\"') {
-                        inQuotes = !inQuotes
-                    } else if (ch == ',' && !inQuotes) {
-                        colCount++
-                        totalCells++
-                        require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                        require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                        cellCharCount = 0
-                    } else {
-                        cellCharCount++
-                    }
-                }
-                colCount++
-                totalCells++
-                require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                require(totalCells <= 20000) { "CSV total cells limit exceeded (max 20000)" }
-            }
-        }
+        CsvParser.parse(csvText)
         return csvText
     }
 

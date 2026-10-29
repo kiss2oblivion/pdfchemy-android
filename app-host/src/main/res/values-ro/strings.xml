@@ -178,6 +178,9 @@
 <string name="recent_activity">Activitate Recentă</string>
 <string name="premium_title">Upgrade Premium</string>
 <string name="premium_thanks">Mulțumim pentru susținerea uneltelor noastre offline!</string>
+    <string name="price_available_in_google_play">Preț disponibil în Google Play</string>
+    <string name="unlock_lifetime_with_price">Deblochează pe viață · %1$s</string>
+    <string name="restore_purchases">Restaurează achizițiile</string>
     <string name="premium_features">Deblochează experiența PDF supremă.
 
 ✓ Fără Reclame
@@ -904,17 +907,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Informații Fast Web View</string>
+<string name="menu_fast_web_view_desc">Inspectează informațiile PDF; generarea Fast Web View nu este disponibilă</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">Această versiune nu poate genera sau certifica fișiere PDF Fast Web View. Nu se va crea niciun fișier de ieșire.</string>
+<string name="select_pdf_for_linearize">Selectează un PDF pentru inspectare</string>
+<string name="label_diagnostic_status">Informații PDF</string>
+<string name="label_fast_web_view_enabled">Liniarizare:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">Neverificat</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">Optimizare indisponibilă</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -932,11 +935,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">Verificări preliminare PDF/A</string>
+<string name="menu_pdfa_validator_desc">Rulează verificări preliminare; conformitatea PDF/A nu este certificată</string>
+<string name="pdfa_headline">Doar verificări preliminare; necertificat</string>
+<string name="pdfa_subtitle">Aceste verificări nu certifică conformitatea ISO 19005. Conversia PDF/A nu este disponibilă în această versiune.</string>
+<string name="select_pdf_for_pdfa">Selectează PDF pentru verificări preliminare</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1169,4 +1172,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Salvarea fișierului CSV a eșuat.</string>
+    <string name="table_extractor_error_extract">Extragerea datelor din tabel din document a eșuat.</string>
+    <string name="table_extractor_safe_mode">Export sigur pentru foi de calcul (Recomandat)</string>
+    <string name="table_extractor_raw_mode">Export date brute</string>
+    <string name="table_extractor_safe_mode_desc">Modul sigur neutralizează caracterele de tip formulă (=, +, -, @) cu un apostrof inițial pentru a preveni executarea formulelor la deschiderea în foile de calcul.</string>
+    <string name="table_extractor_raw_mode_desc">Modul Date brute păstrează valorile celulelor extrase exact așa cum au fost găsite în PDF, fără neutralizare.</string>
+    <string name="table_extractor_safe_banner">Export sigur activat. Valorile de tip formulă sunt prefixate pentru a împiedica evaluarea lor de către aplicațiile externe de calcul tabelar.</string>
+    <string name="table_extractor_error_title">Extragerea tabelului a eșuat</string>
+    <string name="table_extractor_error_fallback">A apărut o eroare neașteptată în timpul extragerii tabelului.</string>
+    <string name="table_extractor_retry">Reîncearcă extragerea</string>
+    <string name="table_extractor_no_tables_desc">Nu au fost detectate date tabelare în acest document.</string>
+    <string name="table_extractor_error_share">Partajarea fișierului CSV a eșuat.</string>
+    <string name="table_extractor_share_desc">Partajează CSV</string>
 </resources>

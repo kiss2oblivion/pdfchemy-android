@@ -170,6 +170,9 @@
 <string name="recent_activity">Recente Activiteit</string>
 <string name="premium_title">Premium Versie</string>
 <string name="premium_thanks">Bedankt voor het ondersteunen van onze privacygerichte, offline documenttools!</string>
+    <string name="price_available_in_google_play">Prijs beschikbaar in Google Play</string>
+    <string name="unlock_lifetime_with_price">Levenslang ontgrendelen · %1$s</string>
+    <string name="restore_purchases">Aankopen herstellen</string>
     <string name="premium_features">Ontgrendel de complete offline PDF-ervaring.
 
 ✓ Geen advertenties
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Fast Web View-informatie</string>
+<string name="menu_fast_web_view_desc">PDF-informatie inspecteren; Fast Web View-aanmaak niet beschikbaar</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">Deze versie kan geen Fast Web View-PDF\'s genereren of certificeren. Er wordt geen uitvoerbestand aangemaakt.</string>
+<string name="select_pdf_for_linearize">Selecteer een PDF om te inspecteren</string>
+<string name="label_diagnostic_status">PDF-informatie</string>
+<string name="label_fast_web_view_enabled">Linearisatie:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">Niet geverifieerd</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">Optimalisatie niet beschikbaar</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">Voorlopige PDF/A-controles</string>
+<string name="menu_pdfa_validator_desc">Voer voorlopige controles uit; PDF/A-conformiteit is niet gecertificeerd</string>
+<string name="pdfa_headline">Alleen voorlopige controles; niet gecertificeerd</string>
+<string name="pdfa_subtitle">Deze controles certificeren geen ISO 19005-naleving. PDF/A-conversie is niet beschikbaar in deze versie.</string>
+<string name="select_pdf_for_pdfa">Selecteer PDF voor voorlopige controles</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Kan CSV-bestand niet opslaan.</string>
+    <string name="table_extractor_error_extract">Kan tabelgegevens niet uit document extraheren.</string>
+    <string name="table_extractor_safe_mode">Spreadsheet-veilige export (Aanbevolen)</string>
+    <string name="table_extractor_raw_mode">Ruwe data-export</string>
+    <string name="table_extractor_safe_mode_desc">De veilige modus neutraliseert formule-achtige tekens (=, +, -, @) met een voorloopapostrof om te voorkomen dat spreadsheet-apps formules uitvoeren bij het openen.</string>
+    <string name="table_extractor_raw_mode_desc">De ruwe datamodus behoudt geëxtraheerde celwaarden precies zoals aangetroffen in de PDF zonder neutralisatie.</string>
+    <string name="table_extractor_safe_banner">Spreadsheet-veilige export ingeschakeld. Formule-achtige waarden krijgen een voorvoegsel om evaluatie door externe apps te voorkomen.</string>
+    <string name="table_extractor_error_title">Tabelextractie mislukt</string>
+    <string name="table_extractor_error_fallback">Er is een onverwachte fout opgetreden tijdens het extraheren van de tabel.</string>
+    <string name="table_extractor_retry">Extractie opnieuw proberen</string>
+    <string name="table_extractor_no_tables_desc">Geen tabelgegevens gedetecteerd in dit document.</string>
+    <string name="table_extractor_error_share">Kan CSV-bestand niet delen.</string>
+    <string name="table_extractor_share_desc">CSV delen</string>
 </resources>

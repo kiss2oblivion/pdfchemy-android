@@ -215,4 +215,69 @@ class AdCallbackLifecycleTest {
         // Ad show must still only have been called once
         verify(exactly = 1) { mockAd.show(activity) }
     }
+
+    // Scenario 11: Cooldown rejection callback is invoked outside internal lock and allows re-entrant AdManager calls without deadlock.
+    @Test
+    fun scenario11_cooldownCallbackInvokedWithoutHoldingInternalLock() = exercise { activity, callbacks, _ ->
+        val mockAd = mockk<InterstitialAd>(relaxed = true)
+        every { mockAd.show(activity) } just Runs
+        AdManager.loadInterstitial(activity)
+        callbacks.single().onAdLoaded(mockAd)
+
+        // First show succeeds and displays fullscreen ad (which sets cooldown timestamp)
+        AdManager.showInterstitialIfReady(activity, isPremium = false) { /* on dismissed */ }
+        verify(exactly = 1) { mockAd.show(activity) }
+
+        // Second show within cooldown executes completion callback which performs re-entrant AdManager operations
+        var reentrantSuccess = false
+        AdManager.showInterstitialIfReady(activity, isPremium = false) {
+            // Re-entrant call: must not deadlock because lock was released before invoking callback!
+            AdManager.clearAd()
+            assertFalse(AdManager.isAdLoaded())
+            reentrantSuccess = true
+        }
+        assertTrue("Re-entrant AdManager call inside callback must complete without deadlocking", reentrantSuccess)
+    }
+
+    // Scenario 12: Fullscreen dismissal does not preload if user purchased Premium while ad was shown.
+    @Test
+    fun scenario12_fullscreenDismissalDoesNotPreloadIfUserPurchasedPremium() = exercise { activity, callbacks, _ ->
+        val mockAd = mockk<InterstitialAd>(relaxed = true)
+        val callbackSlot = slot<com.google.android.gms.ads.FullScreenContentCallback>()
+        every { mockAd.fullScreenContentCallback = capture(callbackSlot) } just Runs
+        every { mockAd.show(activity) } just Runs
+
+        AdManager.loadInterstitial(activity)
+        assertEquals(1, callbacks.size)
+        callbacks[0].onAdLoaded(mockAd)
+
+        var dismissed = false
+        AdManager.showInterstitialIfReady(activity, isPremium = false) { dismissed = true }
+        assertTrue(callbackSlot.isCaptured)
+
+        // User purchases premium while ad was on screen
+        AdManager.setPremiumForTesting(true)
+
+        // Dismissal occurs
+        callbackSlot.captured.onAdDismissedFullScreenContent()
+        assertTrue("Dismissal callback must fire", dismissed)
+
+        // No new interstitial load should have been dispatched because user is premium
+        assertEquals("No new load request dispatched for premium user on dismiss", 1, callbacks.size)
+    }
+
+    // Scenario 13: clearAd invalidates pending load callbacks.
+    @Test
+    fun scenario13_clearAdInvalidatesPendingLoadCallbacks() = exercise { activity, callbacks, _ ->
+        AdManager.loadInterstitial(activity)
+        assertEquals(1, callbacks.size)
+
+        // User actions or lifecycle trigger explicit clearAd
+        AdManager.clearAd()
+        assertFalse(AdManager.isAdLoaded())
+
+        // Stale load completes after clearAd
+        callbacks[0].onAdLoaded(mockk(relaxed = true))
+        assertFalse("Stale ad arriving after clearAd must not be stored", AdManager.isAdLoaded())
+    }
 }

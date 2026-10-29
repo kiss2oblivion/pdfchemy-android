@@ -170,6 +170,9 @@
 <string name="recent_activity">กิจกรรมล่าสุด</string>
 <string name="premium_title">อัปเกรดเป็นพรีเมียม</string>
 <string name="premium_thanks">ขอบคุณที่สนับสนุนเครื่องมือจัดการเอกสารออฟไลน์ที่เน้นความเป็นส่วนตัว!</string>
+    <string name="price_available_in_google_play">ราคาดูได้ใน Google Play</string>
+    <string name="unlock_lifetime_with_price">ปลดล็อกตลอดชีพ · %1$s</string>
+    <string name="restore_purchases">กู้คืนการซื้อ</string>
     <string name="premium_features">ปลดล็อกประสบการณ์ PDF ออฟไลน์เต็มรูปแบบ
 
 ✓ ไม่มีโฆษณา
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">ข้อมูล Fast Web View</string>
+<string name="menu_fast_web_view_desc">ตรวจสอบข้อมูล PDF ไม่รองรับการสร้าง Fast Web View</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">เวอร์ชันนี้ไม่สามารถสร้างหรือรับรอง PDF แบบ Fast Web View ได้ จะไม่มีการสร้างไฟล์ผลลัพธ์</string>
+<string name="select_pdf_for_linearize">เลือก PDF เพื่อตรวจสอบ</string>
+<string name="label_diagnostic_status">ข้อมูล PDF</string>
+<string name="label_fast_web_view_enabled">การจัดเรียงเชิงเส้น:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">ยังไม่ได้รับการยืนยัน</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">การปรับให้เหมาะสมไม่พร้อมใช้งาน</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">การตรวจสอบ PDF/A เบื้องต้น</string>
+<string name="menu_pdfa_validator_desc">เรียกใช้การตรวจสอบเบื้องต้น ไม่รับรองการปฏิบัติตามข้อกำหนด PDF/A</string>
+<string name="pdfa_headline">การตรวจสอบเบื้องต้นเท่านั้น ไม่ได้รับการรับรอง</string>
+<string name="pdfa_subtitle">การตรวจสอบนี้ไม่ได้รับรองการปฏิบัติตามมาตรฐาน ISO 19005 การแปลงเป็น PDF/A ไม่พร้อมใช้งานในเวอร์ชันนี้</string>
+<string name="select_pdf_for_pdfa">เลือก PDF สำหรับการตรวจสอบเบื้องต้น</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">บันทึกไฟล์ CSV ไม่สำเร็จ</string>
+    <string name="table_extractor_error_extract">ไม่สามารถแยกข้อมูลตารางจากเอกสารได้</string>
+    <string name="table_extractor_safe_mode">ส่งออกอย่างปลอดภัยสำหรับสเปรดชีต (แนะนำ)</string>
+    <string name="table_extractor_raw_mode">ส่งออกข้อมูลดิบ</string>
+    <string name="table_extractor_safe_mode_desc">โหมดปลอดภัยสำหรับสเปรดชีตจะเติมเครื่องหมายอัญประกาศเดี่ยวข้างหน้าอักขระที่เหมือนสูตร (=, +, -, @) เพื่อป้องกันไม่ให้แอปพลิเคชันสเปรดชีตทำงานตามสูตรเมื่อเปิด</string>
+    <string name="table_extractor_raw_mode_desc">โหมดข้อมูลดิบจะคงค่าเซลล์ที่แยกได้ตามที่พบใน PDF ทุกประการโดยไม่มีการดัดแปลง</string>
+    <string name="table_extractor_safe_banner">เปิดใช้งานการส่งออกอย่างปลอดภัยสำหรับสเปรดชีต ค่าที่คล้ายสูตรจะถูกใส่คำนำหน้าเพื่อป้องกันไม่ให้แอปสเปรดชีตภายนอกประมวลผล</string>
+    <string name="table_extractor_error_title">การแยกตารางล้มเหลว</string>
+    <string name="table_extractor_error_fallback">เกิดข้อผิดพลาดที่ไม่คาดคิดระหว่างการแยกตาราง</string>
+    <string name="table_extractor_retry">ลองแยกข้อมูลอีกครั้ง</string>
+    <string name="table_extractor_no_tables_desc">ตรวจไม่พบข้อมูลตารางในเอกสารนี้</string>
+    <string name="table_extractor_error_share">แชร์ไฟล์ CSV ไม่สำเร็จ</string>
+    <string name="table_extractor_share_desc">แชร์ CSV</string>
 </resources>
