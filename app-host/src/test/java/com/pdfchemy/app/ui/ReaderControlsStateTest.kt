@@ -7,7 +7,9 @@ import com.pdfchemy.app.logic.ReaderControlsUiState
 import com.pdfchemy.app.logic.ReaderStartupCoordinator
 import com.pdfchemy.app.logic.VanguardThreatResult
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -148,6 +150,30 @@ class ReaderControlsStateTest {
             listOf("scanning:true", "audit", "pageCount", "scanning:false", "history", "outline"),
             events
         )
+    }
+
+    @Test
+    fun positionRestoreRunsAfterReadyStateSoFirstLayoutCanComplete() = runBlocking {
+        // Models LazyListState.scrollToItem: it suspends until the list's first layout,
+        // and the page list is only composed once the ready state has been published.
+        val firstLayout = CompletableDeferred<Unit>()
+        val events = mutableListOf<String>()
+
+        withTimeout(5_000) {
+            ReaderStartupCoordinator.publishReadyThenRestorePosition(
+                publishReady = {
+                    events.add("ready")
+                    firstLayout.complete(Unit)
+                },
+                restorePosition = {
+                    firstLayout.await()
+                    events.add("restore")
+                },
+                onPositionRestored = { events.add("restored") }
+            )
+        }
+
+        assertEquals(listOf("ready", "restore", "restored"), events)
     }
 
     @Test

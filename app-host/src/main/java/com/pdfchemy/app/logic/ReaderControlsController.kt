@@ -193,6 +193,22 @@ data class ReaderStartupResult(
 
 object ReaderStartupCoordinator {
     /**
+     * `LazyListState.scrollToItem` suspends until the list's first layout, and the Reader
+     * only composes its page list after the ready state is published. Restoring the saved
+     * position before publishing would therefore suspend forever, so the ready state is
+     * always published first and the restore runs afterwards.
+     */
+    suspend fun publishReadyThenRestorePosition(
+        publishReady: () -> Unit,
+        restorePosition: suspend () -> Unit,
+        onPositionRestored: () -> Unit
+    ) {
+        publishReady()
+        restorePosition()
+        onPositionRestored()
+    }
+
+    /**
      * Executes Vanguard threat audit, page-count lookup, and outline extraction strictly
      * in sequence before returning the ready state. All three operations share the
      * single-flight `.PdfJailService` worker; publishing [ReaderStartupResult.totalPages]

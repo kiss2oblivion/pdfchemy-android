@@ -346,8 +346,13 @@ private fun PdfReaderDocument(
                     // after worker startup, while keeping tools and persistence gated
                     // until the requested position has actually been restored.
                     isRestoringPosition = true
-                    isDocumentLoading = false
-                    listState.scrollToItem(page.coerceIn(0, totalPages - 1), offset.coerceAtLeast(0))
+                    com.pdfchemy.app.logic.ReaderStartupCoordinator.publishReadyThenRestorePosition(
+                        publishReady = { isDocumentLoading = false },
+                        restorePosition = {
+                            listState.scrollToItem(page.coerceIn(0, totalPages - 1), offset.coerceAtLeast(0))
+                        },
+                        onPositionRestored = { isRestoringPosition = false }
+                    )
                 }
             } finally {
                 isRestoringPosition = false
