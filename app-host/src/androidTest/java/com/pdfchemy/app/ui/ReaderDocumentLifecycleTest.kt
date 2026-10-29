@@ -112,6 +112,44 @@ class ReaderDocumentLifecycleTest {
         }
     }
 
+    @Test fun survivingViewModelRetainsReaderSnapshotAcrossCompositionRecreation() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val prefs = app.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
+        val previous = prefs.all["vanguard_enabled"]
+        val store = ViewModelStore()
+        val staged = InstrumentationRegistry.getInstrumentation().context.assets
+            .open("vanguard-benign/01-metadata-xmp.pdf").use { DocumentStager.stageStream(app, it, "pdf") }
+        val file = File(staged.uri.path!!)
+        val original = file.readBytes()
+        lateinit var model: MainViewModel
+        val incoming = MutableStateFlow<Uri?>(staged.uri)
+        val showApp = mutableStateOf(true)
+        val restoration = StateRestorationTester(compose)
+        try {
+            compose.runOnUiThread {
+                model = MainViewModel(app)
+                store.put("reader-recreation", model)
+                model.setVanguardEnabled(true)
+            }
+            restoration.setContent { MaterialTheme {
+                if (showApp.value) MainApp(viewModel = model, incomingPdfUriState = incoming, isScreenshotRun = true)
+            } }
+            waitForReader()
+            restoration.emulateSavedInstanceStateRestore()
+            assertTrue("A surviving ViewModel must retain the Reader snapshot across UI recreation", file.exists())
+            waitForReader()
+            assertArrayEquals(original, file.readBytes())
+        } finally {
+            compose.runOnIdle { showApp.value = false }
+            compose.waitForIdle()
+            compose.runOnUiThread { store.clear() }
+            prefs.edit().apply {
+                if (previous is Boolean) putBoolean("vanguard_enabled", previous) else remove("vanguard_enabled")
+            }.commit()
+            DocumentStager.release(staged)
+        }
+    }
+
     private fun waitForReader() {
         val app = ApplicationProvider.getApplicationContext<Context>()
         val indicator = app.getString(R.string.reader_page_indicator, 1, 1)

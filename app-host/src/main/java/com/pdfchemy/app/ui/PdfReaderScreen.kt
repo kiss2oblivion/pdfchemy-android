@@ -151,7 +151,6 @@ private fun PdfReaderDocument(
         }
     }
     var documentId by remember { mutableStateOf("") }
-    viewModel.readerSourceUri = initialUri
     var totalPages by remember { mutableIntStateOf(0) }
     var fileName by remember { mutableStateOf("") }
     
@@ -304,6 +303,7 @@ private fun PdfReaderDocument(
                 val oldUri = selectedPdfUri
                 activeSessionLease = stagedLease.lease
                 selectedPdfUri = stagedUri
+                viewModel.readerSourceUri = stagedUri
                 viewModel.clearContinuityUri(stagedUri)
                 oldLease?.close()
                 if (oldUri != null && oldUri != stagedUri && viewModel.continuityDocumentUri.value != oldUri) {

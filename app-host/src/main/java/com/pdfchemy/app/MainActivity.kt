@@ -956,7 +956,7 @@ fun MainApp(
                         initialUri = readerScreen.initialPdfUri,
                         onBack = {
                             readerReturnUri = null
-                            viewModel.readerNavigation.onExitReader()
+                            viewModel.exitReader()
                             viewModel.clearContinuityUri()
                             currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
                         },
@@ -1136,7 +1136,7 @@ fun MainApp(
                                 onClick = { 
                                     resetAndShowAd()
                                     readerReturnUri = null
-                                    viewModel.readerNavigation.onExitReader()
+                                    viewModel.exitReader()
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()

@@ -255,8 +255,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return size > 32
         }
     }
+    private var readerSourceLease: java.io.Closeable? = null
     var readerSourceUri: Uri? = null
+        set(value) {
+            val next = value?.takeIf { it != Uri.EMPTY }
+            if (field == next && (next == null || readerSourceLease != null)) return
+            val nextLease = next?.let { com.pdfchemy.app.utils.DocumentStager.retain(it) }
+            val previous = field
+            val previousLease = readerSourceLease
+            readerSourceLease = nextLease
+            field = next
+            previousLease?.close()
+            if (previous != null && previous != next) com.pdfchemy.app.utils.DocumentStager.release(previous)
+        }
     val readerNavigation = com.pdfchemy.app.logic.ReaderNavigationCoordinator()
+
+    fun exitReader() {
+        readerNavigation.onExitReader()
+        readerSourceUri = null
+    }
 
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
@@ -304,6 +321,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+        exitReader()
         setContinuityUri(null)
         val context = getApplication<Application>()
         val records = activeOperations.values.toList()
