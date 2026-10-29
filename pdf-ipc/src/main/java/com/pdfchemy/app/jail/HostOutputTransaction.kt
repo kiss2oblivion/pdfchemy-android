@@ -92,7 +92,7 @@ class HostOutputTransaction(
         require(targets.isEmpty() || (value != false && value != JSONObject.NULL)) { "Worker reported failure" }
     }
 
-    suspend fun validateAndSnapshot(result: String) {
+    suspend fun validateAndSnapshot(result: String, operation: String? = null) {
         check(!closed && !validated && !commitStarted)
         validateResult(result)
         require(producers.size == targets.size) { "Output count mismatch" }
@@ -129,6 +129,22 @@ class HostOutputTransaction(
             require(size(snapshot) == sizes[index]) { "Incomplete output snapshot" }
         }
         require(snapshots.size == targets.size && snapshots.sumOf(::size) <= SecurityLimits.MAX_OUTPUT_BYTES)
+        if (operation == "TABLE_EXTRACT") {
+            // Validate immutable host snapshots before ACK/publication, not a reopened worker path.
+            for (index in snapshots.indices) {
+                require(sizes[index] <= 2 * 1024 * 1024L) { "CSV file exceeds limit" }
+                val bytes = ByteArray(sizes[index].toInt())
+                var offset = 0
+                while (offset < bytes.size) {
+                    currentCoroutineContext().ensureActive()
+                    val read = Os.pread(snapshots[index].fileDescriptor, bytes, offset,
+                        minOf(64 * 1024, bytes.size - offset), offset.toLong())
+                    require(read > 0) { "Incomplete CSV snapshot" }
+                    offset += read
+                }
+                WorkerResponseValidator.validateCsvTableBytes(bytes)
+            }
+        }
         currentCoroutineContext().ensureActive()
         validated = true
     }
