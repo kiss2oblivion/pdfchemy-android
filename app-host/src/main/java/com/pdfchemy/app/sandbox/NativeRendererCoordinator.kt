@@ -16,7 +16,7 @@ object NativeRendererCoordinator {
         context: Context,
         owner: ResourceTransferOwner<android.graphics.Bitmap>,
         render: suspend (ParcelFileDescriptor) -> Unit
-    ) {
+    ) = NativeRendererAccess.withPermit {
         BoundedWorkerStorage(context, timeoutMs = SecurityLimits.RENDER_DEADLINE_MS).use { storage ->
             val sink = storage.create(BoundedWorkerStorage.Kind.OUTPUT)
             sink.writer.use { render(it) }
@@ -68,8 +68,10 @@ object NativeRendererCoordinator {
     }
     suspend fun getPageCount(context: Context, pdfPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Int? = withContext(Dispatchers.IO) {
         val (hash, size) = StagedIdentity.identity(pdfPfd)
-        if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).getPageCount(pdfPfd, hash, size)
-        else withRenderer(context) { it.getPageCount(pdfPfd, hash, size) }
+        NativeRendererAccess.withPermit {
+            if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).getPageCount(pdfPfd, hash, size)
+            else withRenderer(context) { it.getPageCount(pdfPfd, hash, size) }
+        }
     }
     suspend fun renderPageToBitmap(
         context: Context,
@@ -94,18 +96,20 @@ object NativeRendererCoordinator {
     }
     suspend fun renderPageToJpeg(context: Context, pdfPfd: ParcelFileDescriptor, pageIndex: Int, outputJpegPfd: ParcelFileDescriptor, rendererBinder: IBinder? = null): Boolean? = withContext(Dispatchers.IO) {
         val (hash, size) = StagedIdentity.identity(pdfPfd)
-        BoundedWorkerStorage(context, timeoutMs = SecurityLimits.RENDER_DEADLINE_MS).use { storage ->
-            val sink = storage.create(BoundedWorkerStorage.Kind.OUTPUT)
-            sink.writer.use { target ->
-                if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).renderPageToJpeg(pdfPfd, pageIndex, target, hash, size)
-                else withRenderer(context) { it.renderPageToJpeg(pdfPfd, pageIndex, target, hash, size) }
-            }
-            storage.snapshotCancellable(sink.id).use { snapshot ->
-                ParcelFileDescriptor.AutoCloseInputStream(snapshot).use { input ->
-                    BoundedOutputStream(ParcelFileDescriptor.AutoCloseOutputStream(outputJpegPfd.dup())).use { input.copyTo(it) }
+        NativeRendererAccess.withPermit {
+            BoundedWorkerStorage(context, timeoutMs = SecurityLimits.RENDER_DEADLINE_MS).use { storage ->
+                val sink = storage.create(BoundedWorkerStorage.Kind.OUTPUT)
+                sink.writer.use { target ->
+                    if (rendererBinder != null) IPdfNativeRendererService.Stub.asInterface(rendererBinder).renderPageToJpeg(pdfPfd, pageIndex, target, hash, size)
+                    else withRenderer(context) { it.renderPageToJpeg(pdfPfd, pageIndex, target, hash, size) }
+                }
+                storage.snapshotCancellable(sink.id).use { snapshot ->
+                    ParcelFileDescriptor.AutoCloseInputStream(snapshot).use { input ->
+                        BoundedOutputStream(ParcelFileDescriptor.AutoCloseOutputStream(outputJpegPfd.dup())).use { input.copyTo(it) }
+                    }
                 }
             }
+            true
         }
-        true
     }
 }
