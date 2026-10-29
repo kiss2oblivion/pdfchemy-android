@@ -1,11 +1,19 @@
 package com.pdfchemy.app.ui
 
+import android.net.Uri
+import com.pdfchemy.app.logic.OutlineBookmark
 import com.pdfchemy.app.logic.ReaderBackAction
 import com.pdfchemy.app.logic.ReaderControlsUiState
+import com.pdfchemy.app.logic.ReaderStartupCoordinator
+import com.pdfchemy.app.logic.VanguardThreatResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ReaderControlsStateTest {
 
@@ -66,5 +74,96 @@ class ReaderControlsStateTest {
         assertEquals(120, portraitPadding.bottomDp)
         assertEquals(64, landscapePadding.topDp)
         assertEquals(96, landscapePadding.bottomDp)
+    }
+
+    @Test
+    fun documentActionsRemainDisabledUntilSequentialStartupCompletes() {
+        assertFalse(
+            ReaderControlsUiState.canExecuteDocumentAction(
+                isDocumentLoading = true,
+                isVanguardScanning = false,
+                totalPages = 1
+            )
+        )
+        assertFalse(
+            ReaderControlsUiState.canExecuteDocumentAction(
+                isDocumentLoading = false,
+                isVanguardScanning = true,
+                totalPages = 1
+            )
+        )
+        assertFalse(
+            ReaderControlsUiState.canExecuteDocumentAction(
+                isDocumentLoading = false,
+                isVanguardScanning = false,
+                totalPages = 0
+            )
+        )
+        assertTrue(
+            ReaderControlsUiState.canExecuteDocumentAction(
+                isDocumentLoading = false,
+                isVanguardScanning = false,
+                totalPages = 1
+            )
+        )
+    }
+
+    @Test
+    fun sequentialStartupFinishesAuditPageCountAndOutlineBeforePublishingReadyState() = runBlocking {
+        val singleFlightWorkerBusy = AtomicBoolean(false)
+        val events = mutableListOf<String>()
+
+        val result = ReaderStartupCoordinator.executeSequentialStartup(
+            isVanguardEnabled = true,
+            onVanguardScanningChanged = { scanning ->
+                events.add("scanning:$scanning")
+            },
+            checkVanguardThreat = {
+                assertTrue("Single-flight worker must be idle on audit entry", singleFlightWorkerBusy.compareAndSet(false, true))
+                events.add("audit")
+                singleFlightWorkerBusy.set(false)
+                VanguardThreatResult.Clean
+            },
+            getPageCount = {
+                assertTrue("Single-flight worker must be idle on pageCount entry", singleFlightWorkerBusy.compareAndSet(false, true))
+                events.add("pageCount")
+                singleFlightWorkerBusy.set(false)
+                1
+            },
+            extractOutline = {
+                assertTrue("Single-flight worker must be idle on outline entry", singleFlightWorkerBusy.compareAndSet(false, true))
+                events.add("outline")
+                singleFlightWorkerBusy.set(false)
+                listOf(OutlineBookmark(title = "Intro", pageNumber = 1))
+            },
+            onRecordHistory = {
+                events.add("history")
+            }
+        )
+
+        assertFalse("Single-flight worker must be idle when startup returns", singleFlightWorkerBusy.get())
+        assertEquals(1, result.totalPages)
+        assertEquals(1, result.bookmarks.size)
+        assertEquals(
+            listOf("scanning:true", "audit", "pageCount", "scanning:false", "history", "outline"),
+            events
+        )
+    }
+
+    @Test
+    fun sequentialStartupPropagatesCancellationFromOutlineExtraction() = runBlocking {
+        try {
+            ReaderStartupCoordinator.executeSequentialStartup(
+                isVanguardEnabled = false,
+                onVanguardScanningChanged = {},
+                checkVanguardThreat = { VanguardThreatResult.Clean },
+                getPageCount = { 1 },
+                extractOutline = { throw CancellationException("Reader left composition") },
+                onRecordHistory = {}
+            )
+            fail("Expected CancellationException to be rethrown")
+        } catch (_: CancellationException) {
+            // Expected
+        }
     }
 }

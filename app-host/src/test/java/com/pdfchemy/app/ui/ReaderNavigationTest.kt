@@ -109,6 +109,34 @@ class ReaderNavigationTest {
     }
 
     @Test
+    fun savedReturnRouteRestoresReaderAcrossViewModelReplacement() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val originalViewModel = MainViewModel(app)
+        val docUri = Uri.parse("file:///data/user/0/com.pdfchemy.app/cache/staged/snapshot_restored.pdf")
+
+        originalViewModel.readerNavigation.onEnterReader(docUri)
+        val editorScreen = originalViewModel.navigateFromReaderToTool(docUri, Screen.PdfEditor(docUri))
+        assertEquals(Screen.PdfEditor(docUri), editorScreen)
+        val savedReturnUri = originalViewModel.readerNavigation.readerReturnUri?.toString()
+        assertEquals(docUri.toString(), savedReturnUri)
+
+        // Simulate composition restoration with a replaced MainViewModel instance
+        val replacedViewModel = MainViewModel(app)
+        assertNull(replacedViewModel.readerNavigation.readerReturnUri)
+        val restoredSource = Uri.parse(savedReturnUri!!)
+        if (replacedViewModel.readerNavigation.readerReturnUri == null) {
+            replacedViewModel.navigateFromReaderToTool(restoredSource, editorScreen)
+        }
+        val returnedScreen = replacedViewModel.returnFromTool(Screen.Home)
+        assertEquals(Screen.PdfReader(initialPdfUri = docUri), returnedScreen)
+        assertEquals(docUri, replacedViewModel.continuityDocumentUri.value)
+
+        // Returning Reader consumes continuity after acquiring its own lease
+        replacedViewModel.clearContinuityUri(docUri)
+        assertNull(replacedViewModel.continuityDocumentUri.value)
+    }
+
+    @Test
     fun toolRegistry_includesPdfReaderEntryPoint() {
         assertTrue(
             "ToolRegistry must include Screen.PdfReader entry point for search discovery",

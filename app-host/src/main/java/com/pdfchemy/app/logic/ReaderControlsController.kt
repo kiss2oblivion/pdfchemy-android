@@ -169,5 +169,96 @@ data class ReaderControlsUiState(
                 ReaderViewportPaddingDp(topDp = 80, bottomDp = 120, horizontalDp = 16)
             }
         }
+
+        /**
+         * Reader tool and search actions must remain disabled until the sequential
+         * single-flight startup (Vanguard audit, page count, and outline extraction)
+         * has completed (`!isDocumentLoading && !isVanguardScanning && totalPages > 0`).
+         */
+        fun canExecuteDocumentAction(
+            isDocumentLoading: Boolean,
+            isVanguardScanning: Boolean,
+            totalPages: Int
+        ): Boolean = !isDocumentLoading && !isVanguardScanning && totalPages > 0
+    }
+}
+
+data class ReaderStartupResult(
+    val totalPages: Int = 0,
+    val bookmarks: List<OutlineBookmark> = emptyList(),
+    val showVanguardBlockedDialog: Boolean = false,
+    val showVanguardEncryptedDialog: Boolean = false,
+    val showVanguardDamagedDialog: Boolean = false
+)
+
+object ReaderStartupCoordinator {
+    /**
+     * Executes Vanguard threat audit, page-count lookup, and outline extraction strictly
+     * in sequence before returning the ready state. All three operations share the
+     * single-flight `.PdfJailService` worker; publishing [ReaderStartupResult.totalPages]
+     * only after outline extraction completes prevents concurrent page rendering or
+     * premature tool handoffs (`Edit`, `Reflow`, etc.) while `.PdfJailService` is busy.
+     */
+    suspend fun executeSequentialStartup(
+        isVanguardEnabled: Boolean,
+        onVanguardScanningChanged: (Boolean) -> Unit,
+        checkVanguardThreat: suspend () -> VanguardThreatResult,
+        getPageCount: suspend () -> Int,
+        extractOutline: suspend () -> List<OutlineBookmark>,
+        onRecordHistory: () -> Unit
+    ): ReaderStartupResult {
+        var resolvedPages = 0
+        var showBlocked = false
+        var showEncrypted = false
+        var showDamaged = false
+
+        if (isVanguardEnabled) {
+            onVanguardScanningChanged(true)
+            try {
+                when (checkVanguardThreat()) {
+                    is VanguardThreatResult.Clean -> {
+                        resolvedPages = getPageCount()
+                        if (resolvedPages <= 0) {
+                            showDamaged = true
+                        }
+                    }
+                    is VanguardThreatResult.EncryptedCannotVerify -> {
+                        showEncrypted = true
+                    }
+                    is VanguardThreatResult.ExecutableThreat -> {
+                        showBlocked = true
+                    }
+                    is VanguardThreatResult.ParseFailed -> {
+                        showDamaged = true
+                    }
+                }
+            } finally {
+                onVanguardScanningChanged(false)
+            }
+        } else {
+            resolvedPages = getPageCount()
+            if (resolvedPages <= 0) {
+                showDamaged = true
+            }
+        }
+
+        var extractedBookmarks: List<OutlineBookmark> = emptyList()
+        if (resolvedPages > 0) {
+            onRecordHistory()
+            try {
+                extractedBookmarks = extractOutline()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+            }
+        }
+
+        return ReaderStartupResult(
+            totalPages = resolvedPages,
+            bookmarks = extractedBookmarks,
+            showVanguardBlockedDialog = showBlocked,
+            showVanguardEncryptedDialog = showEncrypted,
+            showVanguardDamagedDialog = showDamaged
+        )
     }
 }
