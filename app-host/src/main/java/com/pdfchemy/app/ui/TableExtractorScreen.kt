@@ -69,8 +69,17 @@ fun TableExtractorScreen(
             parsedRows = emptyList()
         } else {
             isParsingCsv = true
-            parsedRows = withContext(Dispatchers.Default) {
-                runCatching { CsvParser.parse(extractedCsv) }.getOrDefault(emptyList())
+            val parseResult = withContext(Dispatchers.Default) {
+                runCatching { CsvParser.parse(extractedCsv) }
+            }
+            parseResult.onSuccess { rows ->
+                parsedRows = rows
+                if (rows.isEmpty() && extractedCsv.isNotBlank()) {
+                    isEmptyResult = true
+                }
+            }.onFailure { err ->
+                parsedRows = emptyList()
+                extractionError = err.message ?: context.getString(R.string.table_extractor_error_extract)
             }
             isParsingCsv = false
         }
