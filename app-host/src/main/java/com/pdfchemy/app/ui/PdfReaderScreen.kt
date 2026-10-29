@@ -92,12 +92,14 @@ fun PdfReaderScreen(
     )
     val activeUri = documentUri?.takeIf { it != Uri.EMPTY }
     if (activeUri != null) {
-        PdfReaderDocument(
-            viewModel = viewModel,
-            initialUri = activeUri,
-            onBack = onBack,
-            onNavigateToTool = onNavigateToTool
-        )
+        key(activeUri) {
+            PdfReaderDocument(
+                viewModel = viewModel,
+                initialUri = activeUri,
+                onBack = onBack,
+                onNavigateToTool = onNavigateToTool
+            )
+        }
     } else {
         BackHandler { onBack() }
         Scaffold(
@@ -198,12 +200,6 @@ private fun PdfReaderDocument(
         showCommandCentreSheet = showCommandCentreSheet
     )
 
-    fun launchCommandAction(action: ReaderCommandAction) {
-        applyControlsState(currentControlsState().onDismissCommandCentre())
-        viewModel.setContinuityUri(selectedPdfUri)
-        onNavigateToTool(ReaderCommandCentreCatalog.resolveScreen(action, selectedPdfUri))
-    }
-    
     // Search and TOC state
     var bookmarks by remember { mutableStateOf<List<com.pdfchemy.app.logic.OutlineBookmark>>(emptyList()) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -211,7 +207,7 @@ private fun PdfReaderDocument(
     var currentMatchIndex by rememberSaveable { mutableIntStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
     var hasExecutedSearch by rememberSaveable { mutableStateOf(false) }
-    
+
     // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -220,6 +216,18 @@ private fun PdfReaderDocument(
     var showAccessErrorDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var isDocumentLoading by remember(initialUri) { mutableStateOf(true) }
+    val actionsEnabled = ReaderControlsUiState.canExecuteDocumentAction(
+        isDocumentLoading = isDocumentLoading,
+        isVanguardScanning = isVanguardScanning,
+        totalPages = totalPages
+    )
+
+    fun launchCommandAction(action: ReaderCommandAction) {
+        if (!ReaderControlsUiState.canExecuteDocumentAction(isDocumentLoading, isVanguardScanning, totalPages)) return
+        applyControlsState(currentControlsState().onDismissCommandCentre())
+        viewModel.setContinuityUri(selectedPdfUri)
+        onNavigateToTool(ReaderCommandCentreCatalog.resolveScreen(action, selectedPdfUri))
+    }
     
     BackHandler {
         val (action, nextState) = currentControlsState().resolveBackAction(ReaderZoomCalculator.isZoomed(scale))
@@ -274,51 +282,29 @@ private fun PdfReaderDocument(
                 oldLease?.close()
                 val stagedUri = staged.uri
                 selectedPdfUri = stagedUri
+                viewModel.clearContinuityUri(stagedUri)
                 viewModel.readerNavigation.onEnterReader(stagedUri)
                 fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
-                
-                if (isVanguardEnabled) {
-                    isVanguardScanning = true
-                    try {
-                        val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
-                        when (threat) {
-                            is VanguardThreatResult.Clean -> {
-                                totalPages = PdfEditor.getPageCount(context, stagedUri)
-                                if (totalPages <= 0) {
-                                    showVanguardDamagedDialog = true
-                                }
-                            }
-                            is VanguardThreatResult.EncryptedCannotVerify -> {
-                                showVanguardEncryptedDialog = true
-                            }
-                            is VanguardThreatResult.ExecutableThreat -> {
-                                showVanguardBlockedDialog = true
-                            }
-                            is VanguardThreatResult.ParseFailed -> {
-                                showVanguardDamagedDialog = true
-                            }
-                        }
-                    } finally {
-                        isVanguardScanning = false
-                    }
-                } else {
-                    totalPages = PdfEditor.getPageCount(context, stagedUri)
-                    if (totalPages <= 0) {
-                        showVanguardDamagedDialog = true
-                    }
-                }
 
-                if (totalPages > 0) {
-                    viewModel.recordReaderHistory(initialUri, fileName)
-                    try {
-                        bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
-                    } catch (_: Exception) {
-                    }
-                }
-                
-                if (isRememberPositionEnabled && totalPages > 0) {
+                // Outline, audit, and page-count operations share the single-flight worker.
+                // Finish them in sequence before publishing totalPages and enabling Reader actions.
+                val startupResult = com.pdfchemy.app.logic.ReaderStartupCoordinator.executeSequentialStartup(
+                    isVanguardEnabled = isVanguardEnabled,
+                    onVanguardScanningChanged = { isVanguardScanning = it },
+                    checkVanguardThreat = { com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri) },
+                    getPageCount = { PdfEditor.getPageCount(context, stagedUri) },
+                    extractOutline = { com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri) },
+                    onRecordHistory = { viewModel.recordReaderHistory(initialUri, fileName) }
+                )
+                showVanguardBlockedDialog = startupResult.showVanguardBlockedDialog
+                showVanguardEncryptedDialog = startupResult.showVanguardEncryptedDialog
+                showVanguardDamagedDialog = startupResult.showVanguardDamagedDialog
+                bookmarks = startupResult.bookmarks
+                totalPages = startupResult.totalPages
+
+                if (isRememberPositionEnabled && startupResult.totalPages > 0) {
                     val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, stagedUri)
-                    val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, totalPages)
+                    val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, startupResult.totalPages)
                     listState.scrollToItem(savedPos.pageIndex, savedPos.scrollOffsetPx)
                 }
             } finally {
@@ -332,10 +318,11 @@ private fun PdfReaderDocument(
         listState.firstVisibleItemIndex,
         listState.firstVisibleItemScrollOffset,
         isRememberPositionEnabled,
-        totalPages
+        totalPages,
+        isDocumentLoading
     ) {
         val activeUri = selectedPdfUri ?: initialUri
-        if (isRememberPositionEnabled && totalPages > 0) {
+        if (!isDocumentLoading && isRememberPositionEnabled && totalPages > 0) {
             val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, activeUri)
             com.pdfchemy.app.utils.DocumentIdentity.saveReaderPosition(
                 context = context,
@@ -426,7 +413,7 @@ private fun PdfReaderDocument(
             .fillMaxSize()
             .background(Color(0xFFE5E5E5)) // Neutral reading background
     ) {
-        if (isDocumentLoading && totalPages == 0) {
+        if (isDocumentLoading || totalPages == 0) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -537,7 +524,7 @@ private fun PdfReaderDocument(
         val currentPageOneBased = listState.firstVisibleItemIndex + 1
         val fullPageIndicatorText = stringResource(R.string.reader_page_indicator, currentPageOneBased, totalPages)
         AnimatedVisibility(
-            visible = !showControls && totalPages > 0,
+            visible = !showControls && !isDocumentLoading && totalPages > 0,
             enter = fadeIn(tween(180)),
             exit = fadeOut(tween(180)),
             modifier = Modifier
@@ -636,12 +623,15 @@ private fun PdfReaderDocument(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        fitPage = !fitPage
-                        scale = 1f
-                        offsetX = 0f
-                        offsetY = 0f
-                    }) {
+                    IconButton(
+                        onClick = {
+                            fitPage = !fitPage
+                            scale = 1f
+                            offsetX = 0f
+                            offsetY = 0f
+                        },
+                        enabled = actionsEnabled
+                    ) {
                         Icon(
                             imageVector = if (fitPage) Icons.Rounded.FitScreen else Icons.Rounded.Fullscreen,
                             contentDescription = stringResource(
@@ -649,18 +639,30 @@ private fun PdfReaderDocument(
                             )
                         )
                     }
-                    IconButton(onClick = { applyControlsState(currentControlsState().onToggleSearch()) }) {
+                    IconButton(
+                        onClick = { applyControlsState(currentControlsState().onToggleSearch()) },
+                        enabled = actionsEnabled
+                    ) {
                         Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.reader_action_search))
                     }
                     if (bookmarks.isNotEmpty()) {
-                        IconButton(onClick = { applyControlsState(currentControlsState().onOpenToc()) }) {
+                        IconButton(
+                            onClick = { applyControlsState(currentControlsState().onOpenToc()) },
+                            enabled = actionsEnabled
+                        ) {
                             Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.reader_toc_title))
                         }
                     }
-                    IconButton(onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) }) {
+                    IconButton(
+                        onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) },
+                        enabled = actionsEnabled
+                    ) {
                         Icon(Icons.Rounded.MenuBook, contentDescription = stringResource(R.string.menu_reflow_reader))
                     }
-                    IconButton(onClick = { launchCommandAction(ReaderCommandAction.EDIT_ANNOTATE) }) {
+                    IconButton(
+                        onClick = { launchCommandAction(ReaderCommandAction.EDIT_ANNOTATE) },
+                        enabled = actionsEnabled
+                    ) {
                         Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.menu_edit_pdf))
                     }
                 },
@@ -815,26 +817,31 @@ private fun PdfReaderDocument(
                         ContinuityToolButton(
                             icon = Icons.Rounded.Compress, 
                             label = stringResource(R.string.menu_compress), 
+                            enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.COMPRESS) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.DocumentScanner, 
                             label = stringResource(R.string.menu_ocr_pdf), 
+                            enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.OCR_SEARCHABLE) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.Draw, 
                             label = stringResource(R.string.menu_sign_pdf), 
+                            enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.SIGN_PDF) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.Security, 
                             label = stringResource(R.string.menu_protect_pdf), 
+                            enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.PROTECT_ENCRYPT) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.Apps,
                             label = stringResource(R.string.menu_more_tools),
+                            enabled = actionsEnabled,
                             onClick = { applyControlsState(currentControlsState().onOpenCommandCentre()) }
                         )
                     }
@@ -882,7 +889,7 @@ private fun PdfReaderDocument(
                                 },
                                 modifier = Modifier
                                     .defaultMinSize(minHeight = 48.dp)
-                                    .clickable { launchCommandAction(action) }
+                                    .clickable(enabled = actionsEnabled) { launchCommandAction(action) }
                             )
                         }
                     }
@@ -968,7 +975,12 @@ private fun readerCommandPresentation(
 }
 
 @Composable
-fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+fun ContinuityToolButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -981,7 +993,7 @@ fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, 
                 contentDescription = label
                 role = Role.Button
             }
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
