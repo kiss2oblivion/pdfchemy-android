@@ -56,6 +56,7 @@ fun TableExtractorScreen(
     var isExtracting by remember { mutableStateOf(false) }
     var isParsingCsv by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
+    var isSharing by remember { mutableStateOf(false) }
     var exportSourceUri by remember { mutableStateOf<Uri?>(null) }
     var exportSafeMode by remember { mutableStateOf(true) }
     var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
@@ -191,33 +192,43 @@ fun TableExtractorScreen(
                 },
                 actions = {
                     if (extractedCsv.isNotBlank()) {
-                        IconButton(onClick = {
-                            scope.launch {
-                                try {
-                                    val shareUri = withContext(Dispatchers.IO) {
-                                        val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                        val tempFile = File(exportsDir, "shared_table_${UUID.randomUUID()}.csv")
-                                        try {
-                                            FileOutputStream(tempFile).use { it.write(extractedCsv.toByteArray(Charsets.UTF_8)) }
-                                            androidx.core.content.FileProvider.getUriForFile(
-                                                context,
-                                                "${context.packageName}.fileprovider",
-                                                tempFile
-                                            )
-                                        } catch (e: Exception) {
-                                            if (tempFile.exists()) {
-                                                runCatching { tempFile.delete() }
+                        IconButton(
+                            onClick = {
+                                val csvSnapshot = extractedCsv
+                                if (csvSnapshot.isBlank() || isSharing) return@IconButton
+                                isSharing = true
+                                scope.launch {
+                                    try {
+                                        val shareUri = withContext(Dispatchers.IO) {
+                                            val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                                            val tempFile = File(exportsDir, "shared_table_${UUID.randomUUID()}.csv")
+                                            try {
+                                                FileOutputStream(tempFile).use { it.write(csvSnapshot.toByteArray(Charsets.UTF_8)) }
+                                                androidx.core.content.FileProvider.getUriForFile(
+                                                    context,
+                                                    "${context.packageName}.fileprovider",
+                                                    tempFile
+                                                )
+                                            } catch (e: Exception) {
+                                                if (tempFile.exists()) {
+                                                    runCatching { tempFile.delete() }
+                                                }
+                                                throw e
                                             }
-                                            throw e
                                         }
+                                        ShareUtil.shareFile(context, shareUri, "text/csv", context.getString(R.string.share))
+                                    } catch (e: kotlinx.coroutines.CancellationException) {
+                                        // Sharing cancelled
+                                    } catch (e: Exception) {
+                                        AppLogger.e("Share CSV failed", e)
+                                        Toast.makeText(context, "Failed to share CSV", Toast.LENGTH_SHORT).show()
+                                    } finally {
+                                        isSharing = false
                                     }
-                                    ShareUtil.shareFile(context, shareUri, "text/csv")
-                                } catch (e: Exception) {
-                                    AppLogger.e("Share CSV failed", e)
-                                    Toast.makeText(context, "Failed to share CSV", Toast.LENGTH_SHORT).show()
                                 }
-                            }
-                        }) {
+                            },
+                            enabled = !isSharing
+                        ) {
                             Icon(Icons.Rounded.Share, contentDescription = "Share CSV")
                         }
                     }

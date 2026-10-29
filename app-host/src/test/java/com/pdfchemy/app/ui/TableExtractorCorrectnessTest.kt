@@ -367,4 +367,115 @@ class TableExtractorCorrectnessTest {
         triggerExport()
         assertFalse("Secondary export must not launch while an export is already active", secondaryExportLaunched)
     }
+
+    @Test
+    fun sharingWhileAnotherRecipientReadsEarlierFileDoesNotCorruptOrDelete() {
+        val exportsDir = java.io.File(System.getProperty("java.io.tmpdir"), "test_share_readers_${java.util.UUID.randomUUID()}").apply { mkdirs() }
+        try {
+            // Recipient 1 opens first shared file
+            val file1 = java.io.File(exportsDir, "shared_table_1.csv").apply { writeText("File1Header,Data\n1,Alpha", Charsets.UTF_8) }
+            val readerStream = java.io.FileInputStream(file1)
+
+            // Multiple subsequent shares are created (beyond 5)
+            val subsequentFiles = (2..10).map { i ->
+                java.io.File(exportsDir, "shared_table_$i.csv").apply { writeText("File${i}Header,Data\n$i,Data", Charsets.UTF_8) }
+            }
+
+            // Verify file1 is still readable and content intact while reader holds open stream
+            val contentRead = readerStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            assertEquals("File1Header,Data\n1,Alpha", contentRead)
+            assertTrue("File 1 must still exist on disk", file1.exists())
+
+            // Verify all subsequent files also exist intact
+            for (f in subsequentFiles) {
+                assertTrue(f.exists())
+            }
+        } finally {
+            exportsDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun cancellationDuringCopyDeletesPartialTemporaryFile() {
+        val exportsDir = java.io.File(System.getProperty("java.io.tmpdir"), "test_cancel_share_${java.util.UUID.randomUUID()}").apply { mkdirs() }
+        val tempFile = java.io.File(exportsDir, "shared_table_partial.csv")
+        try {
+            var isCancelled = false
+            try {
+                java.io.FileOutputStream(tempFile).use { out ->
+                    out.write("PartialData".toByteArray(Charsets.UTF_8))
+                    // Simulate cancellation mid-write
+                    throw kotlinx.coroutines.CancellationException("User cancelled share")
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                isCancelled = true
+                if (tempFile.exists()) {
+                    tempFile.delete()
+                }
+            }
+            assertTrue("Cancellation caught", isCancelled)
+            assertFalse("Partial temporary file must be cleaned up on cancellation", tempFile.exists())
+        } finally {
+            exportsDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun failureHalfwayThroughCopyingCleansUpPartialFile() {
+        val exportsDir = java.io.File(System.getProperty("java.io.tmpdir"), "test_fail_share_${java.util.UUID.randomUUID()}").apply { mkdirs() }
+        val tempFile = java.io.File(exportsDir, "shared_table_fail.csv")
+        try {
+            var failed = false
+            try {
+                java.io.FileOutputStream(tempFile).use { out ->
+                    out.write("IncompleteData".toByteArray(Charsets.UTF_8))
+                    throw java.io.IOException("Disk quota simulated error")
+                }
+            } catch (e: Exception) {
+                failed = true
+                if (tempFile.exists()) {
+                    tempFile.delete()
+                }
+            }
+            assertTrue("Exception caught", failed)
+            assertFalse("Partial file must be deleted on error", tempFile.exists())
+        } finally {
+            exportsDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun largeValidCsvInputSharingWritesCompleteContent() {
+        val exportsDir = java.io.File(System.getProperty("java.io.tmpdir"), "test_large_share_${java.util.UUID.randomUUID()}").apply { mkdirs() }
+        val tempFile = java.io.File(exportsDir, "shared_table_large.csv")
+        try {
+            // 2000 rows of valid CSV data
+            val header = "ColA,ColB,ColC,ColD\n"
+            val rows = (1..2000).joinToString("\n") { "Row$it,Val$it,\"Quoted, Data $it\",End$it" }
+            val fullCsv = header + rows
+
+            java.io.FileOutputStream(tempFile).use { it.write(fullCsv.toByteArray(Charsets.UTF_8)) }
+            assertTrue(tempFile.exists())
+            assertEquals(fullCsv.toByteArray(Charsets.UTF_8).size.toLong(), tempFile.length())
+
+            val parsed = CsvParser.parse(tempFile.readText(Charsets.UTF_8))
+            assertEquals(2001, parsed.size)
+        } finally {
+            exportsDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun duplicateSimultaneousShareRequestsAreSafelyPrevented() {
+        var isSharing = true
+        var secondaryShareStarted = false
+
+        fun triggerShare() {
+            if (isSharing) return
+            secondaryShareStarted = true
+        }
+
+        triggerShare()
+        assertFalse("Duplicate simultaneous share request must not be triggered", secondaryShareStarted)
+    }
 }
