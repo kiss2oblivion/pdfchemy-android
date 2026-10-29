@@ -24,6 +24,10 @@ public class ShareRecipientProvider extends ContentProvider {
             if ("close".equals(method)) {
                 for (InputStream stream : consumers.values()) stream.close();
                 consumers.clear();
+            } else if ("closeOne".equals(method)) {
+                InputStream stream = consumers.remove(argument);
+                if (stream == null) throw new IllegalStateException("Missing stream");
+                stream.close();
             } else if ("open".equals(method)) {
                 if (consumers.size() >= 2 || consumers.containsKey(argument)) throw new IllegalStateException("Receiver slots full");
                 consumers.put(argument, getContext().getContentResolver().openInputStream(Uri.parse(extras.getString("uri"))));

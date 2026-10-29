@@ -111,6 +111,8 @@ class RetainedShareManagementTest {
                 assertTrue(entered.await(10, TimeUnit.SECONDS))
                 val pending = own(tag).single()
                 assertEquals(RetainedShareKind.INCOMPLETE_COPY, pending.kind)
+                assertEquals(before.activeCopyCount + 1, inspect().activeCopyCount)
+                assertEquals(before.activeTransferCount + 1, inspect().activeTransferCount)
                 assertTrue(RetainedShareProtection.ACTIVE_COPY in pending.protections)
                 assertEquals(before.reservedCopyBytes + bytes.size, inspect().reservedCopyBytes)
                 val result = DocumentActions.cleanupRetainedShares(context, setOf(pending.id))
@@ -214,6 +216,36 @@ class RetainedShareManagementTest {
             } finally { readers.forEach { it.close() } }
             awaitNoReaders(tag)
             assertArrayEquals(bytes, read(uri))
+        }
+    }
+
+    @Test fun sameShareSurvivesUntilBothForeignReadersClose() = runBlocking {
+        fixture { source, tag ->
+            val uri = share(source, tag, "two_readers")
+            val entry = own(tag).single()
+            val before = inspect()
+            context.grantUriPermission("com.pdfchemy.app.test", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            for (slot in listOf("one", "two")) {
+                val opened = remote("open", slot, Bundle().apply { putString("uri", uri.toString()) })
+                assertNull(opened.getString("error"))
+                assertNotEquals(android.os.Process.myUid(), opened.getInt("uid"))
+            }
+            assertEquals(before.activeReaderCount + 2, inspect().activeReaderCount)
+            assertEquals(before.activeTransferCount + 2, inspect().activeTransferCount)
+            assertEquals(0, DocumentActions.cleanupRetainedShares(context, setOf(entry.id)).deletedCount)
+            assertNull(remote("closeOne", "one").getString("error"))
+            withTimeout(10_000) { while (inspect().activeReaderCount != before.activeReaderCount + 1) yield() }
+            val protected = DocumentActions.cleanupRetainedShares(context, setOf(entry.id))
+            assertEquals(setOf(RetainedShareProtection.ACTIVE_READER), protected.protected[entry.id])
+            assertArrayEquals(bytes, remote("readOpen", "two").getByteArray("bytes"))
+            assertArrayEquals(bytes, read(uri))
+            assertNull(remote("closeOne", "two").getString("error"))
+            awaitNoReaders(tag)
+            // Reader release alone never expires a previously granted URI.
+            assertArrayEquals(bytes, remote("read", uri.toString()).getByteArray("bytes"))
+            awaitNoReaders(tag)
+            assertTrue(DocumentActions.cleanupRetainedShares(context, setOf(entry.id)).complete)
+            assertEquals(before.activeTransferCount, inspect().activeTransferCount)
         }
     }
 }

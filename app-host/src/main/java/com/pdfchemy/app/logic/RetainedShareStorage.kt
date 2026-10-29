@@ -22,6 +22,9 @@ data class RetainedShareStorage(
     val retainedCopyCount: Int get() = entries.count { it.kind == RetainedShareKind.RETAINED_COPY }
     val retainedCopyBytes: Long get() = entries.filter { it.kind == RetainedShareKind.RETAINED_COPY }.sumOf { it.bytes }
     val incompleteCopyCount: Int get() = entries.count { it.kind == RetainedShareKind.INCOMPLETE_COPY }
+    /** Current copy producers and open provider reads; completed copies are not active transfers. */
+    val activeCopyCount: Int get() = entries.count { RetainedShareProtection.ACTIVE_COPY in it.protections }
+    val activeTransferCount: Int get() = activeCopyCount + activeReaderCount
     val legacyCandidateCount: Int get() = entries.count { it.kind == RetainedShareKind.LEGACY_UNVERIFIED }
     val protectedCount: Int get() = entries.count { it.protections.isNotEmpty() }
 }

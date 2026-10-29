@@ -16,7 +16,7 @@ val result = withContext(Dispatchers.IO) {
 }
 ```
 
-`RetainedShareStorage` reports logical file bytes and counts, completed-copy bytes/count, incomplete-copy count, legacy-candidate count, protected count, active readers and reserved bytes for ongoing copies. Entries contain opaque stable IDs, display names, kind, logical bytes and protection reasons. No private filesystem path is returned. Inspection has no deletion side effect. An unreadable/unsafe store raises an inspection error, rather than pretending storage is empty.
+`RetainedShareStorage` reports logical file bytes and counts, completed-copy bytes/count, incomplete-copy count, legacy-candidate count, protected count, active readers and reserved bytes for ongoing copies. `activeCopyCount` counts producers/undelivered copies in that snapshot; `activeTransferCount` is active copies plus open managed reader descriptors. Both use the same locked snapshot as the other statistics. Completed inactive shares do not count as active transfers. Entries contain opaque stable IDs, display names, kind, logical bytes and protection reasons. No private filesystem path is returned. Inspection has no deletion side effect. An unreadable/unsafe store raises an inspection error, rather than pretending storage is empty.
 
 Cleanup accepts at most 500 valid snapshot IDs. It never accepts paths/URIs as deletion targets and never expands selection to copies created after the snapshot. Unknown valid IDs are reported as missing. A renamed pending file has a new ID; refresh before requesting its removal again.
 
