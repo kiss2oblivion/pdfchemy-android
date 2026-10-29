@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">保存 CSV 文件失败。</string>
     <string name="table_extractor_error_extract">从文档中提取表格数据失败。</string>
+    <string name="table_extractor_safe_mode">电子表格安全导出（推荐）</string>
+    <string name="table_extractor_raw_mode">原始数据导出</string>
+    <string name="table_extractor_safe_mode_desc">安全模式会在公式类字符（=、+、-、@）前加上前置单引号，防止电子表格应用在打开时执行公式。</string>
+    <string name="table_extractor_raw_mode_desc">原始数据模式将原样保留从 PDF 中提取的单元格值，不进行任何转义过滤。</string>
+    <string name="table_extractor_safe_banner">已启用电子表格安全导出。公式类值已添加前缀，防止外部电子表格应用对其求值。</string>
+    <string name="table_extractor_error_title">表格提取失败</string>
+    <string name="table_extractor_error_fallback">提取表格时发生意外错误。</string>
+    <string name="table_extractor_retry">重试提取</string>
+    <string name="table_extractor_no_tables_desc">此文档中未检测到表格数据。</string>
+    <string name="table_extractor_error_share">共享 CSV 文件失败。</string>
+    <string name="table_extractor_share_desc">共享 CSV</string>
 </resources>

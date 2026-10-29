@@ -478,4 +478,46 @@ class TableExtractorCorrectnessTest {
         triggerShare()
         assertFalse("Duplicate simultaneous share request must not be triggered", secondaryShareStarted)
     }
+
+    @Test
+    fun sanitizeErrorMessageReturnsNullForNullOrBlank() {
+        org.junit.Assert.assertNull(sanitizeErrorMessage(null))
+        org.junit.Assert.assertNull(sanitizeErrorMessage(""))
+        org.junit.Assert.assertNull(sanitizeErrorMessage("   \t\n  "))
+    }
+
+    @Test
+    fun sanitizeErrorMessageStripsExceptionPrefixAndPaths() {
+        val input = "java.io.FileNotFoundException: /data/user/0/com.pdfchemy.app/cache/table.pdf (No such file)"
+        val sanitized = sanitizeErrorMessage(input)
+        assertEquals("[path] (No such file)", sanitized)
+    }
+
+    @Test
+    fun sanitizeErrorMessageStripsUrisAndWindowsPaths() {
+        val uriInput = "Failed to read content://com.android.providers.media.documents/document/1234: I/O error"
+        assertEquals("Failed to read [uri]: I/O error", sanitizeErrorMessage(uriInput))
+
+        val fileUriInput = "file:///storage/emulated/0/doc.pdf unreadable"
+        assertEquals("[uri] unreadable", sanitizeErrorMessage(fileUriInput))
+
+        val winInput = "Error at C:\\Users\\John\\AppData\\Local\\Temp\\test.pdf occurred"
+        assertEquals("Error at [path] occurred", sanitizeErrorMessage(winInput))
+    }
+
+    @Test
+    fun sanitizeErrorMessageScrubsStackTraceLines() {
+        val trace = "Error processing table\n\tat com.pdfchemy.app.Engine.extract(Engine.kt:123)\n\tat com.pdfchemy.app.Worker.run(Worker.java:45)"
+        assertEquals("Error processing table", sanitizeErrorMessage(trace))
+    }
+
+    @Test
+    fun sanitizeErrorMessageEnforcesDisplayLengthLimit() {
+        val longMessage = "This is a detailed error message describing table extraction failure: " + "A".repeat(250)
+        val sanitized = sanitizeErrorMessage(longMessage)
+        org.junit.Assert.assertNotNull(sanitized)
+        assertTrue("Sanitized error must be capped at 180 characters", sanitized!!.length <= 180)
+        assertTrue("Truncated message must end with ellipsis", sanitized.endsWith("..."))
+    }
 }
+

@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">CSVファイルの保存に失敗しました。</string>
     <string name="table_extractor_error_extract">ドキュメントから表データを抽出できませんでした。</string>
+    <string name="table_extractor_safe_mode">スプレッドシート保護エクスポート（推奨）</string>
+    <string name="table_extractor_raw_mode">未加工データエクスポート</string>
+    <string name="table_extractor_safe_mode_desc">保護モードでは、数式に似た文字（=、+、-、@）の先頭に引用符を付加し、ファイルを開いたときにスプレッドシートアプリが数式を実行するのを防ぎます。</string>
+    <string name="table_extractor_raw_mode_desc">未加工データモードでは、抽出されたセルの値を加工せず、PDF 内のそのままの状態で保持します。</string>
+    <string name="table_extractor_safe_banner">スプレッドシート保護エクスポートが有効です。数式に似た値にプレフィックスを付加し、外部アプリによる実行を防ぎます。</string>
+    <string name="table_extractor_error_title">表の抽出に失敗しました</string>
+    <string name="table_extractor_error_fallback">表の抽出中に予期しないエラーが発生しました。</string>
+    <string name="table_extractor_retry">抽出を再試行</string>
+    <string name="table_extractor_no_tables_desc">このドキュメントから表データは検出されませんでした。</string>
+    <string name="table_extractor_error_share">CSVファイルの共有に失敗しました。</string>
+    <string name="table_extractor_share_desc">CSVを共有</string>
 </resources>

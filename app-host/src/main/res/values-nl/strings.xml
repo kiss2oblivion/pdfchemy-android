@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Kan CSV-bestand niet opslaan.</string>
     <string name="table_extractor_error_extract">Kan tabelgegevens niet uit document extraheren.</string>
+    <string name="table_extractor_safe_mode">Spreadsheet-veilige export (Aanbevolen)</string>
+    <string name="table_extractor_raw_mode">Ruwe data-export</string>
+    <string name="table_extractor_safe_mode_desc">De veilige modus neutraliseert formule-achtige tekens (=, +, -, @) met een voorloopapostrof om te voorkomen dat spreadsheet-apps formules uitvoeren bij het openen.</string>
+    <string name="table_extractor_raw_mode_desc">De ruwe datamodus behoudt geëxtraheerde celwaarden precies zoals aangetroffen in de PDF zonder neutralisatie.</string>
+    <string name="table_extractor_safe_banner">Spreadsheet-veilige export ingeschakeld. Formule-achtige waarden krijgen een voorvoegsel om evaluatie door externe apps te voorkomen.</string>
+    <string name="table_extractor_error_title">Tabelextractie mislukt</string>
+    <string name="table_extractor_error_fallback">Er is een onverwachte fout opgetreden tijdens het extraheren van de tabel.</string>
+    <string name="table_extractor_retry">Extractie opnieuw proberen</string>
+    <string name="table_extractor_no_tables_desc">Geen tabelgegevens gedetecteerd in dit document.</string>
+    <string name="table_extractor_error_share">Kan CSV-bestand niet delen.</string>
+    <string name="table_extractor_share_desc">CSV delen</string>
 </resources>

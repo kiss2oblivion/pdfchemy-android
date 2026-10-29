@@ -1170,4 +1170,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Impossibile salvare il file CSV.</string>
     <string name="table_extractor_error_extract">Impossibile estrarre i dati tabulari dal documento.</string>
+    <string name="table_extractor_safe_mode">Esportazione sicura per fogli di calcolo (Consigliato)</string>
+    <string name="table_extractor_raw_mode">Esportazione dati non elaborati</string>
+    <string name="table_extractor_safe_mode_desc">La modalità sicura neutralizza i caratteri formula (=, +, -, @) con un apice iniziale per impedire ai fogli di calcolo di eseguire formule all\'apertura.</string>
+    <string name="table_extractor_raw_mode_desc">La modalità dati non elaborati mantiene i valori delle celle estratti esattamente come si trovano nel PDF, senza modifiche.</string>
+    <string name="table_extractor_safe_banner">Esportazione sicura attivata. I valori simili a formule sono preceduti da un prefisso per impedirne la valutazione da app esterne.</string>
+    <string name="table_extractor_error_title">Estrazione tabella non riuscita</string>
+    <string name="table_extractor_error_fallback">Si è verificato un errore imprevisto durante l\'estrazione della tabella.</string>
+    <string name="table_extractor_retry">Riprova estrazione</string>
+    <string name="table_extractor_no_tables_desc">Nessun dato tabulare rilevato in questo documento.</string>
+    <string name="table_extractor_error_share">Impossibile condividere il file CSV.</string>
+    <string name="table_extractor_share_desc">Condividi CSV</string>
 </resources>

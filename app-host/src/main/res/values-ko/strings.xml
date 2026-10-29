@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">CSV 파일을 저장하지 못했습니다.</string>
     <string name="table_extractor_error_extract">문서에서 표 데이터를 추출하지 못했습니다.</string>
+    <string name="table_extractor_safe_mode">스프레드시트 안전 내보내기(권장)</string>
+    <string name="table_extractor_raw_mode">원시 데이터 내보내기</string>
+    <string name="table_extractor_safe_mode_desc">스프레드시트 안전 모드는 수식과 유사한 문자(=, +, -, @) 앞에 작은따옴표를 붙여 스프레드시트 앱을 열 때 수식이 실행되는 것을 방지합니다.</string>
+    <string name="table_extractor_raw_mode_desc">원시 데이터 모드는 정제 없이 PDF에서 추출된 셀 값을 그대로 유지합니다.</string>
+    <string name="table_extractor_safe_banner">스프레드시트 안전 내보내기가 활성화되었습니다. 외부 스프레드시트 앱에서 계산되지 않도록 수식 형식의 값 앞에 접두사가 추가됩니다.</string>
+    <string name="table_extractor_error_title">표 추출 실패</string>
+    <string name="table_extractor_error_fallback">표를 추출하는 동안 예기치 않은 오류가 발생했습니다.</string>
+    <string name="table_extractor_retry">추출 재시도</string>
+    <string name="table_extractor_no_tables_desc">이 문서에서 표 데이터를 감지하지 못했습니다.</string>
+    <string name="table_extractor_error_share">CSV 파일을 공유하지 못했습니다.</string>
+    <string name="table_extractor_share_desc">CSV 공유</string>
 </resources>

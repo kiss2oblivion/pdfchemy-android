@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">บันทึกไฟล์ CSV ไม่สำเร็จ</string>
     <string name="table_extractor_error_extract">ไม่สามารถแยกข้อมูลตารางจากเอกสารได้</string>
+    <string name="table_extractor_safe_mode">ส่งออกอย่างปลอดภัยสำหรับสเปรดชีต (แนะนำ)</string>
+    <string name="table_extractor_raw_mode">ส่งออกข้อมูลดิบ</string>
+    <string name="table_extractor_safe_mode_desc">โหมดปลอดภัยสำหรับสเปรดชีตจะเติมเครื่องหมายอัญประกาศเดี่ยวข้างหน้าอักขระที่เหมือนสูตร (=, +, -, @) เพื่อป้องกันไม่ให้แอปพลิเคชันสเปรดชีตทำงานตามสูตรเมื่อเปิด</string>
+    <string name="table_extractor_raw_mode_desc">โหมดข้อมูลดิบจะคงค่าเซลล์ที่แยกได้ตามที่พบใน PDF ทุกประการโดยไม่มีการดัดแปลง</string>
+    <string name="table_extractor_safe_banner">เปิดใช้งานการส่งออกอย่างปลอดภัยสำหรับสเปรดชีต ค่าที่คล้ายสูตรจะถูกใส่คำนำหน้าเพื่อป้องกันไม่ให้แอปสเปรดชีตภายนอกประมวลผล</string>
+    <string name="table_extractor_error_title">การแยกตารางล้มเหลว</string>
+    <string name="table_extractor_error_fallback">เกิดข้อผิดพลาดที่ไม่คาดคิดระหว่างการแยกตาราง</string>
+    <string name="table_extractor_retry">ลองแยกข้อมูลอีกครั้ง</string>
+    <string name="table_extractor_no_tables_desc">ตรวจไม่พบข้อมูลตารางในเอกสารนี้</string>
+    <string name="table_extractor_error_share">แชร์ไฟล์ CSV ไม่สำเร็จ</string>
+    <string name="table_extractor_share_desc">แชร์ CSV</string>
 </resources>

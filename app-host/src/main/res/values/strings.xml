@@ -1043,6 +1043,17 @@
     <string name="table_extractor_success">Tables Exported to CSV!</string>
     <string name="table_extractor_error_save">Failed to save CSV file.</string>
     <string name="table_extractor_error_extract">Failed to extract tabular data from document.</string>
+    <string name="table_extractor_safe_mode">Spreadsheet-Safe Export (Recommended)</string>
+    <string name="table_extractor_raw_mode">Raw Data Export</string>
+    <string name="table_extractor_safe_mode_desc">Spreadsheet-Safe mode sanitizes formula-like characters (=, +, -, @) with a leading single quote to prevent spreadsheet applications from executing formulas when opened.</string>
+    <string name="table_extractor_raw_mode_desc">Raw Data mode preserves extracted cell values exactly as found in the PDF without sanitization.</string>
+    <string name="table_extractor_safe_banner">Spreadsheet-Safe Export enabled. Formula-like values are prefixed to prevent external spreadsheet apps from evaluating them.</string>
+    <string name="table_extractor_error_title">Table Extraction Failed</string>
+    <string name="table_extractor_error_fallback">An unexpected error occurred during table extraction.</string>
+    <string name="table_extractor_retry">Retry Extraction</string>
+    <string name="table_extractor_no_tables_desc">No tabular data was detected in this document.</string>
+    <string name="table_extractor_error_share">Failed to share CSV file.</string>
+    <string name="table_extractor_share_desc">Share CSV</string>
 
     <string name="menu_doc_sanitizer">Threat &amp; Security Sanitizer</string>
     <string name="menu_doc_sanitizer_desc">Strip embedded JavaScript, tracking beacons, and malicious launch triggers</string>

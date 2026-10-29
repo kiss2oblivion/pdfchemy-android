@@ -1170,4 +1170,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Falha ao salvar o arquivo CSV.</string>
     <string name="table_extractor_error_extract">Falha ao extrair dados de tabela do documento.</string>
+    <string name="table_extractor_safe_mode">Exportação segura para folhas de cálculo (Recomendado)</string>
+    <string name="table_extractor_raw_mode">Exportação de dados em bruto</string>
+    <string name="table_extractor_safe_mode_desc">O modo seguro neutraliza carateres de fórmula (=, +, -, @) com uma plica inicial para impedir que as aplicações de folhas de cálculo executem fórmulas ao abrir.</string>
+    <string name="table_extractor_raw_mode_desc">O modo de dados em bruto mantém os valores de célula extraídos exatamente como encontrados no PDF sem neutralização.</string>
+    <string name="table_extractor_safe_banner">Exportação segura ativada. Valores tipo fórmula recebem prefixo para impedir que aplicações externas os avaliem.</string>
+    <string name="table_extractor_error_title">Falha na extração da tabela</string>
+    <string name="table_extractor_error_fallback">Ocorreu um erro inesperado durante a extração da tabela.</string>
+    <string name="table_extractor_retry">Tentar extração novamente</string>
+    <string name="table_extractor_no_tables_desc">Não foram detetados dados tabulares neste documento.</string>
+    <string name="table_extractor_error_share">Falha ao partilhar o ficheiro CSV.</string>
+    <string name="table_extractor_share_desc">Partilhar CSV</string>
 </resources>

@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">فشل حفظ ملف CSV.</string>
     <string name="table_extractor_error_extract">فشل استخراج البيانات الجدولية من المستند.</string>
+    <string name="table_extractor_safe_mode">تصدير آمن لجداول البيانات (موصى به)</string>
+    <string name="table_extractor_raw_mode">تصدير البيانات الأولية</string>
+    <string name="table_extractor_safe_mode_desc">يقوم الوضع الآمن بتطهير الأحرف الشبيهة بالصيغ (=، +، -، @) بفاصلة عليا بادئة لمنع تطبيقات جداول البيانات من تنفيذ الصيغ عند الفتح.</string>
+    <string name="table_extractor_raw_mode_desc">يحفظ وضع البيانات الأولية قيم الخلايا المستخرجة تمامًا كما هي في مستند PDF دون أي تطهير.</string>
+    <string name="table_extractor_safe_banner">تم تفعيل التصدير الآمن لجداول البيانات. تمت إضافة بادئة للقيم الشبيهة بالصيغ لمنع التطبيقات الخارجية من تقييمها.</string>
+    <string name="table_extractor_error_title">فشل استخراج الجدول</string>
+    <string name="table_extractor_error_fallback">حدث خطأ غير متوقع أثناء استخراج الجدول.</string>
+    <string name="table_extractor_retry">إعادة محاولة الاستخراج</string>
+    <string name="table_extractor_no_tables_desc">لم يتم اكتشاف أي بيانات جدولية في هذا المستند.</string>
+    <string name="table_extractor_error_share">فشلت مشاركة ملف CSV.</string>
+    <string name="table_extractor_share_desc">مشاركة ملف CSV</string>
 </resources>

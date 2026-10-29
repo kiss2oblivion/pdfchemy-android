@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Не удалось сохранить файл CSV.</string>
     <string name="table_extractor_error_extract">Не удалось извлечь табличные данные из документа.</string>
+    <string name="table_extractor_safe_mode">Безопасный экспорт для таблиц (Рекомендуется)</string>
+    <string name="table_extractor_raw_mode">Экспорт необработанных данных</string>
+    <string name="table_extractor_safe_mode_desc">Безопасный режим экранирует знаки формул (=, +, -, @) начальным апострофом, предотвращая исполнение формул табличными редакторами при открытии.</string>
+    <string name="table_extractor_raw_mode_desc">Режим необработанных данных сохраняет значения ячеек точно в том виде, в котором они извлечены из PDF, без изменений.</string>
+    <string name="table_extractor_safe_banner">Безопасный экспорт включен. Значения в виде формул снабжены префиксом для защиты от выполнения внешними табличными редакторами.</string>
+    <string name="table_extractor_error_title">Сбой извлечения таблицы</string>
+    <string name="table_extractor_error_fallback">Произошла непредвиденная ошибка при извлечении таблицы.</string>
+    <string name="table_extractor_retry">Повторить извлечение</string>
+    <string name="table_extractor_no_tables_desc">В этом документе табличные данные не обнаружены.</string>
+    <string name="table_extractor_error_share">Не удалось поделиться файлом CSV.</string>
+    <string name="table_extractor_share_desc">Поделиться CSV</string>
 </resources>

@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Không thể lưu tệp CSV.</string>
     <string name="table_extractor_error_extract">Không thể trích xuất dữ liệu bảng từ tài liệu.</string>
+    <string name="table_extractor_safe_mode">Xuất an toàn cho bảng tính (Được khuyến nghị)</string>
+    <string name="table_extractor_raw_mode">Xuất dữ liệu thô</string>
+    <string name="table_extractor_safe_mode_desc">Chế độ an toàn chuẩn hóa các ký tự giống công thức (=, +, -, @) bằng dấu nháy đơn ở đầu để ngăn các ứng dụng bảng tính thực thi công thức khi mở.</string>
+    <string name="table_extractor_raw_mode_desc">Chế độ dữ liệu thô giữ nguyên giá trị ô được trích xuất chính xác như trong PDF mà không qua xử lý.</string>
+    <string name="table_extractor_safe_banner">Đã bật xuất an toàn cho bảng tính. Các giá trị giống công thức được thêm tiền tố để ngăn ứng dụng bên ngoài tính toán.</string>
+    <string name="table_extractor_error_title">Trích xuất bảng thất bại</string>
+    <string name="table_extractor_error_fallback">Đã xảy ra lỗi không mong muốn trong quá trình trích xuất bảng.</string>
+    <string name="table_extractor_retry">Thử lại trích xuất</string>
+    <string name="table_extractor_no_tables_desc">Không tìm thấy dữ liệu bảng trong tài liệu này.</string>
+    <string name="table_extractor_error_share">Không thể chia sẻ tệp CSV.</string>
+    <string name="table_extractor_share_desc">Chia sẻ CSV</string>
 </resources>

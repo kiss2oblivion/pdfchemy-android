@@ -1173,4 +1173,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Gagal menyimpan file CSV.</string>
     <string name="table_extractor_error_extract">Gagal mengekstrak data tabel dari dokumen.</string>
+    <string name="table_extractor_safe_mode">Ekspor Aman Spreadsheet (Direkomendasikan)</string>
+    <string name="table_extractor_raw_mode">Ekspor Data Mentah</string>
+    <string name="table_extractor_safe_mode_desc">Mode Aman Spreadsheet membersihkan karakter mirip rumus (=, +, -, @) dengan tanda kutip tunggal di awal agar aplikasi spreadsheet tidak mengeksekusi rumus saat dibuka.</string>
+    <string name="table_extractor_raw_mode_desc">Mode Data Mentah mempertahankan nilai sel yang diekstrak persis seperti yang ditemukan di PDF tanpa pembersihan.</string>
+    <string name="table_extractor_safe_banner">Ekspor Aman Spreadsheet aktif. Nilai mirip rumus diberi awalan untuk mencegah evaluasi oleh aplikasi spreadsheet eksternal.</string>
+    <string name="table_extractor_error_title">Ekstraksi Tabel Gagal</string>
+    <string name="table_extractor_error_fallback">Terjadi kesalahan tak terduga selama ekstraksi tabel.</string>
+    <string name="table_extractor_retry">Coba Lagi Ekstraksi</string>
+    <string name="table_extractor_no_tables_desc">Tidak ada data tabel yang terdeteksi dalam dokumen ini.</string>
+    <string name="table_extractor_error_share">Gagal membagikan file CSV.</string>
+    <string name="table_extractor_share_desc">Bagikan CSV</string>
 </resources>

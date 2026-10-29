@@ -221,7 +221,7 @@ fun TableExtractorScreen(
                                         // Sharing cancelled
                                     } catch (e: Exception) {
                                         AppLogger.e("Share CSV failed", e)
-                                        Toast.makeText(context, "Failed to share CSV", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.table_extractor_error_share), Toast.LENGTH_SHORT).show()
                                     } finally {
                                         isSharing = false
                                     }
@@ -229,7 +229,7 @@ fun TableExtractorScreen(
                             },
                             enabled = !isSharing
                         ) {
-                            Icon(Icons.Rounded.Share, contentDescription = "Share CSV")
+                            Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.table_extractor_share_desc))
                         }
                     }
                 }
@@ -276,16 +276,16 @@ fun TableExtractorScreen(
                         }
                     )
                     Text(
-                        if (isSpreadsheetSafeCsv) "Spreadsheet-Safe Export (Recommended)" else "Raw Data Export",
+                        if (isSpreadsheetSafeCsv) stringResource(R.string.table_extractor_safe_mode) else stringResource(R.string.table_extractor_raw_mode),
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 Text(
                     if (isSpreadsheetSafeCsv)
-                        "Spreadsheet-Safe mode sanitizes formula-like characters (=, +, -, @) with a leading single quote to prevent spreadsheet applications from executing formulas when opened."
+                        stringResource(R.string.table_extractor_safe_mode_desc)
                     else
-                        "Raw Data mode preserves extracted cell values exactly as found in the PDF without sanitization.",
+                        stringResource(R.string.table_extractor_raw_mode_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -296,7 +296,7 @@ fun TableExtractorScreen(
                             Icon(Icons.Rounded.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                "Spreadsheet-Safe Export enabled. Formula-like values are prefixed to prevent external spreadsheet apps from evaluating them.",
+                                stringResource(R.string.table_extractor_safe_banner),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -396,14 +396,14 @@ fun TableExtractorScreen(
                         )
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = "Table Extraction Failed",
+                            text = stringResource(R.string.table_extractor_error_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            text = extractionError ?: "An unexpected error occurred during table extraction.",
+                            text = sanitizeErrorMessage(extractionError) ?: stringResource(R.string.table_extractor_error_fallback),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -416,12 +416,12 @@ fun TableExtractorScreen(
                             ) {
                                 Icon(Icons.Rounded.Refresh, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Retry Extraction")
+                                Text(stringResource(R.string.table_extractor_retry))
                             }
                         }
                     }
                 }
-            } else if (isEmptyResult) {
+            } else if (isEmptyResult || (selectedPdfUri != null && parsedRows.isEmpty() && extractedCsv.isBlank())) {
                 Card(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -447,22 +447,49 @@ fun TableExtractorScreen(
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "No tabular data was detected in this document.",
+                            stringResource(R.string.table_extractor_no_tables_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                 }
-            } else if (selectedPdfUri != null) {
-                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    Text(
-                        stringResource(R.string.table_extractor_no_tables),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
             }
         }
+    }
+}
+
+internal fun sanitizeErrorMessage(rawMessage: String?): String? {
+    if (rawMessage.isNullOrBlank()) return null
+    var sanitized = rawMessage.trim()
+
+    // Strip leading exception class prefixes (e.g. "java.io.IOException: ...", "IllegalArgumentException: ...")
+    sanitized = sanitized.replace(Regex("^(?:[a-zA-Z_][a-zA-Z0-9_.]*\\.)?([a-zA-Z0-9_]+(?:Exception|Error)):\\s*"), "")
+
+    // Scrub Content and File URIs first so slashes in URIs aren't partially matched as unix paths
+    sanitized = sanitized.replace(Regex("content://[^\"'\\s\\n:]+"), "[uri]")
+    sanitized = sanitized.replace(Regex("file://[^\"'\\s\\n:]+"), "[uri]")
+
+    // Scrub Android / Unix filesystem paths (e.g. /data/user/0/..., /storage/emulated/0/..., /proc/...)
+    sanitized = sanitized.replace(Regex("/(?:[a-zA-Z0-9._-]+/)+[a-zA-Z0-9._-]*"), "[path]")
+
+    // Scrub Windows file paths (e.g. C:\Users\...)
+    sanitized = sanitized.replace(Regex("[a-zA-Z]:\\\\[^\"'\\s\\n]+"), "[path]")
+
+    // Scrub stack trace frames
+    val lines = sanitized.lines().filterNot { line ->
+        val trimmed = line.trim()
+        trimmed.startsWith("at ") || trimmed.startsWith("\tat ") || trimmed.contains(".kt:") || trimmed.contains(".java:")
+    }
+    sanitized = lines.joinToString(" ").replace(Regex("\\s+"), " ").trim()
+
+    if (sanitized.isBlank()) return null
+
+    // Limit display length to prevent UI overflow or information leakage
+    val maxLength = 180
+    return if (sanitized.length > maxLength) {
+        sanitized.take(maxLength - 3).trimEnd() + "..."
+    } else {
+        sanitized
     }
 }

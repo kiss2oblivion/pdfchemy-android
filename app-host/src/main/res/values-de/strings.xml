@@ -1174,4 +1174,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">CSV-Datei konnte nicht gespeichert werden.</string>
     <string name="table_extractor_error_extract">Tabellendaten konnten nicht aus dem Dokument extrahiert werden.</string>
+    <string name="table_extractor_safe_mode">Tabellenkalkulation-sicherer Export (Empfohlen)</string>
+    <string name="table_extractor_raw_mode">Rohdaten-Export</string>
+    <string name="table_extractor_safe_mode_desc">Der sichere Modus entschärft formelartige Zeichen (=, +, -, @) mit einem führenden einfachen Anführungszeichen, um die Formelausführung in Tabellenprogrammen zu verhindern.</string>
+    <string name="table_extractor_raw_mode_desc">Der Rohdaten-Modus behält extrahierte Zellwerte genau wie in der PDF gefunden ohne Entschärfung bei.</string>
+    <string name="table_extractor_safe_banner">Sicherer Export aktiviert. Formelartige Werte werden mit einem Präfix versehen, um eine Auswertung in Tabellenprogrammen zu verhindern.</string>
+    <string name="table_extractor_error_title">Tabellenextraktion fehlgeschlagen</string>
+    <string name="table_extractor_error_fallback">Bei der Tabellenextraktion ist ein unerwarteter Fehler aufgetreten.</string>
+    <string name="table_extractor_retry">Extraktion wiederholen</string>
+    <string name="table_extractor_no_tables_desc">In diesem Dokument wurden keine tabellarischen Daten erkannt.</string>
+    <string name="table_extractor_error_share">CSV-Datei konnte nicht geteilt werden.</string>
+    <string name="table_extractor_share_desc">CSV teilen</string>
 </resources>

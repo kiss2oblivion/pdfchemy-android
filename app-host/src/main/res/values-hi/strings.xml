@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">CSV फ़ाइल सहेजने में विफल।</string>
     <string name="table_extractor_error_extract">दस्तावेज़ से सारणीबद्ध डेटा निकालने में विफल।</string>
+    <string name="table_extractor_safe_mode">स्प्रेडशीट-सुरक्षित निर्यात (अनुशंसित)</string>
+    <string name="table_extractor_raw_mode">अपरिष्कृत डेटा निर्यात</string>
+    <string name="table_extractor_safe_mode_desc">स्प्रेडशीट-सुरक्षित मोड फ़ॉर्मूला जैसे वर्णों (=, +, -, @) को प्रारंभिक एकल उद्धरण के साथ सुरक्षित करता है ताकि खोले जाने पर स्प्रेडशीट ऐप्स फ़ॉर्मूला निष्पादित न करें।</string>
+    <string name="table_extractor_raw_mode_desc">अपरिष्कृत डेटा मोड निकाले गए सेल मानों को बिना किसी बदलाव के ठीक वैसे ही संरक्षित करता है जैसे वे PDF में पाए गए थे।</string>
+    <string name="table_extractor_safe_banner">स्प्रेडशीट-सुरक्षित निर्यात सक्षम। बाहरी स्प्रेडशीट ऐप्स द्वारा मूल्यांकन रोकने के लिए फ़ॉर्मूला जैसे मानों में उपसर्ग जोड़ा गया है।</string>
+    <string name="table_extractor_error_title">तालिका निष्कर्षण विफल</string>
+    <string name="table_extractor_error_fallback">तालिका निकालने के दौरान एक अप्रत्याशित त्रुटि हुई।</string>
+    <string name="table_extractor_retry">निष्कर्षण का पुनः प्रयास करें</string>
+    <string name="table_extractor_no_tables_desc">इस दस्तावेज़ में कोई सारणीबद्ध डेटा नहीं मिला।</string>
+    <string name="table_extractor_error_share">CSV फ़ाइल साझा करने में विफल।</string>
+    <string name="table_extractor_share_desc">CSV साझा करें</string>
 </resources>

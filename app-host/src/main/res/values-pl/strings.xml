@@ -1163,4 +1163,15 @@
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="table_extractor_error_save">Nie udało się zapisać pliku CSV.</string>
     <string name="table_extractor_error_extract">Nie udało się wyodrębnić danych tabelarycznych z dokumentu.</string>
+    <string name="table_extractor_safe_mode">Bezpieczny eksport do arkusza (Zalecane)</string>
+    <string name="table_extractor_raw_mode">Eksport danych surowych</string>
+    <string name="table_extractor_safe_mode_desc">Tryb bezpieczny neutralizuje znaki formuł (=, +, -, @) początkowym apostrofem, aby zapobiec wykonywaniu formuł po otwarciu pliku w arkuszu.</string>
+    <string name="table_extractor_raw_mode_desc">Tryb danych surowych zachowuje wyodrębnione wartości komórek dokładnie tak, jak znaleziono w pliku PDF, bez modyfikacji.</string>
+    <string name="table_extractor_safe_banner">Włączono bezpieczny eksport. Wartości przypominające formuły mają prefiks, aby zapobiec ich interpretacji przez zewnętrzne programy.</string>
+    <string name="table_extractor_error_title">Wyodrębnianie tabeli nie powiodło się</string>
+    <string name="table_extractor_error_fallback">Wystąpił nieoczekiwany błąd podczas wyodrębniania tabeli.</string>
+    <string name="table_extractor_retry">Ponów wyodrębnianie</string>
+    <string name="table_extractor_no_tables_desc">W tym dokumencie nie wykryto danych tabelarycznych.</string>
+    <string name="table_extractor_error_share">Nie udało się udostępnić pliku CSV.</string>
+    <string name="table_extractor_share_desc">Udostępnij CSV</string>
 </resources>
