@@ -36,9 +36,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +55,7 @@ fun TableExtractorScreen(
     var isParsingCsv by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
     var isSharing by remember { mutableStateOf(false) }
+    var shareError by remember { mutableStateOf<String?>(null) }
     var exportSourceUri by remember { mutableStateOf<Uri?>(null) }
     var exportSafeMode by remember { mutableStateOf(true) }
     var isSpreadsheetSafeCsv by remember { mutableStateOf(true) }
@@ -97,6 +95,7 @@ fun TableExtractorScreen(
         extractionError = null
         isEmptyResult = false
         extractedCsv = ""
+        shareError = null
         try {
             val result = PdfTableExtractorEngine.extractTables(context, uri, safeMode = isSpreadsheetSafeCsv)
             if (extractionRequests.isCurrent(ticket)) {
@@ -198,31 +197,18 @@ fun TableExtractorScreen(
                                 val csvSnapshot = extractedCsv
                                 if (csvSnapshot.isBlank() || isSharing) return@IconButton
                                 isSharing = true
-                                scope.launch {
+                                shareError = null
+                                scope.launch(Dispatchers.Main.immediate) {
                                     try {
-                                        val shareUri = withContext(Dispatchers.IO) {
-                                            val exportsDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                            val tempFile = File(exportsDir, "shared_table_${UUID.randomUUID()}.csv")
-                                            try {
-                                                FileOutputStream(tempFile).use { it.write(csvSnapshot.toByteArray(Charsets.UTF_8)) }
-                                                androidx.core.content.FileProvider.getUriForFile(
-                                                    context,
-                                                    "${context.packageName}.fileprovider",
-                                                    tempFile
-                                                )
-                                            } catch (e: Exception) {
-                                                if (tempFile.exists()) {
-                                                    runCatching { tempFile.delete() }
-                                                }
-                                                throw e
-                                            }
-                                        }
+                                        val shareUri = com.pdfchemy.app.logic.DocumentActions.createRetainedCsvCopyAsync(context, csvSnapshot)
                                         ShareUtil.shareFile(context, shareUri, "text/csv", context.getString(R.string.share))
                                     } catch (e: kotlinx.coroutines.CancellationException) {
-                                        // Sharing cancelled
+                                        throw e
                                     } catch (e: Exception) {
                                         AppLogger.e("Share CSV failed", e)
-                                        Toast.makeText(context, context.getString(R.string.table_extractor_error_share), Toast.LENGTH_SHORT).show()
+                                        val message = if (e is com.pdfchemy.app.logic.RetainedShareQuotaException)
+                                            R.string.integrity_share_storage_full else R.string.table_extractor_error_share
+                                        shareError = context.getString(message)
                                     } finally {
                                         isSharing = false
                                     }
@@ -251,6 +237,10 @@ fun TableExtractorScreen(
                 Icon(Icons.Rounded.TableChart, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.select_pdf))
+            }
+
+            shareError?.let { message ->
+                Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
 
             selectedPdfUri?.let { uri ->

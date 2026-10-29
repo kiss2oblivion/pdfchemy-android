@@ -68,6 +68,28 @@ object DocumentActions {
         result.uri
     }
 
+    /** Retain generated CSV under the same reservations and reader leases as PDF shares. */
+    suspend fun createRetainedCsvCopyAsync(context: Context, csv: String, displayName: String = "Table.csv"): Uri =
+        ResourceTransferOwner<PreparedShare> { it.discard() }.use { owner ->
+            val result = withContext(Dispatchers.IO) {
+                val job = currentCoroutineContext()
+                job.ensureActive()
+                // The IPC CSV result is bounded to 2 MiB. Check characters before encoding
+                // as well as bytes, so this public backend cannot allocate arbitrary text.
+                require(csv.isNotEmpty() && csv.length <= 2 * 1024 * 1024) { "CSV share exceeds size limit" }
+                val bytes = csv.toByteArray(Charsets.UTF_8)
+                require(bytes.size <= 2 * 1024 * 1024) { "CSV share exceeds size limit" }
+                val staged = com.pdfchemy.app.utils.DocumentStager.stageStreamWithLease(
+                    context, bytes.inputStream(), "csv", checkCancellation = { job.ensureActive() })
+                try {
+                    prepareShare(context, staged.document.uri, displayName, extension = "csv") { job.ensureActive() }
+                        .also(owner::stage)
+                } finally { staged.discard() }
+            }
+            owner.commit()?.retain()
+            result.uri
+        }
+
     fun share(context: Context, uri: Uri, displayName: String? = null) {
         val shareUri = getShareableContentUri(context, uri, displayName)
         ShareUtil.shareFiles(context, listOf(shareUri), title = displayName ?: "Share PDF")
@@ -222,7 +244,7 @@ object DocumentActions {
             .forEach { check(it.file.delete()) { "Unable to clean incomplete share copy" } }
     }
 
-    private fun prepareShare(context: Context, uri: Uri, displayName: String?, checkCancellation: () -> Unit): PreparedShare {
+    private fun prepareShare(context: Context, uri: Uri, displayName: String?, extension: String = "pdf", checkCancellation: () -> Unit): PreparedShare {
         fun checkActive() {
             checkCancellation()
             if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Share copy interrupted")
@@ -241,17 +263,16 @@ object DocumentActions {
             require(size in 1..SecurityLimits.MAX_PDF_FILESIZE) { "Share source exceeds size limit" }
             val raw = displayName?.takeIf { it.isNotBlank() }
                 ?: com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: source.name
-            val base = raw.replace("[^a-zA-Z0-9._-]".toRegex(), "_").take(120).ifBlank { "Document.pdf" }
-            val name = if (base.endsWith(".pdf", true)) base else "$base.pdf"
+            val base = raw.replace("[^a-zA-Z0-9._-]".toRegex(), "_").take(120).ifBlank { "Document.$extension" }
+            val name = if (base.endsWith(".$extension", true)) base else "$base.$extension"
             val directory = File(context.filesDir, "shared_copies")
             val pending = synchronized(shareLock) {
                 check(directory.isDirectory || directory.mkdirs()) { "Share storage unavailable" }
                 cleanupAbandonedShareCopies(context)
                 val retained = retainedFiles(context).filter { it.kind != RetainedShareKind.INCOMPLETE_COPY }.map { it.file }
-                require(retained.size + reservations.size < MAX_RETAINED_SHARE_COPIES &&
-                    retained.sumOf { it.length() } + reservations.values.sum() <= MAX_RETAINED_SHARE_BYTES - size) {
-                    "Share storage is full; existing recipient copies have been preserved"
-                }
+                if (retained.size + reservations.size >= MAX_RETAINED_SHARE_COPIES ||
+                    retained.sumOf { it.length() } + reservations.values.sum() > MAX_RETAINED_SHARE_BYTES - size)
+                    throw RetainedShareQuotaException()
                 File.createTempFile(".pending_", "_$name", directory).also {
                     working = it; activeCopies.add(it); reservations[it] = size
                 }
