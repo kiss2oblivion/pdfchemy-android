@@ -170,6 +170,9 @@
 <string name="recent_activity">हाल की गतिविधि</string>
 <string name="premium_title">प्रीमियम अपग्रेड</string>
 <string name="premium_thanks">गोपनीयता-प्रथम, ऑफ़लाइन दस्तावेज़ टूल्स का समर्थन करने के लिए धन्यवाद!</string>
+    <string name="price_available_in_google_play">Google Play में मूल्य उपलब्ध है</string>
+    <string name="unlock_lifetime_with_price">लाइफटाइम अनलॉक करें · %1$s</string>
+    <string name="restore_purchases">खरीदारियां पुनर्स्थापित करें</string>
     <string name="premium_features">सर्वश्रेष्ठ ऑफ़लाइन PDF अनुभव अनलॉक करें।
 
 ✓ कोई विज्ञापन नहीं
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Fast Web View जानकारी</string>
+<string name="menu_fast_web_view_desc">PDF जानकारी का निरीक्षण करें; Fast Web View निर्माण अनुपलब्ध है</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">यह संस्करण Fast Web View PDF उत्पन्न या प्रमाणित नहीं कर सकता है। कोई आउटपुट फ़ाइल नहीं बनाई जाएगी।</string>
+<string name="select_pdf_for_linearize">निरीक्षण के लिए PDF चुनें</string>
+<string name="label_diagnostic_status">PDF जानकारी</string>
+<string name="label_fast_web_view_enabled">लीनियराइजेशन:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">सत्यापित नहीं</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">अनुकूलन अनुपलब्ध</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">प्रारंभिक PDF/A जांच</string>
+<string name="menu_pdfa_validator_desc">प्रारंभिक जांच चलाएं; PDF/A अनुरूपता प्रमाणित नहीं है</string>
+<string name="pdfa_headline">केवल प्रारंभिक जांच; प्रमाणित नहीं</string>
+<string name="pdfa_subtitle">ये जांचें ISO 19005 अनुपालन को प्रमाणित नहीं करती हैं। इस संस्करण में PDF/A रूपांतरण अनुपलब्ध है।</string>
+<string name="select_pdf_for_pdfa">प्रारंभिक जांच के लिए PDF चुनें</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">CSV फ़ाइल सहेजने में विफल।</string>
+    <string name="table_extractor_error_extract">दस्तावेज़ से सारणीबद्ध डेटा निकालने में विफल।</string>
+    <string name="table_extractor_safe_mode">स्प्रेडशीट-सुरक्षित निर्यात (अनुशंसित)</string>
+    <string name="table_extractor_raw_mode">अपरिष्कृत डेटा निर्यात</string>
+    <string name="table_extractor_safe_mode_desc">स्प्रेडशीट-सुरक्षित मोड फ़ॉर्मूला जैसे वर्णों (=, +, -, @) को प्रारंभिक एकल उद्धरण के साथ सुरक्षित करता है ताकि खोले जाने पर स्प्रेडशीट ऐप्स फ़ॉर्मूला निष्पादित न करें।</string>
+    <string name="table_extractor_raw_mode_desc">अपरिष्कृत डेटा मोड निकाले गए सेल मानों को बिना किसी बदलाव के ठीक वैसे ही संरक्षित करता है जैसे वे PDF में पाए गए थे।</string>
+    <string name="table_extractor_safe_banner">स्प्रेडशीट-सुरक्षित निर्यात सक्षम। बाहरी स्प्रेडशीट ऐप्स द्वारा मूल्यांकन रोकने के लिए फ़ॉर्मूला जैसे मानों में उपसर्ग जोड़ा गया है।</string>
+    <string name="table_extractor_error_title">तालिका निष्कर्षण विफल</string>
+    <string name="table_extractor_error_fallback">तालिका निकालने के दौरान एक अप्रत्याशित त्रुटि हुई।</string>
+    <string name="table_extractor_retry">निष्कर्षण का पुनः प्रयास करें</string>
+    <string name="table_extractor_no_tables_desc">इस दस्तावेज़ में कोई सारणीबद्ध डेटा नहीं मिला।</string>
+    <string name="table_extractor_error_share">CSV फ़ाइल साझा करने में विफल।</string>
+    <string name="table_extractor_share_desc">CSV साझा करें</string>
 </resources>

@@ -178,6 +178,9 @@
 <string name="recent_activity">Actividad Reciente</string>
 <string name="premium_title">Actualización Premium</string>
 <string name="premium_thanks">¡Gracias por apoyar nuestras herramientas fuera de línea!</string>
+    <string name="price_available_in_google_play">Precio disponible en Google Play</string>
+    <string name="unlock_lifetime_with_price">Desbloquear de por vida · %1$s</string>
+    <string name="restore_purchases">Restaurar compras</string>
     <string name="premium_features">Desbloquea la experiencia PDF definitiva.
 
 ✓ Sin Anuncios
@@ -905,17 +908,17 @@
 <string name="title_embed_success">Archivo adjuntado</string>
 <string name="desc_embed_success">Nuevo archivo adjuntado al PDF con éxito</string>
 <string name="error_embed_failed">Error al adjuntar</string>
-<string name="menu_fast_web_view">Vista web rápida (Linealizar)</string>
-<string name="menu_fast_web_view_desc">Reestructura flujos de PDF para streaming web instantáneo</string>
+<string name="menu_fast_web_view">Información de Fast Web View</string>
+<string name="menu_fast_web_view_desc">Inspeccionar información de PDF; generación de Fast Web View no disponible</string>
 <string name="linearize_headline">Optimizador de streaming web</string>
-<string name="linearize_subtitle">Optimiza la primera página para carga instantánea en navegadores</string>
-<string name="select_pdf_for_linearize">Seleccionar PDF para linealizar</string>
-<string name="label_diagnostic_status">Estado de linealización</string>
-<string name="label_fast_web_view_enabled">Vista web rápida activada:</string>
+<string name="linearize_subtitle">Esta versión no puede generar ni certificar archivos PDF Fast Web View. No se creará ningún archivo de salida.</string>
+<string name="select_pdf_for_linearize">Seleccionar un PDF para inspeccionar</string>
+<string name="label_diagnostic_status">Información de PDF</string>
+<string name="label_fast_web_view_enabled">Linealización:</string>
 <string name="status_enabled">Activado</string>
-<string name="status_disabled">Desactivado (No linealizado)</string>
+<string name="status_disabled">No verificado</string>
 <string name="linearize_info_explanation">La vista web rápida organiza el PDF para que los navegadores muestren la primera página de inmediato sin esperar la descarga completa.</string>
-<string name="btn_optimize_fast_web_view">Optimizar para vista web rápida</string>
+<string name="btn_optimize_fast_web_view">Optimización no disponible</string>
 <string name="title_linearize_success">PDF linealizado</string>
 <string name="desc_linearize_success">Documento optimizado para streaming (%1$s)</string>
 <string name="error_linearize_failed">Error de optimización</string>
@@ -933,11 +936,11 @@
 <string name="title_nup_success">Folleto creado</string>
 <string name="desc_nup_success">Se generó cuadrícula de %1$d páginas por hoja</string>
 <string name="error_nup_failed">Error al generar folleto</string>
-<string name="menu_pdfa_validator">Validador PDF/A</string>
-<string name="menu_pdfa_validator_desc">Verifica conformidad para archivos a largo plazo</string>
-<string name="pdfa_headline">Conformidad de archivo PDF/A</string>
-<string name="pdfa_subtitle">Audita fuentes, perfiles de color y metadatos ISO</string>
-<string name="select_pdf_for_pdfa">Seleccionar PDF para validar</string>
+<string name="menu_pdfa_validator">Comprobaciones preliminares de PDF/A</string>
+<string name="menu_pdfa_validator_desc">Ejecutar comprobaciones preliminares; la conformidad con PDF/A no está certificada</string>
+<string name="pdfa_headline">Solo comprobaciones preliminares; no certificado</string>
+<string name="pdfa_subtitle">Estas comprobaciones no certifican la conformidad con ISO 19005. La conversión a PDF/A no está disponible en esta versión.</string>
+<string name="select_pdf_for_pdfa">Seleccionar PDF para comprobaciones preliminares</string>
 <string name="status_archival_ready">Listo para archivar (100%% conforme)</string>
 <string name="status_compliance_issues_found">No conforme (Se detectaron problemas)</string>
 <string name="menu_font_inspector">Inspector de fuentes</string>
@@ -1169,4 +1172,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Error al guardar el archivo CSV.</string>
+    <string name="table_extractor_error_extract">Error al extraer datos tabulares del documento.</string>
+    <string name="table_extractor_safe_mode">Exportación segura para hojas de cálculo (Recomendado)</string>
+    <string name="table_extractor_raw_mode">Exportación de datos sin procesar</string>
+    <string name="table_extractor_safe_mode_desc">El modo seguro desinfecta caracteres de fórmula (=, +, -, @) con una comilla simple inicial para evitar que las aplicaciones de hojas de cálculo ejecuten fórmulas al abrirse.</string>
+    <string name="table_extractor_raw_mode_desc">El modo de datos sin procesar conserva los valores de celda extraídos exactamente como se encontraron en el PDF sin desinfección.</string>
+    <string name="table_extractor_safe_banner">Exportación segura habilitada. Los valores de tipo fórmula tienen prefijo para evitar que las hojas de cálculo externas los evalúen.</string>
+    <string name="table_extractor_error_title">Error al extraer la tabla</string>
+    <string name="table_extractor_error_fallback">Ocurrió un error inesperado durante la extracción de la tabla.</string>
+    <string name="table_extractor_retry">Reintentar extracción</string>
+    <string name="table_extractor_no_tables_desc">No se detectaron datos tabulares en este documento.</string>
+    <string name="table_extractor_error_share">Error al compartir el archivo CSV.</string>
+    <string name="table_extractor_share_desc">Compartir CSV</string>
 </resources>

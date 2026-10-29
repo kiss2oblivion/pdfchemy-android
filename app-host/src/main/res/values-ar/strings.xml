@@ -170,6 +170,9 @@
 <string name="recent_activity">النشاط الأخير</string>
 <string name="premium_title">الترقية إلى بريميوم</string>
 <string name="premium_thanks">شكراً لدعمك لمهمتنا في تقديم أدوات مستندات آمنة وبدون اتصال بالإنترنت!</string>
+    <string name="price_available_in_google_play">السعر متاح في Google Play</string>
+    <string name="unlock_lifetime_with_price">فتح مدى الحياة · %1$s</string>
+    <string name="restore_purchases">استعادة المشتريات</string>
     <string name="premium_features">احصل على تجربة PDF المتكاملة بدون إنترنت.
 
 ✓ بدون إعلانات
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">معلومات Fast Web View</string>
+<string name="menu_fast_web_view_desc">فحص معلومات PDF؛ إنشاء Fast Web View غير متوفر</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">لا يمكن لهذا الإصدار إنشاء أو اعتماد ملفات PDF بنظام Fast Web View. لن يتم إنشاء أي ملف إخراج.</string>
+<string name="select_pdf_for_linearize">حدد ملف PDF للفحص</string>
+<string name="label_diagnostic_status">معلومات PDF</string>
+<string name="label_fast_web_view_enabled">التهيئة الخطية:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">لم يتم التحقق</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">التحسين غير متوفر</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">فحوصات PDF/A أولية</string>
+<string name="menu_pdfa_validator_desc">تشغيل فحوصات أولية؛ توافق PDF/A غير معتمد</string>
+<string name="pdfa_headline">فحوصات أولية فقط؛ غير معتمد</string>
+<string name="pdfa_subtitle">هذه الفحوصات لا تعتمد الامتثال لمعيار ISO 19005. تحويل PDF/A غير متوفر في هذا الإصدار.</string>
+<string name="select_pdf_for_pdfa">حدد ملف PDF للفحوصات الأولية</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,17 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">فشل حفظ ملف CSV.</string>
+    <string name="table_extractor_error_extract">فشل استخراج البيانات الجدولية من المستند.</string>
+    <string name="table_extractor_safe_mode">تصدير آمن لجداول البيانات (موصى به)</string>
+    <string name="table_extractor_raw_mode">تصدير البيانات الأولية</string>
+    <string name="table_extractor_safe_mode_desc">يقوم الوضع الآمن بتطهير الأحرف الشبيهة بالصيغ (=، +، -، @) بفاصلة عليا بادئة لمنع تطبيقات جداول البيانات من تنفيذ الصيغ عند الفتح.</string>
+    <string name="table_extractor_raw_mode_desc">يحفظ وضع البيانات الأولية قيم الخلايا المستخرجة تمامًا كما هي في مستند PDF دون أي تطهير.</string>
+    <string name="table_extractor_safe_banner">تم تفعيل التصدير الآمن لجداول البيانات. تمت إضافة بادئة للقيم الشبيهة بالصيغ لمنع التطبيقات الخارجية من تقييمها.</string>
+    <string name="table_extractor_error_title">فشل استخراج الجدول</string>
+    <string name="table_extractor_error_fallback">حدث خطأ غير متوقع أثناء استخراج الجدول.</string>
+    <string name="table_extractor_retry">إعادة محاولة الاستخراج</string>
+    <string name="table_extractor_no_tables_desc">لم يتم اكتشاف أي بيانات جدولية في هذا المستند.</string>
+    <string name="table_extractor_error_share">فشلت مشاركة ملف CSV.</string>
+    <string name="table_extractor_share_desc">مشاركة ملف CSV</string>
 </resources>

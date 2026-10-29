@@ -420,7 +420,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isPremium.value = true
     }
 
-    private val _premiumPrice = MutableStateFlow("\$1.99")
+    private val _premiumPrice = MutableStateFlow("")
     val premiumPrice: StateFlow<String> = _premiumPrice.asStateFlow()
 
     private var billingManager: BillingManager? = null

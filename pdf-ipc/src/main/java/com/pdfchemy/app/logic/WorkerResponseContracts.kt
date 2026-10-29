@@ -17,6 +17,18 @@ data class StandardOutputContract(
 ) : OperationContract
 
 /**
+ * Table extraction contract for TABLE_EXTRACT.
+ * Distinguishes output file count from table row count, and reports whether extraction was empty.
+ */
+data class TableExtractContract(
+    val success: Boolean = true,
+    val empty: Boolean = false,
+    val rowCount: Int = 0,
+    val count: Int = 1
+) : OperationContract
+
+
+/**
  * Metadata read contract for METADATA_READ.
  */
 data class MetadataReadContract(
