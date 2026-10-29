@@ -4,50 +4,36 @@ import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 data class LinearizeStatus(
     val isLinearized: Boolean,
     val fileSizeOriginal: Long,
-    val pageCount: Int
+    val pageCount: Int,
+    val verificationStatus: String = "NOT_VERIFIED"
 )
 
 object PdfLinearizeEngine {
-
     suspend fun checkLinearized(context: Context, pdfUri: Uri): Result<LinearizeStatus> = withContext(Dispatchers.IO) {
         try {
             val contract = PdfGateway.executeEngineTyped<LinearizeCheckContract>(context, "LINEARIZE_CHECK", pdfUri, null, "{}")
-            val size = FileUtils.getFileSize(context, pdfUri)
-            Result.success(LinearizeStatus(
-                isLinearized = contract.isLinearized,
-                fileSizeOriginal = size,
-                pageCount = contract.pageCount
-            ))
+            Result.success(LinearizeStatus(false, FileUtils.getFileSize(context, pdfUri),
+                contract.pageCount, contract.verificationStatus))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            AppLogger.e("PdfLinearizeEngine: Error checking linearization", e)
+            AppLogger.e("PdfLinearizeEngine: Error inspecting PDF", e)
             Result.failure(e)
         }
     }
 
     suspend fun optimizeFastWebView(context: Context, sourcePdfUri: Uri, destPdfUri: Uri): Result<Long> = withContext(Dispatchers.IO) {
-        try {
-            val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "LINEARIZE_OPTIMIZE", sourcePdfUri, destPdfUri, "{}")
-            
-            // Independently verify linearized output before reporting success
-            val verifyStatus = checkLinearized(context, destPdfUri).getOrNull()
-            if (verifyStatus?.isLinearized != true) {
-                throw UnsupportedOperationException("Linearization (Fast Web View generation) is not supported by the local engine")
-            }
-
-            val historyRepo = HistoryRepository(context)
-            historyRepo.addHistoryItem(destPdfUri, FileUtils.getFileName(context, destPdfUri) ?: "web_optimized.pdf", "Fast Web View Stream Optimizer")
-            
-            Result.success(contract.size)
-        } catch (e: Exception) {
-            AppLogger.e("PdfLinearizeEngine: Error optimizing stream", e)
-            Result.failure(e)
-        }
+        currentCoroutineContext().ensureActive()
+        // No Gateway/publication/history call: existing and newly selected destinations stay untouched.
+        Result.failure(UnsupportedOperationException("Fast Web View generation is not supported by the local engine"))
     }
 }

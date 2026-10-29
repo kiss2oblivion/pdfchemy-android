@@ -1,0 +1,9 @@
+<resources>
+    <string name="menu_fast_web_view">Fast Web View information</string>
+    <string name="linearize_subtitle">This version cannot generate or certify Fast Web View PDFs. No output file will be created.</string>
+    <string name="select_pdf_for_linearize">Select a PDF to inspect</string>
+    <string name="label_diagnostic_status">PDF information</string>
+    <string name="label_fast_web_view_enabled">Linearization:</string>
+    <string name="status_disabled">Not verified</string>
+    <string name="btn_optimize_fast_web_view">Optimization unavailable</string>
+</resources>

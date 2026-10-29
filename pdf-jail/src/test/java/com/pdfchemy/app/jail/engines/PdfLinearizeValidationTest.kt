@@ -1,7 +1,10 @@
 package com.pdfchemy.app.jail.engines
 
+import android.os.ParcelFileDescriptor
+import com.tom_roush.pdfbox.cos.COSName
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
+import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -9,40 +12,46 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class PdfLinearizeValidationTest {
-
-    @get:Rule
-    val tempFolder = TemporaryFolder()
-
-    @Test
-    fun isLinearizedFileDetectsAbsenceAndPresenceOfLinearizationDictionary() {
-        val nonLinearFile = tempFolder.newFile("non_linear.pdf")
-        PDDocument().use { doc ->
-            doc.addPage(PDPage())
-            doc.save(nonLinearFile)
-        }
-        assertFalse("Standard saved document must not be classified as linearized",
-            PdfLinearizeEngineWorker.isLinearizedFile(nonLinearFile))
-
-        val linearHeaderFile = tempFolder.newFile("linear_synthetic.pdf")
-        linearHeaderFile.writeBytes("%PDF-1.4\n%âãÏÓ\n1 0 obj\n<< /Linearized 1.0 /L 12345 /H [ 678 123 ] /O 11 /E 12345 /N 1 /T 12345 >>\nendobj\n".toByteArray(Charsets.US_ASCII))
-        assertTrue("Synthetic linearized header must be detected",
-            PdfLinearizeEngineWorker.isLinearizedFile(linearHeaderFile))
+    @get:Rule val temp = TemporaryFolder()
+    private fun inspect(configure: (PDDocument) -> Unit = {}): JSONObject {
+        val file = temp.newFile()
+        PDDocument().use { doc -> doc.addPage(PDPage()); configure(doc); doc.save(file) }
+        return PDDocument.load(file).use { JSONObject(PdfLinearizeEngineWorker.inspectDocument(it)) }
     }
-
-    @Test
-    fun unlinearizedOutputRejectionEnforcesLinearizationIntegrity() {
-        val tempFile = tempFolder.newFile("saved_output.pdf")
+    private fun assertUnverified(result: JSONObject) {
+        assertFalse(result.getBoolean("isLinearized"))
+        assertEquals("NOT_VERIFIED", result.getString("verificationStatus"))
+        assertEquals(1, result.getInt("pageCount"))
+    }
+    @Test fun ordinarySerializedPdfIsNotCertified() = assertUnverified(inspect())
+    @Test fun metadataMarkerIsNotCertification() = assertUnverified(inspect {
+        it.documentInformation.subject = "A mention of /Linearized is not a validation result"
+    })
+    @Test fun forgedCatalogDictionaryIsNotCertification() = assertUnverified(inspect {
+        it.documentCatalog.cosObject.setInt(COSName.getPDFName("Linearized"), 1)
+    })
+    @Test fun zeroPageDocumentCannotProduceDiagnosticSuccess() {
         PDDocument().use { doc ->
-            doc.addPage(PDPage())
-            doc.save(tempFile)
+            try { PdfLinearizeEngineWorker.inspectDocument(doc); fail("Expected rejection") }
+            catch (_: IllegalArgumentException) {}
         }
-        // Verify that standard PDFBox output fails the linearization check
-        val isLinear = PdfLinearizeEngineWorker.isLinearizedFile(tempFile)
-        assertFalse("PDFBox standard save cannot produce linearized PDFs", isLinear)
+    }
+    @Test fun unsupportedWorkerDoesNotReadOrModifyEitherDescriptor() {
+        val input = temp.newFile().apply { writeText("not even a PDF /Linearized") }
+        val target = temp.newFile().apply { writeText("existing destination") }
+        val before = temp.root.list()!!.toSet()
+        ParcelFileDescriptor.open(input, ParcelFileDescriptor.MODE_READ_ONLY).use { source ->
+            ParcelFileDescriptor.open(target, ParcelFileDescriptor.MODE_READ_WRITE).use { dest ->
+                try { PdfLinearizeEngineWorker.optimizeFastWebView(source, dest); fail("Expected unsupported") }
+                catch (e: UnsupportedOperationException) { assertTrue(e.message!!.contains("not supported")) }
+            }
+        }
+        assertEquals("existing destination", target.readText())
+        assertEquals("not even a PDF /Linearized", input.readText())
+        assertEquals("No scratch file may be created", before, temp.root.list()!!.toSet())
     }
 }

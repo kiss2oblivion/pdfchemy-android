@@ -91,7 +91,8 @@ data class CheckEncryptionContract(
  */
 data class LinearizeCheckContract(
     val isLinearized: Boolean,
-    val pageCount: Int
+    val pageCount: Int,
+    val verificationStatus: String
 ) : OperationContract
 
 /**
@@ -111,7 +112,9 @@ data class ArchiveInspectContract(
     val pdfaVersionDetected: String,
     val complianceScore: Int,
     val checks: List<ArchiveCheckItemContract>,
-    val isCompliant: Boolean
+    val isCompliant: Boolean,
+    val certificationStatus: String,
+    val assessmentScope: String
 ) : OperationContract
 
 /**

@@ -43,50 +43,22 @@ fun LinearizePdfScreen(
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var status by remember { mutableStateOf<LinearizeStatus?>(null) }
     var isChecking by remember { mutableStateOf(false) }
-    var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedPdfUri) {
         val uri = selectedPdfUri
         if (uri != null) {
+            status = null
             isChecking = true
-            val result = PdfLinearizeEngine.checkLinearized(context, uri)
-            isChecking = false
-            if (result.isSuccess) {
-                status = result.getOrThrow()
+            try {
+                status = PdfLinearizeEngine.checkLinearized(context, uri).getOrNull()
+            } finally {
+                isChecking = false
             }
         }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
-    }
-
-    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null) {
-            coroutineScope.launch {
-                isProcessing = true
-                val result = PdfLinearizeEngine.optimizeFastWebView(
-                    context = context,
-                    sourcePdfUri = selectedPdfUri!!,
-                    destPdfUri = destUri
-                )
-                isProcessing = false
-
-                if (result.isSuccess) {
-                    val outBytes = result.getOrThrow()
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_linearize_success),
-                        context.getString(R.string.desc_linearize_success, FileUtils.formatFileSize(outBytes))
-                    , destUri)
-                    onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_linearize_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
-                }
-            }
-        }
     }
 
     Scaffold(
@@ -127,7 +99,7 @@ fun LinearizePdfScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = stringResource(R.string.linearize_headline),
+                            text = stringResource(R.string.menu_fast_web_view),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -186,9 +158,9 @@ fun LinearizePdfScreen(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(stringResource(R.string.label_fast_web_view_enabled), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = if (status!!.isLinearized) stringResource(R.string.status_enabled) else stringResource(R.string.status_disabled),
+                                text = stringResource(R.string.status_disabled),
                                 fontWeight = FontWeight.Bold,
-                                color = if (status!!.isLinearized) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -213,7 +185,7 @@ fun LinearizePdfScreen(
                         Icon(Icons.Rounded.Bolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = stringResource(R.string.linearize_info_explanation),
+                            text = stringResource(R.string.linearize_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -223,31 +195,12 @@ fun LinearizePdfScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Optimize Button
             Button(
-                onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_stream_optimized.pdf")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 52.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                enabled = !isProcessing && selectedPdfUri != null
+                onClick = {},
+                enabled = false,
+                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp)
             ) {
-                if (isProcessing) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
-                } else {
-                    Icon(Icons.Rounded.CloudSync, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.btn_optimize_fast_web_view),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Text(stringResource(R.string.btn_optimize_fast_web_view))
             }
         }
     }
