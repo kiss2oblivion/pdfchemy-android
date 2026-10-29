@@ -216,6 +216,7 @@ private fun PdfReaderDocument(
     var showAccessErrorDialog by remember { mutableStateOf(false) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var isDocumentLoading by remember(initialUri) { mutableStateOf(true) }
+    var isPositionRestored by remember(initialUri) { mutableStateOf(false) }
     val actionsEnabled = ReaderControlsUiState.canExecuteDocumentAction(
         isDocumentLoading = isDocumentLoading,
         isVanguardScanning = isVanguardScanning,
@@ -296,17 +297,26 @@ private fun PdfReaderDocument(
                     extractOutline = { com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri) },
                     onRecordHistory = { viewModel.recordReaderHistory(initialUri, fileName) }
                 )
-                showVanguardBlockedDialog = startupResult.showVanguardBlockedDialog
-                showVanguardEncryptedDialog = startupResult.showVanguardEncryptedDialog
-                showVanguardDamagedDialog = startupResult.showVanguardDamagedDialog
-                bookmarks = startupResult.bookmarks
-                totalPages = startupResult.totalPages
-
-                if (isRememberPositionEnabled && startupResult.totalPages > 0) {
+                // Read the saved position before the page list is composed and can overwrite it.
+                val savedPos = if (isRememberPositionEnabled && startupResult.totalPages > 0) {
                     val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, stagedUri)
-                    val savedPos = com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, startupResult.totalPages)
-                    listState.scrollToItem(savedPos.pageIndex, savedPos.scrollOffsetPx)
-                }
+                    com.pdfchemy.app.utils.DocumentIdentity.getSavedReaderPosition(context, docId, startupResult.totalPages)
+                } else null
+                com.pdfchemy.app.logic.ReaderStartupCoordinator.publishReadyThenRestorePosition(
+                    publishReady = {
+                        showVanguardBlockedDialog = startupResult.showVanguardBlockedDialog
+                        showVanguardEncryptedDialog = startupResult.showVanguardEncryptedDialog
+                        showVanguardDamagedDialog = startupResult.showVanguardDamagedDialog
+                        bookmarks = startupResult.bookmarks
+                        totalPages = startupResult.totalPages
+                        isDocumentLoading = false
+                    },
+                    restorePosition = {
+                        // Suspends until the LazyColumn's first layout, which requires the ready state above.
+                        savedPos?.let { listState.scrollToItem(it.pageIndex, it.scrollOffsetPx) }
+                    },
+                    onPositionRestored = { isPositionRestored = true }
+                )
             } finally {
                 isDocumentLoading = false
             }
@@ -319,10 +329,11 @@ private fun PdfReaderDocument(
         listState.firstVisibleItemScrollOffset,
         isRememberPositionEnabled,
         totalPages,
-        isDocumentLoading
+        isDocumentLoading,
+        isPositionRestored
     ) {
         val activeUri = selectedPdfUri ?: initialUri
-        if (!isDocumentLoading && isRememberPositionEnabled && totalPages > 0) {
+        if (!isDocumentLoading && isPositionRestored && isRememberPositionEnabled && totalPages > 0) {
             val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, activeUri)
             com.pdfchemy.app.utils.DocumentIdentity.saveReaderPosition(
                 context = context,
