@@ -92,6 +92,14 @@ object DocumentActions {
 
     private data class RetainedFile(val file: File, val kind: RetainedShareKind, val root: String)
 
+    /** Completed recipient copies require explicit cleanup; age cannot prove a grant expired. */
+    internal fun protectsFromAutomaticCleanup(context: Context, file: File): Boolean {
+        if (!file.name.startsWith("shared_")) return false
+        val parent = file.canonicalFile.parentFile ?: return false
+        return parent == File(context.cacheDir, "exports").canonicalFile ||
+            parent == File(context.filesDir, "shared_copies").canonicalFile
+    }
+
     private fun retainedId(record: RetainedFile): String {
         val digest = MessageDigest.getInstance("SHA-256").digest((record.root + ":" + record.file.name).toByteArray(Charsets.UTF_8))
         val hex = "0123456789abcdef"

@@ -424,6 +424,7 @@ class MainActivity : AppCompatActivity() {
                     if (file.isDirectory) {
                         cleanDir(file)
                     } else if (file.isFile && file.lastModified() < oneHourAgo) {
+                        if (com.pdfchemy.app.logic.DocumentActions.protectsFromAutomaticCleanup(context, file)) continue
                         val name = file.name.lowercase()
                         if (name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".cbz") ||
                             name.endsWith(".csv") || name.endsWith(".docx") || name.endsWith(".xlsx") || name.endsWith(".pptx") ||
