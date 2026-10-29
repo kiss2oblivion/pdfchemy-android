@@ -42,7 +42,7 @@ fun rememberPreferredDocumentDestinationCreator(
         if (tree == null) {
             working = false
             currentResult(null)
-        } else scope.launch {
+        } else scope.launch(Dispatchers.Main.immediate) {
             var created: DocumentFile? = null
             var handedOff = false
             try {
@@ -84,7 +84,7 @@ fun rememberPreferredDocumentDestinationCreator(
             confirmButton = {
                 TextButton(enabled = !working && editedName.isNotBlank(), onClick = {
                     working = true
-                    scope.launch {
+                    scope.launch(Dispatchers.Main.immediate) {
                         val uri = folderUri
                         val name = OutputPolicy.safeName(editedName)
                         var created: DocumentFile? = null
@@ -109,8 +109,7 @@ fun rememberPreferredDocumentDestinationCreator(
                             // Only a fresh copy created here is ours to remove before callback ownership.
                             if (!handedOff) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
                                 created?.let {
-                                    OutputPolicy.unregisterFreshCopy(it.uri)
-                                    runCatching { it.delete() }
+                                    cleanupPreferredDocumentCopy(context, it)
                                 }
                             }
                         }
@@ -135,3 +134,8 @@ fun rememberPreferredDocumentDestinationCreator(
 @Composable
 fun rememberPreferredDocumentCreator(mimeType: String, onResult: (Uri?) -> Unit): DocumentCreateLauncher =
     rememberPreferredDocumentDestinationCreator(mimeType) { onResult(it?.uri) }
+
+/** Creation cleanup must respect publication/operation ownership, including late cancellation. */
+internal fun cleanupPreferredDocumentCopy(context: Context, created: DocumentFile) {
+    OutputPolicy.deleteIfFresh(context, created.uri)
+}

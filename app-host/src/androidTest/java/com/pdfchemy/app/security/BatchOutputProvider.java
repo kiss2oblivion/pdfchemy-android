@@ -19,19 +19,28 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/** Synthetic SAF store. Only its second output open blocks, outside the state lock. */
+/** Synthetic SAF store with controlled creation and output-open gates. */
 public class BatchOutputProvider extends ContentProvider {
     private final Map<String, String[]> documents = new LinkedHashMap<>();
     private File directory;
     private CountDownLatch release = new CountDownLatch(1);
     private int sequence, writes, deleted;
     private String firstId, blockedId;
+    private volatile CountDownLatch creationRelease = new CountDownLatch(1);
+    private volatile boolean creationEntered;
+    private boolean blockCreation, returnExisting;
     @Override public boolean onCreate() {
         directory = new File(getContext().getCacheDir(), "sc03-batch-fixture");
         directory.mkdirs();
         return true;
     }
-    @Override public synchronized Bundle call(String method, String arg, Bundle extras) {
+    @Override public Bundle call(String method, String arg, Bundle extras) {
+        // Creation can model an uninterruptible provider call without blocking its test control channel.
+        if ("creationState".equals(method)) {
+            Bundle result = new Bundle(); result.putBoolean("entered", creationEntered); return result;
+        }
+        if ("releaseCreation".equals(method)) { creationRelease.countDown(); return new Bundle(); }
+        synchronized (this) {
         try {
             if ("android:createDocument".equals(method)) {
                 Uri parent = extras.getParcelable("uri");
@@ -43,6 +52,9 @@ public class BatchOutputProvider extends ContentProvider {
                 Uri uri = extras.getParcelable("uri"); deleteDocument(DocumentsContract.getDocumentId(uri)); return new Bundle();
             }
             if ("configure".equals(method)) {
+                creationRelease.countDown(); creationRelease = new CountDownLatch(1); creationEntered = false;
+                blockCreation = extras != null && extras.getBoolean("blockCreation");
+                returnExisting = extras != null && extras.getBoolean("returnExisting");
                 release.countDown(); release = new CountDownLatch(1);
                 for (File file : directory.listFiles()) file.delete();
                 documents.clear(); sequence = writes = deleted = 0; firstId = blockedId = null;
@@ -64,13 +76,20 @@ public class BatchOutputProvider extends ContentProvider {
             result.putInt("createdCount", sequence); result.putInt("deletedCount", deleted);
             return result;
         } catch (Exception error) { throw new IllegalStateException(error); }
+        }
     }
     public synchronized String createDocument(String parent, String mime, String name) throws FileNotFoundException {
         if (!"root".equals(parent)) throw new FileNotFoundException();
+        if (returnExisting) return "existing";
         String id = "doc_" + (++sequence);
         documents.put(id, new String[]{name, mime});
         try { new File(directory, id).createNewFile(); }
         catch (Exception error) { throw new FileNotFoundException(error.toString()); }
+        if (blockCreation) {
+            creationEntered = true;
+            try { if (!creationRelease.await(30, TimeUnit.SECONDS)) throw new FileNotFoundException("Creation fixture timed out"); }
+            catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new FileNotFoundException("Creation interrupted"); }
+        }
         return id;
     }
     public synchronized void deleteDocument(String id) throws FileNotFoundException {
@@ -114,7 +133,10 @@ public class BatchOutputProvider extends ContentProvider {
     }
     @Override public Uri insert(Uri uri, ContentValues values) { throw new UnsupportedOperationException(); }
     @Override public int update(Uri uri, ContentValues values, String selection, String[] args) { throw new UnsupportedOperationException(); }
-    @Override public int delete(Uri uri, String selection, String[] args) { throw new UnsupportedOperationException(); }
+    @Override public int delete(Uri uri, String selection, String[] args) {
+        try { deleteDocument(DocumentsContract.getDocumentId(uri)); return 1; }
+        catch (FileNotFoundException error) { return 0; }
+    }
     @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
         String id = DocumentsContract.getDocumentId(uri);
         CountDownLatch wait = null;
