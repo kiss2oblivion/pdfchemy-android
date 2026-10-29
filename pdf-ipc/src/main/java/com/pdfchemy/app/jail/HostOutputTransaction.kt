@@ -28,7 +28,9 @@ class HostOutputTransaction(
     private var sizes = emptyList<Long>()
     private var validated = false
     private var commitStarted = false
+    private var published = false
     private var closed = false
+    private val publicationOwner = Any()
     val workerDescriptors: List<ParcelFileDescriptor> get() = producers.map { it.writer }
     fun releaseWorkerDescriptors() { producers.forEach { runCatching { it.writer.close() } } }
     val validatedBytes: Long get() {
@@ -39,6 +41,7 @@ class HostOutputTransaction(
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
+        com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
         try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
@@ -89,7 +92,7 @@ class HostOutputTransaction(
         require(targets.isEmpty() || (value != false && value != JSONObject.NULL)) { "Worker reported failure" }
     }
 
-    suspend fun validateAndSnapshot(result: String) {
+    suspend fun validateAndSnapshot(result: String, operation: String? = null) {
         check(!closed && !validated && !commitStarted)
         validateResult(result)
         require(producers.size == targets.size) { "Output count mismatch" }
@@ -126,6 +129,22 @@ class HostOutputTransaction(
             require(size(snapshot) == sizes[index]) { "Incomplete output snapshot" }
         }
         require(snapshots.size == targets.size && snapshots.sumOf(::size) <= SecurityLimits.MAX_OUTPUT_BYTES)
+        if (operation == "TABLE_EXTRACT") {
+            // Validate immutable host snapshots before ACK/publication, not a reopened worker path.
+            for (index in snapshots.indices) {
+                require(sizes[index] <= 2 * 1024 * 1024L) { "CSV file exceeds limit" }
+                val bytes = ByteArray(sizes[index].toInt())
+                var offset = 0
+                while (offset < bytes.size) {
+                    currentCoroutineContext().ensureActive()
+                    val read = Os.pread(snapshots[index].fileDescriptor, bytes, offset,
+                        minOf(64 * 1024, bytes.size - offset), offset.toLong())
+                    require(read > 0) { "Incomplete CSV snapshot" }
+                    offset += read
+                }
+                WorkerResponseValidator.validateCsvTableBytes(bytes)
+            }
+        }
         currentCoroutineContext().ensureActive()
         validated = true
     }
@@ -134,6 +153,9 @@ class HostOutputTransaction(
         check(!closed && validated && !commitStarted) { "Outputs must be validated and committed only once" }
         currentCoroutineContext().ensureActive()
         commitStarted = true
+        // Opening "wt" may destroy old bytes even when the provider subsequently
+        // throws. Only host-created fresh SAF copies may enter publication.
+        com.pdfchemy.app.security.FreshOutputRegistry.requireSafeSafTargets(targets, publicationOwner)
         val totalBytes = snapshots.sumOf(::size)
         val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, totalBytes)
         var completedNormally = false
@@ -176,6 +198,8 @@ class HostOutputTransaction(
                 }
             }
             completedNormally = true
+            published = true
+            com.pdfchemy.app.security.FreshOutputRegistry.published(targets, publicationOwner)
         } finally {
             watcher.cancel()
             handle.close()
@@ -188,5 +212,6 @@ class HostOutputTransaction(
         releaseWorkerDescriptors()
         snapshots.clear(); temporary.clear()
         if (ownsStorage) storage.close()
+        if (!published) com.pdfchemy.app.security.FreshOutputRegistry.abandon(context, targets, publicationOwner)
     }
 }

@@ -868,41 +868,77 @@ object WorkerResponseValidator {
         require(file.exists()) { "CSV table file does not exist" }
         val length = file.length()
         require(length <= MAX_FILE_RESULT_BYTES) { "CSV file exceeds limit: $length bytes" }
-        val text = file.readText(Charsets.UTF_8)
-        return validateCsvTable(text)
+        // The length check must also bound the read if the file changes afterwards.
+        val bytes = ByteArray(length.toInt())
+        file.inputStream().use { input ->
+            var offset = 0
+            while (offset < bytes.size) {
+                val read = input.read(bytes, offset, bytes.size - offset)
+                require(read > 0) { "CSV file changed during validation" }
+                offset += read
+            }
+            require(input.read() == -1) { "CSV file changed during validation" }
+        }
+        return validateCsvTableBytes(bytes)
+    }
+
+    fun validateCsvTableBytes(bytes: ByteArray): String {
+        require(bytes.size <= MAX_FILE_RESULT_BYTES) { "CSV file exceeds limit" }
+        return validateCsvTable(bytes.toString(Charsets.UTF_8))
     }
 
     fun validateCsvTable(csvText: String): String {
         require(csvText.length <= MAX_FILE_RESULT_BYTES) { "CSV text exceeds limit" }
         var rowCount = 0
         var totalCells = 0
-        csvText.lineSequence().forEach { line ->
-            if (line.isNotBlank()) {
-                rowCount++
-                require(rowCount <= 5000) { "CSV row limit exceeded (max 5000)" }
-                var inQuotes = false
-                var colCount = 0
-                var cellCharCount = 0
-                for (ch in line) {
-                    if (ch == '\"') {
-                        inQuotes = !inQuotes
-                    } else if (ch == ',' && !inQuotes) {
-                        colCount++
-                        totalCells++
-                        require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                        require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                        cellCharCount = 0
-                    } else {
-                        cellCharCount++
-                    }
-                }
-                colCount++
-                totalCells++
-                require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                require(totalCells <= 20000) { "CSV total cells limit exceeded (max 20000)" }
-            }
+        var columns = 0
+        var cellChars = 0
+        var started = false
+        var quoted = false
+        var closedQuote = false
+        fun character() {
+            cellChars++
+            require(cellChars <= 1024) { "CSV cell character limit exceeded (max 1024)" }
         }
+        fun cell() {
+            columns++; totalCells++
+            require(columns <= 128) { "CSV column limit exceeded (max 128)" }
+            require(totalCells <= 20000) { "CSV total cells limit exceeded (max 20000)" }
+            cellChars = 0; started = false; closedQuote = false
+        }
+        fun row() {
+            rowCount++
+            require(rowCount <= 5000) { "CSV row limit exceeded (max 5000)" }
+            columns = 0
+        }
+        var index = 0
+        while (index < csvText.length) {
+            val ch = csvText[index]
+            if (quoted) {
+                if (ch == '"') {
+                    if (index + 1 < csvText.length && csvText[index + 1] == '"') {
+                        character(); index++ // Two encoded quotes are one decoded character.
+                    } else { quoted = false; closedQuote = true }
+                } else character() // Embedded CR/LF are cell characters, not records.
+            } else when (ch) {
+                ',' -> cell()
+                '\r', '\n' -> {
+                    cell(); row()
+                    if (ch == '\r' && index + 1 < csvText.length && csvText[index + 1] == '\n') index++
+                }
+                '"' -> {
+                    require(!started && !closedQuote) { "Malformed CSV: quote in unquoted field" }
+                    quoted = true; started = true
+                }
+                else -> {
+                    require(!closedQuote) { "Malformed CSV: character after closing quote" }
+                    started = true; character()
+                }
+            }
+            index++
+        }
+        require(!quoted) { "Malformed CSV: unclosed quote" }
+        if (started || closedQuote || columns > 0) { cell(); row() }
         return csvText
     }
 
