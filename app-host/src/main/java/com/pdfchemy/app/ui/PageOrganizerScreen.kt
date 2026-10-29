@@ -64,7 +64,8 @@ fun PageOrganizerScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
@@ -78,7 +79,7 @@ fun PageOrganizerScreen(
         }
     }
 
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+    fun loadOrganizerDocument(uri: Uri) {
         selectedPdfUri = uri
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
@@ -114,6 +115,16 @@ fun PageOrganizerScreen(
                 try { pfd?.close() } catch (_: Throwable) {}
             }
         }
+    }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && selectedPdfUri == continuityUri && session.pages.isEmpty()) {
+            loadOrganizerDocument(continuityUri!!)
+        }
+    }
+
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+        loadOrganizerDocument(uri)
     }
 
     val savePdfLauncher = rememberLauncherForActivityResult(

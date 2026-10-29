@@ -51,6 +51,61 @@ import kotlinx.coroutines.withContext
 @Composable
 fun PdfReaderScreen(
     viewModel: MainViewModel,
+    initialUri: Uri?,
+    onBack: () -> Unit,
+    onNavigateToTool: (Screen) -> Unit
+) {
+    val sanitizedInitial = initialUri?.takeIf { it != Uri.EMPTY } ?: viewModel.continuityDocumentUri.collectAsState().value?.takeIf { it != Uri.EMPTY }
+    var documentUri by remember(sanitizedInitial) { mutableStateOf(sanitizedInitial) }
+    val picker = rememberVanguardPdfPicker(
+        onNavigateToUnlock = { onNavigateToTool(Screen.UnlockPdf(it)) },
+        onPdfSelected = { pickedUri ->
+            viewModel.readerNavigation.onEnterReader(pickedUri)
+            documentUri = pickedUri
+        }
+    )
+    val activeUri = documentUri?.takeIf { it != Uri.EMPTY }
+    if (activeUri != null) {
+        PdfReaderDocument(
+            viewModel = viewModel,
+            initialUri = activeUri,
+            onBack = onBack,
+            onNavigateToTool = onNavigateToTool
+        )
+    } else {
+        BackHandler { onBack() }
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.select_pdf_for_reading)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(onClick = { picker.launch(arrayOf("application/pdf")) }) {
+                    Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.select_pdf_for_reading))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PdfReaderDocument(
+    viewModel: MainViewModel,
     initialUri: Uri,
     onBack: () -> Unit,
     onNavigateToTool: (Screen) -> Unit
@@ -59,7 +114,8 @@ fun PdfReaderScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    var selectedPdfUri by remember(initialUri) { mutableStateOf<Uri?>(initialUri) }
+    var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
     var totalPages by remember { mutableIntStateOf(0) }
     var fileName by remember { mutableStateOf("") }
     
@@ -99,24 +155,32 @@ fun PdfReaderScreen(
     }
     
     val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
+
+    DisposableEffect(initialUri) {
+        onDispose {
+            activeSessionLease?.close()
+            activeSessionLease = null
+            selectedPdfUri?.let { uri ->
+                if (viewModel.continuityDocumentUri.value != uri && viewModel.readerNavigation.readerReturnUri != uri) {
+                    DocumentStager.release(uri)
+                }
+            }
+        }
+    }
     
     LaunchedEffect(initialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
             isVanguardScanning = false
         }) {
-            val docId = com.pdfchemy.app.utils.DocumentIdentity.computeStableId(context, initialUri)
-            val stagedUri = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri).uri }
+            val staged = withContext(Dispatchers.IO) { DocumentStager.stageDocumentCancellable(context, initialUri) }
+            val newLease = DocumentStager.retain(staged)
+            val oldLease = activeSessionLease
+            activeSessionLease = newLease
+            oldLease?.close()
+            val stagedUri = staged.uri
             selectedPdfUri = stagedUri
-            
-            // Fetch bookmarks asynchronously
-            coroutineScope.launch {
-                try {
-                    bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, initialUri)
-                } catch (e: Exception) {
-                    // Ignore
-                }
-            }
+            viewModel.readerNavigation.onEnterReader(stagedUri)
             fileName = FileUtils.getFileName(context, stagedUri) ?: "Document.pdf"
             
             if (isVanguardEnabled) {
@@ -142,6 +206,13 @@ fun PdfReaderScreen(
                 }
             } else {
                 totalPages = PdfEditor.getPageCount(context, stagedUri)
+            }
+
+            if (totalPages > 0) {
+                try {
+                    bookmarks = com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri)
+                } catch (_: Exception) {
+                }
             }
             
             if (isRememberPositionEnabled && totalPages > 0) {

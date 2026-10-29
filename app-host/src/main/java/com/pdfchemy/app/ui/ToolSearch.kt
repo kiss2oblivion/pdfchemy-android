@@ -29,6 +29,9 @@ data class ToolEntry(
 
 object ToolRegistry {
     val allTools = listOf(
+        // Reading
+        ToolEntry(R.string.select_pdf_for_reading, R.string.menu_reflow_reader_desc, Icons.Rounded.PictureAsPdf, Screen.PdfReader(), listOf("read", "reader", "view", "open pdf", "viewer")),
+
         // Compression
         ToolEntry(R.string.menu_compress, R.string.menu_compress_desc, Icons.Rounded.Compress, Screen.CompressPdf, listOf("shrink", "reduce size", "make smaller", "optimize")),
         

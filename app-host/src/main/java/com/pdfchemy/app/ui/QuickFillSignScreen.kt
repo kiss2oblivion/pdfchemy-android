@@ -83,8 +83,9 @@ fun QuickFillSignScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
