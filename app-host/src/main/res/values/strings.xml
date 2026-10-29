@@ -1193,5 +1193,19 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="menu_more_tools">All Tools</string>
+    <string name="reader_action_search">Search Document</string>
+    <string name="reader_toc_title">Table of Contents</string>
+    <string name="reader_fit_width">Fit Width</string>
+    <string name="reader_fit_page">Fit Page</string>
+    <string name="reader_search_hint">Search document…</string>
+    <string name="reader_action_clear_search">Clear Search</string>
+    <string name="reader_search_no_matches">No matches found</string>
+    <string name="reader_page_indicator">Page %1$d of %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Page %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Reset</string>
+    <string name="previous_match">Previous Match</string>
+    <string name="next_match">Next Match</string>
 </resources>
 

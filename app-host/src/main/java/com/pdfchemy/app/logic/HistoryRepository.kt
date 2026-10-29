@@ -3,9 +3,9 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
+import com.pdfchemy.app.utils.AppLogger
 import org.json.JSONArray
 import org.json.JSONObject
-import com.pdfchemy.app.utils.AppLogger
 
 data class HistoryItem(
     val uriString: String,
@@ -57,10 +57,9 @@ class HistoryRepository(private val context: Context) {
         val currentList = getHistory().toMutableList()
         val uriStr = uri.toString()
 
-        
         // Remove existing item if it has the same URI
         currentList.removeAll { it.uriString == uriStr }
-        
+
         currentList.add(
             HistoryItem(
                 uriString = uriStr,
@@ -71,12 +70,25 @@ class HistoryRepository(private val context: Context) {
                 isDirectory = android.provider.DocumentsContract.isTreeUri(uri)
             )
         )
-        
+
         // Keep only the most recent 20 items
         val limitedList = currentList.sortedByDescending { it.timestamp }.take(20)
-        
+        persistList(limitedList)
+    }
+
+    fun removeHistoryItem(uriString: String) {
+        if (uriString.isBlank()) return
+        val remaining = getHistory().filterNot { it.uriString == uriString }
+        persistList(remaining)
+    }
+
+    fun clearHistory() {
+        prefs.edit().remove(KEY_HISTORY).apply()
+    }
+
+    private fun persistList(items: List<HistoryItem>) {
         val jsonArray = JSONArray()
-        for (item in limitedList) {
+        for (item in items) {
             val obj = JSONObject()
             obj.put("uri", item.uriString)
             obj.put("name", item.name)
@@ -86,18 +98,7 @@ class HistoryRepository(private val context: Context) {
             obj.put("directory", item.isDirectory)
             jsonArray.put(obj)
         }
-        
         prefs.edit().putString(KEY_HISTORY, jsonArray.toString()).apply()
     }
-    
-    fun clearHistory() {
-        prefs.edit().remove(KEY_HISTORY).apply()
-    }
-    fun remove(uriString: String) {
-        val items = getHistory().filterNot { it.uriString == uriString }
-        val json = JSONArray()
-        items.forEach { json.put(JSONObject().put("uri", it.uriString).put("name", it.name)
-            .put("action", it.action).put("timestamp", it.timestamp).put("mime", it.mimeType).put("directory", it.isDirectory)) }
-        prefs.edit().putString(KEY_HISTORY, json.toString()).apply()
-    }
+    fun remove(uriString: String) = removeHistoryItem(uriString)
 }

@@ -50,8 +50,9 @@ fun TableExtractorScreen(
     BackHandler { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var extractedCsv by remember { mutableStateOf("") }
     var isExtracting by remember { mutableStateOf(false) }
     var isParsingCsv by remember { mutableStateOf(false) }

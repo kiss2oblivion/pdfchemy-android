@@ -64,7 +64,8 @@ fun PageOrganizerScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
@@ -118,7 +119,7 @@ fun PageOrganizerScreen(
     }
 
     val latestLoad = remember { com.pdfchemy.app.logic.LatestRequest() }
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+    fun loadOrganizerDocument(uri: Uri) {
         val ticket = latestLoad.begin()
         selectedPdfUri = uri
         loadFailed = false
@@ -153,6 +154,14 @@ fun PageOrganizerScreen(
             }
         }
     }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && selectedPdfUri == continuityUri && session.pages.isEmpty()) {
+            loadOrganizerDocument(continuityUri!!)
+        }
+    }
+
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri -> loadOrganizerDocument(uri) }
 
     val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && pageItems.isNotEmpty()) {

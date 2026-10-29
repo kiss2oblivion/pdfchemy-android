@@ -45,14 +45,14 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var formFields by remember { mutableStateOf<List<FormFieldInfo>>(emptyList()) }
     val fieldValues = remember { mutableStateMapOf<String, String>() }
     var isLoadingFields by remember { mutableStateOf(false) }
     var flattenForm by remember { mutableStateOf(false) }
 
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    fun loadFormFields(uri: Uri) {
         selectedPdfUri = uri
         isLoadingFields = true
         scope.launch {
@@ -64,6 +64,17 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             }
             isLoadingFields = false
         }
+    }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && selectedPdfUri == continuityUri && formFields.isEmpty() && !isLoadingFields) {
+            loadFormFields(continuityUri!!)
+        }
+    }
+
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        loadFormFields(uri)
     }
 
     val saveDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->

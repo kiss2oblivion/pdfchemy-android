@@ -49,7 +49,15 @@ fun RedactionScreen(
     val isProcessing = uiState is MainViewModel.UiState.Processing || uiState is MainViewModel.UiState.BatchProcessing
     BackHandler(enabled = !isProcessing) { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
+    LaunchedEffect(continuityUri) {
+        val target = continuityUri
+        if (target != null) {
+            selectedPdfUri = target
+            viewModel.clearContinuityUri()
+        }
+    }
     var searchQuery by remember { mutableStateOf("") }
     var isRegex by remember { mutableStateOf(false) }
 

@@ -93,6 +93,14 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             ) {
             item {
                 ToolCard(
+                    title = stringResource(R.string.select_pdf_for_reading),
+                    subtitle = stringResource(R.string.menu_reflow_reader_desc),
+                    icon = Icons.Rounded.PictureAsPdf,
+                    onClick = { onNavigate(Screen.PdfReader()) }
+                )
+            }
+            item {
+                ToolCard(
                     title = stringResource(R.string.menu_edit_pdf),
                     subtitle = stringResource(R.string.menu_edit_pdf_desc),
                     icon = Icons.Filled.Edit,
@@ -544,8 +552,10 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedFile by remember(initialUri) {
-        mutableStateOf(initialUri?.let { PdfItem(it, com.pdfchemy.app.utils.FileUtils.getFileName(context, it) ?: "Document.pdf") })
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedFile by remember(effectiveInitialUri) {
+        mutableStateOf(effectiveInitialUri?.let { PdfItem(it, com.pdfchemy.app.utils.FileUtils.getFileName(context, it) ?: "Document.pdf") })
     }
     var extractMode by remember { mutableStateOf(0) } // 0 = All, 1 = Custom Range
     var customRange by remember { mutableStateOf("") }
@@ -797,7 +807,13 @@ fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<PdfItem?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedFile by remember {
+        mutableStateOf(continuityUri?.let { uri ->
+            val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
+            PdfItem(uri, name)
+        })
+    }
     var pagesToDelete by remember { mutableStateOf("") }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
@@ -885,13 +901,19 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<androidx.documentfile.provider.DocumentFile?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedFile by remember {
+        mutableStateOf(continuityUri?.let { uri ->
+            val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
+            PdfItem(uri, name)
+        })
+    }
     var pageRange by remember { mutableStateOf("") }
     var rotationDegrees by remember { mutableIntStateOf(90) }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
-        val docFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
-        selectedFile = docFile
+        val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
+        selectedFile = PdfItem(uri, name)
     }
 
     val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { uri ->
