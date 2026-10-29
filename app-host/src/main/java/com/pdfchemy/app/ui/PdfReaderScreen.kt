@@ -49,6 +49,8 @@ import com.pdfchemy.app.Screen
 import com.pdfchemy.app.logic.BoundedPageBitmapCache
 import com.pdfchemy.app.logic.PdfEditor
 import com.pdfchemy.app.logic.ReaderBackAction
+import com.pdfchemy.app.logic.ReaderCommandAction
+import com.pdfchemy.app.logic.ReaderCommandCentreCatalog
 import com.pdfchemy.app.logic.ReaderControlsUiState
 import com.pdfchemy.app.logic.ReaderPageKey
 import com.pdfchemy.app.logic.ReaderRenderGate
@@ -162,6 +164,12 @@ private fun PdfReaderDocument(
         showTocSheet = showTocSheet,
         showCommandCentreSheet = showCommandCentreSheet
     )
+
+    fun launchCommandAction(action: ReaderCommandAction) {
+        applyControlsState(currentControlsState().onDismissCommandCentre())
+        viewModel.setContinuityUri(selectedPdfUri)
+        onNavigateToTool(ReaderCommandCentreCatalog.resolveScreen(action, selectedPdfUri))
+    }
     
     // Search and TOC state
     var bookmarks by remember { mutableStateOf<List<com.pdfchemy.app.logic.OutlineBookmark>>(emptyList()) }
@@ -497,8 +505,11 @@ private fun PdfReaderDocument(
                             Icon(Icons.Rounded.Menu, contentDescription = "Table of Contents")
                         }
                     }
-                    IconButton(onClick = { onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri)) }) {
-                        Icon(Icons.Rounded.Edit, contentDescription = "Edit")
+                    IconButton(onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) }) {
+                        Icon(Icons.Rounded.MenuBook, contentDescription = stringResource(R.string.menu_reflow_reader))
+                    }
+                    IconButton(onClick = { launchCommandAction(ReaderCommandAction.EDIT_ANNOTATE) }) {
+                        Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.menu_edit_pdf))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -609,36 +620,75 @@ private fun PdfReaderDocument(
                         ContinuityToolButton(
                             icon = Icons.Rounded.Compress, 
                             label = stringResource(R.string.menu_compress), 
-                            onClick = { 
-                                viewModel.setContinuityUri(selectedPdfUri)
-                                onNavigateToTool(Screen.CompressPdf) 
-                            }
+                            onClick = { launchCommandAction(ReaderCommandAction.COMPRESS) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.DocumentScanner, 
                             label = stringResource(R.string.menu_ocr_pdf), 
-                            onClick = { 
-                                viewModel.setContinuityUri(selectedPdfUri)
-                                onNavigateToTool(Screen.OcrPdf) 
-                            }
+                            onClick = { launchCommandAction(ReaderCommandAction.OCR_SEARCHABLE) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.Draw, 
                             label = stringResource(R.string.menu_sign_pdf), 
-                            onClick = { 
-                                viewModel.setContinuityUri(selectedPdfUri)
-                                onNavigateToTool(Screen.SignPdf) 
-                            }
+                            onClick = { launchCommandAction(ReaderCommandAction.SIGN_PDF) }
                         )
                         ContinuityToolButton(
                             icon = Icons.Rounded.Security, 
                             label = stringResource(R.string.menu_protect_pdf), 
-                            onClick = { 
-                                viewModel.setContinuityUri(selectedPdfUri)
-                                onNavigateToTool(Screen.ProtectPdf) 
-                            }
+                            onClick = { launchCommandAction(ReaderCommandAction.PROTECT_ENCRYPT) }
+                        )
+                        ContinuityToolButton(
+                            icon = Icons.Rounded.Apps,
+                            label = stringResource(R.string.menu_more_tools),
+                            onClick = { applyControlsState(currentControlsState().onOpenCommandCentre()) }
                         )
                     }
+                }
+            }
+        }
+
+        if (showCommandCentreSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { applyControlsState(currentControlsState().onDismissCommandCentre()) }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.menu_more_tools),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 420.dp)
+                    ) {
+                        items(ReaderCommandCentreCatalog.allSheetActions) { action ->
+                            val (icon, titleRes) = readerCommandPresentation(action)
+                            ListItem(
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                headlineContent = {
+                                    Text(
+                                        text = stringResource(titleRes),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                },
+                                modifier = Modifier.clickable { launchCommandAction(action) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -689,6 +739,30 @@ private fun PdfReaderDocument(
                 }
             }
         }
+    }
+}
+
+private fun readerCommandPresentation(
+    action: ReaderCommandAction
+): Pair<androidx.compose.ui.graphics.vector.ImageVector, Int> {
+    return when (action) {
+        ReaderCommandAction.EDIT_ANNOTATE -> Icons.Rounded.Edit to R.string.menu_edit_pdf
+        ReaderCommandAction.REFLOW_READER -> Icons.Rounded.MenuBook to R.string.menu_reflow_reader
+        ReaderCommandAction.COMPRESS -> Icons.Rounded.Compress to R.string.menu_compress
+        ReaderCommandAction.OCR_SEARCHABLE -> Icons.Rounded.DocumentScanner to R.string.menu_ocr_pdf
+        ReaderCommandAction.SIGN_PDF -> Icons.Rounded.Draw to R.string.menu_sign_pdf
+        ReaderCommandAction.PROTECT_ENCRYPT -> Icons.Rounded.Security to R.string.menu_protect_pdf
+        ReaderCommandAction.SPLIT -> Icons.Rounded.CallSplit to R.string.menu_split
+        ReaderCommandAction.PAGE_ORGANIZER -> Icons.Rounded.ViewModule to R.string.menu_page_organizer
+        ReaderCommandAction.ROTATE_PAGES -> Icons.Rounded.RotateRight to R.string.menu_rotate_pages
+        ReaderCommandAction.DELETE_PAGES -> Icons.Rounded.Delete to R.string.menu_delete_pages
+        ReaderCommandAction.FILL_FORM -> Icons.Rounded.DynamicForm to R.string.menu_fill_form
+        ReaderCommandAction.QUICK_FILL_SIGN -> Icons.Rounded.Draw to R.string.menu_quick_fill_sign
+        ReaderCommandAction.EXTRACT_TABLES -> Icons.Rounded.TableChart to R.string.table_extractor_title
+        ReaderCommandAction.EXPORT_OFFICE -> Icons.Rounded.Description to R.string.title_office_exporter
+        ReaderCommandAction.REDACT -> Icons.Rounded.VisibilityOff to R.string.menu_redaction_studio
+        ReaderCommandAction.WATERMARK -> Icons.Rounded.BrandingWatermark to R.string.menu_watermark_pdf
+        ReaderCommandAction.PAGE_NUMBERS -> Icons.Rounded.Numbers to R.string.menu_page_number_pdf
     }
 }
 

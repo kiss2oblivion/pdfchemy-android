@@ -1,5 +1,8 @@
 package com.pdfchemy.app.logic
 
+import android.net.Uri
+import com.pdfchemy.app.Screen
+
 data class ReaderViewportPaddingDp(
     val topDp: Int,
     val bottomDp: Int,
@@ -12,6 +15,60 @@ enum class ReaderBackAction {
     CLOSE_SEARCH,
     RESET_ZOOM,
     EXIT_READER
+}
+
+enum class ReaderCommandAction(val maxTapsFromReader: Int) {
+    EDIT_ANNOTATE(1),
+    REFLOW_READER(1),
+    COMPRESS(1),
+    OCR_SEARCHABLE(1),
+    SIGN_PDF(1),
+    PROTECT_ENCRYPT(1),
+    SPLIT(2),
+    PAGE_ORGANIZER(2),
+    ROTATE_PAGES(2),
+    DELETE_PAGES(2),
+    FILL_FORM(2),
+    QUICK_FILL_SIGN(2),
+    EXTRACT_TABLES(2),
+    EXPORT_OFFICE(2),
+    REDACT(2),
+    WATERMARK(2),
+    PAGE_NUMBERS(2)
+}
+
+object ReaderCommandCentreCatalog {
+
+    val primaryBarActions: List<ReaderCommandAction> = listOf(
+        ReaderCommandAction.COMPRESS,
+        ReaderCommandAction.OCR_SEARCHABLE,
+        ReaderCommandAction.SIGN_PDF,
+        ReaderCommandAction.PROTECT_ENCRYPT
+    )
+
+    val allSheetActions: List<ReaderCommandAction> = ReaderCommandAction.entries
+
+    fun resolveScreen(action: ReaderCommandAction, activeDocumentUri: Uri?): Screen {
+        return when (action) {
+            ReaderCommandAction.EDIT_ANNOTATE -> Screen.PdfEditor(initialPdfUri = activeDocumentUri)
+            ReaderCommandAction.REFLOW_READER -> Screen.ReflowReader(initialUri = activeDocumentUri)
+            ReaderCommandAction.COMPRESS -> Screen.CompressPdf
+            ReaderCommandAction.OCR_SEARCHABLE -> Screen.OcrPdf
+            ReaderCommandAction.SIGN_PDF -> Screen.SignPdf
+            ReaderCommandAction.PROTECT_ENCRYPT -> Screen.ProtectPdf
+            ReaderCommandAction.SPLIT -> Screen.SplitPdf
+            ReaderCommandAction.PAGE_ORGANIZER -> Screen.PageOrganizer
+            ReaderCommandAction.ROTATE_PAGES -> Screen.RotatePdf
+            ReaderCommandAction.DELETE_PAGES -> Screen.DeletePages
+            ReaderCommandAction.FILL_FORM -> Screen.FillForm
+            ReaderCommandAction.QUICK_FILL_SIGN -> Screen.QuickFillSign
+            ReaderCommandAction.EXTRACT_TABLES -> Screen.TableExtractor
+            ReaderCommandAction.EXPORT_OFFICE -> Screen.OfficeExport(OfficeFormat.WORD)
+            ReaderCommandAction.REDACT -> Screen.Redaction
+            ReaderCommandAction.WATERMARK -> Screen.Watermark
+            ReaderCommandAction.PAGE_NUMBERS -> Screen.PageNumber
+        }
+    }
 }
 
 data class ReaderControlsUiState(
@@ -86,4 +143,3 @@ data class ReaderControlsUiState(
         }
     }
 }
-
