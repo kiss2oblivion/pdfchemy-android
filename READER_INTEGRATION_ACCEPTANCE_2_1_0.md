@@ -109,6 +109,10 @@
 6. **Retained-Share Settings Management (Gate Open):**
    - Codex implemented `DocumentActions.inspectRetainedShares(context)` and `cleanupRetainedShares(context, ids, cancellationSignal)` off the main thread, enforcing the 64-copy/250 MiB quota.
    - **Status:** Backend is verified and ready. UI integration in Settings remains an open release gate (requires dedicated UI for displaying retained copy count/bytes and user-confirmed cleanup of inactive copies without automatic eviction).
+7. **MainViewModel Operation Admission & Ownership Remediation (DeepSeek H3):**
+   - **Issue:** 21 of 31 operation entry points in `MainViewModel.kt` lacked admission guards, allowing concurrent operation requests while an active operation was in `Processing` state. This displaced `activeJob`, accidentally attached secondary output URIs to the primary operation's record, and caused cancellation cross-talk or orphaned temp files.
+   - **Remediation:** Added `operationAdmissionLock`, `isProcessingActive()`, `tryAdmitOperation(onReject = { ... })`, and synchronized `cancelOperation` and `_uiStateInternal.value` setter across all 31 operations. If an operation is called while processing is active, it is immediately rejected without mutating `activeJob` or `activeOperations`.
+   - **Verification:** Added `OperationConcurrencyTest.kt` verifying immediate rejection of secondary calls (`rotatePdf`, `extractTextFromPdf`, `exportPdfToOffice`), cancellation isolation, and thread-safe atomic admission across 20 concurrent threads (1 admitted, 19 rejected).
 
 ---
 
