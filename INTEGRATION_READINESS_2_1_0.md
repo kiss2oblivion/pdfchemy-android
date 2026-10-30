@@ -2,7 +2,9 @@
 
 **Decision: HOLD for release.** This is the combined review candidate for PRs #12, #13, #14 and #15. Original PR branches remain unchanged. No main merge, release tag, deployment or Play action is authorized.
 
-The last application-code commit is `de825ca1075121c0187f854a0c6c0f877da07a5f` (tree `fea3f54e4ec0c8b6eb9e9d79950619ec2f84f789`). Remote heads, bases and CI were refreshed on 2026-10-30 for the [new assignment](https://github.com/kiss2oblivion/pdfchemy-android/pull/14#issuecomment-6517180797); all four input heads still match this integration. This report adds documentation only. The report-bearing commit must also pass all nine required jobs; its immutable SHA and run URL belong in the draft PR's final verification comment, after CI finishes. The completed results below apply to the explicitly named code SHA, not to a future commit.
+**Current correction record:** [PR #17 closure, 30 October](reports/integration-2.1.0/PR17_CLOSURE_2026_10_30.md). Codex has integrated `84b883fb` (causal audio cancellation fix) and `e3f22dd1` (explicit retained-share management; history no longer deletes recipient copies) on refreshed baseline `3e981763f23701b8b7cbc2d0e106b73f805424c9`. These production changes require new exact-head CI and signed artifacts. The final immutable SHA and verified run/artifact receipt belong in PR #17 metadata after completion. Earlier evidence below remains bound to its named SHA and does not close those new gates.
+
+The historical application-code baseline is `de825ca1075121c0187f854a0c6c0f877da07a5f` (tree `fea3f54e4ec0c8b6eb9e9d79950619ec2f84f789`). Its original integration evidence follows. All original PR inputs and C01-C06 remain in history. Codex owns canonical implementation/release engineering; Gemini's assignment is the full independent product security audit, under the superseding PR #17 owner directive.
 
 ## Dependencies and provenance
 
