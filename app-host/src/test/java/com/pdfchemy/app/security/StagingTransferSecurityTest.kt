@@ -239,9 +239,8 @@ class StagingTransferSecurityTest {
         val initialBytes = DocumentStager.totalStagedBytes
 
         // 2. Perform 10 repeated cancellations of new documents and the borrower document
-        val controlledDispatcher = ControllableDispatcher(Dispatchers.IO)
-
         for (i in 1..10) {
+            val controlledDispatcher = ControllableDispatcher(Dispatchers.IO)
             val ephemeralFile = createPdfFile("ephemeral_$i", "noise_$i")
             val ephemeralUri = Uri.fromFile(ephemeralFile)
 
@@ -263,6 +262,7 @@ class StagingTransferSecurityTest {
             }
 
             job.join()
+            assertTrue("Job $i must have been cancelled", job.isCancelled)
 
             // Verify: No lease leak on ephemeral file
             assertEquals("No lease should leak on ephemeral document $i",
