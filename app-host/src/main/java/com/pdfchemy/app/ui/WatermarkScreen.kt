@@ -54,7 +54,8 @@ fun WatermarkScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var watermarkText by remember { mutableStateOf("CONFIDENTIAL") }
     var opacity by remember { mutableFloatStateOf(0.30f) }
@@ -89,6 +90,15 @@ fun WatermarkScreen(
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
             }
+        }
+    }
+
+    LaunchedEffect(continuityUri) {
+        val target = continuityUri
+        if (target != null) {
+            selectedPdfUri = target
+            viewModel.clearContinuityUri()
+            loadPreview(target)
         }
     }
 

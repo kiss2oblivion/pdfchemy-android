@@ -1123,4 +1123,18 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="menu_more_tools">全部工具</string>
+    <string name="reader_action_search">搜索文档</string>
+    <string name="reader_toc_title">目录</string>
+    <string name="reader_fit_width">适合宽度</string>
+    <string name="reader_fit_page">适合页面</string>
+    <string name="reader_search_hint">搜索文档…</string>
+    <string name="reader_action_clear_search">清除搜索</string>
+    <string name="reader_search_no_matches">未找到匹配项</string>
+    <string name="reader_page_indicator">第 %1$d / %2$d 页</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">第 %1$d 页</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • 重置</string>
+    <string name="previous_match">上一个匹配项</string>
+    <string name="next_match">下一个匹配项</string>
 </resources>

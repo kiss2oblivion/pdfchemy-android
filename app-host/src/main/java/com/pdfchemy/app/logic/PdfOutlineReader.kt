@@ -3,10 +3,10 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.json.JSONArray
 
 data class OutlineBookmark(
     val title: String,
@@ -69,6 +69,8 @@ object PdfOutlineReader {
                 isScannedOnly = contract.isScannedOnly,
                 totalPages = contract.totalPages
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfOutlineReader: Failed to extract reflow document", e)
             ReflowDocumentData(emptyList(), emptyList(), false, 0)

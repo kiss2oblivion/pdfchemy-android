@@ -320,28 +320,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun extractPdfUri(intent: Intent?): Uri? {
-        if (intent == null) return null
-        val action = intent.action
-        if (Intent.ACTION_VIEW == action) {
-            return intent.data
-        } else if (Intent.ACTION_SEND == action) {
-            val streamUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-            }
-            return streamUri ?: intent.data
-        } else if (Intent.ACTION_SEND_MULTIPLE == action) {
-            val list = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-            }
-            return list?.firstOrNull() ?: intent.data
-        }
-        return null
+        return com.pdfchemy.app.logic.ReaderNavigationCoordinator.extractIncomingDocumentUri(intent)
     }
 
     private fun cleanupOrphanedCacheFiles(context: Context) {
@@ -557,6 +536,15 @@ fun MainApp(
     onOpenTour: () -> Unit = {}
 ) {
     var currentScreen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Home) }
+    var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
+    fun returnFromTool(fallback: Screen) {
+        val savedSource = readerReturnUri?.let(Uri::parse)
+        readerReturnUri = null
+        if (savedSource != null && viewModel.readerNavigation.readerReturnUri == null) {
+            viewModel.navigateFromReaderToTool(savedSource, currentScreen)
+        }
+        currentScreen = viewModel.returnFromTool(fallback)
+    }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
@@ -578,10 +566,9 @@ fun MainApp(
             incomingPdfUri?.let { originalUri ->
                 val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
                 val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.lowercase() ?: ""
-                if (name.endsWith(".epub")) {
-                    currentScreen = Screen.ReflowReader(initialUri = uri)
-                } else if (name.endsWith(".cbz") || name.endsWith(".cbr")) {
-                    currentScreen = Screen.EbookConverter
+                val resolvedTarget = com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(uri, name)
+                if (resolvedTarget !is Screen.PdfReader) {
+                    currentScreen = resolvedTarget
                 } else {
                     if (isVanguardEnabled) {
                         isVanguardScanning = true
@@ -590,7 +577,7 @@ fun MainApp(
                             val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                             when (threatResult) {
                                 is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                    currentScreen = Screen.PdfReader(initialPdfUri = uri)
+                                    currentScreen = resolvedTarget
                                 }
                                 is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                     vanguardPendingEncryptedUri = uri
@@ -598,6 +585,7 @@ fun MainApp(
                                 }
                                 is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
                                 is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(uri)
                                     showVanguardBlockedDialog = true
                                 }
                             }
@@ -606,7 +594,7 @@ fun MainApp(
                             vanguardScanningFileName = null
                         }
                     } else {
-                        currentScreen = Screen.PdfReader(initialPdfUri = uri)
+                        currentScreen = resolvedTarget
                     }
                 }
                 incomingPdfUriState?.value = null
@@ -816,68 +804,68 @@ fun MainApp(
                 // 1. 🗜️ COMPRESSION & OPTIMIZATION (FEATURES_REGISTRY Section 1)
                 // =========================================================================================
                 // [FEATURE: PDF Compressor] — 4 Presets (Extreme, Recommended, High Quality, Custom DPI/Quality)
-                Screen.CompressPdf -> CompressPdfScreen(viewModel, 0, isScreenshotRun) { currentScreen = Screen.CompressCategory }
+                Screen.CompressPdf -> CompressPdfScreen(viewModel, 0, isScreenshotRun) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Batch PDF Compressor] — Parallel multi-file background compression
-                Screen.BatchCompressPdf -> CompressPdfScreen(viewModel, 1, isScreenshotRun) { currentScreen = Screen.CompressCategory }
+                Screen.BatchCompressPdf -> CompressPdfScreen(viewModel, 1, isScreenshotRun) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Image Compressor] — Compress standalone JPEG/PNG/WEBP photos
-                Screen.ImageCompressor -> ImageCompressorScreen(viewModel) { currentScreen = Screen.CompressCategory }
+                Screen.ImageCompressor -> ImageCompressorScreen(viewModel) { returnFromTool(Screen.CompressCategory) }
                 // [FEATURE: Grayscale Optimizer] — Converts color PDF streams to monochrome/grayscale
-                Screen.GrayscaleOptimizer -> GrayscaleOptimizerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.GrayscaleOptimizer -> GrayscaleOptimizerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Linearize (Fast Web View)] — Restructures PDF dictionary for instant streaming
-                Screen.LinearizePdf -> LinearizePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.LinearizePdf -> LinearizePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Flatten PDF] — Permanently bakes form fields, comments, and annotations into page layer
-                Screen.FlattenPdf -> FlattenPdfScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.FlattenPdf -> FlattenPdfScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
 
                 // =========================================================================================
                 // 2. 📑 PAGE STUDIO & ORGANIZATION (FEATURES_REGISTRY Section 2)
                 // =========================================================================================
                 // [FEATURE: Merge PDFs] — Multi-document combiner with drag-and-drop reordering
-                Screen.MergePdf -> MergePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.MergePdf -> MergePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Split PDFs (Range / All)] — Split into individual pages or arbitrary page ranges
-                Screen.SplitPdf -> SplitPdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.SplitPdf -> SplitPdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Page Organizer] — Visual thumbnail grid: reorder, delete, duplicate, rotate
-                Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Delete Pages] — Visual single-page or multi-page removal
-                Screen.DeletePages -> DeletePagesScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.DeletePages -> DeletePagesScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Rotate Pages] — Lossless 90°, 180°, 270° orientation correction
-                Screen.RotatePdf -> RotatePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.RotatePdf -> RotatePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Auto-Deskew & Straighten] — Hough transform scan tilt auto-correction
-                Screen.Deskew -> DeskewScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.Deskew -> DeskewScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Page Cropper & Margin Trimmer] — CropBox adjustment to remove scanner borders
-                Screen.CropPdf -> PageCropperScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.CropPdf -> PageCropperScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Paper Canvas Resizer] — Standard paper dimension imposition (A4, Letter, Legal, A3)
-                Screen.PageLayout -> PageLayoutScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.PageLayout -> PageLayoutScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: N-Up Handouts] — Imposes 2, 4, 6, 9, 16 pages per sheet with border guides
-                Screen.NUp -> NUpScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.NUp -> NUpScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Booklet Imposition] — Saddle-stitch fold printer ordering
-                Screen.Booklet -> BookletScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.Booklet -> BookletScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
 
                 // =========================================================================================
                 // 3. 🔄 CREATION & CONVERSION (FEATURES_REGISTRY Section 3)
                 // =========================================================================================
                 // [FEATURE: Images to PDF] — Converts camera photos, receipts, and gallery images to PDF
-                Screen.ImagesToPdf -> ImagesToPdfScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.ImagesToPdf -> ImagesToPdfScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: PDF to High-Res Images] — Exports pages as PNG or JPEG image files
-                Screen.PdfToImages -> PdfToImagesScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.PdfToImages -> PdfToImagesScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Scan to PDF] — Hardware camera scan with edge auto-detection and perspective correction
-                Screen.ScanPdf -> ScanPdfScreen(viewModel, onNavigateToTool = { currentScreen = it }) { currentScreen = Screen.CreateCategory }
+                Screen.ScanPdf -> ScanPdfScreen(viewModel, onNavigateToTool = { currentScreen = it }) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: EPUB to PDF Converter] — Standard EPUB parsing with fonts/margins to paginated PDF
-                Screen.EbookConverter -> EbookConverterScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.EbookConverter -> EbookConverterScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Markdown to PDF Studio] — Rich Markdown editor with live preview
-                Screen.MarkdownStudio -> MarkdownStudioScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.MarkdownStudio -> MarkdownStudioScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Text to PDF Converter] — Converts .txt, source code, and logs into paginated PDF
-                Screen.TextToPdf -> TextToPdfScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.TextToPdf -> TextToPdfScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Text Format Converter] — Inter-converts between TXT, RTF, and HTML
-                Screen.TextConverter -> TextConverterScreen(textConverterViewModel, viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.TextConverter -> TextConverterScreen(textConverterViewModel, viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Table Extractor to CSV] — 2D column clustering: extracts tables to RFC 4180 CSV / Excel
-                Screen.TableExtractor -> TableExtractorScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.TableExtractor -> TableExtractorScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Office Export (Word / Excel / PPTX)] — Pure OpenXML generators: PDF to DOCX, XLSX, PPTX
-                is Screen.OfficeExport -> OfficeExportScreen((targetScreen as Screen.OfficeExport).initialFormat, viewModel) { currentScreen = Screen.CreateCategory }
+                is Screen.OfficeExport -> OfficeExportScreen((targetScreen as Screen.OfficeExport).initialFormat, viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: On-Device OCR] — 100% offline optical character recognition
-                Screen.OcrPdf -> OcrPdfScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.OcrPdf -> OcrPdfScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Extract Text & Images] — Strips raw uncompressed text and raster bitmaps
-                Screen.ExtractText -> ExtractTextScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                Screen.ExtractImages -> ExtractImagesScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.ExtractText -> ExtractTextScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                Screen.ExtractImages -> ExtractImagesScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
 
                 // =========================================================================================
                 // 4. ✍️ FORM FILLING & DOCUMENT EDITING (FEATURES_REGISTRY Section 4)
@@ -886,64 +874,75 @@ fun MainApp(
                 is Screen.PdfEditor -> {
                     val editorScreen = targetScreen as Screen.PdfEditor
                     PdfEditorScreen(viewModel, editorScreen.initialPdfUri) {
-                        currentScreen = if (editorScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
+                        returnFromTool(if (editorScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory)
                     }
                 }
                 is Screen.PdfReader -> {
                     val readerScreen = targetScreen as Screen.PdfReader
                     com.pdfchemy.app.ui.PdfReaderScreen(
                         viewModel = viewModel,
-                        initialUri = readerScreen.initialPdfUri ?: Uri.EMPTY,
-                        onBack = { currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory },
-                        onNavigateToTool = { screen -> currentScreen = screen }
+                        initialUri = readerScreen.initialPdfUri,
+                        onBack = {
+                            readerReturnUri = null
+                            viewModel.readerNavigation.onExitReader()
+                            viewModel.clearContinuityUri()
+                            currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
+                        },
+                        onNavigateToTool = { screen ->
+                            currentScreen = viewModel.navigateFromReaderToTool(
+                                viewModel.readerNavigation.activeReaderUri ?: readerScreen.initialPdfUri,
+                                screen
+                            )
+                            readerReturnUri = viewModel.readerNavigation.readerReturnUri?.toString()
+                        }
                     )
                 }
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)
-                Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Interactive Form Builder] — Converts flat PDFs into genuine fillable forms (PDAcroForm)
-                Screen.FormBuilder -> FormBuilderScreen { currentScreen = Screen.CreateCategory }
+                Screen.FormBuilder -> FormBuilderScreen { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: AcroForm Interactive Filler] — Inspects and fills standard interactive PDF forms
-                Screen.FillForm -> FillFormScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.FillForm -> FillFormScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Visual Signer] — Draw smoothed vector signatures and place on page
-                Screen.SignPdf -> SignPdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.SignPdf -> SignPdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Watermark Studio] — Custom text/image watermarks with opacity and diagonal tiling
-                Screen.Watermark -> WatermarkScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.Watermark -> WatermarkScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Header & Footer Studio] — Running headers and footers with custom margins
-                Screen.HeaderFooter -> HeaderFooterScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.HeaderFooter -> HeaderFooterScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Page Numbering Studio] — Page numbers (Page X of Y, X/Y), position, font, start offset
-                Screen.PageNumber -> PageNumberScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.PageNumber -> PageNumberScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Bookmark Editor] — Edit document outline tree and table of contents
-                Screen.BookmarkEditor -> BookmarkEditorScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.BookmarkEditor -> BookmarkEditorScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Find & Replace Text] — Text search across pages with replacement or redaction
-                Screen.FindAndReplaceText -> FindAndReplaceScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.FindAndReplaceText -> FindAndReplaceScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Image Replacer] — Replace embedded raster objects in PDF stream
-                Screen.ImageReplacer -> ImageReplacerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.ImageReplacer -> ImageReplacerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
 
                 // =========================================================================================
                 // 5. 🛡️ SECURITY, PRIVACY & COMPLIANCE (FEATURES_REGISTRY Section 5)
                 // =========================================================================================
                 // [FEATURE: Encrypt / Password Protect] — AES-128 / AES-256 standard PDF encryption
-                Screen.ProtectPdf -> ProtectPdfScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                is Screen.UnlockPdf -> UnlockPdfScreen(viewModel, targetScreen.initialUri) { currentScreen = Screen.CheckCategory }
+                Screen.ProtectPdf -> ProtectPdfScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                is Screen.UnlockPdf -> UnlockPdfScreen(viewModel, targetScreen.initialUri) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Permanent Smart Redaction] — PII auto-detection (emails, phones, SSNs) + stream scrubbing
-                Screen.Redaction -> RedactionScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.Redaction -> RedactionScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Deep Threat Sanitizer] — Strips embedded JavaScript, launch actions, URI tracking beacons
-                Screen.DocumentSanitizer -> DocumentSanitizerScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.DocumentSanitizer -> DocumentSanitizerScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Metadata Sanitizer] — Purges author name, software creator, GPS coordinates, history
-                Screen.MetadataSanitizer -> MetadataSanitizerScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                Screen.InspectMetadata -> InspectMetadataScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                Screen.StripMetadata -> StripMetadataScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                Screen.TextCleaner -> TextCleanerScreen { currentScreen = Screen.CheckCategory }
+                Screen.MetadataSanitizer -> MetadataSanitizerScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                Screen.InspectMetadata -> InspectMetadataScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                Screen.StripMetadata -> StripMetadataScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                Screen.TextCleaner -> TextCleanerScreen { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: PDF/A Preflight Validator] — Audits ISO 19005 compliance (OutputIntents, fonts, XMP)
-                Screen.PdfAValidator -> PdfAValidatorScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.PdfAValidator -> PdfAValidatorScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Typography & Font Inspector] — Lists embedded font programs, TrueType/Type1, subsets
-                Screen.FontInspector -> FontInspectorScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.FontInspector -> FontInspectorScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Embedded Attachments Manager] — Inspects, extracts, and embeds arbitrary file attachments
-                Screen.AttachmentManager -> AttachmentManagerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.AttachmentManager -> AttachmentManagerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: PDF Repair Studio] — Reconstructs broken cross-reference tables and truncated trailers
-                Screen.RepairPdf -> RepairPdfScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.RepairPdf -> RepairPdfScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
                 // [FEATURE: Document Visual Comparison] — Side-by-side synchronized comparison & textual diffs
-                Screen.ComparePdf -> PdfCompareScreen(viewModel) { currentScreen = Screen.CheckCategory }
+                Screen.ComparePdf -> PdfCompareScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
 
                 // =========================================================================================
                 // 6. 📖 READING & ACCESSIBILITY (FEATURES_REGISTRY Section 6)
@@ -951,7 +950,7 @@ fun MainApp(
                 // [FEATURE: Reflow Reader Studio & Offline TTS] — E-reader reflow, themes, 100% offline TTS
                 is Screen.ReflowReader -> {
                     val reflowScreen = targetScreen as Screen.ReflowReader
-                    ReflowReaderScreen(viewModel = viewModel, initialUri = reflowScreen.initialUri) { currentScreen = Screen.OrganizeCategory }
+                    ReflowReaderScreen(viewModel = viewModel, initialUri = reflowScreen.initialUri) { returnFromTool(Screen.OrganizeCategory) }
                 }
             }
         }
@@ -1050,6 +1049,8 @@ fun MainApp(
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
+                                    readerReturnUri = null
+                                    viewModel.readerNavigation.onExitReader()
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
@@ -1687,10 +1688,34 @@ fun HomeScreen(
                         )
                     }
                     
+                    val homeReaderPicker = rememberVanguardPdfPicker(
+                        onNavigateToUnlock = { unlockUri -> onNavigate(Screen.UnlockPdf(unlockUri)) },
+                        onPdfSelected = { pickedUri ->
+                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
+                        }
+                    )
+
                     com.pdfchemy.app.ui.ToolSearchBar(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier.padding(bottom = 12.dp),
                         onToolSelected = onNavigate
                     )
+
+                    Button(
+                        onClick = { homeReaderPicker.launch(arrayOf("application/pdf")) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(bottom = 8.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.select_pdf_for_reading),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
                     Column(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -4015,11 +4040,47 @@ fun RecentFilesSection(
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
+    var showFileInaccessibleDialog by remember { mutableStateOf(false) }
+    var showDamagedPdfDialog by remember { mutableStateOf(false) }
     var vanguardPendingEncryptedUri by remember { mutableStateOf<Uri?>(null) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    if (showFileInaccessibleDialog) {
+        AlertDialog(
+            onDismissRequest = { showFileInaccessibleDialog = false },
+            title = { Text(stringResource(R.string.vanguard_provider_error_title)) },
+            text = { Text(stringResource(R.string.vanguard_provider_error_message)) },
+            confirmButton = {
+                Button(onClick = { showFileInaccessibleDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedPdfDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedPdfDialog = false },
+            title = { Text(stringResource(R.string.vanguard_damaged_title)) },
+            text = { Text(stringResource(R.string.vanguard_damaged_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showDamagedPdfDialog = false
+                    onNavigate?.invoke(Screen.RepairPdf)
+                }) {
+                    Text(stringResource(R.string.menu_repair_pdf))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDamagedPdfDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     if (showVanguardBlockedDialog) {
         AlertDialog(
@@ -4140,10 +4201,16 @@ fun RecentFilesSection(
                                         onNavigate(Screen.ReflowReader(uri))
                                     } else if (ext == "pdf" && onNavigate != null) {
                                         scope.launch {
-                                            com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
-                                                showVanguardBlockedDialog = true
+                                            com.pdfchemy.app.ui.guardDocumentLoadWithCause(onFailure = { err ->
                                                 isVanguardScanning = false
                                                 vanguardScanningFileName = null
+                                                val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
+                                                if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
+                                                    viewModel.removeHistoryItem(item.uriString)
+                                                    showFileInaccessibleDialog = true
+                                                } else {
+                                                    showDamagedPdfDialog = true
+                                                }
                                             }) {
                                                 val stagedUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri }
                                                 if (isVanguardEnabled) {
@@ -4153,15 +4220,19 @@ fun RecentFilesSection(
                                                         val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                                                         when (threat) {
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                                                onNavigate(Screen.PdfEditor(initialPdfUri = stagedUri))
+                                                                onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(stagedUri, item.name))
                                                             }
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                                                 vanguardPendingEncryptedUri = stagedUri
                                                                 showVanguardEncryptedDialog = true
                                                             }
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat,
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
+                                                                com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
                                                                 showVanguardBlockedDialog = true
+                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                                com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                showDamagedPdfDialog = true
                                                             }
                                                         }
                                                     } finally {
@@ -4169,7 +4240,7 @@ fun RecentFilesSection(
                                                         vanguardScanningFileName = null
                                                     }
                                                 } else {
-                                                    onNavigate(Screen.PdfReader(initialPdfUri = stagedUri))
+                                                    onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(stagedUri, item.name))
                                                 }
                                             }
                                         }

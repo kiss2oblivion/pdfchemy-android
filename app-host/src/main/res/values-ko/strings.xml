@@ -1123,4 +1123,18 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="menu_more_tools">모든 도구</string>
+    <string name="reader_action_search">문서 검색</string>
+    <string name="reader_toc_title">목차</string>
+    <string name="reader_fit_width">너비에 맞춤</string>
+    <string name="reader_fit_page">페이지에 맞춤</string>
+    <string name="reader_search_hint">문서 검색…</string>
+    <string name="reader_action_clear_search">검색 지우기</string>
+    <string name="reader_search_no_matches">일치하는 항목 없음</string>
+    <string name="reader_page_indicator">%2$d페이지 중 %1$d페이지</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">%1$d페이지</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • 재설정</string>
+    <string name="previous_match">이전 일치</string>
+    <string name="next_match">다음 일치</string>
 </resources>

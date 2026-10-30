@@ -98,11 +98,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    val readerNavigation = com.pdfchemy.app.logic.ReaderNavigationCoordinator()
+
     private val _continuityDocumentUri = MutableStateFlow<Uri?>(null)
     val continuityDocumentUri: StateFlow<Uri?> = _continuityDocumentUri.asStateFlow()
 
     fun setContinuityUri(uri: Uri?) {
-        _continuityDocumentUri.value = uri
+        _continuityDocumentUri.value = uri?.takeIf { it != Uri.EMPTY }
+    }
+
+    fun clearContinuityUri(expectedUri: Uri? = null) {
+        if (expectedUri == null || _continuityDocumentUri.value == expectedUri) {
+            _continuityDocumentUri.value = null
+        }
+    }
+
+    fun navigateFromReaderToTool(sourceUri: Uri?, targetScreen: com.pdfchemy.app.Screen): com.pdfchemy.app.Screen {
+        val effectiveUri = sourceUri?.takeIf { it != Uri.EMPTY } ?: readerNavigation.activeReaderUri
+        setContinuityUri(effectiveUri)
+        return readerNavigation.prepareToolNavigationFromReader(effectiveUri, targetScreen)
+    }
+
+    fun returnFromTool(fallback: com.pdfchemy.app.Screen): com.pdfchemy.app.Screen {
+        return readerNavigation.resolveReturnFromTool(fallback) {
+            clearContinuityUri()
+        }
     }
 
     private val prefs = application.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
@@ -116,6 +136,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val items = historyRepository.getHistory()
             _historyList.value = items
         }
+    }
+
+    fun removeHistoryItem(uriString: String) {
+        if (uriString.isBlank()) return
+        historyRepository.removeHistoryItem(uriString)
+        _historyList.value = historyRepository.getHistory()
+    }
+
+    fun recordReaderHistory(uri: Uri, name: String, actionLabel: String = "Read PDF") {
+        if (!_isHistoryEnabled.value) return
+        // Avoid recording transient staged snapshot paths into long-term history if the URI is inside cacheDir/staged_documents
+        val path = uri.path ?: ""
+        if (uri.scheme == "file" && path.contains("staged_documents")) return
+        historyRepository.addHistoryItem(uri, name, actionLabel)
+        _historyList.value = historyRepository.getHistory()
     }
     private val _isHapticEnabled = MutableStateFlow(prefs.getBoolean("haptic", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()

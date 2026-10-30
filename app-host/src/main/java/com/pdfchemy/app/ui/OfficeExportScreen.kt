@@ -40,10 +40,14 @@ fun OfficeExportScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
+    androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var selectedFormat by remember { mutableStateOf(initialFormat) }
-    var fileName by remember { mutableStateOf("") }
+    var fileName by remember {
+        mutableStateOf(continuityUri?.let { FileUtils.getFileName(context, it) ?: "document.pdf" } ?: "")
+    }
     var isProcessing by remember { mutableStateOf(false) }
 
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->

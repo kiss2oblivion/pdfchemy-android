@@ -1134,4 +1134,18 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="menu_more_tools">Toate instrumentele</string>
+    <string name="reader_action_search">Caută în document</string>
+    <string name="reader_toc_title">Cuprins</string>
+    <string name="reader_fit_width">Potrivire la lățime</string>
+    <string name="reader_fit_page">Potrivire la pagină</string>
+    <string name="reader_search_hint">Caută în document…</string>
+    <string name="reader_action_clear_search">Șterge căutarea</string>
+    <string name="reader_search_no_matches">Nu s-au găsit potriviri</string>
+    <string name="reader_page_indicator">Pagina %1$d din %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Pagina %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Resetare</string>
+    <string name="previous_match">Potrivirea anterioară</string>
+    <string name="next_match">Potrivirea următoare</string>
 </resources>
