@@ -105,11 +105,15 @@ class PublicationCancellationSecurityTest {
 
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val writer = scope.launch {
-            AudioOutputPublisher.copy(
-                tempWav,
-                { stream },
-                { cleanupCount.incrementAndGet() }
-            )
+            try {
+                AudioOutputPublisher.copy(
+                    tempWav,
+                    { stream },
+                    { cleanupCount.incrementAndGet() }
+                )
+            } catch (ignored: IOException) {
+                // Expected when stream is asynchronously closed during writer cancellation
+            }
         }
 
         try {
