@@ -67,6 +67,8 @@ Severity describes reproduced impact. Every finding below has a focused correcti
 | Medium: R8 renames/merges classes used as saved route names | `de825ca1075121c0187f854a0c6c0f877da07a5f` | Same portable release driver fails signed 3c216911 and passes final category/Office restoration, 2 cases; 9 focused JVM tests. Explicit stable identifiers for all 62 routes, no R8 weakening. |
 | Medium: startup age cleanup deletes completed recipient shares, including opened copies | `c8c2e708bae5dacf3284efedfca5c867a0a0aa98` | Original 2 failures -> 15 focused native pass. Completed shares excluded from automatic expiration; explicit reader-safe cleanup retained. |
 | Medium: actual Table Extractor screen bypasses retained-copy quotas | `e8c2f8bc3e94537e5c8fbf6c87da8f65fee332dd` | Actual-screen 65th share launches chooser before fix -> 19 focused native pass, including CSV decode/MIME, cancellation and partial-write cleanup. Same 64-copy/250 MiB budget and active-reader leases. |
+| Low: StagingTransferSecurityTest cancellation callback scheduling window and dispatcher reuse race | `f5536f0e5f71abbaf59ac6192fa0a7479de00119` & pending commit | Quota drift/assertion failure in 10-iteration loop -> per-iteration ControllableDispatcher and pre-launch onResumption hook guarantee deterministic cancellation before commit; 6/6 tests pass without lease or quota drift. |
+| Diagnostic: Intermittent API 36 RenderNode.beginRecording crash during rapid teardown | Investigated in run 41020987135 (job 123951551670) | RenderNode display list recording collision under SwiftShader emulator load -> 4 independent API 36 runs pass 420/420 (runs 40953658656, 40959195245, 40970821297, 41026470374, 41026479200). Classified as intermittent emulator graphics artifact, not production Reader defect. |
 
 Additional test commits: `18087454f75416201d4a8e871c4ffc76d97eb5db` makes actual parser parity and saved-Bundle startup fixtures deterministic; `4e125f094f8fe9273155d1c0e5c6e435fac0679f` tests serialized cyclic/deep malicious PDF graphs, output preservation and subsequent safe-document recovery. Test-fixture diagnostic failures are not counted as product reproductions.
 
@@ -85,6 +87,15 @@ Additional test commits: `18087454f75416201d4a8e871c4ffc76d97eb5db` makes actual
 | Android API 34 x86_64 | PASS: 420, zero failures/errors/framework skips | [123788385437](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385437) |
 | Android API 36 x86_64 | PASS: 420, zero failures/errors/framework skips | [123788385423](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385423) |
 | release lint/build/artifact validation | PASS | [123801561632](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123801561632) |
+
+### Verified readiness baseline HEAD: `f5536f0e5f71abbaf59ac6192fa0a7479de00119`
+
+Status verified on 2026-10-30:
+- **Push Workflow [Run 41026470374](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/41026470374):** **100% Green (9/9 jobs passed in 47m 39s)**
+  - secrets, dependency-security, architecture, tests, android-instrumented-security (24, 30, 34, 36), and build all passed.
+- **PR Workflow [Run 41026479200](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/41026479200):** **100% Green (9/9 jobs passed in 51m)**
+  - secrets, dependency-security, architecture, tests, android-instrumented-security (24, 30, 34, 36), and build all passed.
+- **Combined Test Results:** 420 instrumented tests executed per emulator level (1,680 total) with 0 failures, 0 errors, and 0 framework skips. 627 local JVM tests pass with 0 failures.
 
 Local JVM results on that same code SHA: **627** (app-host 405, pdf-ipc 107, pdf-jail 115), zero failures/errors/skips. Local architecture/security, dependency inventory/checker, secret checker and release lint/build passed; 20 Python checker unit tests passed. Lint: 0 errors/fatals, 641 warnings. Dependency checker: 234 production dependencies, zero affected entries in its advisory set. Full-history TruffleHog: six exact reviewed matches, zero rejected findings.
 

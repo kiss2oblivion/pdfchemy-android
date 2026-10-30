@@ -8,14 +8,14 @@
 - [x] Preserve all merge parents and focused correction commits; no historic #1-#7 replay, original-branch rewrite or main merge.
 - [x] Re-read all four #12 native failures: the unsupported-linearization test reaches a prohibited FD pathname reopen. Core #13 correction and regression survive in the combined tree.
 - [x] Verify sixteen protected core Git blobs match #14 and both Gemini table/parser blobs match #12.
-- [x] Code SHA CI: all nine jobs pass in [40970821297](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297).
+- [x] Code SHA CI: all nine jobs pass in [40970821297](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297). Baseline SHA `f5536f0e5f71abbaf59ac6192fa0a7479de00119` passes all nine jobs in push run [41026470374](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/41026470374) and PR #17 run [41026479200](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/41026479200).
 - [x] Local JVM: 627 pass; GitHub Android: 420 per API 24/30/34/36, 1,680 total, zero failure/error/framework skip.
 - [x] Actual exported-PDF geometry, forensic privacy, recursive sanitization, storage quotas, cancellation/failure cleanup and source/old-target preservation regressions pass at that code SHA.
 - [x] Worker isolation, service restrictions, bounded host collectors, renderer scheduling and recovery remain enforced.
 - [x] Architecture, secrets and dependency checks; release lint/build, artifact hygiene and R8 Gson contracts pass at that code SHA.
 - [x] Standard signed/minified code-SHA APK passes the scoped Reader, route-restoration and PPTX public flows, plus static 16 KB ELF/ZIP checks.
 - [ ] **Final report-bearing HEAD:** require all nine jobs on its exact SHA and attach the immutable run/job links in the draft PR verification comment. This committed checklist is a pre-run snapshot; a completed code-SHA run does not close this row for a later head.
-- [ ] **Gemini combined acceptance:** Reader/R01-R06 and G01-G08 report against the combined draft PR, not only its standalone branch.
+- [x] **Gemini combined acceptance:** Reader/R01-R06 and G01-G08 report against the combined draft PR #17 documented in [READER_INTEGRATION_ACCEPTANCE_2_1_0.md](READER_INTEGRATION_ACCEPTANCE_2_1_0.md).
 
 ## Remaining gates and owners
 

@@ -63,10 +63,19 @@ class StagingTransferSecurityTest {
     private class ControllableDispatcher(
         private val delegate: CoroutineDispatcher = Dispatchers.Default
     ) : CoroutineDispatcher() {
+        private val dispatchCount = java.util.concurrent.atomic.AtomicInteger(0)
         @Volatile
         var onDispatch: ((Runnable) -> Unit)? = null
+        @Volatile
+        var onResumption: ((Job?, Runnable) -> Unit)? = null
 
         override fun dispatch(context: CoroutineContext, block: Runnable) {
+            val count = dispatchCount.incrementAndGet()
+            val resumptionHandler = onResumption
+            if (count > 1 && resumptionHandler != null) {
+                resumptionHandler(context[Job], block)
+                return
+            }
             val handler = onDispatch
             if (handler != null) {
                 handler(block)
@@ -90,6 +99,12 @@ class StagingTransferSecurityTest {
             uncommitted.discard(sourceUri)
         }
 
+        // Intercept resumption deterministically before launch
+        callerDispatcher.onResumption = { job, runnable ->
+            job?.cancel()
+            runnable.run()
+        }
+
         // Launch on our controlled dispatcher
         val job = launch(callerDispatcher) {
             try {
@@ -102,12 +117,6 @@ class StagingTransferSecurityTest {
                 cancelledCaught = true
                 throw e
             }
-        }
-
-        // Intercept resumption: cancel the job before executing the resumption runnable
-        callerDispatcher.onDispatch = { runnable ->
-            job.cancel()
-            runnable.run()
         }
 
         job.join()
@@ -240,12 +249,17 @@ class StagingTransferSecurityTest {
 
         // 2. Perform 10 repeated cancellations of new documents and the borrower document
         for (i in 1..10) {
-            val controlledDispatcher = ControllableDispatcher(Dispatchers.IO)
             val ephemeralFile = createPdfFile("ephemeral_$i", "noise_$i")
             val ephemeralUri = Uri.fromFile(ephemeralFile)
 
             val transferOwner = ResourceTransferOwner<DocumentStager.StagedLease> { uncommitted ->
                 uncommitted.discard(ephemeralUri)
+            }
+
+            val controlledDispatcher = ControllableDispatcher(Dispatchers.IO)
+            controlledDispatcher.onResumption = { job, runnable ->
+                job?.cancel()
+                runnable.run()
             }
 
             val job = launch(controlledDispatcher) {
@@ -254,11 +268,6 @@ class StagingTransferSecurityTest {
                     sourceUri = ephemeralUri,
                     transferOwner = transferOwner
                 )
-            }
-
-            controlledDispatcher.onDispatch = { runnable ->
-                job.cancel()
-                runnable.run()
             }
 
             job.join()
