@@ -35,6 +35,7 @@ In accordance with owner directive (PR #17 comment 6520074055), issues are stric
 | **BLK-11** | Platform Gate | **OWNER-DEPENDENT** | `PdfPrintAdapter.kt` | Physical Wi-Fi / Mopria PrintManager spooling. | Requires physical printer hardware on local network. Gated for owner internal testing. | **OWNER-DEPENDENT** |
 | **BLK-12** | Accessibility | **OWNER-DEPENDENT** | Compose UI Layer | Physical TalkBack screen reader gestures, auditory feedback, and WCAG large-font scaling. | Requires hands-on manual verification with TalkBack enabled. Gated for owner internal testing. | **OWNER-DEPENDENT** |
 | **BLK-13** | CI Artifact | **UNVERIFIED** | CI Runner (API 36) | `RenderNode.beginRecording` `IllegalStateException` during rapid test activity teardown on SwiftShader emulator. | SwiftShader emulator frame overlap under high host CPU load during test teardown. Not reproducible in production Reader code or in repeat local/CI runs. | **UNVERIFIED** |
+| **BLK-14** | Monetization | **BLOCKER** | `AdManager.kt`, `MainActivity.kt`, `MainViewModel.kt` | Interstitial delivery lifecycle failure: stale ads retained past 60m Google Mobile Ads SDK TTL; missing ad opportunities on `UiState.Warning` and tool returns; missing impression tracking. | **RESOLVED**: Enforced 55m TTL auto-refresh, centralized atomic opportunity tracking, wired warning and tool-return opportunity consumption, added `onAdImpression` callback and proactive auto-reload. 10/10 new tests in `AdOpportunityDeliveryTest.kt` passing. | **RESOLVED** |
 
 ---
 

@@ -220,6 +220,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    data class CompletedOperationOpportunity(
+        val operationId: Long,
+        val toolName: String,
+        val outputUris: List<Uri>,
+        val timestamp: Long = System.currentTimeMillis()
+    )
+
+    private val _pendingAdOpportunity = MutableStateFlow<CompletedOperationOpportunity?>(null)
+    val pendingAdOpportunity: StateFlow<CompletedOperationOpportunity?> = _pendingAdOpportunity.asStateFlow()
+
+    fun recordCompletedOpportunity(toolName: String, outputUris: List<Uri>) {
+        if (outputUris.isEmpty()) return
+        val opId = if (currentOperationId != 0L) currentOperationId else System.currentTimeMillis()
+        _pendingAdOpportunity.value = CompletedOperationOpportunity(opId, toolName, outputUris)
+        com.pdfchemy.app.billing.AdManager.debugCounters.operationComplete++
+    }
+
+    fun consumeAdOpportunity(): CompletedOperationOpportunity? {
+        val opp = _pendingAdOpportunity.value
+        _pendingAdOpportunity.value = null
+        return opp
+    }
+
+    fun clearAdOpportunity() {
+        _pendingAdOpportunity.value = null
+    }
+
     private val _uiStateInternal = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiStateInternal.asStateFlow()
 
@@ -229,6 +256,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             set(v) {
                 synchronized(operationAdmissionLock) {
                     if (v is UiState.Error) {
+                        clearAdOpportunity()
                         val opId = currentOperationId
                         val opRecord = if (opId != 0L) activeOperations.remove(opId) else null
                         val jobToJoin = opRecord?.job ?: activeJob
@@ -269,6 +297,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             is UiState.Warning -> v.outputUris
                             else -> emptyList()
                         }
+                        if (outputUris.isNotEmpty()) {
+                            recordCompletedOpportunity(if (v is UiState.Success) "success" else "warning", outputUris)
+                        }
                         val opId = currentOperationId
                         if (opId != 0L) {
                             val opRecord = activeOperations.remove(opId)
@@ -299,6 +330,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiStateInternal.value = v
                 }
             }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal fun setUiStateForTesting(state: UiState) {
+        _uiState.value = state
     }
 
     val editorSession = com.pdfchemy.app.logic.EditorSession()

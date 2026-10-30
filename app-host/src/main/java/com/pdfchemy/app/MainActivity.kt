@@ -590,9 +590,20 @@ fun MainApp(
     onChangeThemeMode: (String) -> Unit = {},
     onOpenTour: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val screenSaver = remember(viewModel) { readerAwareScreenSaver(viewModel) }
     var currentScreen by rememberSaveable(stateSaver = screenSaver) { mutableStateOf<Screen>(Screen.Home) }
     var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val isPremiumHomeUser by viewModel.isPremium.collectAsState()
+    LaunchedEffect(currentScreen) {
+        if (currentScreen == Screen.Home) {
+            val opp = viewModel.consumeAdOpportunity()
+            val activity = context as? android.app.Activity
+            if (opp != null && activity != null) {
+                AdManager.showInterstitialIfReady(activity, isPremiumHomeUser, isReaderOrReflowActive = false) {}
+            }
+        }
+    }
     fun returnFromTool(fallback: Screen) {
         val savedSource = readerReturnUri?.let(Uri::parse)
         readerReturnUri = null
@@ -602,7 +613,6 @@ fun MainApp(
         currentScreen = viewModel.returnFromTool(fallback)
     }
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     val browseOutput = rememberLauncherForActivityResult(BrowseOutputContract()) { uri ->
         if (uri != null) runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
@@ -1092,9 +1102,11 @@ fun MainApp(
             is MainViewModel.UiState.Success -> {
                 val isPremium by viewModel.isPremium.collectAsState()
                 val activity = context as? android.app.Activity
+                val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
                 val resetAndShowAd = {
-                    if (activity != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium) { viewModel.resetState() }
+                    val opp = viewModel.consumeAdOpportunity()
+                    if (activity != null && opp != null) {
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
                     } else {
                         viewModel.resetState()
                     }
@@ -1148,12 +1160,23 @@ fun MainApp(
                 )
             }
             is MainViewModel.UiState.Warning -> {
+                val isPremium by viewModel.isPremium.collectAsState()
+                val activity = context as? android.app.Activity
+                val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
+                val resetAndShowAd = {
+                    val opp = viewModel.consumeAdOpportunity()
+                    if (activity != null && opp != null) {
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
+                    } else {
+                        viewModel.resetState()
+                    }
+                }
                 AlertDialog(
-                    onDismissRequest = { viewModel.resetState() },
+                    onDismissRequest = resetAndShowAd,
                     title = { Text(state.title, color = MaterialTheme.colorScheme.error) },
                     text = { Text(state.message) },
                     confirmButton = {
-                        TextButton(onClick = { viewModel.resetState() }) {
+                        TextButton(onClick = resetAndShowAd) {
                             Text(stringResource(R.string.ok))
                         }
                     },
