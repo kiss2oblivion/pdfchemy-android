@@ -3893,6 +3893,7 @@ fun SettingsScreen(
                             ) {
                                 Text(stringResource(R.string.settings_clear_history), color = MaterialTheme.colorScheme.error)
                             }
+                            com.pdfchemy.app.ui.RetainedShareManagementButton(Modifier.fillMaxWidth())
                         }
                     }
 

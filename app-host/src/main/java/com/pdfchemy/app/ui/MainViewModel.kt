@@ -542,16 +542,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearHistory() {
         historyRepository.clearHistory()
         refreshHistory()
-        viewModelScope.launch(Dispatchers.IO) {
-            runCatching {
-                val context = getApplication<Application>()
-                val storage = com.pdfchemy.app.logic.DocumentActions.inspectRetainedShares(context)
-                val inactiveIds = storage.entries.filter { it.protections.isEmpty() }.map { it.id }.toSet()
-                if (inactiveIds.isNotEmpty()) {
-                    com.pdfchemy.app.logic.DocumentActions.cleanupRetainedShares(context, inactiveIds)
-                }
-            }
-        }
     }
 
     private val _isVanguardEnabled = MutableStateFlow(prefs.getBoolean("vanguard_enabled", true))

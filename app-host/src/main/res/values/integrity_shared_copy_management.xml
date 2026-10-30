@@ -1,0 +1,16 @@
+<resources>
+    <!-- Core hotfix labels intentionally use English fallback, matching integrity_share_strings.xml. -->
+    <string name="integrity_share_manage" translatable="false">Manage shared copies</string>
+    <string name="integrity_share_title" translatable="false">Shared copies</string>
+    <string name="integrity_share_loading" translatable="false">Reading shared-copy storage…</string>
+    <string name="integrity_share_usage" translatable="false">Completed copies: %1$d (%2$s)\nActive transfers: %3$d\nIncomplete copies: %4$d\nTotal stored: %5$s</string>
+    <string name="integrity_share_delete_inactive" translatable="false">Delete inactive copies</string>
+    <string name="integrity_share_delete_confirm" translatable="false">Delete copies</string>
+    <string name="integrity_share_confirm" translatable="false">Delete %1$d inactive shared copies? Their shared links will stop working. Original documents are kept. Active readers and transfers are protected.</string>
+    <string name="integrity_share_result" translatable="false">Deleted: %1$d; skipped: %2$d; failed: %3$d; missing: %4$d; not processed: %5$d.</string>
+    <string name="integrity_share_stopped" translatable="false">Cleanup stopped. Remaining copies were kept.</string>
+    <string name="integrity_share_failure" translatable="false">Shared-copy storage could not be read or cleanup could not finish. Refresh to try again.</string>
+    <string name="integrity_share_protected" translatable="false">Active transfers and older copies with unverified ownership are kept.</string>
+    <string name="integrity_share_none" translatable="false">No inactive copies to remove.</string>
+    <string name="integrity_share_refresh" translatable="false">Refresh</string>
+</resources>
