@@ -35,8 +35,9 @@
 | **R04** | `32cc3928` | `feat(reader): R04 - expand Reader command centre for 1-2 tap access to core PDF tools` | `ReaderCommandCentreTest` | ✅ Accepted |
 | **R05** | `cd435d8d` | `fix(reader): R05 - stabilize document identity, restore exact scroll offset, and handle revoked SAF access` | `ReaderHistoryAndPositionTest` | ✅ Accepted |
 | **R06** | `55965e65` | `fix(reader): R06 - harden accessibility semantics, small-screen landscape layout, font scaling, and error recovery` | `ReaderAccessibilityAndResilienceTest` | ✅ Accepted |
-| **Docs** | `d336eb13` | `docs(reader): add READER_EXPERIENCE_ACCEPTANCE.md for R01-R06 cycle` | CI Run `40885512390` (8/9 jobs passed) | ✅ Superseded by Lint Remediation |
-| **Lint Remediation** | `HEAD` (`gemini/next-reader-experience`) | `fix(reader): resolve release lint failures and validate R01-R06` | `ReaderAccessibilityAndResilienceTest` (20-locale matrix) + `:app-host:lintRelease` (`0 errors`) | ✅ Verified |
+| **Lint Remediation** | `fd6bf9d1` | `fix(reader): resolve release lint failures and validate R01-R06` | `ReaderAccessibilityAndResilienceTest` (20-locale matrix) + `:app-host:lintRelease` (`0 errors`) | ✅ Verified |
+| **Tool Handoff Remediation** | `48a1f16f` | `fix(reader): serialize single-flight startup before enabling tool handoffs` | `ReaderControlsStateTest`, `ReaderNavigationTest`, `ReaderDocumentLifecycleTest` | ✅ Verified |
+| **Scroll Position Remediation** | `0d2711d1` | `fix(reader): publish ready state before restoring saved scroll position` | `ReaderControlsStateTest` (`positionRestoreRunsAfterReadyStateSoFirstLayoutCanComplete`) + Full 4-Tier Android Instrumented CI Matrix | ✅ Fully Verified |
 
 ---
 
@@ -179,7 +180,50 @@ On commit `d336eb13d1cccc9ff987728e2c60b77fc88a9caa` (CI run https://github.com/
 
 ---
 
-## 6. Remaining Known Limitations & Next-Cycle Opportunities (Ranked by Severity)
+## 6. PR #15 CI Remediation & Instrumented Matrix Verification
+
+### A. Root-Cause Analysis (Run `40916721230`)
+- **Failing Run Identified:** https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40916721230
+- **Branch & Commit:** `integration/2.1.0-readiness-2026-10-29` at commit `4e125f094f8fe9273155d1c0e5c6e435fac0679f`.
+- **Failing Jobs:** `android-instrumented-security (24, x86)` and `android-instrumented-security (34, x86_64)` failed with `ComposeTimeoutException: Condition still not satisfied after 30000 ms` in `ReaderDocumentLifecycleTest`.
+- **Attribution to PR #15:**
+  - `integration/2.1.0-readiness-2026-10-29` had integrated PR #15 (`gemini/next-reader-experience`).
+  - In PR #15, `totalPages` was assigned to Compose state before `PdfOutlineReader.extractOutline` completed, and `Edit` (`R.string.menu_edit_pdf`) was enabled immediately upon `totalPages > 0`.
+  - Both outline extraction and threat auditing utilize the single-flight `.PdfJailService` worker (`PdfGateway.request`).
+  - In `ReaderDocumentLifecycleTest`, Compose observed `totalPages == 1` and clicked `Edit` while `.PdfJailService` was still busy extracting outlines. When `PdfReaderScreen` was disposed, its cancellation killed `.PdfJailService` right as `PdfEditorScreen` entered composition and called `checkVanguardThreat`. The resulting worker death was mapped to `VanguardThreatResult.ParseFailed`, triggering `showVanguardDamagedDialog = true` and causing `Page 1 of 1` to never appear in `PdfEditorScreen`.
+
+### B. Fix Implementation (`48a1f16f` and `0d2711d1`)
+1. **Single-Flight Serialization (`48a1f16f`):**
+   - Implemented `ReaderStartupCoordinator.executeSequentialStartup(...)` in `ReaderControlsController.kt`.
+   - Vanguard threat audit, page count lookup, and outline extraction are guaranteed to execute strictly in sequence before `ReaderStartupResult` returns.
+   - Gated `launchCommandAction`, TopAppBar actions (`FitPage`, `Search`, `TOC`, `Reflow`, `Edit`), BottomAppBar continuity tools, and ModalBottomSheet items with `ReaderControlsUiState.canExecuteDocumentAction(isDocumentLoading, isVanguardScanning, totalPages)`.
+   - Rethrew `CancellationException` in `PdfOutlineReader.loadReflowDocument`.
+   - Added `readerReturnUri` via `rememberSaveable` in `MainActivity.kt`.
+   - Added instrumented tests `ReaderDocumentLifecycleTest` directly to PR #15.
+2. **Scroll Position Deadlock Resolution (`0d2711d1`):**
+   - Run `40947315678` showed `ReaderDocumentLifecycleTest` timing out waiting for `Page 1` on API 24, 30, 34, and 36.
+   - Diagnosis revealed `LazyListState.scrollToItem` suspends until the `LazyColumn` has finished its first layout measurement. Because the `LazyColumn` was guarded by `!isDocumentLoading`, attempting to restore the saved scroll position *before* marking `isDocumentLoading = false` caused a circular deadlock: `isDocumentLoading` could never become `false`, so `LazyColumn` never composed, and `Page 1` was never rendered.
+   - Introduced `ReaderStartupCoordinator.publishReadyThenRestorePosition(...)`: the ready state (`totalPages`, `bookmarks`, `isDocumentLoading = false`) is published first so the `LazyColumn` can compose and lay out, followed by `scrollToItem`, and finally marking `isPositionRestored = true`. Continuous scroll position saving is deferred until `isPositionRestored` is `true`.
+   - Added unit regression test `positionRestoreRunsAfterReadyStateSoFirstLayoutCanComplete` in `ReaderControlsStateTest.kt`.
+
+### C. Final GitHub CI Verification (PR #15 — 100% Green)
+- **Workflow Run:** https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656
+- **Head SHA:** `0d2711d1dfca989ecc19da05f266f93a11a1fbff`
+- **Results across all 9 workflow jobs:**
+  - `architecture`: `SUCCESS` (5m 03s)
+  - `secrets`: `SUCCESS` (18s)
+  - `dependency-security`: `SUCCESS` (1m 47s)
+  - `tests`: `SUCCESS` (4m 24s)
+  - `android-instrumented-security (24, x86)`: `SUCCESS` (24m 24s)
+  - `android-instrumented-security (30, x86_64)`: `SUCCESS` (22m 38s)
+  - `android-instrumented-security (34, x86_64)`: `SUCCESS` (24m 58s)
+  - `android-instrumented-security (36, x86_64)`: `SUCCESS` (21m 18s)
+  - `build`: `SUCCESS` (6m 49s)
+- **Status:** All checks passing. PR #15 is verified and ready for merge into `main` and integration into `integration/2.1.0-readiness-2026-10-29`.
+
+---
+
+## 7. Remaining Known Limitations & Next-Cycle Opportunities (Ranked by Severity)
 
 1. **Low Severity — In-Page Visual Highlighting of Search Occurrences:**
    - *Current State:* In-document search (`PdfFindAndReplaceEngine.findOccurrences`) accurately locates matches and scrolls directly to the matching page (`listState.animateScrollToItem`) with `current/total` navigation and "No matches found" feedback, but does not draw yellow bounding-box overlays on the rasterized page bitmap.
