@@ -55,5 +55,9 @@ The core root causes have been systematically addressed:
 ## 3. Production vs Test Ad Unit Configuration
 
 - **Debug Builds:** Uses Google official test interstitial ad unit ID: `ca-app-pub-3940256099942544/1033173712`.
-- **Release Builds:** Built with configured production unit ID `ca-app-pub-2195000754291883/4688402436` via `BuildConfig.AD_UNIT_ID`.
+- **Release Builds:** Built with configured production unit IDs via `BuildConfig` and `manifestPlaceholders`:
+  - Interstitial: `ca-app-pub-8945763551071628/9314012106` (`BuildConfig.AD_UNIT_ID`)
+  - Banner: `ca-app-pub-8945763551071628/5697788038` (`BuildConfig.BANNER_AD_UNIT_ID`)
+  - App ID: `ca-app-pub-8945763551071628~8206577473` (`manifestPlaceholders["adMobAppId"]`)
 - **Telemetry Policy:** All `AdDebugCounters` reside strictly in local volatile memory. Zero user identifiers, device metadata, or document data are recorded or transmitted.
+

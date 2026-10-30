@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
@@ -238,9 +239,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun consumeAdOpportunity(): CompletedOperationOpportunity? {
-        val opp = _pendingAdOpportunity.value
-        _pendingAdOpportunity.value = null
-        return opp
+        return _pendingAdOpportunity.getAndUpdate { null }
     }
 
     fun clearAdOpportunity() {
@@ -1437,6 +1436,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 completed = true
                 
                 withContext(Dispatchers.Main) {
+                    if (extractedCount > 0) {
+                        recordCompletedOpportunity("extract_images", createdOutputs.map { it.uri })
+                    }
                     historyRepository.addHistoryItem(outputDirectory.uri, context.getString(R.string.history_extracted_images_folder), context.getString(R.string.history_extract_images))
                     refreshHistory()
                     onComplete(extractedCount, errorCount)
@@ -1544,6 +1546,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (result.success) {
+                        recordCompletedOpportunity("compress_image", listOf(destUri))
                         markOutputPublished(destUri)
                         com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                         historyRepository.addHistoryItem(
@@ -1606,6 +1609,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (result.success) {
+                        recordCompletedOpportunity("compress_image", listOf(destUri))
                         markOutputPublished(destUri)
                         com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                         historyRepository.addHistoryItem(
@@ -1746,6 +1750,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 withContext(Dispatchers.Main) {
                     if (outputUris.isNotEmpty()) {
+                        recordCompletedOpportunity("compress_images_batch", ArrayList(outputUris))
                         historyRepository.addHistoryItem(
                             outputDirectory.uri,
                             context.getString(R.string.history_compressed_images_folder),
@@ -1787,6 +1792,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             withContext(Dispatchers.Main) {
                 if (result.isSuccess) {
+                    recordCompletedOpportunity("export_edited_pdf", listOf(destUri))
                     markOutputPublished(destUri)
                     com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
                     historyRepository.addHistoryItem(

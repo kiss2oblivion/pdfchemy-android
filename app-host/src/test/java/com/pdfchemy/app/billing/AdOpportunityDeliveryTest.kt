@@ -324,5 +324,79 @@ class AdOpportunityDeliveryTest {
         assertEquals(1L, AdManager.debugCounters.failedToShow)
         assertEquals(1, AdManager.debugCounters.lastShowErrorCode)
     }
+
+    // 11. Callback workflow generates opportunity and is consumed atomically on Home
+    @Test
+    fun callbackWorkflow_generatesOpportunity_consumedAtomicallyOnHome() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        assertEquals(0L, AdManager.debugCounters.operationComplete)
+        assertNull(vm.consumeAdOpportunity())
+
+        val extractedImages = listOf(
+            Uri.parse("content://pdfchemy/image_1.jpg"),
+            Uri.parse("content://pdfchemy/image_2.jpg")
+        )
+
+        // Simulates extractImagesFromPdf callback completion
+        vm.recordCompletedOpportunity("extract_images", extractedImages)
+
+        assertEquals(1L, AdManager.debugCounters.operationComplete)
+        assertNotNull(vm.pendingAdOpportunity.value)
+
+        // Atomic consumption on Home transition
+        val consumed = vm.consumeAdOpportunity()
+        assertNotNull("Callback opportunity must be retrievable on Home navigation", consumed)
+        assertEquals("extract_images", consumed?.toolName)
+        assertEquals(extractedImages, consumed?.outputUris)
+
+        // Verifies atomic exchange: subsequent read MUST be null
+        assertNull("Subsequent read must be null to guarantee exactly-once delivery", vm.consumeAdOpportunity())
+    }
+
+    // 12. Atomic CAS consumption under concurrent thread contention
+    @Test
+    fun consumeAdOpportunity_isStrictlyAtomicUnderConcurrentContention() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        vm.recordCompletedOpportunity("compress_image", listOf(Uri.parse("content://pdfchemy/out.png")))
+
+        val nonNullCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val nullCount = java.util.concurrent.atomic.AtomicInteger(0)
+        val threads = 16
+        val barrier = java.util.concurrent.CyclicBarrier(threads)
+
+        val threadPool = java.util.concurrent.Executors.newFixedThreadPool(threads)
+        val futures = (0 until threads).map {
+            threadPool.submit {
+                barrier.await()
+                val opp = vm.consumeAdOpportunity()
+                if (opp != null) {
+                    nonNullCount.incrementAndGet()
+                } else {
+                    nullCount.incrementAndGet()
+                }
+            }
+        }
+        futures.forEach { it.get() }
+        threadPool.shutdown()
+
+        assertEquals("Exactly one thread must capture the opportunity", 1, nonNullCount.get())
+        assertEquals("All other concurrent threads must receive null", threads - 1, nullCount.get())
+    }
+
+    // 13. Empty or failed callback outputs never create opportunities
+    @Test
+    fun emptyOrFailedCallbackOutputs_neverRecordOpportunity() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        // Empty outputs
+        vm.recordCompletedOpportunity("extract_images", emptyList())
+        assertEquals(0L, AdManager.debugCounters.operationComplete)
+        assertNull(vm.consumeAdOpportunity())
+    }
 }
 
