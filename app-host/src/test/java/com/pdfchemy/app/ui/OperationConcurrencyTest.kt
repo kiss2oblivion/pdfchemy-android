@@ -253,4 +253,194 @@ class OperationConcurrencyTest {
 
         releaseExport.complete(Unit)
     }
+
+    @Test
+    fun warningResultMarksOutputPublishedAndClearsActiveJob() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        val sourceUri = Uri.parse("content://fixture/source.pdf")
+        val destUri = Uri.parse("content://fixture/warning_compressed.pdf")
+
+        mockkObject(PdfCompressor)
+        coEvery {
+            PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns Result.success(
+            PdfCompressor.CompressionReport(
+                originalSize = 2000L,
+                imagesProcessed = 1,
+                hasSignatures = false,
+                targetMissed = true // Triggers UiState.Warning
+            )
+        )
+
+        vm.compressPdf(app, sourceUri, destUri)
+        testScheduler.advanceUntilIdle()
+
+        // UiState must be Warning
+        val state = vm.uiState.value
+        assertTrue("State must be UiState.Warning when target is missed", state is MainViewModel.UiState.Warning)
+        val warning = state as MainViewModel.UiState.Warning
+        assertTrue("Warning outputUris must contain destUri", warning.outputUris.contains(destUri))
+
+        // Active job and current operation must be cleanly cleared
+        assertFalse("isProcessingActive must be false after warning terminal state", vm.isProcessingActive())
+        assertEquals("currentOperationId must be reset to 0L", 0L, vm.currentOpId)
+        assertNull("activeJob must be cleared", vm.activeJobRef)
+
+        // Output destination must be marked published in OutputPolicy
+        assertFalse("Published output must not be fresh copy", com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(destUri))
+
+        // Subsequent operation can be admitted immediately
+        mockkObject(PdfManipulator)
+        val secondDest = Uri.parse("content://fixture/rotated.pdf")
+        coEvery { PdfManipulator.rotatePdf(any(), any(), any(), any(), any()) } just Runs
+
+        vm.rotatePdf(app, sourceUri, secondDest, 90)
+        testScheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { PdfManipulator.rotatePdf(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun dismissErrorDoesNotDisruptActiveProcessing() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        val sourceUri = Uri.parse("content://fixture/source.pdf")
+        val destUri = Uri.parse("content://fixture/active_dest.pdf")
+
+        mockkObject(PdfCompressor)
+        val releaseCompress = CompletableDeferred<Unit>()
+        coEvery {
+            PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            releaseCompress.await()
+            Result.success(PdfCompressor.CompressionReport(1000L, 1, false, false))
+        }
+
+        vm.compressPdf(app, sourceUri, destUri)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(vm.isProcessingActive())
+        val jobBefore = vm.activeJobRef
+        assertNotNull(jobBefore)
+
+        // Calling dismissError while Processing must be a no-op
+        vm.dismissError()
+        testScheduler.advanceUntilIdle()
+
+        assertTrue("isProcessingActive must still be true after dismissError", vm.isProcessingActive())
+        assertSame("activeJob must not be cleared by dismissError", jobBefore, vm.activeJobRef)
+        assertTrue("UiState must remain Processing", vm.uiState.value is MainViewModel.UiState.Processing)
+
+        // Cleanly finish operation
+        releaseCompress.complete(Unit)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(vm.uiState.value is MainViewModel.UiState.Success)
+
+        // Now simulate Error state and test dismissError transitions to Idle
+        vm.notifyError("Test error", "Details")
+        assertTrue(vm.uiState.value is MainViewModel.UiState.Error)
+        vm.dismissError()
+        assertEquals(MainViewModel.UiState.Idle, vm.uiState.value)
+    }
+
+    @Test
+    fun resetStateCoordinatesCleanlyWithActiveOperation() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        val sourceUri = Uri.parse("content://fixture/source.pdf")
+        val destUri = Uri.parse("content://fixture/reset_dest.pdf")
+
+        mockkObject(PdfCompressor)
+        val jobCancelled = CompletableDeferred<Unit>()
+        coEvery {
+            PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            try {
+                awaitCancellation()
+            } finally {
+                jobCancelled.complete(Unit)
+            }
+        }
+
+        vm.compressPdf(app, sourceUri, destUri)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(vm.isProcessingActive())
+        val job = vm.activeJobRef
+
+        // Reset state while active
+        vm.resetState()
+        testScheduler.advanceUntilIdle()
+
+        assertTrue("Active job must be cancelled by resetState", job?.isCancelled == true)
+        assertFalse("isProcessingActive must be false", vm.isProcessingActive())
+        assertNull("activeJob must be cleared", vm.activeJobRef)
+        assertEquals("UiState must be Idle", MainViewModel.UiState.Idle, vm.uiState.value)
+        assertEquals("Selected files must be cleared", emptyList<MainViewModel.SelectedFile>(), vm.selectedFiles.value)
+    }
+
+    @Test
+    fun cancellationAndFailurePreservePreExistingDestinationBytes() = runTest(testDispatcher) {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+
+        // Create an actual pre-existing file on disk with known bytes
+        val preExistingFile = java.io.File(app.cacheDir, "pre_existing_document.pdf")
+        val originalBytes = byteArrayOf(0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37) // "%PDF-1.7"
+        preExistingFile.writeBytes(originalBytes)
+        val preExistingUri = Uri.fromFile(preExistingFile)
+
+        // Create an uncommitted fresh copy file on disk
+        val freshCopyFile = java.io.File(app.cacheDir, "fresh_copy_to_delete.pdf")
+        val freshBytes = byteArrayOf(0x01, 0x02, 0x03)
+        freshCopyFile.writeBytes(freshBytes)
+        val freshUri = Uri.fromFile(freshCopyFile)
+        com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(freshUri)
+
+        mockkObject(PdfCompressor)
+        coEvery {
+            PdfCompressor.compressPdf(any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            awaitCancellation()
+        }
+
+        // Start operation using the pre-existing URI
+        vm.compressPdf(app, Uri.parse("content://fixture/source.pdf"), preExistingUri)
+        testScheduler.advanceUntilIdle()
+
+        // Also register fresh copy under the active operation to verify differential cleanup
+        vm.addPendingOutputUri(freshUri, isFreshCopy = true)
+
+        // Verify pre-existing file is NOT registered as fresh copy
+        assertFalse("Pre-existing destination must not be marked fresh copy", com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(preExistingUri))
+        assertTrue("Fresh copy must be marked fresh copy", com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(freshUri))
+
+        // Cancel the operation
+        vm.cancelOperation(app)
+        testScheduler.advanceUntilIdle()
+
+        // Wait for background IO cleanup coroutine
+        withContext(Dispatchers.IO) {
+            val start = System.currentTimeMillis()
+            while (freshCopyFile.exists() && System.currentTimeMillis() - start < 3000) {
+                Thread.sleep(25)
+            }
+        }
+
+        // Verification: Pre-existing file MUST still exist with identical bytes!
+        assertTrue("Pre-existing file must NOT be deleted upon cancellation", preExistingFile.exists())
+        assertArrayEquals("Pre-existing bytes must remain intact", originalBytes, preExistingFile.readBytes())
+
+        // Verification: Fresh copy MUST be deleted upon cancellation
+        assertFalse("Uncommitted fresh copy MUST be deleted upon cancellation", freshCopyFile.exists())
+        assertFalse("Fresh copy must be unregistered from OutputPolicy", com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(freshUri))
+
+        // Cleanup
+        if (preExistingFile.exists()) preExistingFile.delete()
+    }
 }

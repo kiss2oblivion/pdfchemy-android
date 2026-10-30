@@ -207,7 +207,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
                         com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                        runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                        runCatching {
+                            if (tracked.uri.scheme == "file") {
+                                tracked.uri.path?.let { java.io.File(it).delete() }
+                            } else {
+                                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete()
+                            }
+                        }
                     }
                 }
             }
@@ -245,13 +251,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     }
                                     if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
                                         com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                                        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() } catch(e: Exception) {}
+                                        runCatching {
+                                            if (tracked.uri.scheme == "file") {
+                                                tracked.uri.path?.let { java.io.File(it).delete() }
+                                            } else {
+                                                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete()
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                    if (v is UiState.Success) {
+                    if (v is UiState.Success || v is UiState.Warning) {
+                        val outputUris = when (v) {
+                            is UiState.Success -> v.outputUris
+                            is UiState.Warning -> v.outputUris
+                            else -> emptyList()
+                        }
                         val opId = currentOperationId
                         if (opId != 0L) {
                             val opRecord = activeOperations.remove(opId)
@@ -260,21 +277,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 com.pdfchemy.app.logic.OutputPolicy.markPublished(tracked.uri)
                             }
                         }
-                        v.outputUris.forEach { com.pdfchemy.app.logic.OutputPolicy.markPublished(it) }
+                        outputUris.forEach { com.pdfchemy.app.logic.OutputPolicy.markPublished(it) }
                         activeJob = null
                         _canCancelOperation.value = false
                         currentOperationId = 0L
                     }
                     if (v is UiState.Idle) {
                         val opId = currentOperationId
+                        val runningJob = activeJob
                         if (opId != 0L) {
                             activeOperations.remove(opId)
                             currentOperationId = 0L
                         }
                         activeJob = null
                         _canCancelOperation.value = false
+                        runningJob?.cancel()
                     }
-                    if (v is UiState.Success || v is UiState.Error || v is UiState.Idle) {
+                    if (v is UiState.Success || v is UiState.Warning || v is UiState.Error || v is UiState.Idle) {
                         ocrProgressRequests.invalidate()
                     }
                     _uiStateInternal.value = v
@@ -488,6 +507,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearHistory() {
         historyRepository.clearHistory()
         refreshHistory()
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val context = getApplication<Application>()
+                val storage = com.pdfchemy.app.logic.DocumentActions.inspectRetainedShares(context)
+                val inactiveIds = storage.entries.filter { it.protections.isEmpty() }.map { it.id }.toSet()
+                if (inactiveIds.isNotEmpty()) {
+                    com.pdfchemy.app.logic.DocumentActions.cleanupRetainedShares(context, inactiveIds)
+                }
+            }
+        }
     }
 
     private val _isVanguardEnabled = MutableStateFlow(prefs.getBoolean("vanguard_enabled", true))
@@ -1035,17 +1064,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun dismissError() {
-        _uiState.value = UiState.Idle
+        synchronized(operationAdmissionLock) {
+            if (_uiStateInternal.value is UiState.Error) {
+                _uiState.value = UiState.Idle
+            }
+        }
     }
 
     fun resetState() {
-        latestAnalysis.invalidate()
-        fileAnalysisJob?.cancel()
-        _uiState.value = UiState.Idle
-        _warning.value = null
-        _pdfAnalysis.value = null
-        _isAnalyzing.value = false
-        _selectedFiles.value = emptyList()
+        synchronized(operationAdmissionLock) {
+            if (isProcessingActive()) {
+                cancelOperation(getApplication())
+            }
+            latestAnalysis.invalidate()
+            fileAnalysisJob?.cancel()
+            _uiState.value = UiState.Idle
+            _warning.value = null
+            _pdfAnalysis.value = null
+            _isAnalyzing.value = false
+            _selectedFiles.value = emptyList()
+        }
     }
 
     private fun applyScenarioDefaults(scenario: com.pdfchemy.app.logic.PdfScenario) {

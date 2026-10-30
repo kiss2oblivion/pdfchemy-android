@@ -1,7 +1,7 @@
 package com.pdfchemy.app.logic
 
 class RetainedShareQuotaException : IllegalArgumentException(
-    "Share storage is full; existing recipient copies have been preserved")
+    "Share storage limit reached (64 items / 250 MB). Clear history in Settings to reclaim space.")
 
 enum class RetainedShareKind { RETAINED_COPY, INCOMPLETE_COPY, LEGACY_UNVERIFIED }
 enum class RetainedShareProtection { ACTIVE_COPY, ACTIVE_READER, UNVERIFIED_LEGACY_OWNERSHIP }

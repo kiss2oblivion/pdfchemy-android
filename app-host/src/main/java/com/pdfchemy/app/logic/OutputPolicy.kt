@@ -52,7 +52,7 @@ object OutputPolicy {
 
     fun deleteIfFresh(context: Context, uri: Uri): Boolean {
         return FreshOutputRegistry.deleteIfFresh(uri) {
-            DocumentFile.fromSingleUri(context, uri)?.delete() == true
+            if (uri.scheme == "file") uri.path?.let { java.io.File(it).delete() } == true else DocumentFile.fromSingleUri(context, uri)?.delete() == true
         }
     }
 
