@@ -92,6 +92,9 @@ object AudioOutputPublisher {
             completedNormally = true
         } catch (error: Throwable) {
             runCatching { deletePartial() }
+            // Aborting a blocked provider write can surface as IOException.
+            // Preserve cancellation while retaining genuine active-copy errors.
+            if (error is java.io.IOException) currentCoroutineContext().ensureActive()
             throw error
         } finally {
             watcher.cancel()

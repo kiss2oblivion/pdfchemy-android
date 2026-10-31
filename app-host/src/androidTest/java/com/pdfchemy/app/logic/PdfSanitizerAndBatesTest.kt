@@ -100,25 +100,33 @@ class PdfSanitizerAndBatesTest {
 
     @Test
     fun testConvertToPdfAAndroid() = runBlocking {
-        val inFile = File(context.cacheDir, "pdfa_in.pdf")
-        val outFile = File(context.cacheDir, "pdfa_out.pdf")
-
-        val doc = PDDocument()
-        doc.addPage(PDPage(PDRectangle.A4))
-        doc.save(inFile)
-        doc.close()
-
-        val inUri = Uri.fromFile(inFile)
-        val outUri = Uri.fromFile(outFile)
-
-        val success = PdfArchiveValidatorEngine.convertToPdfA(context, inUri, outUri)
-        assertTrue(success)
-        assertTrue(outFile.exists() && outFile.length() > 0)
-
-        PDDocument.load(outFile).use { pdfaDoc ->
-            assertNotNull(pdfaDoc.documentCatalog.metadata)
-            assertNotNull(pdfaDoc.documentCatalog.markInfo)
-            assertTrue(pdfaDoc.documentCatalog.markInfo.isMarked)
+        val inFile = File.createTempFile("pdfa_source_", ".pdf", context.cacheDir)
+        val existing = File.createTempFile("pdfa_existing_", ".pdf", context.cacheDir)
+        val absent = File(context.cacheDir, "pdfa_absent_${System.nanoTime()}.pdf")
+        try {
+            PDDocument().use { doc ->
+                doc.addPage(PDPage(PDRectangle.A4))
+                doc.save(inFile)
+            }
+            val sourceBytes = inFile.readBytes()
+            val targetBytes = "existing private destination".toByteArray()
+            existing.writeBytes(targetBytes)
+            assertFalse(absent.exists())
+            for (target in listOf(existing, absent)) {
+                val result = runCatching {
+                    PdfArchiveValidatorEngine.convertToPdfA(context, Uri.fromFile(inFile), Uri.fromFile(target))
+                }
+                assertTrue("Metadata tagging cannot constitute PDF/A conversion: $result",
+                    result.exceptionOrNull() is UnsupportedOperationException)
+                assertTrue(result.exceptionOrNull()!!.message.orEmpty().contains("not supported"))
+                assertArrayEquals("Original PDF changed after unsupported conversion", sourceBytes, inFile.readBytes())
+                assertArrayEquals("Existing destination changed", targetBytes, existing.readBytes())
+                assertFalse("Unsupported conversion created a misleading output", absent.exists())
+            }
+        } finally {
+            inFile.delete()
+            existing.delete()
+            absent.delete()
         }
     }
 

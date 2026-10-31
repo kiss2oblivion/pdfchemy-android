@@ -43,6 +43,7 @@ object PdfGateway {
         val connections = mutableListOf<ServiceConnection>()
         var jail: IPdfJailService? = null
         var operationToken: Long = 0L
+        var rendererAccess: com.pdfchemy.app.sandbox.NativeRendererAccess.Permit? = null
         val scratch = com.pdfchemy.app.jail.OperationScratchBroker(context)
         val outputTransaction = try { HostOutputTransaction(context, targets, scratch.storage) }
         catch (error: Throwable) {
@@ -87,6 +88,7 @@ object PdfGateway {
             }
 
             val renderer = if (operation == "REDACT" || operation == "OFFICE_PPT") {
+                rendererAccess = com.pdfchemy.app.sandbox.NativeRendererAccess.acquire()
                 bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
             } else {
                 null
@@ -126,12 +128,15 @@ object PdfGateway {
                 }
             } finally { runCatching { binder.unlinkToDeath(death, 0) } }
 
+            // Worker rendering is finished; SAF publication must not occupy the renderer.
+            rendererAccess?.close()
+
             scratch.verifyBudget()
 
             // Acceptance handshake:
             // For output operations: validate and snapshot into private FDs, validate typed response, then ACK before committing to SAF.
             if (targets.isNotEmpty()) {
-                outputTransaction.validateAndSnapshot(rawResult)
+                outputTransaction.validateAndSnapshot(rawResult, operation)
                 val contract = WorkerResponseValidator.validate(operation, rawResult, targets.size)
                 check(jail.completeOperation(operationToken)) { "Worker rejected Host acceptance handshake" }
                 operationToken = 0L // Successfully completed/released
@@ -154,6 +159,7 @@ object PdfGateway {
             }
             throw error
         } finally {
+            rendererAccess?.close()
             outputTransaction.close()
             scratch.close()
             descriptors.forEach { runCatching { it.close() } }

@@ -161,6 +161,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.pdfchemy.app.billing.AdManager
+import com.pdfchemy.app.billing.BillingManager
 
 // --- Color Palette ---
 val md_theme_light_primary = Color(0xFF0072B2)
@@ -316,20 +317,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     internal fun isUserEntitledToPremium(): Boolean {
-        return try {
-            val masterKey = androidx.security.crypto.MasterKey.Builder(this)
-                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            androidx.security.crypto.EncryptedSharedPreferences.create(
-                this,
-                com.pdfchemy.app.billing.BillingManager.PREFS_NAME,
-                masterKey,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            ).getBoolean(com.pdfchemy.app.billing.BillingManager.KEY_IS_PREMIUM, false)
-        } catch (_: Exception) {
-            false
-        }
+        return com.pdfchemy.app.billing.BillingManager.isUserEntitled(applicationContext)
     }
 
     internal fun initializeMobileAdsIfPermitted() {
@@ -337,14 +325,22 @@ class MainActivity : AppCompatActivity() {
             AdManager.clearAd()
             return
         }
-        val consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        val appCtx = this.applicationContext ?: this
+        val consentInformation = UserMessagingPlatform.getConsentInformation(appCtx)
         if (consentInformation.canRequestAds()) {
+            val currentlyEntitled = isUserEntitledToPremium()
             if (isMobileAdsInitialized.compareAndSet(false, true)) {
-                MobileAds.initialize(this) {
-                    AdManager.loadInterstitial(this, isPremium = false)
+                MobileAds.initialize(appCtx) {
+                    AdManager.loadInterstitial(
+                        appCtx,
+                        isPremium = currentlyEntitled
+                    )
                 }
             } else {
-                AdManager.loadInterstitial(this, isPremium = false)
+                AdManager.loadInterstitial(
+                    appCtx,
+                    isPremium = currentlyEntitled
+                )
             }
         } else {
             AdManager.clearAd()
@@ -377,7 +373,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (isFinishing) com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        if (isFinishing) {
+            AdManager.clearAd()
+            com.pdfchemy.app.utils.DocumentStager.releaseAll()
+        }
         super.onDestroy()
     }
 
@@ -425,6 +424,7 @@ class MainActivity : AppCompatActivity() {
                     if (file.isDirectory) {
                         cleanDir(file)
                     } else if (file.isFile && file.lastModified() < oneHourAgo) {
+                        if (com.pdfchemy.app.logic.DocumentActions.protectsFromAutomaticCleanup(context, file)) continue
                         val name = file.name.lowercase()
                         if (name.endsWith(".pdf") || name.endsWith(".epub") || name.endsWith(".cbz") ||
                             name.endsWith(".csv") || name.endsWith(".docx") || name.endsWith(".xlsx") || name.endsWith(".pptx") ||
@@ -590,17 +590,29 @@ fun MainApp(
     onChangeThemeMode: (String) -> Unit = {},
     onOpenTour: () -> Unit = {}
 ) {
-    var currentScreen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen>(Screen.Home) }
+    val context = LocalContext.current
+    val screenSaver = remember(viewModel) { readerAwareScreenSaver(viewModel) }
+    var currentScreen by rememberSaveable(stateSaver = screenSaver) { mutableStateOf<Screen>(Screen.Home) }
     var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
+    val isPremiumHomeUser by viewModel.isPremium.collectAsState()
+    LaunchedEffect(currentScreen) {
+        if (currentScreen == Screen.Home) {
+            val opp = viewModel.consumeAdOpportunity()
+            val activity = context as? android.app.Activity
+            if (opp != null && activity != null) {
+                AdManager.showInterstitialIfReady(activity, isPremiumHomeUser, isReaderOrReflowActive = false) {}
+            }
+        }
+    }
     fun returnFromTool(fallback: Screen) {
-        val source = readerReturnUri
+        val savedSource = readerReturnUri?.let(Uri::parse)
         readerReturnUri = null
-        // The returning Reader consumes this lease after acquiring its own.
-        if (source == null) viewModel.clearContinuityUri()
-        currentScreen = source?.let { Screen.PdfReader(Uri.parse(it)) } ?: fallback
+        if (savedSource != null && viewModel.readerNavigation.readerReturnUri == null) {
+            viewModel.navigateFromReaderToTool(savedSource, currentScreen)
+        }
+        currentScreen = viewModel.returnFromTool(fallback)
     }
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     val browseOutput = rememberLauncherForActivityResult(BrowseOutputContract()) { uri ->
         if (uri != null) runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
@@ -624,10 +636,9 @@ fun MainApp(
             incomingPdfUri?.let { originalUri ->
                 val uri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, originalUri).uri }
                 val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.lowercase() ?: ""
-                if (name.endsWith(".epub")) {
-                    currentScreen = Screen.ReflowReader(initialUri = uri)
-                } else if (name.endsWith(".cbz") || name.endsWith(".cbr")) {
-                    currentScreen = Screen.EbookConverter
+                val resolvedTarget = com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(uri, name)
+                if (resolvedTarget !is Screen.PdfReader) {
+                    currentScreen = resolvedTarget
                 } else {
                     if (isVanguardEnabled) {
                         isVanguardScanning = true
@@ -636,21 +647,27 @@ fun MainApp(
                             val threatResult = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, uri)
                             when (threatResult) {
                                 is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                    currentScreen = Screen.PdfReader(initialPdfUri = uri)
+                                    currentScreen = resolvedTarget
                                 }
                                 is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                     vanguardPendingEncryptedUri = uri
                                     showVanguardEncryptedDialog = true
                                 }
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> { showVanguardBlockedDialog = true }
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> { viewModel.notifyError(context.getString(R.string.document_damaged_recovery)) }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(uri)
+                                    showVanguardBlockedDialog = true
+                                }
+                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                    com.pdfchemy.app.utils.DocumentStager.release(uri)
+                                    viewModel.notifyError(context.getString(R.string.document_damaged_recovery))
+                                }
                             }
                         } finally {
                             isVanguardScanning = false
                             vanguardScanningFileName = null
                         }
                     } else {
-                        currentScreen = Screen.PdfReader(initialPdfUri = uri)
+                        currentScreen = resolvedTarget
                     }
                 }
                 incomingPdfUriState?.value = null
@@ -766,7 +783,13 @@ fun MainApp(
     }
 
     val isPremiumRaw by viewModel.isPremium.collectAsState()
-    val isPremium = isPremiumRaw || isScreenshotRun
+    val isPremium = isPremiumRaw || isScreenshotRun || (context as? MainActivity)?.isUserEntitledToPremium() == true
+
+    LaunchedEffect(isPremium) {
+        if (isPremium) {
+            AdManager.clearAd()
+        }
+    }
 
     val safeguardAssessment by viewModel.safeguardAssessment.collectAsState()
     safeguardAssessment?.let { assessment ->
@@ -943,12 +966,17 @@ fun MainApp(
                         viewModel = viewModel,
                         initialUri = readerScreen.initialPdfUri,
                         onBack = {
+                            readerReturnUri = null
+                            viewModel.exitReader()
                             viewModel.clearContinuityUri()
                             currentScreen = if (readerScreen.initialPdfUri != null) Screen.Home else Screen.OrganizeCategory
                         },
                         onNavigateToTool = { screen ->
-                            readerReturnUri = (viewModel.continuityDocumentUri.value ?: viewModel.readerSourceUri)?.toString()
-                            currentScreen = screen
+                            currentScreen = viewModel.navigateFromReaderToTool(
+                                viewModel.readerNavigation.activeReaderUri ?: readerScreen.initialPdfUri,
+                                screen
+                            )
+                            readerReturnUri = viewModel.readerNavigation.readerReturnUri?.toString()
                         }
                     )
                 }
@@ -1074,9 +1102,11 @@ fun MainApp(
             is MainViewModel.UiState.Success -> {
                 val isPremium by viewModel.isPremium.collectAsState()
                 val activity = context as? android.app.Activity
+                val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
                 val resetAndShowAd = {
-                    if (activity != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium) { viewModel.resetState() }
+                    val opp = viewModel.consumeAdOpportunity()
+                    if (activity != null && opp != null) {
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
                     } else {
                         viewModel.resetState()
                     }
@@ -1085,7 +1115,7 @@ fun MainApp(
                     onDismissRequest = resetAndShowAd,
                     title = { Text(state.title) },
                     text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(state.message)
                             Spacer(modifier = Modifier.height(16.dp))
                             if (state.outputUris.isNotEmpty()) {
@@ -1119,6 +1149,7 @@ fun MainApp(
                                 onClick = { 
                                     resetAndShowAd()
                                     readerReturnUri = null
+                                    viewModel.exitReader()
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
@@ -1129,12 +1160,23 @@ fun MainApp(
                 )
             }
             is MainViewModel.UiState.Warning -> {
+                val isPremium by viewModel.isPremium.collectAsState()
+                val activity = context as? android.app.Activity
+                val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
+                val resetAndShowAd = {
+                    val opp = viewModel.consumeAdOpportunity()
+                    if (activity != null && opp != null) {
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
+                    } else {
+                        viewModel.resetState()
+                    }
+                }
                 AlertDialog(
-                    onDismissRequest = { viewModel.resetState() },
+                    onDismissRequest = resetAndShowAd,
                     title = { Text(state.title, color = MaterialTheme.colorScheme.error) },
                     text = { Text(state.message) },
                     confirmButton = {
-                        TextButton(onClick = { viewModel.resetState() }) {
+                        TextButton(onClick = resetAndShowAd) {
                             Text(stringResource(R.string.ok))
                         }
                     },
@@ -1257,14 +1299,17 @@ fun MainApp(
             }
         }
         }
-            val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
-            if (!isPremium && hasConsented && !isScreenshotRun && !isReaderActive) {
+            if (shouldShowBannerAd(currentScreen, isPremium, hasConsented, isScreenshotRun)) {
                 BannerAdView()
             }
         }
     }
     }
 }
+
+internal fun shouldShowBannerAd(screen: Screen, isPremium: Boolean, hasConsented: Boolean,
+    isScreenshotRun: Boolean): Boolean = !isPremium && hasConsented && !isScreenshotRun &&
+    screen !is Screen.PdfReader && screen !is Screen.ReflowReader
 
 @Composable
 fun BannerAdView(modifier: Modifier = Modifier) {
@@ -1435,6 +1480,14 @@ sealed class Screen {
     data class ReflowReader(val initialUri: Uri? = null) : Screen()
 }
 
+internal fun readerAwareScreenSaver(viewModel: MainViewModel): Saver<Screen, String> = Saver(
+    save = { screen ->
+        val scope = this
+        with(ScreenSaver) { scope.save(viewModel.readerScreenForStateSave(screen)) }
+    },
+    restore = { ScreenSaver.restore(it) }
+)
+
 val ScreenSaver: Saver<Screen, String> = Saver(
     save = { screen ->
         when (screen) {
@@ -1444,7 +1497,64 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             is Screen.UnlockPdf -> "UnlockPdf:${screen.initialUri?.toString() ?: ""}"
             is Screen.SplitPdf -> "SplitPdf:${screen.initialUri?.toString() ?: ""}"
             is Screen.OfficeExport -> "OfficeExport:${screen.initialFormat.name}"
-            else -> screen::class.simpleName ?: "Home"
+            // Persist wire identifiers, never runtime class names: R8 can rename
+            // and merge these singleton classes in a normal release build.
+            Screen.Home -> "Home"
+            Screen.History -> "History"
+            Screen.Settings -> "Settings"
+            Screen.Premium -> "Premium"
+            Screen.CompressCategory -> "CompressCategory"
+            Screen.CreateCategory -> "CreateCategory"
+            Screen.OrganizeCategory -> "OrganizeCategory"
+            Screen.CheckCategory -> "CheckCategory"
+            Screen.CompressPdf -> "CompressPdf"
+            Screen.BatchCompressPdf -> "BatchCompressPdf"
+            Screen.ImageCompressor -> "ImageCompressor"
+            Screen.GrayscaleOptimizer -> "GrayscaleOptimizer"
+            Screen.LinearizePdf -> "LinearizePdf"
+            Screen.FlattenPdf -> "FlattenPdf"
+            Screen.MergePdf -> "MergePdf"
+            Screen.PageOrganizer -> "PageOrganizer"
+            Screen.DeletePages -> "DeletePages"
+            Screen.RotatePdf -> "RotatePdf"
+            Screen.Deskew -> "Deskew"
+            Screen.CropPdf -> "CropPdf"
+            Screen.PageLayout -> "PageLayout"
+            Screen.NUp -> "NUp"
+            Screen.Booklet -> "Booklet"
+            Screen.ImagesToPdf -> "ImagesToPdf"
+            Screen.PdfToImages -> "PdfToImages"
+            Screen.ScanPdf -> "ScanPdf"
+            Screen.EbookConverter -> "EbookConverter"
+            Screen.MarkdownStudio -> "MarkdownStudio"
+            Screen.TextToPdf -> "TextToPdf"
+            Screen.TextConverter -> "TextConverter"
+            Screen.TableExtractor -> "TableExtractor"
+            Screen.OcrPdf -> "OcrPdf"
+            Screen.ExtractText -> "ExtractText"
+            Screen.ExtractImages -> "ExtractImages"
+            Screen.QuickFillSign -> "QuickFillSign"
+            Screen.FormBuilder -> "FormBuilder"
+            Screen.FillForm -> "FillForm"
+            Screen.SignPdf -> "SignPdf"
+            Screen.Watermark -> "Watermark"
+            Screen.HeaderFooter -> "HeaderFooter"
+            Screen.PageNumber -> "PageNumber"
+            Screen.BookmarkEditor -> "BookmarkEditor"
+            Screen.FindAndReplaceText -> "FindAndReplaceText"
+            Screen.ImageReplacer -> "ImageReplacer"
+            Screen.ProtectPdf -> "ProtectPdf"
+            Screen.Redaction -> "Redaction"
+            Screen.DocumentSanitizer -> "DocumentSanitizer"
+            Screen.MetadataSanitizer -> "MetadataSanitizer"
+            Screen.InspectMetadata -> "InspectMetadata"
+            Screen.StripMetadata -> "StripMetadata"
+            Screen.TextCleaner -> "TextCleaner"
+            Screen.PdfAValidator -> "PdfAValidator"
+            Screen.FontInspector -> "FontInspector"
+            Screen.AttachmentManager -> "AttachmentManager"
+            Screen.RepairPdf -> "RepairPdf"
+            Screen.ComparePdf -> "ComparePdf"
         }
     },
     restore = { str ->
@@ -1776,8 +1886,15 @@ fun HomeScreen(
                         )
                     }
                     
+                    val homeReaderPicker = rememberVanguardPdfPicker(
+                        onNavigateToUnlock = { unlockUri -> onNavigate(Screen.UnlockPdf(unlockUri)) },
+                        onPdfSelected = { pickedUri ->
+                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
+                        }
+                    )
+
                     com.pdfchemy.app.ui.ToolSearchBar(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier.padding(bottom = 12.dp),
                         onToolSelected = onNavigate
                     )
 
@@ -3501,8 +3618,8 @@ fun SettingsScreen(
     if (showPrivacyPolicyDialog) {
         AlertDialog(
             onDismissRequest = { showPrivacyPolicyDialog = false },
-            title = { Text(stringResource(R.string.consent_dialog_title)) },
-            text = { Text(stringResource(R.string.consent_dialog_body)) },
+            title = { Text(stringResource(R.string.settings_privacy_policy)) },
+            text = { com.pdfchemy.app.ui.ReleasePrivacyPolicyContent() },
             confirmButton = {
                 TextButton(onClick = { showPrivacyPolicyDialog = false }) {
                     Text(stringResource(R.string.ok))
@@ -3779,6 +3896,7 @@ fun SettingsScreen(
                             ) {
                                 Text(stringResource(R.string.settings_clear_history), color = MaterialTheme.colorScheme.error)
                             }
+                            com.pdfchemy.app.ui.RetainedShareManagementButton(Modifier.fillMaxWidth())
                         }
                     }
 
@@ -4179,11 +4297,47 @@ fun RecentFilesSection(
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
+    var showFileInaccessibleDialog by remember { mutableStateOf(false) }
+    var showDamagedPdfDialog by remember { mutableStateOf(false) }
     var vanguardPendingEncryptedUri by remember { mutableStateOf<Uri?>(null) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    if (showFileInaccessibleDialog) {
+        AlertDialog(
+            onDismissRequest = { showFileInaccessibleDialog = false },
+            title = { Text(stringResource(R.string.vanguard_provider_error_title)) },
+            text = { Text(stringResource(R.string.vanguard_provider_error_message)) },
+            confirmButton = {
+                Button(onClick = { showFileInaccessibleDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    if (showDamagedPdfDialog) {
+        AlertDialog(
+            onDismissRequest = { showDamagedPdfDialog = false },
+            title = { Text(stringResource(R.string.vanguard_damaged_title)) },
+            text = { Text(stringResource(R.string.vanguard_damaged_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showDamagedPdfDialog = false
+                    onNavigate?.invoke(Screen.RepairPdf)
+                }) {
+                    Text(stringResource(R.string.menu_repair_pdf))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDamagedPdfDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     if (showVanguardBlockedDialog) {
         AlertDialog(
@@ -4309,10 +4463,16 @@ fun RecentFilesSection(
                                         onNavigate(Screen.ReflowReader(uri))
                                     } else if (ext == "pdf" && onNavigate != null) {
                                         scope.launch {
-                                            com.pdfchemy.app.ui.guardDocumentLoad(onFailure = {
-                                                viewModel.notifyError(context.getString(R.string.document_load_recovery))
+                                            com.pdfchemy.app.ui.guardDocumentLoadWithCause(onFailure = { err ->
                                                 isVanguardScanning = false
                                                 vanguardScanningFileName = null
+                                                val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
+                                                if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
+                                                    viewModel.removeHistoryItem(item.uriString)
+                                                    showFileInaccessibleDialog = true
+                                                } else {
+                                                    showDamagedPdfDialog = true
+                                                }
                                             }) {
                                                 val stagedUri = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri }
                                                 if (isVanguardEnabled) {
@@ -4322,21 +4482,27 @@ fun RecentFilesSection(
                                                         val threat = com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
                                                         when (threat) {
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.Clean -> {
-                                                                onNavigate(Screen.PdfReader(initialPdfUri = stagedUri))
+                                                                onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(stagedUri, item.name))
                                                             }
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.EncryptedCannotVerify -> {
                                                                 vanguardPendingEncryptedUri = stagedUri
                                                                 showVanguardEncryptedDialog = true
                                                             }
-                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> { showVanguardBlockedDialog = true }
-                                is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> { viewModel.notifyError(context.getString(R.string.document_damaged_recovery)) }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ExecutableThreat -> {
+                                                                com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                showVanguardBlockedDialog = true
+                                                            }
+                                                            is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
+                                                                com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                showDamagedPdfDialog = true
+                                                            }
                                                         }
                                                     } finally {
                                                         isVanguardScanning = false
                                                         vanguardScanningFileName = null
                                                     }
                                                 } else {
-                                                    onNavigate(Screen.PdfReader(initialPdfUri = stagedUri))
+                                                    onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(stagedUri, item.name))
                                                 }
                                             }
                                         }
@@ -4471,11 +4637,15 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
                     onClick = { if (activity != null) viewModel.purchasePremium(activity) },
-                    enabled = billingUi.canPurchase,
+                    enabled = billingUi.canPurchase && price.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Text(
-                        text = if (price.isNotEmpty()) "Unlock Lifetime · $price" else stringResource(R.string.label_preview_loading),
+                        text = if (price.isNotBlank()) {
+                            stringResource(R.string.unlock_lifetime_with_price, price)
+                        } else {
+                            stringResource(R.string.price_available_in_google_play)
+                        },
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -4486,7 +4656,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     Text(
-                        text = "Restore Purchases",
+                        text = stringResource(R.string.restore_purchases),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

@@ -3,7 +3,7 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import java.util.Collections
+import com.pdfchemy.app.security.FreshOutputRegistry
 import java.util.Locale
 
 enum class DestinationProvenance {
@@ -29,14 +29,12 @@ data class OutputDestination(
 object OutputPolicy {
     const val DIRECTORY_KEY = "preferred_output_directory"
 
-    private val freshUris = Collections.synchronizedSet(mutableSetOf<Uri>())
-
     fun registerFreshCopy(uri: Uri) {
-        freshUris.add(uri)
+        FreshOutputRegistry.register(uri)
     }
 
     fun unregisterFreshCopy(uri: Uri) {
-        freshUris.remove(uri)
+        FreshOutputRegistry.unregister(uri)
     }
 
     /** Transitions destination to published state: it is no longer an uncommitted fresh copy. */
@@ -44,7 +42,7 @@ object OutputPolicy {
         unregisterFreshCopy(uri)
     }
 
-    fun isFreshCopy(uri: Uri): Boolean = freshUris.contains(uri)
+    fun isFreshCopy(uri: Uri): Boolean = FreshOutputRegistry.contains(uri)
 
     fun provenanceOf(uri: Uri): DestinationProvenance =
         if (isFreshCopy(uri)) DestinationProvenance.FRESH_COPY else DestinationProvenance.EXISTING_OR_UNKNOWN
@@ -53,11 +51,9 @@ object OutputPolicy {
         OutputDestination(uri, provenanceOf(uri))
 
     fun deleteIfFresh(context: Context, uri: Uri): Boolean {
-        if (isFreshCopy(uri)) {
-            unregisterFreshCopy(uri)
-            return runCatching { DocumentFile.fromSingleUri(context, uri)?.delete() == true }.getOrDefault(false)
+        return FreshOutputRegistry.deleteIfFresh(uri) {
+            if (uri.scheme == "file") uri.path?.let { java.io.File(it).delete() } == true else DocumentFile.fromSingleUri(context, uri)?.delete() == true
         }
-        return false
     }
 
     /** Operation completion helper: retires freshness on success, cleans up incomplete output on failure only if fresh. */

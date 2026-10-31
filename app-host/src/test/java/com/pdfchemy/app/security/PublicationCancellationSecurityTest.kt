@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Regression and security test suite for SC-13:
@@ -102,8 +103,14 @@ class PublicationCancellationSecurityTest {
         val block = CountDownLatch(1)
         val stream = StallingOutputStream(entered, block)
         val cleanupCount = AtomicInteger(0)
+        val completionCause = AtomicReference<Throwable?>()
+        val unhandled = AtomicReference<Throwable?>()
 
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        // Keep an unexpected writer error in this test, and fail here rather than
+        // contaminating the next runTest with UncaughtExceptionsBeforeTest.
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, error ->
+            unhandled.set(error)
+        })
         val writer = scope.launch {
             AudioOutputPublisher.copy(
                 tempWav,
@@ -111,6 +118,7 @@ class PublicationCancellationSecurityTest {
                 { cleanupCount.incrementAndGet() }
             )
         }
+        writer.invokeOnCompletion { completionCause.set(it) }
 
         try {
             assertTrue("Writer must enter write loop", entered.await(5, TimeUnit.SECONDS))
@@ -126,6 +134,9 @@ class PublicationCancellationSecurityTest {
             } ?: false
 
             assertTrue("Writer must terminate promptly upon stream closure", terminated)
+            assertTrue("Stream closure must preserve cancellation: ${completionCause.get()}",
+                completionCause.get() is CancellationException)
+            assertNull("Cancellation must not report an uncaught writer failure", unhandled.get())
             assertTrue("Stream must have been closed asynchronously", stream.closed.get())
             assertEquals("Cleanup must be executed on cancellation/abort", 1, cleanupCount.get())
             assertEquals("Publication coordinator must release handle upon completion", 0, PublicationCoordinator.activeCount())

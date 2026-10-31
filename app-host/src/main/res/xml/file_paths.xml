@@ -3,5 +3,6 @@
     <cache-path name="camera_scans" path="scans" />
     <cache-path name="shared_exports" path="exports" />
     <files-path name="internal_scans" path="scans" />
+    <files-path name="retained_share_copies" path="shared_copies" />
 </paths>
 

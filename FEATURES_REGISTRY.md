@@ -14,7 +14,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PDF Compressor** | `CompressScreen.kt` | `PdfCompressor.kt` | ✅ Live | 4 Presets (Extreme, Recommended, High Quality, Custom DPI/Quality), Flate & JBIG2 |
 | **Grayscale Optimizer** | `GrayscaleOptimizerScreen.kt` | `PdfCompressor.kt` | ✅ Live | Converts color PDF pages to monochrome/grayscale to drastically reduce size |
-| **Linearize (Fast Web View)** | `LinearizePdfScreen.kt` | `PdfManipulator.kt` | ✅ Live | Restructures PDF dictionary and stream orders for instant first-page web/mobile streaming |
+| **Fast Web View information** | `LinearizePdfScreen.kt` | `PdfLinearizeEngine.kt` | Inspection only | Reports PDF page information with linearization NOT_VERIFIED; generation is explicitly unsupported and disabled |
 | **Flatten PDF** | `FlattenPdfScreen.kt` | `PdfFlattenEngine.kt` | ✅ Live | Forensic annotation baking: bakes AcroForms via `acroForm.flatten()` and non-widget annotations via high-res `RENDER_MODE_FOR_PRINT` rasterization without destroying user highlights or drawings |
 
 ---
@@ -78,7 +78,7 @@
 | **Zero-Trust Hardening & OOM Guard** | Cross-cutting | `SecurityLimits`, `JailMemory`, `SafeImageDecoder`, `JailOutput` (Android); existing desktop safeguards | ✅ Implemented; release verification pending | Android parsers and image decoders run in isolated services with a 32 MiB PDFBox buffer limit, bounded FD scratch, 100 MiB per input, bounded archive expansion, and 2048-pixel / 4,194,304-pixel raster limits. Desktop buffering and limits are separate and unchanged by the Android remediation. |
 | **Vanguard Zero-Trust Shield** | Universal across entire app (`VanguardPicker.kt`, `MainActivity.kt`, `PdfEditorScreen.kt`, `ReflowReaderScreen.kt`, `SecurityScreens.kt`, and 30+ standalone tool screens) | `PdfSanitizerEngine.checkVanguardThreat`, `VanguardScanningOverlay`, `rememberVanguardPdfPicker`, `rememberVanguardMultiplePdfPicker` | ✅ Live | Pre-flight zero-trust gatekeeper with animated non-dismissible Material 3 overlay; differentiated threat detection allows standard web hyperlinks (`/S /URI`) and document destinations while strictly blocking malicious `/Launch`, `/JavaScript`, and auto-run `/OpenAction` executables; unified `shrinkpdf_settings` SharedPreferences with live listeners |
 | **Metadata Sanitizer** | `MetadataSanitizerScreen.kt` | `PdfMetadataSanitizer.kt` | ✅ Live | Inspects and purges author name, software creator, GPS coordinates, editing history |
-| **PDF/A Preflight Validator** | `PdfAValidatorScreen.kt` | `PdfAValidator.kt` | ✅ Live | Audits ISO 19005 compliance (OutputIntents, DeviceRGB/CMYK, font subsets, XMP) |
+| **Preliminary PDF/A checks** | `PdfAValidatorScreen.kt` | `PdfArchiveValidatorEngine.kt` | Preliminary only | Reports limited presence checks with NOT_CERTIFIED status; ISO 19005 certification and PDF/A conversion are unavailable |
 | **Typography & Font Inspector** | `FontInspectorScreen.kt` | `FontInspector.kt` | ✅ Live | Lists embedded font programs, TrueType/Type1/Type0, subsets, and character encodings |
 | **Embedded Attachments Manager**| `AttachmentManagerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Inspects, extracts, and embeds arbitrary file attachments and PDF portfolios |
 | **PDF Repair Studio** | `RepairPdfScreen.kt` | `PdfRepairEngine.kt` | ✅ Live | Reconstructs broken cross-reference tables, truncated trailers, and corrupted streams |
@@ -98,6 +98,7 @@
 ### 6. 📖 Reading & Accessibility
 | Feature | UI Screen | Engine / Logic | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
+| **PDF Reader Studio (R01–R06)** | `PdfReaderScreen.kt` | `ReaderNavigationCoordinator.kt`, `ReaderViewportController.kt`, `ReaderControlsController.kt`, `DocumentIdentity.kt` | ✅ Live | Consistent Reader-first entry across Home, Recent Files, Tool Search, and external `ACTION_VIEW`/`ACTION_SEND` PDF intents; stateful Reader→Tool→Reader continuity preserving active document; native inertial fling scrolling at `1.0x` zoom, focal double-tap zoom (`2.5x`), Fit Width / Fit Page modes, and reference-counted LRU bitmap cache (`BoundedPageBitmapCache`) with `ComponentCallbacks2` memory trimming and tokenized `ReaderRenderGate` cancellation; orientation-stable tap-to-reveal overlay controls with zero layout jump, floating page badge, and Table of Contents sheet; 1–2 tap Command Centre for 17 core PDF operations; normalized document identity and exact `(pageIndex, scrollOffsetPx)` restoration with graceful revoked SAF cleanup; full WCAG 48dp touch targets, TalkBack semantics, 200% font-scale / small-screen / landscape responsiveness, and per-page render retry |
 | **Reflow Reader Studio** | `ReflowReaderScreen.kt` | `ReflowEngine.kt` | ✅ Live | E-reader mode with font scaling, themes (Light, Sepia, Dark, OLED), continuous flow |
 | **Offline TTS (Read Aloud)** | `ReflowReaderScreen.kt` | `android.speech.tts.TextToSpeech` | ✅ Live | 100% offline text-to-speech with speed controls (0.75x–2.0x) and synced paragraph tracking |
 | **Dual-Page Spread & Tabletop** | `ReflowReaderScreen.kt` | Compose layout | ✅ Live | Supports tabletop / flex mode on Samsung Fold / Pixel Fold devices and tablets |

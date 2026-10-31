@@ -1,0 +1,3 @@
+<resources>
+    <string name="integrity_share_storage_full" translatable="false">Share storage is full. Existing shared copies were preserved. No new share was created.</string>
+</resources>

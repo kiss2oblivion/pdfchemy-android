@@ -52,6 +52,10 @@ object WorkerResponseValidator {
 
     fun validate(operation: String, rawJson: String, targetCount: Int = 0): OperationContract {
         validateOperation(operation)
+        when (operation) {
+            "LINEARIZE_OPTIMIZE" -> throw UnsupportedOperationException("Fast Web View generation is not supported by the local engine")
+            "ARCHIVE_CONVERT" -> throw UnsupportedOperationException("PDF/A conversion is not supported by the local engine")
+        }
         SecurityLimits.enforceResultSize(rawJson)
 
         // 1. Structural check: balanced quotes, braces, brackets, and nesting depth
@@ -148,6 +152,7 @@ object WorkerResponseValidator {
             "COMPRESS" -> parseCompress(root)
             "ANALYZE_PDF" -> parsePdfAnalysis(root)
             "OFFICE_WORD", "OFFICE_EXCEL", "OFFICE_PPT" -> parseOfficeExport(root)
+            "TABLE_EXTRACT" -> parseTableExtract(root, targetCount)
 
             // Standard output / status operations
             "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
@@ -155,7 +160,7 @@ object WorkerResponseValidator {
             "ARCHIVE_CONVERT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
             "CROP", "FLATTEN_APPLY", "REDACT",
             "ATTACHMENT_EXTRACT", "ATTACHMENT_REMOVE", "ATTACHMENT_EMBED", "BOOKLET_GENERATE",
-            "TABLE_EXTRACT", "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
+            "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
             "NUP_GENERATE", "OCR_PROCESS",
             "SIGNATURE_DIGITAL", "PDF_TO_EPUB", "EPUB_TO_PDF", "EDITOR_EXPORT",
             "SPLIT", "MERGE", "IMAGES_TO_PDF", "PDF_TO_IMAGES", "LAYOUT_RESIZE",
@@ -300,8 +305,11 @@ object WorkerResponseValidator {
     private fun parseLinearizeCheck(root: Any?): LinearizeCheckContract {
         val obj = requireObject(root)
         val isLinearized = obj.requireBoolean("isLinearized")
-        val pageCount = obj.requireInt("pageCount", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
-        return LinearizeCheckContract(isLinearized = isLinearized, pageCount = pageCount)
+        require(!isLinearized) { "Linearization cannot be certified by this engine" }
+        val status = obj.requireString("verificationStatus", maxLength = 32)
+        require(status == "NOT_VERIFIED") { "Invalid linearization verification status" }
+        val pageCount = obj.requireInt("pageCount", min = 1, max = SecurityLimits.MAX_PAGE_COUNT)
+        return LinearizeCheckContract(isLinearized = false, pageCount = pageCount, verificationStatus = status)
     }
 
     private fun parseArchiveInspect(root: Any?): ArchiveInspectContract {
@@ -309,6 +317,12 @@ object WorkerResponseValidator {
         val version = obj.requireString("pdfaVersionDetected", maxLength = 64)
         val score = obj.requireInt("complianceScore", min = 0, max = 100)
         val isCompliant = obj.requireBoolean("isCompliant")
+        require(!isCompliant) { "Preliminary checks cannot certify PDF/A" }
+        val status = obj.requireString("certificationStatus", maxLength = 32)
+        require(status == "NOT_CERTIFIED") { "Invalid PDF/A certification status" }
+        val scope = obj.requireString("assessmentScope", maxLength = 32)
+        require(scope == "PRELIMINARY_PDF_A_CHECKS") { "Invalid PDF/A assessment scope" }
+        require(version == "Unknown (not certified)") { "Unverified PDF/A version claim" }
         val checksArray = obj.requireArray("checks", maxItems = 100)
         val checks = mutableListOf<ArchiveCheckItemContract>()
         for (i in 0 until checksArray.length()) {
@@ -324,7 +338,9 @@ object WorkerResponseValidator {
             pdfaVersionDetected = version,
             complianceScore = score,
             checks = checks,
-            isCompliant = isCompliant
+            isCompliant = false,
+            certificationStatus = status,
+            assessmentScope = scope
         )
     }
 
@@ -511,6 +527,30 @@ object WorkerResponseValidator {
             itemsExtracted = obj.requireInt("itemsExtracted", min = 0)
         )
     }
+
+    private fun parseTableExtract(root: Any?, targetCount: Int): TableExtractContract {
+        val obj = requireObject(root)
+        require(!obj.has("error")) { "Worker reported error" }
+        val success = if (obj.has("success")) obj.requireBoolean("success") else true
+        require(success) { "Worker reported failure: success=false" }
+        val empty = if (obj.has("empty")) obj.requireBoolean("empty") else false
+        val rowCount = obj.requireInt("rowCount", min = 0, max = CsvParser.MAX_ROWS)
+        val count = if (obj.has("count") && !obj.isNull("count")) {
+            obj.requireInt("count", min = 0)
+        } else {
+            if (empty) 0 else 1
+        }
+        if (empty) {
+            require(rowCount == 0) { "Table extraction marked empty but rowCount is $rowCount" }
+        }
+        return TableExtractContract(
+            success = true,
+            empty = empty,
+            rowCount = rowCount,
+            count = count
+        )
+    }
+
 
     private fun parseImageAnalyze(root: Any?): ImageAnalysisContract {
         val obj = requireObject(root)
@@ -853,41 +893,77 @@ object WorkerResponseValidator {
         require(file.exists()) { "CSV table file does not exist" }
         val length = file.length()
         require(length <= MAX_FILE_RESULT_BYTES) { "CSV file exceeds limit: $length bytes" }
-        val text = file.readText(Charsets.UTF_8)
-        return validateCsvTable(text)
+        // The length check must also bound the read if the file changes afterwards.
+        val bytes = ByteArray(length.toInt())
+        file.inputStream().use { input ->
+            var offset = 0
+            while (offset < bytes.size) {
+                val read = input.read(bytes, offset, bytes.size - offset)
+                require(read > 0) { "CSV file changed during validation" }
+                offset += read
+            }
+            require(input.read() == -1) { "CSV file changed during validation" }
+        }
+        return validateCsvTableBytes(bytes)
+    }
+
+    fun validateCsvTableBytes(bytes: ByteArray): String {
+        require(bytes.size <= MAX_FILE_RESULT_BYTES) { "CSV file exceeds limit" }
+        return validateCsvTable(bytes.toString(Charsets.UTF_8))
     }
 
     fun validateCsvTable(csvText: String): String {
         require(csvText.length <= MAX_FILE_RESULT_BYTES) { "CSV text exceeds limit" }
         var rowCount = 0
         var totalCells = 0
-        csvText.lineSequence().forEach { line ->
-            if (line.isNotBlank()) {
-                rowCount++
-                require(rowCount <= 5000) { "CSV row limit exceeded (max 5000)" }
-                var inQuotes = false
-                var colCount = 0
-                var cellCharCount = 0
-                for (ch in line) {
-                    if (ch == '\"') {
-                        inQuotes = !inQuotes
-                    } else if (ch == ',' && !inQuotes) {
-                        colCount++
-                        totalCells++
-                        require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                        require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                        cellCharCount = 0
-                    } else {
-                        cellCharCount++
-                    }
-                }
-                colCount++
-                totalCells++
-                require(colCount <= 128) { "CSV column limit exceeded (max 128)" }
-                require(cellCharCount <= 1024) { "CSV cell character limit exceeded (max 1024)" }
-                require(totalCells <= 20000) { "CSV total cells limit exceeded (max 20000)" }
-            }
+        var columns = 0
+        var cellChars = 0
+        var started = false
+        var quoted = false
+        var closedQuote = false
+        fun character() {
+            cellChars++
+            require(cellChars <= 1024) { "CSV cell character limit exceeded (max 1024)" }
         }
+        fun cell() {
+            columns++; totalCells++
+            require(columns <= 128) { "CSV column limit exceeded (max 128)" }
+            require(totalCells <= 20000) { "CSV total cells limit exceeded (max 20000)" }
+            cellChars = 0; started = false; closedQuote = false
+        }
+        fun row() {
+            rowCount++
+            require(rowCount <= 5000) { "CSV row limit exceeded (max 5000)" }
+            columns = 0
+        }
+        var index = 0
+        while (index < csvText.length) {
+            val ch = csvText[index]
+            if (quoted) {
+                if (ch == '"') {
+                    if (index + 1 < csvText.length && csvText[index + 1] == '"') {
+                        character(); index++ // Two encoded quotes are one decoded character.
+                    } else { quoted = false; closedQuote = true }
+                } else character() // Embedded CR/LF are cell characters, not records.
+            } else when (ch) {
+                ',' -> cell()
+                '\r', '\n' -> {
+                    cell(); row()
+                    if (ch == '\r' && index + 1 < csvText.length && csvText[index + 1] == '\n') index++
+                }
+                '"' -> {
+                    require(!started && !closedQuote) { "Malformed CSV: quote in unquoted field" }
+                    quoted = true; started = true
+                }
+                else -> {
+                    require(!closedQuote) { "Malformed CSV: character after closing quote" }
+                    started = true; character()
+                }
+            }
+            index++
+        }
+        require(!quoted) { "Malformed CSV: unclosed quote" }
+        if (started || closedQuote || columns > 0) { cell(); row() }
         return csvText
     }
 

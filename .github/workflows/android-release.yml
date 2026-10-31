@@ -2,9 +2,26 @@ name: Android security and build
 
 on:
   push:
-    branches: [repo-android, main, feature/wave-2-audio-export]
+    branches:
+      - repo-android
+      - main
+      - feature/wave-2-audio-export
+      - integration/2.1.0-2026-10-26
+      - 'integration/**'
+      - 'release/**'
+      - 'gemini/**'
+      - 'codex/**'
+      - 'fix/**'
   pull_request:
-    branches: [repo-android, main]
+    branches:
+      - repo-android
+      - main
+      - integration/2.1.0-2026-10-26
+      - 'integration/**'
+      - 'release/**'
+      - 'gemini/**'
+      - 'codex/**'
+      - 'fix/**'
   workflow_dispatch:
 
 permissions:

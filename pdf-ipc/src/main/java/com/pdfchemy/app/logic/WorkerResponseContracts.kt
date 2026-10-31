@@ -17,6 +17,18 @@ data class StandardOutputContract(
 ) : OperationContract
 
 /**
+ * Table extraction contract for TABLE_EXTRACT.
+ * Distinguishes output file count from table row count, and reports whether extraction was empty.
+ */
+data class TableExtractContract(
+    val success: Boolean = true,
+    val empty: Boolean = false,
+    val rowCount: Int = 0,
+    val count: Int = 1
+) : OperationContract
+
+
+/**
  * Metadata read contract for METADATA_READ.
  */
 data class MetadataReadContract(
@@ -91,7 +103,8 @@ data class CheckEncryptionContract(
  */
 data class LinearizeCheckContract(
     val isLinearized: Boolean,
-    val pageCount: Int
+    val pageCount: Int,
+    val verificationStatus: String
 ) : OperationContract
 
 /**
@@ -111,7 +124,9 @@ data class ArchiveInspectContract(
     val pdfaVersionDetected: String,
     val complianceScore: Int,
     val checks: List<ArchiveCheckItemContract>,
-    val isCompliant: Boolean
+    val isCompliant: Boolean,
+    val certificationStatus: String,
+    val assessmentScope: String
 ) : OperationContract
 
 /**

@@ -1,5 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <provider
+            android:name="com.pdfchemy.app.security.ShareRecipientProvider"
+            android:authorities="com.pdfchemy.app.test.sharerecipient"
+            android:process=":shareRecipient"
+            android:exported="true" />
         <!-- A real foreign UID/process; none of these components ship in the app. -->
         <activity
             android:name="com.pdfchemy.app.security.CrossUidSenderFixture$SenderActivity"

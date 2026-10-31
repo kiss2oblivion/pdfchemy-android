@@ -35,4 +35,23 @@ class ScreenRestorationTest {
     @Test fun legacySplitDestinationStillRestoresWithoutAnInput() {
         assertEquals(Screen.SplitPdf(), ScreenSaver.restore("SplitPdf"))
     }
+
+    @Test fun persistedRouteIdentifiersRemainCanonicalAcrossAppUpdates() {
+        val scope = SaverScope { true }
+        // Stored values are a compatibility contract, independent of class names.
+        for ((identifier, screen) in mapOf(
+            "Home" to Screen.Home,
+            "CreateCategory" to Screen.CreateCategory,
+            "CompressCategory" to Screen.CompressCategory,
+            "OrganizeCategory" to Screen.OrganizeCategory,
+            "CheckCategory" to Screen.CheckCategory,
+            "CompressPdf" to Screen.CompressPdf,
+            "Deskew" to Screen.Deskew,
+            "DocumentSanitizer" to Screen.DocumentSanitizer,
+            "OfficeExport:POWERPOINT" to Screen.OfficeExport(com.pdfchemy.app.logic.OfficeFormat.POWERPOINT)
+        )) {
+            assertEquals(screen, ScreenSaver.restore(identifier))
+            assertEquals(identifier, with(ScreenSaver) { scope.save(screen) })
+        }
+    }
 }

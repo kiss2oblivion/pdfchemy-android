@@ -6,7 +6,20 @@ import android.provider.OpenableColumns
 import com.pdfchemy.app.jail.StagedPdf
 import java.io.File
 import java.io.InputStream
+import java.io.FileNotFoundException
 import java.security.MessageDigest
+
+data class SavedReaderPosition(
+    val pageIndex: Int,
+    val scrollOffsetPx: Int
+)
+
+enum class DocumentLoadFailureKind {
+    REVOKED_OR_INACCESSIBLE,
+    ENCRYPTED,
+    DAMAGED,
+    VANGUARD_THREAT
+}
 
 object DocumentIdentity {
 
@@ -301,5 +314,42 @@ object DocumentIdentity {
      */
     fun clearPreferencesForTesting(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit()
+    }
+
+    fun getSavedReaderPosition(
+        context: Context,
+        docId: String,
+        totalPages: Int
+    ): SavedReaderPosition {
+        if (docId.isBlank() || totalPages <= 0) {
+            return SavedReaderPosition(pageIndex = 0, scrollOffsetPx = 0)
+        }
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val rawPage = prefs.getInt("page_$docId", 0).coerceAtLeast(0)
+        val rawOffset = prefs.getInt("offset_$docId", 0).coerceAtLeast(0)
+        return if (rawPage < totalPages) {
+            SavedReaderPosition(pageIndex = rawPage, scrollOffsetPx = rawOffset)
+        } else {
+            SavedReaderPosition(pageIndex = (totalPages - 1).coerceAtLeast(0), scrollOffsetPx = 0)
+        }
+    }
+
+    fun classifyLoadException(throwable: Throwable?): DocumentLoadFailureKind {
+        var current: Throwable? = throwable
+        while (current != null) {
+            if (current is SecurityException || current is FileNotFoundException) {
+                return DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE
+            }
+            val msg = current.message ?: ""
+            if (msg.contains("Cannot open document", ignoreCase = true) ||
+                msg.contains("Permission Denial", ignoreCase = true) ||
+                msg.contains("FileNotFound", ignoreCase = true) ||
+                msg.contains("ENOENT", ignoreCase = true)
+            ) {
+                return DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE
+            }
+            current = current.cause
+        }
+        return DocumentLoadFailureKind.DAMAGED
     }
 }

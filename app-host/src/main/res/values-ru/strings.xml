@@ -170,6 +170,9 @@
 <string name="recent_activity">Недавние действия</string>
 <string name="premium_title">Премиум версия</string>
 <string name="premium_thanks">Спасибо за поддержку безопасных офлайн инструментов!</string>
+    <string name="price_available_in_google_play">Цена доступна в Google Play</string>
+    <string name="unlock_lifetime_with_price">Разблокировать навсегда · %1$s</string>
+    <string name="restore_purchases">Восстановить покупки</string>
     <string name="premium_features">Разблокируйте все возможности PDFchemy.
 
 ✓ Без рекламы
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Сведения о Fast Web View</string>
+<string name="menu_fast_web_view_desc">Проверка сведений о PDF; создание Fast Web View недоступно</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">Эта версия не поддерживает создание или сертификацию файлов PDF с Fast Web View. Выходной файл создан не будет.</string>
+<string name="select_pdf_for_linearize">Выберите PDF для проверки</string>
+<string name="label_diagnostic_status">Сведения о PDF</string>
+<string name="label_fast_web_view_enabled">Линеаризация:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">Не подтверждено</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">Оптимизация недоступна</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">Предварительная проверка PDF/A</string>
+<string name="menu_pdfa_validator_desc">Выполнение предварительных проверок; соответствие PDF/A не сертифицировано</string>
+<string name="pdfa_headline">Только предварительная проверка; не сертифицировано</string>
+<string name="pdfa_subtitle">Эти проверки не подтверждают соответствие стандарту ISO 19005. Преобразование в PDF/A недоступно в этой версии.</string>
+<string name="select_pdf_for_pdfa">Выберите PDF для предварительной проверки</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,31 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Не удалось сохранить файл CSV.</string>
+    <string name="table_extractor_error_extract">Не удалось извлечь табличные данные из документа.</string>
+    <string name="table_extractor_safe_mode">Безопасный экспорт для таблиц (Рекомендуется)</string>
+    <string name="table_extractor_raw_mode">Экспорт необработанных данных</string>
+    <string name="table_extractor_safe_mode_desc">Безопасный режим экранирует знаки формул (=, +, -, @) начальным апострофом, предотвращая исполнение формул табличными редакторами при открытии.</string>
+    <string name="table_extractor_raw_mode_desc">Режим необработанных данных сохраняет значения ячеек точно в том виде, в котором они извлечены из PDF, без изменений.</string>
+    <string name="table_extractor_safe_banner">Безопасный экспорт включен. Значения в виде формул снабжены префиксом для защиты от выполнения внешними табличными редакторами.</string>
+    <string name="table_extractor_error_title">Сбой извлечения таблицы</string>
+    <string name="table_extractor_error_fallback">Произошла непредвиденная ошибка при извлечении таблицы.</string>
+    <string name="table_extractor_retry">Повторить извлечение</string>
+    <string name="table_extractor_no_tables_desc">В этом документе табличные данные не обнаружены.</string>
+    <string name="table_extractor_error_share">Не удалось поделиться файлом CSV.</string>
+    <string name="table_extractor_share_desc">Поделиться CSV</string>
+    <string name="menu_more_tools">Все инструменты</string>
+    <string name="reader_action_search">Поиск по документу</string>
+    <string name="reader_toc_title">Оглавление</string>
+    <string name="reader_fit_width">По ширине</string>
+    <string name="reader_fit_page">По странице</string>
+    <string name="reader_search_hint">Поиск по документу…</string>
+    <string name="reader_action_clear_search">Очистить поиск</string>
+    <string name="reader_search_no_matches">Совпадений не найдено</string>
+    <string name="reader_page_indicator">Страница %1$d из %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Страница %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Сброс</string>
+    <string name="previous_match">Предыдущее совпадение</string>
+    <string name="next_match">Следующее совпадение</string>
 </resources>

@@ -11,7 +11,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import java.io.File
+import android.graphics.BitmapFactory
+import com.pdfchemy.app.security.SecurityLimits
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlin.math.roundToLong
 import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import java.io.OutputStream
@@ -86,74 +91,112 @@ object OfficeExportEngineWorker {
         }
     }
 
+    private data class PresentationPage(val width: Double, val height: Double)
+
     fun exportToPowerPoint(context: Context, sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, rendererBinder: android.os.IBinder? = null): String {
         return try {
-            var doc: PDDocument? = null
-            var pageCount = 0
-            var slideTexts: List<List<String>> = emptyList()
-            val slideImages = mutableListOf<File>()
-            
-            try {
-                FileInputStream(sourceFd.fileDescriptor).use { inStream ->
-                    doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
-                }
-                
-                pageCount = doc!!.numberOfPages
-                val allPagesText = PdfTextExtractorWorker.extractAllPagesText(doc!!)
-                slideTexts = allPagesText.map { pageText ->
-                    pageText.lines().map { it.trim() }.filter { it.isNotEmpty() }
-                }
-
-                // Render slide images via IPC to PdfNativeRendererService
-                runBlocking {
-                    val renderedPageCount = JailNativeRendererCoordinator.getPageCount(sourceFd, rendererBinder)
-                    if (renderedPageCount != null) {
-                        for (i in 0 until renderedPageCount) {
-                            val tempImgFile = com.pdfchemy.app.jail.JailScratch.namedFile("slide_${System.currentTimeMillis()}_$i.jpg")
-                            val pipe = ParcelFileDescriptor.createPipe()
-                            val readFd = pipe[0]
-                            val writeFd = pipe[1]
-                            
-                            val renderJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.currentCoroutineContext()).async(Dispatchers.IO) {
-                                try {
-                                    JailNativeRendererCoordinator.renderPageToJpeg(sourceFd, i, writeFd, rendererBinder)
-                                } finally {
-                                    try { writeFd.close() } catch (e: Exception) {}
-                                }
-                            }
-                            
-                            try {
-                                ParcelFileDescriptor.AutoCloseInputStream(readFd).use { pipeIn ->
-                                    FileOutputStream(tempImgFile).use { fos ->
-                                        pipeIn.copyTo(fos)
-                                    }
-                                }
-                            } finally {
-                                renderJob.await()
-                            }
-                            slideImages.add(tempImgFile)
-                        }
+            checkNotNull(rendererBinder) { "PowerPoint export requires the isolated renderer" }
+            val pages = FileInputStream(sourceFd.fileDescriptor).use { input ->
+                PDDocument.load(input, com.pdfchemy.app.jail.JailMemory.settings()).use { document ->
+                    require(document.numberOfPages in 1..SecurityLimits.MAX_PAGE_COUNT) { "No readable pages or page quota exceeded" }
+                    document.pages.map { page ->
+                        val box = page.cropBox
+                        val rotation = ((page.rotation % 360) + 360) % 360
+                        require(rotation in listOf(0, 90, 180, 270)) { "Invalid page rotation" }
+                        val width = box.width.toDouble(); val height = box.height.toDouble()
+                        require(width.isFinite() && height.isFinite() && width > 0 && height > 0) { "Invalid page dimensions" }
+                        if (rotation == 90 || rotation == 270) PresentationPage(height, width)
+                        else PresentationPage(width, height)
                     }
                 }
-
-                FileOutputStream(targetFd.fileDescriptor).use { out ->
-                    writePptxArchive(out, slideTexts, slideImages)
-                }
-
-            } finally {
-                try { doc?.close() } catch (_: Exception) {}
-                slideImages.forEach { it.delete() }
             }
-            
-            val outSize = com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor)
-            val obj = JSONObject()
-            obj.put("success", true)
-            obj.put("pageCount", pageCount)
-            obj.put("outputSizeBytes", outSize)
-            obj.put("itemsExtracted", slideTexts.size)
-            obj.toString()
-        } catch (e: Exception) {
-            JSONObject().put("error", e.message).toString()
+            runBlocking {
+                val count = JailNativeRendererCoordinator.getPageCount(sourceFd, rendererBinder)
+                check(count == pages.size) { "Renderer page count does not match the PDF" }
+                FileOutputStream(targetFd.fileDescriptor).use { output ->
+                    writePptxArchive(output, pages) { index, page, zip, budget ->
+                        streamPresentationImage(sourceFd, index, page, zip, budget, rendererBinder)
+                    }
+                }
+            }
+            JSONObject().put("success", true).put("pageCount", pages.size)
+                .put("outputSizeBytes", com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor))
+                .put("itemsExtracted", pages.size).toString()
+        } catch (error: Exception) {
+            JSONObject().put("error", error.message ?: "PowerPoint export failed").toString()
+        }
+    }
+
+    /** One bounded JPEG pipe at a time; no page-image files accumulate in worker scratch. */
+    private suspend fun streamPresentationImage(
+        source: ParcelFileDescriptor, index: Int, page: PresentationPage,
+        output: OutputStream, budget: Long, renderer: android.os.IBinder
+    ): Long = coroutineScope {
+        val pipe = ParcelFileDescriptor.createPipe()
+        val producer = async(Dispatchers.IO) {
+            try {
+                check(JailNativeRendererCoordinator.renderPageToJpeg(source, index, pipe[1], renderer) == true) {
+                    "Renderer did not complete page ${index + 1}"
+                }
+            } finally { pipe[1].close() }
+        }
+        try {
+            ParcelFileDescriptor.AutoCloseInputStream(pipe[0]).use { input ->
+                val cancellation = currentCoroutineContext()
+                var bytes = 0L
+                var prefix = 0; var prefixBytes = 0; var trailer = 0
+                fun record(buffer: ByteArray, offset: Int, count: Int) {
+                    cancellation.ensureActive()
+                    require(count.toLong() <= budget - bytes) { "Presentation image quota exceeded" }
+                    for (n in offset until offset + minOf(count, 2 - prefixBytes)) {
+                        prefix = (prefix shl 8) or (buffer[n].toInt() and 255); prefixBytes++
+                    }
+                    if (count >= 2) trailer = ((buffer[offset + count - 2].toInt() and 255) shl 8) or (buffer[offset + count - 1].toInt() and 255)
+                    else if (count == 1) trailer = ((trailer shl 8) or (buffer[offset].toInt() and 255)) and 65535
+                    output.write(buffer, offset, count)
+                    bytes += count
+                }
+                // Decode bounds through a tee, then drain the rest. This checks a
+                // real JPEG frame without allocating a second raster or buffering
+                // the image. Decoder read-ahead is recorded exactly once as well.
+                val recording = object : java.io.InputStream() {
+                    private val single = ByteArray(1)
+                    override fun read(): Int {
+                        val value = input.read()
+                        if (value >= 0) { single[0] = value.toByte(); record(single, 0, 1) }
+                        return value
+                    }
+                    override fun read(buffer: ByteArray, offset: Int, count: Int): Int {
+                        val read = input.read(buffer, offset, count)
+                        if (read > 0) record(buffer, offset, read)
+                        return read
+                    }
+                    override fun skip(count: Long): Long {
+                        val buffer = ByteArray(8192)
+                        var skipped = 0L
+                        while (skipped < count) {
+                            val read = read(buffer, 0, minOf(buffer.size.toLong(), count - skipped).toInt())
+                            if (read < 0) break
+                            skipped += read
+                        }
+                        return skipped
+                    }
+                }
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(recording, null, bounds)?.recycle()
+                check(bounds.outMimeType == "image/jpeg") { "Renderer did not return a JPEG" }
+                SecurityLimits.requirePixels(bounds.outWidth, bounds.outHeight)
+                val aspectError = kotlin.math.abs(bounds.outWidth.toDouble() / bounds.outHeight - page.width / page.height)
+                check(aspectError <= 2.0 / minOf(bounds.outWidth, bounds.outHeight)) { "Rendered page aspect ratio mismatch" }
+                val buffer = ByteArray(64 * 1024)
+                while (true) { val read = recording.read(buffer); if (read < 0) break }
+                producer.await()
+                check(bytes >= 4 && prefix == 0xffd8 && trailer == 0xffd9) { "Incomplete rendered JPEG" }
+                bytes
+            }
+        } finally {
+            runCatching { pipe[0].close() }; runCatching { pipe[1].close() }
+            producer.cancel()
         }
     }
 
@@ -398,182 +441,62 @@ object OfficeExportEngineWorker {
     // PowerPoint (.pptx) OpenXML Archive Builder
     // =========================================================================
 
-    private fun writePptxArchive(
+    private suspend fun writePptxArchive(
         outputStream: OutputStream,
-        slideTexts: List<List<String>>,
-        slideImages: List<File>
+        pages: List<PresentationPage>,
+        image: suspend (Int, PresentationPage, OutputStream, Long) -> Long
     ) {
         val zip = ZipOutputStream(outputStream)
-        val slideCount = maxOf(1, slideTexts.size)
-
-        // 1. [Content_Types].xml
-        zip.putNextEntry(ZipEntry("[Content_Types].xml"))
-        val ctSb = StringBuilder()
-        ctSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-    <Default Extension="xml" ContentType="application/xml"/>
-    <Default Extension="jpeg" ContentType="image/jpeg"/>
-    <Default Extension="jpg" ContentType="image/jpeg"/>
-    <Default Extension="png" ContentType="image/png"/>
-    <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>""")
-        
-        for (i in 1..slideCount) {
-            ctSb.append("<Override PartName=\"/ppt/slides/slide$i.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>")
-        }
-        ctSb.append("</Types>")
-        zip.write(ctSb.toString().toByteArray(StandardCharsets.UTF_8))
-        zip.closeEntry()
-
-        // 2. _rels/.rels
-        zip.putNextEntry(ZipEntry("_rels/.rels"))
-        val rootRelsXml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
-</Relationships>"""
-        zip.write(rootRelsXml.toByteArray(StandardCharsets.UTF_8))
-        zip.closeEntry()
-
-        // 3. ppt/_rels/presentation.xml.rels
-        zip.putNextEntry(ZipEntry("ppt/_rels/presentation.xml.rels"))
-        val presRelsSb = StringBuilder()
-        presRelsSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">""")
-        for (i in 1..slideCount) {
-            presRelsSb.append("<Relationship Id=\"rId$i\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide$i.xml\"/>")
-        }
-        presRelsSb.append("</Relationships>")
-        zip.write(presRelsSb.toString().toByteArray(StandardCharsets.UTF_8))
-        zip.closeEntry()
-
-        // 4. ppt/presentation.xml
-        zip.putNextEntry(ZipEntry("ppt/presentation.xml"))
-        val presSb = StringBuilder()
-        presSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-    <p:sldIdLst>""")
-        for (i in 1..slideCount) {
-            val id = 255 + i
-            presSb.append("<p:sldId id=\"$id\" r:id=\"rId$i\"/>")
-        }
-        presSb.append("""</p:sldIdLst>
-    <p:sldSz cx="12192000" cy="6858000"/>
-    <p:notesSz cx="6858000" cy="9144000"/>
-</p:presentation>""")
-        zip.write(presSb.toString().toByteArray(StandardCharsets.UTF_8))
-        zip.closeEntry()
-
-        // 5. Individual Slides: ppt/slides/slideN.xml
-        for (i in 1..slideCount) {
-            val lines = if (i - 1 < slideTexts.size) slideTexts[i - 1] else emptyList()
-            val titleText = if (lines.isNotEmpty()) escapeXml(lines[0]) else "Slide $i"
-            val bodyLines = if (lines.size > 1) lines.drop(1).take(8) else emptyList()
-
-            // Save slide image backdrop if present
-            val hasImage = i - 1 < slideImages.size
-            if (hasImage) {
-                val imgFile = slideImages[i - 1]
-                if (imgFile.exists()) {
-                    zip.putNextEntry(ZipEntry("ppt/media/image$i.jpeg"))
-                    com.pdfchemy.app.jail.CapabilityIo.input(imgFile).use { it.copyTo(zip) }
-                    zip.closeEntry()
-                }
-
-                // Relationship for slide image
-                zip.putNextEntry(ZipEntry("ppt/slides/_rels/slide$i.xml.rels"))
-                val slideRel = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image$i.jpeg"/>
-</Relationships>"""
-                zip.write(slideRel.toByteArray(StandardCharsets.UTF_8))
-                zip.closeEntry()
-            }
-
-            zip.putNextEntry(ZipEntry("ppt/slides/slide$i.xml"))
-            val slideSb = StringBuilder()
-            slideSb.append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-    <p:cSld>
-        <p:spTree>
-            <p:nvGrpSpPr>
-                <p:cNvPr id="1" name=""/>
-                <p:cNvGrpSpPr/>
-                <p:nvPr/>
-            </p:nvGrpSpPr>
-            <p:grpSpPr/>""")
-
-            // 1. Title shape
-            slideSb.append("""
-            <p:sp>
-                <p:nvSpPr>
-                    <p:cNvPr id="2" name="Title $i"/>
-                    <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
-                    <p:nvPr/>
-                </p:nvSpPr>
-                <p:spPr>
-                    <a:xfrm><a:off x="800000" y="500000"/><a:ext cx="10592000" cy="1000000"/></a:xfrm>
-                </p:spPr>
-                <p:txBody>
-                    <a:bodyPr/>
-                    <a:lstStyle/>
-                    <a:p>
-                        <a:pPr algn="l"/>
-                        <a:r>
-                            <a:rPr lang="en-US" sz="2800" b="1"><a:solidFill><a:srgbClr val="1A237E"/></a:solidFill></a:rPr>
-                            <a:t>$titleText</a:t>
-                        </a:r>
-                    </a:p>
-                </p:txBody>
-            </p:sp>""")
-
-            // 2. Body shape with bullets
-            slideSb.append("""
-            <p:sp>
-                <p:nvSpPr>
-                    <p:cNvPr id="3" name="Content $i"/>
-                    <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
-                    <p:nvPr/>
-                </p:nvSpPr>
-                <p:spPr>
-                    <a:xfrm><a:off x="800000" y="1700000"/><a:ext cx="10592000" cy="4500000"/></a:xfrm>
-                </p:spPr>
-                <p:txBody>
-                    <a:bodyPr/>
-                    <a:lstStyle/>""")
-
-            if (bodyLines.isNotEmpty()) {
-                for (bodyLine in bodyLines) {
-                    val cleanBody = escapeXml(bodyLine)
-                    slideSb.append("""
-                    <a:p>
-                        <a:pPr lvl="0"/>
-                        <a:r>
-                            <a:rPr lang="en-US" sz="1800"><a:solidFill><a:srgbClr val="333333"/></a:solidFill></a:rPr>
-                            <a:t>$cleanBody</a:t>
-                        </a:r>
-                    </a:p>""")
-                }
-            } else {
-                slideSb.append("""
-                    <a:p>
-                        <a:r>
-                            <a:rPr lang="en-US" sz="1600" i="1"><a:solidFill><a:srgbClr val="888888"/></a:solidFill></a:rPr>
-                            <a:t>Content from PDF Page $i</a:t>
-                        </a:r>
-                    </a:p>""")
-            }
-
-            slideSb.append("""
-                </p:txBody>
-            </p:sp>
-        </p:spTree>
-    </p:cSld>
-</p:sld>""")
-
-            zip.write(slideSb.toString().toByteArray(StandardCharsets.UTF_8))
+        val p = "http://schemas.openxmlformats.org/presentationml/2006/main"
+        val a = "http://schemas.openxmlformats.org/drawingml/2006/main"
+        val r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+        fun xml(name: String, body: String) {
+            zip.putNextEntry(ZipEntry(name))
+            zip.write(("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" + body).toByteArray(StandardCharsets.UTF_8))
             zip.closeEntry()
         }
-
+        fun rel(id: String, type: String, target: String) = """<Relationship Id="$id" Type="$r/$type" Target="$target"/>"""
+        fun rels(name: String, body: String) = xml(name, """<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">$body</Relationships>""")
+        val group = """<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>"""
+        val types = buildString {
+            append("""<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/>""")
+            for ((name, type) in listOf("presentation.xml" to "presentation.main", "slideMasters/slideMaster1.xml" to "slideMaster", "slideLayouts/slideLayout1.xml" to "slideLayout")) {
+                append("""<Override PartName="/ppt/$name" ContentType="application/vnd.openxmlformats-officedocument.presentationml.$type+xml"/>""")
+            }
+            append("""<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>""")
+            for (i in pages.indices) append("""<Override PartName="/ppt/slides/slide${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>""")
+            append("</Types>")
+        }
+        xml("[Content_Types].xml", types)
+        rels("_rels/.rels", rel("rId1", "officeDocument", "ppt/presentation.xml"))
+        rels("ppt/_rels/presentation.xml.rels", rel("rIdMaster", "slideMaster", "slideMasters/slideMaster1.xml") +
+            pages.indices.joinToString("") { rel("rId${it + 1}", "slide", "slides/slide${it + 1}.xml") })
+        val slideIds = pages.indices.joinToString("") { """<p:sldId id="${256 + it}" r:id="rId${it + 1}"/>""" }
+        val slideWidth = 12192000L; val slideHeight = 6858000L
+        xml("ppt/presentation.xml", """<p:presentation xmlns:a="$a" xmlns:r="$r" xmlns:p="$p"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rIdMaster"/></p:sldMasterIdLst><p:sldIdLst>$slideIds</p:sldIdLst><p:sldSz cx="$slideWidth" cy="$slideHeight"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>""")
+        xml("ppt/slideMasters/slideMaster1.xml", """<p:sldMaster xmlns:a="$a" xmlns:r="$r" xmlns:p="$p"><p:cSld name="PDF pages"><p:spTree>$group</p:spTree></p:cSld><p:clrMap accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" bg1="lt1" bg2="lt2" folHlink="folHlink" hlink="hlink" tx1="dk1" tx2="dk2"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rIdLayout"/></p:sldLayoutIdLst></p:sldMaster>""")
+        rels("ppt/slideMasters/_rels/slideMaster1.xml.rels", rel("rIdLayout", "slideLayout", "../slideLayouts/slideLayout1.xml") + rel("rIdTheme", "theme", "../theme/theme1.xml"))
+        xml("ppt/slideLayouts/slideLayout1.xml", """<p:sldLayout xmlns:a="$a" xmlns:r="$r" xmlns:p="$p" type="blank" preserve="1"><p:cSld name="Blank"><p:spTree>$group</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>""")
+        rels("ppt/slideLayouts/_rels/slideLayout1.xml.rels", rel("rIdMaster", "slideMaster", "../slideMasters/slideMaster1.xml"))
+        val colors = listOf("dk1" to "000000", "lt1" to "FFFFFF", "dk2" to "222222", "lt2" to "EEEEEE", "accent1" to "4472C4", "accent2" to "ED7D31", "accent3" to "A5A5A5", "accent4" to "FFC000", "accent5" to "5B9BD5", "accent6" to "70AD47", "hlink" to "0000FF", "folHlink" to "800080")
+            .joinToString("") { (name, color) -> """<a:$name><a:srgbClr val="$color"/></a:$name>""" }
+        val solid = """<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>"""
+        val fonts = """<a:latin typeface="Arial"/><a:ea typeface=""/><a:cs typeface=""/>"""
+        xml("ppt/theme/theme1.xml", """<a:theme xmlns:a="$a" name="PDF pages"><a:themeElements><a:clrScheme name="PDF pages">$colors</a:clrScheme><a:fontScheme name="PDF pages"><a:majorFont>$fonts</a:majorFont><a:minorFont>$fonts</a:minorFont></a:fontScheme><a:fmtScheme name="PDF pages"><a:fillStyleLst>${solid.repeat(3)}</a:fillStyleLst><a:lnStyleLst>${("<a:ln w=\"9525\">" + solid + "<a:prstDash val=\"solid\"/></a:ln>").repeat(3)}</a:lnStyleLst><a:effectStyleLst>${"<a:effectStyle><a:effectLst/></a:effectStyle>".repeat(3)}</a:effectStyleLst><a:bgFillStyleLst>${solid.repeat(3)}</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>""")
+        var imageBytes = 0L
+        for ((index, page) in pages.withIndex()) {
+            currentCoroutineContext().ensureActive()
+            val number = index + 1
+            zip.putNextEntry(ZipEntry("ppt/media/image$number.jpeg"))
+            imageBytes += image(index, page, zip, SecurityLimits.MAX_OUTPUT_BYTES - imageBytes)
+            zip.closeEntry()
+            rels("ppt/slides/_rels/slide$number.xml.rels", rel("rIdImage", "image", "../media/image$number.jpeg") + rel("rIdLayout", "slideLayout", "../slideLayouts/slideLayout1.xml"))
+            val scale = minOf(slideWidth / page.width, slideHeight / page.height)
+            val width = (page.width * scale).roundToLong().coerceIn(1L, slideWidth)
+            val height = (page.height * scale).roundToLong().coerceIn(1L, slideHeight)
+            val x = (slideWidth - width) / 2; val y = (slideHeight - height) / 2
+            xml("ppt/slides/slide$number.xml", """<p:sld xmlns:a="$a" xmlns:r="$r" xmlns:p="$p"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:bgPr></p:bg><p:spTree>$group<p:pic><p:nvPicPr><p:cNvPr id="2" name="PDF page $number"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rIdImage"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="$x" y="$y"/><a:ext cx="$width" cy="$height"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>""")
+        }
         zip.finish()
     }
 

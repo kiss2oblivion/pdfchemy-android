@@ -178,6 +178,9 @@
 <string name="recent_activity">Activité récente</string>
 <string name="premium_title">Mise à niveau Premium</string>
 <string name="premium_thanks">Merci de soutenir nos outils de documents hors ligne !</string>
+    <string name="price_available_in_google_play">Prix disponible sur Google Play</string>
+    <string name="unlock_lifetime_with_price">Débloquer à vie · %1$s</string>
+    <string name="restore_purchases">Restaurer les achats</string>
     <string name="premium_features">Débloquez l\'expérience PDF ultime.
 
 ✓ Pas de publicités
@@ -904,17 +907,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Informations Fast Web View</string>
+<string name="menu_fast_web_view_desc">Inspecter les informations du PDF ; génération de Fast Web View non disponible</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">Cette version ne peut pas générer ou certifier de fichiers PDF Fast Web View. Aucun fichier de sortie ne sera créé.</string>
+<string name="select_pdf_for_linearize">Sélectionner un PDF à inspecter</string>
+<string name="label_diagnostic_status">Informations PDF</string>
+<string name="label_fast_web_view_enabled">Linéarisation :</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">Non vérifié</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">Optimisation non disponible</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -932,11 +935,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">Vérifications préliminaires PDF/A</string>
+<string name="menu_pdfa_validator_desc">Exécuter des vérifications préliminaires ; la conformité PDF/A n\'est pas certifiée</string>
+<string name="pdfa_headline">Vérifications préliminaires uniquement ; non certifié</string>
+<string name="pdfa_subtitle">Ces vérifications ne certifient pas la conformité ISO 19005. La conversion PDF/A n\'est pas disponible dans cette version.</string>
+<string name="select_pdf_for_pdfa">Sélectionner un PDF pour vérifications préliminaires</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1168,4 +1171,31 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">Échec de l\'enregistrement du fichier CSV.</string>
+    <string name="table_extractor_error_extract">Échec de l\'extraction des données tabulaires du document.</string>
+    <string name="table_extractor_safe_mode">Export sécurisé pour tableur (Recommandé)</string>
+    <string name="table_extractor_raw_mode">Export de données brutes</string>
+    <string name="table_extractor_safe_mode_desc">Le mode sécurisé neutralise les caractères de formule (=, +, -, @) avec une apostrophe initiale pour empêcher les tableurs d\'exécuter des formules à l\'ouverture.</string>
+    <string name="table_extractor_raw_mode_desc">Le mode Données brutes conserve les valeurs extraites exactement telles qu\'elles figurent dans le PDF, sans modification.</string>
+    <string name="table_extractor_safe_banner">Export sécurisé activé. Les valeurs de type formule sont préfixées pour empêcher leur évaluation par les tableurs externes.</string>
+    <string name="table_extractor_error_title">Échec de l\'extraction du tableau</string>
+    <string name="table_extractor_error_fallback">Une erreur inattendue est survenue lors de l\'extraction du tableau.</string>
+    <string name="table_extractor_retry">Réessayer l\'extraction</string>
+    <string name="table_extractor_no_tables_desc">Aucune donnée tabulaire n\'a été détectée dans ce document.</string>
+    <string name="table_extractor_error_share">Échec du partage du fichier CSV.</string>
+    <string name="table_extractor_share_desc">Partager le CSV</string>
+    <string name="menu_more_tools">Tous les outils</string>
+    <string name="reader_action_search">Rechercher dans le document</string>
+    <string name="reader_toc_title">Table des matières</string>
+    <string name="reader_fit_width">Ajuster à la largeur</string>
+    <string name="reader_fit_page">Ajuster à la page</string>
+    <string name="reader_search_hint">Rechercher dans le document…</string>
+    <string name="reader_action_clear_search">Effacer la recherche</string>
+    <string name="reader_search_no_matches">Aucun résultat trouvé</string>
+    <string name="reader_page_indicator">Page %1$d sur %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Page %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Réinitialiser</string>
+    <string name="previous_match">Occurrence précédente</string>
+    <string name="next_match">Occurrence suivante</string>
 </resources>

@@ -177,6 +177,9 @@
 <string name="recent_activity">Recent Activity</string>
 <string name="premium_title">Premium Upgrade</string>
 <string name="premium_thanks">Thank you for supporting our mission of privacy-first, offline document tools!</string>
+    <string name="price_available_in_google_play">Price available in Google Play</string>
+    <string name="unlock_lifetime_with_price">Unlock Lifetime · %1$s</string>
+    <string name="restore_purchases">Restore Purchases</string>
     <string name="premium_features">Unlock the ultimate offline PDF experience.
 
 ✓ No Banner Ads
@@ -916,17 +919,10 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view_desc">Inspect PDF information; Fast Web View generation is unavailable</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -944,11 +940,7 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator_desc">Run preliminary checks; PDF/A conformance is not certified</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1038,6 +1030,19 @@
     <string name="table_extractor_preview">Detected Tabular Data</string>
     <string name="table_extractor_no_tables">No tabular data detected on this page.</string>
     <string name="table_extractor_success">Tables Exported to CSV!</string>
+    <string name="table_extractor_error_save">Failed to save CSV file.</string>
+    <string name="table_extractor_error_extract">Failed to extract tabular data from document.</string>
+    <string name="table_extractor_safe_mode">Spreadsheet-Safe Export (Recommended)</string>
+    <string name="table_extractor_raw_mode">Raw Data Export</string>
+    <string name="table_extractor_safe_mode_desc">Spreadsheet-Safe mode sanitizes formula-like characters (=, +, -, @) with a leading single quote to prevent spreadsheet applications from executing formulas when opened.</string>
+    <string name="table_extractor_raw_mode_desc">Raw Data mode preserves extracted cell values exactly as found in the PDF without sanitization.</string>
+    <string name="table_extractor_safe_banner">Spreadsheet-Safe Export enabled. Formula-like values are prefixed to prevent external spreadsheet apps from evaluating them.</string>
+    <string name="table_extractor_error_title">Table Extraction Failed</string>
+    <string name="table_extractor_error_fallback">An unexpected error occurred during table extraction.</string>
+    <string name="table_extractor_retry">Retry Extraction</string>
+    <string name="table_extractor_no_tables_desc">No tabular data was detected in this document.</string>
+    <string name="table_extractor_error_share">Failed to share CSV file.</string>
+    <string name="table_extractor_share_desc">Share CSV</string>
 
     <string name="menu_doc_sanitizer">Threat &amp; Security Sanitizer</string>
     <string name="menu_doc_sanitizer_desc">Strip embedded JavaScript, tracking beacons, and malicious launch triggers</string>
@@ -1188,5 +1193,19 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="menu_more_tools">All Tools</string>
+    <string name="reader_action_search">Search Document</string>
+    <string name="reader_toc_title">Table of Contents</string>
+    <string name="reader_fit_width">Fit Width</string>
+    <string name="reader_fit_page">Fit Page</string>
+    <string name="reader_search_hint">Search document…</string>
+    <string name="reader_action_clear_search">Clear Search</string>
+    <string name="reader_search_no_matches">No matches found</string>
+    <string name="reader_page_indicator">Page %1$d of %2$d</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">Page %1$d</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • Reset</string>
+    <string name="previous_match">Previous Match</string>
+    <string name="next_match">Next Match</string>
 </resources>
 

@@ -10,8 +10,13 @@ object ShareUtil {
     fun shareFiles(context: Context, uris: List<Uri>, title: String = "Share PDF") {
         if (uris.isEmpty()) return
 
-        val shareUris = uris.map { uri ->
-            DocumentActions.getShareableContentUri(context, uri)
+        val shareUris = try {
+            uris.map { uri ->
+                DocumentActions.getShareableContentUri(context, uri)
+            }
+        } catch (e: RetainedShareQuotaException) {
+            android.widget.Toast.makeText(context, e.message ?: "Share storage limit reached", android.widget.Toast.LENGTH_LONG).show()
+            return
         }
         launchShareIntent(context, shareUris, title)
     }
@@ -50,6 +55,7 @@ object ShareUtil {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = ClipData.newUri(context.contentResolver, title, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         val chooser = Intent.createChooser(intent, title).apply {

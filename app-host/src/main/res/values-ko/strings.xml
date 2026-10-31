@@ -170,6 +170,9 @@
 <string name="recent_activity">최근 활동</string>
 <string name="premium_title">프리미엄 업그레이드</string>
 <string name="premium_thanks">개인정보 중심 오프라인 도구를 지원해 주셔서 감사합니다!</string>
+    <string name="price_available_in_google_play">Google Play에서 가격 확인 가능</string>
+    <string name="unlock_lifetime_with_price">평생 이용권 잠금 해제 · %1$s</string>
+    <string name="restore_purchases">구매 항목 복원</string>
     <string name="premium_features">최고의 오프라인 PDF 환경을 누려보세요.
 
 ✓ 광고 없음
@@ -895,17 +898,17 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
-<string name="menu_fast_web_view">Fast Web View (Linearize)</string>
-<string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
+<string name="menu_fast_web_view">Fast Web View 정보</string>
+<string name="menu_fast_web_view_desc">PDF 정보 검사; Fast Web View 생성은 지원되지 않습니다</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
-<string name="linearize_subtitle">Optimize object order for instant first-page web rendering</string>
-<string name="select_pdf_for_linearize">Select PDF to Linearize</string>
-<string name="label_diagnostic_status">Linearization Status</string>
-<string name="label_fast_web_view_enabled">Fast Web View Enabled:</string>
+<string name="linearize_subtitle">이 버전에서는 Fast Web View PDF를 생성하거나 인증할 수 없습니다. 출력 파일이 생성되지 않습니다.</string>
+<string name="select_pdf_for_linearize">검사할 PDF 선택</string>
+<string name="label_diagnostic_status">PDF 정보</string>
+<string name="label_fast_web_view_enabled">선형화:</string>
 <string name="status_enabled">Enabled</string>
-<string name="status_disabled">Disabled (Not Linearized)</string>
+<string name="status_disabled">확인되지 않음</string>
 <string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="btn_optimize_fast_web_view">Optimize for Fast Web View</string>
+<string name="btn_optimize_fast_web_view">최적화 사용 불가</string>
 <string name="title_linearize_success">PDF Linearized</string>
 <string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
 <string name="error_linearize_failed">Optimization Failed</string>
@@ -923,11 +926,11 @@
 <string name="title_nup_success">Handout Created</string>
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
-<string name="menu_pdfa_validator">PDF/A Preflight Validator</string>
-<string name="menu_pdfa_validator_desc">Verify long-term archiving &amp; court compliance</string>
-<string name="pdfa_headline">PDF/A Archival Compliance</string>
-<string name="pdfa_subtitle">Audit fonts, OutputIntents, and metadata for ISO standards</string>
-<string name="select_pdf_for_pdfa">Select PDF to Validate</string>
+<string name="menu_pdfa_validator">예비 PDF/A 검사</string>
+<string name="menu_pdfa_validator_desc">예비 검사 실행; PDF/A 적합성은 인증되지 않습니다</string>
+<string name="pdfa_headline">예비 검사 전용; 인증되지 않음</string>
+<string name="pdfa_subtitle">이 검사는 ISO 19005 준수를 인증하지 않습니다. 이 버전에서는 PDF/A 변환을 사용할 수 없습니다.</string>
+<string name="select_pdf_for_pdfa">예비 검사용 PDF 선택</string>
 <string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
@@ -1158,4 +1161,31 @@
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
     <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
+    <string name="table_extractor_error_save">CSV 파일을 저장하지 못했습니다.</string>
+    <string name="table_extractor_error_extract">문서에서 표 데이터를 추출하지 못했습니다.</string>
+    <string name="table_extractor_safe_mode">스프레드시트 안전 내보내기(권장)</string>
+    <string name="table_extractor_raw_mode">원시 데이터 내보내기</string>
+    <string name="table_extractor_safe_mode_desc">스프레드시트 안전 모드는 수식과 유사한 문자(=, +, -, @) 앞에 작은따옴표를 붙여 스프레드시트 앱을 열 때 수식이 실행되는 것을 방지합니다.</string>
+    <string name="table_extractor_raw_mode_desc">원시 데이터 모드는 정제 없이 PDF에서 추출된 셀 값을 그대로 유지합니다.</string>
+    <string name="table_extractor_safe_banner">스프레드시트 안전 내보내기가 활성화되었습니다. 외부 스프레드시트 앱에서 계산되지 않도록 수식 형식의 값 앞에 접두사가 추가됩니다.</string>
+    <string name="table_extractor_error_title">표 추출 실패</string>
+    <string name="table_extractor_error_fallback">표를 추출하는 동안 예기치 않은 오류가 발생했습니다.</string>
+    <string name="table_extractor_retry">추출 재시도</string>
+    <string name="table_extractor_no_tables_desc">이 문서에서 표 데이터를 감지하지 못했습니다.</string>
+    <string name="table_extractor_error_share">CSV 파일을 공유하지 못했습니다.</string>
+    <string name="table_extractor_share_desc">CSV 공유</string>
+    <string name="menu_more_tools">모든 도구</string>
+    <string name="reader_action_search">문서 검색</string>
+    <string name="reader_toc_title">목차</string>
+    <string name="reader_fit_width">너비에 맞춤</string>
+    <string name="reader_fit_page">페이지에 맞춤</string>
+    <string name="reader_search_hint">문서 검색…</string>
+    <string name="reader_action_clear_search">검색 지우기</string>
+    <string name="reader_search_no_matches">일치하는 항목 없음</string>
+    <string name="reader_page_indicator">%2$d페이지 중 %1$d페이지</string>
+    <string name="reader_page_badge_compact">%1$d / %2$d</string>
+    <string name="reader_page_content_desc">%1$d페이지</string>
+    <string name="reader_reset_zoom_fmt">%1$.1fx • 재설정</string>
+    <string name="previous_match">이전 일치</string>
+    <string name="next_match">다음 일치</string>
 </resources>

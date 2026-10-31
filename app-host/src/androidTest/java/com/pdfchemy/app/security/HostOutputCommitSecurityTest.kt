@@ -25,7 +25,10 @@ class HostOutputCommitSecurityTest {
         val id = "output_${System.nanoTime()}"
         context.contentResolver.call(Uri.parse("content://com.pdfchemy.app.security.outputfixture"), "configure", id,
             Bundle().apply { putBoolean("block", block) })
-        return Uri.parse("content://com.pdfchemy.app.security.outputfixture/$id")
+        return Uri.parse("content://com.pdfchemy.app.security.outputfixture/$id").also {
+            // This test created the fixture; preserve coverage of the commit path.
+            com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(it)
+        }
     }
     private fun state(uri: Uri): Bundle = requireNotNull(context.contentResolver.call(uri, "state", uri.lastPathSegment, null))
     private fun untouched(uri: Uri) {
