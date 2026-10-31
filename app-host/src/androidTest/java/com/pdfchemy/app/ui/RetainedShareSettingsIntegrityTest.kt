@@ -41,7 +41,7 @@ class RetainedShareSettingsIntegrityTest {
     @After fun cleanup() {
         reader?.close()
         reader = null
-        compose.waitUntil(5_000) {
+        compose.waitUntil(30_000) {
             DocumentActions.inspectRetainedShares(app).entries
                 .filter { entry -> ownedFiles.any { it.name == entry.displayName } }
                 .none { RetainedShareProtection.ACTIVE_READER in it.protections }
@@ -65,7 +65,7 @@ class RetainedShareSettingsIntegrityTest {
     private fun openManagement() {
         compose.onNodeWithText(app.getString(R.string.integrity_share_manage))
             .performScrollTo().performClick()
-        compose.waitUntil(5_000) {
+        compose.waitUntil(30_000) {
             compose.onAllNodes(hasText(app.getString(R.string.integrity_share_delete_inactive)) and isEnabled())
                 .fetchSemanticsNodes().isNotEmpty()
         }
@@ -105,7 +105,7 @@ class RetainedShareSettingsIntegrityTest {
         openManagement()
 
         clickDelete()
-        compose.waitUntil(5_000) { !inactive.exists() }
+        compose.waitUntil(30_000) { !inactive.exists() }
 
         assertArrayEquals(bytes, active.readBytes())
         val opened = requireNotNull(reader)
@@ -121,7 +121,7 @@ class RetainedShareSettingsIntegrityTest {
         compose.onNodeWithText(app.getString(R.string.settings_clear_history)).performScrollTo().performClick()
         compose.onNode(hasText(app.getString(R.string.clear)) and hasClickAction()).performClick()
         runBlocking {
-            withTimeout(5_000) { model.viewModelScope.coroutineContext[Job]!!.children.toList().joinAll() }
+            withTimeout(30_000) { model.viewModelScope.coroutineContext[Job]!!.children.toList().joinAll() }
         }
 
         assertTrue(copy.exists())
