@@ -15,22 +15,70 @@ import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 import com.pdfchemy.app.jail.FdZipFile as ZipFile
 import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import com.pdfchemy.app.sandbox.JailNativeRendererCoordinator
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runBlocking
 
 object ComicBookEngineWorker {
 
-    fun execute(context: Context, sourceFd: ParcelFileDescriptor?, destFd: ParcelFileDescriptor?, paramsJson: String): String {
+    fun execute(context: Context, sourceFd: ParcelFileDescriptor?, destFd: ParcelFileDescriptor?, paramsJson: String,
+        rendererBinder: android.os.IBinder? = null): String {
         return try {
             val params = JSONObject(paramsJson)
             val action = params.optString("action", "pdf2cbz")
 
-            if (action == "cbz2pdf") {
-                convertCbzToPdf(context, sourceFd!!, destFd!!)
-            } else {
-                JSONObject().put("error", "Unsupported action in worker").toString()
+            when (action) {
+                "cbz2pdf" -> convertCbzToPdf(context, sourceFd!!, destFd!!)
+                "pdf2cbz" -> convertPdfToCbz(sourceFd!!, destFd!!, checkNotNull(rendererBinder) {
+                    "Comic export requires the isolated renderer"
+                })
+                else -> JSONObject().put("error", "Unsupported action in worker").toString()
             }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             JSONObject().put("error", e.message).toString()
         }
+    }
+
+    private fun convertPdfToCbz(sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor,
+        renderer: android.os.IBinder): String {
+        val pages = FileInputStream(sourceFd.fileDescriptor).use { input ->
+            PDDocument.load(input, com.pdfchemy.app.jail.JailMemory.settings()).use { document ->
+                require(document.numberOfPages in 1..minOf(JailQuotas.MAX_PAGE_COUNT, JailQuotas.MAX_ARCHIVE_FILE_COUNT)) {
+                    "No readable pages or comic archive page quota exceeded"
+                }
+                document.pages.map { page ->
+                    val box = page.cropBox
+                    val width = box.width.toDouble(); val height = box.height.toDouble()
+                    val rotation = ((page.rotation % 360) + 360) % 360
+                    require(width.isFinite() && height.isFinite() && width > 0 && height > 0) { "Invalid page dimensions" }
+                    require(rotation in listOf(0, 90, 180, 270)) { "Invalid page rotation" }
+                    if (rotation == 90 || rotation == 270) height to width else width to height
+                }
+            }
+        }
+        runBlocking {
+            check(JailNativeRendererCoordinator.getPageCount(sourceFd, renderer) == pages.size) {
+                "Renderer page count does not match the PDF"
+            }
+            FileOutputStream(destFd.fileDescriptor).use { output ->
+                ZipOutputStream(output).use { zip ->
+                    var imageBytes = 0L
+                    pages.forEachIndexed { index, (width, height) ->
+                        currentCoroutineContext().ensureActive()
+                        zip.putNextEntry(ZipEntry(String.format(java.util.Locale.ROOT, "page_%05d.jpg", index + 1)))
+                        imageBytes += OfficeExportEngineWorker.streamValidatedPageJpeg(
+                            sourceFd, index, width, height, zip, JailQuotas.MAX_OUTPUT_BYTES - imageBytes, renderer
+                        )
+                        zip.closeEntry()
+                    }
+                }
+            }
+        }
+        return JSONObject().put("success", true).put("pages", pages.size).toString()
     }
 
     private fun convertCbzToPdf(context: Context, sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor): String {

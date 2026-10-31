@@ -127,6 +127,12 @@ object OfficeExportEngineWorker {
         }
     }
 
+    /** Shared validation for raster archives; uses the unchanged presentation JPEG pipeline. */
+    internal suspend fun streamValidatedPageJpeg(
+        source: ParcelFileDescriptor, index: Int, width: Double, height: Double,
+        output: OutputStream, budget: Long, renderer: android.os.IBinder
+    ): Long = streamPresentationImage(source, index, PresentationPage(width, height), output, budget, renderer)
+
     /** One bounded JPEG pipe at a time; no page-image files accumulate in worker scratch. */
     private suspend fun streamPresentationImage(
         source: ParcelFileDescriptor, index: Int, page: PresentationPage,

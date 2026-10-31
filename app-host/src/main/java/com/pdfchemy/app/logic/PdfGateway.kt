@@ -87,7 +87,9 @@ object PdfGateway {
                 }
             }
 
-            val renderer = if (operation == "REDACT" || operation == "OFFICE_PPT") {
+            val comicExport = operation == "COMIC_BOOK" &&
+                org.json.JSONObject(paramsJson).optString("action", "pdf2cbz") == "pdf2cbz"
+            val renderer = if (operation == "REDACT" || operation == "OFFICE_PPT" || comicExport) {
                 rendererAccess = com.pdfchemy.app.sandbox.NativeRendererAccess.acquire()
                 bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
             } else {
