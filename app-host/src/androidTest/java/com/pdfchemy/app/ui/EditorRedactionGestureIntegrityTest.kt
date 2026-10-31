@@ -105,6 +105,24 @@ class EditorRedactionGestureIntegrityTest {
         compose.runOnIdle { assertTrue(committed.isEmpty()) }
     }
 
+    private fun assertOpaqueRedactionPixel(pixel: Int) {
+        // Match the existing forensic/geometry tests: JPEG/platform rendering can shift black by a few LSBs.
+        assertEquals("Redaction must be fully opaque", 255, android.graphics.Color.alpha(pixel))
+        assertTrue("The saved PDF must cover the release end, not stop at the last MOVE",
+            android.graphics.Color.red(pixel) <= 3 && android.graphics.Color.green(pixel) <= 3 &&
+                android.graphics.Color.blue(pixel) <= 3)
+    }
+
+    @Test fun redactionPixelControlRejectsPaperTransparencyAndLighterPixels() {
+        listOf(0, 2, 3).forEach { channel ->
+            assertOpaqueRedactionPixel(android.graphics.Color.rgb(channel, channel, channel))
+        }
+        listOf(android.graphics.Color.WHITE, android.graphics.Color.TRANSPARENT,
+            android.graphics.Color.rgb(4, 4, 4)).forEach { pixel ->
+            assertThrows(AssertionError::class.java) { assertOpaqueRedactionPixel(pixel) }
+        }
+    }
+
     @Test fun exportedPdfCoversReleaseEndOfSelection() = runBlocking {
         val app = ApplicationProvider.getApplicationContext<Application>()
         PDFBoxResourceLoader.init(app)
@@ -135,8 +153,7 @@ class EditorRedactionGestureIntegrityTest {
             try {
                 // Below the label and original glyphs, but inside the requested final rectangle.
                 for (y in 147..153) for (x in 147..153) {
-                    assertEquals("The saved PDF must cover the release end, not stop at the last MOVE",
-                        android.graphics.Color.BLACK, rendered.getPixel(x, y))
+                    assertOpaqueRedactionPixel(rendered.getPixel(x, y))
                 }
             } finally { rendered.recycle() }
         } finally { source.delete(); output.delete() }
