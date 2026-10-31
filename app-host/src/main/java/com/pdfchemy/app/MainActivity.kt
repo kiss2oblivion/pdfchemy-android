@@ -3615,8 +3615,8 @@ fun SettingsScreen(
     if (showPrivacyPolicyDialog) {
         AlertDialog(
             onDismissRequest = { showPrivacyPolicyDialog = false },
-            title = { Text(stringResource(R.string.consent_dialog_title)) },
-            text = { Text(stringResource(R.string.consent_dialog_body)) },
+            title = { Text(stringResource(R.string.settings_privacy_policy)) },
+            text = { com.pdfchemy.app.ui.ReleasePrivacyPolicyContent() },
             confirmButton = {
                 TextButton(onClick = { showPrivacyPolicyDialog = false }) {
                     Text(stringResource(R.string.ok))
