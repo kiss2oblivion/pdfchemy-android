@@ -28,6 +28,14 @@ import com.pdfchemy.app.logic.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+internal fun interface EditorOverlayRenderer {
+    fun render(modification: PageModification, width: Int, height: Int): Bitmap?
+}
+
+internal val LocalEditorOverlayRenderer = staticCompositionLocalOf {
+    EditorOverlayRenderer { modification, width, height -> AnnotationRenderer.render(modification, width, height) }
+}
+
 /** Every posture uses the same unrotated coordinate plane as isolated export. */
 @Composable
 internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification, tool: EditorTool,
@@ -38,6 +46,7 @@ internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification
     var redactStart by remember { mutableStateOf<Offset?>(null) }
     var redactEnd by remember { mutableStateOf<Offset?>(null) }
     var overlay by remember { mutableStateOf<Bitmap?>(null) }
+    val overlayRenderer = LocalEditorOverlayRenderer.current
     val draft = if (points.size > 1) DrawingPath(points = points, color = color.toArgb(),
         strokeWidth = if (tool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
         isHighlighter = tool == EditorTool.HIGHLIGHTER) else null
@@ -45,15 +54,16 @@ internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification
         redactions = modification.redactions + listOfNotNull(if (redactStart != null && redactEnd != null)
             RedactionBox(modification.pageIndex, RectF(minOf(redactStart!!.x, redactEnd!!.x), minOf(redactStart!!.y, redactEnd!!.y),
                 maxOf(redactStart!!.x, redactEnd!!.x), maxOf(redactStart!!.y, redactEnd!!.y))) else null))
-    LaunchedEffect(preview, bitmap) {
+    LaunchedEffect(preview, bitmap, overlayRenderer) {
         var rendered: Bitmap? = null
         try {
-            withContext(Dispatchers.IO) { rendered = AnnotationRenderer.render(preview, bitmap.width, bitmap.height) }
+            withContext(Dispatchers.IO) { rendered = overlayRenderer.render(preview, bitmap.width, bitmap.height) }
             overlay = rendered
             rendered = null
         } finally { rendered?.recycle() }
     }
-    DisposableEffect(overlay) { val owned = overlay; onDispose { owned?.recycle() } }
+    // Published images can still be held by Compose/RenderThread after replacement or disposal.
+    // Their references own that lifetime; only an unpublished render is recycled above.
     fun normalized(point: Offset): Offset = Offset((point.x / bounds.width.coerceAtLeast(1)).coerceIn(0f, 1f),
         (point.y / bounds.height.coerceAtLeast(1)).coerceIn(0f, 1f))
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
