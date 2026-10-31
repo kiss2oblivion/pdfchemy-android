@@ -1115,7 +1115,7 @@ fun MainApp(
                     onDismissRequest = resetAndShowAd,
                     title = { Text(state.title) },
                     text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(state.message)
                             Spacer(modifier = Modifier.height(16.dp))
                             if (state.outputUris.isNotEmpty()) {
