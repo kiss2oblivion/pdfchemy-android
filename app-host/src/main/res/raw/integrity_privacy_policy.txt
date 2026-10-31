@@ -26,7 +26,7 @@ You control source documents and exported copies through their document provider
 
 The free edition uses Google AdMob and the User Messaging Platform (UMP). App-owned document analytics and document-content logging are not enabled. This is separate from third-party SDK activity: Google advertising services can process IP addresses (including approximate location derived from IP), app/ad interactions, diagnostic information and device, advertising, app-set and, where applicable, account-related identifiers for advertising, analytics/measurement and fraud prevention. The exact data depends on SDK behavior, device settings and privacy choices. These SDKs use network access and their own data-handling policies.
 
-Advertising requests follow eligibility reported by Google's consent platform. Where required, reopen Privacy choices in Settings → Privacy Policy. Viewing this policy or closing it does not grant advertising consent. Android also provides controls to reset or delete the advertising ID. Premium entitlement disables advertising in PDFchemy. Full-screen interstitial ads are disabled in Reader and Reflow to prevent reading interruptions.
+Advertising requests follow eligibility reported by Google's consent platform. Where required, reopen Privacy choices in Settings → Privacy Policy. Viewing this policy or closing it does not grant advertising consent. Android also provides controls to reset or delete the advertising ID. Premium entitlement disables advertising in PDFchemy. Reader and Reflow are designed without advertising.
 
 Google privacy policy: https://policies.google.com/privacy
 Google advertising information: https://policies.google.com/technologies/ads

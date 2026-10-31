@@ -1299,13 +1299,17 @@ fun MainApp(
             }
         }
         }
-            if (!isPremium && hasConsented && !isScreenshotRun) {
+            if (shouldShowBannerAd(currentScreen, isPremium, hasConsented, isScreenshotRun)) {
                 BannerAdView()
             }
         }
     }
     }
 }
+
+internal fun shouldShowBannerAd(screen: Screen, isPremium: Boolean, hasConsented: Boolean,
+    isScreenshotRun: Boolean): Boolean = !isPremium && hasConsented && !isScreenshotRun &&
+    screen !is Screen.PdfReader && screen !is Screen.ReflowReader
 
 @Composable
 fun BannerAdView(modifier: Modifier = Modifier) {
