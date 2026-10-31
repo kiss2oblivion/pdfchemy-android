@@ -1299,8 +1299,7 @@ fun MainApp(
             }
         }
         }
-            val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
-            if (!isPremium && hasConsented && !isScreenshotRun && !isReaderActive) {
+            if (!isPremium && hasConsented && !isScreenshotRun) {
                 BannerAdView()
             }
         }
