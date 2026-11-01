@@ -18,9 +18,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         buildConfig = true
         aidl = true
@@ -122,4 +119,10 @@ val verifyTesseractAarHash = tasks.register("verifyTesseractAarHash") {
 
 tasks.matching { it.name.startsWith("compile") || it.name.startsWith("preBuild") }.configureEach {
     dependsOn(verifyTesseractAarHash)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+    }
 }

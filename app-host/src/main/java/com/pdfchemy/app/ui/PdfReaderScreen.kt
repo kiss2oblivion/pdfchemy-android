@@ -176,7 +176,7 @@ private fun PdfReaderDocument(
         val callbacks = object : ComponentCallbacks2 {
             override fun onConfigurationChanged(newConfig: Configuration) = Unit
             override fun onLowMemory() {
-                bitmapCache.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL)
+                bitmapCache.clear()
             }
             override fun onTrimMemory(level: Int) {
                 bitmapCache.onTrimMemory(level)
