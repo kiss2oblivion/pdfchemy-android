@@ -146,10 +146,10 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
 
     // 4. AdMob
-    implementation("com.google.android.gms:play-services-ads:23.2.0")
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
 
     // Google User Messaging Platform (UMP) for GDPR
-    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 
     // ML Kit Document Scanner
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
