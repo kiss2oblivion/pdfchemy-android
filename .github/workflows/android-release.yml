@@ -33,12 +33,14 @@ jobs:
   architecture:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0 (Node 24)
         with:
           java-version: '21'
           distribution: temurin
-      - uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+      - uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1 (Node 24)
+      - run: python3 -m unittest discover -s tools -p test_check_action_runtimes.py
+      - run: python3 tools/check_action_runtimes.py
       - run: chmod +x gradlew
       - run: python3 -m unittest discover -s scripts -p test_run_android_instrumentation.py
       - run: ./gradlew :app-host:securityAudit securityArchitecture :app-host:testDebugUnitTest --tests 'com.pdfchemy.app.arch.*' --tests 'com.pdfchemy.app.architecture.*' --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
@@ -46,7 +48,7 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
         with:
           fetch-depth: 0
       - run: python3 -m unittest discover -s tools -p test_check_secrets.py
@@ -55,8 +57,8 @@ jobs:
   dependency-security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0 (Node 24)
         with:
           java-version: '21'
           distribution: temurin
@@ -68,8 +70,8 @@ jobs:
     needs: architecture
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0 (Node 24)
         with:
           java-version: '21'
           distribution: temurin
@@ -93,8 +95,8 @@ jobs:
           - api: 36
             arch: x86_64
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0 (Node 24)
         with:
           java-version: '21'
           distribution: temurin
@@ -124,7 +126,7 @@ jobs:
             fi
       - name: Retain native test and installation evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 (Node 24)
         with:
           name: native-security-api${{ matrix.api }}-${{ matrix.arch }}
           path: |
@@ -137,8 +139,8 @@ jobs:
     needs: [architecture, secrets, dependency-security, tests, android-instrumented-security]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24)
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0 (Node 24)
         with:
           java-version: '21'
           distribution: temurin
