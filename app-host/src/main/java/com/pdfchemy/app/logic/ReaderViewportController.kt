@@ -117,15 +117,19 @@ class BoundedPageBitmapCache(
     fun activeReferenceCount(bitmap: Bitmap): Int = refCounts[bitmap] ?: 0
 
     @Synchronized
-    @Suppress("DEPRECATION")
     fun onTrimMemory(level: Int) {
-        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL ||
+        // These callbacks are still delivered on API 24-33. Keep their eviction semantics.
+        @Suppress("DEPRECATION")
+        val runningCritical = ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
+        @Suppress("DEPRECATION")
+        val runningLow = ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW
+        if (level >= runningCritical ||
             level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND
         ) {
             clear()
             return
         }
-        if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+        if (level >= runningLow) {
             val iterator = entries.entries.iterator()
             while (iterator.hasNext()) {
                 val candidate = iterator.next()

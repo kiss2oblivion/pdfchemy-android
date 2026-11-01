@@ -21,7 +21,6 @@ import org.robolectric.annotation.Config
 class ReaderAccessibilityAndResilienceTest {
 
     @Test
-    @Suppress("DEPRECATION")
     fun `adaptive cache budget scales down on low RAM or constrained heaps`() {
         val (lowRamEntries, lowRamBytes) = BoundedPageBitmapCache.computeAdaptiveBudget(
             maxMemoryBytes = 256L * 1024L * 1024L,
@@ -46,6 +45,7 @@ class ReaderAccessibilityAndResilienceTest {
     }
 
     @Test
+    // Legacy memory callbacks remain part of the API 24-33 compatibility contract.
     @Suppress("DEPRECATION")
     fun `onTrimMemory evicts unreferenced bitmaps while protecting active displayed pages`() {
         val cache = BoundedPageBitmapCache(maxEntries = 6, maxBytes = 32L * 1024L * 1024L)
@@ -79,7 +79,6 @@ class ReaderAccessibilityAndResilienceTest {
     }
 
     @Test
-    @Suppress("DEPRECATION")
     fun `bar layout enforces 48dp touch targets and adapts to small screens, landscape, and 200 percent font scale`() {
         val standardSpec = ReaderAccessibilityLayout.computeBarLayout(
             screenWidthDp = 411,
@@ -118,7 +117,6 @@ class ReaderAccessibilityAndResilienceTest {
     }
 
     @Test
-    @Suppress("DEPRECATION")
     fun `all Reader localized strings and format specifiers resolve cleanly`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         assertTrue(context.getString(R.string.reader_action_search).isNotBlank())

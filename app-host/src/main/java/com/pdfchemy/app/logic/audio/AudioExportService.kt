@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.speech.tts.TextToSpeech
+import androidx.core.app.NotificationCompat
 import com.pdfchemy.app.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -47,7 +48,7 @@ class AudioExportService : Service() {
     }
 
     private fun notification(id: UUID?): Notification {
-        @Suppress("DEPRECATION") val builder = (if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL_ID) else Notification.Builder(this))
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.audio_export_title))
             .setContentText(getString(R.string.audio_export_notification))
             .setSmallIcon(android.R.drawable.ic_media_play)
@@ -56,7 +57,7 @@ class AudioExportService : Service() {
             val cancel = PendingIntent.getService(this, NOTIFICATION_ID,
                 Intent(this, AudioExportService::class.java).setAction(ACTION_CANCEL).putExtra(EXTRA_JOB_ID, id.toString()),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            builder.addAction(Notification.Action.Builder(android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_delete), getString(android.R.string.cancel), cancel).build())
+            builder.addAction(android.R.drawable.ic_delete, getString(android.R.string.cancel), cancel)
         }
         return builder.build()
     }

@@ -34,7 +34,6 @@ public class BatchOutputProvider extends ContentProvider {
         directory.mkdirs();
         return true;
     }
-    @SuppressWarnings("deprecation")
     @Override public Bundle call(String method, String arg, Bundle extras) {
         // Creation can model an uninterruptible provider call without blocking its test control channel.
         if ("creationState".equals(method)) {
@@ -44,13 +43,13 @@ public class BatchOutputProvider extends ContentProvider {
         synchronized (this) {
         try {
             if ("android:createDocument".equals(method)) {
-                Uri parent = android.os.Build.VERSION.SDK_INT >= 33 ? extras.getParcelable("uri", Uri.class) : extras.getParcelable("uri");
+                Uri parent = androidx.core.os.BundleCompat.getParcelable(extras, "uri", Uri.class);
                 String id = createDocument(DocumentsContract.getDocumentId(parent),
                     extras.getString(Document.COLUMN_MIME_TYPE), extras.getString(Document.COLUMN_DISPLAY_NAME));
                 Bundle result = new Bundle(); result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(parent, id)); return result;
             }
             if ("android:deleteDocument".equals(method)) {
-                Uri uri = android.os.Build.VERSION.SDK_INT >= 33 ? extras.getParcelable("uri", Uri.class) : extras.getParcelable("uri"); deleteDocument(DocumentsContract.getDocumentId(uri)); return new Bundle();
+                Uri uri = androidx.core.os.BundleCompat.getParcelable(extras, "uri", Uri.class); deleteDocument(DocumentsContract.getDocumentId(uri)); return new Bundle();
             }
             if ("configure".equals(method)) {
                 creationRelease.countDown(); creationRelease = new CountDownLatch(1); creationEntered = false;
