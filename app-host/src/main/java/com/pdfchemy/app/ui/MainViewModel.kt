@@ -899,7 +899,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             activeJob = viewModelScope.launch {
                 try {
                     com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", imageUris, listOf(destUri), "{}")
-                    _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted))
+                    _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted), listOf(destUri))
                 } catch (e: Exception) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
                     AppLogger.e("Exception in MainViewModel", e)
