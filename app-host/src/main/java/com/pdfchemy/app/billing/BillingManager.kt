@@ -262,7 +262,7 @@ class BillingManager(
             } else if (isUserInitiated) {
                 val msg = when (billingResult.responseCode) {
                     BillingClient.BillingResponseCode.NETWORK_ERROR,
-                    BillingClient.BillingResponseCode.SERVICE_TIMEOUT,
+                    BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                     BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
                         "Network error connecting to Google Play. Check connection and retry."
                     BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
@@ -294,7 +294,7 @@ class BillingManager(
                 _billingUi.value = available("Purchase cancelled. You can continue using PDFchemy.")
             }
             BillingClient.BillingResponseCode.NETWORK_ERROR,
-            BillingClient.BillingResponseCode.SERVICE_TIMEOUT,
+            BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
             BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> {
                 _billingUi.value = available("Network error communicating with Google Play. Check your connection and try again.")
             }
@@ -399,7 +399,7 @@ class BillingManager(
                 BillingClient.BillingResponseCode.USER_CANCELED ->
                     "Purchase cancelled. You can continue using PDFchemy."
                 BillingClient.BillingResponseCode.NETWORK_ERROR,
-                BillingClient.BillingResponseCode.SERVICE_TIMEOUT,
+                BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                 BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
                     "Network error opening checkout. Check your connection and try again."
                 else ->

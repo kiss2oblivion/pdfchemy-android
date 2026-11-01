@@ -117,6 +117,7 @@ class BoundedPageBitmapCache(
     fun activeReferenceCount(bitmap: Bitmap): Int = refCounts[bitmap] ?: 0
 
     @Synchronized
+    @Suppress("DEPRECATION")
     fun onTrimMemory(level: Int) {
         if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL ||
             level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND

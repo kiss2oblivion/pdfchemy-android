@@ -9,7 +9,7 @@ class TtsPcmAssembler(private val writer: PcmWriter) : UtteranceProgressListener
         writer.begin(utteranceId, sampleRateInHz, audioFormat, channelCount)
     override fun onAudioAvailable(utteranceId: String, audio: ByteArray) = writer.audio(utteranceId, audio)
     override fun onDone(utteranceId: String) = writer.done(utteranceId)
-    override fun onError(utteranceId: String) = writer.error(utteranceId, IllegalStateException("TTS synthesis failed"))
+    @Deprecated("Deprecated in Java", ReplaceWith("onError(utteranceId, -1)")) @Suppress("DEPRECATION") override fun onError(utteranceId: String) = writer.error(utteranceId, IllegalStateException("TTS synthesis failed"))
     override fun onError(utteranceId: String, errorCode: Int) =
         writer.error(utteranceId, IllegalStateException("TTS synthesis failed ($errorCode)"))
     override fun onStop(utteranceId: String, interrupted: Boolean) =
