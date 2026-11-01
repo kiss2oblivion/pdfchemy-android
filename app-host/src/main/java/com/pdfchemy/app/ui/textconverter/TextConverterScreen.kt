@@ -136,7 +136,7 @@ fun TextConverterScreen(
                     }
 
                     Icon(
-                        Icons.AutoMirrored.Rounded.ArrowForward, 
+                        Icons.AutoMirrored.Rounded.ArrowForward,
                         contentDescription = "to", 
                         modifier = Modifier.padding(horizontal = 8.dp),
                         tint = MaterialTheme.colorScheme.primary
