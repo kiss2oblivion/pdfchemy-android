@@ -34,6 +34,15 @@ public class BatchOutputProvider extends ContentProvider {
         directory.mkdirs();
         return true;
     }
+    private static Uri documentUri(Bundle extras) {
+        // This provider runs in the test APK's foreign UID. Host AndroidX classes
+        // are intentionally unavailable there. API 33's typed overload also has
+        // platform parcel bugs; use it only from API 34, like BundleCompat does.
+        if (android.os.Build.VERSION.SDK_INT >= 34) return extras.getParcelable("uri", Uri.class);
+        @SuppressWarnings("deprecation")
+        android.os.Parcelable value = extras.getParcelable("uri");
+        return value instanceof Uri ? (Uri) value : null;
+    }
     @Override public Bundle call(String method, String arg, Bundle extras) {
         // Creation can model an uninterruptible provider call without blocking its test control channel.
         if ("creationState".equals(method)) {
@@ -43,13 +52,13 @@ public class BatchOutputProvider extends ContentProvider {
         synchronized (this) {
         try {
             if ("android:createDocument".equals(method)) {
-                Uri parent = androidx.core.os.BundleCompat.getParcelable(extras, "uri", Uri.class);
+                Uri parent = documentUri(extras);
                 String id = createDocument(DocumentsContract.getDocumentId(parent),
                     extras.getString(Document.COLUMN_MIME_TYPE), extras.getString(Document.COLUMN_DISPLAY_NAME));
                 Bundle result = new Bundle(); result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(parent, id)); return result;
             }
             if ("android:deleteDocument".equals(method)) {
-                Uri uri = androidx.core.os.BundleCompat.getParcelable(extras, "uri", Uri.class); deleteDocument(DocumentsContract.getDocumentId(uri)); return new Bundle();
+                Uri uri = documentUri(extras); deleteDocument(DocumentsContract.getDocumentId(uri)); return new Bundle();
             }
             if ("configure".equals(method)) {
                 creationRelease.countDown(); creationRelease = new CountDownLatch(1); creationEntered = false;
@@ -72,6 +81,7 @@ public class BatchOutputProvider extends ContentProvider {
             }
             if ("release".equals(method)) release.countDown();
             Bundle result = new Bundle();
+            result.putInt("providerUid", android.os.Process.myUid());
             result.putString("firstId", firstId); result.putString("blockedId", blockedId);
             result.putInt("createdCount", sequence); result.putInt("deletedCount", deleted);
             return result;
