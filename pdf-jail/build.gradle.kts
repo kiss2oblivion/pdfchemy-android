@@ -2,7 +2,7 @@ import java.security.MessageDigest
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+
 }
 
 android {
@@ -15,8 +15,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         buildConfig = true
@@ -123,6 +123,6 @@ tasks.matching { it.name.startsWith("compile") || it.name.startsWith("preBuild")
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
