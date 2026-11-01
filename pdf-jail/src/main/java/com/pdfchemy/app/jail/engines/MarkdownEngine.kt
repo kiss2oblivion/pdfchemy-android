@@ -65,7 +65,7 @@ object MarkdownEngine {
                 currentY -= 28f
 
                 // Header separator line
-                contentStream.setStrokingColor(200, 200, 200)
+                contentStream.setStrokingColor(200f / 255f, 200f / 255f, 200f / 255f)
                 contentStream.setLineWidth(1f)
                 contentStream.moveTo(margin, currentY + 10f)
                 contentStream.lineTo(pageWidth - margin, currentY + 10f)
@@ -91,12 +91,12 @@ object MarkdownEngine {
                         }
 
                         // Draw background box for code
-                        contentStream.setNonStrokingColor(240, 242, 245)
+                        contentStream.setNonStrokingColor(240f / 255f, 242f / 255f, 245f / 255f)
                         contentStream.addRect(margin, currentY - blockHeight + 10f, contentWidth, blockHeight)
                         contentStream.fill()
 
                         // Draw code border
-                        contentStream.setStrokingColor(210, 215, 220)
+                        contentStream.setStrokingColor(210f / 255f, 215f / 255f, 220f / 255f)
                         contentStream.setLineWidth(0.8f)
                         contentStream.addRect(margin, currentY - blockHeight + 10f, contentWidth, blockHeight)
                         contentStream.stroke()
@@ -105,7 +105,7 @@ object MarkdownEngine {
                         var codeY = currentY
                         for (cLine in codeLines) {
                             contentStream.beginText()
-                            contentStream.setNonStrokingColor(40, 45, 50)
+                            contentStream.setNonStrokingColor(40f / 255f, 45f / 255f, 50f / 255f)
                             contentStream.setFont(PDType1Font.COURIER, 9.5f)
                             contentStream.newLineAtOffset(margin + 8f, codeY)
                             contentStream.showText(sanitizeText(cLine.take(90)))
@@ -136,7 +136,7 @@ object MarkdownEngine {
                 // Horizontal Rule ---
                 if (trimmed.matches(Regex("^-{3,}|_{3,}|\\*{3,}$"))) {
                     if (currentY < margin + 20f) startNewPage()
-                    contentStream.setStrokingColor(220, 220, 220)
+                    contentStream.setStrokingColor(220f / 255f, 220f / 255f, 220f / 255f)
                     contentStream.setLineWidth(0.8f)
                     contentStream.moveTo(margin, currentY)
                     contentStream.lineTo(pageWidth - margin, currentY)
@@ -152,7 +152,7 @@ object MarkdownEngine {
                         if (currentY < margin + 40f) startNewPage()
                         currentY -= 10f
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(25, 30, 40)
+                        contentStream.setNonStrokingColor(25f / 255f, 30f / 255f, 40f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16f)
                         contentStream.newLineAtOffset(margin, currentY)
                         contentStream.showText(sanitizeText(text))
@@ -164,7 +164,7 @@ object MarkdownEngine {
                         if (currentY < margin + 30f) startNewPage()
                         currentY -= 8f
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(40, 50, 65)
+                        contentStream.setNonStrokingColor(40f / 255f, 50f / 255f, 65f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA_BOLD, 13.5f)
                         contentStream.newLineAtOffset(margin, currentY)
                         contentStream.showText(sanitizeText(text))
@@ -175,7 +175,7 @@ object MarkdownEngine {
                         val text = trimmed.removePrefix("### ").trim()
                         if (currentY < margin + 25f) startNewPage()
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(60, 70, 85)
+                        contentStream.setNonStrokingColor(60f / 255f, 70f / 255f, 85f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA_BOLD, 11.5f)
                         contentStream.newLineAtOffset(margin, currentY)
                         contentStream.showText(sanitizeText(text))
@@ -187,14 +187,14 @@ object MarkdownEngine {
                         val text = trimmed.removePrefix(">").trim()
                         if (currentY < margin + 20f) startNewPage()
 
-                        contentStream.setStrokingColor(70, 130, 220)
+                        contentStream.setStrokingColor(70f / 255f, 130f / 255f, 220f / 255f)
                         contentStream.setLineWidth(3f)
                         contentStream.moveTo(margin, currentY + 8f)
                         contentStream.lineTo(margin, currentY - 6f)
                         contentStream.stroke()
 
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(90, 95, 105)
+                        contentStream.setNonStrokingColor(90f / 255f, 95f / 255f, 105f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA_OBLIQUE, 10f)
                         contentStream.newLineAtOffset(margin + 12f, currentY)
                         contentStream.showText(sanitizeText(text))
@@ -207,7 +207,7 @@ object MarkdownEngine {
                         if (currentY < margin + 18f) startNewPage()
 
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(30, 30, 30)
+                        contentStream.setNonStrokingColor(30f / 255f, 30f / 255f, 30f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA, 10f)
                         contentStream.newLineAtOffset(margin + 10f, currentY)
                         contentStream.showText("• " + sanitizeText(text))
@@ -219,7 +219,7 @@ object MarkdownEngine {
                         if (currentY < margin + 18f) startNewPage()
 
                         contentStream.beginText()
-                        contentStream.setNonStrokingColor(30, 30, 30)
+                        contentStream.setNonStrokingColor(30f / 255f, 30f / 255f, 30f / 255f)
                         contentStream.setFont(PDType1Font.HELVETICA, 10f)
                         contentStream.newLineAtOffset(margin + 10f, currentY)
                         contentStream.showText(sanitizeText(trimmed))
@@ -232,7 +232,7 @@ object MarkdownEngine {
                         for (wLine in wrapped) {
                             if (currentY < margin + 18f) startNewPage()
                             contentStream.beginText()
-                            contentStream.setNonStrokingColor(30, 30, 30)
+                            contentStream.setNonStrokingColor(30f / 255f, 30f / 255f, 30f / 255f)
                             contentStream.setFont(PDType1Font.HELVETICA, 10f)
                             contentStream.newLineAtOffset(margin, currentY)
                             contentStream.showText(sanitizeText(wLine))

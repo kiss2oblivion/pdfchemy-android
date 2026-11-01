@@ -78,12 +78,12 @@ class EditorLargePageExportSecurityTest {
                 page.rotation = rotation
                 val visible = crop ?: media
                 PDPageContentStream(doc, page).use { cs ->
-                    cs.setNonStrokingColor(0, 0, 255)
+                    cs.setNonStrokingColor(0f, 0f, 1f)
                     cs.addRect(visible.lowerLeftX + visible.width * .1f,
                         visible.lowerLeftY + visible.height * .8f,
                         visible.width * .08f, visible.height * .08f)
                     cs.fill()
-                    cs.setNonStrokingColor(0, 0, 0)
+                    cs.setNonStrokingColor(0f, 0f, 0f)
                     cs.beginText(); cs.setFont(PDType1Font.HELVETICA, 12f)
                     cs.newLineAtOffset(visible.lowerLeftX + visible.width * .2f,
                         visible.lowerLeftY + visible.height * .5f)

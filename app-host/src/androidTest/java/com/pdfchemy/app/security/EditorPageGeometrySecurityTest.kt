@@ -64,9 +64,9 @@ class EditorPageGeometrySecurityTest {
             PDPageContentStream(doc, page).use { cs ->
                 inDisplayPlane(cs, visible, rotation)
                 // Public registration mark must survive at the same rendered coordinates.
-                cs.setNonStrokingColor(0, 0, 255)
+                cs.setNonStrokingColor(0f, 0f, 1f)
                 cs.addRect(w*.08f, h*.8f, w*.08f, h*.08f); cs.fill()
-                cs.setNonStrokingColor(0, 0, 0)
+                cs.setNonStrokingColor(0f, 0f, 0f)
                 cs.beginText(); cs.setFont(PDType1Font.HELVETICA, w*.018f)
                 cs.newLineAtOffset(w*.3f, h*.5f); cs.showText(secret); cs.endText()
             }

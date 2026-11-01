@@ -280,9 +280,9 @@ object PdfRedactionEngineWorker {
 
                         cs.saveGraphicsState()
                         if (config.isBlackout) {
-                            cs.setNonStrokingColor(0, 0, 0)
+                            cs.setNonStrokingColor(0f, 0f, 0f)
                         } else {
-                            cs.setNonStrokingColor(255, 255, 255)
+                            cs.setNonStrokingColor(1f, 1f, 1f)
                         }
                         cs.addRect(drawX, drawY, drawW, drawH)
                         cs.fill()
@@ -297,9 +297,9 @@ object PdfRedactionEngineWorker {
                                 cs.beginText()
                                 cs.setFont(font, fontSize)
                                 if (config.isBlackout) {
-                                    cs.setNonStrokingColor(255, 255, 255)
+                                    cs.setNonStrokingColor(1f, 1f, 1f)
                                 } else {
-                                    cs.setNonStrokingColor(80, 80, 80)
+                                    cs.setNonStrokingColor(80f / 255f, 80f / 255f, 80f / 255f)
                                 }
                                 
                                 val rad = Math.toRadians((360 - rot).toDouble())

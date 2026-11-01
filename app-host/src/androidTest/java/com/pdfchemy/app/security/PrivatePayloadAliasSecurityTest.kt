@@ -177,7 +177,7 @@ class PrivatePayloadAliasSecurityTest {
             PDPageContentStream(doc, publicPage).use {
                 it.beginText(); it.setFont(PDType1Font.COURIER, 12f)
                 it.newLineAtOffset(30f, 100f); it.showText(publicText); it.endText()
-                it.setNonStrokingColor(0, 180, 0)
+                it.setNonStrokingColor(0f, 180f / 255f, 0f)
                 it.addRect(240f, 20f, 30f, 30f); it.fill()
             }
             publicPage.annotations.add(PDAnnotationLink().apply {

@@ -67,7 +67,7 @@ class PowerPointIntegrityTest {
                 doc.addPage(page)
                 PDPageContentStream(doc, page).use { stream ->
                     val color = colors[index]
-                    stream.setNonStrokingColor(Color.red(color), Color.green(color), Color.blue(color))
+                    stream.setNonStrokingColor(Color.red(color) / 255f, Color.green(color) / 255f, Color.blue(color) / 255f)
                     stream.addRect(0f, 0f, page.mediaBox.width, page.mediaBox.height); stream.fill()
                 }
             }
@@ -132,7 +132,7 @@ class PowerPointIntegrityTest {
                     document.addPage(page)
                     if (index >= 2) PDPageContentStream(document, page).use {
                         val color = if (index == 2) Color.RED else Color.BLUE
-                        it.setNonStrokingColor(Color.red(color), Color.green(color), Color.blue(color))
+                        it.setNonStrokingColor(Color.red(color) / 255f, Color.green(color) / 255f, Color.blue(color) / 255f)
                         it.addRect(0f, 0f, 300f, 200f); it.fill()
                     }
                 }

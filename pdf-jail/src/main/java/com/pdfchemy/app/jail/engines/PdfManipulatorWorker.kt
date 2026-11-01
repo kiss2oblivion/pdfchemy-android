@@ -336,7 +336,7 @@ object PdfManipulatorWorker {
                 
                 val accessPermission = com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission()
                 accessPermission.setCanPrint(params.optBoolean("canPrint", true))
-                accessPermission.setCanPrintDegraded(params.optBoolean("canPrintDegraded", true))
+                accessPermission.setCanPrintFaithful(if (params.has("canPrintFaithful")) params.optBoolean("canPrintFaithful", true) else params.optBoolean("canPrintDegraded", true))
                 accessPermission.setCanModify(params.optBoolean("canModify", true))
                 accessPermission.setCanModifyAnnotations(params.optBoolean("canModifyAnnotations", true))
                 accessPermission.setCanExtractContent(params.optBoolean("canExtractContent", true))

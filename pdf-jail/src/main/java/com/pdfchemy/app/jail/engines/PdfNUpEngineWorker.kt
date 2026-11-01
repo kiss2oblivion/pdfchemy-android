@@ -135,7 +135,7 @@ object PdfNUpEngineWorker {
 
         if (drawBorder) {
             cs.saveGraphicsState()
-            cs.setStrokingColor(200, 205, 215)
+            cs.setStrokingColor(200f / 255f, 205f / 255f, 215f / 255f)
             cs.setLineWidth(0.6f)
             cs.addRect(drawX, drawY, drawW, drawH)
             cs.stroke()

@@ -47,7 +47,7 @@ class ComicBookExportIntegrityTest {
                     if (index == 3) page.cropBox = PDRectangle(30f, 20f, 200f, 100f)
                     doc.addPage(page)
                     PDPageContentStream(doc, page).use { stream ->
-                        val c=colors[index];stream.setNonStrokingColor(Color.red(c),Color.green(c),Color.blue(c))
+                        val c=colors[index];stream.setNonStrokingColor(Color.red(c) / 255f, Color.green(c) / 255f, Color.blue(c) / 255f)
                         stream.addRect(0f,0f,page.mediaBox.width,page.mediaBox.height);stream.fill()
                     }
                 }
