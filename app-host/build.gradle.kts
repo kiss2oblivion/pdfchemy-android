@@ -16,8 +16,8 @@ android {
         applicationId = "com.pdfchemy.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 14
-        versionName = "2.1.0"
+        versionCode = 15
+        versionName = "2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
