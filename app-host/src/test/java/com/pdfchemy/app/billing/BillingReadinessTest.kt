@@ -1,8 +1,6 @@
 package com.pdfchemy.app.billing
 
 import android.content.Context
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import androidx.test.core.app.ApplicationProvider
 import com.android.billingclient.api.*
 import io.mockk.*
@@ -16,6 +14,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class BillingReadinessTest {
+
+    private class TestEntitlementStore(private val prefs: android.content.SharedPreferences) : EntitlementStore {
+        override fun read() = prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false)
+        override fun write(entitled: Boolean) = prefs.edit().putBoolean(BillingManager.KEY_IS_PREMIUM, entitled).commit()
+    }
 
     @org.junit.Before
     fun setup() {
@@ -36,12 +39,9 @@ class BillingReadinessTest {
         val builder = mockk<BillingClient.Builder>()
         val client = mockk<BillingClient>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -56,8 +56,7 @@ class BillingReadinessTest {
             assertFalse("Cannot purchase until price and details are resolved", manager.billingUi.value.canPurchase)
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -74,12 +73,9 @@ class BillingReadinessTest {
         val products = slot<ProductDetailsResponseListener>()
         var ready = false
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -125,8 +121,7 @@ class BillingReadinessTest {
             verify(exactly = 0) { client.launchBillingFlow(any(), any()) }
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -141,12 +136,9 @@ class BillingReadinessTest {
         val client = mockk<BillingClient>()
         val setup = slot<BillingClientStateListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -170,8 +162,7 @@ class BillingReadinessTest {
             assertTrue(manager.billingUi.value.message.contains("Payment is pending"))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -187,12 +178,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val ackListener = slot<AcknowledgePurchaseResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -229,8 +217,7 @@ class BillingReadinessTest {
             verify(atLeast = 1) { client.acknowledgePurchase(any(), any()) }
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -246,12 +233,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         var callCount = 0
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -280,8 +264,7 @@ class BillingReadinessTest {
             assertEquals("Acknowledge should have been retried until success", 3, callCount)
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -297,12 +280,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val products = slot<ProductDetailsResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -332,8 +312,7 @@ class BillingReadinessTest {
             assertEquals("One-time purchase through Google Play.", manager.billingUi.value.message)
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -349,12 +328,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val purchasesListener = slot<PurchasesResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -384,8 +360,7 @@ class BillingReadinessTest {
             assertTrue(manager.billingUi.value.message.contains("restored successfully"))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -401,12 +376,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val purchasesListener = slot<PurchasesResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -427,8 +399,7 @@ class BillingReadinessTest {
             assertTrue(manager.billingUi.value.message.contains("No previous purchases found"))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -443,12 +414,9 @@ class BillingReadinessTest {
         val client = mockk<BillingClient>()
         val setup = slot<BillingClientStateListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -473,8 +441,7 @@ class BillingReadinessTest {
             assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -490,12 +457,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val purchasesListener = slot<PurchasesResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -529,8 +493,7 @@ class BillingReadinessTest {
             assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -546,12 +509,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val capturedListeners = mutableListOf<PurchasesResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -589,8 +549,7 @@ class BillingReadinessTest {
             assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -607,12 +566,9 @@ class BillingReadinessTest {
         val client = mockk<BillingClient>()
         val setup = slot<BillingClientStateListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -639,8 +595,7 @@ class BillingReadinessTest {
             assertTrue(prefs.getBoolean(BillingManager.KEY_IS_PREMIUM, false))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }
@@ -657,12 +612,9 @@ class BillingReadinessTest {
         val setup = slot<BillingClientStateListener>()
         val purchasesListener = slot<PurchasesResponseListener>()
         mockkStatic(BillingClient::class)
-        mockkStatic(EncryptedSharedPreferences::class)
-        mockkConstructor(MasterKey.Builder::class)
+        mockkObject(EntitlementStores)
         try {
-            every { anyConstructed<MasterKey.Builder>().setKeyScheme(any()) } answers { self as MasterKey.Builder }
-            every { anyConstructed<MasterKey.Builder>().build() } returns mockk()
-            every { EncryptedSharedPreferences.create(any<Context>(), any<String>(), any<MasterKey>(), any(), any()) } returns prefs
+            every { EntitlementStores.open(any()) } returns TestEntitlementStore(prefs)
             every { BillingClient.newBuilder(any()) } returns builder
             every { builder.setListener(any()) } returns builder
             every { builder.enablePendingPurchases(any()) } returns builder
@@ -689,8 +641,7 @@ class BillingReadinessTest {
             assertTrue(manager.billingUi.value.message.contains("unavailable on this device"))
         } finally {
             scope.cancel()
-            unmockkConstructor(MasterKey.Builder::class)
-            unmockkStatic(EncryptedSharedPreferences::class)
+            unmockkObject(EntitlementStores)
             unmockkStatic(BillingClient::class)
         }
     }

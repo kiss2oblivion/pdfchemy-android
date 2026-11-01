@@ -2,9 +2,6 @@ package com.pdfchemy.app.billing
 
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import com.android.billingclient.api.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,28 +57,10 @@ class BillingManager(
         @Volatile
         private var cachedEntitled: Boolean? = null
 
-        internal fun getSecurePrefs(context: Context): SharedPreferences {
-            val appContext = context.applicationContext ?: context
-            return runCatching {
-                val masterKey = MasterKey.Builder(appContext)
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                    .build()
-                EncryptedSharedPreferences.create(
-                    appContext,
-                    PREFS_NAME,
-                    masterKey,
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                )
-            }.getOrElse {
-                appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            }
-        }
-
         fun isUserEntitled(context: Context): Boolean {
             cachedEntitled?.let { return it }
             return try {
-                val entitled = getSecurePrefs(context).getBoolean(KEY_IS_PREMIUM, false)
+                val entitled = EntitlementStores.open(context).read()
                 cachedEntitled = entitled
                 entitled
             } catch (_: Exception) {
@@ -99,13 +78,13 @@ class BillingManager(
         }
     }
     
-    private val securePrefs: SharedPreferences by lazy {
-        getSecurePrefs(context)
+    private val entitlementStore: EntitlementStore by lazy {
+        EntitlementStores.open(context)
     }
 
     init {
         // Fallback to secure cached value immediately for offline support
-        val initialEntitled = securePrefs.getBoolean(KEY_IS_PREMIUM, false)
+        val initialEntitled = entitlementStore.read()
         _isPremium.value = initialEntitled
         updateCachedEntitlement(initialEntitled)
         initializeBillingClient()
@@ -331,13 +310,13 @@ class BillingManager(
                 }
             }
             if (hasPremiumInBatch) {
-                securePrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
+                entitlementStore.write(true)
                 updateCachedEntitlement(true)
                 _isPremium.value = true
                 AdManager.clearAd()
             } else if (isFullInventory) {
                 if (requestTicket == null || purchaseRequests.isCurrent(requestTicket)) {
-                    securePrefs.edit().putBoolean(KEY_IS_PREMIUM, false).apply()
+                    entitlementStore.write(false)
                     updateCachedEntitlement(false)
                     _isPremium.value = false
                 }

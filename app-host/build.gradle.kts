@@ -160,7 +160,8 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.window:window:1.2.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // Only the read-only legacy entitlement migration uses Tink; new records use Android Keystore.
+    implementation("com.google.crypto.tink:tink-android:1.24.0")
 
     // Text Conversion Libraries
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.11")
@@ -175,6 +176,8 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("com.tngtech.archunit:archunit:1.3.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    // Independent interoperability oracle for preference records shipped before this migration.
+    androidTestImplementation("androidx.security:security-crypto:1.1.0-alpha06")
     androidTestImplementation("io.mockk:mockk-android:1.13.10")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
