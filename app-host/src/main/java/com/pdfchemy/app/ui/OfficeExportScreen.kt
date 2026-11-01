@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -205,7 +206,7 @@ fun OfficeExportScreen(
                 FormatSelectionCard(
                     title = "Word",
                     subtitle = ".docx",
-                    icon = Icons.Rounded.Article,
+                    icon = Icons.AutoMirrored.Rounded.Article,
                     color = Color(0xFF2B579A),
                     isSelected = selectedFormat == OfficeFormat.WORD,
                     modifier = Modifier.weight(1f)

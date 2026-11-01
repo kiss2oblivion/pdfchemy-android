@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -227,8 +228,8 @@ fun SignPdfScreen(
                     }
                 },
                 actions = {
-                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Undo, "Undo placement") }
-                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.Rounded.Redo, "Redo placement") }
+                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Undo, "Undo placement") }
+                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Redo, "Redo placement") }
                     IconButton(onClick = { forceTabletopMode = !forceTabletopMode }) {
                         Icon(
                             imageVector = if (isTabletopMode) Icons.Rounded.LaptopMac else Icons.Rounded.PhoneAndroid,

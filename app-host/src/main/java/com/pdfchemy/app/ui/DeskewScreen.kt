@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -202,7 +203,7 @@ fun DeskewScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            if (abs(detectedAngle) >= 0.5f) Icons.Rounded.RotateRight else Icons.Rounded.CheckCircle,
+                            if (abs(detectedAngle) >= 0.5f) Icons.AutoMirrored.Rounded.RotateRight else Icons.Rounded.CheckCircle,
                             contentDescription = null,
                             tint = if (abs(detectedAngle) >= 0.5f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(36.dp)

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -565,7 +566,7 @@ fun ReflowReaderScreen(
                     Text(stringResource(R.string.audio_export_offline_notice))
                     if (activeJobState!!.totalCharacters > 0) {
                         val progress = activeJobState!!.processedCharacters.toFloat() / activeJobState!!.totalCharacters
-                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
                         Text("${(progress * 100).toInt()}% (${activeJobState!!.projectedSizeBytes / (1024 * 1024)} MB projected)")
                     } else {
                         CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
@@ -725,7 +726,7 @@ fun ReflowReaderScreen(
                             IconButton(onClick = { showReadingControls = false }) { Icon(Icons.Rounded.Fullscreen, "Hide reading controls") }
                             if (bookmarks.isNotEmpty()) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(Icons.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
+                                    Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
                                 }
                             }
                             if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
@@ -739,7 +740,7 @@ fun ReflowReaderScreen(
                                     }
                                 }) {
                                     Icon(
-                                        if (isTtsPlaying) Icons.Rounded.VolumeUp else Icons.Rounded.VolumeMute,
+                                        if (isTtsPlaying) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeMute,
                                         contentDescription = "Read Aloud",
                                         tint = if (isTtsBarVisible) MaterialTheme.colorScheme.primary else selectedTheme.text
                                     )
@@ -1117,7 +1118,7 @@ fun ReflowReaderScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Rounded.MenuBook,
+                                Icons.AutoMirrored.Rounded.MenuBook,
                                 contentDescription = null,
                                 modifier = Modifier.size(36.dp),
                                 tint = MaterialTheme.colorScheme.primary

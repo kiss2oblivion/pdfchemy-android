@@ -57,6 +57,7 @@ import com.pdfchemy.app.logic.EditorSession
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.automirrored.rounded.Redo
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
@@ -554,7 +555,7 @@ fun PdfEditorScreen(
                         if (totalPages > 1 && isWideScreen) {
                             IconButton(onClick = { isDualPageMode = !isDualPageMode }) {
                                 Icon(
-                                    imageVector = if (isDualPageMode) Icons.Rounded.MenuBook else Icons.Rounded.AutoStories,
+                                    imageVector = if (isDualPageMode) Icons.AutoMirrored.Rounded.MenuBook else Icons.Rounded.AutoStories,
                                     contentDescription = stringResource(if (isDualPageMode) R.string.reader_single_page else R.string.reader_dual_page_spread),
                                     tint = if (isDualPageMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )

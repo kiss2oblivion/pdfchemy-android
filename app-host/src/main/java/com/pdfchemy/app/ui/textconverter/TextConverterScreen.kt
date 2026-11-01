@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -135,7 +136,7 @@ fun TextConverterScreen(
                     }
 
                     Icon(
-                        Icons.Rounded.ArrowForward, 
+                        Icons.AutoMirrored.Rounded.ArrowForward, 
                         contentDescription = "to", 
                         modifier = Modifier.padding(horizontal = 8.dp),
                         tint = MaterialTheme.colorScheme.primary

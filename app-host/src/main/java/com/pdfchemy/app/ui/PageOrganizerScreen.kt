@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.rounded.Redo
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -506,7 +507,7 @@ fun PageOrganizerScreen(
                                 sessionTick++
                             }
                         ) {
-                            Icon(Icons.Rounded.NoteAdd, contentDescription = stringResource(R.string.action_insert_blank_page))
+                            Icon(Icons.AutoMirrored.Rounded.NoteAdd, contentDescription = stringResource(R.string.action_insert_blank_page))
                         }
 
                         // Delete

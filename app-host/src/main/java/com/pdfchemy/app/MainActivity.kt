@@ -137,6 +137,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -1906,7 +1907,7 @@ fun HomeScreen(
                         onClick = { readerPicker.launch() },
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                     ) {
-                        Icon(Icons.Rounded.MenuBook, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.select_pdf_for_reading))
                     }
@@ -1930,7 +1931,7 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             CategoryCard(stringResource(R.string.cat_organize), stringResource(R.string.cat_organize_desc), Icons.Rounded.FolderOpen, { onNavigate(Screen.OrganizeCategory) }, Modifier.weight(1f).fillMaxHeight())
-                            CategoryCard(stringResource(R.string.cat_check), stringResource(R.string.cat_check_desc), Icons.Rounded.FactCheck, { onNavigate(Screen.CheckCategory) }, Modifier.weight(1f).fillMaxHeight())
+                            CategoryCard(stringResource(R.string.cat_check), stringResource(R.string.cat_check_desc), Icons.AutoMirrored.Rounded.FactCheck, { onNavigate(Screen.CheckCategory) }, Modifier.weight(1f).fillMaxHeight())
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         RecentFilesSection(viewModel, onNavigate = { screen -> onNavigate(screen) })
@@ -2235,7 +2236,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_pdf_to_word),
                     subtitle = stringResource(R.string.menu_pdf_to_word_desc),
-                    icon = Icons.Rounded.Article,
+                    icon = Icons.AutoMirrored.Rounded.Article,
                     onClick = { onNavigate(Screen.OfficeExport(com.pdfchemy.app.logic.OfficeFormat.WORD)) }
                 )
             }
@@ -2329,7 +2330,7 @@ fun CompressCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.compress_batch),
                     subtitle = stringResource(R.string.subtitle_batch_compress),
-                    icon = Icons.Rounded.LibraryBooks,
+                    icon = Icons.AutoMirrored.Rounded.LibraryBooks,
                     onClick = { onNavigate(Screen.BatchCompressPdf) } // Routes to same tool where tab exists
                 )
             }

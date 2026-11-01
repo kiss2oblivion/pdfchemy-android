@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Crop
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.DynamicForm
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -143,7 +144,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_split),
                     subtitle = stringResource(R.string.menu_split_desc),
-                    icon = Icons.Rounded.CallSplit,
+                    icon = Icons.AutoMirrored.Rounded.CallSplit,
                     onClick = { onNavigate(Screen.SplitPdf()) }
                 )
             }
@@ -160,7 +161,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_rotate_pages),
                     subtitle = stringResource(R.string.menu_rotate_pages_desc),
-                    icon = Icons.Rounded.RotateRight,
+                    icon = Icons.AutoMirrored.Rounded.RotateRight,
                     onClick = { onNavigate(Screen.RotatePdf) }
                 )
             }
@@ -168,7 +169,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_reflow_reader),
                     subtitle = stringResource(R.string.menu_reflow_reader_desc),
-                    icon = Icons.Rounded.MenuBook,
+                    icon = Icons.AutoMirrored.Rounded.MenuBook,
                     onClick = { onNavigate(Screen.ReflowReader()) }
                 )
             }
@@ -185,7 +186,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_watermark_pdf),
                     subtitle = stringResource(R.string.menu_watermark_pdf_desc),
-                    icon = Icons.Rounded.BrandingWatermark,
+                    icon = Icons.AutoMirrored.Rounded.BrandingWatermark,
                     onClick = { onNavigate(Screen.Watermark) }
                 )
             }
@@ -233,7 +234,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_booklet_creator),
                     subtitle = stringResource(R.string.menu_booklet_creator_desc),
-                    icon = Icons.Rounded.MenuBook,
+                    icon = Icons.AutoMirrored.Rounded.MenuBook,
                     onClick = { onNavigate(Screen.Booklet) }
                 )
             }
@@ -250,7 +251,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_bookmark_editor),
                     subtitle = stringResource(R.string.menu_bookmark_editor_desc),
-                    icon = Icons.Rounded.MenuBook,
+                    icon = Icons.AutoMirrored.Rounded.MenuBook,
                     onClick = { onNavigate(Screen.BookmarkEditor) }
                 )
             }
@@ -275,7 +276,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_deskew),
                     subtitle = stringResource(R.string.menu_deskew_desc),
-                    icon = Icons.Rounded.RotateRight,
+                    icon = Icons.AutoMirrored.Rounded.RotateRight,
                     onClick = { onNavigate(Screen.Deskew) }
                 )
             }
@@ -594,7 +595,7 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
             if (selectedFile != null) {
                 ExtendedFloatingActionButton(
                     onClick = { directoryPickerLauncher.launch(null) },
-                    icon = { Icon(Icons.Rounded.CallSplit, stringResource(R.string.desc_split)) },
+                    icon = { Icon(Icons.AutoMirrored.Rounded.CallSplit, stringResource(R.string.desc_split)) },
                     text = { Text(stringResource(R.string.split_into_folder)) }
                 )
             }
@@ -942,7 +943,7 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
                         saveFileLauncher.launch("rotated_${file.name}") 
                     },
-                    icon = { Icon(Icons.Rounded.RotateRight, contentDescription = stringResource(R.string.desc_save)) },
+                    icon = { Icon(Icons.AutoMirrored.Rounded.RotateRight, contentDescription = stringResource(R.string.desc_save)) },
                     text = { Text(stringResource(R.string.rotate_save)) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary

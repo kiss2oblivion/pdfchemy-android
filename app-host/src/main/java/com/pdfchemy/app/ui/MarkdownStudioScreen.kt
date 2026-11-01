@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -243,7 +244,7 @@ fun MarkdownStudioScreen(
                 ToolbarIconButton(icon = Icons.Rounded.FormatItalic) { insertText("*Italic text*") }
                 ToolbarIconButton(icon = Icons.Rounded.FormatQuote) { insertText("> Quote text") }
                 ToolbarIconButton(icon = Icons.Rounded.Code) { insertText("```\n// Code snippet\n```") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatListBulleted) { insertText("- List item") }
+                ToolbarIconButton(icon = Icons.AutoMirrored.Rounded.FormatListBulleted) { insertText("- List item") }
                 ToolbarIconButton(icon = Icons.Rounded.FormatListNumbered) { insertText("1. Numbered item") }
                 ToolbarIconButton(icon = Icons.Rounded.Checklist) { insertText("- [ ] Task item") }
                 ToolbarIconButton(icon = Icons.Rounded.TableChart) {

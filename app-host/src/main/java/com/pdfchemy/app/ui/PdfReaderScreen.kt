@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -701,7 +702,7 @@ private fun PdfReaderDocument(
                         onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) },
                         enabled = actionsEnabled
                     ) {
-                        Icon(Icons.Rounded.MenuBook, contentDescription = stringResource(R.string.menu_reflow_reader))
+                        Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = stringResource(R.string.menu_reflow_reader))
                     }
                     IconButton(
                         onClick = { launchCommandAction(ReaderCommandAction.EDIT_ANNOTATE) },
@@ -1001,21 +1002,21 @@ private fun readerCommandPresentation(
 ): Pair<androidx.compose.ui.graphics.vector.ImageVector, Int> {
     return when (action) {
         ReaderCommandAction.EDIT_ANNOTATE -> Icons.Rounded.Edit to R.string.menu_edit_pdf
-        ReaderCommandAction.REFLOW_READER -> Icons.Rounded.MenuBook to R.string.menu_reflow_reader
+        ReaderCommandAction.REFLOW_READER -> Icons.AutoMirrored.Rounded.MenuBook to R.string.menu_reflow_reader
         ReaderCommandAction.COMPRESS -> Icons.Rounded.Compress to R.string.menu_compress
         ReaderCommandAction.OCR_SEARCHABLE -> Icons.Rounded.DocumentScanner to R.string.menu_ocr_pdf
         ReaderCommandAction.SIGN_PDF -> Icons.Rounded.Draw to R.string.menu_sign_pdf
         ReaderCommandAction.PROTECT_ENCRYPT -> Icons.Rounded.Security to R.string.menu_protect_pdf
-        ReaderCommandAction.SPLIT -> Icons.Rounded.CallSplit to R.string.menu_split
+        ReaderCommandAction.SPLIT -> Icons.AutoMirrored.Rounded.CallSplit to R.string.menu_split
         ReaderCommandAction.PAGE_ORGANIZER -> Icons.Rounded.ViewModule to R.string.menu_page_organizer
-        ReaderCommandAction.ROTATE_PAGES -> Icons.Rounded.RotateRight to R.string.menu_rotate_pages
+        ReaderCommandAction.ROTATE_PAGES -> Icons.AutoMirrored.Rounded.RotateRight to R.string.menu_rotate_pages
         ReaderCommandAction.DELETE_PAGES -> Icons.Rounded.Delete to R.string.menu_delete_pages
         ReaderCommandAction.FILL_FORM -> Icons.Rounded.DynamicForm to R.string.menu_fill_form
         ReaderCommandAction.QUICK_FILL_SIGN -> Icons.Rounded.Draw to R.string.menu_quick_fill_sign
         ReaderCommandAction.EXTRACT_TABLES -> Icons.Rounded.TableChart to R.string.table_extractor_title
         ReaderCommandAction.EXPORT_OFFICE -> Icons.Rounded.Description to R.string.title_office_exporter
         ReaderCommandAction.REDACT -> Icons.Rounded.VisibilityOff to R.string.menu_redaction_studio
-        ReaderCommandAction.WATERMARK -> Icons.Rounded.BrandingWatermark to R.string.menu_watermark_pdf
+        ReaderCommandAction.WATERMARK -> Icons.AutoMirrored.Rounded.BrandingWatermark to R.string.menu_watermark_pdf
         ReaderCommandAction.PAGE_NUMBERS -> Icons.Rounded.Numbers to R.string.menu_page_number_pdf
     }
 }

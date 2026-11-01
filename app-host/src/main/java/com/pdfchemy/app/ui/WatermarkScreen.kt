@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -178,7 +179,7 @@ fun WatermarkScreen(
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(46.dp), tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.AutoMirrored.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(46.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(stringResource(R.string.watermark_headline), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -376,7 +377,7 @@ fun WatermarkScreen(
                     if (isProcessing) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Icon(Icons.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.AutoMirrored.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.action_apply_watermark),
