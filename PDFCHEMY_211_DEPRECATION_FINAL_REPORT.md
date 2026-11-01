@@ -26,8 +26,34 @@ configuration are retained. Independent clean replay of the corrected baseline p
   55 focused JVM tests passed, including nine new store cases. Six actual API 36
   Keystore migration/tamper/missing-key cases passed; the installed candidate was restored
   and its APK hash checked. This was diagnostic instrumentation, not minified runtime.
-- Used NotificationCompat and BundleCompat for platform compatibility. Scoped legacy
-  memory callback suppressions and retained the required upstream TTS callback.
+- Used NotificationCompat for notifications. Foreign-UID SAF fixtures use platform-only,
+  version-gated parcel access: host AndroidX classes are unavailable in that provider.
+  Scoped legacy memory callback suppressions and retained the required upstream TTS callback.
+
+## Additional closure reproductions and corrections
+
+- CI run 41311384064 could not boot API 30: 6,701.91 MiB free versus 7,372.80 MiB
+  required for userdata. CI now frees only the disposable hosted runner's unused .NET
+  SDK and checks 10 GiB headroom after compilation. Two preflight regressions passed;
+  all four API preflights passed in the next run. No timeout or test coverage was reduced.
+- Run 41313471940 exposed a test-provider classpath regression introduced during review:
+  BundleCompat was available at compilation but absent in the separate provider UID.
+  Platform-only parcel access corrected it. Thirteen actual native provider, publication,
+  cancellation and cleanup cases passed, including a new explicit foreign-UID roundtrip.
+  The failed four-API run remains evidence, not acceptance.
+- Signed OCR output independently reproduced fractional A4 rounding (595.28 became
+  595.0 points) and lost crop/rotation structure. The new native regression reproduced
+  the A4 mismatch on the original worker. OCR now reads original geometry using the
+  transferred descriptor, preserves exact boxes/rotation/page units, and transforms
+  the rendered image and invisible searchable text into that coordinate system.
+  Raster limits, host publication ownership and worker isolation remain unchanged.
+  Seven native OCR cases passed, including a six-page actual-export geometry/pixel
+  fixture, worker continuity, progress, cancellation and malformed input. Seven focused
+  OCR JVM cases also passed. The native receipt corrects an external collector's initial
+  expected count of six; the unchanged framework log proves seven complete passes.
+
+Those focused results are debug instrumentation. Final-source CI, rebuilt signed
+artifacts and signed OCR revalidation are required before the main integration gate.
 
 Receipts, including failed build attempts, are retained outside Git under
 release-validation-2.1.0-2026-10-23/closure52-evidence. Signing/build helpers reuse the
