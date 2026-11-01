@@ -43,6 +43,7 @@ jobs:
       - run: python3 tools/check_action_runtimes.py
       - run: chmod +x gradlew
       - run: python3 -m unittest discover -s scripts -p test_run_android_instrumentation.py
+      - run: python3 -m unittest discover -s scripts -p test_check_android_emulator_space.py
       - run: ./gradlew :app-host:securityAudit securityArchitecture :app-host:testDebugUnitTest --tests 'com.pdfchemy.app.arch.*' --tests 'com.pdfchemy.app.architecture.*' --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
 
   secrets:
@@ -101,8 +102,16 @@ jobs:
           java-version: '21'
           distribution: temurin
       - run: chmod +x gradlew
+      - name: Free unused hosted-runner SDK space
+        run: |
+          test "$GITHUB_ACTIONS" = true && test "$RUNNER_OS" = Linux
+          df -h "$HOME"
+          sudo rm -rf /usr/share/dotnet
+          df -h "$HOME"
       - name: Build native test APKs before emulator startup
         run: ./gradlew :app-host:assembleDebug :app-host:assembleDebugAndroidTest --max-workers=2 -Pkotlin.compiler.execution.strategy=in-process
+      - name: Require emulator userdata headroom
+        run: python3 scripts/check_android_emulator_space.py
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
