@@ -2,6 +2,7 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
+import kotlinx.coroutines.CancellationException
 
 import org.json.JSONObject
 import java.io.InputStream
@@ -65,6 +66,8 @@ object PdfSanitizerEngine {
                 isEncrypted = contract.isEncrypted,
                 parseFailed = contract.parseFailed
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true)
         }
@@ -139,6 +142,8 @@ object PdfSanitizerEngine {
                 metadataRemoved = contract.metadataRemoved,
                 attachmentsRemoved = contract.attachmentsRemoved
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             SanitizerResult(false, 0, 0, 0, false, 0)
         }

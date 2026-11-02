@@ -53,6 +53,7 @@ fun DocumentSanitizerScreen(
     var isAuditing by remember { mutableStateOf(false) }
     var isSanitizing by remember { mutableStateOf(false) }
     var sanitizeResult by remember { mutableStateOf<SanitizerResult?>(null) }
+    var sanitizeFailed by remember { mutableStateOf(false) }
 
     var purgeJs by remember { mutableStateOf(true) }
     var purgeActions by remember { mutableStateOf(true) }
@@ -64,10 +65,13 @@ fun DocumentSanitizerScreen(
         isAuditing = true
         auditReport = null
         sanitizeResult = null
+        sanitizeFailed = false
         scope.launch {
             try {
                 val report = com.pdfchemy.app.logic.PdfSanitizerEngine.auditDocumentThreats(context, uri)
                 auditReport = report
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 AppLogger.e("Audit failed", e)
             } finally {
@@ -94,19 +98,26 @@ fun DocumentSanitizerScreen(
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isSanitizing = true
+            sanitizeResult = null
+            sanitizeFailed = false
             scope.launch {
                 try {
                     val result = com.pdfchemy.app.logic.PdfSanitizerEngine.sanitizeDocument(
                         context, srcUri, destUri,
-                        purgeJs, purgeActions, purgeMetadata
+                        purgeJs = purgeJs,
+                        purgeActions = purgeActions,
+                        purgeMetadata = purgeMetadata,
+                        purgeAttachments = purgeAttachments
                     )
-                    sanitizeResult = result
-                    if (result != null && result.isSuccess) {
+                    if (result.isSuccess) {
                         com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
+                        sanitizeResult = result
                         Toast.makeText(context, context.getString(R.string.sanitizer_success), Toast.LENGTH_SHORT).show()
                     } else {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
-                        Toast.makeText(context, "Sanitize failed (Timeout or Crash)", Toast.LENGTH_SHORT).show()
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                        }
+                        sanitizeFailed = true
                     }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
@@ -118,6 +129,7 @@ fun DocumentSanitizerScreen(
                         com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
                     }
                     AppLogger.e("Sanitizing failed", e)
+                    sanitizeFailed = true
                 } finally {
                     isSanitizing = false
                 }
@@ -264,7 +276,14 @@ fun DocumentSanitizerScreen(
                     }
                 }
 
-                sanitizeResult?.let { res ->
+                if (sanitizeFailed) {
+                    Text(
+                        stringResource(R.string.integrity_sanitizer_failed),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                sanitizeResult?.takeIf { it.isSuccess }?.let {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -276,7 +295,7 @@ fun DocumentSanitizerScreen(
                                 Text(stringResource(R.string.sanitizer_success), fontWeight = FontWeight.Bold)
                             }
                             Text(
-                                stringResource(R.string.sanitizer_success_desc),
+                                stringResource(R.string.integrity_sanitizer_selected_complete),
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
