@@ -11,8 +11,14 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.core.app.ActivityOptionsCompat
@@ -38,8 +44,10 @@ class SanitizerPublicationIntegrityTest {
     @Test fun deselectedAttachmentPurgePreservesEmbeddedPayload() = exercise(keepAttachment = true)
     @Test fun selectedAttachmentPurgeRemovesEmbeddedPayload() = exercise(keepAttachment = false)
     @Test fun malformedInputNeverDisplaysSuccessOrLeavesOutput() = exercise(keepAttachment = false, malformed = true)
+    @Test fun narrowLargeTextOptionsRemainTouchableAndPreserveSelectedAttachment() =
+        exercise(keepAttachment = true, narrowLargeText = true)
 
-    private fun exercise(keepAttachment: Boolean, malformed: Boolean = false) {
+    private fun exercise(keepAttachment: Boolean, malformed: Boolean = false, narrowLargeText: Boolean = false) {
         val app = ApplicationProvider.getApplicationContext<Application>()
         PDFBoxResourceLoader.init(app)
         val resolver = app.contentResolver
@@ -94,7 +102,16 @@ class SanitizerPublicationIntegrityTest {
         try {
             compose.setContent {
                 CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
-                    MaterialTheme { if (visible.value) DocumentSanitizerScreen(model, onBack = {}) }
+                    MaterialTheme {
+                        if (visible.value) {
+                            if (narrowLargeText) {
+                                val density = LocalDensity.current
+                                CompositionLocalProvider(LocalDensity provides Density(density.density, 1.3f)) {
+                                    Box(Modifier.width(280.dp)) { DocumentSanitizerScreen(model, onBack = {}) }
+                                }
+                            } else DocumentSanitizerScreen(model, onBack = {})
+                        }
+                    }
                 }
             }
             compose.onNodeWithText(app.getString(R.string.select_pdf)).performClick()
@@ -104,8 +121,14 @@ class SanitizerPublicationIntegrityTest {
                 compose.onNodeWithText("Purge Hidden Embedded Files").assertExists()
                 // JS, actions, attachments, metadata: select before scrolling.
                 // Off-screen bounds are clipped on API24 and cannot identify a row.
-                compose.onAllNodes(isToggleable()).assertCountEquals(4)[2]
-                    .performScrollTo().performClick().assertIsOff()
+                val switches = compose.onAllNodes(isToggleable()).assertCountEquals(4)
+                if (narrowLargeText) {
+                    repeat(4) { index ->
+                        switches[index].performScrollTo().assertIsDisplayed().assertWidthIsAtLeast(48.dp)
+                    }
+                }
+                switches[2].performScrollTo().assertIsDisplayed().assertWidthIsAtLeast(48.dp)
+                    .performClick().assertIsOff()
             }
             compose.onNodeWithText(action).performScrollTo().performClick()
             val message = app.getString(if (malformed) R.string.integrity_sanitizer_failed else R.string.sanitizer_success)

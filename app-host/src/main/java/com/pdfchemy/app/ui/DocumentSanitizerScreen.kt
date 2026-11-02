@@ -246,7 +246,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge JavaScript Payload Triggers")
+                            Text("Purge JavaScript Payload Triggers", modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeJs, onCheckedChange = { purgeJs = it })
                         }
                         Row(
@@ -254,7 +254,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Launch & URL Actions")
+                            Text("Purge Launch & URL Actions", modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeActions, onCheckedChange = { purgeActions = it })
                         }
                         Row(
@@ -262,7 +262,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Hidden Embedded Files")
+                            Text("Purge Hidden Embedded Files", modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeAttachments, onCheckedChange = { purgeAttachments = it })
                         }
                         Row(
@@ -270,7 +270,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Tracking Metadata & IDs")
+                            Text("Purge Tracking Metadata & IDs", modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeMetadata, onCheckedChange = { purgeMetadata = it })
                         }
                     }
