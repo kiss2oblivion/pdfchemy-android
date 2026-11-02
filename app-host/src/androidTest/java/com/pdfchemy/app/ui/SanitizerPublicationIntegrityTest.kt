@@ -101,11 +101,10 @@ class SanitizerPublicationIntegrityTest {
             val action = app.getString(R.string.sanitizer_action_sanitize)
             compose.waitUntil(30_000) { compose.onAllNodesWithText(action).fetchSemanticsNodes().size == 1 }
             if (keepAttachment) {
-                val label = compose.onNodeWithText("Purge Hidden Embedded Files").fetchSemanticsNode()
-                val attachmentSwitch = compose.onAllNodes(isToggleable()).fetchSemanticsNodes().single {
-                    kotlin.math.abs(it.boundsInRoot.center.y - label.boundsInRoot.center.y) < 1f
-                }
-                compose.onNode(isToggleable() and SemanticsMatcher("aligned with attachment label") { it.id == attachmentSwitch.id })
+                compose.onNodeWithText("Purge Hidden Embedded Files").assertExists()
+                // JS, actions, attachments, metadata: select before scrolling.
+                // Off-screen bounds are clipped on API24 and cannot identify a row.
+                compose.onAllNodes(isToggleable()).assertCountEquals(4)[2]
                     .performScrollTo().performClick().assertIsOff()
             }
             compose.onNodeWithText(action).performScrollTo().performClick()
