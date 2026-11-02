@@ -101,7 +101,11 @@ class SanitizerPublicationIntegrityTest {
             val action = app.getString(R.string.sanitizer_action_sanitize)
             compose.waitUntil(30_000) { compose.onAllNodesWithText(action).fetchSemanticsNodes().size == 1 }
             if (keepAttachment) {
-                compose.onNode(isToggleable() and hasAnySibling(hasText("Purge Hidden Embedded Files")))
+                val label = compose.onNodeWithText("Purge Hidden Embedded Files").fetchSemanticsNode()
+                val attachmentSwitch = compose.onAllNodes(isToggleable()).fetchSemanticsNodes().single {
+                    kotlin.math.abs(it.boundsInRoot.center.y - label.boundsInRoot.center.y) < 1f
+                }
+                compose.onNode(isToggleable() and SemanticsMatcher("aligned with attachment label") { it.id == attachmentSwitch.id })
                     .performScrollTo().performClick().assertIsOff()
             }
             compose.onNodeWithText(action).performScrollTo().performClick()

@@ -96,12 +96,16 @@ class TextExportNamingIntegrityTest {
                 }
             }
             compose.onNodeWithText(app.getString(R.string.select_pdf)).performClick()
-            val action = app.getString(R.string.extract_save_as_txt)
-            compose.waitUntil(30_000) { compose.onAllNodesWithText(action).fetchSemanticsNodes().size == 1 }
+            val action = hasContentDescription("Extract") and hasClickAction()
+            try {
+                compose.waitUntil(30_000) { compose.onAllNodes(action).fetchSemanticsNodes().size == 1 }
+            } catch (error: Throwable) {
+                throw AssertionError("Extract action unavailable after selection:\n" + compose.onRoot(useUnmergedTree = true).printToString(), error)
+            }
             if (!export) {
                 compose.onNodeWithText(name).assertExists()
             } else {
-                compose.onNodeWithText(action).performClick()
+                compose.onNode(action).performClick()
                 compose.waitUntil(30_000) {
                     model.uiState.value is MainViewModel.UiState.Success || model.uiState.value is MainViewModel.UiState.Error
                 }
