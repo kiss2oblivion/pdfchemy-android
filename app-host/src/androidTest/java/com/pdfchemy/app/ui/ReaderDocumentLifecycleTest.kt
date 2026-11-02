@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.test.*
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.lifecycle.ViewModelStore
@@ -23,6 +24,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -30,8 +33,12 @@ import java.io.File
 import java.io.ByteArrayOutputStream
 
 /** Exercises the actual Reader and navigation, rather than just the recent-file destination. */
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class ReaderDocumentLifecycleTest {
-    @get:Rule val compose = createComposeRule()
+    // Compose 1.6's default unconfined test dispatcher can resume a frame on
+    // the I/O worker which sends snapshot notifications. Queue that work for
+    // the UI test clock instead of applying layout on the producer thread.
+    @get:Rule val compose = createComposeRule(effectContext = StandardTestDispatcher())
 
     @Test fun readerEditorRoundTripPreservesStagedDocumentWithVanguardEnabled() {
         val app = ApplicationProvider.getApplicationContext<Application>()
@@ -102,13 +109,15 @@ class ReaderDocumentLifecycleTest {
                 }
             }
             waitForReader()
-            compose.onNodeWithContentDescription(app.getString(R.string.menu_edit_pdf)).performClick()
-            compose.waitUntil(30_000) { compose.onAllNodesWithText("Page 1 of 1").fetchSemanticsNodes().size == 1 }
-            restoration.emulateSavedInstanceStateRestore()
-            compose.waitUntil(30_000) { compose.onAllNodesWithText("Page 1 of 1").fetchSemanticsNodes().size == 1 }
-            compose.onNodeWithContentDescription("Back").performClick()
-            waitForReader()
-            assertArrayEquals("Restoration must preserve the input snapshot", original, source.readBytes())
+            repeat(4) {
+                compose.onNodeWithContentDescription(app.getString(R.string.menu_edit_pdf)).performClick()
+                compose.waitUntil(30_000) { compose.onAllNodesWithText("Page 1 of 1").fetchSemanticsNodes().size == 1 }
+                restoration.emulateSavedInstanceStateRestore()
+                compose.waitUntil(30_000) { compose.onAllNodesWithText("Page 1 of 1").fetchSemanticsNodes().size == 1 }
+                compose.onNodeWithContentDescription("Back").performClick()
+                waitForReader()
+                assertArrayEquals("Restoration must preserve the input snapshot on cycle $it", original, source.readBytes())
+            }
         } finally {
             compose.runOnIdle { showApp.value = false }
             compose.waitForIdle()
