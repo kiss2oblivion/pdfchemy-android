@@ -47,6 +47,7 @@ class TextExportNamingIntegrityTest {
         val tree = DocumentsContract.buildTreeDocumentUri(control.authority!!, "root")
         val root = DocumentsContract.buildDocumentUriUsingTree(tree, "root")
         resolver.call(control, "configure", null, null)
+        resolver.call(control, "release", null, null)
         val settings = app.getSharedPreferences("shrinkpdf_settings", Application.MODE_PRIVATE)
         val oldFolder = settings.getString(OutputPolicy.DIRECTORY_KEY, null)
         val oldVanguard = settings.getBoolean("vanguard_enabled", true)
