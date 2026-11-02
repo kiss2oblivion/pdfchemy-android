@@ -1,0 +1,45 @@
+{
+  "baseline_head": "79bc3ed7f12f1a3340bc52b98874653a213f5a0a",
+  "application_apk_byte_identical": true,
+  "apks": {
+    "baseline.apk": {
+      "sha256": "ac95a5901919567f6f214291c7a5948b490ec273ffa07afc1c38bf280acafa0f",
+      "bytes": 129728932
+    },
+    "baseline-test.apk": {
+      "sha256": "bbe3cd1f828529620159c8b2d23b705d653ccb483ce577146ef3b3480543f172",
+      "bytes": 12847462
+    },
+    "fixed.apk": {
+      "sha256": "ac95a5901919567f6f214291c7a5948b490ec273ffa07afc1c38bf280acafa0f",
+      "bytes": 129728932
+    },
+    "fixed-test.apk": {
+      "sha256": "41c7948bc70b69164bf9ff45576234f2501394e6b2f779691f85cf83c23de2db",
+      "bytes": 12847462
+    }
+  },
+  "changed_test_sha256": "6facffd9e19ac8dfa1f653eadd6e3ac802e9e05ae7ce7ea3adaf3d3f911e54ed",
+  "focused_jvm_methods": 6,
+  "local_native_methods": 2,
+  "observed_home_cycles": 10,
+  "local_native_apis": [
+    24
+  ],
+  "local_api36": "INCOMPLETE: three process-start ANRs before test methods, including reduced-host-load attempt; one ADB setup failure; use full Linux CI for API36 verification",
+  "local_api34": "INCOMPLETE: three Windows host exits before a completed method; no local baseline reproduction or revised-test result",
+  "host_exit_codes": {
+    "attempt0": "unknown",
+    "attempt1": "0xC0000005",
+    "attempt2_vulkan_disabled": "0xC0000005"
+  },
+  "first_revised_attempt": {
+    "api24": "FAIL: all ten Home cycles pass, close() times out because initial/return intent filters differ; corrected by initial launcher intent",
+    "api36": "INCOMPLETE: process-start ANR before test start; retained exit-info, empty crash buffer",
+    "test_apk_sha256": "d6f4312486e2afa43f44ea9814274cf9fb8af20af1773823e21e2ea2f32f1a59"
+  },
+  "api36_corrected_setup_attempt": "INCOMPLETE before instrumentation: transient ADB connection failure setting log buffer; device connection/boot/log-buffer precheck subsequently passed",
+  "api36_corrected_prestart_anr": "INCOMPLETE: process-start ANR before test methods; retained slow-operation/CPU-pressure/exit-info evidence; completed API24 emulator and task-owned idle Gradle daemon stopped before next verification",
+  "release": "HOLD",
+  "full_same_source_ci": "PENDING"
+}

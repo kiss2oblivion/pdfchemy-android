@@ -1,0 +1,46 @@
+{
+  "base_commit": "61f40b5e85eb28a894215dd68b33feb5c1a75bf0",
+  "production_form_commit": "c52233141b09607255dcc2b86d3401ae35fe045b",
+  "scope": "Test-only preservation of eight private form value and compatibility regressions",
+  "focused_tests": 53,
+  "worker_tests": 94,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "worker_debug_lint_errors": 0,
+  "worker_debug_lint_warnings": 36,
+  "source_release_gate": {
+    "fixture_hashes": "PASS",
+    "corpus_files": 14,
+    "smoke_routes": 62
+  },
+  "files": [
+    {
+      "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/FormValueAliasTest.kt",
+      "bytes": 7010,
+      "sha256": "81dad66326176b47f1942d15843ee10407f12f1b1cbe123ef319e03012fcabe2"
+    },
+    {
+      "path": "pdf-jail/src/test/resources/redaction-form-value-alias/no-view-indirect-value.pdf",
+      "bytes": 1073,
+      "sha256": "3dbaf3ead5ea96d34b39aa01a1f239ee7ed632079a71c3c06e56cdb222a53abb"
+    }
+  ],
+  "external_build_logs": [
+    {
+      "path": "release-form-regressions-focused.log",
+      "sha256": "0179b66826ab77aee85d4a106c4cec9683516aca6f0ec2df021af842f669b17f"
+    },
+    {
+      "path": "release-form-regressions-worker-validation.log",
+      "sha256": "14e541608751c8c285b99dbd32ae8f35c5893c461d00eecc0b18df0c8f321635"
+    },
+    {
+      "path": "release-form-regressions-source-gate.json",
+      "sha256": "23d2a3d73a98791e790a00a63451d8b09c53219709c2815e264ae873cc90f4f3"
+    }
+  ],
+  "resulting_source_ci": "PENDING at commit snapshot",
+  "physical": "NOT_RUN",
+  "release": "HOLD"
+}

@@ -84,6 +84,11 @@ class ReleaseWorkflowRegressionTest {
         val directory = mockk<DocumentFile>()
         val first = mockk<DocumentFile>(relaxed = true)
         every { first.uri } returns Uri.parse("content://fixture/first.pdf")
+        every { first.delete() } returns true
+        every { directory.exists() } returns true
+        every { directory.isDirectory } returns true
+        every { directory.canWrite() } returns true
+        every { directory.listFiles() } returns emptyArray()
         every { directory.createFile(any(), any()) } returnsMany listOf(first, null)
         coEvery { PdfGateway.executeEngine(any(), "PLAN_SPLIT_BOOKMARKS", any(), any(), any()) } returns PlanSplitBookmarksContract(true, listOf(listOf("1"), listOf("2")))
         assertTrue(runCatching { PdfManipulator.splitByBookmarks(context, source, directory, "source") }.isFailure)

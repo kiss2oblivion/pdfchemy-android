@@ -1,0 +1,42 @@
+{
+  "scope": "Raw local source/artifact bytes for the outline SE accessibility-reference follow-up. CI 39172047026 tests earlier source 414b053a and does not cover the extended fixture.",
+  "negative_baseline": "document-carrier-fixed.apk is the 414b053a application; outline-structure-baseline-test.apk is the completed extended test APK used for the confirmed native negative retry.",
+  "files": [
+    {
+      "path": "app-host/build/outputs/apk/debug/app-host-debug.apk",
+      "sha256": "996eaed869340e6a6d4322dd6503206eae8061399c0698f9c76bde635c464c89"
+    },
+    {
+      "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk",
+      "sha256": "19a6e0855d2cdcce564379706ba2e522ce83468988d8a554a74faca8fd7bb38f"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt",
+      "sha256": "6a48b23ea280d748034e80cdb6d1f62c063111fb93f82ae81c7db03ec692b2fd"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+      "sha256": "ff92c2b9c7c2d06e882d2cb0fa9a6152d52e8806033dff29d34bde653d97cf9a"
+    },
+    {
+      "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/RedactionResourcesTest.kt",
+      "sha256": "1362502a6360f2872359af3f02d9f9846227e4cb921f8b270a773cda904032c9"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/EditorRedactionResourceSecurityTest.kt",
+      "sha256": "0232465f86e626797b57a233a48ba4e3eb1a6fb0287d099429913ae62b9146a8"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/ActiveContentScrubber.kt",
+      "sha256": "1707e067ad7ec74ff079859ef6ec4cac8e7f1a5f72440e2eb54711037008c9ac"
+    },
+    {
+      "path": ".security-runtime/sc01/document-carrier-fixed.apk",
+      "sha256": "c44f2c04e5e1415a7735202bae501c6e5bb45b816013a1b41191f932a2d499b6"
+    },
+    {
+      "path": ".security-runtime/sc01/outline-structure-baseline-test.apk",
+      "sha256": "5696d606ca1b8baad9f1c2365dd2fa052f9a7b9926d4cc8a860e108d01807c2d"
+    }
+  ]
+}

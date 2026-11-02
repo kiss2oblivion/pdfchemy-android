@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.RedactionResourcesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:19:34.956Z" hostname="DESKTOP-N37P7P6" time="1.556">
+  <properties/>
+  <testcase name="replacingScanRemovesOriginalImageResource" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="1.371"/>
+  <testcase name="inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.14"/>
+  <testcase name="replacingContentRemovesOriginalSensitiveForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.045"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

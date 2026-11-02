@@ -87,6 +87,7 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
 
     private fun pushState() {
         undoStack.addLast(pages)
+        if (undoStack.size > 50) undoStack.removeFirst()
         redoStack.clear()
     }
 
@@ -105,6 +106,7 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
         if (!canRedo()) return false
         val next = redoStack.removeLast()
         undoStack.addLast(pages)
+        if (undoStack.size > 50) undoStack.removeFirst()
         pages = next
         if (selectedIndex >= pages.size) {
             selectedIndex = pages.size - 1
@@ -161,6 +163,18 @@ class OrganizerSession(initialPages: List<OrganizerPageItem> = emptyList()) {
         list.add(selectedIndex + 1, item)
         pages = list
         selectedIndex++
+    }
+
+    /** Move the selected page directly, preserving identity and a single undo step. */
+    fun moveSelectedTo(targetIndex: Int): Boolean {
+        if (selectedIndex !in pages.indices || targetIndex !in pages.indices || targetIndex == selectedIndex) return false
+        pushState()
+        val list = pages.toMutableList()
+        val item = list.removeAt(selectedIndex)
+        list.add(targetIndex, item)
+        pages = list
+        selectedIndex = targetIndex
+        return true
     }
 
     fun duplicateSelected() {

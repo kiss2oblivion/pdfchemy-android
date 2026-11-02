@@ -1,0 +1,16 @@
+092C3811640CDC81D423BE601B90D0BF796866D66BDA1DB7515F8EB7B8AFBA5A  reports/security-code-analysis-2026-10-18/evidence/editor-retained-original-resource.pdf
+7DD52A8264506B0A4EE84D99FE41D069CD48C0C795FD76C5121BC1FFD49F7429  reports/security-code-analysis-2026-10-18/evidence/search-link-retained-original-page.pdf
+A20496A34CA66B40E70C31758DCA466E40713DFAA5B73C22FB406D7F2F8C6802  reports/security-code-analysis-2026-10-18/evidence/security-review-focused.log
+965EACE2939D3D0C711622800212D7CFE75DCE9B6503D79FB397BDB812E00546  reports/security-code-analysis-2026-10-18/evidence/security-review-probes.log
+92840A961706A3D7103A6D6591F405A8EFC2BA6C5A253F01DDB6D53300056503  reports/security-code-analysis-2026-10-18/evidence/security-review-redaction-artifacts.log
+6C88A354F6E2148F41D7E636255AB2B9F720BD2A550640CD832564980BA42A97  reports/security-code-analysis-2026-10-18/evidence/security-review-redaction.log
+B003FD1BDE6ADDA4BFFAC8E2209A7866D3B47A1440CDFFBDA8D538A9074EBBBE  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.security.DestinationIntegritySecurityTest.xml
+FAB26CA2C234F388416D8AC8EC01E4833571FBC1C9EDFBD0D5F9B77BAE6CC889  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.security.IndependentLifecycleReviewProbeTest.xml
+D95968856EDCA180CA51A16395F567C721C20819E36F9B053459F83A147A49CF  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.security.IndependentSecurityReviewProbeTest.xml
+87CE1AAD977733386BD62808E0FBA0C27FA7D799D4686BB35F854E65A5D56DD3  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.security.RedactionObjectGraphReviewProbeTest.xml
+4569D593A7FAC4137F490889966614E68EB5E67F4521A57EBCA9F4752D5D4738  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.security.WindowSecureManagerTest.xml
+47D5ADE4F3E104515B7249E3D40E0C4847ED89245CA8A7912D7ECABB4D57A7FF  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.ui.PdfReaderBitmapOwnershipTest.xml
+0E9F79AADA4725B8DF131D0F513D3EE7A559764770E55505723BF0B6A4A0235E  reports/security-code-analysis-2026-10-18/evidence/TEST-com.pdfchemy.app.utils.DocumentStagerRetentionTest.xml
+8A2E75315CE5D7EC5793B9E2B01B083AC53E0499EE82BAAEED4F4CAC128AAC91  app-host/src/test/java/com/pdfchemy/app/security/IndependentLifecycleReviewProbeTest.kt
+5CE666801F1D1D7C3E6DDEBB7A2E9071EDE1A546C271B102BC4D710DD2AD9AB8  app-host/src/test/java/com/pdfchemy/app/security/IndependentSecurityReviewProbeTest.kt
+B46BD112B2D6CC116CC71011A02D2B5C1B4A14FA080373EBD2B344ECF966402A  app-host/src/test/java/com/pdfchemy/app/security/RedactionObjectGraphReviewProbeTest.kt

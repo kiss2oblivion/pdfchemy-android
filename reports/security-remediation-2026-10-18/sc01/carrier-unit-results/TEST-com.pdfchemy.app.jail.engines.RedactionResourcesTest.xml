@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.RedactionResourcesTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:47:16.912Z" hostname="DESKTOP-N37P7P6" time="2.31">
+  <properties/>
+  <testcase name="nestedUsedFormsKeepTextWhileUnusedSensitiveFormIsRemoved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="2.009"/>
+  <testcase name="replacingScanRemovesOriginalImageResource" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.048"/>
+  <testcase name="resourceLessFormKeepsNamesResolvedInCallingPage" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.033"/>
+  <testcase name="inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.032"/>
+  <testcase name="annotationAppearanceCanResolveFontInPageResources" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.042"/>
+  <testcase name="replacingContentRemovesOriginalSensitiveForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.036"/>
+  <testcase name="softMaskDoesNotRetainUnusedOriginalForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.035"/>
+  <testcase name="usedTilingPatternDoesNotRetainUnusedOriginalForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.039"/>
+  <testcase name="implicitDefaultColorSpaceIsPreserved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.035"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

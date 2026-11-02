@@ -214,7 +214,7 @@ $env:JAVA_HOME="E:\Android_Studio\jbr"; .\gradlew :app-host:bundleRelease
 
 ## Agent Handoff Notes
 
-- **Next version:** 2.0.7 (v14) — increment in `app-host/build.gradle.kts`
+- **Next version:** 2.1.0 (v14) — increment in `app-host/build.gradle.kts`
 - **Update `FEATURES_REGISTRY.md`** if any new user-visible features added (none in 2.0.6 — purely architectural/security)
 - **Update `CHANGELOG.md`** with v2.0.6 entry (template: follow v2.0.0 format)
 - **Update `PROJECT_STATE_BRIEFING.md`** Android edition version to 2.0.6

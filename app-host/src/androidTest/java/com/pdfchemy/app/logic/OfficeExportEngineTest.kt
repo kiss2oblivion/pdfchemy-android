@@ -162,5 +162,15 @@ class OfficeExportEngineTest {
         assertTrue("Must contain ppt/presentation.xml", entries.contains("ppt/presentation.xml"))
         assertTrue("Must contain ppt/slides/slide1.xml", entries.contains("ppt/slides/slide1.xml"))
         assertTrue("Must contain ppt/slides/slide2.xml", entries.contains("ppt/slides/slide2.xml"))
+        java.util.zip.ZipFile(destPptx).use { zip ->
+            for (page in 1..2) {
+                val xml = zip.getInputStream(zip.getEntry("ppt/slides/slide$page.xml")).use { it.readBytes() }
+                val document = javax.xml.parsers.DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+                    .newDocumentBuilder().parse(xml.inputStream())
+                assertEquals("Each page must be visible as a picture, not just stored in the ZIP", 1,
+                    document.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "pic").length)
+                assertEquals(1, document.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "blip").length)
+            }
+        }
     }
 }

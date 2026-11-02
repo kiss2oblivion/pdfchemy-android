@@ -1,0 +1,19 @@
+{
+  "corpus_files": 14,
+  "smoke_routes": 62,
+  "fixture_hashes": "PASS",
+  "production_ad_ids": "PASS",
+  "lint_baseline_issue_types": [
+    "MissingTranslation"
+  ],
+  "version": "2.1.0 (14)",
+  "sdk": "24..36",
+  "release_apk": "app-host-release-unsigned.apk",
+  "artifact_hygiene": "PASS",
+  "exported_components": [
+    "com.pdfchemy.app.MainActivity",
+    "androidx.work.impl.background.systemjob.SystemJobService",
+    "androidx.work.impl.diagnostics.DiagnosticsReceiver",
+    "androidx.profileinstaller.ProfileInstallReceiver"
+  ]
+}

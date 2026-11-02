@@ -1,12 +1,13 @@
 # Release tool smoke-test matrix
 
-Every Screen destination is represented. **Device checklist not executed locally:** no device or AVD. Automated regressions do not certify all rows.
+Every Screen destination is represented. **Manual device checklist not executed.** Selected emulator regressions are recorded in the current UI/UX implementation reports; they do not certify all rows.
 
 Use a signed/minified RC on API 24, 30, 36 and a physical device. For every output check page/content correctness, actual MIME, external open/share, denied/full/null SAF provider, cancellation, Back, rotation, restart and source preservation. Run purchases with Play license testers and ads with registered test devices.
 
 | Tool/route | Input | Operation | Expected output | Open/share | Cancel/failure | Status |
 |---|---|---|---|---|---|---|
 | Home | none | launch, recent files, tool search, light/dark, rotation | dashboard | Exercise linked destinations; unavailable external handlers must not crash | Back and cancelled external dialogs must preserve navigation | MANUAL NOT RUN; existing automated tests cover subsets only |
+| History | opt-in history with PDF, image, directory, unavailable and empty entries | browse retained history, remove an entry, open available items, disabled/empty guidance | updated local history and matching Reader/viewer destination; no generated document | Open PDF through Vanguard and native Reader; other MIME through matching external handler; directories through file browser; report unavailable handlers | Back returns Home; unavailable/deleted entry reports recovery; history remains opt-in with existing retention | MANUAL NOT RUN; history repository unit tests and Recent-to-Reader native regressions cover subsets only |
 | Settings | defaults | toggle Vanguard/history/theme/language/reader position; restart | persisted settings | Exercise linked destinations; unavailable external handlers must not crash | Back and cancelled external dialogs must preserve navigation | MANUAL NOT RUN; existing automated tests cover subsets only |
 | Premium | Play license tester | purchase, cancel purchase, pending purchase, restore, offline cached entitlement | premium entitlement; Play-confirmed price | Exercise linked destinations; unavailable external handlers must not crash | Back and cancelled external dialogs must preserve navigation | MANUAL NOT RUN; existing automated tests cover subsets only |
 | CompressCategory | none | open every tool tile; Back restores category and Home | correct destination screen | Exercise linked destinations; unavailable external handlers must not crash | Back and cancelled external dialogs must preserve navigation | MANUAL NOT RUN; existing automated tests cover subsets only |

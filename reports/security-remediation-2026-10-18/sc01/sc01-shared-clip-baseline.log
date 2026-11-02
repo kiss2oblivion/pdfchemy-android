@@ -1,0 +1,71 @@
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.EditorRedactionResourceSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=clippedSharedFormCannotRetainTheHiddenOriginalText
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+Error in clippedSharedFormCannotRetainTheHiddenOriginalText(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError: Clipping must not leave private shared stream data
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$clippedSharedFormCannotRetainTheHiddenOriginalText$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:184)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.clippedSharedFormCannotRetainTheHiddenOriginalText(EditorRedactionResourceSecurityTest.kt:149)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=clippedSharedFormCannotRetainTheHiddenOriginalText
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Clipping must not leave private shared stream data
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$clippedSharedFormCannotRetainTheHiddenOriginalText$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:184)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.clippedSharedFormCannotRetainTheHiddenOriginalText(EditorRedactionResourceSecurityTest.kt:149)
+
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.675
+There was 1 failure:
+1) clippedSharedFormCannotRetainTheHiddenOriginalText(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError: Clipping must not leave private shared stream data
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$clippedSharedFormCannotRetainTheHiddenOriginalText$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:184)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.clippedSharedFormCannotRetainTheHiddenOriginalText(EditorRedactionResourceSecurityTest.kt:149)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.WorkerGateTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:00:00.417Z" hostname="DESKTOP-N37P7P6" time="0.644">
+  <properties/>
+  <testcase name="acquireHelperUsesPrivateReleaseWithoutViolatingStateSemantics" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <testcase name="markAwaitingHostAcceptRequiresMatchingTokenAndRunningState" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <testcase name="executionWatchdogFiresAndPoisonsGate" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.161"/>
+  <testcase name="terminateIfOwnerPoisonsGateAndCallsTerminate" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.0"/>
+  <testcase name="hostAcceptWatchdogFiresAndTerminatesWorker" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.157"/>
+  <testcase name="cancelledExecutionWatchdogDoesNotTerminateAwaitingHostAcceptWorker" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.312"/>
+  <testcase name="concurrentBeginReturnsZeroBusy" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.002"/>
+  <testcase name="completeStrictlyRequiresAwaitingHostAcceptState" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <testcase name="beginReturnsPositiveTokenAndTransitionsToReserved" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <testcase name="staleCompleteCannotReleaseCurrentOwner" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <testcase name="ownerBinderDeathTriggersImmediateWorkerTermination" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.003"/>
+  <testcase name="startExecutionRequiresMatchingTokenAndReservedState" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.0"/>
+  <testcase name="completeReleasesGateAndAllowsNextAdmission" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.0"/>
+  <testcase name="staleTerminateIfOwnerIsNoOpAndPreservesCurrentOwner" classname="com.pdfchemy.app.security.WorkerGateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.rounded.Redo
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -64,13 +65,53 @@ fun PageOrganizerScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
+    var loadFailed by remember { mutableStateOf(false) }
+    var showMoveDialog by remember { mutableStateOf(false) }
+    var movePosition by remember { mutableStateOf("") }
 
-    val pageItems = session.pages
-    val selectedItemIndex = session.selectedIndex
+    // The session is a plain model; observe its revision during composition so
+    // thumbnail publication and history/page actions actually refresh the UI.
+    val pageItems = remember(sessionTick) { session.pages }
+    val selectedItemIndex = remember(sessionTick) { session.selectedIndex }
+
+    if (showMoveDialog) {
+        val targetPosition = movePosition.toIntOrNull()
+        val validPosition = targetPosition != null && targetPosition in 1..pageItems.size
+        AlertDialog(
+            onDismissRequest = { showMoveDialog = false },
+            title = { Text(stringResource(R.string.organizer_move_to)) },
+            text = {
+                OutlinedTextField(
+                    value = movePosition,
+                    onValueChange = { movePosition = it },
+                    label = { Text(stringResource(R.string.organizer_position)) },
+                    supportingText = { Text(stringResource(R.string.organizer_position_range, pageItems.size)) },
+                    isError = movePosition.isNotEmpty() && !validPosition,
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = validPosition && targetPosition != selectedItemIndex + 1,
+                    onClick = {
+                        if (session.moveSelectedTo(targetPosition!! - 1)) sessionTick++
+                        showMoveDialog = false
+                    }
+                ) { Text(stringResource(R.string.organizer_move_to)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMoveDialog = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -78,37 +119,36 @@ fun PageOrganizerScreen(
         }
     }
 
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+    val latestLoad = remember { com.pdfchemy.app.logic.LatestRequest() }
+    fun loadOrganizerDocument(uri: Uri) {
+        val ticket = latestLoad.begin()
         selectedPdfUri = uri
+        loadFailed = false
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
             try {
                 // Clean up existing thumbnails
                 withContext(Dispatchers.Main) {
+                    if (!latestLoad.isCurrent(ticket)) return@withContext
                     session.pages.forEach { it.thumbnail?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
                     session.initialize(0)
                     sessionTick++
                 }
 
-                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: return@launch
-                val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                pfd = context.contentResolver.openFileDescriptor(uri, "r") ?: error("File unavailable")
+                val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: error("Page count unavailable")
+                check(count > 0)
 
                 withContext(Dispatchers.Main) {
+                    if (!latestLoad.isCurrent(ticket)) return@withContext
                     // UX-12: Initialize ALL pages with LOADING state immediately so source page identity is decoupled from preview
                     session.initialize(count)
                     sessionTick++
                 }
 
-                for (i in 0 until count) {
-                    coroutineContext.ensureActive()
-                    val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, i, 240)
-                    withContext(Dispatchers.Main) {
-                        val state = if (bmp != null) PageThumbnailState.READY else PageThumbnailState.FAILED
-                        session.updateThumbnail(i, bmp, state)
-                        sessionTick++
-                    }
-                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
             } catch (e: Exception) {
+                withContext(Dispatchers.Main) { if (latestLoad.isCurrent(ticket)) loadFailed = true }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to load thumbnails for organizer: ${e.message}", e)
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
@@ -116,9 +156,15 @@ fun PageOrganizerScreen(
         }
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && selectedPdfUri == continuityUri && session.pages.isEmpty()) {
+            loadOrganizerDocument(continuityUri!!)
+        }
+    }
+
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri -> loadOrganizerDocument(uri) }
+
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && pageItems.isNotEmpty()) {
             isOrganizing = true
             coroutineScope.launch(Dispatchers.IO) {
@@ -140,6 +186,13 @@ fun PageOrganizerScreen(
                 }
             }
         }
+    }
+
+    if (loadFailed) {
+        AlertDialog(onDismissRequest = { loadFailed = false },
+            title = { Text(stringResource(R.string.error)) },
+            text = { Text(stringResource(R.string.document_load_recovery)) },
+            confirmButton = { TextButton(onClick = { loadFailed = false; pdfPickerLauncher.launch() }) { Text(stringResource(R.string.select_pdf)) } })
     }
 
     Scaffold(
@@ -370,48 +423,9 @@ fun PageOrganizerScreen(
                                     ) {
                                         Text(stringResource(R.string.label_blank_page), fontSize = 11.sp, color = Color.Gray)
                                     }
-                                } else if (item.previewState == PageThumbnailState.READY && item.thumbnail != null) {
-                                    Image(
-                                        bitmap = item.thumbnail.asImageBitmap(),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .rotate(item.rotation.toFloat()),
-                                        contentScale = ContentScale.Fit
-                                    )
-                                } else if (item.previewState == PageThumbnailState.LOADING) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color(0xFFFAFAFA)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                                    }
                                 } else {
-                                    // UX-12: Preview failed placeholder; page identity remains intact
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color(0xFFF5F5F5))
-                                            .padding(6.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Icon(
-                                                Icons.Rounded.BrokenImage,
-                                                contentDescription = null,
-                                                tint = Color.Gray,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                text = stringResource(R.string.label_preview_unavailable),
-                                                fontSize = 9.sp,
-                                                color = Color.Gray,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
+                                    selectedPdfUri?.let { uri ->
+                                        PdfPagePreview(uri, item.originalIndex!!, Modifier.fillMaxSize(), item.rotation)
                                     }
                                 }
 
@@ -493,7 +507,7 @@ fun PageOrganizerScreen(
                                 sessionTick++
                             }
                         ) {
-                            Icon(Icons.Rounded.NoteAdd, contentDescription = stringResource(R.string.action_insert_blank_page))
+                            Icon(Icons.AutoMirrored.Rounded.NoteAdd, contentDescription = stringResource(R.string.action_insert_blank_page))
                         }
 
                         // Delete
@@ -525,6 +539,15 @@ fun PageOrganizerScreen(
                         }
                     }
                 }
+
+                OutlinedButton(
+                    onClick = {
+                        movePosition = (selectedItemIndex + 1).toString()
+                        showMoveDialog = true
+                    },
+                    enabled = selectedItemIndex in pageItems.indices && pageItems.size > 1 && !isOrganizing,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.organizer_move_to)) }
 
                 // Save Reorganized PDF Button
                 Button(

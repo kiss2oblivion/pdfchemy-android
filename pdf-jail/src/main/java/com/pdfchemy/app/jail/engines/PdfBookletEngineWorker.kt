@@ -57,7 +57,7 @@ object PdfBookletEngineWorker {
                         drawVectorPageOnSheet(srcDoc, layerUtil, cs, sidePlan.rightPageOriginalIndex, margin + halfWidth + 8f, margin, halfWidth - 8f, contentHeight)
                     }
                     if (drawFoldGuide) {
-                        cs.setStrokingColor(210, 210, 210)
+                        cs.setStrokingColor(210f / 255f, 210f / 255f, 210f / 255f)
                         cs.setLineWidth(0.5f)
                         cs.setLineDashPattern(floatArrayOf(4f, 4f), 0f)
                         cs.moveTo(sheetWidth / 2f, margin)

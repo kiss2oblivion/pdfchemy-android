@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 A = "{http://schemas.android.com/apk/res/android}"
 
@@ -65,9 +66,14 @@ def main():
         check(application.get(A + "debuggable", "false") == "false", "Release APK is debuggable")
         check(application.get(A + "testOnly", "false") == "false", "Release APK is testOnly")
         check(application.get(A + "allowBackup") == "false", "Document backup unexpectedly enabled")
+        internal_alias = next((node for node in application.findall("activity-alias")
+                               if node.get(A + "name") == "com.pdfchemy.app.InternalDocumentOpen"), None)
+        check(internal_alias is not None and internal_alias.get(A + "exported") == "false"
+              and internal_alias.get(A + "targetActivity") == "com.pdfchemy.app.MainActivity",
+              "Internal document alias must remain private and target MainActivity")
         sdk = tree.find("uses-sdk")
         check(sdk.get(A + "minSdkVersion") == "24" and sdk.get(A + "targetSdkVersion") == "36", "Unexpected SDK configuration")
-        check(tree.get(A + "versionCode") == "13" and tree.get(A + "versionName") == "2.0.6", "Unexpected RC version; deliberately update gate when incrementing")
+        check(tree.get(A + "versionCode") == "14" and tree.get(A + "versionName") == "2.1.0", "Unexpected RC version; deliberately update gate when incrementing")
         metadata = {node.get(A + "name"): node.get(A + "value") for node in application.findall("meta-data")}
         check(metadata.get("com.google.android.gms.ads.APPLICATION_ID") == "ca-app-pub-8945763551071628~8206577473", "Unexpected production AdMob app ID")
         check(metadata.get("firebase_analytics_collection_deactivated") == "true", "Analytics deactivation missing")
@@ -90,9 +96,14 @@ def main():
             forbidden = [name for name in names if name.startswith("assets/") and any(part in name.lower() for part in ("vanguard-benign", "test_pdfs", "intentionally-damaged", "keystore", ".jks"))]
             check(not forbidden, f"Test/secret assets in release APK: {forbidden}")
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
-            for marker in (b"Lcom/pdfchemy/app/security/OutputCommitProvider;", b"Lcom/pdfchemy/app/security/MutableInputProvider;", b"Lcom/pdfchemy/app/security/BenignPdfCompatibilityTest;"):
+            for marker in (b"Lcom/pdfchemy/app/security/OutputCommitProvider;", b"Lcom/pdfchemy/app/security/MutableInputProvider;", b"Lcom/pdfchemy/app/security/BenignPdfCompatibilityTest;",
+                           b"Lcom/pdfchemy/app/security/CrossUidSenderFixture", b"Lcom/pdfchemy/app/security/CrossUidAdmissionSecurityTest;",
+                           b"Lcom/pdfchemy/app/security/RedactionCountSecurityTest;",
+                           b"Lcom/pdfchemy/app/security/FormValueAliasSecurityTest;"):
                 check(marker not in dex, "Instrumentation class leaked into production DEX")
-        report.update(version="2.0.6 (13)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
+        from check_release_gson_contract import inspect_apk
+        report["gson_runtime_contract"] = inspect_apk(apk)
+        report.update(version="2.1.0 (14)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
     print(json.dumps(report, indent=2))
 
 

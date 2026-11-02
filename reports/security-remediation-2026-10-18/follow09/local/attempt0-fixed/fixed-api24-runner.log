@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\.security-runtime\follow09\run_native.py", line 33, in <module>
+    count = validate_result(text)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\scripts\run_android_instrumentation.py", line 18, in validate_result
+    raise ValueError("Missing unique nonzero passing test summary")
+ValueError: Missing unique nonzero passing test summary

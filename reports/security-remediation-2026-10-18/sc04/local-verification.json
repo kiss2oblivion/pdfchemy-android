@@ -1,0 +1,63 @@
+{
+  "baseline_application_source": "7390523c61b3eedbf0be91bc9f0696811b0c4626",
+  "unit": {
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "native": [
+    {
+      "api": 24,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    },
+    {
+      "api": 36,
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    }
+  ],
+  "local_build_lint_artifact_gate": "pass",
+  "full_ci": "not-run-at-local-checkpoint",
+  "source_and_artifact_hashes": [
+    {
+      "path": "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+      "sha256": "9c409a4dfb6de884088b92362b28b072fa4f09a5d9faceb47e2b1b54d5687ed9"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/WarningPublicationSecurityTest.kt",
+      "sha256": "0425e2db32304cf6467ea54e1ccc8536e9278b0fb2d15e9f246e01255145df55"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/BatchOutputProvider.java",
+      "sha256": "b250e83e7a9890a1d4f1a9daddbdcbd0c91495c7abfaf4d24953dade56f17d78"
+    },
+    {
+      "path": ".security-runtime/sc04/baseline.apk",
+      "sha256": "5cb9fe097d55fc40998b5795494d1c207d3f833a985623f56fe862e4d1fb1972"
+    },
+    {
+      "path": ".security-runtime/sc04/baseline-test.apk",
+      "sha256": "01ff708aa49d62a402929169bf8d5f0cad753199449f382d9b992f9cfb159f8e"
+    },
+    {
+      "path": ".security-runtime/sc04/fixed.apk",
+      "sha256": "9b2653faf51987ed944cba5d2e1ec209f0754944875bb5dee62dd3c664f3e343"
+    },
+    {
+      "path": ".security-runtime/sc04/fixed-test.apk",
+      "sha256": "01ff708aa49d62a402929169bf8d5f0cad753199449f382d9b992f9cfb159f8e"
+    },
+    {
+      "path": ".security-runtime/sc04/release-unsigned.apk",
+      "sha256": "2c52c0298da63f30ad7a9e68309ff7f4aaa6886d4947e1be27793fcf4798b5e8"
+    }
+  ]
+}

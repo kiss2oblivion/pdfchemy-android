@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.architecture.ArchitectureBoundaryTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:21:48.273Z" hostname="DESKTOP-N37P7P6" time="7.729">
+  <properties/>
+  <testcase name="host process must not use PDDocument or PdfRenderer" classname="com.pdfchemy.app.architecture.ArchitectureBoundaryTest" time="4.281"/>
+  <testcase name="no production host class may call IPdfJailService abortWorker" classname="com.pdfchemy.app.architecture.ArchitectureBoundaryTest" time="3.448"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

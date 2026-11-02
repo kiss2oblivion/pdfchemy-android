@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.RedactionResourcesTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-10-18T22:17:08.511Z" hostname="DESKTOP-N37P7P6" time="3.557">
+  <properties/>
+  <testcase name="nestedUsedFormsKeepTextWhileUnusedSensitiveFormIsRemoved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="2.84"/>
+  <testcase name="redactionRemovesDocumentAccessibilityText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.052"/>
+  <testcase name="missingVisibleFieldAppearanceIsCreatedBeforeFlattening" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.07"/>
+  <testcase name="originalStreamRetainedThroughCatalogMustFailClosed" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.034"/>
+  <testcase name="replacingScanRemovesOriginalImageResource" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.034"/>
+  <testcase name="redactionRemovesDocumentXmpMetadata" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.049"/>
+  <testcase name="redactionRemovesEmbeddedOriginalsAndAliasesButPreservesNamedDestinations" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.042"/>
+  <testcase name="resourceLessFormKeepsNamesResolvedInCallingPage" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.035"/>
+  <testcase name="sharedStreamsPropagateRasterizationWithoutSelectingIndependentPages" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.039"/>
+  <testcase name="inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.036"/>
+  <testcase name="cyclicFormHierarchyIsRejectedBeforeFlattening" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.026"/>
+  <testcase name="noViewFieldMustNotBecomeVisibleSelectableTextDuringFlattening" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="xfaFormsAreRejectedBeforeAnyFormMutation" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.025"/>
+  <testcase name="annotationAppearanceCanResolveFontInPageResources" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="replacingContentRemovesOriginalSensitiveForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="redactedWidgetDoesNotRetainOriginalValueInDocumentFormTree" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.031"/>
+  <testcase name="formFlatteningPreservesAnExistingCustomAppearance" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="softMaskDoesNotRetainUnusedOriginalForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.039"/>
+  <testcase name="redactionRemovesDocumentInformationStrings" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.034"/>
+  <testcase name="usedTilingPatternDoesNotRetainUnusedOriginalForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.028"/>
+  <testcase name="implicitDefaultColorSpaceIsPreserved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.023"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

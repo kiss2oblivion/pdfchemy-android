@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.logic.OrganizerSessionTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:30.901Z" hostname="DESKTOP-N37P7P6" time="0.005">
+  <properties/>
+  <testcase name="testChronologicalUndoAndRedo" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.002"/>
+  <testcase name="testMoveDuplicateAndReverse" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.001"/>
+  <testcase name="testThumbnailFailureDoesNotDropPage" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <testcase name="testNewActionClearsRedo" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <testcase name="testResetRestoresBaseline" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <testcase name="testDeleteLastPageBlocked" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <testcase name="directMovePreservesAllSourcePagesAndOneUndoRedoStep" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <testcase name="testInitializationPreservesAllPages" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.001"/>
+  <testcase name="invalidAndSamePositionMovesDoNotPolluteHistory" classname="com.pdfchemy.app.logic.OrganizerSessionTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

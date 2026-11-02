@@ -3,7 +3,7 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
 }
@@ -16,13 +16,17 @@ android {
         applicationId = "com.pdfchemy.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 13
-        versionName = "2.0.6"
+        versionCode = 14
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
+
+    installation {
+        timeOutInMs = 15 * 60 * 1000
     }
 
     lint {
@@ -75,11 +79,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -145,10 +146,10 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
 
     // 4. AdMob
-    implementation("com.google.android.gms:play-services-ads:23.2.0")
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
 
     // Google User Messaging Platform (UMP) for GDPR
-    implementation("com.google.android.ump:user-messaging-platform:2.2.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 
     // ML Kit Document Scanner
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
@@ -159,7 +160,8 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.window:window:1.2.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // Only the read-only legacy entitlement migration uses Tink; new records use Android Keystore.
+    implementation("com.google.crypto.tink:tink-android:1.24.0")
 
     // Text Conversion Libraries
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.11")
@@ -174,6 +176,8 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("com.tngtech.archunit:archunit:1.3.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    // Independent interoperability oracle for preference records shipped before this migration.
+    androidTestImplementation("androidx.security:security-crypto:1.1.0-alpha06")
     androidTestImplementation("io.mockk:mockk-android:1.13.10")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
@@ -216,5 +220,11 @@ tasks.named("preBuild") {
 tasks.withType<Test>().configureEach {
     doFirst {
         systemProperty("hostProductionClasses", tasks.named("compileDebugKotlin").get().outputs.files.asPath)
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }

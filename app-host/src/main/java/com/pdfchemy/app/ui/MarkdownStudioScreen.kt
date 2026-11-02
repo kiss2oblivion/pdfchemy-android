@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,15 +85,29 @@ fun MarkdownStudioScreen(
         if (uri != null) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val text = stream.bufferedReader().readText()
-                        withContext(Dispatchers.Main) {
-                            markdownText = text
-                            documentTitle = FileUtils.getFileName(context, uri)?.removeSuffix(".md") ?: "Document"
-                        }
+                    val stream = context.contentResolver.openInputStream(uri)
+                        ?: throw java.io.IOException("Unable to open selected file")
+                    val text = stream.use {
+                        com.pdfchemy.app.logic.MarkdownAdmission.readBoundedText(it)
+                    }
+                    val fileName = FileUtils.getFileName(context, uri)?.removeSuffix(".md") ?: "Document"
+                    withContext(Dispatchers.Main) {
+                        markdownText = text
+                        documentTitle = fileName
                     }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     AppLogger.e("Failed to open markdown file", e)
+                    withContext(Dispatchers.Main) {
+                        val message = when (e) {
+                            is SecurityException -> e.message ?: "File exceeds maximum permitted size"
+                            else -> "Failed to open document: ${e.localizedMessage ?: "Unknown error"}"
+                        }
+                        viewModel.showErrorToast(
+                            context.getString(R.string.error),
+                            message
+                        )
+                    }
                 }
             }
         }
@@ -121,56 +136,25 @@ fun MarkdownStudioScreen(
     }
 
     // Save as PDF
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            coroutineScope.launch {
-                isProcessing = true
-                val result = MarkdownEngine.markdownToPdf(
-                    context = context,
-                    markdownText = markdownText,
-                    destPdfUri = destUri,
-                    documentTitle = documentTitle
-                )
-                isProcessing = false
-                if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_md_to_pdf_success),
-                        context.getString(R.string.desc_md_to_pdf_success)
-                    )
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_md_to_pdf_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
-                }
-            }
+            viewModel.convertMarkdownToPdf(
+                context = context,
+                markdownText = markdownText,
+                destUri = destUri,
+                documentTitle = documentTitle
+            ) { /* Handled by ViewModel UiState */ }
         }
     }
 
     // Save as .MD file
-    val saveMdLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/markdown")
-    ) { destUri ->
+    val saveMdLauncher = rememberPreferredDocumentCreator("text/markdown") { destUri ->
         if (destUri != null) {
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open Markdown destination" }.use { out ->
-                        out.write(markdownText.toByteArray(Charsets.UTF_8))
-                    }
-                    withContext(Dispatchers.Main) {
-                        viewModel.showSuccessToast(
-                            context.getString(R.string.title_save_md_success),
-                            context.getString(R.string.desc_save_md_success)
-                        )
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        viewModel.showErrorToast(context.getString(R.string.error_save_md_failed), e.localizedMessage ?: "")
-                    }
-                }
-            }
+            viewModel.saveMarkdownDocument(
+                context = context,
+                markdownText = markdownText,
+                destUri = destUri
+            ) { /* Handled by ViewModel UiState */ }
         }
     }
 
@@ -260,7 +244,7 @@ fun MarkdownStudioScreen(
                 ToolbarIconButton(icon = Icons.Rounded.FormatItalic) { insertText("*Italic text*") }
                 ToolbarIconButton(icon = Icons.Rounded.FormatQuote) { insertText("> Quote text") }
                 ToolbarIconButton(icon = Icons.Rounded.Code) { insertText("```\n// Code snippet\n```") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatListBulleted) { insertText("- List item") }
+                ToolbarIconButton(icon = Icons.AutoMirrored.Rounded.FormatListBulleted) { insertText("- List item") }
                 ToolbarIconButton(icon = Icons.Rounded.FormatListNumbered) { insertText("1. Numbered item") }
                 ToolbarIconButton(icon = Icons.Rounded.Checklist) { insertText("- [ ] Task item") }
                 ToolbarIconButton(icon = Icons.Rounded.TableChart) {

@@ -1,0 +1,68 @@
+ACTIVITY MANAGER PROCESS EXIT INFO (dumpsys activity exit-info)
+Last Timestamp of Persistence Into Persistent Storage: 2026-10-22 10:42:16.377
+  package: com.pdfchemy.app
+    Historical Process Exit for uid=10219
+        ApplicationExitInfo #0:
+          timestamp=2026-10-22 14:35:27.042 pid=6056 realUid=10219 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app reason=6 (ANR) subreason=0 (UNKNOWN) status=0
+          importance=400 pss=0.00 rss=0.00 description=bg anr: Process ProcessRecord{6769006 6056:com.pdfchemy.app/u0a219} failed to complete startup state=empty trace=/data/system/procexitstore/anr_2026-10-22-14-35-17-978.gz
+        ApplicationExitInfo #1:
+          timestamp=2026-10-22 10:14:33.831 pid=3629 realUid=10219 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app reason=6 (ANR) subreason=0 (UNKNOWN) status=0
+          importance=400 pss=0.00 rss=0.00 description=bg anr: Process ProcessRecord{fd6c2d2 3629:com.pdfchemy.app/u0a219} failed to complete startup state=empty trace=/data/system/procexitstore/anr_2026-10-22-10-14-32-848.gz
+        ApplicationExitInfo #2:
+          timestamp=2026-10-21 11:15:46.767 pid=7136 realUid=10219 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app reason=10 (USER REQUESTED) subreason=21 (FORCE STOP) status=0
+          importance=125 pss=0.00 rss=0.00 description=stop com.pdfchemy.app due to finished inst state=empty trace=null
+        ApplicationExitInfo #3:
+          timestamp=2026-10-21 11:15:46.590 pid=8397 realUid=99083 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #4:
+          timestamp=2026-10-21 11:15:45.604 pid=8383 realUid=99082 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #5:
+          timestamp=2026-10-21 11:15:44.420 pid=8368 realUid=99081 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #6:
+          timestamp=2026-10-21 11:15:43.346 pid=8355 realUid=99080 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #7:
+          timestamp=2026-10-21 11:15:42.311 pid=8338 realUid=99079 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.jail.PdfJailService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #8:
+          timestamp=2026-10-21 11:15:42.307 pid=8326 realUid=99078 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #9:
+          timestamp=2026-10-21 11:15:39.875 pid=8309 realUid=99077 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.jail.PdfJailService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #10:
+          timestamp=2026-10-21 11:15:38.215 pid=8295 realUid=99076 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #11:
+          timestamp=2026-10-21 11:15:37.213 pid=8281 realUid=99075 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #12:
+          timestamp=2026-10-21 11:15:36.189 pid=8268 realUid=99074 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #13:
+          timestamp=2026-10-21 11:15:35.022 pid=8254 realUid=99073 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #14:
+          timestamp=2026-10-21 11:15:33.856 pid=8238 realUid=99072 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.jail.PdfJailService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null
+        ApplicationExitInfo #15:
+          timestamp=2026-10-21 11:15:32.349 pid=8223 realUid=99071 packageUid=10219 definingUid=10219 user=0
+          process=com.pdfchemy.app:com.pdfchemy.app.sandbox.PdfNativeRendererService reason=13 (OTHER KILLS BY SYSTEM) subreason=17 (ISOLATED NOT NEEDED) status=0
+          importance=300 pss=0.00 rss=0.00 description=isolated not needed state=empty trace=null

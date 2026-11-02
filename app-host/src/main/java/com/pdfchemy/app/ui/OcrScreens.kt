@@ -51,30 +51,23 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
     var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
-    var isProcessing by remember { mutableStateOf(false) }
-    var currentProgressPage by remember { mutableStateOf(0) }
-    var totalProgressPages by remember { mutableStateOf(0) }
+    val operationState by viewModel.uiState.collectAsState()
+    val isProcessing = operationState is MainViewModel.UiState.Processing || operationState is MainViewModel.UiState.BatchProcessing
+    val currentProgressPage = (operationState as? MainViewModel.UiState.Processing)?.completedPages ?: 0
+    val totalProgressPages = (operationState as? MainViewModel.UiState.Processing)?.totalPages ?: 0
 
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         selectedPdfUri = uri
     }
 
-    val saveDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
-            isProcessing = true
             viewModel.createSearchablePdf(
                 context = context,
                 sourceUri = selectedPdfUri!!,
                 destUri = destUri,
-                onProgress = { current, total ->
-                    currentProgressPage = current
-                    totalProgressPages = total
-                }
             ) { success ->
-                isProcessing = false
                 if (success) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
@@ -208,7 +201,7 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             CircularProgressIndicator()
                             Text(
                                 text = if (totalProgressPages > 0) {
-                                    stringResource(R.string.ocr_processing_progress, currentProgressPage, totalProgressPages)
+                                    stringResource(R.string.ocr_pages_completed, currentProgressPage, totalProgressPages)
                                 } else {
                                     stringResource(R.string.ocr_processing_generic)
                                 },

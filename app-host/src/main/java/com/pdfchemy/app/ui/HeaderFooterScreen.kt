@@ -64,9 +64,7 @@ fun HeaderFooterScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -97,7 +95,7 @@ fun HeaderFooterScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_stamp_success),
                         context.getString(R.string.desc_stamp_success)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

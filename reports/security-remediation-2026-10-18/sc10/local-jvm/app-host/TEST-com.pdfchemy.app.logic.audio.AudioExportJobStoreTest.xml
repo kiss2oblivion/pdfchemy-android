@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.logic.audio.AudioExportJobStoreTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:33.009Z" hostname="DESKTOP-N37P7P6" time="0.008">
+  <properties/>
+  <testcase name="removeJob deletes job from store" classname="com.pdfchemy.app.logic.audio.AudioExportJobStoreTest" time="0.007"/>
+  <testcase name="updateProgress updates metrics correctly" classname="com.pdfchemy.app.logic.audio.AudioExportJobStoreTest" time="0.001"/>
+  <testcase name="createJob initializes job in QUEUED state" classname="com.pdfchemy.app.logic.audio.AudioExportJobStoreTest" time="0.0"/>
+  <testcase name="updateState modifies state and error" classname="com.pdfchemy.app.logic.audio.AudioExportJobStoreTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

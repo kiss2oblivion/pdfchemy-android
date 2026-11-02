@@ -11,46 +11,282 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 
 object DocumentStager {
+    data class StagedLease(
+        val document: StagedPdf,
+        val lease: java.io.Closeable
+    ) : java.io.Closeable {
+        override fun close() = lease.close()
+
+        fun discard(borrowedUri: Uri? = null) {
+            if (borrowedUri == null || document.uri != borrowedUri) {
+                release(document)
+            }
+            lease.close()
+        }
+    }
+
     private val staged = ConcurrentHashMap<String, StagedPdf>()
     private val displayNames = ConcurrentHashMap<String, String>()
+    private val originalSourceUris = ConcurrentHashMap<String, Uri>()
     private val leases = mutableMapOf<String, Int>()
     private val pendingRelease = mutableSetOf<String>()
     private val initializedDirectories = mutableSetOf<String>()
-    @Synchronized
-    fun stageDocument(context: Context, sourceUri: Uri, checkCancellation: () -> Unit = {}, onInputOpened: (InputStream) -> Unit = {}): StagedPdf {
+    @Volatile private var inFlightSlots = 0
+    @Volatile private var inFlightBytes = 0L
+
+    fun stageDocument(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {}
+    ): StagedPdf = stageDocumentInternal(context, sourceUri, checkCancellation, onInputOpened, acquireInitialLease = false).document
+
+    fun stageDocumentWithLease(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {}
+    ): StagedLease = stageDocumentInternal(context, sourceUri, checkCancellation, onInputOpened, acquireInitialLease = true)
+
+    private fun stageDocumentInternal(
+        context: Context,
+        sourceUri: Uri,
+        checkCancellation: () -> Unit = {},
+        onInputOpened: (InputStream) -> Unit = {},
+        acquireInitialLease: Boolean
+    ): StagedLease {
         checkCancellation()
+        findBorrowedSnapshot(context, sourceUri, acquireInitialLease)?.let { return it }
+
         if (sourceUri.scheme == "file") {
-            val file = File(requireNotNull(sourceUri.path)).canonicalFile
-            val directory = File(context.cacheDir, "staged").canonicalFile
-            if (file.parentFile == directory) {
-                staged[file.path]?.let {
-                    require(file.length() == it.size) { "Staged capability changed" }
-                    return it
+            val path = sourceUri.path
+            if (path != null && isPrivateAppPath(context, File(path), includeCacheAndFiles = false)) {
+                throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+            }
+        }
+
+        // Provider display name query runs outside the global monitor
+        val name = FileUtils.getFileName(context, sourceUri)
+        checkCancellation()
+
+        // Provider input opening runs outside the global monitor
+        val stagedLease = (context.contentResolver.openInputStream(sourceUri) ?: error("Cannot open input")).use { stream ->
+            onInputOpened(stream)
+            stageStreamInternal(
+                context = context,
+                input = stream,
+                extension = name?.substringAfterLast('.')?.lowercase(),
+                checkCancellation = checkCancellation,
+                acquireInitialLease = acquireInitialLease
+            )
+        }
+        registerDocumentMetadata(stagedLease.document, sourceUri, name)
+        return stagedLease
+    }
+
+    fun isTrustedStagedCapability(context: Context, uri: Uri): Boolean {
+        if (uri.scheme != "file") return false
+        val path = uri.path ?: return false
+        val file = runCatching { File(path).canonicalFile }.getOrNull() ?: return false
+        val directory = runCatching { File(context.cacheDir, "staged").canonicalFile }.getOrNull() ?: return false
+        if (file.parentFile != directory) return false
+        val candidate = staged[file.path] ?: return false
+        return file.length() == candidate.size
+    }
+
+    fun isPrivateAppPath(context: Context, file: File, includeCacheAndFiles: Boolean = true): Boolean {
+        val canonicalFile = runCatching { file.canonicalFile }.getOrNull() ?: return true
+        val canonicalPath = canonicalFile.path
+
+        val privateRoots = mutableListOf<File>()
+
+        if (includeCacheAndFiles) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                runCatching { context.dataDir }.getOrNull()?.let { privateRoots.add(it) }
+            }
+            runCatching { context.applicationInfo?.dataDir?.let { File(it) } }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.filesDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.noBackupFilesDir }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { context.codeCacheDir }.getOrNull()?.let { privateRoots.add(it) }
+        }
+
+        runCatching { context.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
+        runCatching {
+            val dataDir = context.applicationInfo?.dataDir
+            if (dataDir != null) File(dataDir, "shared_prefs") else null
+        }.getOrNull()?.let { privateRoots.add(it) }
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            val dps = runCatching { context.createDeviceProtectedStorageContext() }.getOrNull()
+            if (dps != null) {
+                runCatching { dps.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
+                runCatching { File(dps.dataDir, "shared_prefs") }.getOrNull()?.let { privateRoots.add(it) }
+                if (includeCacheAndFiles) {
+                    runCatching { dps.dataDir }.getOrNull()?.let { privateRoots.add(it) }
+                    runCatching { dps.filesDir }.getOrNull()?.let { privateRoots.add(it) }
+                    runCatching { dps.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
                 }
             }
         }
-        val name = FileUtils.getFileName(context, sourceUri)
-        val snapshot = (context.contentResolver.openInputStream(sourceUri) ?: error("Cannot open input")).use {
-            onInputOpened(it)
-            stageStream(context, it, name?.substringAfterLast('.')?.lowercase(), checkCancellation)
+
+        for (root in privateRoots) {
+            val canonicalRoot = runCatching { root.canonicalFile }.getOrNull() ?: continue
+            if (isDescendantOf(canonicalFile, canonicalRoot)) {
+                return true
+            }
         }
-        name?.take(512)?.let { displayNames[requireNotNull(snapshot.uri.path)] = it }
-        return snapshot
+
+        val pkg = context.packageName
+        if (!includeCacheAndFiles) {
+            val sensitivePatterns = listOf(
+                "/data/data/$pkg/shared_prefs",
+                "/data/data/$pkg/databases",
+                "/data/data/$pkg/app_prefs",
+                "/data/user/"
+            )
+            for (p in sensitivePatterns) {
+                if (canonicalPath.startsWith(p)) {
+                    if (p == "/data/user/") {
+                        val after = canonicalPath.substring(p.length)
+                        val parts = after.split('/')
+                        if (parts.size >= 3 && parts[1] == pkg && (parts[2] == "shared_prefs" || parts[2] == "databases")) {
+                            return true
+                        }
+                    } else {
+                        return true
+                    }
+                }
+            }
+        } else {
+            if (canonicalPath.startsWith("/data/data/$pkg/") || canonicalPath == "/data/data/$pkg") {
+                return true
+            }
+            val dataUserPrefix = "/data/user/"
+            if (canonicalPath.startsWith(dataUserPrefix)) {
+                val after = canonicalPath.substring(dataUserPrefix.length)
+                val parts = after.split('/')
+                if (parts.size >= 2 && parts[1] == pkg) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
-    @Synchronized
-    fun stageStream(context: Context, input: InputStream, extension: String? = null, checkCancellation: () -> Unit = {}): StagedPdf {
-        checkCancellation()
-        require(staged.size < SecurityLimits.MAX_STAGED_DOCUMENTS) { "Too many staged documents" }
-        val directory = File(context.cacheDir, "staged").apply { mkdirs() }.canonicalFile
-        if (directory.path !in initializedDirectories) {
-            directory.listFiles().orEmpty().filter { it.name.startsWith("snapshot_") && it.canonicalFile.parentFile == directory }
-                .forEach { check(it.delete()) { "Unable to remove an expired snapshot" } }
-            initializedDirectories.add(directory.path)
+
+    private fun isDescendantOf(file: File, ancestor: File): Boolean {
+        var current: File? = file
+        while (current != null) {
+            if (current == ancestor) return true
+            current = current.parentFile
         }
-        val suffix = if (extension in setOf("pdf", "epub", "cbz", "jpg", "jpeg", "png", "webp", "heic", "heif", "txt")) ".$extension" else ".bin"
-        val file = File.createTempFile("snapshot_", suffix, directory)
-        val remainingBytes = SecurityLimits.MAX_BATCH_INPUT_BYTES - staged.values.sumOf { it.size }
+        return false
+    }
+
+    @Synchronized
+    private fun findBorrowedSnapshot(context: Context, sourceUri: Uri, acquireInitialLease: Boolean): StagedLease? {
+        if (sourceUri.scheme != "file") return null
+        val path = sourceUri.path ?: return null
+        val file = runCatching { File(path).canonicalFile }.getOrNull() ?: return null
+        val directory = runCatching { File(context.cacheDir, "staged").canonicalFile }.getOrNull() ?: return null
+        if (file.parentFile != directory) return null
+        val candidate = staged[file.path] ?: return null
+        require(file.length() == candidate.size) { "Staged capability changed" }
+        val lease = if (acquireInitialLease) retain(candidate) else java.io.Closeable {}
+        return StagedLease(candidate, lease)
+    }
+
+    @Synchronized
+    private fun registerDocumentMetadata(document: StagedPdf, sourceUri: Uri, name: String?) {
+        val path = document.uri.path ?: return
+        name?.take(512)?.let { displayNames[path] = it }
+        originalSourceUris[path] = sourceUri
+        runCatching { File(path).canonicalPath }.getOrNull()?.let { canonical ->
+            if (canonical != path) {
+                originalSourceUris[canonical] = sourceUri
+                name?.take(512)?.let { displayNames[canonical] = it }
+            }
+        }
+    }
+    const val MAX_UNLEASED_DOCUMENTS = 4
+
+    @Synchronized
+    fun pruneUnleasedSnapshots(neededBytes: Long = 0L, targetCount: Int = SecurityLimits.MAX_STAGED_DOCUMENTS - 1): Int {
+        val unleased = staged.values.toSet().filter { doc ->
+            val path = doc.uri.path ?: return@filter false
+            (leases[path] ?: 0) == 0
+        }.sortedBy { doc ->
+            File(doc.uri.path!!).lastModified()
+        }
+
+        var pruned = 0
+        for (doc in unleased) {
+            val totalBytes = staged.values.toSet().sumOf { it.size } + inFlightBytes
+            val remainingBytes = SecurityLimits.MAX_BATCH_INPUT_BYTES - totalBytes
+            val totalCount = staged.values.toSet().size + inFlightSlots
+            if (totalCount <= targetCount && remainingBytes >= neededBytes) {
+                break
+            }
+            remove(doc)
+            pruned++
+        }
+        return pruned
+    }
+
+    @Synchronized
+    fun trimUnleasedToBound(maxUnleased: Int = MAX_UNLEASED_DOCUMENTS): Int {
+        val unleased = staged.values.toSet().filter { doc ->
+            val path = doc.uri.path ?: return@filter false
+            (leases[path] ?: 0) == 0
+        }.sortedBy { doc ->
+            File(doc.uri.path!!).lastModified()
+        }
+
+        var pruned = 0
+        val excess = unleased.size - maxUnleased
+        if (excess > 0) {
+            for (i in 0 until excess) {
+                remove(unleased[i])
+                pruned++
+            }
+        }
+        return pruned
+    }
+
+    fun stageStream(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {}
+    ): StagedPdf = stageStreamInternal(context, input, extension, checkCancellation, acquireInitialLease = false).document
+
+    fun stageStreamWithLease(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {}
+    ): StagedLease = stageStreamInternal(context, input, extension, checkCancellation, acquireInitialLease = true)
+
+    private fun stageStreamInternal(
+        context: Context,
+        input: InputStream,
+        extension: String? = null,
+        checkCancellation: () -> Unit = {},
+        acquireInitialLease: Boolean
+    ): StagedLease {
+        checkCancellation()
+        reserveSlot()
+
+        var published = false
+        var recordedInFlightBytes = 0L
+        var tempFile: File? = null
+
         try {
+            val directory = ensureStagedDirectory(context)
+            val suffix = if (extension in setOf("pdf", "epub", "cbz", "jpg", "jpeg", "png", "webp", "heic", "heif", "txt")) ".$extension" else ".bin"
+            val file = File.createTempFile("snapshot_", suffix, directory).also { tempFile = it }
+
             var size = 0L
             val digest = MessageDigest.getInstance("SHA-256")
             file.outputStream().use { output ->
@@ -61,8 +297,11 @@ object DocumentStager {
                     val read = input.read(buffer)
                     checkCancellation()
                     if (read == -1) break
-                    if (read.toLong() > minOf(SecurityLimits.MAX_PDF_FILESIZE, remainingBytes) - size) throw SecurityException("Staging input quota exceeded")
-                    size += read
+                    if (read == 0) continue
+                    val readLong = read.toLong()
+                    accountInFlightBytes(readLong, size)
+                    recordedInFlightBytes += readLong
+                    size += readLong
                     digest.update(buffer, 0, read)
                     output.write(buffer, 0, read)
                 }
@@ -72,12 +311,116 @@ object DocumentStager {
             val hash = digest.digest().joinToString("") { "%02x".format(it) }
             SecurityLimits.requireIdentity(hash, size)
             check(file.setReadOnly()) { "Unable to seal staged input" }
-            val capability = StagedPdf(Uri.fromFile(file), hash, size)
-            staged[file.canonicalPath] = capability
-            return capability
-        } catch (error: Throwable) {
+
+            val stagedLease = publishStagedSnapshot(
+                file = file,
+                hash = hash,
+                size = size,
+                recordedInFlightBytes = recordedInFlightBytes,
+                acquireInitialLease = acquireInitialLease
+            )
+            published = true
+            return stagedLease
+        } finally {
+            if (!published) {
+                releaseReservation(recordedInFlightBytes)
+                tempFile?.let { cleanupUnpublishedFile(it) }
+            }
+        }
+    }
+
+    @Synchronized
+    private fun ensureStagedDirectory(context: Context): File {
+        val directory = File(context.cacheDir, "staged").apply { mkdirs() }.canonicalFile
+        if (directory.path !in initializedDirectories) {
+            directory.listFiles().orEmpty().filter { it.name.startsWith("snapshot_") && it.canonicalFile.parentFile == directory }
+                .forEach {
+                    it.setWritable(true)
+                    check(it.delete()) { "Unable to remove an expired snapshot" }
+                }
+            initializedDirectories.add(directory.path)
+        }
+        return directory
+    }
+
+    @Synchronized
+    private fun reserveSlot() {
+        val currentCount = staged.values.toSet().size + inFlightSlots
+        if (currentCount >= SecurityLimits.MAX_STAGED_DOCUMENTS) {
+            pruneUnleasedSnapshots(targetCount = maxOf(0, SecurityLimits.MAX_STAGED_DOCUMENTS - 1 - inFlightSlots))
+        }
+        val updatedCount = staged.values.toSet().size + inFlightSlots
+        require(updatedCount < SecurityLimits.MAX_STAGED_DOCUMENTS) { "Too many staged documents" }
+
+        val totalBytes = staged.values.toSet().sumOf { it.size } + inFlightBytes
+        if (SecurityLimits.MAX_BATCH_INPUT_BYTES - totalBytes <= 0) {
+            pruneUnleasedSnapshots(neededBytes = 1024 * 1024)
+        }
+
+        inFlightSlots++
+    }
+
+    @Synchronized
+    private fun releaseReservation(recordedInFlightBytes: Long) {
+        if (inFlightSlots > 0) inFlightSlots--
+        if (recordedInFlightBytes > 0) {
+            inFlightBytes = maxOf(0L, inFlightBytes - recordedInFlightBytes)
+        }
+    }
+
+    @Synchronized
+    private fun accountInFlightBytes(bytes: Long, currentStreamSize: Long) {
+        if (currentStreamSize + bytes > SecurityLimits.MAX_PDF_FILESIZE) {
+            throw SecurityException("Staging input quota exceeded")
+        }
+        val totalBytes = staged.values.toSet().sumOf { it.size } + inFlightBytes + bytes
+        if (totalBytes > SecurityLimits.MAX_BATCH_INPUT_BYTES) {
+            pruneUnleasedSnapshots(neededBytes = bytes)
+            val updatedTotal = staged.values.toSet().sumOf { it.size } + inFlightBytes + bytes
+            if (updatedTotal > SecurityLimits.MAX_BATCH_INPUT_BYTES) {
+                throw SecurityException("Staging input quota exceeded")
+            }
+        }
+        inFlightBytes += bytes
+    }
+
+    @Synchronized
+    private fun publishStagedSnapshot(
+        file: File,
+        hash: String,
+        size: Long,
+        recordedInFlightBytes: Long,
+        acquireInitialLease: Boolean
+    ): StagedLease {
+        val capability = StagedPdf(Uri.fromFile(file), hash, size)
+        val canonical = file.canonicalPath
+        staged[canonical] = capability
+        val uriPath = capability.uri.path
+        if (uriPath != null && uriPath != canonical) {
+            staged[uriPath] = capability
+        }
+
+        val lease = if (acquireInitialLease) retain(capability) else java.io.Closeable {}
+
+        if (inFlightSlots > 0) inFlightSlots--
+        if (recordedInFlightBytes > 0) {
+            inFlightBytes = maxOf(0L, inFlightBytes - recordedInFlightBytes)
+        }
+
+        trimUnleasedToBound()
+        return StagedLease(capability, lease)
+    }
+
+    @Synchronized
+    private fun cleanupUnpublishedFile(file: File) {
+        runCatching {
+            staged.remove(file.canonicalPath)
+            file.canonicalFile.path.let { staged.remove(it) }
+            file.absolutePath.let { staged.remove(it) }
+            leases.remove(file.canonicalPath)
+            leases.remove(file.absolutePath)
+            file.setWritable(true)
             file.delete()
-            throw error
         }
     }
     @Synchronized fun retain(document: StagedPdf): java.io.Closeable {
@@ -87,14 +430,66 @@ object DocumentStager {
         val closed = java.util.concurrent.atomic.AtomicBoolean()
         return java.io.Closeable {
             if (closed.compareAndSet(false, true)) synchronized(this) {
-                val remaining = requireNotNull(leases[path]) - 1
-                if (remaining == 0) {
+                val remaining = (leases[path] ?: 1) - 1
+                if (remaining <= 0) {
                     leases.remove(path)
                     if (pendingRelease.remove(path)) remove(document)
                 } else leases[path] = remaining
             }
         }
     }
+    @Synchronized fun retain(uri: Uri): java.io.Closeable? {
+        val snapshot = stagedFor(uri) ?: return null
+        return retain(snapshot)
+    }
+    fun stagedFor(uri: Uri): StagedPdf? = if (uri.scheme == "file") uri.path?.let { staged[it] } else null
+    @Synchronized fun activeLeases(uri: Uri): Int = uri.path?.let { leases[it] } ?: 0
+    @Synchronized fun activeLeases(document: StagedPdf): Int = document.uri.path?.let { leases[it] } ?: 0
+    @Synchronized fun isPendingRelease(uri: Uri): Boolean = uri.path?.let { pendingRelease.contains(it) } ?: false
+
+    @Synchronized
+    fun isLeased(file: File): Boolean {
+        val candidates = listOfNotNull(
+            file.path,
+            file.absolutePath,
+            runCatching { file.canonicalPath }.getOrNull()
+        )
+        return candidates.any { path ->
+            (leases[path] ?: 0) > 0 || staged[path]?.let { doc -> doc.uri.path?.let { (leases[it] ?: 0) > 0 } } == true
+        }
+    }
+
+    @Synchronized
+    fun isLeased(uri: Uri): Boolean {
+        val path = uri.path ?: return false
+        return (leases[path] ?: 0) > 0 || isLeased(File(path))
+    }
+
+    @Synchronized
+    fun reclaimUnleasedSnapshot(file: File): Boolean {
+        val candidates = listOfNotNull(
+            file.path,
+            file.absolutePath,
+            runCatching { file.canonicalPath }.getOrNull()
+        )
+        for (path in candidates) {
+            val doc = staged[path]
+            if (doc != null) {
+                val docPath = doc.uri.path ?: return false
+                if ((leases[docPath] ?: 0) > 0) {
+                    return false
+                }
+                remove(doc)
+                return true
+            }
+        }
+        return false
+    }
+
+    val stagedCount: Int get() = staged.values.toSet().size
+    val totalStagedBytes: Long get() = staged.values.toSet().sumOf { it.size }
+    val activeInFlightSlots: Int get() = inFlightSlots
+    val activeInFlightBytes: Long get() = inFlightBytes
     suspend fun stageDocumentCancellable(context: Context, sourceUri: Uri): StagedPdf {
         return copyCancellable(sourceUri) { checkpoint, opened -> stageDocument(context, sourceUri, checkpoint, opened) }
     }
@@ -102,6 +497,53 @@ object DocumentStager {
         return copyCancellable(null) { checkpoint, opened ->
             opened(input)
             stageStream(context, input, checkCancellation = checkpoint)
+        }
+    }
+    suspend fun stageDocumentCancellableWithLease(context: Context, sourceUri: Uri): StagedLease {
+        return copyCancellableWithLease(sourceUri) { checkpoint, opened ->
+            stageDocumentWithLease(context, sourceUri, checkpoint, opened)
+        }
+    }
+    suspend fun stageStreamCancellableWithLease(context: Context, input: InputStream): StagedLease {
+        return copyCancellableWithLease(null) { checkpoint, opened ->
+            opened(input)
+            stageStreamWithLease(context, input, checkCancellation = checkpoint)
+        }
+    }
+    suspend fun stageDocumentCancellationSafe(
+        context: Context,
+        sourceUri: Uri,
+        transferOwner: ResourceTransferOwner<StagedLease>? = null
+    ): StagedLease {
+        val owner = transferOwner ?: ResourceTransferOwner { it.discard(sourceUri) }
+        try {
+            withContext(Dispatchers.IO) {
+                val stagedLease = stageDocumentCancellableWithLease(context, sourceUri)
+                owner.stage(stagedLease)
+                stagedLease
+            }
+            return checkNotNull(owner.commit()) { "Staged lease transfer not committed" }
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
+        }
+    }
+    suspend fun stageStreamCancellationSafe(
+        context: Context,
+        input: InputStream,
+        transferOwner: ResourceTransferOwner<StagedLease>? = null
+    ): StagedLease {
+        val owner = transferOwner ?: ResourceTransferOwner { it.discard(null) }
+        try {
+            withContext(Dispatchers.IO) {
+                val stagedLease = stageStreamCancellableWithLease(context, input)
+                owner.stage(stagedLease)
+                stagedLease
+            }
+            return checkNotNull(owner.commit()) { "Staged stream lease transfer not committed" }
+        } catch (e: Throwable) {
+            owner.discard()
+            throw e
         }
     }
     private suspend fun copyCancellable(borrowedUri: Uri?, copy: (() -> Unit, (InputStream) -> Unit) -> StagedPdf): StagedPdf {
@@ -126,21 +568,88 @@ object DocumentStager {
             }
         } catch (error: Throwable) {
             result?.takeIf { it.uri != borrowedUri }?.let(::release)
+            // Closing a cancelled input can unblock read() with IOException.
+            // Preserve cancellation without masking failures of an active job.
+            if (error is java.io.IOException) job?.ensureActive()
+            throw error
+        }
+    }
+    private suspend fun copyCancellableWithLease(
+        borrowedUri: Uri?,
+        copy: (() -> Unit, (InputStream) -> Unit) -> StagedLease
+    ): StagedLease {
+        val job = currentCoroutineContext()[Job]
+        val input = java.util.concurrent.atomic.AtomicReference<InputStream>()
+        var result: StagedLease? = null
+        try {
+            return coroutineScope {
+                val finished = java.util.concurrent.atomic.AtomicBoolean()
+                val closeOnCancellation = launch(Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+                    try { awaitCancellation() }
+                    finally { if (!finished.get()) runCatching { input.get()?.close() } }
+                }
+                try {
+                    runInterruptible(Dispatchers.IO) {
+                        copy({ job?.ensureActive() }, { input.set(it) }).also { result = it }
+                    }
+                } finally {
+                    finished.set(true)
+                    withContext(NonCancellable) { closeOnCancellation.cancelAndJoin() }
+                }
+            }
+        } catch (error: Throwable) {
+            result?.let {
+                if (it.document.uri != borrowedUri) {
+                    release(it.document)
+                }
+                it.lease.close()
+            }
+            // A close-induced read failure must not fail the cancelled job's parent.
+            if (error is java.io.IOException) job?.ensureActive()
             throw error
         }
     }
     private fun remove(document: StagedPdf) {
         val path = document.uri.path ?: return
-        if (staged.remove(path, document)) { displayNames.remove(path); File(path).delete() }
+        val removed = staged.remove(path, document)
+        displayNames.remove(path)
+        originalSourceUris.remove(path)
+        val file = File(path)
+        val canonical = runCatching { file.canonicalPath }.getOrNull()
+        if (canonical != null && canonical != path) {
+            staged.remove(canonical, document)
+            displayNames.remove(canonical)
+            originalSourceUris.remove(canonical)
+        }
+        runCatching { file.setWritable(true) }
+        file.delete()
     }
     @Synchronized fun release(document: StagedPdf) {
         val path = document.uri.path ?: return
         if (staged[path] != document) return
-        if ((leases[path] ?: 0) > 0) pendingRelease.add(path) else remove(document)
+        if ((leases[path] ?: 0) > 0) {
+            pendingRelease.add(path)
+        } else {
+            remove(document)
+        }
+        trimUnleasedToBound()
     }
-    @Synchronized fun releaseAll() { staged.values.toList().forEach(::release) }
+    @Synchronized fun releaseAll() {
+        // Copies run outside this monitor and retire their own reservations on completion.
+        // Session shutdown must not erase the quota still occupied by those live copies.
+        staged.values.toList().forEach(::release)
+        trimUnleasedToBound(0)
+    }
     fun release(uri: Uri) {
         if (uri.scheme == "file") uri.path?.let { staged[it]?.let(::release) }
     }
     fun displayName(uri: Uri): String? = uri.path?.let(displayNames::get)
+    fun originalSourceFor(uri: Uri): Uri? {
+        if (uri.scheme == "file") {
+            val path = uri.path ?: return null
+            return originalSourceUris[path] ?: runCatching { File(path).canonicalPath }.getOrNull()?.let { originalSourceUris[it] }
+        }
+        return null
+    }
+    fun originalSourceFor(document: StagedPdf): Uri? = originalSourceFor(document.uri)
 }

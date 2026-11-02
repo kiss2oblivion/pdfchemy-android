@@ -80,9 +80,7 @@ fun BookmarkEditorScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -98,7 +96,7 @@ fun BookmarkEditorScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_bookmark_success),
                         context.getString(R.string.desc_bookmark_success)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

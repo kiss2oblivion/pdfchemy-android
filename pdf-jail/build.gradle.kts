@@ -2,7 +2,7 @@ import java.security.MessageDigest
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+
 }
 
 android {
@@ -15,15 +15,15 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         buildConfig = true
         aidl = true
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
     packaging {
         resources {
@@ -119,4 +119,10 @@ val verifyTesseractAarHash = tasks.register("verifyTesseractAarHash") {
 
 tasks.matching { it.name.startsWith("compile") || it.name.startsWith("preBuild") }.configureEach {
     dependsOn(verifyTesseractAarHash)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }

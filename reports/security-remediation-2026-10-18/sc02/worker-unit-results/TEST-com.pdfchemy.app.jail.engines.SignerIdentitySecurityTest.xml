@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.SignerIdentitySecurityTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-19T10:07:02.147Z" hostname="DESKTOP-N37P7P6" time="0.272">
+  <properties/>
+  <testcase name="hostileNameRemainsOneLiteralCommonNameInAnEphemeralSelfSignedCertificate" classname="com.pdfchemy.app.jail.engines.SignerIdentitySecurityTest" time="0.272"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

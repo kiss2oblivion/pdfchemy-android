@@ -6,8 +6,7 @@ import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
 import com.pdfchemy.app.security.SecurityLimits
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.*
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.Closeable
@@ -15,15 +14,25 @@ import java.io.File
 import java.io.IOException
 
 /** Worker capabilities and host-only commit snapshots never name a user destination. */
-class HostOutputTransaction(private val context: Context, targets: List<Uri>) : Closeable {
+class HostOutputTransaction(
+    private val context: Context,
+    targets: List<Uri>,
+    storage: BoundedWorkerStorage? = null
+) : Closeable {
+    private val ownsStorage = storage == null
+    private val storage = storage ?: BoundedWorkerStorage(context)
     private val targets = targets.toList()
+    private val producers = mutableListOf<BoundedWorkerStorage.Sink>()
     private val temporary = mutableListOf<ParcelFileDescriptor>()
     private val snapshots = mutableListOf<ParcelFileDescriptor>()
     private var sizes = emptyList<Long>()
     private var validated = false
     private var commitStarted = false
+    private var published = false
     private var closed = false
-    val workerDescriptors: List<ParcelFileDescriptor> get() = temporary.toList()
+    private val publicationOwner = Any()
+    val workerDescriptors: List<ParcelFileDescriptor> get() = producers.map { it.writer }
+    fun releaseWorkerDescriptors() { producers.forEach { runCatching { it.writer.close() } } }
     val validatedBytes: Long get() {
         check(validated && !closed)
         return sizes.sum()
@@ -32,7 +41,8 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
-        try { repeat(targets.size) { temporary.add(anonymousFile()) } }
+        com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
+        try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
 
@@ -82,16 +92,22 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
         require(targets.isEmpty() || (value != false && value != JSONObject.NULL)) { "Worker reported failure" }
     }
 
-    suspend fun validateAndSnapshot(result: String) {
+    suspend fun validateAndSnapshot(result: String, operation: String? = null) {
         check(!closed && !validated && !commitStarted)
         validateResult(result)
+        require(producers.size == targets.size) { "Output count mismatch" }
+        releaseWorkerDescriptors()
+        producers.forEach { producer ->
+            currentCoroutineContext().ensureActive()
+            temporary.add(storage.snapshotCancellable(producer.id))
+        }
         require(temporary.size == targets.size) { "Output count mismatch" }
         sizes = temporary.map(::size)
         require(sizes.sum() <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate output quota exceeded" }
         val buffer = ByteArray(64 * 1024)
         // Snapshot every output before opening even the first real destination.
-        // The worker can still hold/seek/write its FDs; pread uses explicit offsets
-        // and these new snapshot capabilities are never sent to that process.
+        // Every pipe has reached EOF; producer readback is read-only. These new
+        // commit snapshots are host-only and are never sent to another process.
         for (index in temporary.indices) {
             currentCoroutineContext().ensureActive()
             val snapshot = anonymousFile().also(snapshots::add)
@@ -113,38 +129,89 @@ class HostOutputTransaction(private val context: Context, targets: List<Uri>) : 
             require(size(snapshot) == sizes[index]) { "Incomplete output snapshot" }
         }
         require(snapshots.size == targets.size && snapshots.sumOf(::size) <= SecurityLimits.MAX_OUTPUT_BYTES)
+        if (operation == "TABLE_EXTRACT") {
+            // Validate immutable host snapshots before ACK/publication, not a reopened worker path.
+            for (index in snapshots.indices) {
+                require(sizes[index] <= 2 * 1024 * 1024L) { "CSV file exceeds limit" }
+                val bytes = ByteArray(sizes[index].toInt())
+                var offset = 0
+                while (offset < bytes.size) {
+                    currentCoroutineContext().ensureActive()
+                    val read = Os.pread(snapshots[index].fileDescriptor, bytes, offset,
+                        minOf(64 * 1024, bytes.size - offset), offset.toLong())
+                    require(read > 0) { "Incomplete CSV snapshot" }
+                    offset += read
+                }
+                WorkerResponseValidator.validateCsvTableBytes(bytes)
+            }
+        }
         currentCoroutineContext().ensureActive()
         validated = true
     }
 
-    suspend fun commit() {
+    suspend fun commit() = kotlinx.coroutines.coroutineScope {
         check(!closed && validated && !commitStarted) { "Outputs must be validated and committed only once" }
         currentCoroutineContext().ensureActive()
         commitStarted = true
-        val buffer = ByteArray(64 * 1024)
-        var committed = 0L
-        for (index in targets.indices) {
-            currentCoroutineContext().ensureActive()
-            // SAF may supply a pipe. No seek/truncate operation is performed on
-            // its FD, and no real provider capability crosses the worker boundary.
-            requireNotNull(context.contentResolver.openOutputStream(targets[index], "wt")).use { output ->
-                var offset = 0L
-                while (offset < sizes[index]) {
-                    currentCoroutineContext().ensureActive()
-                    val count = Os.pread(snapshots[index].fileDescriptor, buffer, 0,
-                        minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
-                    if (count <= 0) throw IOException("Incomplete commit snapshot")
-                    require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
-                    output.write(buffer, 0, count)
-                    offset += count; committed += count
+        // Opening "wt" may destroy old bytes even when the provider subsequently
+        // throws. Only host-created fresh SAF copies may enter publication.
+        com.pdfchemy.app.security.FreshOutputRegistry.requireSafeSafTargets(targets, publicationOwner)
+        val totalBytes = snapshots.sumOf(::size)
+        val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, totalBytes)
+        var completedNormally = false
+        val watcher = launch(Dispatchers.IO) {
+            try {
+                awaitCancellation()
+            } finally {
+                if (!completedNormally) {
+                    handle.abort()
                 }
             }
+        }
+        val job = currentCoroutineContext()[kotlinx.coroutines.Job]
+        if (job != null) {
+            handle.attachJob(job)
+        }
+        try {
+            val buffer = ByteArray(64 * 1024)
+            var committed = 0L
+            for (index in targets.indices) {
+                currentCoroutineContext().ensureActive()
+                // SAF may supply a pipe. No seek/truncate operation is performed on
+                // its FD, and no real provider capability crosses the worker boundary.
+                val stream = requireNotNull(context.contentResolver.openOutputStream(targets[index], "wt")) {
+                    "Unable to open destination: ${targets[index]}"
+                }
+                handle.registerStream(stream).use {
+                    stream.use { output ->
+                        var offset = 0L
+                        while (offset < sizes[index]) {
+                            currentCoroutineContext().ensureActive()
+                            val count = Os.pread(snapshots[index].fileDescriptor, buffer, 0,
+                                minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
+                            if (count <= 0) throw IOException("Incomplete commit snapshot")
+                            require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
+                            output.write(buffer, 0, count)
+                            offset += count; committed += count
+                        }
+                    }
+                }
+            }
+            completedNormally = true
+            published = true
+            com.pdfchemy.app.security.FreshOutputRegistry.published(targets, publicationOwner)
+        } finally {
+            watcher.cancel()
+            handle.close()
         }
     }
 
     override fun close() {
         closed = true
         (snapshots + temporary).forEach { runCatching { it.close() } }
+        releaseWorkerDescriptors()
         snapshots.clear(); temporary.clear()
+        if (ownsStorage) storage.close()
+        if (!published) com.pdfchemy.app.security.FreshOutputRegistry.abandon(context, targets, publicationOwner)
     }
 }

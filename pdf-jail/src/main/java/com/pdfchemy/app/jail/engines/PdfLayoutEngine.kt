@@ -125,7 +125,7 @@ object PdfLayoutEngine {
                             cs.drawImage(pdImage, drawX, drawY, drawW, drawH)
 
                             if (drawBorders) {
-                                cs.setStrokingColor(200, 200, 200)
+                                cs.setStrokingColor(200f / 255f, 200f / 255f, 200f / 255f)
                                 cs.setLineWidth(0.5f)
                                 cs.addRect(drawX, drawY, drawW, drawH)
                                 cs.stroke()

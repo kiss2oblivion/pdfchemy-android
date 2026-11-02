@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.DestinationIntegritySecurityTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-18T10:50:33.025Z" hostname="DESKTOP-N37P7P6" time="7.411">
+  <properties/>
+  <testcase name="fresh incomplete destination is deleted on worker error" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="4.886"/>
+  <testcase name="audio export existing destination survives rejection and failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.171"/>
+  <testcase name="existing destination seeded with bytes survives cancellation" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.377"/>
+  <testcase name="successful write publishes output and protects it from subsequent cleanup" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.303"/>
+  <testcase name="audio export fresh incomplete destination is cleaned up" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.102"/>
+  <testcase name="stale operation cleanup cannot delete newer operation output" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.328"/>
+  <testcase name="source equals destination is rejected and source is protected" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.135"/>
+  <testcase name="fresh incomplete destination is not deleted when onCleared writer exceeds join timeout until writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.297"/>
+  <testcase name="published URI reused in subsequent operation survives subsequent failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.303"/>
+  <testcase name="fresh incomplete destination is deleted on cancellation after writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.165"/>
+  <testcase name="fresh incomplete destination is deleted on onCleared only after writer stops" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.171"/>
+  <testcase name="existing destination seeded with bytes survives pre-publication failure" classname="com.pdfchemy.app.security.DestinationIntegritySecurityTest" time="0.17"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+WARNING: A Java agent has been loaded dynamically (C:\Users\John\.gradle\caches\9.4.1\transforms\7dd41080ed7927faef4c3fbb68d5d634\transformed\jetified-byte-buddy-agent-1.14.6.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

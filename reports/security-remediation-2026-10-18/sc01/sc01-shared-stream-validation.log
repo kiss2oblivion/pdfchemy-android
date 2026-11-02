@@ -1,0 +1,538 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/John/.gradle/wrapper/dists/gradle-9.4.1-bin/arn2x92ynaizyzdaamcbpbhtj/gradle-9.4.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app-host
+WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableJetifier=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-ipc
+WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-jail
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-renderer
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :pdf-ipc:preBuild UP-TO-DATE
+> Task :pdf-ipc:preDebugBuild UP-TO-DATE
+> Task :pdf-ipc:compileDebugAidl UP-TO-DATE
+> Task :pdf-ipc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-ipc:generateDebugResValues UP-TO-DATE
+> Task :pdf-ipc:generateDebugResources UP-TO-DATE
+> Task :pdf-ipc:packageDebugResources UP-TO-DATE
+> Task :pdf-ipc:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-ipc:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-ipc:generateDebugRFile UP-TO-DATE
+> Task :pdf-ipc:compileDebugKotlin UP-TO-DATE
+> Task :pdf-ipc:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-ipc:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-ipc:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :pdf-ipc:processDebugJavaRes UP-TO-DATE
+> Task :pdf-ipc:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :pdf-jail:verifyTesseractAarHash UP-TO-DATE
+> Task :pdf-jail:preBuild UP-TO-DATE
+> Task :pdf-jail:preDebugBuild UP-TO-DATE
+> Task :pdf-jail:compileDebugAidl NO-SOURCE
+> Task :pdf-jail:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-jail:generateDebugBuildConfig UP-TO-DATE
+> Task :pdf-jail:generateDebugResValues UP-TO-DATE
+> Task :pdf-jail:generateDebugResources UP-TO-DATE
+> Task :pdf-jail:packageDebugResources UP-TO-DATE
+> Task :pdf-jail:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-jail:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-jail:generateDebugRFile UP-TO-DATE
+
+> Task :pdf-jail:compileDebugKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:68:31 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:94:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:99:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:108:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:139:35 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:155:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:167:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:178:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:190:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:197:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:210:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:222:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:235:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfBookletEngineWorker.kt:60:28 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfHeaderFooterEngine.kt:106:24 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageExtractorEngine.kt:55:41 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageReplacerEngine.kt:55:37 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:69:17 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:128:36 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfManipulatorWorker.kt:339:34 'fun setCanPrintDegraded(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfNUpEngineWorker.kt:138:16 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:271:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:273:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:288:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:290:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:59:44 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:77:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:148:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:211:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:37:63 Java type mismatch: inferred type is 'Nothing?', but 'String' was expected.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:80:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:115:33 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+
+> Task :pdf-jail:javaPreCompileDebug UP-TO-DATE
+
+> Task :pdf-jail:compileDebugJavaWithJavac UP-TO-DATE
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :pdf-jail:bundleLibRuntimeToJarDebug
+> Task :pdf-jail:bundleLibCompileToJarDebug
+> Task :pdf-ipc:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-ipc:compileDebugLibraryResources UP-TO-DATE
+> Task :pdf-ipc:writeDebugAarMetadata UP-TO-DATE
+> Task :pdf-jail:preDebugUnitTestBuild UP-TO-DATE
+> Task :pdf-jail:writeDebugAarMetadata UP-TO-DATE
+> Task :pdf-jail:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :pdf-jail:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-jail:compileDebugLibraryResources UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestResValues UP-TO-DATE
+> Task :pdf-jail:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestResources UP-TO-DATE
+> Task :pdf-jail:mergeDebugUnitTestResources UP-TO-DATE
+> Task :pdf-ipc:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-ipc:processDebugManifest UP-TO-DATE
+> Task :pdf-jail:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-jail:processDebugManifest UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestManifest UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestResources UP-TO-DATE
+> Task :pdf-jail:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :pdf-jail:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :pdf-jail:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :pdf-ipc:generateDebugAssets UP-TO-DATE
+> Task :pdf-ipc:mergeDebugAssets UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestAssets UP-TO-DATE
+> Task :pdf-jail:generateDebugAssets UP-TO-DATE
+> Task :pdf-jail:mergeDebugAssets UP-TO-DATE
+> Task :pdf-jail:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :pdf-jail:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestConfig UP-TO-DATE
+> Task :pdf-jail:processDebugJavaRes UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :pdf-jail:testDebugUnitTest
+> Task :securityArchitecture
+
+> Task :app-host:securityAudit
+securityAudit scanned 135 files in app module.
+
+> Task :app-host:preBuild
+> Task :app-host:preDebugBuild
+> Task :app-host:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app-host:compileDebugAidl NO-SOURCE
+> Task :app-host:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app-host:generateDebugBuildConfig UP-TO-DATE
+> Task :pdf-renderer:preBuild UP-TO-DATE
+> Task :pdf-renderer:preDebugBuild UP-TO-DATE
+> Task :pdf-renderer:writeDebugAarMetadata UP-TO-DATE
+> Task :app-host:checkDebugAarMetadata UP-TO-DATE
+> Task :app-host:generateDebugResValues UP-TO-DATE
+> Task :app-host:processDebugGoogleServices UP-TO-DATE
+> Task :app-host:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-renderer:processDebugNavigationResources UP-TO-DATE
+> Task :app-host:processDebugNavigationResources UP-TO-DATE
+> Task :app-host:compileDebugNavigationResources UP-TO-DATE
+> Task :app-host:generateDebugResources UP-TO-DATE
+> Task :pdf-renderer:generateDebugResValues UP-TO-DATE
+> Task :pdf-renderer:generateDebugResources UP-TO-DATE
+> Task :pdf-renderer:packageDebugResources UP-TO-DATE
+> Task :app-host:mergeDebugResources UP-TO-DATE
+> Task :app-host:packageDebugResources UP-TO-DATE
+> Task :app-host:parseDebugLocalResources UP-TO-DATE
+> Task :app-host:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app-host:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-renderer:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-renderer:processDebugManifest UP-TO-DATE
+> Task :app-host:processDebugMainManifest UP-TO-DATE
+> Task :app-host:processDebugManifest UP-TO-DATE
+> Task :app-host:processDebugManifestForPackage UP-TO-DATE
+> Task :pdf-renderer:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-renderer:compileDebugLibraryResources UP-TO-DATE
+> Task :pdf-renderer:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-renderer:generateDebugRFile UP-TO-DATE
+> Task :app-host:processDebugResources UP-TO-DATE
+> Task :app-host:compileDebugKotlin UP-TO-DATE
+> Task :app-host:javaPreCompileDebug UP-TO-DATE
+> Task :app-host:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app-host:generateDebugAssets UP-TO-DATE
+> Task :pdf-renderer:generateDebugAssets UP-TO-DATE
+> Task :pdf-renderer:mergeDebugAssets UP-TO-DATE
+> Task :app-host:mergeDebugAssets UP-TO-DATE
+> Task :app-host:compressDebugAssets UP-TO-DATE
+> Task :app-host:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :app-host:processDebugJavaRes UP-TO-DATE
+> Task :pdf-renderer:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-renderer:compileDebugAidl NO-SOURCE
+> Task :pdf-renderer:generateDebugBuildConfig UP-TO-DATE
+> Task :pdf-renderer:compileDebugKotlin UP-TO-DATE
+> Task :pdf-renderer:processDebugJavaRes UP-TO-DATE
+> Task :app-host:mergeDebugJavaResource UP-TO-DATE
+> Task :app-host:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app-host:desugarDebugFileDependencies UP-TO-DATE
+> Task :app-host:mergeExtDexDebug UP-TO-DATE
+> Task :pdf-jail:bundleLibRuntimeToDirDebug
+> Task :pdf-renderer:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-renderer:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-renderer:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :pdf-ipc:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app-host:mergeLibDexDebug
+> Task :app-host:dexBuilderDebug UP-TO-DATE
+> Task :app-host:mergeProjectDexDebug UP-TO-DATE
+> Task :app-host:mergeDebugJniLibFolders UP-TO-DATE
+> Task :pdf-ipc:mergeDebugJniLibFolders UP-TO-DATE
+> Task :pdf-ipc:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-ipc:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :pdf-jail:mergeDebugJniLibFolders UP-TO-DATE
+> Task :pdf-jail:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-jail:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :pdf-renderer:mergeDebugJniLibFolders UP-TO-DATE
+> Task :pdf-renderer:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-renderer:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app-host:mergeDebugNativeLibs UP-TO-DATE
+> Task :app-host:stripDebugDebugSymbols UP-TO-DATE
+> Task :app-host:validateSigningDebug UP-TO-DATE
+> Task :app-host:writeDebugAppMetadata UP-TO-DATE
+> Task :app-host:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app-host:packageDebug
+> Task :app-host:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app-host:assembleDebug
+> Task :app-host:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :app-host:preDebugAndroidTestBuild SKIPPED
+> Task :app-host:compileDebugAndroidTestAidl NO-SOURCE
+> Task :app-host:processDebugAndroidTestManifest UP-TO-DATE
+> Task :app-host:generateDebugAndroidTestBuildConfig UP-TO-DATE
+> Task :app-host:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :app-host:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :app-host:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :app-host:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :app-host:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :app-host:generateDebugAndroidTestResources UP-TO-DATE
+> Task :app-host:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :app-host:processDebugAndroidTestResources UP-TO-DATE
+> Task :app-host:compileDebugAndroidTestKotlin
+> Task :app-host:javaPreCompileDebugAndroidTest UP-TO-DATE
+
+> Task :app-host:compileDebugAndroidTestJavaWithJavac UP-TO-DATE
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :app-host:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :app-host:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :app-host:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :app-host:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :app-host:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :app-host:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :app-host:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :app-host:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :app-host:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :app-host:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :app-host:dexBuilderDebugAndroidTest
+> Task :app-host:mergeProjectDexDebugAndroidTest
+> Task :app-host:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :app-host:mergeDebugAndroidTestNativeLibs UP-TO-DATE
+> Task :app-host:stripDebugAndroidTestDebugSymbols UP-TO-DATE
+> Task :app-host:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :app-host:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :app-host:packageDebugAndroidTest
+> Task :app-host:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :app-host:assembleDebugAndroidTest
+> Task :app-host:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app-host:preReleaseBuild
+> Task :pdf-ipc:preReleaseBuild UP-TO-DATE
+> Task :pdf-ipc:compileReleaseAidl UP-TO-DATE
+> Task :app-host:compileReleaseAidl NO-SOURCE
+> Task :app-host:generateReleaseBuildConfig UP-TO-DATE
+> Task :pdf-ipc:writeReleaseAarMetadata UP-TO-DATE
+> Task :pdf-jail:preReleaseBuild UP-TO-DATE
+> Task :pdf-jail:writeReleaseAarMetadata UP-TO-DATE
+> Task :pdf-renderer:preReleaseBuild UP-TO-DATE
+> Task :pdf-renderer:writeReleaseAarMetadata UP-TO-DATE
+> Task :app-host:checkReleaseAarMetadata UP-TO-DATE
+> Task :app-host:generateReleaseResValues UP-TO-DATE
+> Task :app-host:processReleaseGoogleServices UP-TO-DATE
+> Task :app-host:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :pdf-ipc:processReleaseNavigationResources UP-TO-DATE
+> Task :pdf-jail:processReleaseNavigationResources UP-TO-DATE
+> Task :pdf-renderer:processReleaseNavigationResources UP-TO-DATE
+> Task :app-host:processReleaseNavigationResources UP-TO-DATE
+> Task :app-host:compileReleaseNavigationResources UP-TO-DATE
+> Task :app-host:generateReleaseResources UP-TO-DATE
+> Task :pdf-ipc:generateReleaseResValues UP-TO-DATE
+> Task :pdf-ipc:generateReleaseResources UP-TO-DATE
+> Task :pdf-ipc:packageReleaseResources UP-TO-DATE
+> Task :pdf-jail:generateReleaseResValues UP-TO-DATE
+> Task :pdf-jail:generateReleaseResources UP-TO-DATE
+> Task :pdf-jail:packageReleaseResources UP-TO-DATE
+> Task :pdf-renderer:generateReleaseResValues UP-TO-DATE
+> Task :pdf-renderer:generateReleaseResources UP-TO-DATE
+> Task :pdf-renderer:packageReleaseResources UP-TO-DATE
+> Task :app-host:mergeReleaseResources UP-TO-DATE
+> Task :app-host:packageReleaseResources UP-TO-DATE
+> Task :app-host:parseReleaseLocalResources UP-TO-DATE
+> Task :app-host:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app-host:extractDeepLinksRelease UP-TO-DATE
+> Task :pdf-ipc:extractDeepLinksRelease UP-TO-DATE
+> Task :pdf-ipc:processReleaseManifest UP-TO-DATE
+> Task :pdf-jail:extractDeepLinksRelease UP-TO-DATE
+> Task :pdf-jail:processReleaseManifest UP-TO-DATE
+> Task :pdf-renderer:extractDeepLinksRelease UP-TO-DATE
+> Task :pdf-renderer:processReleaseManifest UP-TO-DATE
+> Task :app-host:processReleaseMainManifest UP-TO-DATE
+> Task :app-host:processReleaseManifest UP-TO-DATE
+> Task :app-host:processReleaseManifestForPackage UP-TO-DATE
+> Task :pdf-ipc:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :pdf-ipc:compileReleaseLibraryResources UP-TO-DATE
+> Task :pdf-ipc:parseReleaseLocalResources UP-TO-DATE
+> Task :pdf-ipc:generateReleaseRFile UP-TO-DATE
+> Task :pdf-jail:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :pdf-jail:compileReleaseLibraryResources UP-TO-DATE
+> Task :pdf-jail:parseReleaseLocalResources UP-TO-DATE
+> Task :pdf-jail:generateReleaseRFile UP-TO-DATE
+> Task :pdf-renderer:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :pdf-renderer:compileReleaseLibraryResources UP-TO-DATE
+> Task :pdf-renderer:parseReleaseLocalResources UP-TO-DATE
+> Task :pdf-renderer:generateReleaseRFile UP-TO-DATE
+> Task :app-host:processReleaseResources UP-TO-DATE
+> Task :pdf-ipc:compileReleaseKotlin UP-TO-DATE
+> Task :pdf-ipc:javaPreCompileRelease UP-TO-DATE
+> Task :pdf-ipc:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :pdf-ipc:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :app-host:compileReleaseKotlin UP-TO-DATE
+> Task :app-host:javaPreCompileRelease UP-TO-DATE
+> Task :app-host:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :app-host:extractProguardFiles UP-TO-DATE
+> Task :pdf-ipc:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :pdf-ipc:processReleaseJavaRes UP-TO-DATE
+> Task :pdf-ipc:createFullJarRelease UP-TO-DATE
+> Task :pdf-ipc:extractProguardFiles UP-TO-DATE
+> Task :pdf-ipc:generateReleaseLintModel UP-TO-DATE
+> Task :pdf-ipc:prepareLintJarForPublish UP-TO-DATE
+> Task :pdf-jail:compileReleaseAidl NO-SOURCE
+> Task :pdf-jail:generateReleaseBuildConfig UP-TO-DATE
+
+> Task :pdf-jail:compileReleaseKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:68:31 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:94:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:99:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:108:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:139:35 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:155:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:167:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:178:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:190:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:197:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:210:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:222:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:235:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfBookletEngineWorker.kt:60:28 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfHeaderFooterEngine.kt:106:24 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageExtractorEngine.kt:55:41 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageReplacerEngine.kt:55:37 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:69:17 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:128:36 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfManipulatorWorker.kt:339:34 'fun setCanPrintDegraded(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfNUpEngineWorker.kt:138:16 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:271:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:273:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:288:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:290:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:59:44 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:77:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:148:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:211:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:37:63 Java type mismatch: inferred type is 'Nothing?', but 'String' was expected.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:80:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:115:33 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+
+> Task :pdf-jail:javaPreCompileRelease UP-TO-DATE
+
+> Task :pdf-jail:compileReleaseJavaWithJavac UP-TO-DATE
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :pdf-jail:bundleLibRuntimeToJarRelease
+> Task :pdf-jail:processReleaseJavaRes UP-TO-DATE
+> Task :pdf-jail:createFullJarRelease
+> Task :pdf-jail:extractProguardFiles UP-TO-DATE
+> Task :pdf-jail:generateReleaseLintModel
+> Task :pdf-jail:prepareLintJarForPublish UP-TO-DATE
+> Task :pdf-renderer:compileReleaseAidl NO-SOURCE
+> Task :pdf-renderer:generateReleaseBuildConfig UP-TO-DATE
+> Task :pdf-renderer:compileReleaseKotlin UP-TO-DATE
+> Task :pdf-renderer:javaPreCompileRelease UP-TO-DATE
+> Task :pdf-renderer:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :pdf-renderer:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :pdf-renderer:processReleaseJavaRes UP-TO-DATE
+> Task :pdf-renderer:createFullJarRelease UP-TO-DATE
+> Task :pdf-renderer:extractProguardFiles UP-TO-DATE
+> Task :pdf-renderer:generateReleaseLintModel UP-TO-DATE
+> Task :pdf-renderer:prepareLintJarForPublish UP-TO-DATE
+> Task :app-host:generateReleaseLintReportModel
+> Task :pdf-jail:checkReleaseAarMetadata UP-TO-DATE
+> Task :pdf-jail:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :pdf-jail:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-jail:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-jail:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :pdf-jail:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :pdf-jail:extractReleaseAnnotations
+> Task :pdf-jail:generateReleaseAssets UP-TO-DATE
+> Task :pdf-jail:mergeReleaseAssets UP-TO-DATE
+> Task :pdf-jail:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :pdf-jail:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :pdf-jail:prepareReleaseArtProfile UP-TO-DATE
+> Task :pdf-jail:mergeReleaseJavaResource UP-TO-DATE
+> Task :pdf-jail:syncReleaseLibJars
+> Task :pdf-jail:bundleReleaseLocalLintAar
+> Task :pdf-renderer:checkReleaseAarMetadata UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-renderer:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-renderer:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :pdf-renderer:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :pdf-renderer:extractReleaseAnnotations UP-TO-DATE
+> Task :pdf-renderer:generateReleaseAssets UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseAssets UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :pdf-renderer:prepareReleaseArtProfile UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseJavaResource UP-TO-DATE
+> Task :pdf-renderer:syncReleaseLibJars UP-TO-DATE
+> Task :pdf-renderer:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :pdf-ipc:checkReleaseAarMetadata UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-ipc:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-ipc:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :pdf-ipc:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :pdf-ipc:extractReleaseAnnotations UP-TO-DATE
+> Task :pdf-ipc:generateReleaseAssets UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseAssets UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :pdf-ipc:prepareReleaseArtProfile UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseJavaResource UP-TO-DATE
+> Task :pdf-ipc:syncReleaseLibJars UP-TO-DATE
+> Task :pdf-ipc:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :pdf-ipc:lintAnalyzeRelease UP-TO-DATE
+> Task :pdf-ipc:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :pdf-jail:lintAnalyzeRelease
+> Task :pdf-jail:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :pdf-renderer:lintAnalyzeRelease UP-TO-DATE
+> Task :pdf-renderer:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :app-host:lintAnalyzeRelease
+
+> Task :app-host:lintReportRelease
+Wrote HTML report to file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/build/reports/lint-results-release.html
+Lint found 629 warnings
+
+38 errors/warnings were listed in the baseline file (E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\app-host\lint-localization-baseline.xml) but not found in the project; perhaps they have been fixed?
+
+> Task :app-host:lintRelease
+
+BUILD SUCCESSFUL in 3m 57s
+284 actionable tasks: 25 executed, 259 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html

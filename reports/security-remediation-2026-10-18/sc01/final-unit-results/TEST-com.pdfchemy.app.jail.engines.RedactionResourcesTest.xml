@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.RedactionResourcesTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:31:50.634Z" hostname="DESKTOP-N37P7P6" time="2.263">
+  <properties/>
+  <testcase name="nestedUsedFormsKeepTextWhileUnusedSensitiveFormIsRemoved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="2.073"/>
+  <testcase name="replacingScanRemovesOriginalImageResource" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.037"/>
+  <testcase name="resourceLessFormKeepsNamesResolvedInCallingPage" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="inheritedSharedUnusedResourcesAreRemovedWithoutLosingUnrelatedText" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="annotationAppearanceCanResolveFontInPageResources" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.035"/>
+  <testcase name="replacingContentRemovesOriginalSensitiveForm" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.029"/>
+  <testcase name="implicitDefaultColorSpaceIsPreserved" classname="com.pdfchemy.app.jail.engines.RedactionResourcesTest" time="0.03"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

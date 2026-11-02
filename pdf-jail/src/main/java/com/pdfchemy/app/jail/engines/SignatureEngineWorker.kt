@@ -77,7 +77,7 @@ object SignatureEngineWorker {
                             if (!dateStamp.isNullOrBlank()) {
                                 cs.beginText()
                                 cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
-                                cs.setNonStrokingColor(0, 0, 0)
+                                cs.setNonStrokingColor(0f, 0f, 0f)
                                 cs.newLineAtOffset(stampX, stampY - 12f)
                                 cs.showText("Signed: $dateStamp")
                                 cs.endText()

@@ -1,0 +1,237 @@
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.WarningPublicationSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=failedCompressionPreservesExistingDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=failedCompressionPreservesExistingDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=failedCompressionDeletesFreshIncompleteDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=failedCompressionDeletesFreshIncompleteDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+Error in dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion(com.pdfchemy.app.security.WarningPublicationSecurityTest):
+java.lang.AssertionError: Completed Warning output must survive DISMISS_AND_REUSE
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion(WarningPublicationSecurityTest.kt:127)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Completed Warning output must survive DISMISS_AND_REUSE
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion(WarningPublicationSecurityTest.kt:127)
+
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=targetMissedPdfSurvivesViewModelDestruction
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+Error in targetMissedPdfSurvivesViewModelDestruction(com.pdfchemy.app.security.WarningPublicationSecurityTest):
+java.lang.AssertionError: Completed Warning output must survive CLEAR
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesViewModelDestruction(WarningPublicationSecurityTest.kt:125)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=targetMissedPdfSurvivesViewModelDestruction
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Completed Warning output must survive CLEAR
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesViewModelDestruction(WarningPublicationSecurityTest.kt:125)
+
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=targetMissedPdfSurvivesCancellation
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+Error in targetMissedPdfSurvivesCancellation(com.pdfchemy.app.security.WarningPublicationSecurityTest):
+java.lang.AssertionError: Completed Warning output must survive CANCEL
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesCancellation(WarningPublicationSecurityTest.kt:126)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=targetMissedPdfSurvivesCancellation
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.WarningPublicationSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Completed Warning output must survive CANCEL
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesCancellation(WarningPublicationSecurityTest.kt:126)
+
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1.366
+There were 3 failures:
+1) dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion(com.pdfchemy.app.security.WarningPublicationSecurityTest)
+java.lang.AssertionError: Completed Warning output must survive DISMISS_AND_REUSE
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.dismissedWarningCanBeReusedWithoutStaleFreshnessDeletion(WarningPublicationSecurityTest.kt:127)
+2) targetMissedPdfSurvivesViewModelDestruction(com.pdfchemy.app.security.WarningPublicationSecurityTest)
+java.lang.AssertionError: Completed Warning output must survive CLEAR
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:28)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:46)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesViewModelDestruction(WarningPublicationSecurityTest.kt:125)
+3) targetMissedPdfSurvivesCancellation(com.pdfchemy.app.security.WarningPublicationSecurityTest)
+java.lang.AssertionError: Completed Warning output must survive CANCEL
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest$exercise$1.invokeSuspend(WarningPublicationSecurityTest.kt:105)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.exercise$default(WarningPublicationSecurityTest.kt:54)
+	at com.pdfchemy.app.security.WarningPublicationSecurityTest.targetMissedPdfSurvivesCancellation(WarningPublicationSecurityTest.kt:126)
+
+FAILURES!!!
+Tests run: 5,  Failures: 3
+
+
+INSTRUMENTATION_CODE: -1

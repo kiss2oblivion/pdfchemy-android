@@ -1,0 +1,22 @@
+{
+  "source": "7f7fe75766e4ec55461b140faccde101eebb5aa2",
+  "run": 39400342318,
+  "attempt": 1,
+  "api": 34,
+  "job": 118554850267,
+  "tests": 236,
+  "failures": 1,
+  "errors": 0,
+  "skipped": 0,
+  "warning_methods_passed": 5,
+  "failing_methods": [
+    [
+      "com.pdfchemy.app.StartupWindowRegressionTest",
+      "backgroundAndResumeRetainsContent",
+      null
+    ]
+  ],
+  "cause": "not established; ActivityScenario STARTED transition timeout",
+  "build": "skipped",
+  "successful_matrix_counting": "not included; retain failed attempt separately"
+}

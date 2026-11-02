@@ -1,0 +1,80 @@
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.EditorRedactionResourceSecurityTest:
+INSTRUMENTATION_STATUS: test=documentMetadataAndAccessibilityTextCannotSurviveRedaction
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:129)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture$default(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.documentMetadataAndAccessibilityTextCannotSurviveRedaction(EditorRedactionResourceSecurityTest.kt:154)
+
+INSTRUMENTATION_STATUS: stream=
+Error in documentMetadataAndAccessibilityTextCannotSurviveRedaction(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:129)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture$default(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.documentMetadataAndAccessibilityTextCannotSurviveRedaction(EditorRedactionResourceSecurityTest.kt:154)
+
+INSTRUMENTATION_STATUS: test=documentMetadataAndAccessibilityTextCannotSurviveRedaction
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2.192
+There was 1 failure:
+1) documentMetadataAndAccessibilityTextCannotSurviveRedaction(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError
+	at org.junit.Assert.fail(Assert.java:87)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertFalse(Assert.java:65)
+	at org.junit.Assert.assertFalse(Assert.java:75)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$runFixture$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:129)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.runFixture$default(EditorRedactionResourceSecurityTest.kt:28)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.documentMetadataAndAccessibilityTextCannotSurviveRedaction(EditorRedactionResourceSecurityTest.kt:154)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

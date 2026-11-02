@@ -1,0 +1,108 @@
+{
+  "baseline_application_source": "7f7fe75766e4ec55461b140faccde101eebb5aa2",
+  "implementation_parent": "1ae531c1e593a7cb18b0ea9f2ab75aef6d2eb0f9",
+  "jvm": [
+    {
+      "module": "pdf-ipc",
+      "tests": 48,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "pdf-jail",
+      "tests": 75,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "module": "app-host",
+      "tests": 165,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "native": [
+    {
+      "api": 24,
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    },
+    {
+      "api": 36,
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "crash_buffer": "empty"
+    }
+  ],
+  "negative": {
+    "jvm_tests": 3,
+    "expected_failures": 3,
+    "native_api24_tests": 4,
+    "native_expected_failures": 4
+  },
+  "full_ci": "not-run-at-local-checkpoint",
+  "physical_device": "not-run",
+  "limits": [
+    "Conservative refusal when private descendants overlap live rendering/navigation, including OBJR/MCR references.",
+    "Seeded destination preservation uses local file output; no new SAF-provider verification.",
+    "Exact archived PDFs run through Editor; Search uses searchable extensions of the same alias topologies."
+  ],
+  "source_and_artifact_hashes": [
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+      "sha256": "a3f7cdd38373e5c749ca50126bb68d43f7ce2c7ba4006e28eef0b8df1214c0e7"
+    },
+    {
+      "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PrivatePayloadAliasTest.kt",
+      "sha256": "5692b61b30042a5d575b0bb7bac175963ff13cce30c6683dc9b02ce1c64b5f0a"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/PrivatePayloadAliasSecurityTest.kt",
+      "sha256": "c8938fd31b0c50f5904e03879b4118ef6066957a47e34d062d50269c38b59cf2"
+    },
+    {
+      "path": "app-host/src/androidTest/assets/security/sc10/piece-info-alias-input.pdf",
+      "sha256": "057469d492abfdce4e496d102319315c113ca7f15c29f9c9667ba4292aa1bd67"
+    },
+    {
+      "path": "pdf-jail/src/test/resources/redaction-private-alias/piece-info.pdf",
+      "sha256": "057469d492abfdce4e496d102319315c113ca7f15c29f9c9667ba4292aa1bd67"
+    },
+    {
+      "path": "app-host/src/androidTest/assets/security/sc10/attachment-alias-input.pdf",
+      "sha256": "8c7fd137e1dd0b83b26c240b6cfee6bd7e0e2bca97a5e53a4fcba6c8286f77bf"
+    },
+    {
+      "path": "pdf-jail/src/test/resources/redaction-private-alias/attachment.pdf",
+      "sha256": "8c7fd137e1dd0b83b26c240b6cfee6bd7e0e2bca97a5e53a4fcba6c8286f77bf"
+    },
+    {
+      "path": ".security-runtime/sc10/baseline.apk",
+      "sha256": "9b2653faf51987ed944cba5d2e1ec209f0754944875bb5dee62dd3c664f3e343"
+    },
+    {
+      "path": ".security-runtime/sc10/baseline-test.apk",
+      "sha256": "a02e6fc388b89f792eb8481fb639abc0415c383a37212dca2b1b64e4a933b392"
+    },
+    {
+      "path": ".security-runtime/sc10/fixed.apk",
+      "sha256": "ac95a5901919567f6f214291c7a5948b490ec273ffa07afc1c38bf280acafa0f"
+    },
+    {
+      "path": ".security-runtime/sc10/fixed-test.apk",
+      "sha256": "bbe3cd1f828529620159c8b2d23b705d653ccb483ce577146ef3b3480543f172"
+    },
+    {
+      "path": ".security-runtime/sc10/release-unsigned.apk",
+      "sha256": "5fb877fd84ceaca2fdd2f528e0b8a9bf8b35a8365e18ff8d4630f70be42b6db1"
+    }
+  ]
+}

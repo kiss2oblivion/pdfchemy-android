@@ -83,8 +83,9 @@ fun QuickFillSignScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -163,9 +164,7 @@ fun QuickFillSignScreen(
         session.reset(); sessionTick++
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val srcUri = selectedPdfUri
         if (destUri != null && srcUri != null) {
             isSaving = true
@@ -375,7 +374,7 @@ fun QuickFillSignScreen(
                         }
                         Button(
                             onClick = {
-                                val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "filled")
+                                val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "filled")
                                 saveFileLauncher.launch(suggestedName)
                             },
                             enabled = !isSaving
@@ -596,7 +595,7 @@ fun QuickFillSignScreen(
                 Button(
                     onClick = {
                         showUnsavedDialog = false
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "filled")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "filled")
                         saveFileLauncher.launch(suggestedName)
                     }
                 ) {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.WindowSecureManagerTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:39.796Z" hostname="DESKTOP-N37P7P6" time="0.573">
+  <properties/>
+  <testcase name="activityRecreation_isolatesWindowsCleanly" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.082"/>
+  <testcase name="contextHierarchyActivityResolution_unwrapsDeepContextWrappers" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.044"/>
+  <testcase name="windowCycleAbsence_allowsGarbageCollectionWithoutRetainingObsoleteWindow" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.064"/>
+  <testcase name="backNavigation_restoresUnshieldedStateOnlyWhenAllSensitiveScreensExit" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.041"/>
+  <testcase name="preservationOfIndependentlyEstablishedFlag_neverRemovesPreExistingSecurity" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.043"/>
+  <testcase name="multiWindowIsolation_concurrentWindowsDoNotCrossContaminate" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.06"/>
+  <testcase name="rapidNavigationAndOutOfOrderRelease_preservesFlagUntilLastRelease" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.049"/>
+  <testcase name="chainedTransitionsAcrossMultipleSensitiveScreens_retainsProtectionThroughout" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.044"/>
+  <testcase name="singleScreenLifecycle_setsAndClearsFlag" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.046"/>
+  <testcase name="overlappingReaderToEditorTransition_neverClearsFlagDuringHandoff" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.045"/>
+  <testcase name="idempotentRelease_doesNotUnderflowOrCorruptCount" classname="com.pdfchemy.app.security.WindowSecureManagerTest" time="0.053"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

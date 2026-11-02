@@ -70,7 +70,7 @@ object JailCompressionWorker {
                     document.documentCatalog.metadata = null
                 }
                 boundedFileOutput(target.fileDescriptor).use { document.save(it) }
-                JSONObject().put("size", target.statSize).put("imagesProcessed", processed).put("hasSignatures", signed).toString()
+                JSONObject().put("size", com.pdfchemy.app.jail.JailScratch.outputSize(target.fileDescriptor)).put("imagesProcessed", processed).put("hasSignatures", signed).toString()
             }
         }
     }

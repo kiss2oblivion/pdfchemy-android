@@ -107,9 +107,7 @@ fun GrayscaleOptimizerScreen(
         }
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -130,7 +128,7 @@ fun GrayscaleOptimizerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_grayscale_success),
                         context.getString(R.string.desc_grayscale_success)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

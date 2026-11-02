@@ -53,7 +53,8 @@ fun PageNumberScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var totalPages by remember { mutableIntStateOf(1) }
 
@@ -92,14 +93,21 @@ fun PageNumberScreen(
         }
     }
 
+    LaunchedEffect(continuityUri) {
+        val target = continuityUri
+        if (target != null) {
+            selectedPdfUri = target
+            viewModel.clearContinuityUri()
+            loadPreview(target)
+        }
+    }
+
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         loadPreview(uri)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {

@@ -1,0 +1,42 @@
+{
+  "scope": "Raw local source/artifact bytes for document metadata, accessibility and attachment follow-up. Superseded CI 39170654288 and local 220-method run tested 593be048 before this follow-up.",
+  "negative_baseline": "shared-stream-fixed.apk is the 593be048 application; document-carrier-baseline-test.apk is the metadata/tag negative test APK before attachment fixture extension.",
+  "files": [
+    {
+      "path": "app-host/build/outputs/apk/debug/app-host-debug.apk",
+      "sha256": "c44f2c04e5e1415a7735202bae501c6e5bb45b816013a1b41191f932a2d499b6"
+    },
+    {
+      "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk",
+      "sha256": "19fb57d58a1015f4143aa86c2b488bacbb7c4ca649b79135315c5e9a33ae6f3c"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt",
+      "sha256": "6a48b23ea280d748034e80cdb6d1f62c063111fb93f82ae81c7db03ec692b2fd"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/RedactionResources.kt",
+      "sha256": "a29905d3b56ecfeefa85a1ccdd8c6c8d3b77429a685f203e1f6bb5614dd701ec"
+    },
+    {
+      "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/RedactionResourcesTest.kt",
+      "sha256": "c38cfc7110955567206f2f544fdf162fcead9ba5d6ef02eb835117dc62158bb6"
+    },
+    {
+      "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/EditorRedactionResourceSecurityTest.kt",
+      "sha256": "f26373d9656a78032d07657adc5716e44cfd21d043f8910591b1126e7150221f"
+    },
+    {
+      "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/ActiveContentScrubber.kt",
+      "sha256": "1707e067ad7ec74ff079859ef6ec4cac8e7f1a5f72440e2eb54711037008c9ac"
+    },
+    {
+      "path": ".security-runtime/sc01/shared-stream-fixed.apk",
+      "sha256": "fe3d46b3a0f99caa1e7f47202524b28e6a31150bd72a3ac6a27fb720a13cfb30"
+    },
+    {
+      "path": ".security-runtime/sc01/document-carrier-baseline-test.apk",
+      "sha256": "625414d3300c5763625bb9bbb5eccd75f13c6d1617bddff35f08808482c2e8a1"
+    }
+  ]
+}

@@ -1,0 +1,705 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/John/.gradle/wrapper/dists/gradle-9.4.1-bin/arn2x92ynaizyzdaamcbpbhtj/gradle-9.4.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app-host
+WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableJetifier=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-ipc
+WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-jail
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-renderer
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :securityArchitecture
+> Task :pdf-ipc:preBuild UP-TO-DATE
+> Task :pdf-ipc:preDebugBuild UP-TO-DATE
+> Task :pdf-ipc:compileDebugAidl UP-TO-DATE
+> Task :pdf-ipc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-ipc:generateDebugResValues UP-TO-DATE
+> Task :pdf-ipc:generateDebugResources UP-TO-DATE
+> Task :pdf-ipc:packageDebugResources UP-TO-DATE
+> Task :pdf-ipc:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-ipc:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-ipc:generateDebugRFile UP-TO-DATE
+> Task :pdf-ipc:compileDebugKotlin UP-TO-DATE
+> Task :pdf-ipc:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-ipc:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-ipc:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :pdf-ipc:processDebugJavaRes UP-TO-DATE
+> Task :pdf-ipc:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :pdf-jail:verifyTesseractAarHash UP-TO-DATE
+> Task :pdf-jail:preBuild UP-TO-DATE
+> Task :pdf-jail:preDebugBuild UP-TO-DATE
+> Task :pdf-jail:compileDebugAidl NO-SOURCE
+> Task :pdf-jail:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-jail:generateDebugBuildConfig UP-TO-DATE
+> Task :pdf-jail:generateDebugResValues UP-TO-DATE
+> Task :pdf-jail:generateDebugResources UP-TO-DATE
+> Task :pdf-jail:packageDebugResources UP-TO-DATE
+> Task :pdf-jail:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-jail:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-jail:generateDebugRFile UP-TO-DATE
+> Task :pdf-jail:compileDebugKotlin UP-TO-DATE
+> Task :pdf-jail:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-jail:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-jail:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :pdf-jail:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :pdf-ipc:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-ipc:compileDebugLibraryResources UP-TO-DATE
+> Task :pdf-ipc:writeDebugAarMetadata UP-TO-DATE
+> Task :pdf-jail:preDebugUnitTestBuild UP-TO-DATE
+> Task :pdf-jail:writeDebugAarMetadata UP-TO-DATE
+> Task :pdf-jail:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :pdf-jail:mapDebugSourceSetPaths UP-TO-DATE
+> Task :pdf-jail:compileDebugLibraryResources UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestResValues UP-TO-DATE
+> Task :pdf-jail:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestResources UP-TO-DATE
+> Task :pdf-jail:mergeDebugUnitTestResources UP-TO-DATE
+> Task :pdf-ipc:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-ipc:processDebugManifest UP-TO-DATE
+> Task :pdf-jail:extractDeepLinksDebug UP-TO-DATE
+> Task :pdf-jail:processDebugManifest UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestManifest UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestResources UP-TO-DATE
+> Task :pdf-jail:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :pdf-jail:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :pdf-jail:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :pdf-ipc:generateDebugAssets UP-TO-DATE
+> Task :pdf-ipc:mergeDebugAssets UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestAssets UP-TO-DATE
+> Task :pdf-jail:generateDebugAssets UP-TO-DATE
+> Task :pdf-jail:mergeDebugAssets UP-TO-DATE
+> Task :pdf-jail:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :pdf-jail:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :pdf-jail:generateDebugUnitTestConfig UP-TO-DATE
+> Task :pdf-jail:processDebugJavaRes UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :pdf-jail:testDebugUnitTest
+
+> Task :app-host:securityAudit
+securityAudit scanned 135 files in app module.
+
+> Task :app-host:preBuild
+> Task :app-host:preDebugBuild
+> Task :app-host:compileDebugAidl NO-SOURCE
+> Task :app-host:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app-host:generateDebugBuildConfig
+> Task :pdf-renderer:preBuild UP-TO-DATE
+> Task :pdf-renderer:preDebugBuild UP-TO-DATE
+> Task :pdf-renderer:writeDebugAarMetadata
+> Task :app-host:checkDebugAarMetadata
+> Task :app-host:generateDebugResValues
+> Task :app-host:processDebugGoogleServices
+> Task :app-host:mapDebugSourceSetPaths
+> Task :pdf-renderer:processDebugNavigationResources
+> Task :app-host:processDebugNavigationResources
+> Task :app-host:compileDebugNavigationResources
+> Task :app-host:generateDebugResources
+> Task :pdf-renderer:generateDebugResValues
+> Task :pdf-renderer:generateDebugResources
+> Task :pdf-renderer:packageDebugResources
+> Task :app-host:mergeDebugResources
+> Task :app-host:packageDebugResources
+> Task :app-host:parseDebugLocalResources
+> Task :app-host:createDebugCompatibleScreenManifests
+> Task :app-host:extractDeepLinksDebug
+> Task :pdf-renderer:extractDeepLinksDebug
+> Task :pdf-renderer:processDebugManifest
+> Task :app-host:processDebugMainManifest
+> Task :app-host:processDebugManifest
+> Task :app-host:processDebugManifestForPackage
+> Task :pdf-renderer:mapDebugSourceSetPaths
+> Task :pdf-renderer:compileDebugLibraryResources
+> Task :pdf-renderer:parseDebugLocalResources
+> Task :pdf-renderer:generateDebugRFile
+> Task :app-host:processDebugResources
+> Task :app-host:compileDebugKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1768:44 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1792:133 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2090:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2184:42 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:50:114 'constructor(p0: Context!): Notification.Builder' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:59:51 'constructor(p0: Int, p1: CharSequence!, p2: PendingIntent?): Notification.Action.Builder' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/TtsPcmAssembler.kt:12:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/AttachmentManagerScreen.kt:272:56 'val Icons.Rounded.InsertDriveFile: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.InsertDriveFile.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:146:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:295:40 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:160:42 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:537:44 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt:204:75 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:101:25 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:103:32 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/EbookConverterScreen.kt:217:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:826:25 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:1438:37 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MarkdownStudioScreen.kt:259:56 'val Icons.Rounded.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FormatListBulleted.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt:204:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:138:42 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:155:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:163:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:180:42 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:228:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:245:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:270:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:587:49 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:923:49 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt:500:48 'val Icons.Rounded.NoteAdd: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.NoteAdd.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt:550:85 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt:461:65 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:558:25 'fun LinearProgressIndicator(progress: Float, modifier: Modifier = ..., color: Color = ..., trackColor: Color = ..., strokeCap: StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:718:56 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:73 'val Icons.Rounded.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeUp.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:101 'val Icons.Rounded.VolumeMute: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeMute.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:1110:47 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ScanPdfScreen.kt:456:48 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:230:181 'val Icons.Rounded.Undo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Undo.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:231:181 'val Icons.Rounded.Redo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Redo.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:41:92 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:49:92 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:58:80 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:60:94 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:61:96 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:63:96 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:69:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:71:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:74:82 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:86:98 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:90:102 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:171:48 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:369:44 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/textconverter/TextConverterScreen.kt:138:39 'val Icons.Rounded.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.ArrowForward.
+
+> Task :app-host:javaPreCompileDebug
+
+> Task :app-host:compileDebugJavaWithJavac
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+3 warnings
+
+> Task :app-host:bundleDebugClassesToRuntimeJar
+> Task :app-host:bundleDebugClassesToCompileJar
+
+> Task :app-host:compileDebugUnitTestKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/test/java/com/pdfchemy/app/logic/OutputWorkflowTest.kt:28:76 Type argument for reified type parameter 'T' was inferred to the intersection of ['Comparable<*>' & 'Serializable']. Reification of an intersection type results in the common supertype being used. This may lead to subtle issues and an explicit type argument is encouraged. This will become an error in a future release.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:24:20 Check for instance is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:28:20 Check for instance is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:33:20 Check for instance is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/test/java/com/pdfchemy/app/logic/PdfGatewayErrorClassificationTest.kt:38:20 Check for instance is always 'true'.
+
+> Task :app-host:preDebugUnitTestBuild
+> Task :app-host:javaPreCompileDebugUnitTest
+> Task :app-host:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app-host:generateDebugAssets UP-TO-DATE
+> Task :pdf-renderer:generateDebugAssets UP-TO-DATE
+> Task :pdf-renderer:mergeDebugAssets
+> Task :app-host:mergeDebugAssets
+> Task :app-host:packageDebugUnitTestForUnitTest
+> Task :app-host:processDebugUnitTestManifest
+> Task :app-host:generateDebugUnitTestConfig
+> Task :app-host:processDebugJavaRes
+> Task :app-host:processDebugUnitTestJavaRes
+> Task :pdf-renderer:compileDebugAidl NO-SOURCE
+> Task :pdf-renderer:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-renderer:generateDebugBuildConfig
+> Task :pdf-renderer:compileDebugKotlin
+> Task :pdf-renderer:javaPreCompileDebug
+
+> Task :pdf-renderer:compileDebugJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :pdf-renderer:bundleLibRuntimeToJarDebug
+> Task :pdf-renderer:processDebugJavaRes
+> Task :app-host:testDebugUnitTest
+> Task :app-host:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app-host:compressDebugAssets
+> Task :app-host:generateDebugGlobalSynthetics
+> Task :app-host:mergeDebugJavaResource
+> Task :app-host:checkDebugDuplicateClasses
+> Task :app-host:desugarDebugFileDependencies
+> Task :app-host:mergeExtDexDebug
+> Task :pdf-jail:bundleLibRuntimeToDirDebug
+> Task :pdf-renderer:bundleLibRuntimeToDirDebug
+> Task :pdf-ipc:bundleLibRuntimeToDirDebug
+> Task :app-host:mergeLibDexDebug
+> Task :app-host:dexBuilderDebug
+> Task :app-host:mergeProjectDexDebug
+> Task :app-host:mergeDebugJniLibFolders
+> Task :pdf-ipc:mergeDebugJniLibFolders
+> Task :pdf-ipc:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-ipc:copyDebugJniLibsProjectOnly
+> Task :pdf-jail:mergeDebugJniLibFolders
+> Task :pdf-jail:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-jail:copyDebugJniLibsProjectOnly
+> Task :pdf-renderer:mergeDebugJniLibFolders
+> Task :pdf-renderer:mergeDebugNativeLibs NO-SOURCE
+> Task :pdf-renderer:copyDebugJniLibsProjectOnly
+> Task :app-host:mergeDebugNativeLibs
+> Task :app-host:stripDebugDebugSymbols
+> Task :app-host:validateSigningDebug
+> Task :app-host:writeDebugAppMetadata
+> Task :app-host:writeDebugSigningConfigVersions
+> Task :app-host:packageDebug
+> Task :app-host:createDebugApkListingFileRedirect
+> Task :app-host:assembleDebug
+> Task :app-host:preDebugAndroidTestBuild SKIPPED
+> Task :app-host:compileDebugAndroidTestAidl NO-SOURCE
+> Task :app-host:processDebugAndroidTestManifest
+> Task :app-host:generateDebugAndroidTestBuildConfig
+> Task :app-host:checkDebugAndroidTestAarMetadata
+> Task :app-host:generateDebugAndroidTestResValues
+> Task :app-host:mapDebugAndroidTestSourceSetPaths
+> Task :app-host:processDebugAndroidTestNavigationResources
+> Task :app-host:compileDebugAndroidTestNavigationResources
+> Task :app-host:generateDebugAndroidTestResources
+> Task :app-host:mergeDebugAndroidTestResources
+> Task :app-host:processDebugAndroidTestResources
+> Task :app-host:compileDebugAndroidTestKotlin
+> Task :app-host:javaPreCompileDebugAndroidTest
+
+> Task :app-host:compileDebugAndroidTestJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :app-host:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :app-host:mergeDebugAndroidTestAssets
+> Task :app-host:compressDebugAndroidTestAssets
+> Task :app-host:generateDebugAndroidTestGlobalSynthetics
+> Task :app-host:processDebugAndroidTestJavaRes
+> Task :app-host:mergeDebugAndroidTestJavaResource
+> Task :app-host:checkDebugAndroidTestDuplicateClasses
+> Task :app-host:desugarDebugAndroidTestFileDependencies
+> Task :app-host:mergeExtDexDebugAndroidTest
+> Task :app-host:mergeLibDexDebugAndroidTest
+> Task :app-host:dexBuilderDebugAndroidTest
+> Task :app-host:mergeProjectDexDebugAndroidTest
+> Task :app-host:mergeDebugAndroidTestJniLibFolders
+> Task :app-host:mergeDebugAndroidTestNativeLibs
+> Task :app-host:stripDebugAndroidTestDebugSymbols
+> Task :app-host:validateSigningDebugAndroidTest
+> Task :app-host:writeDebugAndroidTestSigningConfigVersions
+> Task :app-host:packageDebugAndroidTest
+> Task :app-host:createDebugAndroidTestApkListingFileRedirect
+> Task :app-host:assembleDebugAndroidTest
+> Task :app-host:buildKotlinToolingMetadata
+> Task :app-host:preReleaseBuild
+> Task :pdf-ipc:preReleaseBuild UP-TO-DATE
+> Task :pdf-ipc:compileReleaseAidl
+> Task :app-host:compileReleaseAidl NO-SOURCE
+> Task :app-host:generateReleaseBuildConfig
+> Task :pdf-ipc:writeReleaseAarMetadata
+> Task :pdf-jail:preReleaseBuild UP-TO-DATE
+> Task :pdf-jail:writeReleaseAarMetadata
+> Task :pdf-renderer:preReleaseBuild UP-TO-DATE
+> Task :pdf-renderer:writeReleaseAarMetadata
+> Task :app-host:checkReleaseAarMetadata
+> Task :app-host:generateReleaseResValues
+> Task :app-host:processReleaseGoogleServices
+> Task :app-host:mapReleaseSourceSetPaths
+> Task :pdf-ipc:processReleaseNavigationResources
+> Task :pdf-jail:processReleaseNavigationResources
+> Task :pdf-renderer:processReleaseNavigationResources
+> Task :app-host:processReleaseNavigationResources
+> Task :app-host:compileReleaseNavigationResources
+> Task :app-host:generateReleaseResources
+> Task :pdf-ipc:generateReleaseResValues
+> Task :pdf-ipc:generateReleaseResources
+> Task :pdf-ipc:packageReleaseResources
+> Task :pdf-jail:generateReleaseResValues
+> Task :pdf-jail:generateReleaseResources
+> Task :pdf-jail:packageReleaseResources
+> Task :pdf-renderer:generateReleaseResValues
+> Task :pdf-renderer:generateReleaseResources
+> Task :pdf-renderer:packageReleaseResources
+> Task :app-host:mergeReleaseResources
+> Task :app-host:packageReleaseResources
+> Task :app-host:parseReleaseLocalResources
+> Task :app-host:createReleaseCompatibleScreenManifests
+> Task :app-host:extractDeepLinksRelease
+> Task :pdf-ipc:extractDeepLinksRelease
+
+> Task :pdf-ipc:processReleaseManifest
+package="com.pdfchemy.app.ipc" found in source AndroidManifest.xml: E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\pdf-ipc\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.pdfchemy.app.ipc" from the source AndroidManifest.xml: E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\pdf-ipc\src\main\AndroidManifest.xml.
+
+> Task :pdf-jail:extractDeepLinksRelease
+> Task :pdf-jail:processReleaseManifest
+> Task :pdf-renderer:extractDeepLinksRelease
+> Task :pdf-renderer:processReleaseManifest
+> Task :app-host:processReleaseMainManifest
+> Task :app-host:processReleaseManifest
+> Task :app-host:processReleaseManifestForPackage
+> Task :pdf-ipc:mapReleaseSourceSetPaths
+> Task :pdf-ipc:compileReleaseLibraryResources
+> Task :pdf-ipc:parseReleaseLocalResources
+> Task :pdf-ipc:generateReleaseRFile
+> Task :pdf-jail:mapReleaseSourceSetPaths
+> Task :pdf-jail:compileReleaseLibraryResources
+> Task :pdf-jail:parseReleaseLocalResources
+> Task :pdf-jail:generateReleaseRFile
+> Task :pdf-renderer:mapReleaseSourceSetPaths
+> Task :pdf-renderer:compileReleaseLibraryResources
+> Task :pdf-renderer:parseReleaseLocalResources
+> Task :pdf-renderer:generateReleaseRFile
+> Task :app-host:processReleaseResources
+> Task :pdf-ipc:compileReleaseKotlin
+> Task :pdf-ipc:javaPreCompileRelease
+
+> Task :pdf-ipc:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :pdf-ipc:bundleLibCompileToJarRelease
+> Task :app-host:compileReleaseKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1768:44 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:1792:133 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2090:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/MainActivity.kt:2184:42 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:50:114 'constructor(p0: Context!): Notification.Builder' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/AudioExportService.kt:59:51 'constructor(p0: Int, p1: CharSequence!, p2: PendingIntent?): Notification.Action.Builder' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/logic/audio/TtsPcmAssembler.kt:12:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/AttachmentManagerScreen.kt:272:56 'val Icons.Rounded.InsertDriveFile: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.InsertDriveFile.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:146:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/BookletScreen.kt:295:40 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:160:42 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/CheckScreens.kt:537:44 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt:204:75 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:101:25 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/DocumentSanitizerScreen.kt:103:32 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/EbookConverterScreen.kt:217:39 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:826:25 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt:1438:37 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/MarkdownStudioScreen.kt:259:56 'val Icons.Rounded.FormatListBulleted: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FormatListBulleted.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt:204:42 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:138:42 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:155:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:163:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:180:42 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:228:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:245:42 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:270:42 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:587:49 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt:923:49 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt:500:48 'val Icons.Rounded.NoteAdd: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.NoteAdd.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PdfEditorScreen.kt:550:85 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt:461:65 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:558:25 'fun LinearProgressIndicator(progress: Float, modifier: Modifier = ..., color: Color = ..., trackColor: Color = ..., strokeCap: StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:718:56 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:73 'val Icons.Rounded.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeUp.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:732:101 'val Icons.Rounded.VolumeMute: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.VolumeMute.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ReflowReaderScreen.kt:1110:47 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ScanPdfScreen.kt:456:48 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:230:181 'val Icons.Rounded.Undo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Undo.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/SignPdfScreen.kt:231:181 'val Icons.Rounded.Redo: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Redo.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:41:92 'val Icons.Rounded.Article: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.Article.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:49:92 'val Icons.Rounded.LibraryBooks: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.LibraryBooks.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:58:80 'val Icons.Rounded.CallSplit: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.CallSplit.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:60:94 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:61:96 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:63:96 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:69:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:71:100 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:74:82 'val Icons.Rounded.RotateRight: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.RotateRight.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:86:98 'val Icons.Rounded.FactCheck: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.FactCheck.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt:90:102 'val Icons.Rounded.MenuBook: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.MenuBook.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:171:48 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt:369:44 'val Icons.Rounded.BrandingWatermark: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.BrandingWatermark.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/src/main/java/com/pdfchemy/app/ui/textconverter/TextConverterScreen.kt:138:39 'val Icons.Rounded.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Rounded.ArrowForward.
+
+> Task :app-host:javaPreCompileRelease
+
+> Task :app-host:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :app-host:extractProguardFiles
+> Task :pdf-ipc:bundleLibRuntimeToJarRelease
+> Task :pdf-ipc:processReleaseJavaRes
+> Task :pdf-ipc:createFullJarRelease
+> Task :pdf-ipc:extractProguardFiles
+> Task :pdf-ipc:generateReleaseLintModel
+> Task :pdf-ipc:prepareLintJarForPublish
+> Task :pdf-jail:compileReleaseAidl NO-SOURCE
+> Task :pdf-jail:generateReleaseBuildConfig
+
+> Task :pdf-jail:compileReleaseKotlin
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:68:31 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:94:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:99:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:108:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:139:35 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:155:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:167:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:178:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:190:39 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:197:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:210:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:222:39 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/MarkdownEngine.kt:235:43 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfBookletEngineWorker.kt:60:28 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfHeaderFooterEngine.kt:106:24 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageExtractorEngine.kt:55:41 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfImageReplacerEngine.kt:55:37 Condition is always 'true'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:69:17 Condition is always 'false'.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLayoutEngine.kt:128:36 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfManipulatorWorker.kt:339:34 'fun setCanPrintDegraded(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfNUpEngineWorker.kt:138:16 'fun setStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:271:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:273:32 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:288:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt:290:40 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:59:44 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:77:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:148:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfStampAndNumberWorker.kt:211:28 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:37:63 Java type mismatch: inferred type is 'Nothing?', but 'String' was expected.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:80:36 'fun setNonStrokingColor(p0: Int, p1: Int, p2: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/SignatureEngineWorker.kt:115:33 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+
+> Task :pdf-jail:javaPreCompileRelease
+
+> Task :pdf-jail:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+
+> Task :pdf-jail:bundleLibRuntimeToJarRelease
+> Task :pdf-jail:processReleaseJavaRes
+> Task :pdf-jail:createFullJarRelease
+> Task :pdf-jail:extractProguardFiles
+> Task :pdf-jail:generateReleaseLintModel
+> Task :pdf-jail:prepareLintJarForPublish
+> Task :pdf-renderer:compileReleaseAidl NO-SOURCE
+> Task :pdf-renderer:generateReleaseBuildConfig
+> Task :pdf-renderer:compileReleaseKotlin
+> Task :pdf-renderer:javaPreCompileRelease
+
+> Task :pdf-renderer:compileReleaseJavaWithJavac
+Java compiler version 21 has deprecated support for compiling with source/target version 8.
+Try one of the following options:
+    1. [Recommended] Use Java toolchain with a lower language version
+    2. Set a higher source/target version
+    3. Use a lower version of the JDK running the build (if you're not using Java toolchain)
+For more details on how to configure these settings, see https://developer.android.com/build/jdks.
+To suppress this warning, set android.javaCompile.suppressSourceTargetDeprecationWarning=true in gradle.properties.
+
+> Task :pdf-renderer:bundleLibRuntimeToJarRelease
+> Task :pdf-renderer:processReleaseJavaRes
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+> Task :pdf-renderer:createFullJarRelease
+> Task :pdf-renderer:extractProguardFiles
+> Task :pdf-renderer:generateReleaseLintModel
+> Task :pdf-renderer:prepareLintJarForPublish
+> Task :app-host:generateReleaseLintReportModel
+> Task :pdf-jail:checkReleaseAarMetadata
+> Task :pdf-jail:mergeReleaseJniLibFolders
+> Task :pdf-jail:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-jail:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-jail:copyReleaseJniLibsProjectAndLocalJars
+> Task :pdf-jail:extractDeepLinksForAarRelease
+> Task :pdf-jail:extractReleaseAnnotations
+> Task :pdf-jail:generateReleaseAssets UP-TO-DATE
+> Task :pdf-jail:mergeReleaseAssets
+> Task :pdf-jail:mergeReleaseGeneratedProguardFiles
+> Task :pdf-jail:mergeReleaseConsumerProguardFiles
+> Task :pdf-jail:prepareReleaseArtProfile
+> Task :pdf-jail:mergeReleaseJavaResource
+> Task :pdf-jail:syncReleaseLibJars
+> Task :pdf-jail:bundleReleaseLocalLintAar
+> Task :pdf-renderer:checkReleaseAarMetadata
+> Task :pdf-renderer:mergeReleaseJniLibFolders
+> Task :pdf-renderer:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-renderer:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-renderer:copyReleaseJniLibsProjectAndLocalJars
+> Task :pdf-renderer:extractDeepLinksForAarRelease
+> Task :pdf-renderer:extractReleaseAnnotations
+> Task :pdf-renderer:generateReleaseAssets UP-TO-DATE
+> Task :pdf-renderer:mergeReleaseAssets
+> Task :pdf-renderer:mergeReleaseGeneratedProguardFiles
+> Task :pdf-renderer:mergeReleaseConsumerProguardFiles
+> Task :pdf-renderer:prepareReleaseArtProfile
+> Task :pdf-renderer:mergeReleaseJavaResource
+> Task :pdf-renderer:syncReleaseLibJars
+> Task :pdf-renderer:bundleReleaseLocalLintAar
+> Task :pdf-ipc:checkReleaseAarMetadata
+> Task :pdf-ipc:mergeReleaseJniLibFolders
+> Task :pdf-ipc:mergeReleaseNativeLibs NO-SOURCE
+> Task :pdf-ipc:stripReleaseDebugSymbols NO-SOURCE
+> Task :pdf-ipc:copyReleaseJniLibsProjectAndLocalJars
+> Task :pdf-ipc:extractDeepLinksForAarRelease
+> Task :pdf-ipc:extractReleaseAnnotations
+> Task :pdf-ipc:generateReleaseAssets UP-TO-DATE
+> Task :pdf-ipc:mergeReleaseAssets
+> Task :pdf-ipc:mergeReleaseGeneratedProguardFiles
+> Task :pdf-ipc:mergeReleaseConsumerProguardFiles
+> Task :pdf-ipc:prepareReleaseArtProfile
+> Task :pdf-ipc:mergeReleaseJavaResource
+> Task :pdf-ipc:syncReleaseLibJars
+> Task :pdf-ipc:bundleReleaseLocalLintAar
+> Task :pdf-ipc:lintAnalyzeRelease
+> Task :pdf-ipc:writeReleaseLintModelMetadata
+> Task :pdf-jail:lintAnalyzeRelease
+> Task :pdf-jail:writeReleaseLintModelMetadata
+> Task :pdf-renderer:lintAnalyzeRelease
+> Task :pdf-renderer:writeReleaseLintModelMetadata
+> Task :app-host:lintAnalyzeRelease
+
+> Task :app-host:lintReportRelease
+Wrote HTML report to file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/app-host/build/reports/lint-results-release.html
+Lint found 629 warnings
+
+38 errors/warnings were listed in the baseline file (E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\app-host\lint-localization-baseline.xml) but not found in the project; perhaps they have been fixed?
+
+> Task :app-host:lintRelease
+
+[Incubating] Problems report is available at: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 10m 8s
+293 actionable tasks: 241 executed, 52 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html

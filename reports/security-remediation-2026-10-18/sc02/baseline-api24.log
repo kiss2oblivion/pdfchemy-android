@@ -1,0 +1,71 @@
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.SearchRedactionObjectSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=directLinkCannotRetainOriginalSensitivePage
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.SearchRedactionObjectSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+Error in directLinkCannotRetainOriginalSensitivePage(com.pdfchemy.app.security.SearchRedactionObjectSecurityTest):
+com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=directLinkCannotRetainOriginalSensitivePage
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.SearchRedactionObjectSecurityTest
+INSTRUMENTATION_STATUS: stack=com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=goToActionCannotRetainOriginalSensitivePage
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.SearchRedactionObjectSecurityTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+Error in goToActionCannotRetainOriginalSensitivePage(com.pdfchemy.app.security.SearchRedactionObjectSecurityTest):
+com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=goToActionCannotRetainOriginalSensitivePage
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.SearchRedactionObjectSecurityTest
+INSTRUMENTATION_STATUS: stack=com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1.524
+There were 2 failures:
+1) directLinkCannotRetainOriginalSensitivePage(com.pdfchemy.app.security.SearchRedactionObjectSecurityTest)
+com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+2) goToActionCannotRetainOriginalSensitivePage(com.pdfchemy.app.security.SearchRedactionObjectSecurityTest)
+com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: COSStream has been closed and cannot be read. Perhaps its enclosing PDDocument has been closed?
+	at com.pdfchemy.app.logic.PdfGateway$request$2$callback$1.onFailure(PdfGateway.kt:110)
+	at com.pdfchemy.app.jail.IPdfJailStringCallback$Stub.onTransact(IPdfJailStringCallback.java:80)
+	at android.os.Binder.execTransact(Binder.java:565)
+
+FAILURES!!!
+Tests run: 2,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1

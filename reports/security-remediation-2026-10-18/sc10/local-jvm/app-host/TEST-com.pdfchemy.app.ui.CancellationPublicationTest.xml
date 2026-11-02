@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.ui.CancellationPublicationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:40.375Z" hostname="DESKTOP-N37P7P6" time="0.973">
+  <properties/>
+  <testcase name="imageExtractionFailureDeletesPartialOutputsReportsFailureAndReleasesFrames" classname="com.pdfchemy.app.ui.CancellationPublicationTest" time="0.323"/>
+  <testcase name="cancelledWriterStopsBeforeDestinationIsDeletedAndCannotReplaceIdleWithError" classname="com.pdfchemy.app.ui.CancellationPublicationTest" time="0.298"/>
+  <testcase name="publicationRemainsTerminalAcrossLaterLifecycleTransitions" classname="com.pdfchemy.app.ui.CancellationPublicationTest" time="0.028"/>
+  <testcase name="staleCancellationPreservesFreshDestinationClaimedByNewerOperation" classname="com.pdfchemy.app.ui.CancellationPublicationTest" time="0.324"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

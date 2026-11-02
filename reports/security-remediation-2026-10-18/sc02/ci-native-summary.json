@@ -1,0 +1,49 @@
+{
+  "source": "383f193aa5c5a0f5ebbd01e25f98d0add319c5f7",
+  "run": 39236250552,
+  "native_executions": 916,
+  "apis": [
+    {
+      "api": 24,
+      "tests": 229,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "search_security_methods": 8,
+      "result_sha256": "09e3a1325657f28b24a6d2af48d4bec7c67b9291c6eff81ec96a87877dcec4db"
+    },
+    {
+      "api": 30,
+      "tests": 229,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "search_security_methods": 8,
+      "result_sha256": "77bea521d270a521aa7c235ab9137eb3acea14f275f6ca910c71f5820a334ca6"
+    },
+    {
+      "api": 34,
+      "tests": 229,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "search_security_methods": 8,
+      "result_sha256": "2055f71a677c41347a7b1d46d076838e3f9df2e3ede5d554b8dbc463741f301b"
+    },
+    {
+      "api": 36,
+      "tests": 229,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "search_security_methods": 8,
+      "result_sha256": "6632f4c07808bfb505dcc8579a0ec492a8a0c3e07ddab70d29b479cb9e253a31"
+    }
+  ],
+  "status": "complete",
+  "workflow_conclusion": "success",
+  "release_build": "success",
+  "release_build_job": 118019385347,
+  "successful_secret_retry_job": 118019242292,
+  "note": "Native suites executed in attempt 1; carried-forward successful jobs are not additional executions."
+}

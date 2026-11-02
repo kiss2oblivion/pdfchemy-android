@@ -1,0 +1,47 @@
+{
+  "source": "7390523c61b3eedbf0be91bc9f0696811b0c4626",
+  "run": 39331074041,
+  "native_executions": 924,
+  "apis": [
+    {
+      "api": 24,
+      "tests": 231,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "real_batch_cancellation_methods": 2,
+      "result_sha256": "ae2bb13a81fd81377d32bcda6a3f05666f5de2c6ef6d7883911be6b086825169"
+    },
+    {
+      "api": 30,
+      "tests": 231,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "real_batch_cancellation_methods": 2,
+      "result_sha256": "27bc162971dd1dc95548fd0745e18c73dc56dcf9c1e4cf0aada061073e112672"
+    },
+    {
+      "api": 34,
+      "tests": 231,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "real_batch_cancellation_methods": 2,
+      "result_sha256": "86cb9802fff35e29b2978cb1e3c6535fd09233b99d6ff73f0aa120c0cf2602a6"
+    },
+    {
+      "api": 36,
+      "tests": 231,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "real_batch_cancellation_methods": 2,
+      "result_sha256": "2d3ae23ae830ffb32dd80954b3296c608086e6d75e9dd33530a7d9171f5012f3"
+    }
+  ],
+  "status": "complete",
+  "workflow_conclusion": "success",
+  "release_build": "success",
+  "release_build_job": 118343501783
+}

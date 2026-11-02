@@ -26,7 +26,7 @@ class EditorSession(
     private val redoStack = ArrayDeque<EditorSessionSnapshot>()
 
     private var currentModifications: Map<Int, PageModification> = initialModifications
-    private val baselineModifications: Map<Int, PageModification> = initialModifications
+    private var baselineModifications: Map<Int, PageModification> = initialModifications
 
     val canUndo: Boolean get() = undoStack.isNotEmpty()
     val canRedo: Boolean get() = redoStack.isNotEmpty()
@@ -35,7 +35,9 @@ class EditorSession(
      * True if the document has modifications compared to its baseline state.
      */
     val isDirty: Boolean
-        get() = currentModifications != baselineModifications && currentModifications.values.any { it.hasChanges }
+        // Default page entries are equivalent to absence, on either side of a save.
+        get() = currentModifications.filterValues { it.hasChanges } !=
+            baselineModifications.filterValues { it.hasChanges }
 
     fun getModifications(): Map<Int, PageModification> = currentModifications
 
@@ -119,6 +121,11 @@ class EditorSession(
         return snapshot.targetPageIndex
     }
 
+    fun markSaved() { baselineModifications = currentModifications }
+    fun clear() {
+        baselineModifications = emptyMap()
+        reset()
+    }
     fun reset() {
         undoStack.clear()
         redoStack.clear()

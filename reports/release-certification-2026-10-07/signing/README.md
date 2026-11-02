@@ -1,3 +1,11 @@
+# Current Android 2.1.0 signing status
+
+Version 2.1.0 / code 14 supersedes the historical code-13 instructions below. The old signed 74bb6a82 archive predates the latest form, localization and context corrections. Build signed APK/AAB/mapping from the clean final branch, then record its exact full source SHA, artifact hashes, signatures, bundle validation, hygiene and 16-KiB checks. The final candidate archive's artifact-receipt.json is authoritative for those identities.
+
+The expected local upload certificate is SHA-256 f7b12a179e08ebc24b0bc2afae5438e90834ec92896f67d9da8294aea653b41b. Play's registered upload certificate and highest-used version code remain unverified. Do not confuse the upload certificate with Google's app-signing certificate. See [current release gates](../../../CURRENT_RELEASE_STATUS.md).
+
+## Historical signing checkpoint — 2026-10-07
+
 # Upload signing: P1 registration gate remains open
 
 `app-host/build.gradle.kts` selects `app-host/release.jks`, alias `pdfchemy-release-key`, using environment values or untracked `keystore.properties`. No private key/password was changed. Release APK and AAB were built locally with shrinking enabled. `apksigner verify --print-certs` verified the APK; `keytool -printcert -jarfile` identified the signed AAB certificate. Both contain the same certificate.
@@ -18,6 +26,6 @@ Required external evidence: **Play Console → App integrity → Upload key cert
 - If it is `b12a125d…58a540a`, select the corresponding private upload key if available, or deliberately request an upload-key reset to the current certificate. Renaming a certificate or replacing a PEM does not change the private signing key.
 - If it is another value, identify the matching private upload key or perform the supported reset. Do not upload a bundle until this is reconciled.
 
-The package version remains 2.0.6 / code 13. Confirm code 13 is unused for this Play application before upload; increment deliberately if Play already contains it.
+Historical package: 2.0.6 / code 13. These values are superseded by current 2.1.0 / code 14; verify the highest-used Play code against the current candidate.
 
 Google distinguishes upload and app-signing keys and documents upload-key resets in [Play App Signing](https://support.google.com/googleplay/android-developer/answer/9842756?hl=en-GB) and [Android app signing](https://developer.android.com/studio/publish/app-signing).

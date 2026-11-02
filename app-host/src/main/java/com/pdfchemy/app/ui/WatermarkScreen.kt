@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,7 +55,8 @@ fun WatermarkScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var watermarkText by remember { mutableStateOf("CONFIDENTIAL") }
     var opacity by remember { mutableFloatStateOf(0.30f) }
@@ -92,14 +94,21 @@ fun WatermarkScreen(
         }
     }
 
+    LaunchedEffect(continuityUri) {
+        val target = continuityUri
+        if (target != null) {
+            selectedPdfUri = target
+            viewModel.clearContinuityUri()
+            loadPreview(target)
+        }
+    }
+
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         loadPreview(uri)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {
@@ -170,7 +179,7 @@ fun WatermarkScreen(
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(46.dp), tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.AutoMirrored.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(46.dp), tint = MaterialTheme.colorScheme.primary)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(stringResource(R.string.watermark_headline), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -368,7 +377,7 @@ fun WatermarkScreen(
                     if (isProcessing) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Icon(Icons.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.AutoMirrored.Rounded.BrandingWatermark, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.action_apply_watermark),

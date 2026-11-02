@@ -66,9 +66,7 @@ fun FindAndReplaceScreen(
         searchSummary = null
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && findQuery.isNotBlank()) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             viewModel.replaceTextOccurrences(

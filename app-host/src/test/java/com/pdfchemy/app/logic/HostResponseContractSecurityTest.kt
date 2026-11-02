@@ -69,6 +69,13 @@ class HostResponseContractSecurityTest {
         assertTrue(repairContract is RepairApplyContract)
         assertTrue((repairContract as RepairApplyContract).success)
         assertEquals(12, repairContract.recoveredPages)
+
+        val tableJson = """{"success":true,"empty":false,"rowCount":8}"""
+        val tableContract = WorkerResponseValidator.validate("TABLE_EXTRACT", tableJson)
+        assertTrue(tableContract is TableExtractContract)
+        assertTrue((tableContract as TableExtractContract).success)
+        assertFalse(tableContract.empty)
+        assertEquals(8, tableContract.rowCount)
     }
 
     @Test

@@ -1,0 +1,28 @@
+{
+  "base_commit": "8ec4cfe53b0bff7416de45c1f35e5a6fed4bb4bd",
+  "failed_ci_run": 40022950917,
+  "failed_api": 34,
+  "ci_native_tests": 275,
+  "ci_native_failures": 1,
+  "deterministic_baseline": {
+    "tests": 1,
+    "assertion_failures": 1
+  },
+  "corrected_native_class": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "api": 36
+  },
+  "production_source_changed": false,
+  "application_apk_sha256": "0867a7362ec2d880769e360e2441184ba405666443ccbe28d10d8ebf5ae44a91",
+  "baseline_test_apk_sha256": "60dbac88f00d9d3581cbe6781f54e303d9321729357fd7d8eadcd01bfad01ed4",
+  "corrected_test_apk_sha256": "be8ab7e545b470217b164f5e1d5f4435cfa75217849295eec5e9472879239120",
+  "test_source": {
+    "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/SeparateSenderAdmissionSecurityTest.kt",
+    "sha256": "2a2f622cabf129d39edf6add56ac998689108858a09b017d4010ef8c96644093"
+  },
+  "resulting_source_ci": "PENDING",
+  "release_decision": "HOLD"
+}

@@ -98,9 +98,7 @@ fun MetadataSanitizerScreen(
         loadMetadata(uri)
     }
 
-    val savePdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -123,7 +121,7 @@ fun MetadataSanitizerScreen(
                 if (result.isSuccess) {
                     val titleRes = if (isWipeAction) R.string.title_sanitize_success else R.string.title_update_metadata_success
                     val descRes = if (isWipeAction) R.string.desc_sanitize_success else R.string.desc_update_metadata_success
-                    viewModel.showSuccessToast(context.getString(titleRes), context.getString(descRes))
+                    viewModel.showSuccessToast(context.getString(titleRes), context.getString(descRes), destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

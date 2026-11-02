@@ -1,0 +1,2404 @@
+{
+  "schema": 1,
+  "scope": "Recorded code-SHA evidence; report-bearing commit requires separate CI attestation in draft PR",
+  "remote_inspection": {
+    "inspected_at": "2026-10-30T07:27:35.775Z",
+    "assignment": "https://github.com/kiss2oblivion/pdfchemy-android/pull/14#issuecomment-6517180797",
+    "prs": [
+      {
+        "number": 12,
+        "head": "31f744e0ccd7fa4b8eddf439a0c837e8d88eca36",
+        "head_ref": "gemini/2.1.0-play-acceptance",
+        "base": "integration/2.1.0-2026-10-26",
+        "base_sha": "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/12"
+      },
+      {
+        "number": 13,
+        "head": "2c188f6c5408a3b3a0bedf4c1ebe6ac024f36412",
+        "head_ref": "codex/2.1.0-core-acceptance",
+        "base": "integration/2.1.0-2026-10-26",
+        "base_sha": "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/13"
+      },
+      {
+        "number": 14,
+        "head": "fef22697ab4ecccffe3ecf75c9a956fb1355db35",
+        "head_ref": "codex/2.1.0-integrity-followups",
+        "base": "codex/2.1.0-core-acceptance",
+        "base_sha": "2c188f6c5408a3b3a0bedf4c1ebe6ac024f36412",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/14"
+      },
+      {
+        "number": 15,
+        "head": "0d2711d1dfca989ecc19da05f266f93a11a1fbff",
+        "head_ref": "gemini/next-reader-experience",
+        "base": "main",
+        "base_sha": "4b3c157f3458f7df00ea94044258d33c7449ced9",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/15"
+      }
+    ],
+    "runs": [
+      {
+        "id": 40867756273,
+        "jobs": [
+          {
+            "id": 123426731763,
+            "name": "dependency-security",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123426731763"
+          },
+          {
+            "id": 123426732201,
+            "name": "secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123426732201"
+          },
+          {
+            "id": 123426732315,
+            "name": "architecture",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123426732315"
+          },
+          {
+            "id": 123428564054,
+            "name": "tests",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123428564054"
+          },
+          {
+            "id": 123428564170,
+            "name": "android-instrumented-security (30, x86_64)",
+            "status": "completed",
+            "conclusion": "failure",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123428564170"
+          },
+          {
+            "id": 123428564189,
+            "name": "android-instrumented-security (36, x86_64)",
+            "status": "completed",
+            "conclusion": "failure",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123428564189"
+          },
+          {
+            "id": 123428564202,
+            "name": "android-instrumented-security (24, x86)",
+            "status": "completed",
+            "conclusion": "failure",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123428564202"
+          },
+          {
+            "id": 123428564341,
+            "name": "android-instrumented-security (34, x86_64)",
+            "status": "completed",
+            "conclusion": "failure",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123428564341"
+          },
+          {
+            "id": 123443578715,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "skipped",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40867756273/job/123443578715"
+          }
+        ]
+      },
+      {
+        "id": 40477285048,
+        "jobs": [
+          {
+            "id": 122114269297,
+            "name": "android-instrumented-security (24, x86)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114269297"
+          },
+          {
+            "id": 122114269591,
+            "name": "secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114269591"
+          },
+          {
+            "id": 122114271043,
+            "name": "android-instrumented-security (36, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114271043"
+          },
+          {
+            "id": 122114271045,
+            "name": "tests",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114271045"
+          },
+          {
+            "id": 122114271047,
+            "name": "android-instrumented-security (34, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114271047"
+          },
+          {
+            "id": 122114310251,
+            "name": "android-instrumented-security (30, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114310251"
+          },
+          {
+            "id": 122114314393,
+            "name": "architecture",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114314393"
+          },
+          {
+            "id": 122114318077,
+            "name": "dependency-security",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122114318077"
+          },
+          {
+            "id": 122124816016,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40477285048/job/122124816016"
+          }
+        ]
+      },
+      {
+        "id": 40877576469,
+        "jobs": [
+          {
+            "id": 123460254060,
+            "name": "dependency-security",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123460254060"
+          },
+          {
+            "id": 123460254587,
+            "name": "architecture",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123460254587"
+          },
+          {
+            "id": 123460254630,
+            "name": "secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123460254630"
+          },
+          {
+            "id": 123462772922,
+            "name": "android-instrumented-security (30, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123462772922"
+          },
+          {
+            "id": 123462772985,
+            "name": "android-instrumented-security (34, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123462772985"
+          },
+          {
+            "id": 123462772989,
+            "name": "android-instrumented-security (36, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123462772989"
+          },
+          {
+            "id": 123462773143,
+            "name": "android-instrumented-security (24, x86)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123462773143"
+          },
+          {
+            "id": 123462773156,
+            "name": "tests",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123462773156"
+          },
+          {
+            "id": 123480932677,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40877576469/job/123480932677"
+          }
+        ]
+      },
+      {
+        "id": 40953658656,
+        "jobs": [
+          {
+            "id": 123728043983,
+            "name": "architecture",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123728043983"
+          },
+          {
+            "id": 123728044297,
+            "name": "secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123728044297"
+          },
+          {
+            "id": 123728044341,
+            "name": "dependency-security",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123728044341"
+          },
+          {
+            "id": 123731299715,
+            "name": "tests",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123731299715"
+          },
+          {
+            "id": 123731299816,
+            "name": "android-instrumented-security (36, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123731299816"
+          },
+          {
+            "id": 123731299841,
+            "name": "android-instrumented-security (34, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123731299841"
+          },
+          {
+            "id": 123731299936,
+            "name": "android-instrumented-security (30, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123731299936"
+          },
+          {
+            "id": 123731300043,
+            "name": "android-instrumented-security (24, x86)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123731300043"
+          },
+          {
+            "id": 123749272985,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40953658656/job/123749272985"
+          }
+        ]
+      },
+      {
+        "id": 40970821297,
+        "jobs": [
+          {
+            "id": 123786811571,
+            "name": "secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123786811571"
+          },
+          {
+            "id": 123786811652,
+            "name": "architecture",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123786811652"
+          },
+          {
+            "id": 123786811802,
+            "name": "dependency-security",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123786811802"
+          },
+          {
+            "id": 123788385423,
+            "name": "android-instrumented-security (36, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385423"
+          },
+          {
+            "id": 123788385424,
+            "name": "tests",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385424"
+          },
+          {
+            "id": 123788385437,
+            "name": "android-instrumented-security (34, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385437"
+          },
+          {
+            "id": 123788385450,
+            "name": "android-instrumented-security (30, x86_64)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385450"
+          },
+          {
+            "id": 123788385461,
+            "name": "android-instrumented-security (24, x86)",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123788385461"
+          },
+          {
+            "id": 123801561632,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297/job/123801561632"
+          }
+        ]
+      }
+    ],
+    "pr12_failure_logs": [
+      {
+        "job": 123428564202,
+        "excerpts": [
+          "2026-10-29T12:13:12.3395941Z java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/34 (Permission denied)",
+          "2026-10-29T12:13:12.3406504Z INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/34 (Permission denied)",
+          "2026-10-29T12:13:12.4164038Z java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/34 (Permission denied)",
+          "2026-10-29T12:13:12.4167442Z FAILURES!!!",
+          "2026-10-29T12:13:12.4167532Z Tests run: 317,  Failures: 1"
+        ]
+      },
+      {
+        "job": 123428564170,
+        "excerpts": [
+          "2026-10-29T11:58:28.3257081Z \tjava.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/50: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:09:14.3255358Z java.lang.AssertionError: java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/50: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:09:14.3293980Z java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/50: open failed: EACCES (Permission denied)"
+        ]
+      },
+      {
+        "job": 123428564341,
+        "excerpts": [
+          "2026-10-29T12:01:19.5615397Z \tjava.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/72: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:22:15.7645950Z java.lang.AssertionError: java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/72: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:22:15.7725807Z java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/72: open failed: EACCES (Permission denied)"
+        ]
+      },
+      {
+        "job": 123428564189,
+        "excerpts": [
+          "2026-10-29T11:58:15.0091184Z \tjava.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/88: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:12:17.6095737Z java.lang.AssertionError: java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/88: open failed: EACCES (Permission denied)",
+          "2026-10-29T12:12:17.6134598Z java.lang.AssertionError: Expected failure explaining unsupported linearization, got: com.pdfchemy.app.logic.PdfGateway$WorkerFailure: Jail 400: /proc/self/fd/88: open failed: EACCES (Permission denied)"
+        ]
+      }
+    ]
+  },
+  "inventory": {
+    "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+    "source_tree": "fea3f54e4ec0c8b6eb9e9d79950619ec2f84f789",
+    "base": "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+    "branch": "integration/2.1.0-readiness-2026-10-29",
+    "inputs": [
+      {
+        "number": 12,
+        "state": "open",
+        "draft": false,
+        "head": "31f744e0ccd7fa4b8eddf439a0c837e8d88eca36",
+        "head_ref": "gemini/2.1.0-play-acceptance",
+        "base": "integration/2.1.0-2026-10-26",
+        "base_sha": "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/12"
+      },
+      {
+        "number": 13,
+        "state": "open",
+        "draft": false,
+        "head": "2c188f6c5408a3b3a0bedf4c1ebe6ac024f36412",
+        "head_ref": "codex/2.1.0-core-acceptance",
+        "base": "integration/2.1.0-2026-10-26",
+        "base_sha": "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/13"
+      },
+      {
+        "number": 14,
+        "state": "open",
+        "draft": false,
+        "head": "fef22697ab4ecccffe3ecf75c9a956fb1355db35",
+        "head_ref": "codex/2.1.0-integrity-followups",
+        "base": "codex/2.1.0-core-acceptance",
+        "base_sha": "2c188f6c5408a3b3a0bedf4c1ebe6ac024f36412",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/14"
+      },
+      {
+        "number": 15,
+        "state": "open",
+        "draft": false,
+        "head": "0d2711d1dfca989ecc19da05f266f93a11a1fbff",
+        "head_ref": "gemini/next-reader-experience",
+        "base": "main",
+        "base_sha": "4b3c157f3458f7df00ea94044258d33c7449ced9",
+        "url": "https://github.com/kiss2oblivion/pdfchemy-android/pull/15"
+      }
+    ],
+    "critical_pr14_fence": {
+      "app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt": {
+        "original_blob": "c534b15829595acb1ef0548ce00ce2eee13b22da",
+        "integrated_blob": "c534b15829595acb1ef0548ce00ce2eee13b22da",
+        "unchanged_from_pr14": true
+      },
+      "app-host/src/main/java/com/pdfchemy/app/logic/ReaderSearchCoordinator.kt": {
+        "original_blob": "17d4bf09080eeb7090b472f387e40fd799ddd49d",
+        "integrated_blob": "17d4bf09080eeb7090b472f387e40fd799ddd49d",
+        "unchanged_from_pr14": true
+      },
+      "app-host/src/main/java/com/pdfchemy/app/security/SourcePreservationPolicy.kt": {
+        "original_blob": "d4492f64ee79598b239325e361a8e3cc92fe941f",
+        "integrated_blob": "d4492f64ee79598b239325e361a8e3cc92fe941f",
+        "unchanged_from_pr14": true
+      },
+      "pdf-ipc/src/main/java/com/pdfchemy/app/jail/BoundedWorkerStorage.kt": {
+        "original_blob": "34e471886f310933aa0cc99490fb38e41334d13c",
+        "integrated_blob": "34e471886f310933aa0cc99490fb38e41334d13c",
+        "unchanged_from_pr14": true
+      },
+      "pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt": {
+        "original_blob": "4f6d5c55c4b474db7084c8f0dbe2af4587f4c081",
+        "integrated_blob": "4f6d5c55c4b474db7084c8f0dbe2af4587f4c081",
+        "unchanged_from_pr14": true
+      },
+      "pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt": {
+        "original_blob": "d5fccc8ab79b7516e1c9d48edc94a6130b681076",
+        "integrated_blob": "d5fccc8ab79b7516e1c9d48edc94a6130b681076",
+        "unchanged_from_pr14": true
+      },
+      "pdf-ipc/src/main/java/com/pdfchemy/app/security/PublicationCoordinator.kt": {
+        "original_blob": "973c1f358a08891e33d20c0e5ee89f8374f591ec",
+        "integrated_blob": "973c1f358a08891e33d20c0e5ee89f8374f591ec",
+        "unchanged_from_pr14": true
+      },
+      "pdf-ipc/src/main/java/com/pdfchemy/app/utils/ResourceTransferOwner.kt": {
+        "original_blob": "47be3ae1b1ffec8cedca65266095431bec863ff4",
+        "integrated_blob": "47be3ae1b1ffec8cedca65266095431bec863ff4",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/CapabilityIo.kt": {
+        "original_blob": "9708acb464f1d7c79bbc22156e7b1a38e2e8ce5a",
+        "integrated_blob": "9708acb464f1d7c79bbc22156e7b1a38e2e8ce5a",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/JailScratch.kt": {
+        "original_blob": "94dbb5cb5d9ed56a808275e8f96e5e5190db3155",
+        "integrated_blob": "94dbb5cb5d9ed56a808275e8f96e5e5190db3155",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt": {
+        "original_blob": "107f6190b0908a7571910917532b6eee6173caf9",
+        "integrated_blob": "107f6190b0908a7571910917532b6eee6173caf9",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfArchiveValidatorEngineWorker.kt": {
+        "original_blob": "5fca5ed823bc9b02d12c9182991de209eb527ca8",
+        "integrated_blob": "5fca5ed823bc9b02d12c9182991de209eb527ca8",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfDeskewEngineWorker.kt": {
+        "original_blob": "6df85a2deb3fcad67d6bbf8fcea0ac00fa3d29ad",
+        "integrated_blob": "6df85a2deb3fcad67d6bbf8fcea0ac00fa3d29ad",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfEditorWorker.kt": {
+        "original_blob": "bdb06d87ff612f6424946166dd6a5aa92111bfde",
+        "integrated_blob": "bdb06d87ff612f6424946166dd6a5aa92111bfde",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLinearizeEngineWorker.kt": {
+        "original_blob": "0a4325f18e441d37a60b2a468b60c69fdecdcf5c",
+        "integrated_blob": "0a4325f18e441d37a60b2a468b60c69fdecdcf5c",
+        "unchanged_from_pr14": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfRedactionEngineWorker.kt": {
+        "original_blob": "0e6e424cbe408d58954ed4d32e78cfca3642f613",
+        "integrated_blob": "0e6e424cbe408d58954ed4d32e78cfca3642f613",
+        "unchanged_from_pr14": true
+      }
+    },
+    "gemini_table_fence": {
+      "pdf-ipc/src/main/java/com/pdfchemy/app/logic/CsvParser.kt": {
+        "gemini_blob": "f207affa88196efa39739ac713e86f612f59ff10",
+        "integrated_blob": "f207affa88196efa39739ac713e86f612f59ff10",
+        "unchanged_from_pr12": true
+      },
+      "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfTableExtractorWorker.kt": {
+        "gemini_blob": "61c67c3bc59efe8a530602733bd0697946429b87",
+        "integrated_blob": "61c67c3bc59efe8a530602733bd0697946429b87",
+        "unchanged_from_pr12": true
+      }
+    },
+    "first_parent_commits": [
+      {
+        "sha": "0a1050170ef11a774e561c8b46384fa0013975ac",
+        "parents": [
+          "9ad4fdc0ec5c86d7af3f8b0a30f80603d5a93e36",
+          "2c188f6c5408a3b3a0bedf4c1ebe6ac024f36412"
+        ],
+        "subject": "Integrate PR #13 into disposable 2.1.0 readiness tree",
+        "files": [
+          "FEATURES_REGISTRY.md",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngineTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfLinearizeEngineTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfSanitizerAndBatesTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/CoreLinearizeHonestyTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/CorePdfAHonestyTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngine.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfLinearizeEngine.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/LinearizePdfScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfAValidatorScreen.kt",
+          "app-host/src/main/res/values/core_linearize.xml",
+          "app-host/src/main/res/values/core_pdfa.xml",
+          "app-host/src/main/res/values/strings.xml",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/logic/WorkerResponseContracts.kt",
+          "pdf-ipc/src/test/java/com/pdfchemy/app/jail/ArchiveClaimSecurityTest.kt",
+          "pdf-ipc/src/test/java/com/pdfchemy/app/jail/LinearizationClaimSecurityTest.kt",
+          "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfArchiveValidatorEngineWorker.kt",
+          "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLinearizeEngineWorker.kt",
+          "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfArchivePreliminaryChecksTest.kt",
+          "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfLinearizeValidationTest.kt",
+          "reports/core-acceptance-2026-10-26/CORE_EXECUTION.md"
+        ]
+      },
+      {
+        "sha": "aa39bc3db93ac2f2b7c3f371f470b2fe4369b27f",
+        "parents": [
+          "0a1050170ef11a774e561c8b46384fa0013975ac",
+          "fef22697ab4ecccffe3ecf75c9a956fb1355db35"
+        ],
+        "subject": "Integrate PR #14 into disposable 2.1.0 readiness tree",
+        "files": [
+          "CODEX_INTEGRITY_ACCEPTANCE.md",
+          "CODEX_PLAN_ACCEPTANCE.md",
+          "CODEX_RELEASE_CLOSURE.md",
+          "app-host/src/androidTest/AndroidManifest.xml",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/DeskewPublicationIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfDeskewIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedShareManagementTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/ShareCopyIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/BatchOutputProvider.java",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/CsvPublicationBoundaryTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/HostOutputCommitSecurityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/ReaderShareSecurityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/SafExistingDestinationIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/SafFreshCopyPublicationTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/ShareRecipientProvider.java",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyCleanupIntegrityTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyPublicationTest.kt",
+          "app-host/src/main/AndroidManifest.xml",
+          "app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfDeskewEngine.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfGateway.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfManipulator.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareFileProvider.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareStorage.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt",
+          "app-host/src/main/res/xml/file_paths.xml",
+          "app-host/src/test/java/com/pdfchemy/app/logic/EditorBitmapImmediateDeliveryTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/EditorBitmapOwnershipRegressionTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/ReaderShareAsyncTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/ReleaseWorkflowRegressionTest.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt",
+          "pdf-ipc/src/test/java/com/pdfchemy/app/jail/CsvBoundaryValidationTest.kt",
+          "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt",
+          "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfDeskewEngineWorker.kt",
+          "reports/CSV_BOUNDARY_CONTRACT.md",
+          "reports/INTEGRITY_NEXT_CYCLE.md",
+          "reports/RETAINED_SHARE_API.md",
+          "reports/SAF_PUBLICATION_INVENTORY.md"
+        ]
+      },
+      {
+        "sha": "970cce85af5996c9c9e470701b5418587fe08daf",
+        "parents": [
+          "aa39bc3db93ac2f2b7c3f371f470b2fe4369b27f",
+          "31f744e0ccd7fa4b8eddf439a0c837e8d88eca36"
+        ],
+        "subject": "Integrate PR #12 into disposable 2.1.0 readiness tree",
+        "files": [
+          ".github/workflows/android-release.yml",
+          "GEMINI_APPLICATION_ACCEPTANCE.md",
+          "PLAY_ACCEPTANCE.md",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/RemainingUxRuntimeTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/TableExtractorUserPathTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/main/java/com/pdfchemy/app/billing/AdManager.kt",
+          "app-host/src/main/java/com/pdfchemy/app/billing/BillingManager.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfTableExtractorEngine.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/ShareUtil.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/TableExtractorScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt",
+          "app-host/src/main/res/values-ar/strings.xml",
+          "app-host/src/main/res/values-de/strings.xml",
+          "app-host/src/main/res/values-es/strings.xml",
+          "app-host/src/main/res/values-fr/strings.xml",
+          "app-host/src/main/res/values-hi/strings.xml",
+          "app-host/src/main/res/values-in/strings.xml",
+          "app-host/src/main/res/values-it/strings.xml",
+          "app-host/src/main/res/values-ja/strings.xml",
+          "app-host/src/main/res/values-ko/strings.xml",
+          "app-host/src/main/res/values-nl/strings.xml",
+          "app-host/src/main/res/values-pl/strings.xml",
+          "app-host/src/main/res/values-pt-rBR/strings.xml",
+          "app-host/src/main/res/values-pt/strings.xml",
+          "app-host/src/main/res/values-ro/strings.xml",
+          "app-host/src/main/res/values-ru/strings.xml",
+          "app-host/src/main/res/values-th/strings.xml",
+          "app-host/src/main/res/values-tr/strings.xml",
+          "app-host/src/main/res/values-vi/strings.xml",
+          "app-host/src/main/res/values-zh-rCN/strings.xml",
+          "app-host/src/main/res/values-zh-rTW/strings.xml",
+          "app-host/src/main/res/values/strings.xml",
+          "app-host/src/test/java/com/pdfchemy/app/billing/AdCallbackLifecycleTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/billing/BillingReadinessTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/billing/PremiumAdWiringReviewTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/HostResponseContractSecurityTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/HomeSearchReviewTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/HonestFeatureLocalizationTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/TableExtractorCorrectnessTest.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/logic/CsvParser.kt",
+          "pdf-ipc/src/main/java/com/pdfchemy/app/logic/WorkerResponseContracts.kt",
+          "pdf-ipc/src/test/java/com/pdfchemy/app/logic/CsvParserTest.kt",
+          "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfTableExtractorWorker.kt",
+          "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfTableExtractorWorkerTest.kt"
+        ]
+      },
+      {
+        "sha": "933d5be3390019f981c800666ce2046bce9326e8",
+        "parents": [
+          "970cce85af5996c9c9e470701b5418587fe08daf",
+          "d336eb13d1cccc9ff987728e2c60b77fc88a9caa"
+        ],
+        "subject": "Integrate pinned draft PR #15 into disposable readiness tree",
+        "files": [
+          "FEATURES_REGISTRY.md",
+          "READER_EXPERIENCE_ACCEPTANCE.md",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/HistoryRepository.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/ReaderControlsController.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/ReaderNavigationCoordinator.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/ReaderViewportController.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/AcroFormScreens.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/DocumentLoadGuard.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PageNumberScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/QuickFillSignScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/RedactionScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/TableExtractorScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt",
+          "app-host/src/main/java/com/pdfchemy/app/utils/DocumentIdentity.kt",
+          "app-host/src/main/res/values/strings.xml",
+          "app-host/src/test/java/com/pdfchemy/app/logic/ReaderHistoryAndPositionTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderAccessibilityAndResilienceTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderCommandCentreTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderControlsStateTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderNavigationTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderViewportAndCacheTest.kt"
+        ]
+      },
+      {
+        "sha": "18087454f75416201d4a8e871c4ffc76d97eb5db",
+        "parents": [
+          "933d5be3390019f981c800666ce2046bce9326e8"
+        ],
+        "subject": "test(integration): retain startup lifecycle and actual CSV parser coverage",
+        "files": [
+          "app-host/src/test/java/com/pdfchemy/app/ui/StartupContentContainerTest.kt",
+          "pdf-ipc/src/test/java/com/pdfchemy/app/jail/IntegratedCsvParityTest.kt"
+        ]
+      },
+      {
+        "sha": "93ce4eca32c7bab3ad8fe19d925918aae38dca6e",
+        "parents": [
+          "18087454f75416201d4a8e871c4ffc76d97eb5db",
+          "fd6bf9d1e0af7f67efa3d15ffa44027bbb2520c7"
+        ],
+        "subject": "Integrate reviewed PR #15 localization remediation without changing original branches",
+        "files": [
+          "READER_EXPERIENCE_ACCEPTANCE.md",
+          "app-host/src/main/res/values-ar/strings.xml",
+          "app-host/src/main/res/values-de/strings.xml",
+          "app-host/src/main/res/values-es/strings.xml",
+          "app-host/src/main/res/values-fr/strings.xml",
+          "app-host/src/main/res/values-hi/strings.xml",
+          "app-host/src/main/res/values-in/strings.xml",
+          "app-host/src/main/res/values-it/strings.xml",
+          "app-host/src/main/res/values-ja/strings.xml",
+          "app-host/src/main/res/values-ko/strings.xml",
+          "app-host/src/main/res/values-nl/strings.xml",
+          "app-host/src/main/res/values-pl/strings.xml",
+          "app-host/src/main/res/values-pt-rBR/strings.xml",
+          "app-host/src/main/res/values-pt/strings.xml",
+          "app-host/src/main/res/values-ro/strings.xml",
+          "app-host/src/main/res/values-ru/strings.xml",
+          "app-host/src/main/res/values-th/strings.xml",
+          "app-host/src/main/res/values-tr/strings.xml",
+          "app-host/src/main/res/values-vi/strings.xml",
+          "app-host/src/main/res/values-zh-rCN/strings.xml",
+          "app-host/src/main/res/values-zh-rTW/strings.xml",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderAccessibilityAndResilienceTest.kt"
+        ]
+      },
+      {
+        "sha": "c8c2e708bae5dacf3284efedfca5c867a0a0aa98",
+        "parents": [
+          "93ce4eca32c7bab3ad8fe19d925918aae38dca6e"
+        ],
+        "subject": "fix(share): preserve recipient copies during automatic startup cleanup",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/ShareStartupRetentionTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt"
+        ]
+      },
+      {
+        "sha": "61eb4ed5bac9a55093eddf4b9e1ee362f84c3b58",
+        "parents": [
+          "c8c2e708bae5dacf3284efedfca5c867a0a0aa98"
+        ],
+        "subject": "fix(integration): preserve saved Reader return routes across model replacement",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderDocumentLifecycleTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt"
+        ]
+      },
+      {
+        "sha": "4e125f094f8fe9273155d1c0e5c6e435fac0679f",
+        "parents": [
+          "61eb4ed5bac9a55093eddf4b9e1ee362f84c3b58"
+        ],
+        "subject": "test(security): exercise serialized malicious PDF graphs and safe exports",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/MaliciousPdfGraphIntegrationTest.kt"
+        ]
+      },
+      {
+        "sha": "e13ea43b0ca903ea1a95dbb94e1d33427b6b92e9",
+        "parents": [
+          "4e125f094f8fe9273155d1c0e5c6e435fac0679f"
+        ],
+        "subject": "fix(renderer): schedule host previews and exports before isolated admission",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/security/NativeRendererAdmissionIntegrationTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfGateway.kt",
+          "app-host/src/main/java/com/pdfchemy/app/sandbox/NativeRendererAccess.kt",
+          "app-host/src/main/java/com/pdfchemy/app/sandbox/NativeRendererCoordinator.kt",
+          "app-host/src/test/java/com/pdfchemy/app/sandbox/NativeRendererAccessTest.kt"
+        ]
+      },
+      {
+        "sha": "c51d3930055ef78b38a285a8967c6f81450e55e0",
+        "parents": [
+          "e13ea43b0ca903ea1a95dbb94e1d33427b6b92e9"
+        ],
+        "subject": "fix(reader): retain the document snapshot for the surviving model session",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderDocumentLifecycleTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/ReaderSessionLeaseTest.kt"
+        ]
+      },
+      {
+        "sha": "e8c2f8bc3e94537e5c8fbf6c87da8f65fee332dd",
+        "parents": [
+          "c51d3930055ef78b38a285a8967c6f81450e55e0"
+        ],
+        "subject": "fix(share): apply bounded recipient retention to generated CSV copies",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedCsvShareTest.kt",
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/TableShareBudgetIntegrationTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareStorage.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/TableExtractorScreen.kt",
+          "app-host/src/main/res/values/integrity_share_strings.xml"
+        ]
+      },
+      {
+        "sha": "f68484b39a50fe7f55df7d34baff73381b0dbb9a",
+        "parents": [
+          "e8c2f8bc3e94537e5c8fbf6c87da8f65fee332dd",
+          "48a1f16f5a01ca07a9213d3098bc8d51d47cdaad"
+        ],
+        "subject": "Integrate reviewed PR #15 sequential startup without dropping release integrity fixes",
+        "files": [
+          "app-host/src/main/java/com/pdfchemy/app/logic/PdfOutlineReader.kt",
+          "app-host/src/main/java/com/pdfchemy/app/logic/ReaderControlsController.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderControlsStateTest.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderNavigationTest.kt"
+        ]
+      },
+      {
+        "sha": "e577ccbe83e463ccd2767f6422674aaf3672c5c7",
+        "parents": [
+          "f68484b39a50fe7f55df7d34baff73381b0dbb9a"
+        ],
+        "subject": "fix(reader): lay out pages before awaiting saved position restoration",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderDocumentLifecycleTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt"
+        ]
+      },
+      {
+        "sha": "bcc5dc0f254a73a35d0f6036c7d2637b4e0ae182",
+        "parents": [
+          "e577ccbe83e463ccd2767f6422674aaf3672c5c7",
+          "0d2711d1dfca989ecc19da05f266f93a11a1fbff"
+        ],
+        "subject": "Integrate frozen PR #15 layout-order regression with verified release Reader safeguards",
+        "files": [
+          "app-host/src/main/java/com/pdfchemy/app/logic/ReaderControlsController.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ReaderControlsStateTest.kt"
+        ]
+      },
+      {
+        "sha": "3c216911413d9c03030d43bf2612ee64928d2b45",
+        "parents": [
+          "bcc5dc0f254a73a35d0f6036c7d2637b4e0ae182"
+        ],
+        "subject": "fix(reader): save the live owned snapshot after recovery",
+        "files": [
+          "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderSavedSnapshotRestorationTest.kt",
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt",
+          "app-host/src/test/java/com/pdfchemy/app/logic/ReaderSessionLeaseTest.kt"
+        ]
+      },
+      {
+        "sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+        "parents": [
+          "3c216911413d9c03030d43bf2612ee64928d2b45"
+        ],
+        "subject": "fix(navigation): persist stable route ids through release shrinking",
+        "files": [
+          "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt",
+          "app-host/src/test/java/com/pdfchemy/app/ui/ScreenRestorationTest.kt",
+          "scripts/smoke_release_navigation.py"
+        ]
+      }
+    ],
+    "changed_files": [
+      {
+        "status": "M",
+        "path": ".github/workflows/android-release.yml"
+      },
+      {
+        "status": "A",
+        "path": "CODEX_INTEGRITY_ACCEPTANCE.md"
+      },
+      {
+        "status": "A",
+        "path": "CODEX_PLAN_ACCEPTANCE.md"
+      },
+      {
+        "status": "A",
+        "path": "CODEX_RELEASE_CLOSURE.md"
+      },
+      {
+        "status": "M",
+        "path": "FEATURES_REGISTRY.md"
+      },
+      {
+        "status": "A",
+        "path": "GEMINI_APPLICATION_ACCEPTANCE.md"
+      },
+      {
+        "status": "A",
+        "path": "PLAY_ACCEPTANCE.md"
+      },
+      {
+        "status": "A",
+        "path": "READER_EXPERIENCE_ACCEPTANCE.md"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/AndroidManifest.xml"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/DeskewPublicationIntegrityTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/OfficeExportEngineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngineTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfDeskewIntegrityTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfLinearizeEngineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/PdfSanitizerAndBatesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/PowerPointIntegrityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedCsvShareTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/RetainedShareManagementTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/ShareCopyIntegrityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/logic/ShareStartupRetentionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/BatchOutputProvider.java"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/CsvPublicationBoundaryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/HostOutputCommitSecurityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/MaliciousPdfGraphIntegrationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/NativeRendererAdmissionIntegrationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/OutputCommitProvider.java"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/ReaderShareSecurityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/SafCleanupOwnershipTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/SafExistingDestinationIntegrityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/SafFreshCopyPublicationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/security/ShareRecipientProvider.java"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/CoreLinearizeHonestyTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/CorePdfAHonestyTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewCopyPublicationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/DeskewPreviewIntegrityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyCleanupIntegrityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/PreferredCopyPublicationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderDocumentLifecycleTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderSavedSnapshotRestorationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/RemainingUxRuntimeTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/TableExtractorUserPathTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/androidTest/java/com/pdfchemy/app/ui/TableShareBudgetIntegrationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/AndroidManifest.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/billing/AdManager.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/billing/BillingManager.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/DeskewPreview.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/DocumentActions.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/HistoryRepository.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/OutputPolicy.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfArchiveValidatorEngine.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfDeskewEngine.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfGateway.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfLinearizeEngine.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfManipulator.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfOutlineReader.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/PdfTableExtractorEngine.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/ReaderControlsController.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/ReaderNavigationCoordinator.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/ReaderViewportController.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareFileProvider.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/RetainedShareStorage.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/logic/ShareUtil.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/java/com/pdfchemy/app/sandbox/NativeRendererAccess.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/sandbox/NativeRendererCoordinator.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/AcroFormScreens.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/DeskewScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/DocumentLoadGuard.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/LinearizePdfScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/OfficeExportScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/OrganizeScreens.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/PageNumberScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/PageOrganizerScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/PdfAValidatorScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/PreferredDocumentCreator.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/QuickFillSignScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/RedactionScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/TableExtractorScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/ToolSearch.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/ui/WatermarkScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/java/com/pdfchemy/app/utils/DocumentIdentity.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-ar/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-de/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-es/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-fr/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-hi/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-in/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-it/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-ja/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-ko/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-nl/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-pl/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-pt-rBR/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-pt/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-ro/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-ru/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-th/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-tr/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-vi/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-zh-rCN/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values-zh-rTW/strings.xml"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/res/values/core_linearize.xml"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/res/values/core_pdfa.xml"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/main/res/values/integrity_share_strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/values/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/main/res/xml/file_paths.xml"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/billing/AdCallbackLifecycleTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/billing/BillingReadinessTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/billing/PremiumAdWiringReviewTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/EditorBitmapImmediateDeliveryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/EditorBitmapOwnershipRegressionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/HostResponseContractSecurityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/ReaderHistoryAndPositionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/ReaderSessionLeaseTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/ReaderShareAsyncTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/logic/ReleaseWorkflowRegressionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/sandbox/NativeRendererAccessTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/HomeSearchReviewTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/HonestFeatureLocalizationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ReaderAccessibilityAndResilienceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ReaderCommandCentreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ReaderControlsStateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ReaderNavigationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ReaderViewportAndCacheTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/ScreenRestorationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/StartupContentContainerTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "app-host/src/test/java/com/pdfchemy/app/ui/TableExtractorCorrectnessTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-ipc/src/main/java/com/pdfchemy/app/jail/HostOutputTransaction.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-ipc/src/main/java/com/pdfchemy/app/jail/WorkerResponseValidator.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/main/java/com/pdfchemy/app/logic/CsvParser.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-ipc/src/main/java/com/pdfchemy/app/logic/WorkerResponseContracts.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/main/java/com/pdfchemy/app/security/FreshOutputRegistry.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/test/java/com/pdfchemy/app/jail/ArchiveClaimSecurityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/test/java/com/pdfchemy/app/jail/CsvBoundaryValidationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/test/java/com/pdfchemy/app/jail/IntegratedCsvParityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/test/java/com/pdfchemy/app/jail/LinearizationClaimSecurityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-ipc/src/test/java/com/pdfchemy/app/logic/CsvParserTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/OfficeExportEngineWorker.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfArchiveValidatorEngineWorker.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfDeskewEngineWorker.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfLinearizeEngineWorker.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/main/java/com/pdfchemy/app/jail/engines/PdfTableExtractorWorker.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfArchivePreliminaryChecksTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfLinearizeValidationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "pdf-jail/src/test/java/com/pdfchemy/app/jail/engines/PdfTableExtractorWorkerTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "reports/CSV_BOUNDARY_CONTRACT.md"
+      },
+      {
+        "status": "A",
+        "path": "reports/INTEGRITY_NEXT_CYCLE.md"
+      },
+      {
+        "status": "A",
+        "path": "reports/RETAINED_SHARE_API.md"
+      },
+      {
+        "status": "A",
+        "path": "reports/SAF_PUBLICATION_INVENTORY.md"
+      },
+      {
+        "status": "A",
+        "path": "reports/core-acceptance-2026-10-26/CORE_EXECUTION.md"
+      },
+      {
+        "status": "A",
+        "path": "scripts/smoke_release_navigation.py"
+      }
+    ]
+  },
+  "local_jvm": {
+    "pdf-ipc": {
+      "tests": 107,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "pdf-jail": {
+      "tests": 115,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app-host": {
+      "tests": 405,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "native": {
+    "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+    "run_url": "https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/40970821297",
+    "run_status_at_collection": "completed",
+    "run_conclusion_at_collection": "success",
+    "gate": "native_only",
+    "results": [
+      {
+        "api": 24,
+        "tests": 420,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "form_value_alias_methods": [
+          "editorRemovesNoViewFieldValueCatalogAlias",
+          "secureSearchRemovesNoViewFieldValueCatalogAlias"
+        ],
+        "evidence": "readiness29-evidence\\final-ci-artifacts\\native-security-api24-x86\\build\\reports\\native-api24\\instrumentation.log",
+        "sha256": "081a6e1c7a65f3b4f5a31bc563786933f0f334bf9986ea06c717becbc91ec00a",
+        "cross_uid_methods": [
+          "foreignFileViewCannotClaimPrivateAppFile",
+          "foreignProviderReadGrantIsTransferredAndStaged",
+          "foreignProviderWithoutGrantCannotBeReadOrStaged",
+          "foreignSendCannotClaimAppOwnedProvider",
+          "foreignSendMultipleCannotClaimAppOwnedProvider",
+          "foreignUidCannotLaunchPrivateInternalAlias",
+          "foreignViewCannotClaimUserQualifiedAppOwnedProvider",
+          "internalOpenStillAdmitsAndStagesOwnDocument"
+        ],
+        "redaction_count_methods": [
+          "invalidPageFailsWithoutPublishingPartialRedaction",
+          "twoAppliedBoxesReturnTwo",
+          "zeroSelectedBoxesReturnZero"
+        ],
+        "form_name_alias_methods": [
+          "editorRemovesNoViewFieldNameCatalogAlias",
+          "secureSearchRemovesNoViewFieldNameCatalogAlias"
+        ],
+        "editor_geometry_methods": [
+          "a4KeepsOriginalBoxes",
+          "compressedObjectStreamFormAliasCannotSurviveExport",
+          "fractionalPointsAreNotRoundedToPixels",
+          "letterKeepsOriginalBoxes",
+          "nonzeroMediaAndCropOffsetsSurvive",
+          "points300By200StayPoints",
+          "rasterQuotaFailurePreservesExistingDestination",
+          "requestedRotationIsAddedWithoutRebasingBoxes",
+          "rotated180KeepsCoordinatesAndAlignment",
+          "rotated270KeepsCoordinatesAndAlignment",
+          "rotated90KeepsCoordinatesAndAlignment"
+        ],
+        "editor_large_page_methods": [
+          "a2CropOffsetsAnd270RotationWithRequestedTurnRemainAligned",
+          "a2LandscapeAnnotationExportIsBoundedAndAligned",
+          "a2PortraitAnnotationExportIsBoundedAndAligned",
+          "a3CropOffsetsAnd90RotationRemainAligned",
+          "a3LandscapeAnnotationExportIsBoundedAndAligned",
+          "a3PortraitAnnotationExportIsBoundedAndAligned",
+          "a4AnnotationExportStillPreservesVectorContent",
+          "letterAnnotationExportStillPreservesVectorContent"
+        ],
+        "worker_storage_methods": [
+          "completedSnapshotIsSeekableAndReadOnly",
+          "isolatedRawOutputCannotBypassHostQuotaOrOpenDestination",
+          "isolatedScratchHandoffIsReadOnlyAndCannotReopenBacking",
+          "outputAndScratchShareHostAggregateLimit",
+          "producerIsPipeAndCannotSeekOrSparseTruncate",
+          "rawWritesCannotBypassHostOutputLimit",
+          "retainedReadOnlyDescriptorCannotPinPayloadAfterClose",
+          "retainedWriterCannotBlockPastHostDeadline",
+          "scratchDescriptorAllocationIsBounded",
+          "snapshotWaitRemainsCancellableWithRetainedWriter"
+        ],
+        "renderer_storage_methods": [
+          "bitmapReadbackDecodesCompletedHostPipeSnapshot",
+          "failedRendererCannotTouchHostJpegDestination",
+          "jpegReadbackCopiesCompletedSnapshotIntoHostDestination"
+        ],
+        "retained_writer_methods": [
+          "retainedPipeWriterFailsClosedBeforeOpeningDestination"
+        ],
+        "allocation_cleanup_methods": [
+          "partialOutputAllocationFailureImmediatelyReleasesSharedCollector"
+        ],
+        "epub_methods": [
+          "pdfEpubPdfRoundTripCompletesBothOutputPipes",
+          "testPdfToEpub_createsCompliantEpubPackage"
+        ]
+      },
+      {
+        "api": 30,
+        "tests": 420,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "form_value_alias_methods": [
+          "editorRemovesNoViewFieldValueCatalogAlias",
+          "secureSearchRemovesNoViewFieldValueCatalogAlias"
+        ],
+        "evidence": "readiness29-evidence\\final-ci-artifacts\\native-security-api30-x86_64\\app-host\\build\\outputs\\androidTest-results\\connected\\debug\\TEST-emulator-5554 - 11-_app-host-.xml",
+        "sha256": "f9d1b9b942a2e1753a10b7c1994f4bd041b4acf4d00df88569eefd8f020c37ce",
+        "cross_uid_methods": [
+          "foreignFileViewCannotClaimPrivateAppFile",
+          "foreignProviderReadGrantIsTransferredAndStaged",
+          "foreignProviderWithoutGrantCannotBeReadOrStaged",
+          "foreignSendCannotClaimAppOwnedProvider",
+          "foreignSendMultipleCannotClaimAppOwnedProvider",
+          "foreignUidCannotLaunchPrivateInternalAlias",
+          "foreignViewCannotClaimUserQualifiedAppOwnedProvider",
+          "internalOpenStillAdmitsAndStagesOwnDocument"
+        ],
+        "redaction_count_methods": [
+          "invalidPageFailsWithoutPublishingPartialRedaction",
+          "twoAppliedBoxesReturnTwo",
+          "zeroSelectedBoxesReturnZero"
+        ],
+        "form_name_alias_methods": [
+          "editorRemovesNoViewFieldNameCatalogAlias",
+          "secureSearchRemovesNoViewFieldNameCatalogAlias"
+        ],
+        "editor_geometry_methods": [
+          "a4KeepsOriginalBoxes",
+          "compressedObjectStreamFormAliasCannotSurviveExport",
+          "fractionalPointsAreNotRoundedToPixels",
+          "letterKeepsOriginalBoxes",
+          "nonzeroMediaAndCropOffsetsSurvive",
+          "points300By200StayPoints",
+          "rasterQuotaFailurePreservesExistingDestination",
+          "requestedRotationIsAddedWithoutRebasingBoxes",
+          "rotated180KeepsCoordinatesAndAlignment",
+          "rotated270KeepsCoordinatesAndAlignment",
+          "rotated90KeepsCoordinatesAndAlignment"
+        ],
+        "editor_large_page_methods": [
+          "a2CropOffsetsAnd270RotationWithRequestedTurnRemainAligned",
+          "a2LandscapeAnnotationExportIsBoundedAndAligned",
+          "a2PortraitAnnotationExportIsBoundedAndAligned",
+          "a3CropOffsetsAnd90RotationRemainAligned",
+          "a3LandscapeAnnotationExportIsBoundedAndAligned",
+          "a3PortraitAnnotationExportIsBoundedAndAligned",
+          "a4AnnotationExportStillPreservesVectorContent",
+          "letterAnnotationExportStillPreservesVectorContent"
+        ],
+        "worker_storage_methods": [
+          "completedSnapshotIsSeekableAndReadOnly",
+          "isolatedRawOutputCannotBypassHostQuotaOrOpenDestination",
+          "isolatedScratchHandoffIsReadOnlyAndCannotReopenBacking",
+          "outputAndScratchShareHostAggregateLimit",
+          "producerIsPipeAndCannotSeekOrSparseTruncate",
+          "rawWritesCannotBypassHostOutputLimit",
+          "retainedReadOnlyDescriptorCannotPinPayloadAfterClose",
+          "retainedWriterCannotBlockPastHostDeadline",
+          "scratchDescriptorAllocationIsBounded",
+          "snapshotWaitRemainsCancellableWithRetainedWriter"
+        ],
+        "renderer_storage_methods": [
+          "bitmapReadbackDecodesCompletedHostPipeSnapshot",
+          "failedRendererCannotTouchHostJpegDestination",
+          "jpegReadbackCopiesCompletedSnapshotIntoHostDestination"
+        ],
+        "retained_writer_methods": [
+          "retainedPipeWriterFailsClosedBeforeOpeningDestination"
+        ],
+        "allocation_cleanup_methods": [
+          "partialOutputAllocationFailureImmediatelyReleasesSharedCollector"
+        ],
+        "epub_methods": [
+          "pdfEpubPdfRoundTripCompletesBothOutputPipes",
+          "testPdfToEpub_createsCompliantEpubPackage"
+        ]
+      },
+      {
+        "api": 34,
+        "tests": 420,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "form_value_alias_methods": [
+          "editorRemovesNoViewFieldValueCatalogAlias",
+          "secureSearchRemovesNoViewFieldValueCatalogAlias"
+        ],
+        "evidence": "readiness29-evidence\\final-ci-artifacts\\native-security-api34-x86_64\\app-host\\build\\outputs\\androidTest-results\\connected\\debug\\TEST-emulator-5554 - 14-_app-host-.xml",
+        "sha256": "278307b1fa80f94df314cd089da1ef49ec4b4225c42db95c43fb6819438a4438",
+        "cross_uid_methods": [
+          "foreignFileViewCannotClaimPrivateAppFile",
+          "foreignProviderReadGrantIsTransferredAndStaged",
+          "foreignProviderWithoutGrantCannotBeReadOrStaged",
+          "foreignSendCannotClaimAppOwnedProvider",
+          "foreignSendMultipleCannotClaimAppOwnedProvider",
+          "foreignUidCannotLaunchPrivateInternalAlias",
+          "foreignViewCannotClaimUserQualifiedAppOwnedProvider",
+          "internalOpenStillAdmitsAndStagesOwnDocument"
+        ],
+        "redaction_count_methods": [
+          "invalidPageFailsWithoutPublishingPartialRedaction",
+          "twoAppliedBoxesReturnTwo",
+          "zeroSelectedBoxesReturnZero"
+        ],
+        "form_name_alias_methods": [
+          "editorRemovesNoViewFieldNameCatalogAlias",
+          "secureSearchRemovesNoViewFieldNameCatalogAlias"
+        ],
+        "editor_geometry_methods": [
+          "a4KeepsOriginalBoxes",
+          "compressedObjectStreamFormAliasCannotSurviveExport",
+          "fractionalPointsAreNotRoundedToPixels",
+          "letterKeepsOriginalBoxes",
+          "nonzeroMediaAndCropOffsetsSurvive",
+          "points300By200StayPoints",
+          "rasterQuotaFailurePreservesExistingDestination",
+          "requestedRotationIsAddedWithoutRebasingBoxes",
+          "rotated180KeepsCoordinatesAndAlignment",
+          "rotated270KeepsCoordinatesAndAlignment",
+          "rotated90KeepsCoordinatesAndAlignment"
+        ],
+        "editor_large_page_methods": [
+          "a2CropOffsetsAnd270RotationWithRequestedTurnRemainAligned",
+          "a2LandscapeAnnotationExportIsBoundedAndAligned",
+          "a2PortraitAnnotationExportIsBoundedAndAligned",
+          "a3CropOffsetsAnd90RotationRemainAligned",
+          "a3LandscapeAnnotationExportIsBoundedAndAligned",
+          "a3PortraitAnnotationExportIsBoundedAndAligned",
+          "a4AnnotationExportStillPreservesVectorContent",
+          "letterAnnotationExportStillPreservesVectorContent"
+        ],
+        "worker_storage_methods": [
+          "completedSnapshotIsSeekableAndReadOnly",
+          "isolatedRawOutputCannotBypassHostQuotaOrOpenDestination",
+          "isolatedScratchHandoffIsReadOnlyAndCannotReopenBacking",
+          "outputAndScratchShareHostAggregateLimit",
+          "producerIsPipeAndCannotSeekOrSparseTruncate",
+          "rawWritesCannotBypassHostOutputLimit",
+          "retainedReadOnlyDescriptorCannotPinPayloadAfterClose",
+          "retainedWriterCannotBlockPastHostDeadline",
+          "scratchDescriptorAllocationIsBounded",
+          "snapshotWaitRemainsCancellableWithRetainedWriter"
+        ],
+        "renderer_storage_methods": [
+          "bitmapReadbackDecodesCompletedHostPipeSnapshot",
+          "failedRendererCannotTouchHostJpegDestination",
+          "jpegReadbackCopiesCompletedSnapshotIntoHostDestination"
+        ],
+        "retained_writer_methods": [
+          "retainedPipeWriterFailsClosedBeforeOpeningDestination"
+        ],
+        "allocation_cleanup_methods": [
+          "partialOutputAllocationFailureImmediatelyReleasesSharedCollector"
+        ],
+        "epub_methods": [
+          "pdfEpubPdfRoundTripCompletesBothOutputPipes",
+          "testPdfToEpub_createsCompliantEpubPackage"
+        ]
+      },
+      {
+        "api": 36,
+        "tests": 420,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "form_value_alias_methods": [
+          "editorRemovesNoViewFieldValueCatalogAlias",
+          "secureSearchRemovesNoViewFieldValueCatalogAlias"
+        ],
+        "evidence": "readiness29-evidence\\final-ci-artifacts\\native-security-api36-x86_64\\app-host\\build\\outputs\\androidTest-results\\connected\\debug\\TEST-emulator-5554 - 16-_app-host-.xml",
+        "sha256": "b56695cab59b2b25270b6e8ef4b2cd5f45bd7004e614a2f7828da9abaee40e7f",
+        "cross_uid_methods": [
+          "foreignFileViewCannotClaimPrivateAppFile",
+          "foreignProviderReadGrantIsTransferredAndStaged",
+          "foreignProviderWithoutGrantCannotBeReadOrStaged",
+          "foreignSendCannotClaimAppOwnedProvider",
+          "foreignSendMultipleCannotClaimAppOwnedProvider",
+          "foreignUidCannotLaunchPrivateInternalAlias",
+          "foreignViewCannotClaimUserQualifiedAppOwnedProvider",
+          "internalOpenStillAdmitsAndStagesOwnDocument"
+        ],
+        "redaction_count_methods": [
+          "invalidPageFailsWithoutPublishingPartialRedaction",
+          "twoAppliedBoxesReturnTwo",
+          "zeroSelectedBoxesReturnZero"
+        ],
+        "form_name_alias_methods": [
+          "editorRemovesNoViewFieldNameCatalogAlias",
+          "secureSearchRemovesNoViewFieldNameCatalogAlias"
+        ],
+        "editor_geometry_methods": [
+          "a4KeepsOriginalBoxes",
+          "compressedObjectStreamFormAliasCannotSurviveExport",
+          "fractionalPointsAreNotRoundedToPixels",
+          "letterKeepsOriginalBoxes",
+          "nonzeroMediaAndCropOffsetsSurvive",
+          "points300By200StayPoints",
+          "rasterQuotaFailurePreservesExistingDestination",
+          "requestedRotationIsAddedWithoutRebasingBoxes",
+          "rotated180KeepsCoordinatesAndAlignment",
+          "rotated270KeepsCoordinatesAndAlignment",
+          "rotated90KeepsCoordinatesAndAlignment"
+        ],
+        "editor_large_page_methods": [
+          "a2CropOffsetsAnd270RotationWithRequestedTurnRemainAligned",
+          "a2LandscapeAnnotationExportIsBoundedAndAligned",
+          "a2PortraitAnnotationExportIsBoundedAndAligned",
+          "a3CropOffsetsAnd90RotationRemainAligned",
+          "a3LandscapeAnnotationExportIsBoundedAndAligned",
+          "a3PortraitAnnotationExportIsBoundedAndAligned",
+          "a4AnnotationExportStillPreservesVectorContent",
+          "letterAnnotationExportStillPreservesVectorContent"
+        ],
+        "worker_storage_methods": [
+          "completedSnapshotIsSeekableAndReadOnly",
+          "isolatedRawOutputCannotBypassHostQuotaOrOpenDestination",
+          "isolatedScratchHandoffIsReadOnlyAndCannotReopenBacking",
+          "outputAndScratchShareHostAggregateLimit",
+          "producerIsPipeAndCannotSeekOrSparseTruncate",
+          "rawWritesCannotBypassHostOutputLimit",
+          "retainedReadOnlyDescriptorCannotPinPayloadAfterClose",
+          "retainedWriterCannotBlockPastHostDeadline",
+          "scratchDescriptorAllocationIsBounded",
+          "snapshotWaitRemainsCancellableWithRetainedWriter"
+        ],
+        "renderer_storage_methods": [
+          "bitmapReadbackDecodesCompletedHostPipeSnapshot",
+          "failedRendererCannotTouchHostJpegDestination",
+          "jpegReadbackCopiesCompletedSnapshotIntoHostDestination"
+        ],
+        "retained_writer_methods": [
+          "retainedPipeWriterFailsClosedBeforeOpeningDestination"
+        ],
+        "allocation_cleanup_methods": [
+          "partialOutputAllocationFailureImmediatelyReleasesSharedCollector"
+        ],
+        "epub_methods": [
+          "pdfEpubPdfRoundTripCompletesBothOutputPipes",
+          "testPdfToEpub_createsCompliantEpubPackage"
+        ]
+      }
+    ],
+    "total_test_executions": 1680
+  },
+  "native_required_cases": {
+    "status": "PASS",
+    "results": [
+      {
+        "api": 24,
+        "required_methods": 196,
+        "completed_methods": 420
+      },
+      {
+        "api": 30,
+        "required_methods": 196,
+        "completed_methods": 420
+      },
+      {
+        "api": 34,
+        "required_methods": 196,
+        "completed_methods": 420
+      },
+      {
+        "api": 36,
+        "required_methods": 196,
+        "completed_methods": 420
+      }
+    ],
+    "required_methods": [
+      "com.pdfchemy.app.logic.DeskewPublicationIntegrityTest#existingProviderDestinationIsRejectedBeforeAnyTruncatingOpen",
+      "com.pdfchemy.app.logic.PdfCompressorTest#testAdvancedCompressionOptions",
+      "com.pdfchemy.app.logic.PdfCompressorTest#testAlgorithmEfficiencyMatrix",
+      "com.pdfchemy.app.logic.PdfCompressorTest#testCompressPdfDeduplicatesSharedImagesOnAndroid",
+      "com.pdfchemy.app.logic.PdfCompressorTest#testCompressionReducesFileSize",
+      "com.pdfchemy.app.logic.PdfCompressorTest#testRealDizertatieFiles",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#cancellationDuringWorkerBindingReleasesUnpublishedOutput",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#cancellationPropagatesAndPreservesBothFiles",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#existingFileDestinationIsRejectedWithoutChangingEitherFile",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#malformedInputPropagatesFailureWithoutPublishing",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#successfulDeskewPublishesReadableCorrectedPdfAndPreservesSource",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#unavailableOutputPropagatesFailureWithoutChangingSourceOrOldTarget",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#workerBindingFailureCannotBecomeZeroCorrections",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#workerRenderFailureAbortsBeforeDestinationPublication",
+      "com.pdfchemy.app.logic.PdfDeskewIntegrityTest#zeroCorrectionsStillPublishesAValidPdf",
+      "com.pdfchemy.app.logic.PdfManipulatorTest#deletePages_removesCorrectPages",
+      "com.pdfchemy.app.logic.PdfManipulatorTest#mergePdfs_combinesMultiplePdfs",
+      "com.pdfchemy.app.logic.PdfManipulatorTest#rotatePdf_rotatesPagesCorrectly",
+      "com.pdfchemy.app.logic.PdfManipulatorTest#splitPdf_createsMultipleDocuments",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testBatesStampingAndroid",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testConvertToPdfAAndroid",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testOfficeExportSanitizesInvalidXmlChars",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testSanitizeDocumentAndroid",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardAllowsStandardWebHyperlinksAndDestinations",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardCleanPdfWithMetadataPasses",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardEmbeddedBenignFilePasses",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardRealRegressionFixture",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardZeroTrustBlockOnExecutablePdf",
+      "com.pdfchemy.app.logic.PdfSanitizerAndBatesTest#testVanguardZeroTrustFailClosedOnEncryptedPdf",
+      "com.pdfchemy.app.logic.PdfSecurityAndImageExportTest#testProtectPdf256BitEncryption",
+      "com.pdfchemy.app.logic.PdfSecurityAndImageExportTest#testProtectPdfAndUnlockPdf",
+      "com.pdfchemy.app.logic.PdfSecurityAndImageExportTest#testUnlockWithWrongPasswordFails",
+      "com.pdfchemy.app.logic.PdfTextExtractorTest#extractText_readsRawTextFromPdf",
+      "com.pdfchemy.app.logic.PdfToEpubEngineTest#pdfEpubPdfRoundTripCompletesBothOutputPipes",
+      "com.pdfchemy.app.logic.PdfToEpubEngineTest#testPdfToEpub_createsCompliantEpubPackage",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#blankA4LetterAndRemainingRotationsHaveVisiblePagePictures",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#imageByteQuotaFailsBeforePublication",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#malformedAndZeroPageSourcesPreserveOldTarget",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#missingRendererFailsBeforePublication",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#mixedPageAspectRatiosCropAndRotationRemainVisible",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#oversizedJpegDimensionsFailBeforePublication",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#rendererExceptionFailsBeforePublication",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#rendererPageCountMismatchFailsBeforePublication",
+      "com.pdfchemy.app.logic.PowerPointIntegrityTest#truncatedJpegFailsBeforePublication",
+      "com.pdfchemy.app.logic.RetainedCsvShareTest#cancelledCsvCopyReleasesReservationsAndPartialOutput",
+      "com.pdfchemy.app.logic.RetainedCsvShareTest#csvRetainsItsMimeTypeBytesAndReaderProtection",
+      "com.pdfchemy.app.logic.RetainedCsvShareTest#failedCsvCopyLeavesNoRetainedOrIncompleteOutput",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#activePartialIsProtectedAndCancellationStillCleansItsOwnCopy",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#cancellationAfterOneDeletionReturnsAccuratePartialResult",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#deleteFailuresAreReportedAlongsideSuccessfulRemovals",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#explicitRemovalRestoresQuotaWithoutEvictingOtherShares",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#foreignOpenTransfersStayProtectedAndGrantsAreNeverRevoked",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#inventoryAndSelectedCleanupReportExactLogicalCountsAndBytes",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#legacyCandidatesAndOriginalsRemainUntouchedByExplicitCleanup",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#preCancelledCleanupPreservesEverySelectedCopy",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#readerDescriptorBudgetRefusesOverflowAndRecoversAfterClose",
+      "com.pdfchemy.app.logic.RetainedShareManagementTest#sameShareSurvivesUntilBothForeignReadersClose",
+      "com.pdfchemy.app.logic.ShareStartupRetentionTest#completedShareCanBeReopenedAfterStartupCleanup",
+      "com.pdfchemy.app.logic.ShareStartupRetentionTest#overlappingReadersAndLaterReopenSurviveStartupCleanup",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a2CropOffsetsAnd270RotationWithRequestedTurnRemainAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a2LandscapeAnnotationExportIsBoundedAndAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a2PortraitAnnotationExportIsBoundedAndAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a3CropOffsetsAnd90RotationRemainAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a3LandscapeAnnotationExportIsBoundedAndAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a3PortraitAnnotationExportIsBoundedAndAligned",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#a4AnnotationExportStillPreservesVectorContent",
+      "com.pdfchemy.app.security.EditorLargePageExportSecurityTest#letterAnnotationExportStillPreservesVectorContent",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#a4KeepsOriginalBoxes",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#compressedObjectStreamFormAliasCannotSurviveExport",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#fractionalPointsAreNotRoundedToPixels",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#letterKeepsOriginalBoxes",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#nonzeroMediaAndCropOffsetsSurvive",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#points300By200StayPoints",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#rasterQuotaFailurePreservesExistingDestination",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#requestedRotationIsAddedWithoutRebasingBoxes",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#rotated180KeepsCoordinatesAndAlignment",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#rotated270KeepsCoordinatesAndAlignment",
+      "com.pdfchemy.app.security.EditorPageGeometrySecurityTest#rotated90KeepsCoordinatesAndAlignment",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#catalogReferenceToOriginalStreamCannotOverwriteExistingDestination",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#clippedSharedFormCannotRetainTheHiddenOriginalText",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#documentMetadataAndAccessibilityTextCannotSurviveRedaction",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#formCannotSurviveRealEditorRedactionExport",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#formValuesCannotSurviveRealEditorRedactionExport",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#inheritedUnusedFormIsRemovedAndOtherVectorPageSurvives",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#originalScanCannotSurviveRealEditorRedactionExport",
+      "com.pdfchemy.app.security.EditorRedactionResourceSecurityTest#unsupportedXfaCannotOverwriteAnExistingDestination",
+      "com.pdfchemy.app.security.FormValueAliasSecurityTest#editorRemovesNoViewFieldNameCatalogAlias",
+      "com.pdfchemy.app.security.FormValueAliasSecurityTest#editorRemovesNoViewFieldValueCatalogAlias",
+      "com.pdfchemy.app.security.FormValueAliasSecurityTest#secureSearchRemovesNoViewFieldNameCatalogAlias",
+      "com.pdfchemy.app.security.FormValueAliasSecurityTest#secureSearchRemovesNoViewFieldValueCatalogAlias",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#aggregateOverQuotaIsRejectedBeforeOpeningAnyDestination",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#busyRequestsLeaveTheRunningWorkerAndBothDestinationsUntouched",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#duplicateSuccessCallbacksCommitExactlyOnce",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#failedMalformedAndWrongCountResultsAreRejectedBeforeCommit",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#legacyWritersCommitThroughHostSnapshotsAndLeaveFailuresUntouched",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#rawCompromisedWorkerOverflowCannotTouchNonTruncatableProvider",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#realSplitAndPdfToImagesPreserveMultiOutputCommit",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#realWorkerDeadlineLeavesProviderUntouched",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#retainedPipeWriterFailsClosedBeforeOpeningDestination",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#retainedWorkerFdCannotChangeValidatedBytesDuringProviderCommit",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#secondBatchOutputFailureDoesNotCommitFirstWorkerOutput",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#snapshotIgnoresWorkerFileOffsetAndCommitCannotBeRepeated",
+      "com.pdfchemy.app.security.HostOutputCommitSecurityTest#workerDeathAndCancellationNeverOpenNonTruncatableProvider",
+      "com.pdfchemy.app.security.MaliciousPdfGraphIntegrationTest#deepIndirectActionsCannotEscapeAuditOrSanitization",
+      "com.pdfchemy.app.security.MaliciousPdfGraphIntegrationTest#excessiveDirectDepthFailsClosedAndPreservesBothDocuments",
+      "com.pdfchemy.app.security.MaliciousPdfGraphIntegrationTest#recursiveActionIsRemovedAndExportedPdfReopensWithoutMetadata",
+      "com.pdfchemy.app.security.NativeRendererAdmissionIntegrationTest#overlappingHostFramesAllCompleteWithoutWorkerBusyFailures",
+      "com.pdfchemy.app.security.NativeRendererAdmissionIntegrationTest#sequentialFramesKeepEveryPageReadable",
+      "com.pdfchemy.app.security.NativeRendererIsolationSecurityTest#nativeRendererHasAnIsolatedUidAndItsOwnHardDeadline",
+      "com.pdfchemy.app.security.OcrExtendedVerificationTest#testConsecutiveOcrRunsWorkerSurvival",
+      "com.pdfchemy.app.security.OcrExtendedVerificationTest#testMultiFontAndDegradedScanOcr",
+      "com.pdfchemy.app.security.OcrIsolationCompatibilityTest#scannedTextRemainsSearchableThroughTheIsolatedOcrWorker",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#pieceInfoAliasToUsedFontRejectsEditorWithoutOverwritingDestination",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#pieceInfoAliasToUsedFontRejectsSecureSearchWithoutOverwritingDestination",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#pieceInfoDescendantAliasCannotSurviveEditorExport",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#pieceInfoDescendantAliasCannotSurviveSecureSearchExport",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#retainedAttachmentAuditFixtureCannotLeakThroughEditorExport",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#retainedPieceInfoAuditFixtureCannotLeakThroughEditorExport",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#untypedAttachmentDescendantAliasCannotSurviveEditorExport",
+      "com.pdfchemy.app.security.PrivatePayloadAliasSecurityTest#untypedAttachmentDescendantAliasCannotSurviveSecureSearchExport",
+      "com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest#completedImageBatchItemSurvivesCancellationDuringSecondPublication",
+      "com.pdfchemy.app.security.PublishedBatchCancellationSecurityTest#completedPdfBatchItemSurvivesCancellationDuringSecondPublication",
+      "com.pdfchemy.app.security.ReaderShareSecurityTest#contentUriPassesThroughUnchanged",
+      "com.pdfchemy.app.security.ReaderShareSecurityTest#exportsFileReusesDirectFileProviderUriWithoutRedundantCopy",
+      "com.pdfchemy.app.security.ReaderShareSecurityTest#stagedReaderSnapshotSharesThroughFileProvider_andPreservesBytesAfterNavigation",
+      "com.pdfchemy.app.security.RendererStorageBoundarySecurityTest#bitmapReadbackDecodesCompletedHostPipeSnapshot",
+      "com.pdfchemy.app.security.RendererStorageBoundarySecurityTest#failedRendererCannotTouchHostJpegDestination",
+      "com.pdfchemy.app.security.RendererStorageBoundarySecurityTest#jpegReadbackCopiesCompletedSnapshotIntoHostDestination",
+      "com.pdfchemy.app.security.SafCleanupOwnershipTest#failedCleanupRetainsPendingProvenanceForExplicitRetry",
+      "com.pdfchemy.app.security.SafCleanupOwnershipTest#stalledProviderCleanupCannotBlockOtherOwnershipChecksOrReclaimItsUri",
+      "com.pdfchemy.app.security.SafExistingDestinationIntegrityTest#cancellationAtProviderOpenCannotTruncateExistingDocument",
+      "com.pdfchemy.app.security.SafExistingDestinationIntegrityTest#partialProviderWriteCannotReplaceExistingDocument",
+      "com.pdfchemy.app.security.SafExistingDestinationIntegrityTest#providerFailureAfterTruncationCannotDestroyExistingDocument",
+      "com.pdfchemy.app.security.SafExistingDestinationIntegrityTest#reachableMetadataWorkflowRejectsExistingSafAndPreservesSource",
+      "com.pdfchemy.app.security.SafFreshCopyPublicationTest#failedFreshCopyIsCleanedWithoutAffectingOldDocument",
+      "com.pdfchemy.app.security.SafFreshCopyPublicationTest#overlappingOperationCannotDeleteClaimedFreshCopy",
+      "com.pdfchemy.app.security.SafFreshCopyPublicationTest#successfulSafMetadataCopyPreservesOldNameAndSource",
+      "com.pdfchemy.app.security.SafFreshCopyPublicationTest#wholeBatchIsCheckedBeforeFirstOpen",
+      "com.pdfchemy.app.security.SanitizerScopeSecurityTest#attachmentDeduplicationRegressionTest",
+      "com.pdfchemy.app.security.SanitizerScopeSecurityTest#customPurgesPreserveUnselectedFeaturesAndDefaultPurgesReauditClean",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#clippedSharedFormCannotRetainPrivateStreamThroughUnselectedPage",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#cropAndRotation0CoverPrivateGlyphs",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#cropAndRotation180CoverPrivateGlyphs",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#cropAndRotation270CoverPrivateGlyphs",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#cropAndRotation90CoverPrivateGlyphs",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#directLinkCannotRetainOriginalSensitivePage",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#goToActionCannotRetainOriginalSensitivePage",
+      "com.pdfchemy.app.security.SearchRedactionObjectSecurityTest#multilineTargetsCannotRetainOriginalSensitivePage",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#admittedEngineFailureCallbackRecyclesWorkerAndNextDocumentSucceeds",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#busyGatewayLegacyWritersQueriesAndMalformedBatchPreserveAdmittedPid",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#failedWorkerDoesNotReadmitWhileHostRecycleIsPending",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#hostProtocolRejectionRecyclesWorkerWithoutOpeningDestination",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#legacyQueryParserFailureRecyclesWorkerAndNextDocumentSucceeds",
+      "com.pdfchemy.app.security.WorkerFailureLifecycleSecurityTest#legacyWriterFailureCallbackRecyclesWorkerAndNextDocumentSucceeds",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#batchMissingAndMismatchedMetadataRejectBeforeParsing",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#blockedWorkerRejectsTwelveRequestsWithoutQueuingAndRecoversAfterAbort",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#blockingWorkerDeadlineKillsPidAndNextBindingRecovers",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#isolatedUidAndAnonymousScratchAreUsable",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#outputQuotaPlusOneByteLeavesTheRealDestinationUnchanged",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#realPdfParsingAndRenderingUseTheStagedSnapshot",
+      "com.pdfchemy.app.security.WorkerIsolationSecurityTest#workerDeathAndCancellationLeaveTheRealDestinationUnchanged",
+      "com.pdfchemy.app.security.WorkerResponseValidationSecurityTest#busySemanticsPreservedWithoutAbortingWorker",
+      "com.pdfchemy.app.security.WorkerResponseValidationSecurityTest#executeEngineTypedReturnsStrictValidatedContract",
+      "com.pdfchemy.app.security.WorkerResponseValidationSecurityTest#realSanitizerWorkerAuditMatchesValidatorContract",
+      "com.pdfchemy.app.security.WorkerResponseValidationSecurityTest#unknownOperationFailsClosedAndRecyclesWorker",
+      "com.pdfchemy.app.security.WorkerStorageAllocationFailureSecurityTest#partialOutputAllocationFailureImmediatelyReleasesSharedCollector",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#completedSnapshotIsSeekableAndReadOnly",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#isolatedRawOutputCannotBypassHostQuotaOrOpenDestination",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#isolatedScratchHandoffIsReadOnlyAndCannotReopenBacking",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#outputAndScratchShareHostAggregateLimit",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#producerIsPipeAndCannotSeekOrSparseTruncate",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#rawWritesCannotBypassHostOutputLimit",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#retainedReadOnlyDescriptorCannotPinPayloadAfterClose",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#retainedWriterCannotBlockPastHostDeadline",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#scratchDescriptorAllocationIsBounded",
+      "com.pdfchemy.app.security.WorkerStorageBoundarySecurityTest#snapshotWaitRemainsCancellableWithRetainedWriter",
+      "com.pdfchemy.app.ui.DeskewCopyPublicationTest#engineFailureDeletesFreshCopyWithoutDisplayingSuccess",
+      "com.pdfchemy.app.ui.DeskewCopyPublicationTest#zeroCorrectionsPublishFreshCopyAndKeepExistingDocument",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#disposalAfterPublicationRecyclesCurrentBitmap",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#disposalBeforeProducerReturnRecyclesRejectedBitmap",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#failedReplacementCannotShowPreviousDocumentPreview",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#rapidRepeatedCancellationRetiresEveryUnpublishedResult",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#replacementRejectsOutOfOrderBitmapAndAngle",
+      "com.pdfchemy.app.ui.DeskewPreviewIntegrityTest#threeRequestsCompletingCThenAThenBKeepOnlyC",
+      "com.pdfchemy.app.ui.ReaderDocumentLifecycleTest#nonzeroSessionPositionRestoresAfterTheListBecomesVisible",
+      "com.pdfchemy.app.ui.ReaderDocumentLifecycleTest#readerEditorRoundTripPreservesStagedDocumentWithVanguardEnabled",
+      "com.pdfchemy.app.ui.ReaderDocumentLifecycleTest#savedToolRouteReturnsToReaderAfterCompositionAndViewModelReplacement",
+      "com.pdfchemy.app.ui.ReaderDocumentLifecycleTest#survivingViewModelRetainsReaderSnapshotAcrossCompositionRecreation",
+      "com.pdfchemy.app.ui.ReaderSavedSnapshotRestorationTest#restorationUsesTheLiveSnapshotAfterTheRequestedCopyIsRetired",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#activityRecreationRetainsPremiumEntitlementState",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#cancellationDuringExtractionSafelyAborts",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#changingDocumentsDuringExtractionArbitratesAuthoritativeResult",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#preferredSaveWrapperComposesInTableExtractorFlow",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#realIsolatedWorkerFileExportContentMatchesInput",
+      "com.pdfchemy.app.ui.TableExtractorUserPathTest#realIsolatedWorkerTableExtractionAndPreviewParsing",
+      "com.pdfchemy.app.ui.TableShareBudgetIntegrationTest#actualTableShareCannotCreateARecipientCopyBeyondTheSharedBudget"
+    ]
+  },
+  "native_artifact_download": [
+    {
+      "name": "native-security-api30-x86_64",
+      "sha256": "c7f4b3d6ee447769b7c654a35352c2e388a11bd01e8aae735f9558c663e550aa",
+      "bytes": 923260
+    },
+    {
+      "name": "native-security-api34-x86_64",
+      "sha256": "5fd584ca09dc5bd8daf17ed8566edafe7ad28fea4ec194642586a1edb25d517f",
+      "bytes": 1702854
+    },
+    {
+      "name": "native-security-api24-x86",
+      "sha256": "bc3d1c04a51f7599b4adbad1b93d365e37cdcf58ee7ffd2405671a6e790ab7e2",
+      "bytes": 15740
+    },
+    {
+      "name": "native-security-api36-x86_64",
+      "sha256": "a195729db94d1348c665adba49079ab4e3daafdc81e51998e4e84ff134f3dfaf",
+      "bytes": 1969758
+    }
+  ],
+  "signed_artifact": {
+    "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+    "status": "SIGNED_FINAL_BUILD_AND_ARTIFACT_GATE_PASS",
+    "artifacts": {
+      "apk": {
+        "path": "readiness29-evidence/signed-final-de825ca1/PDFchemy-2.1.0-code14-de825ca1-signed.apk",
+        "bytes": 97560434,
+        "sha256": "bb6f701c87129d7589ccabd58a1fc3ede014a277c1ecc859599214e11beeacd3"
+      },
+      "mapping": {
+        "path": "readiness29-evidence/signed-final-de825ca1/mapping.txt",
+        "bytes": 140985859,
+        "sha256": "0f85047611d5263e7e78ead87ca1a20f111097e191add7d81df286844fd2ccb7"
+      },
+      "lint": {
+        "path": "readiness29-evidence/signed-final-de825ca1/lint-results-release.xml",
+        "bytes": 715056,
+        "sha256": "7e5801ef88a22fee6c1626dbe85e10c85a14176c227476b891990d1b63e8950d"
+      }
+    },
+    "code_and_resources": {
+      "classes.dex": "81c0c6a4b1c6e6a02e1ca6330e1eb9570b55d1bfe9e1c28e2c5392ea353cba18",
+      "classes2.dex": "d64cae01a75e618116037c5a3e78f31f7e9827719119dd5859f1d0d75eac3c25",
+      "resources.arsc": "d76906d5394238aea815c0bfad206cf8257abc7242e533f041ef55d8456d9f9b"
+    },
+    "minified": true,
+    "artifact_gate": {
+      "corpus_files": 14,
+      "smoke_routes": 62,
+      "fixture_hashes": "PASS",
+      "production_ad_ids": "PASS",
+      "lint_baseline_issue_types": [],
+      "gson_runtime_contract": {
+        "status": "PASS",
+        "editor_type_tokens": [
+          "Lcom/pdfchemy/app/jail/PdfJailService$binder$1$exportModifiedPdf$1$type$1;",
+          "Lcom/pdfchemy/app/jail/PdfJailService$dispatch$type$1;"
+        ],
+        "preserved_wire_models": 17,
+        "preserved_collection_signatures": 6,
+        "apk_sha256": "bb6f701c87129d7589ccabd58a1fc3ede014a277c1ecc859599214e11beeacd3"
+      },
+      "version": "2.1.0 (14)",
+      "sdk": "24..36",
+      "release_apk": "app-host-release.apk",
+      "artifact_hygiene": "PASS",
+      "exported_components": [
+        "com.pdfchemy.app.MainActivity",
+        "androidx.work.impl.background.systemjob.SystemJobService",
+        "androidx.work.impl.diagnostics.DiagnosticsReceiver",
+        "androidx.profileinstaller.ProfileInstallReceiver"
+      ]
+    },
+    "lint_severity_counts": {
+      "Warning": 641
+    },
+    "release_approval": false
+  },
+  "signed_workflows": {
+    "reader": {
+      "receipt_path_relative_to_shared_validation": "core26-evidence/readiness29-signed-reader-de825ca1-v2/receipt.json",
+      "receipt_sha256": "a30892d145499e48506ebab53f3cb84814beb12956854d8bd6b7ef3bcb932e59",
+      "status": "SIGNED_MINIFIED_READER_PUBLIC_UI_PASS",
+      "checks": [
+        {
+          "name": "public-SAF-entry-renders-original-pages",
+          "passed": true
+        },
+        {
+          "name": "native-continuous-scroll-changes-page",
+          "passed": true
+        },
+        {
+          "name": "double-tap-zoom-reaches-2.5x",
+          "passed": true
+        },
+        {
+          "name": "background-and-launcher-return-retains-document",
+          "passed": true
+        },
+        {
+          "name": "font-scale-activity-recreation-retains-document",
+          "passed": true
+        },
+        {
+          "name": "Reader-Editor-Reader-retains-document",
+          "passed": true
+        },
+        {
+          "name": "background-process-death-restores-Reader-task",
+          "passed": true,
+          "old_pid": "21430",
+          "new_pid": "22921"
+        },
+        {
+          "name": "configuration-recreation-after-process-death-retains-document",
+          "passed": true
+        },
+        {
+          "name": "original-source-bytes-preserved",
+          "passed": true,
+          "sha256": "e0ee902e6349f26d896a5dc53c38971209d1bc5cd483c9a48f3cb03d6d9007d2"
+        }
+      ],
+      "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+      "apk_sha256": "bb6f701c87129d7589ccabd58a1fc3ede014a277c1ecc859599214e11beeacd3",
+      "exports": null,
+      "packages": [],
+      "slides": null,
+      "pictures": null
+    },
+    "navigation": {
+      "receipt_path_relative_to_shared_validation": "core26-evidence/readiness29-signed-navigation-de825ca1/receipt.json",
+      "receipt_sha256": "a506f1f03de57fa3b720717b4db0f2cdc720f5e36ce9ce04f2e76d9624a08a1c",
+      "status": "SIGNED_MINIFIED_NAVIGATION_PASS",
+      "checks": [
+        {
+          "name": "category-configuration-restoration",
+          "passed": true,
+          "old_activity": "88df8fc",
+          "new_activity": "54ec04e"
+        },
+        {
+          "name": "office-configuration-restoration",
+          "passed": true,
+          "old_activity": "54ec04e",
+          "new_activity": "b951321"
+        }
+      ],
+      "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+      "apk_sha256": "bb6f701c87129d7589ccabd58a1fc3ede014a277c1ecc859599214e11beeacd3",
+      "exports": null,
+      "packages": [],
+      "slides": null,
+      "pictures": null
+    },
+    "powerpoint_public_export": {
+      "receipt_path_relative_to_shared_validation": "core26-evidence/readiness29-signed-office-de825ca1/receipt.json",
+      "receipt_sha256": "cf15344de47723fadf2b0970f278d96b1dcc11a4bc55db0a5f2f4f818a2390fc",
+      "status": "SIGNED_MINIFIED_UI_EXPORT_PASS_PARSER_PENDING",
+      "checks": null,
+      "source_sha": "de825ca1075121c0187f854a0c6c0f877da07a5f",
+      "apk_sha256": "bb6f701c87129d7589ccabd58a1fc3ede014a277c1ecc859599214e11beeacd3",
+      "exports": [
+        {
+          "kind": "mixed",
+          "input": "/sdcard/Download/readiness29-signed-office-de825ca1-mixed.pdf",
+          "input_sha256": "e0ee902e6349f26d896a5dc53c38971209d1bc5cd483c9a48f3cb03d6d9007d2",
+          "old_destination": "/sdcard/Documents/C05S-c61678c8/readiness29-signed-office-de825ca1-mixed.pptx",
+          "old_sha256": "5dce9b2aa6cea05791a5f20cce30e12141f206d378af3b58a0f435f83e40e61d",
+          "output": "/sdcard/Documents/C05S-c61678c8/readiness29-signed-office-de825ca1-mixed (2).pptx",
+          "output_sha256": "a6fae468f5cc2fca115ff9dba76e3bcc5873447346145c738c8597d17dd4d9e3",
+          "original_preserved": true,
+          "old_destination_preserved": true
+        },
+        {
+          "kind": "blank",
+          "input": "/sdcard/Download/readiness29-signed-office-de825ca1-blank.pdf",
+          "input_sha256": "f20995c7c3f2d1206178445a22b67072b5c57f64713c7a53dfb4b69d1ee815ca",
+          "old_destination": "/sdcard/Documents/C05S-3bab6408/readiness29-signed-office-de825ca1-blank.pptx",
+          "old_sha256": "5dce9b2aa6cea05791a5f20cce30e12141f206d378af3b58a0f435f83e40e61d",
+          "output": "/sdcard/Documents/C05S-3bab6408/readiness29-signed-office-de825ca1-blank (2).pptx",
+          "output_sha256": "44e9af010e8e6e501ef5931b06795e76e4cf5415f71db48595c7080c93a48b48",
+          "original_preserved": true,
+          "old_destination_preserved": true
+        }
+      ],
+      "packages": [],
+      "slides": null,
+      "pictures": null
+    },
+    "powerpoint_independent_parser": {
+      "receipt_path_relative_to_shared_validation": "core26-evidence/readiness29-signed-office-de825ca1/independent-pair-receipt.json",
+      "receipt_sha256": "af21b3fe36b7178c959483892a0cea432f7701c13bf123fd005f1944ef4f1afc",
+      "status": "PASS",
+      "checks": null,
+      "source_sha": null,
+      "apk_sha256": null,
+      "exports": null,
+      "packages": [
+        {
+          "kind": "mixed",
+          "files": {
+            "pdf": {
+              "file": "closure28_office_readiness29-signed-office-de825ca1.pdf",
+              "sha256": "e0ee902e6349f26d896a5dc53c38971209d1bc5cd483c9a48f3cb03d6d9007d2"
+            },
+            "pptx": {
+              "file": "closure28_office_readiness29-signed-office-de825ca1.pptx",
+              "sha256": "a6fae468f5cc2fca115ff9dba76e3bcc5873447346145c738c8597d17dd4d9e3"
+            }
+          },
+          "verification": {
+            "parser": "python-pptx",
+            "parser_version": "1.0.2",
+            "pptx_sha256": "a6fae468f5cc2fca115ff9dba76e3bcc5873447346145c738c8597d17dd4d9e3",
+            "source_sha256": "e0ee902e6349f26d896a5dc53c38971209d1bc5cd483c9a48f3cb03d6d9007d2",
+            "slides": 4,
+            "pictures_per_slide": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "status": "PASS",
+            "resolved_relationships": 17,
+            "roundtrip_preserved_images_and_geometry": true
+          }
+        },
+        {
+          "kind": "blank",
+          "files": {
+            "pdf": {
+              "file": "closure29_office_readiness29-signed-office-de825ca1.pdf",
+              "sha256": "f20995c7c3f2d1206178445a22b67072b5c57f64713c7a53dfb4b69d1ee815ca"
+            },
+            "pptx": {
+              "file": "closure29_office_readiness29-signed-office-de825ca1.pptx",
+              "sha256": "44e9af010e8e6e501ef5931b06795e76e4cf5415f71db48595c7080c93a48b48"
+            }
+          },
+          "verification": {
+            "parser": "python-pptx",
+            "parser_version": "1.0.2",
+            "pptx_sha256": "44e9af010e8e6e501ef5931b06795e76e4cf5415f71db48595c7080c93a48b48",
+            "source_sha256": "f20995c7c3f2d1206178445a22b67072b5c57f64713c7a53dfb4b69d1ee815ca",
+            "slides": 4,
+            "pictures_per_slide": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "status": "PASS",
+            "resolved_relationships": 17,
+            "roundtrip_preserved_images_and_geometry": true
+          }
+        }
+      ],
+      "slides": 8,
+      "pictures": 8
+    }
+  },
+  "local_receipt_hashes": {
+    "core26-evidence/readiness29-signed-reader-de825ca1-v2/receipt.json": "a30892d145499e48506ebab53f3cb84814beb12956854d8bd6b7ef3bcb932e59",
+    "core26-evidence/readiness29-signed-navigation-de825ca1/receipt.json": "a506f1f03de57fa3b720717b4db0f2cdc720f5e36ce9ce04f2e76d9624a08a1c",
+    "core26-evidence/readiness29-signed-office-de825ca1/receipt.json": "cf15344de47723fadf2b0970f278d96b1dcc11a4bc55db0a5f2f4f818a2390fc",
+    "core26-evidence/readiness29-signed-office-de825ca1/independent-pair-receipt.json": "af21b3fe36b7178c959483892a0cea432f7701c13bf123fd005f1944ef4f1afc",
+    "readiness29-evidence/final-integration-inventory.json": "cf5d4e3f80dd23018a119d78224c9886f4187b15daee60ac7d43822af8cd2b4d",
+    "readiness29-evidence/final-native-verification.json": "96802f441ecfb1176668db37660afab36c44563502ac368bbc665dfb74f974e8",
+    "readiness29-evidence/final-native-cases.json": "cbfdd508ce7634402059672c49cc90cdb1be8846dad57fd47b17735d93c474f5",
+    "readiness29-evidence/signed-final-de825ca1/receipt.json": "15ca795531bf49ca8387d4b91b9b76417b616084668f10e3f68e012d726b55e7",
+    "readiness29-evidence/elf-de825ca1.json": "ab7e15f0314b19a528d5174f800faeb48245e5e8d762bfef6d841548938b8f49"
+  },
+  "unresolved_owner_gates": true
+}

@@ -70,15 +70,18 @@ class AudioLifecycleTest {
         val wav = File.createTempFile("audio-publish", ".wav"); wav.writeBytes(ByteArray(100))
         try {
             var closed = false; var deleted = false
+            val providerError = IOException("provider failed")
             val error = runCatching {
                 AudioOutputPublisher.copy(wav, {
                     object : OutputStream() {
-                        override fun write(b: Int) { throw IOException("provider failed") }
+                        override fun write(b: Int) { throw providerError }
                         override fun close() { closed = true }
                     }
                 }, { deleted = true })
             }.exceptionOrNull()
-            assertTrue(error is IOException); assertTrue(closed && deleted)
+            assertTrue("An active copy must retain the provider failure", error is IOException)
+            assertEquals(providerError.message, error?.message)
+            assertTrue(closed && deleted)
             deleted = false
             assertTrue(runCatching { AudioOutputPublisher.copy(wav, { null }, { deleted = true }) }.isFailure)
             assertTrue(deleted)
@@ -99,6 +102,35 @@ class AudioLifecycleTest {
                 }, { deleted = true })
             }
             task.join(); assertTrue(task.isCancelled); assertTrue(deleted && closed)
+        } finally { wav.delete() }
+    }
+
+    @Test fun `provider close error during cancellation remains cancellation`() = runTest {
+        val sourceBytes = ByteArray(1024) { it.toByte() }
+        val wav = File.createTempFile("audio-cancel-close", ".wav").apply { writeBytes(sourceBytes) }
+        var closed = false
+        var cleanupCount = 0
+        try {
+            val error = runCatching {
+                coroutineScope {
+                    val copyContext = currentCoroutineContext()
+                    AudioOutputPublisher.copy(wav, {
+                        object : OutputStream() {
+                            override fun write(b: Int) = error("Bulk write expected")
+                            override fun write(b: ByteArray, off: Int, len: Int) {
+                                copyContext.cancel()
+                                throw IOException("Provider stream closed by cancellation")
+                            }
+                            override fun close() { closed = true }
+                        }
+                    }, { cleanupCount++ })
+                }
+            }.exceptionOrNull()
+
+            assertTrue("Cancellation must not escape as a provider failure: $error", error is CancellationException)
+            assertTrue("The canceled destination stream must close", closed)
+            assertEquals("Partial-copy cleanup must run once", 1, cleanupCount)
+            assertArrayEquals("Cancellation must preserve the input bytes", sourceBytes, wav.readBytes())
         } finally { wav.delete() }
     }
 }

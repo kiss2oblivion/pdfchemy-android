@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "artifact": {
+    "file": "core-1.5.0-sources.jar",
+    "url": "https://dl.google.com/dl/android/maven2/androidx/test/core/1.5.0/core-1.5.0-sources.jar",
+    "sha256": "505e01edc532ac8259ad52264bc0f004f42043c446b47957438e673f82fd1944",
+    "bytes": 37891,
+    "retrieved_at_utc": "2026-10-22T06:50:09.8505053Z",
+    "content_modified": false,
+    "license_handling": "The downloaded JAR is retained byte for byte; upstream source headers and licenses are unmodified."
+  },
+  "source_files": [
+    {
+      "archive_path": "androidx/test/core/app/ActivityScenario.java",
+      "sha256": "e49c4e9289879507026109ad42436a9b5c77fd8bf92878df1ff79236e235bf2a",
+      "line_numbering": "One-based source lines; facts use inclusive start/end pairs except the single timeout line.",
+      "facts": [
+        {
+          "lines": [
+            124
+          ],
+          "fact": "The activity-state wait timeout is 45000 milliseconds."
+        },
+        {
+          "lines": [
+            126,
+            136
+          ],
+          "fact": "The steady-state map excludes transient CREATED, STARTED and RESTARTED stages."
+        },
+        {
+          "lines": [
+            413,
+            421
+          ],
+          "fact": "close() invokes moveToState(DESTROYED) before removing its lifecycle observer."
+        },
+        {
+          "lines": [
+            428,
+            452
+          ],
+          "fact": "The wait compares requested Lifecycle states with the mapped current test Stage and throws after the timeout if no requested steady state is observed."
+        },
+        {
+          "lines": [
+            616,
+            624
+          ],
+          "fact": "getCurrentActivityState() maps the current test Stage through STEADY_STATES."
+        },
+        {
+          "lines": [
+            647,
+            684
+          ],
+          "fact": "STARTED is a supported request; its implementation first ensures RESUMED, calls pauseActivity(), then waits for the requested state."
+        },
+        {
+          "lines": [
+            651,
+            654
+          ],
+          "fact": "moveToState() rejects a null mapped state, explaining the cleanup null-state exception when the last Stage remains transient STARTED."
+        }
+      ]
+    },
+    {
+      "archive_path": "androidx/test/core/app/InstrumentationActivityInvoker.java",
+      "sha256": "da50b2e79bf68805fea5f5f9c8bb745233b5f9f2c1d66c85067e86529ed2df3a",
+      "line_numbering": "One-based source lines; facts use inclusive start/end pairs except the single timeout line.",
+      "facts": [
+        {
+          "lines": [
+            352,
+            387
+          ],
+          "fact": "EmptyFloatingActivity finishes on FINISH_EMPTY_ACTIVITIES and broadcasts EMPTY_FLOATING_ACTIVITY_RESUMED from onResume()."
+        },
+        {
+          "lines": [
+            481,
+            484
+          ],
+          "fact": "resumeActivity() sends FINISH_EMPTY_ACTIVITIES."
+        },
+        {
+          "lines": [
+            486,
+            521
+          ],
+          "fact": "pauseActivity() accepts RESUMED or PAUSED, starts EmptyFloatingActivity with FLAG_ACTIVITY_NEW_TASK and waits for its resumed broadcast. The helper is intended to leave the target paused."
+        }
+      ]
+    }
+  ],
+  "requested_lifecycle_to_required_steady_stage": {
+    "RESUMED": "RESUMED",
+    "STARTED": "PAUSED",
+    "CREATED": "STOPPED",
+    "DESTROYED": "DESTROYED"
+  },
+  "unmapped_transient_test_stages": [
+    "CREATED",
+    "STARTED",
+    "RESTARTED"
+  ],
+  "failure_interpretation": {
+    "api_usage": "moveToState(Lifecycle.State.STARTED) is supported. The existing call is not an API misuse.",
+    "observed_context": "SC10 API34 first attempt reported requested Lifecycle STARTED with last raw test Stage STARTED.",
+    "source_explanation": "Lifecycle STARTED requires steady test Stage PAUSED. A last raw Stage STARTED maps to null and does not satisfy the wait. close() subsequently encounters that same null mapping.",
+    "exact_floating_helper_divergence_cause": "Unestablished. Source semantics explain the assertion and secondary cleanup exception, but do not establish why the device took the observed lifecycle path.",
+    "infrastructure_attribution": "Not established."
+  },
+  "repair_context": {
+    "intended_flow": "Exercise real Home/launcher backgrounding and return to the same activity, with lifecycle and content assertions.",
+    "distinction": "The repair uses Home/launcher backgrounding; it does not replace the request with the CREATED helper."
+  },
+  "review_scope": "Upstream source semantics only. No application or test source edits or builds were performed for this evidence."
+}

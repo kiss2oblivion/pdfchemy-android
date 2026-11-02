@@ -56,8 +56,7 @@ object PdfManipulator {
             try {
                 for (pageNumber in pagesList) {
                     val fileName = "${baseName}_page_${pageNumber}.pdf"
-                    val newFile = outputDirectory.createFile("application/pdf", fileName)
-                        ?: throw java.io.IOException("Failed to create output $fileName")
+                    val newFile = OutputPolicy.createCopy(outputDirectory, "application/pdf", fileName)
                     createdOutputs.add(newFile)
                     destUris.add(newFile.uri)
                 }
@@ -75,7 +74,7 @@ object PdfManipulator {
                 )
                 destUris.toList()
             } catch (e: Exception) {
-                createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to split PDF via Gateway", e)
                 throw e
             }
@@ -107,8 +106,7 @@ object PdfManipulator {
 
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
-                val newFile = outputDirectory.createFile("application/pdf", fileName)
-                    ?: throw java.io.IOException("Failed to create output $fileName")
+                val newFile = OutputPolicy.createCopy(outputDirectory, "application/pdf", fileName)
                 createdOutputs.add(newFile)
                 outputUris.add(newFile.uri)
             }
@@ -126,12 +124,12 @@ object PdfManipulator {
                 try {
                     PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
                 } catch (e: Exception) {
-                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
                     throw e
                 }
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { it.delete() } }
+            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by blank pages via Gateway", e)
             throw e
         }
@@ -159,8 +157,7 @@ object PdfManipulator {
 
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
-                val newFile = outputDirectory.createFile("application/pdf", fileName)
-                    ?: throw java.io.IOException("Failed to create output $fileName")
+                val newFile = OutputPolicy.createCopy(outputDirectory, "application/pdf", fileName)
                 createdOutputs.add(newFile)
                 outputUris.add(newFile.uri)
             }
@@ -178,12 +175,12 @@ object PdfManipulator {
                 try {
                     PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
                 } catch (e: Exception) {
-                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
                     throw e
                 }
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { it.delete() } }
+            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by bookmarks via Gateway", e)
             throw e
         }
@@ -307,8 +304,7 @@ object PdfManipulator {
 
             for (i in 0 until totalPages) {
                 val fileName = "${baseName}_page_${i + 1}.$extension"
-                val newFile = outputDirectory.createFile(mimeType, fileName)
-                    ?: throw java.io.IOException("Failed to create output $fileName")
+                val newFile = OutputPolicy.createCopy(outputDirectory, mimeType, fileName)
                 createdOutputs.add(newFile)
                 outputUris.add(newFile.uri)
             }
@@ -324,12 +320,12 @@ object PdfManipulator {
                 try {
                     PdfGateway.executeEngineBatch(context, "PDF_TO_IMAGES", listOf(sourceUri), outputUris, paramsJson)
                 } catch (e: Exception) {
-                    createdOutputs.forEach { try { it.delete() } catch(ex: Exception) {} }
+                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
                     throw e
                 }
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { it.delete() } }
+            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Failed to convert PDF to images via Gateway", e)
             throw e
         }

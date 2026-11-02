@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.FreshReanalysisProbeTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-20T21:27:16.651Z" hostname="DESKTOP-N37P7P6" time="7.216">
+  <properties/>
+  <testcase name="distinctSameNameSameSizeDocumentsCollideInReaderIdentity_probe" classname="com.pdfchemy.app.security.FreshReanalysisProbeTest" time="6.256"/>
+  <testcase name="startupSweepDeletesAnActivelyLeasedSnapshot_probe" classname="com.pdfchemy.app.security.FreshReanalysisProbeTest" time="0.558"/>
+  <testcase name="cancellationCannotFinishWhilePublicationWriteIsBlocked_probe" classname="com.pdfchemy.app.security.FreshReanalysisProbeTest" time="0.399"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+WARNING: A Java agent has been loaded dynamically (C:\Users\John\.gradle\caches\9.4.1\transforms\7dd41080ed7927faef4c3fbb68d5d634\transformed\jetified-byte-buddy-agent-1.14.6.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,9 +90,7 @@ fun AttachmentManagerScreen(
         }
     }
 
-    val extractSaveLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("*/*")
-    ) { destUri ->
+    val extractSaveLauncher = rememberPreferredDocumentCreator("*/*") { destUri ->
         if (destUri != null && selectedPdfUri != null && targetExtractAttachment != null) {
             coroutineScope.launch {
                 try {
@@ -100,7 +99,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_extract_success),
                         context.getString(R.string.desc_extract_success)
-                    )
+                    , destUri)
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_extract_failed),
@@ -111,9 +110,7 @@ fun AttachmentManagerScreen(
         }
     }
 
-    val saveAttachedPdfLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveAttachedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null && fileToEmbedUri != null) {
             coroutineScope.launch {
                 try {
@@ -122,7 +119,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_embed_success),
                         context.getString(R.string.desc_embed_success)
-                    )
+                    , destUri)
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_embed_failed),
@@ -133,7 +130,7 @@ fun AttachmentManagerScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_embed_success),
                         context.getString(R.string.desc_embed_success)
-                    )
+                    , destUri)
                     selectedPdfUri = destUri
                     fileToEmbedUri = null
                     refreshAttachments()
@@ -273,7 +270,7 @@ fun AttachmentManagerScreen(
                                         .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Rounded.InsertDriveFile, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    Icon(Icons.AutoMirrored.Rounded.InsertDriveFile, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(text = item.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)

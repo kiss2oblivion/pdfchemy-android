@@ -75,9 +75,7 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedPdfUri = uri
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             viewModel.protectPdf(
                 context = context,
@@ -300,9 +298,7 @@ fun UnlockPdfScreen(
         }
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             viewModel.unlockPdf(
                 context = context,

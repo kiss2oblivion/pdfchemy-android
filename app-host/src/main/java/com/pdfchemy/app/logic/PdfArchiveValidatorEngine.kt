@@ -3,6 +3,9 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.utils.AppLogger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -20,7 +23,9 @@ data class PdfAReport(
     val pdfaVersionDetected: String,
     val complianceScore: Int,
     val checks: List<ComplianceCheckItem>,
-    val isCompliant: Boolean
+    val isCompliant: Boolean,
+    val certificationStatus: String,
+    val assessmentScope: String
 )
 
 object PdfArchiveValidatorEngine {
@@ -40,22 +45,22 @@ object PdfArchiveValidatorEngine {
                 pdfaVersionDetected = contract.pdfaVersionDetected,
                 complianceScore = contract.complianceScore,
                 checks = checks,
-                isCompliant = contract.isCompliant
+                isCompliant = false,
+                certificationStatus = contract.certificationStatus,
+                assessmentScope = contract.assessmentScope
             )
             Result.success(report)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            AppLogger.e("PdfArchiveValidatorEngine: Error validating PDF/A", e)
+            AppLogger.e("PdfArchiveValidatorEngine: Error inspecting preliminary PDF/A checks", e)
             Result.failure(e)
         }
     }
 
     suspend fun convertToPdfA(context: Context, sourceUri: Uri, destUri: Uri): Boolean = withContext(Dispatchers.IO) {
-        try {
-            PdfGateway.executeEngine(context, "ARCHIVE_CONVERT", sourceUri, destUri, "{}")
-            true
-        } catch (e: Exception) {
-            AppLogger.e("PdfArchiveValidatorEngine: Error converting to PDF/A", e)
-            false
-        }
+        currentCoroutineContext().ensureActive()
+        // Preserve the legacy signature, but fail explicitly before Gateway/history/publication.
+        throw UnsupportedOperationException("PDF/A conversion is not supported by the local engine")
     }
 }

@@ -1,0 +1,33 @@
+{
+  "source": "4ec21c40a81f7aa9eab9f696ccb755131dc7310c",
+  "run": 39590800550,
+  "attempt": 1,
+  "api": 34,
+  "job": 119192994875,
+  "tests": 244,
+  "failures": 1,
+  "errors": 0,
+  "skipped": 0,
+  "private_alias_methods_passed": 8,
+  "failing_methods": [
+    [
+      "com.pdfchemy.app.StartupWindowRegressionTest",
+      "backgroundAndResumeRetainsContent",
+      "java.lang.AssertionError: Activity never becomes requested state \"[STARTED]\" (last lifecycle transition = \"STARTED\")"
+    ]
+  ],
+  "cause": "not established; ActivityScenario STARTED transition timeout",
+  "build": "skipped",
+  "successful_matrix_counting": "not included; retain failed attempt separately",
+  "failure_location": "StartupWindowRegressionTest.kt:46",
+  "logcat_files": [
+    {
+      "path": "ci-api34-attempt1-startup-logcat-1.log",
+      "original_name": "logcat-com.pdfchemy.app.StartupWindowRegressionTest-backgroundAndResumeRetainsContent.txt"
+    },
+    {
+      "path": "ci-api34-attempt1-startup-logcat-2.log",
+      "original_name": "logcat-com.pdfchemy.app.StartupWindowRegressionTest-repeatedNormalLaunchAndRecreationInstallsContent.txt"
+    }
+  ]
+}

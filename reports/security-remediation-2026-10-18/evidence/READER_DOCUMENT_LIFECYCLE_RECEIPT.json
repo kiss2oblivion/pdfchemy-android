@@ -1,0 +1,37 @@
+{
+  "base_commit": "cb7ff0473ec3c420d6caf2fcca53519030910116",
+  "baseline_unit": {
+    "tests": 6,
+    "failures": 1,
+    "errors": 0,
+    "failed_method": "refreshingSameContinuityUriCannotDeletePendingSnapshot"
+  },
+  "corrected_staged_session_tests": 8,
+  "complete_host_suite": {
+    "tests": 271,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "release_lint": {
+    "Warning": 640
+  },
+  "native_lifecycle": {
+    "status": "PASS",
+    "api": 36,
+    "methods": 1,
+    "build_variant": "debug",
+    "scope": "Actual MainApp Reader -> Editor -> Reader -> Home with Vanguard enabled; visible page, retained snapshot and final deletion asserted",
+    "prior_attempt": "Failed because bitmap visibility was asserted before asynchronous layout; test now waits for visible bitmap; failure retained"
+  },
+  "corrected_source_files": {
+    "app-host/src/main/java/com/pdfchemy/app/MainActivity.kt": "c2fed8b13f53a60405a03cd7901b794ea44fcfed25133313d4ec56a5005162d4",
+    "app-host/src/main/java/com/pdfchemy/app/ui/MainViewModel.kt": "ba2e82e0f5a6452a8b55961d1a3e4d90ca2e277c3c0b51df5a0e35a00fcfa355",
+    "app-host/src/main/java/com/pdfchemy/app/ui/PdfReaderScreen.kt": "df37c5ab64fa95526748cc42b2cfab6ef8290e197837f95269a285a72bfa30ef",
+    "app-host/src/androidTest/java/com/pdfchemy/app/ui/ReaderDocumentLifecycleTest.kt": "ec019af591847a740ac23f813494713b92cb902d4baff04101dde4aceaec3e8f",
+    "app-host/src/test/java/com/pdfchemy/app/security/StagedSessionRetentionTest.kt": "64ab52b2120e34e99651c237e0417db5e17ef63bb559201282beff065d958ca7"
+  },
+  "final_source_ci": "PENDING",
+  "final_signed_artifacts": "PENDING",
+  "release_decision": "HOLD"
+}

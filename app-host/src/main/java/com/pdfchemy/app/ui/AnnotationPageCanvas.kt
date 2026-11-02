@@ -1,0 +1,128 @@
+package com.pdfchemy.app.ui
+
+import android.graphics.Bitmap
+import android.graphics.RectF
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.awaitDragOrCancellation
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
+import com.pdfchemy.app.logic.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+internal fun interface EditorOverlayRenderer {
+    fun render(modification: PageModification, width: Int, height: Int): Bitmap?
+}
+
+internal val LocalEditorOverlayRenderer = staticCompositionLocalOf {
+    EditorOverlayRenderer { modification, width, height -> AnnotationRenderer.render(modification, width, height) }
+}
+
+/** Every posture uses the same unrotated coordinate plane as isolated export. */
+@Composable
+internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification, tool: EditorTool,
+    color: Color, strokeWidth: Float, onDrawing: (DrawingPath) -> Unit, onText: (Offset) -> Unit,
+    onStamp: (Offset) -> Unit, onRedaction: (RedactionBox) -> Unit) {
+    var bounds by remember { mutableStateOf(IntSize.Zero) }
+    var points by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
+    var redactStart by remember { mutableStateOf<Offset?>(null) }
+    var redactEnd by remember { mutableStateOf<Offset?>(null) }
+    var overlay by remember { mutableStateOf<Bitmap?>(null) }
+    val overlayRenderer = LocalEditorOverlayRenderer.current
+    val draft = if (points.size > 1) DrawingPath(points = points, color = color.toArgb(),
+        strokeWidth = if (tool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
+        isHighlighter = tool == EditorTool.HIGHLIGHTER) else null
+    val preview = modification.copy(drawings = modification.drawings + listOfNotNull(draft),
+        redactions = modification.redactions + listOfNotNull(if (redactStart != null && redactEnd != null)
+            RedactionBox(modification.pageIndex, RectF(minOf(redactStart!!.x, redactEnd!!.x), minOf(redactStart!!.y, redactEnd!!.y),
+                maxOf(redactStart!!.x, redactEnd!!.x), maxOf(redactStart!!.y, redactEnd!!.y))) else null))
+    LaunchedEffect(preview, bitmap, overlayRenderer) {
+        var rendered: Bitmap? = null
+        try {
+            withContext(Dispatchers.IO) { rendered = overlayRenderer.render(preview, bitmap.width, bitmap.height) }
+            overlay = rendered
+            rendered = null
+        } finally { rendered?.recycle() }
+    }
+    // Published images can still be held by Compose/RenderThread after replacement or disposal.
+    // Their references own that lifetime; only an unpublished render is recycled above.
+    fun normalized(point: Offset): Offset = Offset((point.x / bounds.width.coerceAtLeast(1)).coerceIn(0f, 1f),
+        (point.y / bounds.height.coerceAtLeast(1)).coerceIn(0f, 1f))
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val ratio = bitmap.width.toFloat() / bitmap.height
+        val sideways = modification.rotationDegrees % 180 != 0
+        val pageWidth = if (sideways) minOf(maxHeight, maxWidth * ratio) else minOf(maxWidth, maxHeight * ratio)
+        Box(Modifier.requiredSize(pageWidth, pageWidth / ratio).rotate(modification.rotationDegrees.toFloat())
+            .background(Color.White).onSizeChanged { bounds = it }
+            .pointerInput(tool, modification.pageIndex, color, strokeWidth) {
+                when (tool) {
+                    EditorTool.TEXT, EditorTool.STAMP -> detectTapGestures { point ->
+                        if (tool == EditorTool.TEXT) onText(normalized(point)) else onStamp(normalized(point))
+                    }
+                    EditorTool.REDACT -> awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val drag = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        if (drag != null) {
+                            // Slop decides whether this is a drag; it must not shift its anchor.
+                            redactStart = normalized(down.position)
+                            var change: PointerInputChange = drag
+                            try {
+                                while (true) {
+                                    // ACTION_UP can carry a newer position than the last MOVE.
+                                    redactEnd = normalized(change.position)
+                                    if (!change.pressed) {
+                                        val start = redactStart!!
+                                        val end = redactEnd!!
+                                        if (kotlin.math.abs(start.x - end.x) > .02f && kotlin.math.abs(start.y - end.y) > .01f)
+                                            onRedaction(RedactionBox(modification.pageIndex, RectF(
+                                                minOf(start.x, end.x), minOf(start.y, end.y),
+                                                maxOf(start.x, end.x), maxOf(start.y, end.y))))
+                                        break
+                                    }
+                                    change.consume()
+                                    change = awaitDragOrCancellation(change.id) ?: break
+                                }
+                            } finally { redactStart = null; redactEnd = null }
+                        }
+                    }
+                    EditorTool.PEN, EditorTool.HIGHLIGHTER -> detectDragGestures(
+                        onDragStart = { point ->
+                            val start = normalized(point)
+                            points = listOf(DrawingPoint(start.x, start.y))
+                        },
+                        onDrag = { change, _ ->
+                            change.consume(); val point = normalized(change.position)
+                            points = points + DrawingPoint(point.x, point.y)
+                        },
+                        onDragCancel = { points = emptyList(); redactStart = null; redactEnd = null },
+                        onDragEnd = {
+                            if (points.size > 1) onDrawing(DrawingPath(points = points, color = color.toArgb(),
+                                strokeWidth = if (tool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth, isHighlighter = tool == EditorTool.HIGHLIGHTER))
+                            points = emptyList(); redactStart = null; redactEnd = null
+                        })
+                    EditorTool.VIEW -> Unit
+                }
+            }) {
+            Image(bitmap.asImageBitmap(), "Page ${modification.pageIndex + 1}", Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+            overlay?.let { Image(it.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds) }
+        }
+    }
+}

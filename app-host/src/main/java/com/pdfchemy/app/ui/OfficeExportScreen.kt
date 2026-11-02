@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,10 +41,14 @@ fun OfficeExportScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
+    androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var selectedFormat by remember { mutableStateOf(initialFormat) }
-    var fileName by remember { mutableStateOf("") }
+    var fileName by remember {
+        mutableStateOf(continuityUri?.let { FileUtils.getFileName(context, it) ?: "document.pdf" } ?: "")
+    }
     var isProcessing by remember { mutableStateOf(false) }
 
     val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
@@ -51,9 +56,7 @@ fun OfficeExportScreen(
         fileName = FileUtils.getFileName(context, uri) ?: "document.pdf"
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(selectedFormat.mimeType)
-    ) { destUri: Uri? ->
+    val saveFileLauncher = rememberPreferredDocumentCreator(selectedFormat.mimeType) { destUri: Uri? ->
         if (destUri != null && selectedUri != null) {
             isProcessing = true
             viewModel.exportPdfToOffice(
@@ -203,7 +206,7 @@ fun OfficeExportScreen(
                 FormatSelectionCard(
                     title = "Word",
                     subtitle = ".docx",
-                    icon = Icons.Rounded.Article,
+                    icon = Icons.AutoMirrored.Rounded.Article,
                     color = Color(0xFF2B579A),
                     isSelected = selectedFormat == OfficeFormat.WORD,
                     modifier = Modifier.weight(1f)

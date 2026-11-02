@@ -20,7 +20,7 @@ object PdfServiceEngineWorker {
                         com.pdfchemy.app.jail.boundedFileOutput(targetFd.fileDescriptor).use { output -> document.save(BoundedOutputStream(output)) }
                     }
                 }
-                return org.json.JSONObject().put("size", targetFd.statSize).toString()
+                return org.json.JSONObject().put("size", com.pdfchemy.app.jail.JailScratch.outputSize(targetFd.fileDescriptor)).toString()
     }
     fun analyze(sourceFd: ParcelFileDescriptor?): String {
                 return com.pdfchemy.app.jail.capabilityInput(requireNotNull(sourceFd).fileDescriptor).use { input ->

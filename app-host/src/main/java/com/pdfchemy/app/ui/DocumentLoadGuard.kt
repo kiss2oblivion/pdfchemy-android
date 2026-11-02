@@ -8,3 +8,9 @@ internal suspend inline fun guardDocumentLoad(onFailure: () -> Unit, block: () -
     catch (cancelled: CancellationException) { throw cancelled }
     catch (_: Exception) { onFailure() }
 }
+
+internal suspend inline fun guardDocumentLoadWithCause(onFailure: (Exception) -> Unit, block: () -> Unit) {
+    try { block() }
+    catch (cancelled: CancellationException) { throw cancelled }
+    catch (e: Exception) { onFailure(e) }
+}

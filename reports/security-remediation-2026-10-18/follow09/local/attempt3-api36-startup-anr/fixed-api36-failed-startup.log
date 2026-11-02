@@ -1,0 +1,57 @@
+--------- beginning of system
+10-22 14:37:18.082   635  1127 I ActivityManager: Force stopping com.pdfchemy.app appid=10219 user=0: start instr
+10-22 14:37:18.503   635  1127 W ActivityManager: Slow operation: 55ms so far, now at startProcess: building args
+10-22 14:37:18.677   635   681 W ActivityManager: Slow operation: 235ms so far, now at startProcess: asking zygote to start proc
+10-22 14:37:19.399   635   681 W ActivityManager: Slow operation: 956ms so far, now at startProcess: returned from zygote!
+10-22 14:37:19.574   635   681 W ActivityManager: Slow operation: 1132ms so far, now at startProcess: done updating battery stats
+10-22 14:37:19.575   635   681 W ActivityManager: Slow operation: 1132ms so far, now at startProcess: building log message
+10-22 14:37:19.575   635   681 I ActivityManager: Start proc 6195:com.pdfchemy.app/u0a219 for added application com.pdfchemy.app
+10-22 14:37:19.576   635   681 W ActivityManager: Slow operation: 1134ms so far, now at startProcess: starting to update pids map
+10-22 14:37:19.577   635   681 I ActivityManager: ProcessObserver broadcast disabled
+10-22 14:37:19.577   635   681 W ActivityManager: Slow operation: 1135ms so far, now at startProcess: done updating pids map
+10-22 14:37:20.615   635  1127 W ActivityManager: Slow operation: 69ms so far, now at attachApplicationLocked: after updateOomAdjLocked
+10-22 14:37:35.566   635   680 I ActivityManager: Extending process start timeout by 7440ms for ProcessRecord{fe9dfe3 6195:com.pdfchemy.app/u0a219}
+10-22 14:37:43.166   635  6210 I ActivityManager: Collecting stacks for pid 6195 into temporary file temp_anr_7148401445951497554.txt
+10-22 14:37:43.593   635  6211 I ActivityManager: dumpStackTraces pids=null
+10-22 14:37:43.594   635  6211 I ActivityManager: Dumping to /data/anr/anr_2026-10-22-14-37-43-593
+10-22 14:37:48.136   635  6211 I ActivityManager: dumpStackTraces nativepids=null
+10-22 14:37:48.136   635  6211 I ActivityManager: dumpStackTraces extraPids=null
+10-22 14:37:48.136   635  6211 I ActivityManager: Done dumping
+10-22 14:37:48.143   635  6211 E ActivityManager: ANR in com.pdfchemy.app
+10-22 14:37:48.143   635  6211 E ActivityManager: PID: 6195
+10-22 14:37:48.143   635  6211 E ActivityManager: Reason: Process ProcessRecord{fe9dfe3 6195:com.pdfchemy.app/u0a219} failed to complete startup
+10-22 14:37:48.143   635  6211 E ActivityManager: ErrorId: 8aba7c6d-298c-43bc-bb3a-47fd7399c654
+10-22 14:37:48.143   635  6211 E ActivityManager: Frozen: false
+10-22 14:37:48.143   635  6211 E ActivityManager: Load: 0.0 / 0.0 / 0.0
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- Output from /proc/pressure/memory -----
+10-22 14:37:48.143   635  6211 E ActivityManager: some avg10=4.65 avg60=5.91 avg300=7.51 total=108009417
+10-22 14:37:48.143   635  6211 E ActivityManager: full avg10=1.63 avg60=1.67 avg300=1.84 total=35558283
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- End output from /proc/pressure/memory -----
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- Output from /proc/pressure/cpu -----
+10-22 14:37:48.143   635  6211 E ActivityManager: some avg10=72.69 avg60=78.44 avg300=62.38 total=993507977
+10-22 14:37:48.143   635  6211 E ActivityManager: full avg10=0.00 avg60=0.00 avg300=0.00 total=0
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- End output from /proc/pressure/cpu -----
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- Output from /proc/pressure/io -----
+10-22 14:37:48.143   635  6211 E ActivityManager: some avg10=1.02 avg60=2.48 avg300=3.50 total=93339240
+10-22 14:37:48.143   635  6211 E ActivityManager: full avg10=0.00 avg60=0.16 avg300=0.17 total=11864455
+10-22 14:37:48.143   635  6211 E ActivityManager: ----- End output from /proc/pressure/io -----
+10-22 14:37:48.143   635  6211 E ActivityManager: 
+10-22 14:37:48.143   635  6211 E ActivityManager: CPU usage from 14187ms to -20ms ago (2026-10-22 14:37:28.958 to 2026-10-22 14:37:43.176) with 99% awake:
+10-22 14:37:48.143   635  6211 E ActivityManager:   78% 6195/com.pdfchemy.app: 13% user + 64% kernel / faults: 19745 minor 40 major
+10-22 14:37:48.143   635  6211 E ActivityManager:   48% 452/android.hardware.sensors-service.multihal: 0% user + 48% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager:   19% 635/system_server: 0% user + 19% kernel / faults: 143 minor 14 major
+10-22 14:37:48.143   635  6211 E ActivityManager:   17% 464/android.hardware.graphics.composer3-service.ranchu: 0% user + 17% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager:   3.3% 949/com.android.networkstack.process: 0.1% user + 3.1% kernel / faults: 180 minor
+10-22 14:37:48.143   635  6211 E ActivityManager:   3% 6001/kworker/u6:3-events_unbound: 0% user + 3% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager:   2.3% 45/kswapd0: 0% user + 2.3% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager:   1.8% 5384/kworker/u5:0-events_unbound: 0% user + 1.8% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager:   1.8% 996/com.android.phone: 0% user + 1.8% kernel / faults: 49 minor
+10-22 14:37:48.143   635  6211 E ActivityManager:   1.9% 209/lmkd: 0.1% user + 1.8% kernel
+10-22 14:37:48.143   635  6211 E ActivityManager: 97% TOTAL: 9.8% user + 84% kernel + 0% iowait + 3.3% softirq
+10-22 14:37:48.143   635  6211 E ActivityManager: CPU usage from 15980362ms to 15980362ms ago (1970-01-01 02:00:00.000 to 1970-01-01 02:00:00.000) with 0% awake:
+10-22 14:37:48.143   635  6211 E ActivityManager: 0% TOTAL: 0% user + 0% kernel
+10-22 14:37:48.169   635  6211 I ActivityManager: Killing 6195:com.pdfchemy.app/u0a219 (adj 0): bg anr
+10-22 14:37:48.378   635  4370 W ActivityManager: Crash of app com.pdfchemy.app running instrumentation ComponentInfo{com.pdfchemy.app.test/androidx.test.runner.AndroidJUnitRunner}
+10-22 14:37:48.577   635  4370 I ActivityManager: Force stopping com.pdfchemy.app appid=10219 user=0: finished inst
+10-22 14:37:48.913   635  6214 W ActivityManager: pid 635 system sent binder code 2 with flags 0 to frozen apps and got error -32
+10-22 14:37:48.927   635  6214 I ActivityManager: Failure reporting to instrumentation watcher: comp=ComponentInfo{com.pdfchemy.app.test/androidx.test.runner.AndroidJUnitRunner} results=Bundle[{shortMsg=Process crashed.}]

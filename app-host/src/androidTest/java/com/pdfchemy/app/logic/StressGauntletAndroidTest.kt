@@ -301,7 +301,14 @@ class StressGauntletAndroidTest {
                     Uri.fromFile(out),
                     quality = 0.5f
                 )
-                if (res.isFailure) assertTrue("Excess work must fail fast with BUSY", res.exceptionOrNull()?.message.orEmpty().contains("BUSY"))
+                if (res.isFailure) {
+                    val err = res.exceptionOrNull()
+                    println("Gauntlet job $id rejected with: ${err?.javaClass?.name}: ${err?.message}")
+                    assertTrue(
+                        "Excess work must fail fast with BUSY (got ${err?.javaClass?.simpleName}: '${err?.message}')",
+                        err?.message.orEmpty().contains("BUSY")
+                    )
+                }
                 res.isSuccess && out.exists() && out.length() > 0
             }
         }

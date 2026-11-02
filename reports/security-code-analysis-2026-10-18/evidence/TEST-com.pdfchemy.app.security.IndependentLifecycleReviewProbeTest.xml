@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.security.IndependentLifecycleReviewProbeTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-18T10:50:40.441Z" hostname="DESKTOP-N37P7P6" time="0.365">
+  <properties/>
+  <testcase name="sourceEqualsDestinationReachesCompressorInsteadOfBeingRejected_probe" classname="com.pdfchemy.app.security.IndependentLifecycleReviewProbeTest" time="0.124"/>
+  <testcase name="outerDispatcherCancellationLosesAtomicallyCreatedStagingLease_probe" classname="com.pdfchemy.app.security.IndependentLifecycleReviewProbeTest" time="0.052"/>
+  <testcase name="completedTargetMissedOutputIsDeletedOnViewModelClear_probe" classname="com.pdfchemy.app.security.IndependentLifecycleReviewProbeTest" time="0.189"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

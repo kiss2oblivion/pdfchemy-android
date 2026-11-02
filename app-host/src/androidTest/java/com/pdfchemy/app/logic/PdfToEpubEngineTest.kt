@@ -72,7 +72,7 @@ class PdfToEpubEngineTest {
             authorName = "Author Name"
         )
 
-        assertTrue(result.isSuccess)
+        assertTrue(result.exceptionOrNull()?.stackTraceToString(), result.isSuccess)
         assertTrue(destEpubFile.exists() && destEpubFile.length() > 0)
 
         // Verify valid EPUB / ZIP container structure
@@ -84,5 +84,23 @@ class PdfToEpubEngineTest {
         assertNotNull("Must contain chapter 1", zip.getEntry("OEBPS/chapter_1.xhtml"))
         assertNotNull("Must contain chapter 2", zip.getEntry("OEBPS/chapter_2.xhtml"))
         zip.close()
+    }
+
+    @Test
+    fun pdfEpubPdfRoundTripCompletesBothOutputPipes() = runBlocking {
+        val epub = java.io.ByteArrayOutputStream()
+        FileInputStream(samplePdfFile).use { input ->
+            val result = PdfToEpubEngine.pdfToEpub(context, input, epub, "Round trip", "Fixture")
+            assertTrue(result.exceptionOrNull()?.stackTraceToString(), result.isSuccess)
+        }
+        val pdf = java.io.ByteArrayOutputStream()
+        val result = PdfToEpubEngine.epubToPdf(context, java.io.ByteArrayInputStream(epub.toByteArray()), pdf)
+        assertTrue(result.exceptionOrNull()?.stackTraceToString(), result.isSuccess)
+        PDDocument.load(pdf.toByteArray()).use { document ->
+            assertTrue(document.numberOfPages > 0)
+            val text = com.tom_roush.pdfbox.text.PDFTextStripper().getText(document)
+            assertTrue(text.contains("The Beginning of Digital Publishing"))
+            assertTrue(text.contains("The Future of E-Books and Reflow"))
+        }
     }
 }

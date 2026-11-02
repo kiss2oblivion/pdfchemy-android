@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.WorkerProducerContractTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-18T21:59:18.454Z" hostname="DESKTOP-N37P7P6" time="1.597">
+  <properties/>
+  <testcase name="imageAnalysisProducerRealSerializationMatchesValidatorContract" classname="com.pdfchemy.app.jail.WorkerProducerContractTest" time="1.597"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

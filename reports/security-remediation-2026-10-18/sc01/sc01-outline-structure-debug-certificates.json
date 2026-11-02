@@ -1,0 +1,17 @@
+[
+  {
+    "certificate_sha256": "c9fc306fe6cfe6198a80c2683048d883b77cc828262c08486d0cc32d43e60c6b",
+    "path": ".security-runtime/sc01/document-carrier-fixed.apk",
+    "apk_sha256": "C44F2C04E5E1415A7735202BAE501C6E5BB45B816013A1B41191F932A2D499B6"
+  },
+  {
+    "certificate_sha256": "3151e9f9ed70b4f85b1aa7911884ad6ec1b647c2f13e9e488c47d2da24c3f9c1",
+    "path": "app-host/build/outputs/apk/debug/app-host-debug.apk",
+    "apk_sha256": "996EAED869340E6A6D4322DD6503206EAE8061399C0698F9C76BDE635C464C89"
+  },
+  {
+    "certificate_sha256": "3151e9f9ed70b4f85b1aa7911884ad6ec1b647c2f13e9e488c47d2da24c3f9c1",
+    "path": "app-host/build/outputs/apk/androidTest/debug/app-host-debug-androidTest.apk",
+    "apk_sha256": "19A6E0855D2CDCCE564379706BA2E522CE83468988D8A554A74FACA8FD7BB38F"
+  }
+]

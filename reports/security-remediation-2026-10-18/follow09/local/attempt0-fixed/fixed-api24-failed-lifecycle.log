@@ -1,0 +1,454 @@
+--------- beginning of main
+--------- beginning of system
+10-22 10:12:57.855  3466  3486 I TestRunner: run started: 2 tests
+10-22 10:12:57.857  3466  3486 I TestRunner: started: repeatedNormalLaunchAndRecreationInstallsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 10:12:58.262  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: PRE_ON_CREATE
+10-22 10:12:58.263  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:12:58.710  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: CREATED
+10-22 10:12:58.711  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 10:12:58.713  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: STARTED
+10-22 10:12:58.713  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 10:12:58.718  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: RESUMED
+10-22 10:12:58.718  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 10:13:05.582  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: PAUSED
+10-22 10:13:05.583  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 10:13:05.597  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: STOPPED
+10-22 10:13:05.598  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@e05ff7
+10-22 10:13:05.690  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e05ff7 in: DESTROYED
+10-22 10:13:05.690  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:05.700  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: PRE_ON_CREATE
+10-22 10:13:05.700  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:05.746  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: CREATED
+10-22 10:13:05.746  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@c4a1016
+10-22 10:13:05.748  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: STARTED
+10-22 10:13:05.748  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@c4a1016
+10-22 10:13:05.749  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: RESUMED
+10-22 10:13:05.749  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@c4a1016
+10-22 10:13:07.370  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: PAUSED
+10-22 10:13:07.370  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@c4a1016
+10-22 10:13:08.868  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: STOPPED
+10-22 10:13:08.869  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@c4a1016
+10-22 10:13:08.962  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@c4a1016 in: DESTROYED
+10-22 10:13:08.962  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:09.109  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: PRE_ON_CREATE
+10-22 10:13:09.109  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:09.277  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: CREATED
+10-22 10:13:09.278  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@b3ed53c
+10-22 10:13:09.279  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: STARTED
+10-22 10:13:09.279  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@b3ed53c
+10-22 10:13:09.286  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: RESUMED
+10-22 10:13:09.286  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@b3ed53c
+10-22 10:13:10.513  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: PAUSED
+10-22 10:13:10.513  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@b3ed53c
+10-22 10:13:10.516  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: STOPPED
+10-22 10:13:10.516  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@b3ed53c
+10-22 10:13:10.532  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b3ed53c in: DESTROYED
+10-22 10:13:10.532  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:10.545  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: PRE_ON_CREATE
+10-22 10:13:10.545  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:10.578  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: CREATED
+10-22 10:13:10.578  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@e382d1d
+10-22 10:13:10.578  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: STARTED
+10-22 10:13:10.579  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@e382d1d
+10-22 10:13:10.589  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: RESUMED
+10-22 10:13:10.590  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@e382d1d
+10-22 10:13:11.397  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: PAUSED
+10-22 10:13:11.397  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@e382d1d
+10-22 10:13:11.764  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: STOPPED
+10-22 10:13:11.764  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@e382d1d
+10-22 10:13:11.785  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@e382d1d in: DESTROYED
+10-22 10:13:11.785  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:11.955  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: PRE_ON_CREATE
+10-22 10:13:11.956  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:12.101  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: CREATED
+10-22 10:13:12.101  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@a43e613
+10-22 10:13:12.101  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: STARTED
+10-22 10:13:12.101  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@a43e613
+10-22 10:13:12.104  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: RESUMED
+10-22 10:13:12.104  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@a43e613
+10-22 10:13:12.723  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: PAUSED
+10-22 10:13:12.724  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@a43e613
+10-22 10:13:12.727  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: STOPPED
+10-22 10:13:12.727  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@a43e613
+10-22 10:13:12.760  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a43e613 in: DESTROYED
+10-22 10:13:12.760  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:12.767  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: PRE_ON_CREATE
+10-22 10:13:12.768  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:12.815  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: CREATED
+10-22 10:13:12.816  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@ea5ca58
+10-22 10:13:12.817  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: STARTED
+10-22 10:13:12.817  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@ea5ca58
+10-22 10:13:12.819  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: RESUMED
+10-22 10:13:12.821  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@ea5ca58
+10-22 10:13:14.101  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: PAUSED
+10-22 10:13:14.101  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@ea5ca58
+10-22 10:13:14.602  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: STOPPED
+10-22 10:13:14.602  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@ea5ca58
+10-22 10:13:14.624  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ea5ca58 in: DESTROYED
+10-22 10:13:14.625  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:14.680  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: PRE_ON_CREATE
+10-22 10:13:14.680  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:14.747  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: CREATED
+10-22 10:13:14.748  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@d2c3f63
+10-22 10:13:14.750  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: STARTED
+10-22 10:13:14.750  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@d2c3f63
+10-22 10:13:14.754  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: RESUMED
+10-22 10:13:14.754  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@d2c3f63
+10-22 10:13:15.193  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: PAUSED
+10-22 10:13:15.193  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@d2c3f63
+10-22 10:13:15.204  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: STOPPED
+10-22 10:13:15.204  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@d2c3f63
+10-22 10:13:15.232  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@d2c3f63 in: DESTROYED
+10-22 10:13:15.232  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:15.238  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: PRE_ON_CREATE
+10-22 10:13:15.239  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:15.331  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: CREATED
+10-22 10:13:15.335  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@a6cb768
+10-22 10:13:15.338  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: STARTED
+10-22 10:13:15.339  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@a6cb768
+10-22 10:13:15.350  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: RESUMED
+10-22 10:13:15.350  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@a6cb768
+10-22 10:13:16.587  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: PAUSED
+10-22 10:13:16.587  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@a6cb768
+10-22 10:13:17.013  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: STOPPED
+10-22 10:13:17.013  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@a6cb768
+10-22 10:13:17.034  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@a6cb768 in: DESTROYED
+10-22 10:13:17.035  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:17.194  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: PRE_ON_CREATE
+10-22 10:13:17.195  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:17.257  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: CREATED
+10-22 10:13:17.258  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@eed94b3
+10-22 10:13:17.259  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: STARTED
+10-22 10:13:17.259  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@eed94b3
+10-22 10:13:17.261  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: RESUMED
+10-22 10:13:17.261  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@eed94b3
+10-22 10:13:17.797  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: PAUSED
+10-22 10:13:17.797  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@eed94b3
+10-22 10:13:17.800  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: STOPPED
+10-22 10:13:17.800  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@eed94b3
+10-22 10:13:17.816  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@eed94b3 in: DESTROYED
+10-22 10:13:17.817  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:17.821  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: PRE_ON_CREATE
+10-22 10:13:17.822  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:17.892  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: CREATED
+10-22 10:13:17.892  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@6837078
+10-22 10:13:17.893  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: STARTED
+10-22 10:13:17.893  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@6837078
+10-22 10:13:17.895  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: RESUMED
+10-22 10:13:17.895  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@6837078
+10-22 10:13:18.610  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: PAUSED
+10-22 10:13:18.610  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@6837078
+10-22 10:13:19.082  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: STOPPED
+10-22 10:13:19.082  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@6837078
+10-22 10:13:19.246  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@6837078 in: DESTROYED
+10-22 10:13:19.246  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:19.330  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: PRE_ON_CREATE
+10-22 10:13:19.331  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:19.375  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: CREATED
+10-22 10:13:19.375  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@293dac
+10-22 10:13:19.376  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: STARTED
+10-22 10:13:19.376  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@293dac
+10-22 10:13:19.378  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: RESUMED
+10-22 10:13:19.378  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@293dac
+10-22 10:13:19.767  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: PAUSED
+10-22 10:13:19.768  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@293dac
+10-22 10:13:19.772  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: STOPPED
+10-22 10:13:19.773  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@293dac
+10-22 10:13:19.799  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@293dac in: DESTROYED
+10-22 10:13:19.799  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:19.806  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: PRE_ON_CREATE
+10-22 10:13:19.806  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:19.847  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: CREATED
+10-22 10:13:19.848  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@635585d
+10-22 10:13:19.848  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: STARTED
+10-22 10:13:19.849  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@635585d
+10-22 10:13:19.851  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: RESUMED
+10-22 10:13:19.851  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@635585d
+10-22 10:13:20.814  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: PAUSED
+10-22 10:13:20.814  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@635585d
+10-22 10:13:21.186  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: STOPPED
+10-22 10:13:21.186  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@635585d
+10-22 10:13:21.217  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@635585d in: DESTROYED
+10-22 10:13:21.218  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:21.262  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: PRE_ON_CREATE
+10-22 10:13:21.263  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:21.310  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: CREATED
+10-22 10:13:21.310  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@b0c29bc
+10-22 10:13:21.311  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: STARTED
+10-22 10:13:21.311  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@b0c29bc
+10-22 10:13:21.314  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: RESUMED
+10-22 10:13:21.315  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@b0c29bc
+10-22 10:13:21.783  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: PAUSED
+10-22 10:13:21.783  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@b0c29bc
+10-22 10:13:21.797  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: STOPPED
+10-22 10:13:21.798  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@b0c29bc
+10-22 10:13:21.819  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b0c29bc in: DESTROYED
+10-22 10:13:21.820  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:21.828  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: PRE_ON_CREATE
+10-22 10:13:21.828  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:21.931  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: CREATED
+10-22 10:13:21.931  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@ce2292d
+10-22 10:13:21.931  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: STARTED
+10-22 10:13:21.931  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@ce2292d
+10-22 10:13:21.933  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: RESUMED
+10-22 10:13:21.933  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@ce2292d
+10-22 10:13:23.579  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: PAUSED
+10-22 10:13:23.579  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@ce2292d
+10-22 10:13:24.099  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: STOPPED
+10-22 10:13:24.099  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@ce2292d
+10-22 10:13:24.123  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@ce2292d in: DESTROYED
+10-22 10:13:24.124  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:24.208  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: PRE_ON_CREATE
+10-22 10:13:24.209  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:24.322  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: CREATED
+10-22 10:13:24.322  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@f5e21cc
+10-22 10:13:24.323  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: STARTED
+10-22 10:13:24.323  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@f5e21cc
+10-22 10:13:24.332  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: RESUMED
+10-22 10:13:24.333  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@f5e21cc
+10-22 10:13:25.284  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: PAUSED
+10-22 10:13:25.285  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@f5e21cc
+10-22 10:13:25.290  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: STOPPED
+10-22 10:13:25.290  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@f5e21cc
+10-22 10:13:25.307  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f5e21cc in: DESTROYED
+10-22 10:13:25.307  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:25.316  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: PRE_ON_CREATE
+10-22 10:13:25.316  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:25.346  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: CREATED
+10-22 10:13:25.346  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@45efa9f
+10-22 10:13:25.347  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: STARTED
+10-22 10:13:25.347  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@45efa9f
+10-22 10:13:25.349  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: RESUMED
+10-22 10:13:25.349  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@45efa9f
+10-22 10:13:26.011  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: PAUSED
+10-22 10:13:26.012  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@45efa9f
+10-22 10:13:26.918  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: STOPPED
+10-22 10:13:26.918  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@45efa9f
+10-22 10:13:27.001  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@45efa9f in: DESTROYED
+10-22 10:13:27.001  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:27.100  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: PRE_ON_CREATE
+10-22 10:13:27.101  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:27.167  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: CREATED
+10-22 10:13:27.167  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@9607c6b
+10-22 10:13:27.167  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: STARTED
+10-22 10:13:27.167  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@9607c6b
+10-22 10:13:27.169  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: RESUMED
+10-22 10:13:27.169  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@9607c6b
+10-22 10:13:27.567  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: PAUSED
+10-22 10:13:27.567  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@9607c6b
+10-22 10:13:27.575  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: STOPPED
+10-22 10:13:27.577  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@9607c6b
+10-22 10:13:27.614  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@9607c6b in: DESTROYED
+10-22 10:13:27.614  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:27.620  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: PRE_ON_CREATE
+10-22 10:13:27.620  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:27.731  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: CREATED
+10-22 10:13:27.731  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@b03fad0
+10-22 10:13:27.732  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: STARTED
+10-22 10:13:27.732  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@b03fad0
+10-22 10:13:27.738  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: RESUMED
+10-22 10:13:27.738  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@b03fad0
+10-22 10:13:29.101  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: PAUSED
+10-22 10:13:29.101  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@b03fad0
+10-22 10:13:29.833  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: STOPPED
+10-22 10:13:29.833  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@b03fad0
+10-22 10:13:29.893  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@b03fad0 in: DESTROYED
+10-22 10:13:29.893  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:30.127  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: PRE_ON_CREATE
+10-22 10:13:30.127  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:30.347  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: CREATED
+10-22 10:13:30.347  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@50e97bb
+10-22 10:13:30.349  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: STARTED
+10-22 10:13:30.349  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@50e97bb
+10-22 10:13:30.368  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: RESUMED
+10-22 10:13:30.368  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@50e97bb
+10-22 10:13:31.222  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: PAUSED
+10-22 10:13:31.222  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@50e97bb
+10-22 10:13:31.236  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: STOPPED
+10-22 10:13:31.236  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@50e97bb
+10-22 10:13:31.247  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@50e97bb in: DESTROYED
+10-22 10:13:31.247  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:31.262  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: PRE_ON_CREATE
+10-22 10:13:31.262  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was DESTROYED
+10-22 10:13:31.343  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: CREATED
+10-22 10:13:31.343  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@f0041e0
+10-22 10:13:31.344  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: STARTED
+10-22 10:13:31.344  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@f0041e0
+10-22 10:13:31.346  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: RESUMED
+10-22 10:13:31.347  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@f0041e0
+10-22 10:13:32.528  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: PAUSED
+10-22 10:13:32.528  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@f0041e0
+10-22 10:13:32.988  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: STOPPED
+10-22 10:13:32.988  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@f0041e0
+10-22 10:13:33.000  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@f0041e0 in: DESTROYED
+10-22 10:13:33.000  3466  3466 V ActivityScenario: Update currentActivityStage to DESTROYED, currentActivity=null
+10-22 10:13:33.162  3466  3486 I TestRunner: finished: repeatedNormalLaunchAndRecreationInstallsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 10:13:33.188  3466  3486 I TestRunner: started: backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 10:13:33.255  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PRE_ON_CREATE
+10-22 10:13:33.255  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the reported transition was not ON_CREATE while the last known transition was PRE_ON_CREATE
+10-22 10:13:33.307  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: CREATED
+10-22 10:13:33.307  3466  3466 V ActivityScenario: Update currentActivityStage to CREATED, currentActivity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:33.309  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:13:33.309  3466  3466 V ActivityScenario: Update currentActivityStage to STARTED, currentActivity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:33.317  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:13:33.318  3466  3466 V ActivityScenario: Update currentActivityStage to RESUMED, currentActivity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:34.267  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:13:34.267  3466  3466 V ActivityScenario: Update currentActivityStage to PAUSED, currentActivity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:34.586  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:13:34.587  3466  3466 V ActivityScenario: Update currentActivityStage to STOPPED, currentActivity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:39.177  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:13:39.177  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:39.179  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:13:39.179  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:39.182  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:13:39.182  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:39.455  3466  3466 I StartupWindowRegression: cycle=1 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:13:39.500  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:13:39.500  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:39.584  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:13:39.585  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:44.512  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:13:44.512  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:44.513  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:13:44.513  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:44.519  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:13:44.519  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:44.731  3466  3466 I StartupWindowRegression: cycle=2 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:13:44.784  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:13:44.784  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:44.849  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:13:44.850  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:49.804  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:13:49.804  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:49.806  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:13:49.806  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:49.809  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:13:49.809  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:49.940  3466  3466 I StartupWindowRegression: cycle=3 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:13:49.955  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:13:49.955  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:50.014  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:13:50.014  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:54.984  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:13:54.984  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:54.985  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:13:54.985  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:54.985  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:13:54.986  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:55.126  3466  3466 I StartupWindowRegression: cycle=4 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:13:55.143  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:13:55.143  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:13:55.196  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:13:55.196  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:00.192  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:00.192  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:00.193  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:00.193  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:00.194  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:00.195  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:00.331  3466  3466 I StartupWindowRegression: cycle=5 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:00.360  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:00.361  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:00.437  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:00.437  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:05.371  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:05.371  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:05.372  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:05.372  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:05.375  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:05.377  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:05.544  3466  3466 I StartupWindowRegression: cycle=6 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:05.603  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:05.604  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:05.678  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:05.678  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:10.593  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:10.594  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:10.595  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:10.595  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:10.597  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:10.597  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:10.777  3466  3466 I StartupWindowRegression: cycle=7 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:10.798  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:10.798  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:10.918  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:10.918  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:15.822  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:15.823  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:15.824  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:15.824  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:15.825  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:15.825  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:16.018  3466  3466 I StartupWindowRegression: cycle=8 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:16.064  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:16.064  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:16.145  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:16.145  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:21.106  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:21.107  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:21.110  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:21.110  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:21.114  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:21.114  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:21.375  3466  3466 I StartupWindowRegression: cycle=9 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:21.397  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:21.397  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:21.462  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:21.463  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.491  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESTARTED
+10-22 10:14:26.492  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.493  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STARTED
+10-22 10:14:26.493  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.494  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: RESUMED
+10-22 10:14:26.494  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.609  3466  3466 I StartupWindowRegression: cycle=10 stages=PAUSED->STOPPED->STARTED->RESUMED activity=61288203 task=22 content=221747229 children=1
+10-22 10:14:26.618  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: PAUSED
+10-22 10:14:26.618  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.972  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: STOPPED
+10-22 10:14:26.972  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:14:26.991  3466  3466 D LifecycleMonitor: Lifecycle status change: com.pdfchemy.app.MainActivity@3a72f0b in: DESTROYED
+10-22 10:14:26.991  3466  3466 V ActivityScenario: Activity lifecycle changed event received but ignored because the intent does not match. startActivityIntent=Intent { flg=0x10008000 cmp=com.pdfchemy.app/.MainActivity }, activity.getIntent()=Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10600000 pkg=com.pdfchemy.app cmp=com.pdfchemy.app/.MainActivity }, activity=com.pdfchemy.app.MainActivity@3a72f0b
+10-22 10:15:11.883  3466  3486 E TestRunner: failed: backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 10:15:11.883  3466  3486 E TestRunner: ----- begin exception -----
+10-22 10:15:11.885  3466  3486 E TestRunner: java.lang.AssertionError: Activity never becomes requested state "[DESTROYED]" (last lifecycle transition = "STOPPED")
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.core.app.ActivityScenario.waitForActivityToBecomeAnyOf(ActivityScenario.java:449)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.core.app.ActivityScenario.moveToState(ActivityScenario.java:684)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.core.app.ActivityScenario.close(ActivityScenario.java:416)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at kotlin.io.CloseableKt.closeFinally(Closeable.kt:46)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at com.pdfchemy.app.StartupWindowRegressionTest.backgroundAndResumeRetainsContent(StartupWindowRegressionTest.kt:59)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at java.lang.reflect.Method.invoke(Native Method)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner$1.evaluate(BlockJUnit4ClassRunner.java:100)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:366)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:103)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:63)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.ext.junit.runners.AndroidJUnit4.run(AndroidJUnit4.java:162)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:128)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.Suite.runChild(Suite.java:27)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$4.run(ParentRunner.java:331)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:79)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:329)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.access$100(ParentRunner.java:66)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:293)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runners.ParentRunner.run(ParentRunner.java:413)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:67)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.internal.runner.TestExecutor.execute(TestExecutor.java:58)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at androidx.test.runner.AndroidJUnitRunner.onStart(AndroidJUnitRunner.java:446)
+10-22 10:15:11.885  3466  3486 E TestRunner: 	at android.app.Instrumentation$InstrumentationThread.run(Instrumentation.java:1932)
+10-22 10:15:11.885  3466  3486 E TestRunner: ----- end exception -----
+10-22 10:15:11.890  3466  3486 I TestRunner: finished: backgroundAndResumeRetainsContent(com.pdfchemy.app.StartupWindowRegressionTest)
+10-22 10:15:11.894  3466  3486 I TestRunner: run finished: 2 tests, 1 failed, 0 ignored

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.arch.ArchitectureBoundaryTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-18T11:21:31.757Z" hostname="DESKTOP-N37P7P6" time="16.513">
+  <properties/>
+  <testcase name="no host components should use PdfRenderer directly" classname="com.pdfchemy.app.arch.ArchitectureBoundaryTest" time="10.603"/>
+  <testcase name="no host components should use PDDocument directly" classname="com.pdfchemy.app.arch.ArchitectureBoundaryTest" time="5.9"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+]]></system-err>
+</testsuite>

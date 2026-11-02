@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.ActiveContentScrubberTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-19T10:06:49.004Z" hostname="DESKTOP-N37P7P6" time="0.337">
+  <properties/>
+  <testcase name="bookmarkActionsCannotSurvive" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.096"/>
+  <testcase name="associatedFilesAreScrubbedAtEveryDictionaryDepth" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.003"/>
+  <testcase name="attachmentAnnotationsAndFileSpecificationsAreScrubbed" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.003"/>
+  <testcase name="attachmentIdentityIsTheResolvedFileSpecRatherThanItsCarriers" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.003"/>
+  <testcase name="resolvedJsoupArtifactHandlesAdversarialNamespaces" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.196"/>
+  <testcase name="traversalFailsClosedInsteadOfSilentlyIgnoringDeepCarriers" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.003"/>
+  <testcase name="xfaAndRichMediaAreScrubbed" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.007"/>
+  <testcase name="ordinaryWebLinksAreCountedWithoutBeingExecutableTriggers" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.011"/>
+  <testcase name="autoRunUriIsDangerousEvenWhenAlsoReferencedByAnOrdinaryLink" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.0"/>
+  <testcase name="emptyAttachmentCarriersAreRemovedWithoutCountingAsFiles" classname="com.pdfchemy.app.jail.ActiveContentScrubberTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

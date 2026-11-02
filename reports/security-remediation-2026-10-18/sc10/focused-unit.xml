@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-21T06:59:03.845Z" hostname="DESKTOP-N37P7P6" time="2.861">
+  <properties/>
+  <testcase name="nestedObjectWrappersAndPrivateCyclesTerminate" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="2.393"/>
+  <testcase name="arbitraryPrivateDescendantLinksToDocumentAnchorsReject" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.041"/>
+  <testcase name="actualDocumentAnchorsCannotBePrivateCarrierRoots" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.039"/>
+  <testcase name="retainedUntypedAttachmentFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.047"/>
+  <testcase name="privateAliasToNavigationRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.04"/>
+  <testcase name="retainedPieceInfoFixtureRemovesDescendantAlias" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.043"/>
+  <testcase name="nestedStringsArraysAndCyclesAreSanitized" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.037"/>
+  <testcase name="privateAliasToUsedPageResourceRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.149"/>
+  <testcase name="excessivePrivateDepthRejectsBeforeMutation" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.028"/>
+  <testcase name="serializedIndirectStringAndContainerAliasesAreRemoved" classname="com.pdfchemy.app.jail.engines.PrivatePayloadAliasTest" time="0.039"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

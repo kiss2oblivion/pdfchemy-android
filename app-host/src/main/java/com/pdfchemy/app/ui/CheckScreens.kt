@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Difference
 import androidx.compose.material.icons.rounded.CleaningServices
 import androidx.compose.material.icons.rounded.VerifiedUser
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -157,7 +158,7 @@ fun CheckCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_pdfa_validator),
                     subtitle = stringResource(R.string.menu_pdfa_validator_desc),
-                    icon = Icons.Rounded.FactCheck,
+                    icon = Icons.AutoMirrored.Rounded.FactCheck,
                     onClick = { onNavigate(Screen.PdfAValidator) }
                 )
             }
@@ -220,11 +221,9 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         viewModel.loadMetadata(context, uri)
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberLauncherForActivityResult
+            val src = sourceUri ?: return@rememberPreferredDocumentCreator
             val newMetadata = PdfMetadata(title, author, subject, keywords, creator, producer)
             viewModel.updateMetadata(context, src, destUri, newMetadata)
         }
@@ -324,7 +323,7 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 Button(
-                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "metadata_updated")) } },
+                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "metadata_updated")) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -355,11 +354,9 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         fileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
     }
 
-    val createDocLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberLauncherForActivityResult
+            val src = sourceUri ?: return@rememberPreferredDocumentCreator
             viewModel.clearMetadata(context, src, destUri)
         }
     }
@@ -447,7 +444,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                     Button(
-                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "stripped")) } },
+                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "stripped")) } },
                         modifier = Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 52.dp),
@@ -481,7 +478,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         selectedFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("text/plain") { uri ->
         uri?.let { destUri ->
             selectedFile?.uri?.let { sourceUri ->
                 viewModel.extractTextFromPdf(context, sourceUri, destUri)
@@ -538,7 +535,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.FactCheck, contentDescription = "PDF", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = "PDF", tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(file.name ?: stringResource(R.string.default_doc_name), fontWeight = FontWeight.Bold)
                     }

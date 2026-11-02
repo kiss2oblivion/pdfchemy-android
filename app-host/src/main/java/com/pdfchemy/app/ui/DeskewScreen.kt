@@ -1,10 +1,9 @@
 package com.pdfchemy.app.ui
 
-import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import android.net.Uri
-import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import kotlinx.coroutines.NonCancellable
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,12 +37,17 @@ import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.FileUtil
 import com.pdfchemy.app.logic.PdfDeskewEngine
+import com.pdfchemy.app.logic.DeskewPreviewLoader
+import com.pdfchemy.app.logic.DeskewPreviewOwner
+import com.pdfchemy.app.logic.defaultDeskewPreviewLoader
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+
+internal val LocalDeskewPreviewLoader = staticCompositionLocalOf<DeskewPreviewLoader?> { null }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,79 +59,70 @@ fun DeskewScreen(
     BackHandler { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val suppliedPreviewLoader = LocalDeskewPreviewLoader.current
+    val appContext = context.applicationContext
+    val previewLoader = remember(appContext, suppliedPreviewLoader) { suppliedPreviewLoader ?: defaultDeskewPreviewLoader(appContext) }
+    val previewOwner = remember(scope, previewLoader) { DeskewPreviewOwner(scope, previewLoader) }
+    val preview by previewOwner.state.collectAsState()
 
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
-    var detectedAngle by remember { mutableFloatStateOf(0.0f) }
-    var isAnalyzing by remember { mutableStateOf(false) }
+    val detectedAngle = preview.angle
+    val isAnalyzing = preview.loading
     var isProcessing by remember { mutableStateOf(false) }
-    var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val previewBitmap = preview.bitmap
     var straightenedCount by remember { mutableIntStateOf(-1) }
 
     fun analyzeDocument(uri: Uri) {
         selectedPdfUri = uri
         straightenedCount = -1
-        isAnalyzing = true
-        scope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    var pfd: ParcelFileDescriptor? = null
-                    try {
-                        pfd = context.contentResolver.openFileDescriptor(uri, "r")
-                        if (pfd != null) {
-                            val bmp = com.pdfchemy.app.sandbox.NativeRendererCoordinator.renderPageToBitmap(context, pfd, 0, 360)
-                            if (bmp != null) {
-                                val angle = PdfDeskewEngine.detectSkewAngle(bmp)
-                                withContext(Dispatchers.Main) {
-                                    previewBitmap?.recycle()
-                                    previewBitmap = bmp
-                                    detectedAngle = angle
-                                }
-                            }
-                        }
-                    } finally {
-                        pfd?.close()
-                    }
-                }
-            } catch (e: Exception) {
-                AppLogger.e("Failed to analyze PDF for deskew", e)
-            } finally {
-                isAnalyzing = false
-            }
-        }
+        previewOwner.analyze(uri)
     }
 
-    LaunchedEffect(initialPdfUri) {
+    LaunchedEffect(initialPdfUri, previewOwner) {
         if (initialPdfUri != null) {
             analyzeDocument(initialPdfUri)
+        } else {
+            selectedPdfUri = null
+            straightenedCount = -1
+            previewOwner.clear()
         }
     }
 
-    val currentPreviewBmp by rememberUpdatedState(previewBitmap)
-    DisposableEffect(Unit) {
-        onDispose {
-            currentPreviewBmp?.let { if (!it.isRecycled) it.recycle() }
-        }
+    DisposableEffect(previewOwner) {
+        onDispose { previewOwner.close() }
     }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         analyzeDocument(uri)
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    var requestedOutputName by remember { mutableStateOf("straightened.pdf") }
+    val saveFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { folderUri ->
         val srcUri = selectedPdfUri
-        if (destUri != null && srcUri != null) {
+        if (folderUri != null && srcUri != null) {
+            straightenedCount = -1
             isProcessing = true
-            scope.launch {
+            scope.launch(Dispatchers.Main.immediate) {
+                var createdUri: Uri? = null
                 try {
+                    val destUri = withContext(Dispatchers.IO) {
+                        val directory = checkNotNull(androidx.documentfile.provider.DocumentFile.fromTreeUri(context, folderUri))
+                        com.pdfchemy.app.logic.OutputPolicy.createCopy(directory, "application/pdf", requestedOutputName).uri
+                            .also { createdUri = it }
+                    }
                     val count = PdfDeskewEngine.deskewDocument(context, srcUri, destUri)
                     straightenedCount = count
-                    Toast.makeText(context, context.getString(R.string.deskew_success), Toast.LENGTH_SHORT).show()
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
+                    Toast.makeText(context, context.getString(if (count == 0) R.string.deskew_no_tilt else R.string.deskew_success), Toast.LENGTH_SHORT).show()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
                 } catch (e: Exception) {
                     AppLogger.e("Deskew processing failed", e)
                     Toast.makeText(context, "Error straightening document", Toast.LENGTH_SHORT).show()
                 } finally {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        createdUri?.let { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, it) }
+                    }
                     isProcessing = false
                 }
             }
@@ -156,6 +154,7 @@ fun DeskewScreen(
         ) {
             Button(
                 onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                enabled = !isProcessing,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Rounded.UploadFile, contentDescription = null)
@@ -188,8 +187,9 @@ fun DeskewScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else if (selectedPdfUri != null) {
+                if (preview.failed) Text("Unable to analyze this document", color = MaterialTheme.colorScheme.error)
                 // Detected Tilt Badge
-                Card(
+                if (previewBitmap != null) Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = if (abs(detectedAngle) >= 0.5f)
@@ -203,7 +203,7 @@ fun DeskewScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            if (abs(detectedAngle) >= 0.5f) Icons.Rounded.RotateRight else Icons.Rounded.CheckCircle,
+                            if (abs(detectedAngle) >= 0.5f) Icons.AutoMirrored.Rounded.RotateRight else Icons.Rounded.CheckCircle,
                             contentDescription = null,
                             tint = if (abs(detectedAngle) >= 0.5f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(36.dp)
@@ -241,7 +241,9 @@ fun DeskewScreen(
                         Image(
                             bitmap = bmp.asImageBitmap(),
                             contentDescription = "Page Preview",
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(8.dp).semantics {
+                                stateDescription = String.format(java.util.Locale.getDefault(), "%.1f°", detectedAngle)
+                            }
                         )
                     }
                 }
@@ -258,8 +260,10 @@ fun DeskewScreen(
                             Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(stringResource(R.string.deskew_success), fontWeight = FontWeight.Bold)
-                                Text(stringResource(R.string.deskew_success_desc), style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(if (straightenedCount == 0) R.string.deskew_no_tilt else R.string.deskew_success), fontWeight = FontWeight.Bold)
+                                if (straightenedCount > 0) {
+                                    Text(stringResource(R.string.deskew_success_desc), style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
@@ -267,11 +271,12 @@ fun DeskewScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(
+                        val suggestedName = FileUtil.generateSuggestedName(context,
                             selectedPdfUri,
                             "straightened"
                         )
-                        saveFileLauncher.launch(suggestedName)
+                        requestedOutputName = suggestedName
+                        saveFileLauncher.launch(null)
                     },
                     enabled = !isProcessing,
                     modifier = Modifier.fillMaxWidth()
@@ -285,6 +290,7 @@ fun DeskewScreen(
                     }
                     Text(stringResource(R.string.deskew_action_straighten))
                 }
+                Text("A new copy is saved in the folder you choose.", style = MaterialTheme.typography.bodySmall)
             }
         }
     }

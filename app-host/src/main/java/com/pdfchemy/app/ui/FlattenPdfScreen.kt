@@ -60,9 +60,7 @@ fun FlattenPdfScreen(
         selectedPdfUri = uri
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             coroutineScope.launch {
                 isProcessing = true
@@ -79,7 +77,7 @@ fun FlattenPdfScreen(
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_flatten_success),
                         context.getString(R.string.desc_flatten_success)
-                    )
+                    , destUri)
                     onBack()
                 } else {
                     viewModel.showErrorToast(

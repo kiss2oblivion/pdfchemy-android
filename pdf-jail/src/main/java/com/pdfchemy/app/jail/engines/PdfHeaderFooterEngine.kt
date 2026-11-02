@@ -103,7 +103,7 @@ object PdfHeaderFooterEngine {
                 PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                     cs.beginText()
                     cs.setFont(font, fontSize)
-                    cs.setNonStrokingColor(70, 75, 85)
+                    cs.setNonStrokingColor(70f / 255f, 75f / 255f, 85f / 255f)
                     cs.newLineAtOffset(x, y)
                     cs.showText(text)
                     cs.endText()

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.ui.TextConverterPublicationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-21T07:04:50.690Z" hostname="DESKTOP-N37P7P6" time="1.075">
+  <properties/>
+  <testcase name="nullProviderStreamIsFailureNotSuccess" classname="com.pdfchemy.app.ui.TextConverterPublicationTest" time="0.225"/>
+  <testcase name="writeFailureNeverReportsSuccess" classname="com.pdfchemy.app.ui.TextConverterPublicationTest" time="0.231"/>
+  <testcase name="oversizedSingleLineIsRejectedWithoutTruncatingUserContent" classname="com.pdfchemy.app.ui.TextConverterPublicationTest" time="0.339"/>
+  <testcase name="successRequiresTheActualUtf8BytesToBeWrittenAndClosed" classname="com.pdfchemy.app.ui.TextConverterPublicationTest" time="0.279"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

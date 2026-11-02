@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.WorkerResponseValidatorTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-10-21T06:59:57.820Z" hostname="DESKTOP-N37P7P6" time="2.262">
+  <properties/>
+  <testcase name="metadataReadValidatedStrictly" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="1.849"/>
+  <testcase name="outlineFileEnforcesLimits" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.054"/>
+  <testcase name="sanitizeAuditRejectsInsecureDefaults" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.02"/>
+  <testcase name="standardOutputRespectsTargetCount" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.021"/>
+  <testcase name="pageCountEnforcesLimits" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.018"/>
+  <testcase name="nodeLimitEnforced" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.023"/>
+  <testcase name="integerValidationRejectsFractionalNumbers" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.021"/>
+  <testcase name="singleRootEnforcedAndTrailingNonWhitespaceRejected" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.017"/>
+  <testcase name="searchRedactValidatesBoundingBoxes" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.024"/>
+  <testcase name="standardOutputRejectsUnsupportedRootShapes" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.023"/>
+  <testcase name="repairApplyContractParsed" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.014"/>
+  <testcase name="imageAnalyzeEnforcesCanonicalSchemaAndBounds" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.017"/>
+  <testcase name="csvTableEnforcesBounds" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.028"/>
+  <testcase name="officeExportContractParsed" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.014"/>
+  <testcase name="unknownOperationFailsClosed" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.018"/>
+  <testcase name="unbalancedDelimitersThrow" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.013"/>
+  <testcase name="deskewContractParsed" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.016"/>
+  <testcase name="nestingQuotaEnforced" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.015"/>
+  <testcase name="oversizedPayloadThrows" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.02"/>
+  <testcase name="errorPresenceRejected" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.017"/>
+  <testcase name="numericLongBoundaryValidationEnforced" classname="com.pdfchemy.app.jail.WorkerResponseValidatorTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

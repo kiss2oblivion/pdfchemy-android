@@ -1,0 +1,182 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/John/.gradle/wrapper/dists/gradle-9.4.1-bin/arn2x92ynaizyzdaamcbpbhtj/gradle-9.4.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app-host
+WARNING: The option setting 'android.usesSdkInManifest.disallowed=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.sdk.defaultTargetSdkToCompileSdkIfUnset=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableAppCompileTimeRClass=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.defaults.buildfeatures.resvalues=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.enableJetifier=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: API 'applicationVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling applicationVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-ipc
+WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-jail
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/build.gradle.kts:8:1: 'fun Project.android(configure: Action<LibraryExtension>): Unit' is deprecated. Replaced by com.android.build.api.dsl.LibraryExtension.
+This class is not used for the public extensions in AGP when android.newDsl=true, which is the default in AGP 9.0, and will be removed in AGP 10.0.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/build.gradle.kts:21:5: 'fun LibraryExtension.kotlinOptions(configure: Action<DeprecatedKotlinJvmOptions>): Unit' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+w: file:///E:/backup_ext_hdd/android-projects-2026-07-30/PDFchemy-security-remediation-2026-10-18/pdf-jail/build.gradle.kts:22:9: 'var jvmTarget: String' is deprecated. Please migrate to the compilerOptions DSL. More details are here: https://kotl.in/u1r8ln.
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :pdf-renderer
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :pdf-ipc:preBuild UP-TO-DATE
+> Task :pdf-ipc:preDebugBuild UP-TO-DATE
+> Task :pdf-ipc:compileDebugAidl UP-TO-DATE
+> Task :pdf-ipc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-ipc:generateDebugResValues UP-TO-DATE
+> Task :pdf-ipc:generateDebugResources UP-TO-DATE
+> Task :pdf-ipc:packageDebugResources UP-TO-DATE
+> Task :pdf-ipc:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-ipc:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-ipc:generateDebugRFile UP-TO-DATE
+> Task :pdf-ipc:compileDebugKotlin UP-TO-DATE
+> Task :pdf-ipc:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-ipc:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-ipc:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :pdf-ipc:processDebugJavaRes UP-TO-DATE
+> Task :pdf-ipc:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :pdf-jail:verifyTesseractAarHash
+verifyTesseractAarHash: Verified tesseract4android-4.9.0-inmemory.aar SHA-256 (d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa) matches pinned policy.
+
+> Task :pdf-jail:preBuild
+> Task :pdf-jail:preDebugBuild
+> Task :pdf-jail:compileDebugAidl NO-SOURCE
+> Task :pdf-jail:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :pdf-jail:generateDebugBuildConfig UP-TO-DATE
+> Task :pdf-jail:generateDebugResValues UP-TO-DATE
+> Task :pdf-jail:generateDebugResources UP-TO-DATE
+> Task :pdf-jail:packageDebugResources UP-TO-DATE
+> Task :pdf-jail:processDebugNavigationResources UP-TO-DATE
+> Task :pdf-jail:parseDebugLocalResources UP-TO-DATE
+> Task :pdf-jail:generateDebugRFile UP-TO-DATE
+> Task :pdf-jail:compileDebugKotlin UP-TO-DATE
+> Task :pdf-jail:javaPreCompileDebug UP-TO-DATE
+> Task :pdf-jail:compileDebugJavaWithJavac UP-TO-DATE
+> Task :pdf-jail:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :pdf-jail:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :pdf-ipc:mapDebugSourceSetPaths
+> Task :pdf-ipc:compileDebugLibraryResources
+> Task :pdf-ipc:writeDebugAarMetadata
+> Task :pdf-jail:preDebugUnitTestBuild
+> Task :pdf-jail:writeDebugAarMetadata
+> Task :pdf-jail:checkDebugUnitTestAarMetadata
+> Task :pdf-jail:mapDebugSourceSetPaths
+> Task :pdf-jail:compileDebugLibraryResources
+> Task :pdf-jail:generateDebugUnitTestResValues
+> Task :pdf-jail:mapDebugUnitTestSourceSetPaths
+> Task :pdf-jail:generateDebugUnitTestResources
+> Task :pdf-jail:mergeDebugUnitTestResources
+> Task :pdf-ipc:extractDeepLinksDebug
+
+> Task :pdf-ipc:processDebugManifest
+package="com.pdfchemy.app.ipc" found in source AndroidManifest.xml: E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\pdf-ipc\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.pdfchemy.app.ipc" from the source AndroidManifest.xml: E:\backup_ext_hdd\android-projects-2026-07-30\PDFchemy-security-remediation-2026-10-18\pdf-ipc\src\main\AndroidManifest.xml.
+
+> Task :pdf-jail:extractDeepLinksDebug
+> Task :pdf-jail:processDebugManifest
+> Task :pdf-jail:processDebugUnitTestManifest
+> Task :pdf-jail:processDebugUnitTestResources
+> Task :pdf-jail:compileDebugUnitTestKotlin
+> Task :pdf-jail:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :pdf-jail:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :pdf-ipc:generateDebugAssets UP-TO-DATE
+> Task :pdf-ipc:mergeDebugAssets
+> Task :pdf-jail:generateDebugUnitTestAssets UP-TO-DATE
+> Task :pdf-jail:generateDebugAssets UP-TO-DATE
+> Task :pdf-jail:mergeDebugAssets
+> Task :pdf-jail:mergeDebugUnitTestAssets
+> Task :pdf-jail:packageDebugUnitTestForUnitTest
+> Task :pdf-jail:generateDebugUnitTestConfig
+> Task :pdf-jail:processDebugJavaRes UP-TO-DATE
+> Task :pdf-jail:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :pdf-jail:testDebugUnitTest
+
+BUILD SUCCESSFUL in 37s
+53 actionable tasks: 25 executed, 28 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html

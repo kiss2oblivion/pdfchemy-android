@@ -56,7 +56,7 @@ object PdfStampAndNumberWorker {
 
                                         cs.beginText()
                                         cs.setFont(font, fontSize)
-                                        cs.setNonStrokingColor(128, 128, 128)
+                                        cs.setNonStrokingColor(128f / 255f, 128f / 255f, 128f / 255f)
                                         cs.newLineAtOffset(-textWidth * 0.35f, -textHeight * 0.35f)
                                         cs.showText(text)
                                         cs.endText()
@@ -74,7 +74,7 @@ object PdfStampAndNumberWorker {
 
                                 cs.beginText()
                                 cs.setFont(font, fontSize)
-                                cs.setNonStrokingColor(128, 128, 128)
+                                cs.setNonStrokingColor(128f / 255f, 128f / 255f, 128f / 255f)
                                 cs.newLineAtOffset(-textWidth / 2f, -textHeight / 2f)
                                 cs.showText(text)
                                 cs.endText()
@@ -145,7 +145,7 @@ object PdfStampAndNumberWorker {
                     PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                         cs.beginText()
                         cs.setFont(font, fontSize)
-                        cs.setNonStrokingColor(80, 80, 80)
+                        cs.setNonStrokingColor(80f / 255f, 80f / 255f, 80f / 255f)
                         cs.newLineAtOffset(x, y)
                         cs.showText(pageNumberText)
                         cs.endText()
@@ -208,7 +208,7 @@ object PdfStampAndNumberWorker {
                     PDPageContentStream(doc, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                         cs.beginText()
                         cs.setFont(font, fontSize)
-                        cs.setNonStrokingColor(24, 24, 27)
+                        cs.setNonStrokingColor(24f / 255f, 24f / 255f, 27f / 255f)
                         cs.newLineAtOffset(x, y)
                         cs.showText(batesText)
                         cs.endText()

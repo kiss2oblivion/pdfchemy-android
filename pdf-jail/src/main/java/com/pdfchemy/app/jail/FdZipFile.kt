@@ -15,11 +15,11 @@ import java.util.zip.ZipInputStream
 class FdZipFile(file: File) : Closeable {
     private data class Entry(val entry: ZipEntry, val offset: Long, val length: Long)
     private val scratch = JailScratch.createTempFile("archive_", ".spool")
-    private val fd = CapabilityIo.fd(scratch)
+    private lateinit var fd: ParcelFileDescriptor
     private val index = linkedMapOf<String, Entry>()
     init {
         try {
-            boundedFileOutput(fd.fileDescriptor).use { output ->
+            boundedFileOutput(scratch).use { output ->
                 ZipInputStream(CapabilityIo.input(file)).use { zip ->
                     val buffer = ByteArray(8192)
                     var total = 0L
@@ -42,6 +42,7 @@ class FdZipFile(file: File) : Closeable {
                     }
                 }
             }
+            fd = CapabilityIo.fd(scratch)
         } catch (e: Throwable) { close(); throw e }
     }
     fun entries(): Enumeration<ZipEntry> = Collections.enumeration(index.values.map { it.entry })
@@ -62,5 +63,5 @@ class FdZipFile(file: File) : Closeable {
             }
         }
     }
-    override fun close() { runCatching { fd.close() }; scratch.delete() }
+    override fun close() { if (::fd.isInitialized) runCatching { fd.close() }; scratch.delete() }
 }

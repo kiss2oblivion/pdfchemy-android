@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.pdfchemy.app.jail.engines.OcrProcessContextTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-18T21:59:20.063Z" hostname="DESKTOP-N37P7P6" time="0.121">
+  <properties/>
+  <testcase name="editorsUseDefensiveCopiesAndRemoveAndClearValues" classname="com.pdfchemy.app.jail.engines.OcrProcessContextTest" time="0.045"/>
+  <testcase name="sdkPreferencesRemainEphemeralAcrossProcessContexts" classname="com.pdfchemy.app.jail.engines.OcrProcessContextTest" time="0.076"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

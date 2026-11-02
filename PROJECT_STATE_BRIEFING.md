@@ -1,4 +1,6 @@
 # PDFchemy Tools — Master Briefing & Technical Capability Dossier 📋
+
+> **Android status update, 2026-10-18:** this dossier contains historical version/release statements. The 2.1.0 candidate remains **HOLD**; use the [current remediation plan](SECURITY_REMEDIATION_PLAN.md) and [execution receipt](reports/security-remediation-2026-10-18/EXECUTION_STATUS.md) for implementation and verification status.
 > **Document de referință complet pentru Claude sau orice alt model / dezvoltator.**
 
 ---
@@ -88,6 +90,9 @@
 ---
 
 ## 3. 📱 Android Edition (v2.0.5)
+
+> Historical Android v2.0.5 snapshot. Current 2.1.0 release state and source-bound evidence are in [CURRENT_RELEASE_STATUS.md](CURRENT_RELEASE_STATUS.md).
+
 * **Stack:** Kotlin, Jetpack Compose, Material 3, AndroidX.
 * **Localizare Internațională (i18n):** Paritate completă pe **20 de limbi / 21 de locale** (inclusiv suport complet RTL pentru arabă) în `res/values-*/strings.xml`.
 * **Binare Semnate de Producție:**

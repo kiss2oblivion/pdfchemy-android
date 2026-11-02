@@ -1,0 +1,68 @@
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.pdfchemy.app.security.EditorRedactionResourceSecurityTest:
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=catalogReferenceToOriginalStreamCannotOverwriteExistingDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+Error in catalogReferenceToOriginalStreamCannotOverwriteExistingDestination(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest):
+java.lang.AssertionError: Retained originals must abort export
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$catalogReferenceToOriginalStreamCannotOverwriteExistingDestination$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:224)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.catalogReferenceToOriginalStreamCannotOverwriteExistingDestination(EditorRedactionResourceSecurityTest.kt:201)
+
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: test=catalogReferenceToOriginalStreamCannotOverwriteExistingDestination
+INSTRUMENTATION_STATUS: class=com.pdfchemy.app.security.EditorRedactionResourceSecurityTest
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Retained originals must abort export
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$catalogReferenceToOriginalStreamCannotOverwriteExistingDestination$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:224)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.catalogReferenceToOriginalStreamCannotOverwriteExistingDestination(EditorRedactionResourceSecurityTest.kt:201)
+
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.8
+There was 1 failure:
+1) catalogReferenceToOriginalStreamCannotOverwriteExistingDestination(com.pdfchemy.app.security.EditorRedactionResourceSecurityTest)
+java.lang.AssertionError: Retained originals must abort export
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest$catalogReferenceToOriginalStreamCannotOverwriteExistingDestination$1.invokeSuspend(EditorRedactionResourceSecurityTest.kt:224)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:277)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:95)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:69)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)
+	at com.pdfchemy.app.security.EditorRedactionResourceSecurityTest.catalogReferenceToOriginalStreamCannotOverwriteExistingDestination(EditorRedactionResourceSecurityTest.kt:201)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

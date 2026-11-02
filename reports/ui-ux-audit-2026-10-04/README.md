@@ -1,6 +1,20 @@
 # PDFchemy Android — Audit Package
 
-Audit date: 4 October 2026. Status: complete for review; implementation has not started.
+Original audit date: 4 October 2026. Implementation reconciliation updated 8 October 2026.
+
+Current implementation: all 50 original findings have dispositions; 49 are
+source-DONE. UX-23 retains an explicit physical-device profiling deferral.
+The implementation branch remains unmerged. Source completion is not physical
+validation or release certification.
+
+- [Current finding dispositions](UX_CURRENT_RECONCILIATION.md)
+- [Implementation batches and exact file manifests](UX_IMPLEMENTATION_BATCHES.md)
+- [Native UX validation and remaining hardware gates](UX_RUNTIME_VALIDATION_2026-10-08.md)
+- [Vanguard PDF compatibility and OCR verification](VANGUARD_OCR_VERIFICATION_2026-10-08.md)
+
+The original audit, evidence and handoff below describe the October 4 baseline.
+Their historical findings and authorization boundaries do not supersede the
+current reconciliation or the user's subsequent implementation instructions.
 
 All audit conclusions, recommendations, qualifications, and handoff notes are stored in Markdown. Raw screenshots, UI hierarchy captures, frame/memory data, and the audit helper remain in their original formats and are linked from the Markdown documents.
 
@@ -15,7 +29,9 @@ All audit conclusions, recommendations, qualifications, and handoff notes are st
 
 Read the full report's Executive Summary, Reader Mode, Full Findings Table, Top 10 Highest-Value Improvements, and Changes NOT Recommended. Use the evidence guide when checking runtime claims.
 
-No production code, resources, layouts, behavior, or commits were changed. Only audit artifacts were added under this directory. No visual redesign is recommended. No proposed implementation phase has been performed.
+The October 4 audit changed only audit artifacts. Subsequent authorized source
+changes and validation are recorded in the implementation batch receipts above.
+The existing visual language and security/storage architecture are preserved.
 
 ## Evidence conventions
 
