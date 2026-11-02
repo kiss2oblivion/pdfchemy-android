@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="integrity_sanitizer_failed">Sanitization failed. No sanitized copy was published.</string>
-    <string name="integrity_sanitizer_selected_complete">A new copy was saved with the selected removal options applied.</string>
+    <string name="integrity_sanitizer_failed" translatable="false">Sanitization failed. No sanitized copy was published.</string>
+    <string name="integrity_sanitizer_selected_complete" translatable="false">A new copy was saved with the selected removal options applied.</string>
 </resources>
