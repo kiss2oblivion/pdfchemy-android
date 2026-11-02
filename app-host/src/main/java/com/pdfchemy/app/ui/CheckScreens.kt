@@ -503,7 +503,11 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ExtendedFloatingActionButton(
                     onClick = { 
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
-                        saveFileLauncher.launch("${file.name?.substringBeforeLast(".")}_text.txt") 
+                        saveFileLauncher.launch(
+                            com.pdfchemy.app.logic.FileUtil.generateSuggestedName(
+                                context, file.uri, "text", extension = "txt"
+                            )
+                        )
                     },
                     icon = { Icon(Icons.Rounded.DocumentScanner, contentDescription = "Extract") },
                     text = { Text(stringResource(R.string.extract_save_as_txt)) },
@@ -537,7 +541,11 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = "PDF", tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(16.dp))
-                        Text(file.name ?: stringResource(R.string.default_doc_name), fontWeight = FontWeight.Bold)
+                        Text(
+                            com.pdfchemy.app.utils.FileUtils.getFileName(context, file.uri)
+                                ?: stringResource(R.string.default_doc_name),
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
 
