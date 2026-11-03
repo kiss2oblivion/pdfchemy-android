@@ -61,7 +61,7 @@ object TextFormatConverter {
         val html = when (from) {
             Format.HTML -> input
             Format.MD -> mdHtmlRenderer.render(mdParser.parse(input))
-            Format.TXT -> "<p>" + input.replace("\n", "<br>") + "</p>"
+            Format.TXT -> "<p>" + escapePlainText(input).replace("\n", "<br>") + "</p>"
             else -> input
         }
 
@@ -71,6 +71,18 @@ object TextFormatConverter {
             Format.TXT -> Jsoup.parse(html).text()
             else -> input
         }
+    }
+
+    /** TXT is literal content, even when it happens to contain HTML syntax or entities. */
+    private fun escapePlainText(input: String): String = buildString {
+        for (character in input) append(when (character) {
+            '&' -> "&amp;"
+            '<' -> "&lt;"
+            '>' -> "&gt;"
+            '"' -> "&quot;"
+            '\'' -> "&#39;"
+            else -> character.toString()
+        })
     }
 
     private fun convertStructuredToUnstructured(input: String, from: Format, to: Format): String {
