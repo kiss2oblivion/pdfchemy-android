@@ -5,11 +5,13 @@ import android.content.ContentResolver
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.logic.TextFormatConverter
+import com.pdfchemy.app.logic.TextOutputPublisher
+import com.pdfchemy.app.logic.OutputPolicy
 import com.pdfchemy.app.ui.textconverter.TextConverterViewModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -35,14 +37,24 @@ class TextConverterPublicationTest {
     @Before fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { context.contentResolver } returns resolver
-        mockkObject(TextFormatConverter)
+        OutputPolicy.registerFreshCopy(destination)
+        mockkObject(TextFormatConverter, TextOutputPublisher)
         coEvery { TextFormatConverter.convert(any(), any(), any(), any()) } returns Result.success("converted text")
+        // Controller tests model the publication boundary; actual FD/pipe cases are native tests.
+        coEvery { TextOutputPublisher.publish(any(), any(), any()) } coAnswers {
+            val text = thirdArg<suspend () -> String>().invoke()
+            requireNotNull(resolver.openOutputStream(destination, "wt")).use { it.write(text.toByteArray(Charsets.UTF_8)) }
+            OutputPolicy.markPublished(destination)
+        }
         viewModel = TextConverterViewModel()
     }
-    @After fun cleanup() { Dispatchers.resetMain(); unmockkAll() }
+    @After fun cleanup() {
+        if (OutputPolicy.isFreshCopy(destination)) OutputPolicy.unregisterFreshCopy(destination)
+        Dispatchers.resetMain(); unmockkAll()
+    }
     private fun awaitCompletion() = runBlocking {
         kotlinx.coroutines.withTimeout(5_000) {
-            while (viewModel.uiState.value == TextConverterViewModel.UiState.Processing) delay(10)
+            viewModel.uiState.first { it !is TextConverterViewModel.UiState.Processing }
         }
     }
 
