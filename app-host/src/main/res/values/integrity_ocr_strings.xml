@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="integrity_ocr_no_text" translatable="false">No text was recognized. Your document is unchanged. You can try OCR again.</string>
+</resources>
