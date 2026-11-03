@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.pdfchemy.app.logic.TextFormatConverter
 import com.pdfchemy.app.logic.TextOutputPublisher
 import com.pdfchemy.app.logic.OutputPolicy
+import com.pdfchemy.app.logic.LatestRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,10 +18,13 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Job
 import com.pdfchemy.app.R
 
 class TextConverterViewModel : ViewModel() {
     private var activeOutput: Uri? = null
+    private val imports = LatestRequest()
+    private var importJob: Job? = null
 
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
@@ -63,8 +67,11 @@ class TextConverterViewModel : ViewModel() {
     }
 
     fun loadFile(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        if (activeOutput != null) return
+        val ticket = imports.begin()
+        importJob?.cancel()
+        _uiState.value = UiState.Processing
+        importJob = viewModelScope.launch {
             try {
                 val text = withContext(Dispatchers.IO) {
                     requireNotNull(context.contentResolver.openInputStream(uri)) { "Cannot open input document" }.bufferedReader(Charsets.UTF_8).use { reader ->
@@ -81,6 +88,8 @@ class TextConverterViewModel : ViewModel() {
                         stringBuilder.toString()
                     }
                 }
+                currentCoroutineContext().ensureActive()
+                if (!imports.isCurrent(ticket)) return@launch
                 _inputText.value = text
                 
                 // Auto-detect format based on extension
@@ -100,7 +109,9 @@ class TextConverterViewModel : ViewModel() {
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
-                _uiState.value = UiState.Error("Failed to read file: ${e.message}")
+                if (imports.isCurrent(ticket)) _uiState.value = UiState.Error("Failed to read file: ${e.message}")
+            } finally {
+                if (imports.isCurrent(ticket) && _uiState.value is UiState.Processing) _uiState.value = UiState.Idle
             }
         }
     }
@@ -141,5 +152,11 @@ class TextConverterViewModel : ViewModel() {
 
     fun dismissMessage() {
         _uiState.value = UiState.Idle
+    }
+
+    override fun onCleared() {
+        imports.invalidate()
+        importJob?.cancel()
+        super.onCleared()
     }
 }
