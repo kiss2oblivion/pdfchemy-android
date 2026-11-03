@@ -46,4 +46,14 @@ class TextLiteralConversionTest {
         assertEquals(1, document.select("br").size)
         assertEquals("first second", document.body().text())
     }
+    @Test fun xmlConversionRemainsAvailableWithTheExplicitFactories() = runBlocking<Unit> {
+        val json = convert("<document><value>PUBLIC</value></document>", Format.XML, Format.JSON)
+        assertEquals("PUBLIC", com.fasterxml.jackson.databind.ObjectMapper().readTree(json).get("value").asText())
+        val xml = convert("{\"value\":\"PUBLIC\"}", Format.JSON, Format.XML)
+        assertEquals("PUBLIC", com.fasterxml.jackson.dataformat.xml.XmlMapper().readTree(xml).get("value").asText())
+    }
+    @Test fun documentTypeEntitiesAreRejectedRatherThanExpanded() = runBlocking<Unit> {
+        val xml = "<!DOCTYPE root [<!ENTITY fixture 'PRIVATE_ENTITY_MARKER'>]><root>&fixture;</root>"
+        assertTrue(TextFormatConverter.convert(xml, Format.XML, Format.JSON).isFailure)
+    }
 }

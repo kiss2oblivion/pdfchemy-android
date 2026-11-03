@@ -78,6 +78,8 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.18.11")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.11")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.11")
+    // Android has no StAX API; Jackson/Woodstox assume the JDK supplies it.
+    implementation("javax.xml.stream:stax-api:1.0-2")
 }
 
 tasks.withType<Test>().configureEach {

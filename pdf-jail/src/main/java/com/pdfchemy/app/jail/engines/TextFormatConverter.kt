@@ -4,6 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.csv.CsvMapper
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.fasterxml.jackson.dataformat.xml.XmlFactory
+import com.ctc.wstx.stax.WstxInputFactory
+import com.ctc.wstx.stax.WstxOutputFactory
+import javax.xml.stream.XMLInputFactory
+import javax.xml.stream.XMLOutputFactory
+import javax.xml.stream.XMLResolver
+import javax.xml.stream.XMLStreamException
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -18,7 +25,15 @@ object TextFormatConverter {
     private val jsonMapper = ObjectMapper()
     private val csvMapper = CsvMapper()
     private val yamlMapper = YAMLMapper()
-    private val xmlMapper = XmlMapper()
+    private val xmlMapper by lazy {
+        val input = WstxInputFactory().apply {
+            setProperty(XMLInputFactory.SUPPORT_DTD, false)
+            setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
+            xmlResolver = XMLResolver { _, _, _, _ -> throw XMLStreamException("External XML references are not supported") }
+        }
+        val output = WstxOutputFactory().apply { setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true) }
+        XmlMapper(XmlFactory(input, output))
+    }
 
     // Markdown tools
     private val mdOptions = MutableDataSet()

@@ -42,4 +42,29 @@ class TextLiteralExportIntegrityTest {
     @Test fun plainTextMarkdownExportRendersAsLiteralContent() = runBlocking {
         export("Public <keep>value</keep> &copy; **literal** [link](https://example.invalid) Ω", throughMarkdown = true)
     }
+    @Test fun xmlAndJsonConvertOnTheActualAndroidWorker() = runBlocking {
+        val json = TextFormatConverter.convert(context, "<document><value>PUBLIC</value></document>", TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON).getOrThrow()
+        assertEquals("PUBLIC", org.json.JSONObject(json).getString("value"))
+        val xml = TextFormatConverter.convert(context, "{\"value\":\"PUBLIC\"}", TextFormatConverter.Format.JSON, TextFormatConverter.Format.XML).getOrThrow()
+        val parser = android.util.Xml.newPullParser().apply { setInput(java.io.StringReader(xml)) }
+        var found: String? = null
+        while (parser.next() != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+            if (parser.eventType == org.xmlpull.v1.XmlPullParser.START_TAG && parser.name == "value") found = parser.nextText()
+        }
+        assertEquals("PUBLIC", found)
+    }
+    @Test fun workerRejectsInternalDocumentTypeEntities() = runBlocking {
+        val xml = "<!DOCTYPE root [<!ENTITY fixture 'PRIVATE_ENTITY_MARKER'>]><root>&fixture;</root>"
+        assertTrue(TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON).isFailure)
+    }
+    @Test fun workerRejectsExternalFileEntitiesAndPreservesPrivateFile() = runBlocking {
+        val file = File.createTempFile("xml-private-", ".txt", context.cacheDir)
+        val secret = "PRIVATE_ENTITY_PAYLOAD"
+        file.writeText(secret)
+        try {
+            val xml = "<!DOCTYPE root [<!ENTITY fixture SYSTEM '${file.toURI()}'>]><root>&fixture;</root>"
+            assertTrue(TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON).isFailure)
+            assertEquals(secret, file.readText())
+        } finally { file.delete() }
+    }
 }

@@ -2,9 +2,7 @@
 
 # PdfBox-Android optional dependencies
 -dontwarn com.gemalto.jp2.**
--dontwarn javax.xml.stream.**
 -dontwarn aQute.bnd.annotation.spi.**
--dontwarn org.codehaus.stax2.**
 
 # Jackson Dataformat & Kotlin module reflection
 -keepclassmembers class * {
