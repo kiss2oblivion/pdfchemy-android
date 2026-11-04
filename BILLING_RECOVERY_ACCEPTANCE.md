@@ -13,9 +13,20 @@ Verification: b01-fixed, app-host JVM billing package, 63 tests passed with 0 fa
 
 Changed files: BillingManager.kt, BillingForegroundRecoveryTest.kt, this report. Commit identity is recorded externally after commit to avoid modifying the tested source to insert its own SHA.
 
+## B02 - Acknowledgement recovery
+
+Original reproduction: b02-original, two deterministic JVM tests failed: exhausted transient attempts left no scheduled recovery, and a thrown CancellationException was retried/swallowed. Existing three-attempt retry behavior was preserved as an immediate strategy rather than treated as inherently wrong.
+
+Correction: bounded explicit acknowledgement outcomes, cancellation propagation, per-token deduplication and a bounded in-memory success cache. A private boolean hint and one network-constrained exponential-backoff JobScheduler job are installed before an attempt; no purchase tokens are persisted. Recovery re-queries authoritative Play inventory. It reuses a live UI manager, or owns a temporary manager which is retired before a foreground manager creates its client. Existing UI owners are not closed by other UI owners. Manager jobs are individually cancellable. Permanent failures pause automatic retry for explicit reconciliation. No new dependency, boot receiver or signing change.
+
+Accepted b02-accepted: 73 billing/ad JVM tests passed, 0 failures/errors/skips, including 10 new acknowledgement/scheduling/session cases. Debug Android instrumentation sources compile, including three real platform scheduler/manifest contract tests. These native cases have not yet executed; four-API execution remains B06. Earlier b02-fixed: 71 JVM tests passed before the two additional owner cases. No live Play order or process-kill runtime claim.
+
+Limits: system scheduling is not a deadline guarantee; force-stop, extended offline periods and OS refusal remain possible. The private marker repairs absent jobs on the next manager start, including after reboot; the job itself is not reboot-persisted. Recovery does not promise delivery while the user keeps the application force-stopped. Logs exclude tokens and provider exception messages.
+
+Changed files: BillingManager.kt, BillingAcknowledgementRecovery.kt, BillingRecoveryJobService.kt, AndroidManifest.xml (private permission-protected service and explicit network-state permission), BillingAcknowledgementRecoveryTest.kt, BillingRecoverySchedulerIntegrityTest.kt, this report.
+
 ## Remaining planned work
 
-- B02: acknowledgement recovery beyond immediate retries.
 - B03: bounded restore and operation-specific retry.
 - B04: entitlement persistence failure handling.
 - B05: ITEM_ALREADY_OWNED reconciliation.

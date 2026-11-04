@@ -15,15 +15,27 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.yield
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.SupervisorJob
+import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
+
+internal enum class AcknowledgementOutcome { ACKNOWLEDGED, RETRYABLE, RECONCILE }
 
 data class BillingUiState(val canPurchase: Boolean = false, val loading: Boolean = true,
     val message: String = "Connecting to Google Play…", val canRetry: Boolean = false)
 
 class BillingManager(
     private val context: Context,
-    private val coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    private val acknowledgementDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val recoveryOnly: Boolean = false
 ) : PurchasesUpdatedListener {
-
+    private val managerJob = SupervisorJob(coroutineScope.coroutineContext[Job])
+    private val coroutineScope = CoroutineScope(coroutineScope.coroutineContext + managerJob)
     private lateinit var billingClient: BillingClient
     
     private val _isPremium = MutableStateFlow(false)
@@ -44,6 +56,9 @@ class BillingManager(
     private var inventoryInFlight: Long? = null
     private var refreshAfterInventory = false
     private var foregroundRefresh: Job? = null
+    private val acknowledgementTasks = ConcurrentHashMap<String, CompletableDeferred<AcknowledgementOutcome>>()
+    private val acknowledgedTokens = LinkedHashSet<String>()
+    private val recoveryWaiters = mutableSetOf<CompletableDeferred<AcknowledgementOutcome>>()
     private val application = context.applicationContext as? Application
     private val activityCallbacks = object : Application.ActivityLifecycleCallbacks {
         override fun onActivityResumed(activity: Activity) = refreshOnForeground()
@@ -69,7 +84,7 @@ class BillingManager(
         }
     }
 
-    private fun close() {
+    internal fun close() {
         if (closed) return
         closed = true
         application?.unregisterActivityLifecycleCallbacks(activityCallbacks)
@@ -78,6 +93,10 @@ class BillingManager(
         purchaseRequests.invalidate()
         foregroundRefresh?.cancel()
         connectionTimeout?.cancel()
+        recoveryWaiters.toList().forEach { it.complete(AcknowledgementOutcome.RETRYABLE) }
+        recoveryWaiters.clear()
+        synchronized(sessionLock) { sessions.removeAll { it.get() == null || it.get() === this } }
+        managerJob.cancel()
         // Closing a disconnected Play service must not prevent owner cleanup.
         runCatching { billingClient.endConnection() }
     }
@@ -100,6 +119,14 @@ class BillingManager(
 
         @Volatile
         private var cachedEntitled: Boolean? = null
+        private val sessionLock = Any()
+        private val sessions = mutableListOf<WeakReference<BillingManager>>()
+
+        internal fun activeForRecovery(): BillingManager? = synchronized(sessionLock) {
+            sessions.removeAll { it.get()?.closed != false }
+            sessions.mapNotNull { it.get() }.firstOrNull { !it.recoveryOnly }
+                ?: sessions.firstOrNull()?.get()
+        }
 
         fun isUserEntitled(context: Context): Boolean {
             cachedEntitled?.let { return it }
@@ -131,9 +158,16 @@ class BillingManager(
         val initialEntitled = entitlementStore.read()
         _isPremium.value = initialEntitled
         updateCachedEntitlement(initialEntitled)
+        // Main/UI and JobService construction are serialized on Android Main. Retire a
+        // temporary recovery session before another owner creates a BillingClient.
+        synchronized(sessionLock) {
+            sessions.mapNotNull { it.get() }.filter { it.recoveryOnly }.forEach { it.close() }
+            sessions.add(WeakReference(this))
+        }
         initializeBillingClient()
-        application?.registerActivityLifecycleCallbacks(activityCallbacks)
+        if (!recoveryOnly) application?.registerActivityLifecycleCallbacks(activityCallbacks)
         coroutineScope.coroutineContext[Job]?.invokeOnCompletion { close() }
+        BillingAcknowledgementRecovery.ensureScheduled(context)
     }
 
     private fun initializeBillingClient() {
@@ -168,7 +202,7 @@ class BillingManager(
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     // The BillingClient is ready. You can query purchases here.
                     queryPurchases()
-                    queryProductDetails()
+                    if (!recoveryOnly) queryProductDetails()
                 } else {
                     _billingUi.value = BillingUiState(loading = false, message = "Google Play billing is unavailable. Check your connection and retry.", canRetry = true)
                 }
@@ -346,13 +380,29 @@ class BillingManager(
         }
     }
 
+    internal suspend fun reconcileDelivery(): AcknowledgementOutcome {
+        if (closed) return AcknowledgementOutcome.RETRYABLE
+        val waiter = CompletableDeferred<AcknowledgementOutcome>()
+        recoveryWaiters.add(waiter)
+        try {
+            when {
+                connecting -> Unit // Setup will query the inventory.
+                !billingClient.isReady -> connectToPlayBilling()
+                inventoryInFlight == null -> queryPurchases()
+            }
+            return waiter.await()
+        } finally {
+            recoveryWaiters.remove(waiter)
+        }
+    }
+
     private fun processPurchases(
         purchases: List<Purchase>,
         isFullInventory: Boolean = false,
         requestTicket: Long? = null
     ) {
         coroutineScope.launch {
-            if (requestTicket != null && !purchaseRequests.isCurrent(requestTicket)) {
+            if (closed || (requestTicket != null && !purchaseRequests.isCurrent(requestTicket))) {
                 com.pdfchemy.app.utils.AppLogger.d("Ignoring stale processPurchases for ticket $requestTicket")
                 return@launch
             }
@@ -381,35 +431,89 @@ class BillingManager(
                 }
             }
 
+            var outcome = AcknowledgementOutcome.ACKNOWLEDGED
             for (purchase in unacknowledged) {
-                acknowledgePurchase(purchase)
+                if (closed) return@launch
+                val acknowledgement = acknowledgePurchase(purchase)
+                if (acknowledgement == AcknowledgementOutcome.RETRYABLE) outcome = acknowledgement
+                else if (acknowledgement == AcknowledgementOutcome.RECONCILE && outcome != AcknowledgementOutcome.RETRYABLE)
+                    outcome = acknowledgement
+            }
+            if (isFullInventory && (requestTicket == null || purchaseRequests.isCurrent(requestTicket))) {
+                when (outcome) {
+                    AcknowledgementOutcome.ACKNOWLEDGED -> BillingAcknowledgementRecovery.complete(context)
+                    AcknowledgementOutcome.RECONCILE -> BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
+                    AcknowledgementOutcome.RETRYABLE -> Unit
+                }
+                recoveryWaiters.toList().forEach { it.complete(outcome) }
+            } else if (outcome == AcknowledgementOutcome.RECONCILE) {
+                BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
             }
         }
     }
 
-    internal suspend fun acknowledgePurchase(purchase: Purchase, maxRetries: Int = 3, initialDelayMs: Long = 1000L) {
-        withContext(Dispatchers.IO) {
-            val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                .setPurchaseToken(purchase.purchaseToken)
-                .build()
-            var attempt = 0
-            var delayMs = initialDelayMs
-            while (attempt < maxRetries) {
-                attempt++
-                try {
-                    val result = billingClient.acknowledgePurchase(acknowledgePurchaseParams)
-                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                        return@withContext
+    internal suspend fun acknowledgePurchase(
+        purchase: Purchase, maxRetries: Int = 3, initialDelayMs: Long = 1000L
+    ): AcknowledgementOutcome {
+        val token = purchase.purchaseToken
+        synchronized(acknowledgedTokens) {
+            if (token in acknowledgedTokens) return AcknowledgementOutcome.ACKNOWLEDGED
+        }
+        val task = CompletableDeferred<AcknowledgementOutcome>()
+        val existing = acknowledgementTasks.putIfAbsent(token, task)
+        if (existing != null) return existing.await()
+        try {
+            val outcome = withContext(acknowledgementDispatcher) {
+                // Schedule before the attempt so process death cannot lose an unacknowledged order.
+                BillingAcknowledgementRecovery.markPending(context)
+                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(token)
+                    .build()
+                var attempt = 0
+                var delayMs = initialDelayMs
+                while (attempt < maxRetries) {
+                    attempt++
+                    try {
+                        val result = withTimeoutOrNull(15_000L) {
+                            billingClient.acknowledgePurchase(acknowledgePurchaseParams)
+                        }
+                        if (result == null) return@withContext AcknowledgementOutcome.RETRYABLE
+                        if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                            return@withContext AcknowledgementOutcome.ACKNOWLEDGED
+                        }
+                        com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement attempt $attempt failed with code: ${result.responseCode}")
+                        if (result.responseCode !in setOf(
+                                BillingClient.BillingResponseCode.NETWORK_ERROR,
+                                BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
+                                BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
+                                BillingClient.BillingResponseCode.ERROR
+                            )) return@withContext AcknowledgementOutcome.RECONCILE
+                    } catch (cancel: CancellationException) {
+                        throw cancel
+                    } catch (_: Exception) {
+                        // No purchase/token or provider exception messages enter application logs.
+                        com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement transport failed")
                     }
-                    com.pdfchemy.app.utils.AppLogger.w("BillingManager: Purchase acknowledgement attempt $attempt failed with code: ${result.responseCode}")
-                } catch (e: Exception) {
-                    com.pdfchemy.app.utils.AppLogger.e("BillingManager: Error on purchase acknowledgement attempt $attempt", e)
+                    if (attempt < maxRetries && delayMs > 0) {
+                        delay(delayMs)
+                        delayMs *= 2
+                    }
                 }
-                if (attempt < maxRetries && delayMs > 0) {
-                    delay(delayMs)
-                    delayMs *= 2
-                }
+                AcknowledgementOutcome.RETRYABLE
             }
+            if (outcome == AcknowledgementOutcome.ACKNOWLEDGED) synchronized(acknowledgedTokens) {
+                acknowledgedTokens.add(token)
+                if (acknowledgedTokens.size > 64) acknowledgedTokens.remove(acknowledgedTokens.first())
+            }
+            if (outcome == AcknowledgementOutcome.RECONCILE)
+                BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
+            task.complete(outcome)
+            return outcome
+        } catch (failure: Throwable) {
+            task.completeExceptionally(failure)
+            throw failure
+        } finally {
+            acknowledgementTasks.remove(token, task)
         }
     }
 
