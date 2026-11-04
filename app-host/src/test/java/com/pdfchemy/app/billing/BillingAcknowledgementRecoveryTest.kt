@@ -182,6 +182,7 @@ class BillingAcknowledgementRecoveryTest {
             verify(exactly = 0) { client.endConnection() }
             secondScope.cancel()
             assertSame(manager, BillingManager.activeForRecovery())
+            inventories.first().onQueryPurchasesResponse(reply(BillingClient.BillingResponseCode.OK), emptyList())
             manager.restorePurchases()
             assertEquals(3, inventories.size)
         } finally { secondScope.cancel() }

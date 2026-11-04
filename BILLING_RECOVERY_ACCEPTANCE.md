@@ -25,9 +25,18 @@ Limits: system scheduling is not a deadline guarantee; force-stop, extended offl
 
 Changed files: BillingManager.kt, BillingAcknowledgementRecovery.kt, BillingRecoveryJobService.kt, AndroidManifest.xml (private permission-protected service and explicit network-state permission), BillingAcknowledgementRecoveryTest.kt, BillingRecoverySchedulerIntegrityTest.kt, this report.
 
+## B03 - Bounded restore and retry ownership
+
+Original b03-original: all six new JVM cases failed on B02 source: missing callback never ended loading, late inventory could revoke Premium after a deadline, Retry loaded details instead of retrying restore, connection setup lost restore intent, pending orders were reported absent, and price callbacks overwrote active restore state.
+
+Correction: independent connection/details/inventory deadlines; inventory generation invalidation on timeout; retained manual-restore intent; operation-specific retry; pending-aware outcomes; coalesced repeated Restore calls; and success publication after entitlement processing. Price responses update the price without replacing restore progress/outcome. Connection/inventory failures also release background delivery waiters for bounded retry.
+
+Accepted b03-accepted-final: 81 billing/ad JVM tests passed, 0 failures/errors/skips, including eight restore cases and all B01/B02 regressions. Initial b03-fixed passed 79 tests; the next 81-case attempt exposed a B02 fixture expecting another Restore before its earlier query completed. The fixture now completes that query before proving its owner remains usable; the coalescing regression remains intact. No sleeps, increased timeout, skipped cases or real-account claim.
+
+Changed files: BillingManager.kt, new BillingRestoreRecoveryTest.kt and shared virtual-time BillingTestSession.kt, the one B02 fixture completion, this report. Native/signed/final CI remain B06.
+
 ## Remaining planned work
 
-- B03: bounded restore and operation-specific retry.
 - B04: entitlement persistence failure handling.
 - B05: ITEM_ALREADY_OWNED reconciliation.
 - B06: complete final-source validation and replacement signed artifacts; owner Play/device gates separately recorded.

@@ -49,6 +49,12 @@ class BillingManager(
     val billingUi: StateFlow<BillingUiState> = _billingUi.asStateFlow()
     private var connecting = false
     private var connectionTimeout: Job? = null
+    private var detailsTimeout: Job? = null
+    private var inventoryTimeout: Job? = null
+    private var restorePending = false
+    private var restoreActive = false
+    private var retryRestore = false
+    private var restoreMessage: String? = null
     private val connectionRequests = com.pdfchemy.app.logic.LatestRequest()
     private val detailRequests = com.pdfchemy.app.logic.LatestRequest()
     private val purchaseRequests = com.pdfchemy.app.logic.LatestRequest()
@@ -93,6 +99,8 @@ class BillingManager(
         purchaseRequests.invalidate()
         foregroundRefresh?.cancel()
         connectionTimeout?.cancel()
+        detailsTimeout?.cancel()
+        inventoryTimeout?.cancel()
         recoveryWaiters.toList().forEach { it.complete(AcknowledgementOutcome.RETRYABLE) }
         recoveryWaiters.clear()
         synchronized(sessionLock) { sessions.removeAll { it.get() == null || it.get() === this } }
@@ -107,8 +115,23 @@ class BillingManager(
         canRetry = premiumProductDetails == null || !billingClient.isReady || _premiumPrice.value.isBlank()
     )
 
+    private fun publishDetailsStatus(message: String) {
+        if (restorePending || restoreActive) return
+        _billingUi.value = available(restoreMessage ?: message).let {
+            if (retryRestore) it.copy(canRetry = true) else it
+        }
+    }
+
+    private fun finishRecoveryWaiters(outcome: AcknowledgementOutcome) {
+        recoveryWaiters.toList().forEach { it.complete(outcome) }
+    }
+
     fun retry() {
         if (closed || connecting) return
+        if (retryRestore || restorePending) {
+            restorePurchases()
+            return
+        }
         if (billingClient.isReady) queryProductDetails() else connectToPlayBilling()
     }
 
@@ -192,6 +215,7 @@ class BillingManager(
             if (connectionRequests.isCurrent(ticket) && connecting) {
                 connecting = false
                 _billingUi.value = BillingUiState(loading = false, message = "Google Play did not respond. Check your connection and retry.", canRetry = true)
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
         }
         billingClient.startConnection(object : BillingClientStateListener {
@@ -205,6 +229,7 @@ class BillingManager(
                     if (!recoveryOnly) queryProductDetails()
                 } else {
                     _billingUi.value = BillingUiState(loading = false, message = "Google Play billing is unavailable. Check your connection and retry.", canRetry = true)
+                    finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
                 }
             }
 
@@ -215,9 +240,14 @@ class BillingManager(
                 _premiumPrice.value = ""
                 detailRequests.invalidate()
                 purchaseRequests.invalidate()
+                inventoryTimeout?.cancel()
+                detailsTimeout?.cancel()
+                restorePending = restorePending || restoreActive
+                restoreActive = false
                 inventoryInFlight = null
                 refreshAfterInventory = false
                 _billingUi.value = available("Google Play disconnected. Retry when your connection is available.")
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
                 // Retry connection after a brief delay
                 coroutineScope.launch {
                     kotlinx.coroutines.delay(3000)
@@ -234,12 +264,13 @@ class BillingManager(
         val ticket = detailRequests.begin()
         premiumProductDetails = null
         _premiumPrice.value = ""
-        _billingUi.value = BillingUiState(message = "Loading purchase details…")
-        connectionTimeout?.cancel()
-        connectionTimeout = coroutineScope.launch {
+        if (!restorePending && !restoreActive && restoreMessage == null)
+            _billingUi.value = BillingUiState(message = "Loading purchase details…")
+        detailsTimeout?.cancel()
+        detailsTimeout = coroutineScope.launch {
             delay(15_000)
             if (detailRequests.isCurrent(ticket) && premiumProductDetails == null)
-                _billingUi.value = available("Google Play did not return purchase details. Retry when your connection is available.")
+                publishDetailsStatus("Google Play did not return purchase details. Retry when your connection is available.")
         }
         val queryProductDetailsParams =
             QueryProductDetailsParams.newBuilder()
@@ -255,7 +286,7 @@ class BillingManager(
 
         billingClient.queryProductDetailsAsync(queryProductDetailsParams) { billingResult, productDetailsResult ->
             if (!detailRequests.isCurrent(ticket)) return@queryProductDetailsAsync
-            connectionTimeout?.cancel()
+            detailsTimeout?.cancel()
             val list = productDetailsResult.productDetailsList
             val details = list.firstOrNull { it.productId == PREMIUM_PRODUCT_ID }
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && details != null) {
@@ -264,22 +295,25 @@ class BillingManager(
                 if (!formattedPrice.isNullOrBlank()) {
                     premiumProductDetails = details
                     _premiumPrice.value = formattedPrice
-                    _billingUi.value = available("One-time purchase through Google Play.")
+                    publishDetailsStatus("One-time purchase through Google Play.")
                 } else {
                     premiumProductDetails = null
                     _premiumPrice.value = ""
-                    _billingUi.value = available("Purchase price is unavailable from Google Play. Retry when your connection is available.")
+                    publishDetailsStatus("Purchase price is unavailable from Google Play. Retry when your connection is available.")
                 }
             } else {
                 premiumProductDetails = null
                 _premiumPrice.value = ""
-                _billingUi.value = available("Purchase details are unavailable. Check Google Play and retry.")
+                publishDetailsStatus("Purchase details are unavailable. Check Google Play and retry.")
             }
         }
     }
 
     fun restorePurchases() {
-        if (closed) return
+        if (closed || restoreActive) return
+        restorePending = true
+        retryRestore = false
+        restoreMessage = null
         if (!billingClient.isReady) {
             _billingUi.value = BillingUiState(
                 loading = false,
@@ -299,6 +333,30 @@ class BillingManager(
         }
         val ticket = purchaseRequests.begin()
         inventoryInFlight = ticket
+        val manualRestore = isUserInitiated || restorePending || restoreActive
+        if (manualRestore) {
+            restorePending = false
+            restoreActive = true
+            _billingUi.value = BillingUiState(message = "Checking previous purchases…")
+        }
+        inventoryTimeout?.cancel()
+        inventoryTimeout = coroutineScope.launch {
+            delay(15_000L)
+            if (!purchaseRequests.isCurrent(ticket) || inventoryInFlight != ticket) return@launch
+            purchaseRequests.invalidate()
+            inventoryInFlight = null
+            restoreActive = false
+            if (manualRestore) {
+                retryRestore = true
+                restoreMessage = "Google Play did not return your purchases. Check your connection and retry."
+                _billingUi.value = available(restoreMessage!!).copy(canRetry = true)
+            }
+            finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
+            if (refreshAfterInventory) {
+                refreshAfterInventory = false
+                refreshOnForeground()
+            }
+        }
         
         // Query for existing in-app purchases (non-consumables)
         val params = QueryPurchasesParams.newBuilder()
@@ -310,33 +368,43 @@ class BillingManager(
                 com.pdfchemy.app.utils.AppLogger.d("Ignoring stale onQueryPurchasesResponse for ticket $ticket")
                 return@queryPurchasesAsync
             }
+            inventoryTimeout?.cancel()
             inventoryInFlight = null
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                processPurchases(purchasesList, isFullInventory = true, requestTicket = ticket)
-                if (isUserInitiated) {
-                    val hasActive = purchasesList.any {
-                        it.purchaseState == Purchase.PurchaseState.PURCHASED &&
-                            it.products.contains(PREMIUM_PRODUCT_ID)
-                    }
-                    _billingUi.value = if (hasActive) {
-                        available("Premium entitlement restored successfully.")
-                    } else {
-                        available("No previous purchases found for this Google account.")
+                processPurchases(purchasesList, isFullInventory = true, requestTicket = ticket) {
+                    if (manualRestore && purchaseRequests.isCurrent(ticket)) {
+                        restoreActive = false
+                        retryRestore = false
+                        val premium = purchasesList.filter { it.products.contains(PREMIUM_PRODUCT_ID) }
+                        restoreMessage = when {
+                            premium.any { it.purchaseState == Purchase.PurchaseState.PURCHASED } ->
+                                "Premium entitlement restored successfully."
+                            premium.any { it.purchaseState == Purchase.PurchaseState.PENDING } ->
+                                "Payment is pending. Premium unlocks when Google Play confirms it."
+                            else -> "No previous purchases found for this Google account."
+                        }
+                        _billingUi.value = available(restoreMessage!!)
                     }
                 }
-            } else if (isUserInitiated) {
-                val msg = when (billingResult.responseCode) {
-                    BillingClient.BillingResponseCode.NETWORK_ERROR,
-                    BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
-                    BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
-                        "Network error connecting to Google Play. Check connection and retry."
-                    BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
-                    BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED ->
-                        "Google Play billing is unavailable on this device."
-                    else ->
-                        "Could not restore purchases. Check Google Play and retry."
+            } else {
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
+                if (manualRestore) {
+                    restoreActive = false
+                    retryRestore = true
+                    val msg = when (billingResult.responseCode) {
+                        BillingClient.BillingResponseCode.NETWORK_ERROR,
+                        BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
+                        BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
+                            "Network error connecting to Google Play. Check connection and retry."
+                        BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
+                        BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED ->
+                            "Google Play billing is unavailable on this device."
+                        else ->
+                            "Could not restore purchases. Check Google Play and retry."
+                    }
+                    restoreMessage = msg
+                    _billingUi.value = available(msg).copy(canRetry = true)
                 }
-                _billingUi.value = available(msg)
             }
             if (refreshAfterInventory) {
                 refreshAfterInventory = false
@@ -350,6 +418,11 @@ class BillingManager(
         // Monotonic invalidation: Invalidate any pending background full-inventory queries
         // so that a delayed empty inventory cannot revoke a newer purchase or update.
         purchaseRequests.invalidate()
+        inventoryTimeout?.cancel()
+        restoreActive = false
+        restorePending = false
+        retryRestore = false
+        restoreMessage = null
         inventoryInFlight = null
         refreshAfterInventory = false
 
@@ -399,7 +472,8 @@ class BillingManager(
     private fun processPurchases(
         purchases: List<Purchase>,
         isFullInventory: Boolean = false,
-        requestTicket: Long? = null
+        requestTicket: Long? = null,
+        onEntitlementProcessed: (() -> Unit)? = null
     ) {
         coroutineScope.launch {
             if (closed || (requestTicket != null && !purchaseRequests.isCurrent(requestTicket))) {
@@ -430,6 +504,8 @@ class BillingManager(
                     _isPremium.value = false
                 }
             }
+
+            onEntitlementProcessed?.invoke()
 
             var outcome = AcknowledgementOutcome.ACKNOWLEDGED
             for (purchase in unacknowledged) {
