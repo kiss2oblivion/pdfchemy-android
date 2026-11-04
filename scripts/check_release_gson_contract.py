@@ -61,6 +61,13 @@ TEXT_ENUMS = {
     "Lcom/vladsch/flexmark/util/sequence/LineInfo$Preformatted;": set("NONE FIRST BODY LAST".split()),
     "Lcom/vladsch/flexmark/util/sequence/builder/ISegmentBuilder$Options;": set("INCLUDE_ANCHORS TRACK_FIRST256".split()),
 }
+YAML_TYPE = "Lorg/yaml/snakeyaml/TypeDescription;"
+
+
+def validate_yaml_contract(classes):
+    if YAML_TYPE not in classes:
+        raise RuntimeError("YAML package-dependent TypeDescription missing/renamed in minified DEX")
+    return dict(status="PASS", package_dependent_class=YAML_TYPE)
 
 
 def validate_text_contract(classes):
@@ -155,6 +162,7 @@ def inspect_apk(apk):
                 classes.update(parse_class_dump(dump))
     report = validate_contract(classes)
     report["text_reflection_contract"] = validate_text_contract(classes)
+    report["yaml_package_contract"] = validate_yaml_contract(classes)
     report["apk_sha256"] = hashlib.sha256(Path(apk).read_bytes()).hexdigest()
     return report
 

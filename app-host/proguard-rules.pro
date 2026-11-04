@@ -60,6 +60,12 @@
     public static ** valueOf(java.lang.String);
 }
 
+# SnakeYAML 2.3 initializes these loggers with Class.getPackage().getName().
+# Android returns null after R8 moves the classes into the default package.
+# Preserve only their names; unused classes/members may still be removed.
+-keepnames class org.yaml.snakeyaml.TypeDescription
+-keepnames class org.yaml.snakeyaml.introspector.PropertySubstitute
+
 # These shared DTOs are reflected by Gson across the host/worker wire. Preserve
 # their field names, constructors and nested collection signatures. Worker JSON
 # validation also reads the result keys literally; broad application keeps are

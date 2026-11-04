@@ -1,7 +1,8 @@
 import unittest
 
 from check_release_gson_contract import (parse_class_dump, validate_text_contract,
-                                       TEXT_OPTIONS, TEXT_OPTION_FIELDS, TEXT_ENUMS)
+                                       TEXT_OPTIONS, TEXT_OPTION_FIELDS, TEXT_ENUMS,
+                                       validate_yaml_contract, YAML_TYPE)
 
 
 class DexdumpSchemaParserTest(unittest.TestCase):
@@ -119,6 +120,19 @@ class TextReflectionContractTest(unittest.TestCase):
                 classes[name]["fields"].add("X")
                 with self.assertRaisesRegex(RuntimeError, "fields renamed/removed"):
                     validate_text_contract(classes)
+
+
+class YamlPackageContractTest(unittest.TestCase):
+    def test_type_description_preserves_its_named_package(self):
+        self.assertEqual("PASS", validate_yaml_contract({YAML_TYPE: {}})["status"])
+
+    def test_default_package_rename_reproduces_signed_yaml_failure(self):
+        with self.assertRaisesRegex(RuntimeError, "YAML package-dependent"):
+            validate_yaml_contract({"Lxk6;": {}})
+
+    def test_missing_yaml_constructor_type_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "TypeDescription missing/renamed"):
+            validate_yaml_contract({})
 
 
 if __name__ == "__main__":
