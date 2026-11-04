@@ -46,6 +46,7 @@ class BillingManager(
     private lateinit var billingClient: BillingClient
     
     private val _isPremium = MutableStateFlow(false)
+    private val pendingPremium = MutableStateFlow(false)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
 
     private val _premiumPrice = MutableStateFlow("") // Empty until verified from Google Play
@@ -53,8 +54,9 @@ class BillingManager(
 
     private var premiumProductDetails: ProductDetails? = null
     private val _billingUi = MutableStateFlow(BillingUiState())
-    val billingUi: StateFlow<BillingUiState> = combine(_billingUi, persistence.state, _isPremium) { ui, storage, premium ->
-        if (!storage.failed) ui else ui.copy(
+    val billingUi: StateFlow<BillingUiState> = combine(_billingUi, persistence.state, _isPremium, pendingPremium) { ui, storage, premium, pending ->
+        val current = ui.copy(canPurchase = ui.canPurchase && !premium && !pending)
+        if (!storage.failed) current else current.copy(
             entitlementStorageFailed = true,
             loading = storage.saving,
             canPurchase = false,
@@ -128,7 +130,7 @@ class BillingManager(
         runCatching { billingClient.endConnection() }
     }
     private fun available(message: String) = BillingUiState(
-        canPurchase = premiumProductDetails != null && billingClient.isReady && _premiumPrice.value.isNotBlank(),
+        canPurchase = !_isPremium.value && !pendingPremium.value && premiumProductDetails != null && billingClient.isReady && _premiumPrice.value.isNotBlank(),
         loading = false,
         message = message,
         canRetry = premiumProductDetails == null || !billingClient.isReady || _premiumPrice.value.isBlank()
@@ -444,6 +446,12 @@ class BillingManager(
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         if (closed) return
+        // An ownership error is a hint to query Play, never proof of paid access.
+        // Handle it before invalidation so duplicate callbacks share an active restore.
+        if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+            restorePurchases()
+            return
+        }
         // Monotonic invalidation: Invalidate any pending background full-inventory queries
         // so that a delayed empty inventory cannot revoke a newer purchase or update.
         purchaseRequests.invalidate()
@@ -510,8 +518,11 @@ class BillingManager(
                 return@launch
             }
             var hasPremiumInBatch = false
+            var hasPendingPremium = false
             val unacknowledged = mutableListOf<Purchase>()
             for (purchase in purchases) {
+                if (purchase.purchaseState == Purchase.PurchaseState.PENDING &&
+                    purchase.products.contains(PREMIUM_PRODUCT_ID)) hasPendingPremium = true
                 if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
                     purchase.products.contains(PREMIUM_PRODUCT_ID)
                 ) {
@@ -521,6 +532,8 @@ class BillingManager(
                     }
                 }
             }
+            if (isFullInventory || hasPremiumInBatch || hasPendingPremium)
+                pendingPremium.value = !hasPremiumInBatch && hasPendingPremium
             if (hasPremiumInBatch) {
                 updateCachedEntitlement(true)
                 _isPremium.value = true
@@ -623,6 +636,14 @@ class BillingManager(
     }
 
     fun launchPurchaseFlow(activity: Activity) {
+        if (closed) return
+        if (_isPremium.value || pendingPremium.value) {
+            _billingUi.value = available(
+                if (_isPremium.value) "Premium is already active."
+                else "Payment is pending. Premium unlocks when Google Play confirms it."
+            )
+            return
+        }
         val productDetails = premiumProductDetails
         if (productDetails == null || !billingClient.isReady || !_billingUi.value.canPurchase || _premiumPrice.value.isBlank()) {
             _billingUi.value = available("Purchase is not ready. Check Google Play and retry.")
@@ -641,6 +662,10 @@ class BillingManager(
 
         _billingUi.value = BillingUiState(loading = true, message = "Opening Google Play…")
         val result = billingClient.launchBillingFlow(activity, billingFlowParams)
+        if (result.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+            restorePurchases()
+            return
+        }
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
             val msg = when (result.responseCode) {
                 BillingClient.BillingResponseCode.USER_CANCELED ->

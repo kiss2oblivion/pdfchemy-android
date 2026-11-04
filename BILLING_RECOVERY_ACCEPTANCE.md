@@ -49,7 +49,16 @@ Limits: if durable storage cannot be updated, offline ownership after process de
 
 Changed files: BillingManager.kt; new EntitlementPersistenceCoordinator.kt and PremiumBillingRecoveryNotice.kt; four-line Premium-only MainActivity wiring; BillingPersistenceRecoveryTest.kt, EntitlementPersistenceCoordinatorTest.kt, PremiumBillingRecoveryNoticeTest.kt; deterministic fake-storage/reactive-UI fixture updates; this report.
 
+## B05 - Already-owned reconciliation and purchase guards
+
+Original b05-original: nine JVM cases failed, including both ownership-error entry points, duplicate callbacks, pending/empty/unrelated inventory, restore-error recovery, and checkout attempts for existing/pending owners. The checkout case uses real Billing 8.0.0 ProductDetails and BillingFlowParams builders with a synthetic test product; the client is mocked, so no order or charge is created.
+
+Correction: ITEM_ALREADY_OWNED from launchBillingFlow and onPurchasesUpdated delegates to bounded Restore. Duplicate ownership callbacks retain the current restore ticket. Only authoritative PURCHASED premium_upgrade inventory grants access; confirmed unacknowledged orders use B02 and cache persistence uses B04. Pending ownership is tracked separately, and checkout is rejected for known paid/pending owners. Price callbacks cannot re-enable purchasing for those states. No automatic second checkout.
+
+Accepted b05-fixed: 99 billing/ad JVM tests passed, 0 failures/errors/skips, including all nine new cases and B01-B04 regressions. The resolved SDK builder was independently inspected: it already copies the one-time offer token from ProductDetails, so no speculative offer-handling or Billing dependency migration was introduced. Real Play purchase/restore remains an owner gate.
+
+Changed files: BillingManager.kt, BillingAlreadyOwnedRecoveryTest.kt, synthetic real-SDK product fixture in BillingTestSession.kt, this report.
+
 ## Remaining planned work
 
-- B05: ITEM_ALREADY_OWNED reconciliation.
 - B06: complete final-source validation and replacement signed artifacts; owner Play/device gates separately recorded.

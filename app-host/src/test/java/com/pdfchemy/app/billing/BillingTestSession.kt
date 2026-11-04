@@ -72,13 +72,19 @@ internal class BillingTestSession(initialReadFailure: Boolean = false) : AutoClo
         runCurrent()
     }
 
-    fun completeDetails() {
-        val product = mockk<ProductDetails>(relaxed = true)
+    fun completeDetails(actualProduct: Boolean = false) {
+        val product = if (actualProduct) {
+            ProductDetails::class.java.getDeclaredConstructor(String::class.java).apply { isAccessible = true }.newInstance(
+                """{"productId":"premium_upgrade","type":"inapp","title":"Premium","name":"Premium","description":"Remove ads","packageName":"com.pdfchemy.app","oneTimePurchaseOfferDetails":{"formattedPrice":"EUR 4.99","priceAmountMicros":4990000,"priceCurrencyCode":"EUR","offerIdToken":"test-offer"}}"""
+            )
+        } else mockk<ProductDetails>(relaxed = true)
         val offer = mockk<ProductDetails.OneTimePurchaseOfferDetails>()
-        every { product.productId } returns BillingManager.PREMIUM_PRODUCT_ID
-        every { product.productType } returns BillingClient.ProductType.INAPP
-        every { product.oneTimePurchaseOfferDetails } returns offer
-        every { offer.formattedPrice } returns "EUR 4.99"
+        if (!actualProduct) {
+            every { product.productId } returns BillingManager.PREMIUM_PRODUCT_ID
+            every { product.productType } returns BillingClient.ProductType.INAPP
+            every { product.oneTimePurchaseOfferDetails } returns offer
+            every { offer.formattedPrice } returns "EUR 4.99"
+        }
         val result = mockk<QueryProductDetailsResult>()
         every { result.productDetailsList } returns listOf(product)
         details.last().onProductDetailsResponse(result(), result)
