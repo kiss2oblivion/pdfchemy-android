@@ -1,6 +1,7 @@
 import unittest
 
-from check_release_gson_contract import parse_class_dump
+from check_release_gson_contract import (parse_class_dump, validate_text_contract,
+                                       TEXT_OPTIONS, TEXT_OPTION_FIELDS)
 
 
 class DexdumpSchemaParserTest(unittest.TestCase):
@@ -76,6 +77,25 @@ Class #1 -
         row = parse_class_dump(text)["LWindows;"]
         self.assertEqual("LToken<Ljava/lang/String;>;", row["signature"])
         self.assertEqual({"items"}, row["fields"])
+
+
+class TextReflectionContractTest(unittest.TestCase):
+    def test_complete_reflected_enum_is_accepted(self):
+        result = validate_text_contract({TEXT_OPTIONS: {"fields": TEXT_OPTION_FIELDS.copy()}})
+        self.assertEqual(7, result["reflected_enum_fields"])
+
+    def test_obfuscated_enum_class_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "enum missing/renamed"):
+            validate_text_contract({"Lb43;": {"fields": TEXT_OPTION_FIELDS.copy()}})
+
+    def test_renamed_field_reproduces_signed_initializer_failure(self):
+        fields = TEXT_OPTION_FIELDS - {"TRIM_LEADING_EOL"} | {"X"}
+        with self.assertRaisesRegex(RuntimeError, "TRIM_LEADING_EOL"):
+            validate_text_contract({TEXT_OPTIONS: {"fields": fields}})
+
+    def test_shrunk_unused_option_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "PREFIX_PRE_FORMATTED"):
+            validate_text_contract({TEXT_OPTIONS: {"fields": TEXT_OPTION_FIELDS - {"PREFIX_PRE_FORMATTED"}}})
 
 
 if __name__ == "__main__":

@@ -19,6 +19,16 @@
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
 
+# Flexmark 0.64.8 BitFieldSet$UniverseLoader uses getFields()/Field.getName()
+# with Enum.valueOf. Keep this reflected enum's constants and values table;
+# renaming a constant makes HtmlRenderer's initializer kill the isolated worker.
+# Keep the single enum, rather than disabling shrinking for the converter/library.
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineAppendable$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
 # These shared DTOs are reflected by Gson across the host/worker wire. Preserve
 # their field names, constructors and nested collection signatures. Worker JSON
 # validation also reads the result keys literally; broad application keeps are

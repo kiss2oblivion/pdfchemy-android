@@ -44,6 +44,22 @@ COLLECTIONS = {
     ("FindReplaceSummary", "occurrences"): "TextMatchOccurrence",
 }
 
+# Flexmark 0.64.8 BitFieldSet discovers public enum fields and passes their
+# reflected names to Enum.valueOf. Renaming those fields kills converter init.
+TEXT_OPTIONS = "Lcom/vladsch/flexmark/util/sequence/LineAppendable$Options;"
+TEXT_OPTION_FIELDS = set("CONVERT_TABS COLLAPSE_WHITESPACE TRIM_TRAILING_WHITESPACE "
+                         "PASS_THROUGH TRIM_LEADING_WHITESPACE TRIM_LEADING_EOL "
+                         "PREFIX_PRE_FORMATTED".split())
+
+
+def validate_text_contract(classes):
+    if TEXT_OPTIONS not in classes:
+        raise RuntimeError("Flexmark text option enum missing/renamed in minified DEX")
+    missing = TEXT_OPTION_FIELDS - classes[TEXT_OPTIONS]["fields"]
+    if missing:
+        raise RuntimeError("Flexmark reflected enum fields renamed/removed: " + ", ".join(sorted(missing)))
+    return dict(status="PASS", reflected_enum_fields=len(TEXT_OPTION_FIELDS))
+
 
 def parse_class_dump(text):
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -125,6 +141,7 @@ def inspect_apk(apk):
                                       timeout=120).stdout.decode("utf-8", errors="replace")
                 classes.update(parse_class_dump(dump))
     report = validate_contract(classes)
+    report["text_reflection_contract"] = validate_text_contract(classes)
     report["apk_sha256"] = hashlib.sha256(Path(apk).read_bytes()).hexdigest()
     return report
 
