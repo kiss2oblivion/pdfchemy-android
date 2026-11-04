@@ -2,9 +2,7 @@
 
 # PdfBox-Android optional dependencies
 -dontwarn com.gemalto.jp2.**
--dontwarn javax.xml.stream.**
 -dontwarn aQute.bnd.annotation.spi.**
--dontwarn org.codehaus.stax2.**
 
 # Jackson Dataformat & Kotlin module reflection
 -keepclassmembers class * {
@@ -20,6 +18,53 @@
 # https://google.github.io/gson/Troubleshooting.html#illegalstateexception-typetoken-must-be-created-with-a-type-argument
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
+
+# Flexmark 0.64.8 BitFieldSet$UniverseLoader uses getFields()/Field.getName()
+# with Enum.valueOf. Keep this reflected enum's constants and values table;
+# renaming a constant kills renderer/Markdown parser initialization. These are
+# the seven enum types passed to BitFieldSet by the resolved 0.64.8 libraries.
+# Preserve their reflection contract, rather than keeping the entire library.
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineAppendable$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.ast.TextContainer$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.format.TrackedOffset$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineInfo$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineInfo$Preformatted {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# SnakeYAML 2.3 initializes these loggers with Class.getPackage().getName().
+# Android returns null after R8 moves the classes into the default package.
+# Preserve only their names; unused classes/members may still be removed.
+-keepnames class org.yaml.snakeyaml.TypeDescription
+-keepnames class org.yaml.snakeyaml.introspector.PropertySubstitute
 
 # These shared DTOs are reflected by Gson across the host/worker wire. Preserve
 # their field names, constructors and nested collection signatures. Worker JSON

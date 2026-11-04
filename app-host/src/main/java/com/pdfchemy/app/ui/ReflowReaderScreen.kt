@@ -50,6 +50,8 @@ import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.OutlineBookmark
 import com.pdfchemy.app.logic.PdfOutlineReader
 import com.pdfchemy.app.logic.ReflowSection
+import com.pdfchemy.app.logic.ReflowOcrCoordinator
+import com.pdfchemy.app.logic.ReflowOcrState
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -80,8 +82,28 @@ fun ReflowReaderScreen(
     var reflowSections by remember { mutableStateOf<List<ReflowSection>>(emptyList()) }
     var bookmarks by remember { mutableStateOf<List<OutlineBookmark>>(emptyList()) }
     var isScannedOnly by remember { mutableStateOf(false) }
-    var isOcrExtracting by remember { mutableStateOf(false) }
+    val ocr = remember(context) {
+        ReflowOcrCoordinator { uri -> com.pdfchemy.app.logic.PdfTextExtractor.extractUsingOcr(context, uri) }
+    }
+    val ocrState by ocr.state.collectAsState()
+    val isOcrExtracting = ocrState is ReflowOcrState.Processing
     var isLoading by remember { mutableStateOf(false) }
+
+    DisposableEffect(ocr, selectedPdfUri) {
+        ocr.reset()
+        onDispose { ocr.reset() }
+    }
+    DisposableEffect(ocr) { onDispose { ocr.close() } }
+    LaunchedEffect(ocrState) {
+        val ready = ocrState as? ReflowOcrState.Ready ?: return@LaunchedEffect
+        if (ready.uri == selectedPdfUri) {
+            val paragraphs = ready.text.split(Regex("\n\n+"))
+                .map { it.replace(Regex("\n+"), " ").trim() }.filter { it.isNotBlank() }
+            reflowSections = listOf(ReflowSection(pageNumber = 1, title = "OCR Extracted", paragraphs = paragraphs))
+            isScannedOnly = false
+            ocr.reset()
+        }
+    }
 
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE || configuration.screenWidthDp >= 600
@@ -1079,19 +1101,7 @@ fun ReflowReaderScreen(
                         } else {
                             Button(
                                 onClick = {
-                                    isOcrExtracting = true
-                                    scope.launch {
-                                        val extractedText = com.pdfchemy.app.logic.PdfTextExtractor.extractUsingOcr(context, selectedPdfUri!!)
-                                        if (extractedText.isNotBlank()) {
-                                            val paragraphs = extractedText.split(Regex("\n\n+"))
-                                                .map { it.replace(Regex("\n+"), " ").trim() }
-                                                .filter { it.isNotBlank() }
-
-                                            reflowSections = listOf(ReflowSection(pageNumber = 1, title = "OCR Extracted", paragraphs = paragraphs))
-                                            isScannedOnly = false
-                                        }
-                                        isOcrExtracting = false
-                                    }
+                                    selectedPdfUri?.let { ocr.request(scope, it) }
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 50.dp)
@@ -1099,6 +1109,11 @@ fun ReflowReaderScreen(
                                 Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.run_on_device_ocr), fontWeight = FontWeight.Bold)
+                            }
+                            if (ocrState is ReflowOcrState.Failed) {
+                                Text(stringResource(R.string.error_ocr_failed), color = MaterialTheme.colorScheme.error)
+                            } else if (ocrState is ReflowOcrState.Empty) {
+                                Text(stringResource(R.string.integrity_ocr_no_text), color = selectedTheme.text)
                             }
                         }
                     }

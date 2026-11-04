@@ -1,6 +1,8 @@
 import unittest
 
-from check_release_gson_contract import parse_class_dump
+from check_release_gson_contract import (parse_class_dump, validate_text_contract,
+                                       TEXT_OPTIONS, TEXT_OPTION_FIELDS, TEXT_ENUMS,
+                                       validate_yaml_contract, YAML_TYPE)
 
 
 class DexdumpSchemaParserTest(unittest.TestCase):
@@ -76,6 +78,61 @@ Class #1 -
         row = parse_class_dump(text)["LWindows;"]
         self.assertEqual("LToken<Ljava/lang/String;>;", row["signature"])
         self.assertEqual({"items"}, row["fields"])
+
+
+class TextReflectionContractTest(unittest.TestCase):
+    def preserved(self):
+        return {name: {"fields": fields.copy()} for name, fields in TEXT_ENUMS.items()}
+
+    def test_complete_reflected_enum_is_accepted(self):
+        result = validate_text_contract(self.preserved())
+        self.assertEqual(7, result["reflected_enums"])
+        self.assertEqual(30, result["reflected_enum_fields"])
+
+    def test_obfuscated_enum_class_is_rejected(self):
+        classes = self.preserved()
+        classes["Lb43;"] = classes.pop(TEXT_OPTIONS)
+        with self.assertRaisesRegex(RuntimeError, "enum missing/renamed"):
+            validate_text_contract(classes)
+
+    def test_renamed_field_reproduces_signed_initializer_failure(self):
+        fields = TEXT_OPTION_FIELDS - {"TRIM_LEADING_EOL"} | {"X"}
+        classes = self.preserved(); classes[TEXT_OPTIONS]["fields"] = fields
+        with self.assertRaisesRegex(RuntimeError, "TRIM_LEADING_EOL"):
+            validate_text_contract(classes)
+
+    def test_shrunk_unused_option_is_rejected(self):
+        classes = self.preserved(); classes[TEXT_OPTIONS]["fields"].remove("PREFIX_PRE_FORMATTED")
+        with self.assertRaisesRegex(RuntimeError, "PREFIX_PRE_FORMATTED"):
+            validate_text_contract(classes)
+
+    def test_each_bit_field_enum_rejects_missing_class(self):
+        for name in TEXT_ENUMS:
+            with self.subTest(enum=name):
+                classes = self.preserved(); del classes[name]
+                with self.assertRaisesRegex(RuntimeError, "enum missing/renamed"):
+                    validate_text_contract(classes)
+
+    def test_each_bit_field_enum_rejects_renamed_constant(self):
+        for name, fields in TEXT_ENUMS.items():
+            with self.subTest(enum=name):
+                classes = self.preserved(); classes[name]["fields"].remove(sorted(fields)[0])
+                classes[name]["fields"].add("X")
+                with self.assertRaisesRegex(RuntimeError, "fields renamed/removed"):
+                    validate_text_contract(classes)
+
+
+class YamlPackageContractTest(unittest.TestCase):
+    def test_type_description_preserves_its_named_package(self):
+        self.assertEqual("PASS", validate_yaml_contract({YAML_TYPE: {}})["status"])
+
+    def test_default_package_rename_reproduces_signed_yaml_failure(self):
+        with self.assertRaisesRegex(RuntimeError, "YAML package-dependent"):
+            validate_yaml_contract({"Lxk6;": {}})
+
+    def test_missing_yaml_constructor_type_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "TypeDescription missing/renamed"):
+            validate_yaml_contract({})
 
 
 if __name__ == "__main__":

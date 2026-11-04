@@ -44,6 +44,42 @@ COLLECTIONS = {
     ("FindReplaceSummary", "occurrences"): "TextMatchOccurrence",
 }
 
+# Flexmark 0.64.8 BitFieldSet discovers public enum fields and passes their
+# reflected names to Enum.valueOf. Renaming those fields kills converter init.
+TEXT_OPTIONS = "Lcom/vladsch/flexmark/util/sequence/LineAppendable$Options;"
+TEXT_OPTION_FIELDS = set("CONVERT_TABS COLLAPSE_WHITESPACE TRIM_TRAILING_WHITESPACE "
+                         "PASS_THROUGH TRIM_LEADING_WHITESPACE TRIM_LEADING_EOL "
+                         "PREFIX_PRE_FORMATTED".split())
+TEXT_ENUMS = {
+    TEXT_OPTIONS: TEXT_OPTION_FIELDS,
+    "Lcom/vladsch/flexmark/util/ast/TextContainer$Flags;": set(
+        "LINK_TEXT_TYPE NODE_TEXT FOR_HEADING_ID NO_TRIM_REF_TEXT_START NO_TRIM_REF_TEXT_END ADD_SPACES_BETWEEN_NODES".split()),
+    "Lcom/vladsch/flexmark/util/format/TrackedOffset$Flags;": set("AFTER_SPACE_EDIT AFTER_INSERT AFTER_DELETE".split()),
+    "Lcom/vladsch/flexmark/util/sequence/BasedOptionsHolder$Options;": set(
+        "COLLECT_SEGMENTED_STATS COLLECT_FIRST256_STATS NO_ANCHORS FULL_SEGMENTED_SEQUENCES TREE_SEGMENTED_SEQUENCES".split()),
+    "Lcom/vladsch/flexmark/util/sequence/LineInfo$Flags;": set("PREFORMATTED BLANK_PREFIX BLANK_TEXT".split()),
+    "Lcom/vladsch/flexmark/util/sequence/LineInfo$Preformatted;": set("NONE FIRST BODY LAST".split()),
+    "Lcom/vladsch/flexmark/util/sequence/builder/ISegmentBuilder$Options;": set("INCLUDE_ANCHORS TRACK_FIRST256".split()),
+}
+YAML_TYPE = "Lorg/yaml/snakeyaml/TypeDescription;"
+
+
+def validate_yaml_contract(classes):
+    if YAML_TYPE not in classes:
+        raise RuntimeError("YAML package-dependent TypeDescription missing/renamed in minified DEX")
+    return dict(status="PASS", package_dependent_class=YAML_TYPE)
+
+
+def validate_text_contract(classes):
+    for name, fields in TEXT_ENUMS.items():
+        if name not in classes:
+            raise RuntimeError("Flexmark text option enum missing/renamed in minified DEX: " + name)
+        missing = fields - classes[name]["fields"]
+        if missing:
+            raise RuntimeError("Flexmark reflected enum fields renamed/removed for " + name + ": " + ", ".join(sorted(missing)))
+    return dict(status="PASS", reflected_enums=len(TEXT_ENUMS),
+                reflected_enum_fields=sum(map(len, TEXT_ENUMS.values())))
+
 
 def parse_class_dump(text):
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -125,6 +161,8 @@ def inspect_apk(apk):
                                       timeout=120).stdout.decode("utf-8", errors="replace")
                 classes.update(parse_class_dump(dump))
     report = validate_contract(classes)
+    report["text_reflection_contract"] = validate_text_contract(classes)
+    report["yaml_package_contract"] = validate_yaml_contract(classes)
     report["apk_sha256"] = hashlib.sha256(Path(apk).read_bytes()).hexdigest()
     return report
 

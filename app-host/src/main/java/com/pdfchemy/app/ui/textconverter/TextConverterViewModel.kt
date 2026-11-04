@@ -5,6 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pdfchemy.app.logic.TextFormatConverter
+import com.pdfchemy.app.logic.TextOutputPublisher
+import com.pdfchemy.app.logic.OutputPolicy
+import com.pdfchemy.app.logic.LatestRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,10 +17,14 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.CancellationException
-import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.Job
 import com.pdfchemy.app.R
 
 class TextConverterViewModel : ViewModel() {
+    private var activeOutput: Uri? = null
+    private val imports = LatestRequest()
+    private var importJob: Job? = null
 
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
@@ -60,8 +67,11 @@ class TextConverterViewModel : ViewModel() {
     }
 
     fun loadFile(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = UiState.Processing
+        if (activeOutput != null) return
+        val ticket = imports.begin()
+        importJob?.cancel()
+        _uiState.value = UiState.Processing
+        importJob = viewModelScope.launch {
             try {
                 val text = withContext(Dispatchers.IO) {
                     requireNotNull(context.contentResolver.openInputStream(uri)) { "Cannot open input document" }.bufferedReader(Charsets.UTF_8).use { reader ->
@@ -78,6 +88,8 @@ class TextConverterViewModel : ViewModel() {
                         stringBuilder.toString()
                     }
                 }
+                currentCoroutineContext().ensureActive()
+                if (!imports.isCurrent(ticket)) return@launch
                 _inputText.value = text
                 
                 // Auto-detect format based on extension
@@ -97,46 +109,54 @@ class TextConverterViewModel : ViewModel() {
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
-                _uiState.value = UiState.Error("Failed to read file: ${e.message}")
+                if (imports.isCurrent(ticket)) _uiState.value = UiState.Error("Failed to read file: ${e.message}")
+            } finally {
+                if (imports.isCurrent(ticket) && _uiState.value is UiState.Processing) _uiState.value = UiState.Idle
             }
         }
     }
 
     fun convertAndSave(context: Context, destUri: Uri) {
-        if (_uiState.value is UiState.Processing) return
+        if (_uiState.value is UiState.Processing) {
+            if (destUri != activeOutput) viewModelScope.launch(Dispatchers.IO) { OutputPolicy.deleteIfFresh(context, destUri) }
+            return
+        }
+        val text = _inputText.value
+        val from = _inputFormat.value
+        val to = _outputFormat.value
+        _uiState.value = UiState.Processing
+        activeOutput = destUri
 
         viewModelScope.launch {
-            _uiState.value = UiState.Processing
-            
-            val result = TextFormatConverter.convert(
-                context,
-                _inputText.value, 
-                _inputFormat.value, 
-                _outputFormat.value
-            )
-            
-            result.onSuccess { convertedText ->
-                try {
-                    withContext(Dispatchers.IO) {
-                        requireNotNull(context.contentResolver.openOutputStream(destUri, "wt")) { "Cannot open output document" }.use { outputStream ->
-                            currentCoroutineContext().ensureActive()
-                            outputStream.write(convertedText.toByteArray(Charsets.UTF_8))
-                        }
-                    }
-                    _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_file_converted), destUri)
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (e: Exception) {
-                    _uiState.value = UiState.Error("Failed to save file: ${e.message}")
+            var outcome: UiState = UiState.Idle
+            try {
+                require(OutputPolicy.isFreshCopy(destUri)) { "Saving requires a newly created output copy" }
+                TextOutputPublisher.publish(context, destUri) {
+                    TextFormatConverter.convert(context, text, from, to).getOrThrow()
                 }
-            }.onFailure { error ->
-                if (error is CancellationException) throw error
-                _uiState.value = UiState.Error(error.message ?: "Conversion failed.")
+                outcome = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_file_converted), destUri)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                outcome = UiState.Error(error.message ?: "Conversion failed.")
+            } finally {
+                withContext(NonCancellable + Dispatchers.IO) {
+                    // Published/claimed/unknown destinations cannot be deleted by this cleanup.
+                    OutputPolicy.deleteIfFresh(context, destUri)
+                }
+                activeOutput = null
+                _uiState.value = outcome
             }
         }
     }
 
     fun dismissMessage() {
         _uiState.value = UiState.Idle
+    }
+
+    override fun onCleared() {
+        imports.invalidate()
+        importJob?.cancel()
+        super.onCleared()
     }
 }
