@@ -9,12 +9,20 @@ import com.google.gson.stream.JsonToken
 import com.pdfchemy.app.security.SecurityLimits
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.LoaderOptions
-import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.composer.Composer
 import org.yaml.snakeyaml.constructor.SafeConstructor
+import org.yaml.snakeyaml.emitter.Emitter
+import org.yaml.snakeyaml.nodes.MappingNode
+import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.nodes.NodeId
+import org.yaml.snakeyaml.nodes.NodeTuple
+import org.yaml.snakeyaml.nodes.ScalarNode
+import org.yaml.snakeyaml.nodes.SequenceNode
 import org.yaml.snakeyaml.nodes.Tag
-import org.yaml.snakeyaml.representer.Representer
+import org.yaml.snakeyaml.parser.ParserImpl
+import org.yaml.snakeyaml.reader.StreamReader
 import org.yaml.snakeyaml.resolver.Resolver
+import org.yaml.snakeyaml.serializer.Serializer
 import java.io.StringReader
 import java.io.Writer
 import java.math.BigDecimal
@@ -54,7 +62,7 @@ internal object StructuredTextCodec {
                 reader.isLenient = false
                 readJson(reader, Budget(), 0).also { require(reader.peek() == JsonToken.END_DOCUMENT) { "Trailing JSON content" } }
             }
-            TextFormatConverter.Format.YAML -> fromValue(yaml().load<Any?>(input), Budget(), 0, IdentityHashMap())
+            TextFormatConverter.Format.YAML -> fromValue(readYaml(input), Budget(), 0, IdentityHashMap())
             TextFormatConverter.Format.XML -> readXml(input)
             TextFormatConverter.Format.CSV -> readCsv(input, ',')
             TextFormatConverter.Format.TSV -> readCsv(input, '\t')
@@ -66,7 +74,7 @@ internal object StructuredTextCodec {
         checkTree(tree, Budget(), 0)
         val output = when (format) {
             TextFormatConverter.Format.JSON -> BoundedWriter().also { json.toJson(tree, it) }.toString()
-            TextFormatConverter.Format.YAML -> BoundedWriter().also { yaml().dump(toValue(tree), it) }.toString()
+            TextFormatConverter.Format.YAML -> writeYaml(tree)
             TextFormatConverter.Format.XML -> writeXml(tree, root ?: if (tree.isJsonArray) "ArrayNode" else "ObjectNode")
             TextFormatConverter.Format.CSV -> writeCsv(tree, ',')
             TextFormatConverter.Format.TSV -> writeCsv(tree, '\t')
@@ -104,12 +112,11 @@ internal object StructuredTextCodec {
         }
     }
 
-    private fun yaml(): Yaml {
+    private fun readYaml(input: String): Any? {
         val loader = LoaderOptions().apply {
             nestingDepthLimit = MAX_DEPTH; maxAliasesForCollections = 50
             codePointLimit = SecurityLimits.MAX_TEXT_BYTES; isAllowDuplicateKeys = false
         }
-        val dumper = DumperOptions().apply { defaultFlowStyle = DumperOptions.FlowStyle.BLOCK }
         // Jackson's YAML tree preserves date-like scalars as strings, rather than Java Date objects.
         val resolver = object : Resolver() {
             override fun resolve(kind: NodeId, value: String?, implicit: Boolean): Tag {
@@ -117,8 +124,33 @@ internal object StructuredTextCodec {
                 return if (tag == Tag.TIMESTAMP) Tag.STR else tag
             }
         }
-        return Yaml(SafeConstructor(loader), Representer(dumper), dumper, loader, resolver)
+        return SafeConstructor(loader).apply {
+            setComposer(Composer(ParserImpl(StreamReader(input), loader), resolver, loader))
+        }.getSingleData(Any::class.java)
     }
+
+    /** Emit only JSON-compatible values; the JavaBean Representer is unavailable on Android. */
+    private fun writeYaml(tree: JsonElement): String {
+        val output = BoundedWriter()
+        val options = DumperOptions().apply { defaultFlowStyle = DumperOptions.FlowStyle.BLOCK }
+        val serializer = Serializer(Emitter(output, options), Resolver(), options, null)
+        serializer.open()
+        try { serializer.serialize(yamlNode(tree)) } finally { serializer.close() }
+        return output.toString()
+    }
+
+    private fun yamlNode(node: JsonElement): Node = when {
+        node.isJsonObject -> MappingNode(Tag.MAP, node.asJsonObject.entrySet().map { (key, value) ->
+            NodeTuple(yamlScalar(Tag.STR, key), yamlNode(value))
+        }, DumperOptions.FlowStyle.BLOCK)
+        node.isJsonArray -> SequenceNode(Tag.SEQ, node.asJsonArray.map { yamlNode(it) }, DumperOptions.FlowStyle.BLOCK)
+        node.isJsonNull -> yamlScalar(Tag.NULL, "null")
+        node.asJsonPrimitive.isBoolean -> yamlScalar(Tag.BOOL, node.asString)
+        node.asJsonPrimitive.isNumber -> yamlScalar(if (node.asString.any { it == '.' || it == 'e' || it == 'E' }) Tag.FLOAT else Tag.INT, node.asString)
+        else -> yamlScalar(Tag.STR, node.asString)
+    }
+
+    private fun yamlScalar(tag: Tag, value: String) = ScalarNode(tag, value, null, null, DumperOptions.ScalarStyle.PLAIN)
 
     private fun fromValue(value: Any?, budget: Budget, depth: Int, active: IdentityHashMap<Any, Boolean>): JsonElement {
         budget.take(depth)
@@ -145,17 +177,6 @@ internal object StructuredTextCodec {
             }
             else -> error("Unsupported YAML value")
         }
-    }
-
-    private fun toValue(node: JsonElement): Any? = when {
-        node.isJsonNull -> null
-        node.isJsonObject -> node.asJsonObject.entrySet().associate { it.key to toValue(it.value) }
-        node.isJsonArray -> node.asJsonArray.map { toValue(it) }
-        node.asJsonPrimitive.isBoolean -> node.asBoolean
-        node.asJsonPrimitive.isNumber -> node.asString.let { value ->
-            if (value.any { it == '.' || it == 'e' || it == 'E' }) BigDecimal(value) else BigInteger(value)
-        }
-        else -> node.asString
     }
 
     private fun readXml(input: String): JsonElement {
