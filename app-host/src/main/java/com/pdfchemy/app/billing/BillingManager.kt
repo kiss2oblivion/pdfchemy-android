@@ -1,7 +1,9 @@
 package com.pdfchemy.app.billing
 
 import android.app.Activity
+import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import com.android.billingclient.api.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.yield
 
 data class BillingUiState(val canPurchase: Boolean = false, val loading: Boolean = true,
     val message: String = "Connecting to Google Play…", val canRetry: Boolean = false)
@@ -37,6 +40,47 @@ class BillingManager(
     private val connectionRequests = com.pdfchemy.app.logic.LatestRequest()
     private val detailRequests = com.pdfchemy.app.logic.LatestRequest()
     private val purchaseRequests = com.pdfchemy.app.logic.LatestRequest()
+    private var closed = false
+    private var inventoryInFlight: Long? = null
+    private var refreshAfterInventory = false
+    private var foregroundRefresh: Job? = null
+    private val application = context.applicationContext as? Application
+    private val activityCallbacks = object : Application.ActivityLifecycleCallbacks {
+        override fun onActivityResumed(activity: Activity) = refreshOnForeground()
+        override fun onActivityCreated(activity: Activity, state: Bundle?) = Unit
+        override fun onActivityStarted(activity: Activity) = Unit
+        override fun onActivityPaused(activity: Activity) = Unit
+        override fun onActivityStopped(activity: Activity) = Unit
+        override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) = Unit
+        override fun onActivityDestroyed(activity: Activity) = Unit
+    }
+
+    private fun refreshOnForeground() {
+        if (closed || foregroundRefresh?.isActive == true) return
+        foregroundRefresh = coroutineScope.launch {
+            // Coalesce recreation/resume callbacks before touching the one BillingClient.
+            yield()
+            if (closed || connecting) return@launch
+            when {
+                !billingClient.isReady -> connectToPlayBilling()
+                inventoryInFlight != null -> refreshAfterInventory = true
+                else -> queryPurchases()
+            }
+        }
+    }
+
+    private fun close() {
+        if (closed) return
+        closed = true
+        application?.unregisterActivityLifecycleCallbacks(activityCallbacks)
+        connectionRequests.invalidate()
+        detailRequests.invalidate()
+        purchaseRequests.invalidate()
+        foregroundRefresh?.cancel()
+        connectionTimeout?.cancel()
+        // Closing a disconnected Play service must not prevent owner cleanup.
+        runCatching { billingClient.endConnection() }
+    }
     private fun available(message: String) = BillingUiState(
         canPurchase = premiumProductDetails != null && billingClient.isReady && _premiumPrice.value.isNotBlank(),
         loading = false,
@@ -45,7 +89,7 @@ class BillingManager(
     )
 
     fun retry() {
-        if (connecting) return
+        if (closed || connecting) return
         if (billingClient.isReady) queryProductDetails() else connectToPlayBilling()
     }
 
@@ -88,6 +132,8 @@ class BillingManager(
         _isPremium.value = initialEntitled
         updateCachedEntitlement(initialEntitled)
         initializeBillingClient()
+        application?.registerActivityLifecycleCallbacks(activityCallbacks)
+        coroutineScope.coroutineContext[Job]?.invokeOnCompletion { close() }
     }
 
     private fun initializeBillingClient() {
@@ -102,7 +148,7 @@ class BillingManager(
     }
 
     private fun connectToPlayBilling() {
-        if (connecting) return
+        if (closed || connecting) return
         connecting = true
         val ticket = connectionRequests.begin()
         _billingUi.value = BillingUiState()
@@ -135,6 +181,8 @@ class BillingManager(
                 _premiumPrice.value = ""
                 detailRequests.invalidate()
                 purchaseRequests.invalidate()
+                inventoryInFlight = null
+                refreshAfterInventory = false
                 _billingUi.value = available("Google Play disconnected. Retry when your connection is available.")
                 // Retry connection after a brief delay
                 coroutineScope.launch {
@@ -148,6 +196,7 @@ class BillingManager(
     }
 
     private fun queryProductDetails() {
+        if (closed) return
         val ticket = detailRequests.begin()
         premiumProductDetails = null
         _premiumPrice.value = ""
@@ -196,6 +245,7 @@ class BillingManager(
     }
 
     fun restorePurchases() {
+        if (closed) return
         if (!billingClient.isReady) {
             _billingUi.value = BillingUiState(
                 loading = false,
@@ -210,10 +260,11 @@ class BillingManager(
     }
 
     private fun queryPurchases(isUserInitiated: Boolean = false) {
-        if (!billingClient.isReady) {
+        if (closed || !billingClient.isReady) {
             return
         }
         val ticket = purchaseRequests.begin()
+        inventoryInFlight = ticket
         
         // Query for existing in-app purchases (non-consumables)
         val params = QueryPurchasesParams.newBuilder()
@@ -225,6 +276,7 @@ class BillingManager(
                 com.pdfchemy.app.utils.AppLogger.d("Ignoring stale onQueryPurchasesResponse for ticket $ticket")
                 return@queryPurchasesAsync
             }
+            inventoryInFlight = null
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 processPurchases(purchasesList, isFullInventory = true, requestTicket = ticket)
                 if (isUserInitiated) {
@@ -252,13 +304,20 @@ class BillingManager(
                 }
                 _billingUi.value = available(msg)
             }
+            if (refreshAfterInventory) {
+                refreshAfterInventory = false
+                refreshOnForeground()
+            }
         }
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
+        if (closed) return
         // Monotonic invalidation: Invalidate any pending background full-inventory queries
         // so that a delayed empty inventory cannot revoke a newer purchase or update.
         purchaseRequests.invalidate()
+        inventoryInFlight = null
+        refreshAfterInventory = false
 
         when (billingResult.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
