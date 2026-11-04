@@ -59,6 +59,27 @@ Accepted b05-fixed: 99 billing/ad JVM tests passed, 0 failures/errors/skips, inc
 
 Changed files: BillingManager.kt, BillingAlreadyOwnedRecoveryTest.kt, synthetic real-SDK product fixture in BillingTestSession.kt, this report.
 
-## Remaining planned work
+## B06 - Frozen-source acceptance protocol
 
-- B06: complete final-source validation and replacement signed artifacts; owner Play/device gates separately recorded.
+B01-B05 implementation is complete. This report commit freezes source for final acceptance. Exact commit/tree identities, actual full-suite counts, CI links, signed artifact hashes/paths and runtime receipts are recorded in PR #21 and the external billing-recovery-evidence directory after verification. This section is a protocol, not a claim those final gates have already passed. Keeping the immutable receipt outside source avoids changing the commit merely to insert its own SHA.
+
+Focused implementation commits:
+
+| Batch | Commit |
+| --- | --- |
+| B01 | 9717f054aa4cc0559b030f97f3b6c48bf12249d4 |
+| B02 | 842023b3126e4b952b865ceddbe4ac56804f29fa |
+| B03 | c08a852101b7ca082e82b147cfc8f07cd2067e57 |
+| B04 | 4c9e55202c781b98867b27fbada7280e2ad810af |
+| B05 | 5b334c87044b61c61776bc3477f404cdc91d4485 |
+
+Required final checks:
+
+- Fresh JVM execution for app-host, pdf-jail and pdf-ipc with per-task --rerun; record per-module XML counts rather than reusing earlier suites.
+- SecurityAudit/securityArchitecture, strict secrets and OSV resolved dependency checks, release lint/R8/build, release checker self-tests and actual APK DEX/artifact guards.
+- All nine CI jobs on the exact final source, including unfiltered API24/30/34/36 native tests. Authenticate downloaded artifacts against GitHub digests, source/tree and required test identities, including the six new scheduler/notice cases.
+- Replacement signed APK/AAB/mapping from the existing certificate, signature/bundle validation, zipalign -c -P 16 -v 4 and native ELF load segments. No key change; static alignment is not a physical-device runtime claim.
+- Owned offline signed/minified app smoke and actual public UI error/retry behavior, plus focused native scheduler/notice execution where available. Restore the originally installed APK and verify its hash.
+- Separate PASS/FAIL/NOT RUN status for runtime evidence. Real purchase/pending/acknowledgement/restore/reinstall/offline-account transitions need the owner's authorized Play license-test account; emulator mocks are not payment acceptance.
+
+Owner gates remain: real Play account purchase/restore/acknowledgement; UMP/AdMob account setup and natural test-interstitial display; physical ARM64/16 KiB runtime; upload certificate/version-code/product/track eligibility and publication decision. No further main merge, release tag, Play upload or deployment is performed by this branch's implementation work.
