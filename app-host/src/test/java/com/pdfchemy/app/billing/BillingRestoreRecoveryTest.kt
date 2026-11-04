@@ -84,6 +84,7 @@ class BillingRestoreRecoveryTest {
     @Test fun restoredSuccessFollowsActualEntitlementProcessing() = with(session) {
         connect()
         manager.restorePurchases()
+        runCurrent() // Let the reactive UI expose loading before delivering the Play response.
         inventories.last().onQueryPurchasesResponse(result(), listOf(order()))
         assertFalse(manager.isPremium.value)
         assertTrue(manager.billingUi.value.loading)

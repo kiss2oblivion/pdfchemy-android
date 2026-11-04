@@ -35,8 +35,21 @@ Accepted b03-accepted-final: 81 billing/ad JVM tests passed, 0 failures/errors/s
 
 Changed files: BillingManager.kt, new BillingRestoreRecoveryTest.kt and shared virtual-time BillingTestSession.kt, the one B02 fixture completion, this report. Native/signed/final CI remain B06.
 
+## B04 - Independent secure entitlement persistence
+
+Original b04-original: four JVM reproductions failed for a false-returning grant write, an injected throwing store interrupting grant/acknowledgement, Retry not repairing the cache, and a silent failed revocation write. The concrete PlatformEntitlementStore already catches most storage exceptions; the throwing interface implementation is fault-injection robustness evidence, not a reported live-device incident.
+
+Correction: verified ownership is applied in memory and clears ads before asynchronous cache work. A coordinator checks write results, retries at most three times automatically, preserves explicit Retry, and serializes off-Main blocking commits under a process-wide mutex/generation so old owner retries cannot land after newer decisions. Encryption/migration format is unchanged. Unreadable-cache exceptions fail closed and request Play restoration. A repaired cache restores offline entitlement. The billing UI combines ownership and storage state; four added MainActivity lines render a focused recovery notice in the Premium branch, where purchase controls are hidden. No Reader/ad policy change or UI redesign.
+
+Accepted b04-accepted-final: 90 billing/ad JVM tests passed, 0 failures/errors/skips. Includes six manager persistence cases and three coordinator tests (bounded retries, cross-owner invalidation, real off-Main blocked/cancelled commit ordering). Three native Compose notice cases compile; runtime execution remains B06. Older synchronous fake-store tests explicitly inject their fake storage dispatcher; the production dispatcher is IO. One restore fixture now drains the reactive loading state before delivering its callback and retains the success-order assertion.
+
+Retained attempts: b04-fixed had one fixture failure from reading combined UI before its scheduled emission. b04-accepted had a test thread-name assertion rejected by the coroutine debug suffix, which also prevented its gate from opening and caused a timeout/next-test exception receipt. The fixture now checks actual Thread identity and captures failures; the original 10-second deadlock guard is unchanged. No sleeps, timeouts enlarged, assertions removed or security checks weakened.
+
+Limits: if durable storage cannot be updated, offline ownership after process death cannot be promised, and an old revocation record may remain on disk until storage recovers. The app reports this condition; Play inventory remains authoritative and the current session uses the latest decision. No plaintext fallback or signing/key changes.
+
+Changed files: BillingManager.kt; new EntitlementPersistenceCoordinator.kt and PremiumBillingRecoveryNotice.kt; four-line Premium-only MainActivity wiring; BillingPersistenceRecoveryTest.kt, EntitlementPersistenceCoordinatorTest.kt, PremiumBillingRecoveryNoticeTest.kt; deterministic fake-storage/reactive-UI fixture updates; this report.
+
 ## Remaining planned work
 
-- B04: entitlement persistence failure handling.
 - B05: ITEM_ALREADY_OWNED reconciliation.
 - B06: complete final-source validation and replacement signed artifacts; owner Play/device gates separately recorded.

@@ -10,6 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
@@ -26,16 +29,20 @@ import java.util.concurrent.ConcurrentHashMap
 internal enum class AcknowledgementOutcome { ACKNOWLEDGED, RETRYABLE, RECONCILE }
 
 data class BillingUiState(val canPurchase: Boolean = false, val loading: Boolean = true,
-    val message: String = "Connecting to Google Play…", val canRetry: Boolean = false)
+    val message: String = "Connecting to Google Play…", val canRetry: Boolean = false,
+    val entitlementStorageFailed: Boolean = false)
 
 class BillingManager(
     private val context: Context,
     coroutineScope: CoroutineScope,
     private val acknowledgementDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val recoveryOnly: Boolean = false
+    private val recoveryOnly: Boolean = false,
+    private val storageDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : PurchasesUpdatedListener {
     private val managerJob = SupervisorJob(coroutineScope.coroutineContext[Job])
     private val coroutineScope = CoroutineScope(coroutineScope.coroutineContext + managerJob)
+    private val entitlementStore: EntitlementStore by lazy { EntitlementStores.open(context) }
+    private val persistence = EntitlementPersistenceCoordinator(entitlementStore, this.coroutineScope, storageDispatcher)
     private lateinit var billingClient: BillingClient
     
     private val _isPremium = MutableStateFlow(false)
@@ -46,7 +53,19 @@ class BillingManager(
 
     private var premiumProductDetails: ProductDetails? = null
     private val _billingUi = MutableStateFlow(BillingUiState())
-    val billingUi: StateFlow<BillingUiState> = _billingUi.asStateFlow()
+    val billingUi: StateFlow<BillingUiState> = combine(_billingUi, persistence.state, _isPremium) { ui, storage, premium ->
+        if (!storage.failed) ui else ui.copy(
+            entitlementStorageFailed = true,
+            loading = storage.saving,
+            canPurchase = false,
+            canRetry = !storage.saving,
+            message = when {
+                storage.readFailed -> "Saved purchase status could not be read. Connect to Google Play and restore purchases."
+                premium -> "Premium is active, but offline access could not be saved. Retry saving purchase status."
+                else -> "Purchase status changed, but the offline cache could not be updated. Retry saving purchase status."
+            }
+        )
+    }.stateIn(this.coroutineScope, SharingStarted.Eagerly, _billingUi.value)
     private var connecting = false
     private var connectionTimeout: Job? = null
     private var detailsTimeout: Job? = null
@@ -127,7 +146,16 @@ class BillingManager(
     }
 
     fun retry() {
-        if (closed || connecting) return
+        if (closed) return
+        if (persistence.state.value.failed && persistence.hasPendingWrite()) {
+            persistence.retry()
+            return
+        }
+        if (persistence.state.value.readFailed) {
+            restorePurchases()
+            return
+        }
+        if (connecting) return
         if (retryRestore || restorePending) {
             restorePurchases()
             return
@@ -169,16 +197,16 @@ class BillingManager(
         @androidx.annotation.VisibleForTesting
         internal fun resetCacheForTesting() {
             cachedEntitled = null
+            EntitlementPersistenceCoordinator.resetForTesting()
         }
     }
     
-    private val entitlementStore: EntitlementStore by lazy {
-        EntitlementStores.open(context)
-    }
-
     init {
         // Fallback to secure cached value immediately for offline support
-        val initialEntitled = entitlementStore.read()
+        val initialEntitled = cachedEntitled ?: try { entitlementStore.read() } catch (_: Exception) {
+            persistence.readFailed()
+            false
+        }
         _isPremium.value = initialEntitled
         updateCachedEntitlement(initialEntitled)
         // Main/UI and JobService construction are serialized on Android Main. Retire a
@@ -191,6 +219,7 @@ class BillingManager(
         if (!recoveryOnly) application?.registerActivityLifecycleCallbacks(activityCallbacks)
         coroutineScope.coroutineContext[Job]?.invokeOnCompletion { close() }
         BillingAcknowledgementRecovery.ensureScheduled(context)
+        persistence.retry()
     }
 
     private fun initializeBillingClient() {
@@ -493,15 +522,15 @@ class BillingManager(
                 }
             }
             if (hasPremiumInBatch) {
-                entitlementStore.write(true)
                 updateCachedEntitlement(true)
                 _isPremium.value = true
                 AdManager.clearAd()
+                persistence.save(true)
             } else if (isFullInventory) {
                 if (requestTicket == null || purchaseRequests.isCurrent(requestTicket)) {
-                    entitlementStore.write(false)
                     updateCachedEntitlement(false)
                     _isPremium.value = false
+                    persistence.save(false)
                 }
             }
 

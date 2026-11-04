@@ -48,7 +48,7 @@ class BillingForegroundRecoveryTest {
         every { client.isReady } answers { ready }
         every { client.startConnection(capture(setup)) } just Runs
         every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(inventories)) } just Runs
-        manager = BillingManager(application, scope)
+        manager = BillingManager(application, scope, storageDispatcher = dispatcher)
     }
 
     @After fun tearDown() {

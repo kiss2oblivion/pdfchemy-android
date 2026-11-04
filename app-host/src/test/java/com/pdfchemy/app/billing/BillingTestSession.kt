@@ -10,9 +10,10 @@ import kotlinx.coroutines.test.*
 
 /** Exercises the production manager with controllable Play callbacks and virtual time. */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class BillingTestSession : AutoCloseable {
+internal class BillingTestSession(initialReadFailure: Boolean = false) : AutoCloseable {
     val dispatcher = StandardTestDispatcher()
-    val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    val errors = mutableListOf<Throwable>()
+    val scope = CoroutineScope(SupervisorJob() + dispatcher + CoroutineExceptionHandler { _, error -> errors.add(error) })
     val app = ApplicationProvider.getApplicationContext<Application>()
     val client = mockk<BillingClient>(relaxed = true)
     val connections = mutableListOf<BillingClientStateListener>()
@@ -32,7 +33,10 @@ internal class BillingTestSession : AutoCloseable {
         mockkObject(AdManager)
         every { AdManager.clearAd() } just Runs
         every { EntitlementStores.open(any()) } returns object : EntitlementStore {
-            override fun read() = stored
+            override fun read(): Boolean {
+                if (initialReadFailure) throw java.io.IOException("cache unavailable")
+                return stored
+            }
             override fun write(entitled: Boolean) = write.invoke(entitled)
         }
         val builder = mockk<BillingClient.Builder>()
@@ -47,7 +51,7 @@ internal class BillingTestSession : AutoCloseable {
         every { client.acknowledgePurchase(any(), any()) } answers {
             secondArg<AcknowledgePurchaseResponseListener>().onAcknowledgePurchaseResponse(result())
         }
-        manager = BillingManager(app, scope, acknowledgementDispatcher = dispatcher)
+        manager = BillingManager(app, scope, acknowledgementDispatcher = dispatcher, storageDispatcher = dispatcher)
     }
 
     fun result(code: Int = BillingClient.BillingResponseCode.OK) =
@@ -89,5 +93,6 @@ internal class BillingTestSession : AutoCloseable {
         app.getSystemService(JobScheduler::class.java).cancel(BillingAcknowledgementRecovery.JOB_ID)
         unmockkAll()
         BillingManager.resetCacheForTesting()
+        org.junit.Assert.assertTrue("Unhandled billing coroutine errors: $errors", errors.isEmpty())
     }
 }

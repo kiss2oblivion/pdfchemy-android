@@ -49,7 +49,7 @@ class BillingReadinessTest {
             every { client.isReady } returns false
             every { client.startConnection(any()) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
 
             // Invariant GEM-01: Must never expose hardcoded USD fallback ($4.99)
             assertEquals("Initial price must be empty until Play returns local details", "", manager.premiumPrice.value)
@@ -84,7 +84,7 @@ class BillingReadinessTest {
             every { client.startConnection(capture(setup)) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
             every { client.queryProductDetailsAsync(any(), capture(products)) } just Runs
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             assertFalse(manager.billingUi.value.canPurchase)
             assertEquals("", manager.premiumPrice.value)
 
@@ -148,7 +148,7 @@ class BillingReadinessTest {
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
 
             val pendingPurchase = mockk<Purchase>()
             every { pendingPurchase.purchaseState } returns Purchase.PurchaseState.PENDING
@@ -194,7 +194,7 @@ class BillingReadinessTest {
                 ackListener.captured.onAcknowledgePurchaseResponse(result(BillingClient.BillingResponseCode.OK))
             }
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
 
             val validPurchase = mockk<Purchase>()
             every { validPurchase.purchaseState } returns Purchase.PurchaseState.PURCHASED
@@ -255,7 +255,7 @@ class BillingReadinessTest {
                 }
             }
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             val purchase = mockk<Purchase>()
             every { purchase.purchaseToken } returns "token-retry-123"
 
@@ -292,7 +292,7 @@ class BillingReadinessTest {
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
             every { client.queryProductDetailsAsync(any(), capture(products)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             assertEquals("Initial price must be blank", "", manager.premiumPrice.value)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
 
@@ -340,7 +340,7 @@ class BillingReadinessTest {
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
 
             assertFalse(manager.isPremium.value)
@@ -388,7 +388,7 @@ class BillingReadinessTest {
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
 
             manager.restorePurchases()
@@ -426,7 +426,7 @@ class BillingReadinessTest {
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), any<PurchasesResponseListener>()) } just Runs
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             assertTrue("Initial entitlement from securePrefs should be active", manager.isPremium.value)
 
             val pendingPurchase = mockk<Purchase>()
@@ -469,7 +469,7 @@ class BillingReadinessTest {
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
 
             // Background queryPurchasesAsync (Request A) is now captured in purchasesListener
@@ -521,7 +521,7 @@ class BillingReadinessTest {
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(capturedListeners)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
             assertEquals(1, capturedListeners.size) // Request A (ticket 1)
 
@@ -576,7 +576,7 @@ class BillingReadinessTest {
             every { client.isReady } returns false
             every { client.startConnection(capture(setup)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
 
             // Invariant: Offline launch must immediately reflect cached entitlement
             assertTrue("Offline premium cache must be active immediately", manager.isPremium.value)
@@ -624,7 +624,7 @@ class BillingReadinessTest {
             every { client.queryProductDetailsAsync(any(), any()) } just Runs
             every { client.queryPurchasesAsync(any<QueryPurchasesParams>(), capture(purchasesListener)) } just Runs
 
-            val manager = BillingManager(context, scope)
+            val manager = BillingManager(context, scope, storageDispatcher = Dispatchers.Unconfined)
             setup.captured.onBillingSetupFinished(result(BillingClient.BillingResponseCode.OK))
 
             manager.restorePurchases()
