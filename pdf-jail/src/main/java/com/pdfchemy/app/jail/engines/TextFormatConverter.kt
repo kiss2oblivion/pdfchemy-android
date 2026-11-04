@@ -1,17 +1,8 @@
 package com.pdfchemy.app.jail.engines
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.csv.CsvMapper
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import com.fasterxml.jackson.dataformat.xml.XmlFactory
-import com.ctc.wstx.stax.WstxInputFactory
-import com.ctc.wstx.stax.WstxOutputFactory
-import javax.xml.stream.XMLInputFactory
-import javax.xml.stream.XMLOutputFactory
-import javax.xml.stream.XMLResolver
-import javax.xml.stream.XMLStreamException
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonArray
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -21,19 +12,6 @@ import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
 object TextFormatConverter {
-
-    private val jsonMapper = ObjectMapper()
-    private val csvMapper = CsvMapper()
-    private val yamlMapper = YAMLMapper()
-    private val xmlMapper by lazy {
-        val input = WstxInputFactory().apply {
-            setProperty(XMLInputFactory.SUPPORT_DTD, false)
-            setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
-            xmlResolver = XMLResolver { _, _, _, _ -> throw XMLStreamException("External XML references are not supported") }
-        }
-        val output = WstxOutputFactory().apply { setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true) }
-        XmlMapper(XmlFactory(input, output))
-    }
 
     // Markdown tools
     private val mdOptions = MutableDataSet()
@@ -125,80 +103,26 @@ object TextFormatConverter {
     }
 
     private fun convertUnstructuredToStructured(input: String, from: Format, to: Format): String {
-        val map = mapOf("content" to input)
-        return when (to) {
-            Format.JSON -> jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map)
-            Format.YAML -> yamlMapper.writeValueAsString(map)
-            Format.XML -> xmlMapper.writer().withRootName("document").writeValueAsString(map)
-            Format.CSV -> {
-                val schema = com.fasterxml.jackson.dataformat.csv.CsvSchema.builder().addColumn("content").build().withHeader().withColumnSeparator(',')
-                csvMapper.writer(schema).writeValueAsString(listOf(map))
-            }
-            Format.TSV -> {
-                val schema = com.fasterxml.jackson.dataformat.csv.CsvSchema.builder().addColumn("content").build().withHeader().withColumnSeparator('\t')
-                csvMapper.writer(schema).writeValueAsString(listOf(map))
-            }
-            else -> throw IllegalArgumentException("Not a structured format: $to")
-        }
+        val value = JsonObject().apply { addProperty("content", input) }
+        val tree = if (to == Format.CSV || to == Format.TSV) JsonArray().apply { add(value) } else value
+        return StructuredTextCodec.write(tree, to, root = "document")
     }
 
-    private fun parseToTree(input: String, format: Format): JsonNode {
-        return when (format) {
-            Format.JSON -> jsonMapper.readTree(input)
-            Format.YAML -> yamlMapper.readTree(input)
-            Format.XML -> xmlMapper.readTree(input)
-            Format.CSV -> {
-                val schema = com.fasterxml.jackson.dataformat.csv.CsvSchema.emptySchema().withHeader().withColumnSeparator(',')
-                val list = csvMapper.readerFor(Map::class.java).with(schema).readValues<Map<String, String>>(input).readAll()
-                jsonMapper.valueToTree(list)
-            }
-            Format.TSV -> {
-                val schema = com.fasterxml.jackson.dataformat.csv.CsvSchema.emptySchema().withHeader().withColumnSeparator('\t')
-                val list = csvMapper.readerFor(Map::class.java).with(schema).readValues<Map<String, String>>(input).readAll()
-                jsonMapper.valueToTree(list)
-            }
-            else -> throw IllegalArgumentException("Not a structured format: $format")
-        }
-    }
+    private fun parseToTree(input: String, format: Format): JsonElement = StructuredTextCodec.parse(input, format)
 
-    private fun writeFromTree(tree: JsonNode, format: Format): String {
-        return when (format) {
-            Format.JSON -> jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tree)
-            Format.YAML -> yamlMapper.writeValueAsString(tree)
-            Format.XML -> xmlMapper.writeValueAsString(tree)
-            Format.CSV -> {
-                if (!tree.isArray || tree.isEmpty) throw IllegalArgumentException("Source must be a non-empty array of objects for CSV conversion.")
-                val firstObject = tree.get(0)
-                val schemaBuilder = com.fasterxml.jackson.dataformat.csv.CsvSchema.builder()
-                firstObject.fieldNames().forEach { schemaBuilder.addColumn(it) }
-                val schema = schemaBuilder.build().withHeader().withColumnSeparator(',')
-                val list = jsonMapper.convertValue(tree, List::class.java)
-                csvMapper.writer(schema).writeValueAsString(list)
-            }
-            Format.TSV -> {
-                if (!tree.isArray || tree.isEmpty) throw IllegalArgumentException("Source must be a non-empty array of objects for TSV conversion.")
-                val firstObject = tree.get(0)
-                val schemaBuilder = com.fasterxml.jackson.dataformat.csv.CsvSchema.builder()
-                firstObject.fieldNames().forEach { schemaBuilder.addColumn(it) }
-                val schema = schemaBuilder.build().withHeader().withColumnSeparator('\t')
-                val list = jsonMapper.convertValue(tree, List::class.java)
-                csvMapper.writer(schema).writeValueAsString(list)
-            }
-            else -> throw IllegalArgumentException("Not a structured format: $format")
-        }
-    }
-    
-    private fun jsonToMarkdownTable(tree: JsonNode): String {
-        if (!tree.isArray || tree.isEmpty) return ""
-        val firstObject = tree.get(0)
-        val headers = firstObject.fieldNames().asSequence().toList()
+    private fun writeFromTree(tree: JsonElement, format: Format): String = StructuredTextCodec.write(tree, format)
+
+    private fun jsonToMarkdownTable(tree: JsonElement): String {
+        if (!tree.isJsonArray || tree.asJsonArray.size() == 0) return ""
+        val firstObject = tree.asJsonArray[0].asJsonObject
+        val headers = firstObject.keySet().toList()
         
         val sb = java.lang.StringBuilder()
         sb.append(headers.joinToString(" | ", "| ", " |")).append("\n")
         sb.append(headers.joinToString("|", "|", "|") { "---" }).append("\n")
         
-        for (node in tree) {
-            val row = headers.map { header -> node.get(header)?.asText() ?: "" }
+        for (node in tree.asJsonArray) {
+            val row = headers.map { header -> node.asJsonObject.get(header)?.takeIf { it.isJsonPrimitive }?.asString ?: "" }
             sb.append(row.joinToString(" | ", "| ", " |")).append("\n")
         }
         return sb.toString()

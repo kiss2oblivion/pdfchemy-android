@@ -55,7 +55,8 @@ class TextLiteralExportIntegrityTest {
     }
     @Test fun workerRejectsInternalDocumentTypeEntities() = runBlocking {
         val xml = "<!DOCTYPE root [<!ENTITY fixture 'PRIVATE_ENTITY_MARKER'>]><root>&fixture;</root>"
-        assertTrue(TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON).isFailure)
+        val result = TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON)
+        assertTrue("The parser must reject the entity, rather than lose its worker", result.exceptionOrNull() is PdfGateway.WorkerFailure)
     }
     @Test fun workerRejectsExternalFileEntitiesAndPreservesPrivateFile() = runBlocking {
         val file = File.createTempFile("xml-private-", ".txt", context.cacheDir)
@@ -63,8 +64,19 @@ class TextLiteralExportIntegrityTest {
         file.writeText(secret)
         try {
             val xml = "<!DOCTYPE root [<!ENTITY fixture SYSTEM '${file.toURI()}'>]><root>&fixture;</root>"
-            assertTrue(TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON).isFailure)
+            val result = TextFormatConverter.convert(context, xml, TextFormatConverter.Format.XML, TextFormatConverter.Format.JSON)
+            assertTrue("The parser must reject the entity, rather than lose its worker", result.exceptionOrNull() is PdfGateway.WorkerFailure)
             assertEquals(secret, file.readText())
         } finally { file.delete() }
+    }
+    @Test fun allStructuredFormatsPreserveLiteralMultilineContent() = runBlocking {
+        val literal = "PUBLIC & <literal> \"quoted\"\nUnicode Ω"
+        for (format in listOf(TextFormatConverter.Format.JSON, TextFormatConverter.Format.YAML, TextFormatConverter.Format.XML, TextFormatConverter.Format.CSV, TextFormatConverter.Format.TSV)) {
+            val encoded = TextFormatConverter.convert(context, literal, TextFormatConverter.Format.TXT, format).getOrThrow()
+            val decoded = TextFormatConverter.convert(context, encoded, format, TextFormatConverter.Format.JSON).getOrThrow()
+            val value = if (format == TextFormatConverter.Format.CSV || format == TextFormatConverter.Format.TSV)
+                org.json.JSONArray(decoded).getJSONObject(0) else org.json.JSONObject(decoded)
+            assertEquals(format.name, literal, value.getString("content"))
+        }
     }
 }
