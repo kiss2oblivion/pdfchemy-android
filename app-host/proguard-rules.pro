@@ -21,9 +21,40 @@
 
 # Flexmark 0.64.8 BitFieldSet$UniverseLoader uses getFields()/Field.getName()
 # with Enum.valueOf. Keep this reflected enum's constants and values table;
-# renaming a constant makes HtmlRenderer's initializer kill the isolated worker.
-# Keep the single enum, rather than disabling shrinking for the converter/library.
+# renaming a constant kills renderer/Markdown parser initialization. These are
+# the seven enum types passed to BitFieldSet by the resolved 0.64.8 libraries.
+# Preserve their reflection contract, rather than keeping the entire library.
 -keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineAppendable$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.ast.TextContainer$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.format.TrackedOffset$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.BasedOptionsHolder$Options {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineInfo$Flags {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.LineInfo$Preformatted {
+    public static <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep,allowoptimization enum com.vladsch.flexmark.util.sequence.builder.ISegmentBuilder$Options {
     public static <fields>;
     public static **[] values();
     public static ** valueOf(java.lang.String);
