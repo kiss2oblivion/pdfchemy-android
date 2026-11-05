@@ -3,6 +3,8 @@ package com.pdfchemy.app.logic.audio
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.net.Uri
+import android.os.Bundle
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.media.MediaExtractor
@@ -66,16 +68,35 @@ class AudioWavPlatformTest {
     @Test fun hostPublicationWritesCompleteWavThroughContentResolver() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val staging = AudioStagingManager(context); val id = UUID.randomUUID()
-        val destinationFile = File(context.cacheDir, "exports/audio-platform-$id.wav")
-        destinationFile.parentFile!!.mkdirs()
+        // Publication destinations are writable providers, never immutable recipient copies.
+        val destination = Uri.parse("content://com.pdfchemy.app.security.outputfixture/audio-platform-$id")
+        context.contentResolver.call(destination, "configure", destination.lastPathSegment, Bundle())
         try {
             val raw = staging.getMasterRawFile(id); raw.writeBytes(ByteArray(16000))
             val wav = staging.getFinalWavFile(id)
             WavWriter.assemble(raw, wav, PcmFormat(8000, 1, 2))
-            val destination = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", destinationFile)
             AudioOutputPublisher.publish(context, wav, destination)
-            assertArrayEquals(wav.readBytes(), destinationFile.readBytes())
-        } finally { destinationFile.delete(); staging.clearJobStaging(id) }
+            val result = context.contentResolver.call(destination, "awaitWritten", destination.lastPathSegment, null)!!
+            assertEquals(1, result.getInt("opens"))
+            assertArrayEquals(wav.readBytes(), result.getByteArray("bytes"))
+        } finally { staging.clearJobStaging(id) }
+    }
+
+    @Test fun audioPublicationCannotOverwriteAnImmutableRecipientCopy() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val staging = AudioStagingManager(context); val id = UUID.randomUUID()
+        val exports = File(context.cacheDir, "exports").apply { mkdirs() }
+        val existing = File.createTempFile("audio-read-only-", ".wav", exports)
+        val original = "existing shared audio bytes".toByteArray()
+        existing.writeBytes(original)
+        try {
+            val raw = staging.getMasterRawFile(id); raw.writeBytes(ByteArray(16000))
+            val wav = staging.getFinalWavFile(id)
+            WavWriter.assemble(raw, wav, PcmFormat(8000, 1, 2))
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", existing)
+            assertTrue(runCatching { AudioOutputPublisher.publish(context, wav, uri) }.exceptionOrNull() is SecurityException)
+            assertArrayEquals(original, existing.readBytes())
+        } finally { existing.delete(); staging.clearJobStaging(id) }
     }
 
     @Test fun exportServiceIsPrivateAndTtsDiscoveryIsDeclared() {

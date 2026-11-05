@@ -49,3 +49,9 @@ Changed files: MainViewModel.kt, PdfLayoutEngine.kt, SignatureEngineWorker.kt, P
 ## Final source acceptance
 
 All four tasks are implemented in focused commits. Exact final commit/tree, same-source full JVM/four-API CI, signed artifact identities and available signed-runtime results are recorded in PR metadata and external release-remediation-evidence receipts after this source is frozen. The earlier PR #21 acceptance remains evidence for its unchanged source, not for this new head. No final-source CI, signed runtime, physical device or real Play pass is asserted by this section before those checks complete. Owner-controlled merge, Play/Billing/UMP/AdMob/hardware and publication gates remain separate.
+
+## Integrated acceptance - audio destination fixture
+
+Run 42096371312 on 107d5110 is not accepted: API30 reported three failures, including AudioWavPlatformTest writing through the now read-only sharing provider; API24 also reproduced that fixture failure. Production audio save supplies its publication destination independently; the test had used a sharing URI as a stand-in writable provider. The guard was not relaxed. The positive case now writes the complete WAV through the actual ContentResolver to the existing writable pipe-backed provider fixture and waits for the receiving side's bytes. Added a negative case proving audio cannot overwrite existing recipient bytes through the immutable provider.
+
+audio-provider-fixture-native: five actual platform audio cases passed, zero failures/errors/skips, owned offline API36; original APK restored and hash checked. No production audio publisher or sharing policy change. Other integrated result-navigation/test-clock failures remain under investigation; 107d5110 artifacts and its successful local/signed checks do not substitute for a future corrected final-source CI run.
