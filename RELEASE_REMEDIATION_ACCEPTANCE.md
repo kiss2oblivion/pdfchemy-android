@@ -33,3 +33,19 @@ Accepted task3-accepted-native: ten native cases passed, zero failures/errors/sk
 Limits: this is real adapter/descriptor instrumentation, not a physical printer or signed print-UI acceptance. Arbitrary foreign provider opens or kernel filesystem operations cannot be forcibly terminated by a coroutine; admission remains occupied until the IO block actually exits, limiting such stragglers to two. No universal provider rollback or hard kernel-termination guarantee is claimed. Failed/cancelled spooler-owned partial output is never reported as completed; existing user SAF destinations are not used by this path.
 
 Changed files: DocumentActions.kt, new OwnedPdfPrintAdapter.kt, PrintSpoolIntegrityTest.kt, test-only PrintSourceProvider.java/androidTest manifest and this report.
+
+Reachability clarification: no production caller of DocumentActions.print was found in the current checkout. This corrects the requested backend contract; it is not evidence of a currently exposed printing workflow or permission to add one. R8 may remove unused print code. Signed public print acceptance is therefore not claimed.
+
+## Task 4 - Targeted compiler-warning cleanup
+
+Removed the two dead OutputPolicy.createCopy null branches and the unreachable nullable descriptor branch. Signature date parsing now uses an empty non-null fallback, preserving omitted/blank-date behavior. Its temporary-directory property is explicitly required rather than passed as a nullable String to File. No fallback worker filesystem path or nullable-quota escape was introduced.
+
+The handoff misidentified the image warning: the actual always-true check was bitmap != null at line 55, not page resources != null. Removed only that redundant bitmap check. Nullable page-resource handling remains, including resource-less pages. These are warning/contract hygiene changes, not reproduced new user-facing PDF defects. The original compile logs preserve all six affected warnings; the subsequent production compilation emits none at these sites. Unrelated warnings remain.
+
+Accepted task4-accepted-build: 147 focused JVM cases (136 worker plus 11 host concurrency/output cases), zero failures/errors/skips; securityAudit/securityArchitecture and debug/test builds passed. Native signing/flattening output contains six passing cases, including four actual exports with omitted, empty, whitespace-only and real signature dates. Exported text, signature image, Letter dimensions and source bytes are checked. The initial test fixture failed compilation because positional arguments overlooked the model's leading ID; named arguments corrected the fixture. The driver then expected five native cases while the class actually contained six: its count assertion failed after all six passed. receipt-corrected-count.json strictly validates that same raw output, without rerunning or ignoring any test. Original APK restoration was verified.
+
+Changed files: MainViewModel.kt, PdfLayoutEngine.kt, SignatureEngineWorker.kt, PdfImageExtractorEngine.kt, PdfSigningAndFlattenTest.kt and this report. No broad deprecation/dependency modernization, table-worker change, AIDL change or ViewModel decomposition.
+
+## Final source acceptance
+
+All four tasks are implemented in focused commits. Exact final commit/tree, same-source full JVM/four-API CI, signed artifact identities and available signed-runtime results are recorded in PR metadata and external release-remediation-evidence receipts after this source is frozen. The earlier PR #21 acceptance remains evidence for its unchanged source, not for this new head. No final-source CI, signed runtime, physical device or real Play pass is asserted by this section before those checks complete. Owner-controlled merge, Play/Billing/UMP/AdMob/hardware and publication gates remain separate.

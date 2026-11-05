@@ -52,13 +52,11 @@ object PdfImageExtractorEngine {
                             if (xObject is PDImageXObject) {
                                 try {
                                     val bitmap = SafePdfImage.decode(xObject)
-                                    if (bitmap != null) {
-                                        val entryName = "extracted_image_${System.currentTimeMillis()}_${extractedCount}.jpg"
-                                        zos.putNextEntry(ZipEntry(entryName))
-                                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, zos)
-                                        zos.closeEntry()
-                                        extractedCount++
-                                    }
+                                    val entryName = "extracted_image_${System.currentTimeMillis()}_${extractedCount}.jpg"
+                                    zos.putNextEntry(ZipEntry(entryName))
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, zos)
+                                    zos.closeEntry()
+                                    extractedCount++
                                 } catch (e: Exception) {
                                     // Ignore individual image errors
                                 }

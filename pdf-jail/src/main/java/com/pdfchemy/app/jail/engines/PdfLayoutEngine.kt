@@ -66,7 +66,6 @@ object PdfLayoutEngine {
         var outDoc: PDDocument? = null
         try {
             pfd = com.pdfchemy.app.jail.CapabilityIo.descriptor(context, sourceUri, "r")
-            if (pfd == null) return@withContext false
 
             renderer = PdfRenderer(pfd)
             val totalSrcPages = renderer.pageCount
