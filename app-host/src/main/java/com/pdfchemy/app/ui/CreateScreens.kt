@@ -34,7 +34,7 @@ import com.pdfchemy.app.R
 fun createTempImageUri(context: android.content.Context): Uri {
     val tempFile = File(context.cacheDir, "scans/scan_${System.currentTimeMillis()}.jpg")
     tempFile.parentFile?.mkdirs()
-    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
+    return FileProvider.getUriForFile(context, "${context.packageName}.scanprovider", tempFile)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
