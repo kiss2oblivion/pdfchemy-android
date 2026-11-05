@@ -1106,10 +1106,9 @@ fun MainApp(
                 val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
                 val resetAndShowAd = {
                     val opp = viewModel.consumeAdOpportunity()
+                    viewModel.resetState()
                     if (activity != null && opp != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
-                    } else {
-                        viewModel.resetState()
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) {}
                     }
                 }
                 AlertDialog(
@@ -1166,10 +1165,9 @@ fun MainApp(
                 val isReaderActive = currentScreen is Screen.PdfReader || currentScreen is Screen.ReflowReader
                 val resetAndShowAd = {
                     val opp = viewModel.consumeAdOpportunity()
+                    viewModel.resetState()
                     if (activity != null && opp != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) { viewModel.resetState() }
-                    } else {
-                        viewModel.resetState()
+                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) {}
                     }
                 }
                 AlertDialog(
