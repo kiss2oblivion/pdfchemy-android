@@ -14,14 +14,17 @@ import com.pdfchemy.app.Screen
 import com.pdfchemy.app.logic.HistoryRepository
 import com.pdfchemy.app.logic.PdfEditor
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class VanguardReaderNavigationTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createComposeRule(effectContext = StandardTestDispatcher())
 
     @Test fun cleanRecentPdfOpensReadableNativeReaderWithVanguardOnAndOff() {
         val app = ApplicationProvider.getApplicationContext<Application>()
@@ -40,7 +43,10 @@ class VanguardReaderNavigationTest {
             settings.edit().putBoolean("history_enabled",true).commit()
             HistoryRepository(app).apply { clearHistory(); addHistoryItem(Uri.fromFile(source),source.name,"Opened") }
             compose.runOnUiThread { model=MainViewModel(app); store.put("recent",model) }
-            compose.setContent { MaterialTheme { RecentFilesSection(model) { destination.set(it) } } }
+            compose.setContent { MaterialTheme { RecentFilesSection(model) {
+                assertEquals(android.os.Looper.getMainLooper(), android.os.Looper.myLooper())
+                destination.set(it)
+            } } }
             for (enabled in listOf(true,false)) {
                 destination.set(null)
                 compose.runOnUiThread { model.setVanguardEnabled(enabled) }

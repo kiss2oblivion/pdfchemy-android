@@ -18,6 +18,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.pdfchemy.app.logic.EditorTool
 import com.pdfchemy.app.logic.PageModification
 import com.pdfchemy.app.logic.RedactionBox
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Rule
@@ -27,8 +29,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Actual Compose images, with known native bitmap identities at the rendering boundary. */
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class EditorOverlayBitmapLifetimeTest {
-    @get:Rule val compose = createComposeRule()
+    private val effects = StandardTestDispatcher()
+    @get:Rule val compose = createComposeRule(effectContext = effects)
     private val visible = mutableStateOf(true)
     private val modification = mutableStateOf(page("first"))
     private val source = image(NativeColor.WHITE)
@@ -52,6 +56,7 @@ class EditorOverlayBitmapLifetimeTest {
     }
     private fun awaitColor(expected: Int) {
         compose.waitUntil(5_000) {
+            compose.runOnUiThread { effects.scheduler.runCurrent() }
             // View.draw uses the real Compose BitmapPainter and works on every supported API.
             compose.runOnIdle {
                 val frame = Bitmap.createBitmap(surface.width, surface.height, Bitmap.Config.ARGB_8888)
@@ -91,14 +96,40 @@ class EditorOverlayBitmapLifetimeTest {
         } finally { consumer.recycle() }
     }
 
+}
+
+/** The gated blocking producer needs a real I/O thread, independently of the UI clock. */
+class EditorOverlayCancellationTest {
+    @get:Rule val compose = createComposeRule()
+    private val gate = CountDownLatch(1)
+    private val visible = mutableStateOf(true)
+
+    @After fun close() {
+        gate.countDown()
+        compose.runOnIdle { visible.value = false }
+        compose.waitForIdle()
+    }
+
     @Test fun cancelledUnpublishedOverlayIsRecycled() {
-        val unpublished = image(NativeColor.GREEN)
+        val source = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888)
+        val unpublished = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888).apply {
+            eraseColor(NativeColor.GREEN)
+        }
         val started = AtomicBoolean()
-        show(EditorOverlayRenderer { _, _, _ ->
+        val renderer = EditorOverlayRenderer { _, _, _ ->
+            assertNotEquals("The controlled producer must not block the Android UI thread",
+                android.os.Looper.getMainLooper(), android.os.Looper.myLooper())
             started.set(true)
             check(gate.await(10, TimeUnit.SECONDS)) { "Controlled renderer was not released" }
             unpublished
-        })
+        }
+        compose.setContent {
+            CompositionLocalProvider(LocalEditorOverlayRenderer provides renderer) {
+                if (visible.value) AnnotationPageCanvas(source, PageModification(0), EditorTool.REDACT,
+                    Color.Black, 4f, {}, {}, {}, {})
+                else Text("Editor closed")
+            }
+        }
         compose.waitUntil(5_000) { started.get() }
         compose.runOnIdle { visible.value = false }
         compose.onNodeWithText("Editor closed").assertExists()

@@ -34,6 +34,7 @@ class OperationResultReachabilityTest {
 
     @Before fun controlAdvertisingCallbacks() {
         // Layout/state acceptance must not depend on network or SDK ad availability.
+        AdManager.clearAd()
         mockkObject(AdManager)
         every { AdManager.loadInterstitial(any(), any(), any()) } just Runs
         every { AdManager.showInterstitialIfReady(any(), any(), any(), any()) } answers {
@@ -44,6 +45,7 @@ class OperationResultReachabilityTest {
     @After fun cleanup() {
         store.clear()
         unmockkObject(AdManager)
+        AdManager.clearAd()
         files.forEach { (file, bytes) ->
             assertArrayEquals("Viewing a result must preserve its published output", bytes, file.readBytes())
             assertTrue(file.delete())
