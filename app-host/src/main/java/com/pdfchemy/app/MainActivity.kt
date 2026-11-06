@@ -589,7 +589,8 @@ fun MainApp(
     hasConsented: Boolean = false,
     isScreenshotRun: Boolean = false,
     onChangeThemeMode: (String) -> Unit = {},
-    onOpenTour: () -> Unit = {}
+    onOpenTour: () -> Unit = {},
+    showInterstitial: (android.app.Activity, Boolean, Boolean, () -> Unit) -> Unit = AdManager::showInterstitialIfReady
 ) {
     val context = LocalContext.current
     val screenSaver = remember(viewModel) { readerAwareScreenSaver(viewModel) }
@@ -601,7 +602,7 @@ fun MainApp(
             val opp = viewModel.consumeAdOpportunity()
             val activity = context as? android.app.Activity
             if (opp != null && activity != null) {
-                AdManager.showInterstitialIfReady(activity, isPremiumHomeUser, isReaderOrReflowActive = false) {}
+                showInterstitial(activity, isPremiumHomeUser, false) {}
             }
         }
     }
@@ -1108,7 +1109,7 @@ fun MainApp(
                     val opp = viewModel.consumeAdOpportunity()
                     viewModel.resetState()
                     if (activity != null && opp != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) {}
+                        showInterstitial(activity, isPremium, isReaderActive) {}
                     }
                 }
                 AlertDialog(
@@ -1167,7 +1168,7 @@ fun MainApp(
                     val opp = viewModel.consumeAdOpportunity()
                     viewModel.resetState()
                     if (activity != null && opp != null) {
-                        AdManager.showInterstitialIfReady(activity, isPremium, isReaderOrReflowActive = isReaderActive) {}
+                        showInterstitial(activity, isPremium, isReaderActive) {}
                     }
                 }
                 AlertDialog(
