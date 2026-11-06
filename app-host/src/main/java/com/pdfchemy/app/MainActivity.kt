@@ -4628,6 +4628,10 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                com.pdfchemy.app.ui.PremiumBillingRecoveryNotice(
+                    state = billingUi,
+                    onRetry = { viewModel.retryBilling(context) }
+                )
             } else {
                 Text(
                     text = stringResource(R.string.premium_features),
