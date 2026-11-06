@@ -112,4 +112,22 @@ class ImagesToPdfCompletionTest {
         assertEquals(0L, AdManager.debugCounters.operationComplete)
         assertArrayEquals(original, destination.readBytes())
     }
+
+    @Test
+    fun oversizedImageBatchFailsBeforeGatewayWithoutOutputOrAdvertising() = runTest(dispatcher) {
+        val original = destination.readBytes()
+        coEvery { PdfGateway.executeEngineBatch(any(), any(), any(), any(), any()) } throws IOException("Batch crossed gateway")
+        val vm = MainViewModel(app)
+        vm.convertImagesToPdf(app, List(17) { Uri.parse("content://fixture/image-" + it + ".jpg") }, output)
+        testScheduler.advanceUntilIdle()
+
+        val error = vm.uiState.value as? MainViewModel.UiState.Error
+        assertNotNull("Oversized input must be a normal visible failure", error)
+        assertTrue(error.toString(), error!!.message.contains("at most 16"))
+        coVerify(exactly = 0) { PdfGateway.executeEngineBatch(any(), any(), any(), any(), any()) }
+        assertNull(vm.consumeAdOpportunity())
+        assertEquals(0L, AdManager.debugCounters.operationComplete)
+        assertArrayEquals(original, destination.readBytes())
+    }
+
 }

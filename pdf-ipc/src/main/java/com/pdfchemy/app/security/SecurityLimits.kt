@@ -7,7 +7,7 @@ import kotlin.math.sqrt
 object SecurityLimits {
     const val MAX_PDF_FILESIZE = 100L * 1024 * 1024
     const val MAX_BATCH_INPUT_BYTES = 250L * 1024 * 1024
-    const val MAX_BATCH_FDS = 32
+    const val MAX_BATCH_FDS = 16
     const val MAX_SCRATCH_FDS = 64
     const val MAX_OPERATION_WRITE_BYTES = 500L * 1024 * 1024
     const val MAX_PARSER_MEMORY_BYTES = 32L * 1024 * 1024
@@ -20,6 +20,8 @@ object SecurityLimits {
     const val MAX_FORM_FIELDS = 1000
     const val MAX_JSON_RESPONSE_SIZE = 1024 * 1024
     const val MAX_PARAMS_JSON_BYTES = 256 * 1024
+    // Batch control data is small; keep its UTF-16 Binder envelope well below the shared buffer.
+    const val MAX_BATCH_PARAMS_JSON_BYTES = 32 * 1024
     const val MAX_REQUEST_ITEMS = 2000
     const val MAX_REQUEST_DEPTH = 32
     const val MAX_RESPONSE_DEPTH = 8
@@ -41,6 +43,18 @@ object SecurityLimits {
     fun requireIdentity(hash: String?, size: Long) {
         require(size in 1..MAX_PDF_FILESIZE) { "Missing or excessive staged size" }
         require(hash != null && hash.length == 64 && hash.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }) { "Invalid SHA-256" }
+    }
+
+    /** Also used by non-batch calls that legitimately have no input or no output. */
+    fun requireBatchDescriptorCounts(sources: Int, targets: Int) {
+        require(sources in 0..MAX_BATCH_FDS && targets in 0..MAX_BATCH_FDS) {
+            "Batch supports at most $MAX_BATCH_FDS input and $MAX_BATCH_FDS output files. Use fewer files or select fewer pages."
+        }
+    }
+
+    fun requireBatchRequest(sources: Int, targets: Int, paramsJson: String) {
+        requireBatchDescriptorCounts(sources, targets)
+        enforceStringLength(paramsJson, MAX_BATCH_PARAMS_JSON_BYTES, "Batch parameters")
     }
 
     fun requireBatch(count: Int, targets: Int, hashes: Array<String>?, sizes: LongArray?) {

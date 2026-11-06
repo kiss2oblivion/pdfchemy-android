@@ -114,4 +114,35 @@ class ReleaseWorkflowRegressionTest {
         assertTrue(result.isFailure)
         verify(exactly = 0) { directory.createFile(any(), any()) }
     }
+
+    @Test fun oversizedSplitAndImagePlansFailBeforeCreatingAnyProviderOutput() = runBlocking<Unit> {
+        mockkObject(PdfGateway)
+        val input = Uri.parse("content://fixture/input.pdf")
+        val directory = mockk<DocumentFile>(relaxed = true)
+        every { directory.exists() } returns true
+        every { directory.isDirectory } returns true
+        every { directory.canWrite() } returns true
+        every { directory.listFiles() } returns emptyArray()
+        every { directory.createFile(any(), any()) } answers { fail("Output creation preceded batch admission"); null }
+        coEvery { PdfGateway.executeEngine(any(), "GET_PAGE_COUNT", any(), any(), any()) } returns PageCountContract(17)
+        coEvery { PdfGateway.executeEngine(any(), "PLAN_SPLIT_BLANK", any(), any(), any()) } returns
+            PlanSplitBlankContract(true, List(17) { listOf((it + 1).toString()) })
+        coEvery { PdfGateway.executeEngine(any(), "PLAN_SPLIT_BOOKMARKS", any(), any(), any()) } returns
+            PlanSplitBookmarksContract(true, List(17) { listOf((it + 1).toString()) })
+
+        val actions: List<suspend () -> Unit> = listOf(
+            { PdfManipulator.splitPdf(context, input, directory, "source"); Unit },
+            { PdfManipulator.splitByBlankPages(context, input, directory, "source"); Unit },
+            { PdfManipulator.splitByBookmarks(context, input, directory, "source"); Unit },
+            { PdfManipulator.convertPdfToImages(context, input, directory, "source"); Unit }
+        )
+        for (action in actions) {
+            val error = runCatching { action() }.exceptionOrNull()
+            assertTrue("Expected early batch rejection, got " + error, error is IllegalArgumentException)
+            assertTrue(error.toString(), error!!.message.orEmpty().contains("at most 16"))
+        }
+        verify(exactly = 0) { directory.createFile(any(), any()) }
+        coVerify(exactly = 0) { PdfGateway.executeEngineBatch(any(), any(), any(), any(), any()) }
+    }
+
 }
