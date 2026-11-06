@@ -155,9 +155,11 @@ class BatchIpcIntegrityTest {
         val source = pdf(1)
         val destination = File.createTempFile("batch_wire_", ".tmp", context.cacheDir)
         val measured = AtomicInteger()
-        // An unattached local Binder forces Stub.asInterface to use generated AIDL parceling.
+        // A different descriptor forces Stub.asInterface to use generated AIDL parceling.
+        // Initialize it explicitly: API24's Binder.queryLocalInterface dereferences the descriptor.
         // This measures the envelope, not the kernel's available shared-buffer capacity.
         val recorder = object : Binder() {
+            init { attachInterface(null, "com.pdfchemy.app.security.BatchIpcRecorder") }
             override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
                 assertEquals(IBinder.FLAG_ONEWAY, flags and IBinder.FLAG_ONEWAY)
                 assertTrue(data.hasFileDescriptors())

@@ -19,7 +19,11 @@ The IPC JVM task compiled and ran 113 tests: 3 failed, 110 passed. Failing cases
 - BatchDescriptorLimitTest.seventeenthSourceIsRejected
 - BatchDescriptorLimitTest.seventeenthTargetIsRejected
 
-The task stopped at that module; host JVM regressions were not executed by this failed command. Baseline architecture, secrets and dependency-security jobs passed. Baseline native execution and final-source results are recorded in PR metadata once available. These assertion failures reproduce the requested stricter contract, not an actual Binder exhaustion crash.
+The task stopped at that module; host JVM regressions were not executed by this failed command. Baseline architecture, secrets and dependency-security jobs passed. These assertion failures reproduce the requested stricter contract, not an actual Binder exhaustion crash.
+
+Baseline API24 completed 505 native tests: four intended admission-contract failures (17 inputs, 17 outputs, 32 KiB+1 JSON at host and worker) and one test-recorder failure. The three actual 16-file export cases passed. The recorder's bare Binder had no initialized descriptor; API24 dereferenced it in queryLocalInterface. The fixture now attaches a distinct descriptor so the generated AIDL proxy is still exercised, preserving the oneway/file-descriptor/envelope-size assertions. This is test code only; no production Binder workaround or disabled test is introduced.
+
+The first implementation source, e27f9963, passed architecture/security, secrets, dependency-security and the complete three-module JVM task in 5m19s. Passing JVM totals/XML are not retained by the current workflow, so no freshly parsed full JVM count is claimed. The test-fixture correction changes HEAD; final acceptance must use the new exact source. All original/failed runs are retained in PR metadata.
 
 ## Correction
 
