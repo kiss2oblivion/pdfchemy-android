@@ -267,7 +267,10 @@ class PdfJailService : Service() {
             val sources = sourceFds?.toList().orEmpty()
             val targets = targetFds?.toList().orEmpty()
             submit(operationId, sources, targets, expectedSha256s?.toList().orEmpty(), expectedSizes?.toList().orEmpty(), paramsJson ?: "{}", callback, scratchBinder,
-                validateMetadata = { SecurityLimits.requireBatch(sources.size, targets.size, expectedSha256s, expectedSizes) }) {
+                validateMetadata = {
+                    SecurityLimits.requireBatchRequest(sources.size, targets.size, paramsJson ?: "{}")
+                    SecurityLimits.requireBatch(sources.size, targets.size, expectedSha256s, expectedSizes)
+                }) {
                 when (engineName) {
                     "IMAGES_TO_PDF" -> ImagePdfWorker.convert(sources, targets.single())
                     "MERGE" -> PdfManipulatorWorker.mergePdfs(this@PdfJailService, sourceFds!!, targets.first())

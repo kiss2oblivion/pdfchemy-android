@@ -35,7 +35,7 @@ object PdfGateway {
         invoke: (IPdfJailService, Long, List<com.pdfchemy.app.jail.StagedPdf>, List<ParcelFileDescriptor>, List<ParcelFileDescriptor>, IBinder?, IBinder, IPdfJailStringCallback) -> Unit
     ): OperationContract = withContext(Dispatchers.IO) {
         SecurityLimits.enforceStringLength(paramsJson, SecurityLimits.MAX_PARAMS_JSON_BYTES, "Request")
-        require(sources.size <= SecurityLimits.MAX_BATCH_FDS && targets.size <= SecurityLimits.MAX_BATCH_FDS)
+        SecurityLimits.requireBatchDescriptorCounts(sources.size, targets.size)
         com.pdfchemy.app.security.SourcePreservationPolicy.requireSeparateDestinations(context, sources, targets)
         val staged = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
         val inputLeases = mutableListOf<java.io.Closeable>()
@@ -221,10 +221,13 @@ object PdfGateway {
     suspend inline fun <reified T : OperationContract> executeEngineExtraTyped(context: Context, engineName: String, sourceUri: Uri?, destUri: Uri?, extraUri: Uri?, paramsJson: String): T =
         executeEngineExtra(context, engineName, sourceUri, destUri, extraUri, paramsJson) as T
 
-    suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): OperationContract =
-        request(context, engineName, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
+    suspend fun executeEngineBatch(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): OperationContract {
+        // Reject before staging, scratch/collector allocation, provider access or service binding.
+        SecurityLimits.requireBatchRequest(sourceUris.size, destUris.size, paramsJson)
+        return request(context, engineName, sourceUris, destUris, paramsJson) { jail, token, staged, inputs, outputs, renderer, scratch, callback ->
             jail.executeEngineBatch(token, engineName, inputs.toTypedArray(), outputs.toTypedArray(), paramsJson, renderer, staged.map { it.sha256 }.toTypedArray(), staged.map { it.size }.toLongArray(), scratch, callback)
         }
+    }
 
     suspend inline fun <reified T : OperationContract> executeEngineBatchTyped(context: Context, engineName: String, sourceUris: List<Uri>, destUris: List<Uri>, paramsJson: String): T =
         executeEngineBatch(context, engineName, sourceUris, destUris, paramsJson) as T

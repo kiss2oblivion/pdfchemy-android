@@ -898,6 +898,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = UiState.Processing()
             activeJob = viewModelScope.launch {
                 try {
+                    com.pdfchemy.app.security.SecurityLimits.requireBatchDescriptorCounts(imageUris.size, 1)
                     com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", imageUris, listOf(destUri), "{}")
                     _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_images_converted), listOf(destUri))
                 } catch (e: Exception) {

@@ -46,9 +46,7 @@ object PdfManipulator {
             pagesToKeep = parsePageRange(pageRange, totalPages)
             require(pagesToKeep.isNotEmpty()) { "No pages selected to split" }
 
-            if (pagesToKeep.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
-            }
+            com.pdfchemy.app.security.SecurityLimits.requireBatchDescriptorCounts(1, pagesToKeep.size)
 
             val destUris = mutableListOf<Uri>()
             val createdOutputs = mutableListOf<DocumentFile>()
@@ -100,9 +98,7 @@ object PdfManipulator {
             }
 
             val groups = plan.groups
-            if (groups.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
-            }
+            com.pdfchemy.app.security.SecurityLimits.requireBatchDescriptorCounts(1, groups.size)
 
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
@@ -151,9 +147,7 @@ object PdfManipulator {
             }
 
             val groups = plan.groups
-            if (groups.size > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
-            }
+            com.pdfchemy.app.security.SecurityLimits.requireBatchDescriptorCounts(1, groups.size)
 
             for (i in 0 until groups.size) {
                 val fileName = "${baseName}_part_${i + 1}.pdf"
@@ -294,9 +288,7 @@ object PdfManipulator {
         try {
             var totalPages = getPageCountFromGateway(context, sourceUri)
             require(totalPages > 0) { "No readable pages to export" }
-            if (totalPages > com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) {
-                throw SecurityException("Requested output files exceeds limit of ${com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES}")
-            }
+            com.pdfchemy.app.security.SecurityLimits.requireBatchDescriptorCounts(1, totalPages)
             
             val isPng = formatName.equals("PNG", ignoreCase = true)
             val mimeType = if (isPng) "image/png" else "image/jpeg"
