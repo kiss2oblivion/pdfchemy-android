@@ -219,6 +219,16 @@
             android:exported="false" />
 
         <provider
+            android:name="com.pdfchemy.app.logic.CameraCaptureFileProvider"
+            android:authorities="${applicationId}.scanprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/camera_capture_paths" />
+        </provider>
+
+        <provider
             android:name="com.pdfchemy.app.logic.RetainedShareFileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"

@@ -1017,9 +1017,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                     val outputName = "compressed_${selectedFile.name}"
                     val outputDoc = com.pdfchemy.app.logic.OutputPolicy.createCopy(directory, "application/pdf", outputName)
-                    if (outputDoc == null) {
-                        return@forEachIndexed
-                    }
                     addPendingOutputUri(outputDoc.uri)
 
                     val compressResult = try { PdfCompressor.compressPdf(
@@ -1687,36 +1684,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 totalOriginalBytes.addAndGet(originalSize)
 
                                 val targetFile = com.pdfchemy.app.logic.OutputPolicy.createCopy(outputDirectory, mime, "${baseName}_compressed.$ext")
-                                if (targetFile != null) {
-                                    addPendingOutputUri(targetFile.uri)
-                                    val result = try { ImageCompressor.compressImage(
-                                        context = context,
-                                        sourceUri = uri,
-                                        destUri = targetFile.uri,
-                                        quality = quality,
-                                        targetFormat = resolvedFormat,
-                                        maxDimension = maxDimension,
-                                        stripExif = stripExif
-                                    ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                                        runCatching { targetFile.delete() }
-                                        removePendingOutputUri(targetFile.uri)
-                                        throw cancelled
-                                    }
+                                addPendingOutputUri(targetFile.uri)
+                                val result = try { ImageCompressor.compressImage(
+                                    context = context,
+                                    sourceUri = uri,
+                                    destUri = targetFile.uri,
+                                    quality = quality,
+                                    targetFormat = resolvedFormat,
+                                    maxDimension = maxDimension,
+                                    stripExif = stripExif
+                                ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                    runCatching { targetFile.delete() }
+                                    removePendingOutputUri(targetFile.uri)
+                                    throw cancelled
+                                }
 
-                                    if (result.success) {
-                                        markOutputPublished(targetFile.uri)
-                                        successCount.incrementAndGet()
-                                        totalCompressedBytes.addAndGet(result.compressedSize)
-                                        outputUris.add(targetFile.uri)
-                                    } else {
-                                        failureCount.incrementAndGet()
-                                        errors.add("$fileName: ${result.error ?: "Compression failed"}")
-                                        targetFile.delete()
-                                        removePendingOutputUri(targetFile.uri)
-                                    }
+                                if (result.success) {
+                                    markOutputPublished(targetFile.uri)
+                                    successCount.incrementAndGet()
+                                    totalCompressedBytes.addAndGet(result.compressedSize)
+                                    outputUris.add(targetFile.uri)
                                 } else {
                                     failureCount.incrementAndGet()
-                                    errors.add("$fileName: Failed to create output file")
+                                    errors.add("$fileName: ${result.error ?: "Compression failed"}")
+                                    targetFile.delete()
+                                    removePendingOutputUri(targetFile.uri)
                                 }
 
                                 val done = completedCount.incrementAndGet()

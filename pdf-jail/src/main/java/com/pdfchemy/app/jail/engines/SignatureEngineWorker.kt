@@ -34,7 +34,7 @@ object SignatureEngineWorker {
                 val yRatio = sigObj.getDouble("yRatio").toFloat()
                 val widthRatio = sigObj.getDouble("widthRatio").toFloat()
                 val heightRatio = sigObj.getDouble("heightRatio").toFloat()
-                val dateStamp = sigObj.optString("dateStamp", null)
+                val dateStamp = sigObj.optString("dateStamp", "")
                 val imageSize = images.readInt()
                 require(imageSize in 1..com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURE_BYTES)
                 val bitmapBytes = ByteArray(imageSize)
@@ -74,7 +74,7 @@ object SignatureEngineWorker {
 
                             cs.drawImage(pdImage, stampX, stampY, stampW, stampH)
 
-                            if (!dateStamp.isNullOrBlank()) {
+                            if (dateStamp.isNotBlank()) {
                                 cs.beginText()
                                 cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
                                 cs.setNonStrokingColor(0f, 0f, 0f)
@@ -112,7 +112,7 @@ object SignatureEngineWorker {
             val reason = params.getString("reason")
             val location = params.getString("location")
 
-            val cacheDir = File(System.getProperty("java.io.tmpdir"))
+            val cacheDir = File(requireNotNull(System.getProperty("java.io.tmpdir")) { "Temporary storage unavailable" })
             sourceFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_in", ".pdf", cacheDir)
             destFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_out", ".pdf", cacheDir)
             

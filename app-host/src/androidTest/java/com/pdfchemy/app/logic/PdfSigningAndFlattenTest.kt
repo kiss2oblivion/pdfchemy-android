@@ -173,6 +173,45 @@ class PdfSigningAndFlattenTest {
         stampBmp.recycle()
     }
 
+    @Test fun optionalSignatureDatesPreserveExportedTextImagesGeometryAndSource() = runBlocking {
+        val source = File.createTempFile("optional_date_source_", ".pdf", context.cacheDir)
+        val bitmap = Bitmap.createBitmap(80, 40, Bitmap.Config.ARGB_8888)
+        val image = try {
+            bitmap.eraseColor(Color.BLUE)
+            ByteArrayOutputStream().also { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }.toByteArray()
+        } finally { bitmap.recycle() }
+        try {
+            PDDocument().use { doc ->
+                val page = PDPage(); doc.addPage(page)
+                PDPageContentStream(doc, page).use { stream ->
+                    stream.beginText(); stream.setFont(PDType1Font.HELVETICA, 12f)
+                    stream.newLineAtOffset(50f, 700f); stream.showText("Signature fixture body"); stream.endText()
+                }
+                doc.save(source)
+            }
+            val original = source.readBytes()
+            for (date in listOf(null, "", "   ", "2026-11-05")) {
+                val output = File.createTempFile("optional_date_output_", ".pdf", context.cacheDir)
+                try {
+                    assertTrue(SignatureEngine.applySignatures(context, Uri.fromFile(source), Uri.fromFile(output),
+                        listOf(PlacedSignature(pageIndex = 0, xRatio = 0.2f, yRatio = 0.7f,
+                            widthRatio = 0.25f, heightRatio = 0.08f, bitmapBytes = image, dateStamp = date))))
+                    PDDocument.load(output).use { doc ->
+                        val text = PDFTextStripper().getText(doc)
+                        assertTrue(text.contains("Signature fixture body"))
+                        if (date.isNullOrBlank()) assertFalse(text.contains("Signed:"))
+                        else assertTrue(text.contains("Signed: $date"))
+                        assertEquals(1, doc.numberOfPages)
+                        assertEquals(612f, doc.getPage(0).mediaBox.width, 0f)
+                        assertEquals(792f, doc.getPage(0).mediaBox.height, 0f)
+                        assertEquals(1, doc.getPage(0).resources.xObjectNames.count())
+                    }
+                    assertArrayEquals(original, source.readBytes())
+                } finally { output.delete() }
+            }
+        } finally { source.delete() }
+    }
+
     @Test
     fun testPdfFlattenEngineFormsFlattening() = runBlocking {
         val sampleFormPdf = File(context.cacheDir, "test_form_for_flatten.pdf")

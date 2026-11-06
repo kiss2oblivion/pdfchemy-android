@@ -16,8 +16,8 @@ object AdManager {
     private var interstitialAd: InterstitialAd? = null
     private var isLoading = false
     private var currentGeneration: Long = 0L
-    private var lastAdShownTime: Long = 0L
-    private var adLoadedTimestamp: Long = 0L
+    private var lastAdShownTime: Long? = null
+    private var adLoadedTimestamp: Long? = null
 
     internal const val COOLDOWN_MILLIS = 60_000L // 60 seconds minimum cooldown
     internal const val AD_EXPIRATION_MILLIS = 55 * 60 * 1000L // 55 minutes TTL (Google Mobile Ads SDK limit is 60m)
@@ -28,7 +28,7 @@ object AdManager {
     private var entitlementSource: (() -> Boolean)? = null
 
     @androidx.annotation.VisibleForTesting
-    internal var clock: () -> Long = { System.currentTimeMillis() }
+    internal var clock: () -> Long = { android.os.SystemClock.elapsedRealtime() }
 
     data class AdDebugCounters(
         var operationComplete: Long = 0L,
@@ -94,12 +94,13 @@ object AdManager {
     private fun clearAdLocked() {
         currentGeneration++
         interstitialAd = null
-        adLoadedTimestamp = 0L
+        adLoadedTimestamp = null
         isLoading = false
     }
 
     internal fun isAdExpired(): Boolean {
-        return adLoadedTimestamp != 0L && (clock() - adLoadedTimestamp >= AD_EXPIRATION_MILLIS)
+        val loadedAt = adLoadedTimestamp ?: return false
+        return clock() - loadedAt >= AD_EXPIRATION_MILLIS
     }
 
     @androidx.annotation.VisibleForTesting
@@ -115,7 +116,7 @@ object AdManager {
     }
 
     @androidx.annotation.VisibleForTesting
-    internal fun setLastAdShownTimeForTesting(time: Long) {
+    internal fun setLastAdShownTimeForTesting(time: Long?) {
         synchronized(lock) {
             lastAdShownTime = time
         }
@@ -132,7 +133,7 @@ object AdManager {
     internal fun setLoadedAdForTesting(ad: InterstitialAd?, loadedAt: Long = clock()) {
         synchronized(lock) {
             interstitialAd = ad
-            adLoadedTimestamp = if (ad != null) loadedAt else 0L
+            adLoadedTimestamp = if (ad != null) loadedAt else null
             isLoading = false
         }
     }
@@ -149,11 +150,11 @@ object AdManager {
     internal fun resetForTesting() {
         synchronized(lock) {
             clearAdLocked()
-            lastAdShownTime = 0L
-            adLoadedTimestamp = 0L
+            lastAdShownTime = null
+            adLoadedTimestamp = null
             premiumOverride = null
             entitlementSource = null
-            clock = { System.currentTimeMillis() }
+            clock = { android.os.SystemClock.elapsedRealtime() }
             resetDebugCounters()
         }
         BillingManager.resetCacheForTesting()
@@ -228,7 +229,7 @@ object AdManager {
                         _debugCounters.lastLoadErrorCode = adError.code
                         AppLogger.d("Failed to load interstitial ad: ${adError.message}")
                         interstitialAd = null
-                        adLoadedTimestamp = 0L
+                        adLoadedTimestamp = null
                         isLoading = false
                     }
                 }
@@ -252,7 +253,7 @@ object AdManager {
                         if (!currentConsent || latePremium) {
                             AppLogger.d("Ad loaded but consent was revoked or user is premium; dropping ad.")
                             interstitialAd = null
-                            adLoadedTimestamp = 0L
+                            adLoadedTimestamp = null
                         } else {
                             _debugCounters.loaded++
                             AppLogger.d("Interstitial ad loaded successfully.")
@@ -308,7 +309,7 @@ object AdManager {
         val adToShow: InterstitialAd?
         val inCooldown: Boolean
         synchronized(lock) {
-            inCooldown = (currentTime - lastAdShownTime < COOLDOWN_MILLIS)
+            inCooldown = lastAdShownTime?.let { currentTime - it < COOLDOWN_MILLIS } ?: false
             if (inCooldown) {
                 _debugCounters.skippedCooldown++
                 adToShow = null
@@ -320,7 +321,7 @@ object AdManager {
                 adToShow = interstitialAd
                 if (adToShow != null) {
                     interstitialAd = null
-                    adLoadedTimestamp = 0L
+                    adLoadedTimestamp = null
                     lastAdShownTime = currentTime
                     _debugCounters.showAttempted++
                 }

@@ -21,7 +21,23 @@ public class ShareRecipientProvider extends ContentProvider {
         Bundle result = new Bundle();
         result.putInt("uid", Process.myUid());
         try {
-            if ("close".equals(method)) {
+            if ("probeMode".equals(method)) {
+                Uri uri = Uri.parse(argument);
+                if ("delete".equals(extras.getString("mode"))) {
+                    result.putInt("deleted", getContext().getContentResolver().delete(uri, null, null));
+                } else {
+                    try (android.os.ParcelFileDescriptor descriptor = getContext().getContentResolver().openFileDescriptor(uri, extras.getString("mode"))) {
+                        if (descriptor == null) throw new IllegalStateException("Missing descriptor");
+                        byte[] bytes = extras.getByteArray("bytes");
+                        if (bytes != null) {
+                            if (bytes.length > 65536) throw new IllegalStateException("Fixture write bound");
+                            try (java.io.OutputStream output = new android.os.ParcelFileDescriptor.AutoCloseOutputStream(
+                                    android.os.ParcelFileDescriptor.dup(descriptor.getFileDescriptor()))) { output.write(bytes); }
+                        }
+                        result.putBoolean("opened", true);
+                    }
+                }
+            } else if ("close".equals(method)) {
                 for (InputStream stream : consumers.values()) stream.close();
                 consumers.clear();
             } else if ("closeOne".equals(method)) {

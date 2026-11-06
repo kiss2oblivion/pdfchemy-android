@@ -14,7 +14,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.MainApp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.ui.textconverter.TextConverterViewModel
+import com.pdfchemy.app.billing.AdManager
 import org.junit.After
+import org.junit.Before
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -28,9 +30,17 @@ class OperationResultReachabilityTest {
     private val model = MainViewModel(app).also { store.put("result-layout", it) }
     private val converter = TextConverterViewModel().also { store.put("result-text", it) }
     private val files = mutableListOf<Pair<File, ByteArray>>()
+    private var showAd: (android.app.Activity, Boolean, Boolean, () -> Unit) -> Unit =
+        { _, _, _, complete -> complete() }
+
+    @Before fun controlAdvertisingCallbacks() {
+        // Layout/state acceptance must not depend on network or SDK ad availability.
+        AdManager.clearAd()
+    }
 
     @After fun cleanup() {
         store.clear()
+        AdManager.clearAd()
         files.forEach { (file, bytes) ->
             assertArrayEquals("Viewing a result must preserve its published output", bytes, file.readBytes())
             assertTrue(file.delete())
@@ -50,7 +60,10 @@ class OperationResultReachabilityTest {
         compose.setContent {
             val density = LocalDensity.current.density
             CompositionLocalProvider(LocalDensity provides Density(density, fontScale)) {
-                MaterialTheme { MainApp(viewModel = model, textConverterViewModel = converter) }
+                MaterialTheme { MainApp(viewModel = model, textConverterViewModel = converter,
+                    showInterstitial = { activity, premium, reader, complete ->
+                        showAd(activity, premium, reader, complete)
+                    }) }
             }
         }
         compose.waitForIdle()
@@ -101,4 +114,36 @@ class OperationResultReachabilityTest {
             assertNull(model.pendingAdOpportunity.value)
         }
     }
+
+    private fun delayedAdCannotOwnResultState(warning: Boolean) {
+        val deferred = mutableListOf<() -> Unit>()
+        showAd = { _, _, _, complete -> deferred.add(complete) }
+        val uri = output()
+        showApp(1f)
+        compose.runOnIdle {
+            model.setUiStateForTesting(if (warning)
+                MainViewModel.UiState.Warning("Partial export", "Saved usable output", listOf(uri))
+            else MainViewModel.UiState.Success("Completed export", "Saved output", listOf(uri)))
+        }
+        val action = if (warning) app.getString(R.string.ok) else "Another Operation"
+        val control = resultAction(action)
+        if (!warning) control.performScrollTo()
+        control.assertIsDisplayed().performClick()
+        compose.runOnIdle {
+            assertEquals(1, deferred.size)
+            assertEquals("Completion must end before the SDK callback", MainViewModel.UiState.Idle, model.uiState.value)
+            assertNull(model.pendingAdOpportunity.value)
+        }
+        val next = MainViewModel.UiState.Success("New operation", "New output", listOf(output()))
+        compose.runOnIdle {
+            model.setUiStateForTesting(next)
+            val opportunity = model.pendingAdOpportunity.value
+            deferred.single().invoke()
+            assertEquals("An old ad callback must not clear a newer result", next, model.uiState.value)
+            assertEquals(opportunity, model.pendingAdOpportunity.value)
+        }
+    }
+
+    @Test fun completedResultDoesNotWaitForOrResetAfterAnAdCallback() = delayedAdCannotOwnResultState(false)
+    @Test fun outputBearingWarningDoesNotWaitForOrResetAfterAnAdCallback() = delayedAdCannotOwnResultState(true)
 }

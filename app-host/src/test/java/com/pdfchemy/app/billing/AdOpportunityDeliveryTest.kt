@@ -315,7 +315,7 @@ class AdOpportunityDeliveryTest {
         every { mockAd2.fullScreenContentCallback = capture(callbackSlot2) } just Runs
         every { mockAd2.show(activity) } just Runs
         AdManager.setLoadedAdForTesting(mockAd2)
-        AdManager.setLastAdShownTimeForTesting(0L) // reset cooldown
+        AdManager.setLastAdShownTimeForTesting(null) // No previous display, including near boot.
 
         AdManager.showInterstitialIfReady(activity, isPremium = false) {}
         callbackSlot2.captured.onAdFailedToShowFullScreenContent(AdError(1, "Internal Error", "domain"))
