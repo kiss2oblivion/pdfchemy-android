@@ -207,14 +207,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
                     }
                     if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
-                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                        runCatching {
-                            if (tracked.uri.scheme == "file") {
-                                tracked.uri.path?.let { java.io.File(it).delete() }
-                            } else {
-                                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete()
-                            }
-                        }
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, tracked.uri)
                     }
                 }
             }
@@ -277,14 +270,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                         other.operationId > opId && other.outputs.any { it.uri == tracked.uri }
                                     }
                                     if (!claimedByNewerOp && !com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(tracked.uri)) {
-                                        com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                                        runCatching {
-                                            if (tracked.uri.scheme == "file") {
-                                                tracked.uri.path?.let { java.io.File(it).delete() }
-                                            } else {
-                                                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete()
-                                            }
-                                        }
+                                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, tracked.uri)
                                     }
                                 }
                             }
@@ -447,8 +433,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 fun cleanupFreshOutputs() {
                     opRecord.outputs.forEach { tracked ->
                         if (tracked.isFreshCopy && tracked.publicationState != com.pdfchemy.app.logic.PublicationState.PUBLISHED) {
-                            com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(tracked.uri)
-                            runCatching { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, tracked.uri)?.delete() }
+                            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, tracked.uri)
                         }
                     }
                 }
@@ -1030,7 +1015,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         stripMetadata = _stripMetadata.value,
                         targetMb = _targetMb.value
                     ) } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                        runCatching { outputDoc.delete() }
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, outputDoc.uri)
                         removePendingOutputUri(outputDoc.uri)
                         throw cancelled
                     }
@@ -1049,7 +1034,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         successCount++
                     }.onFailure { error ->
                         if (error is kotlinx.coroutines.CancellationException) throw error
-                        runCatching { outputDoc.delete() }
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, outputDoc.uri)
                         removePendingOutputUri(outputDoc.uri)
                     }
                 }

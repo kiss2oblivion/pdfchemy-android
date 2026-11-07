@@ -3,21 +3,26 @@ package com.pdfchemy.app.jail
 import android.content.Context
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
+import android.system.StructPollfd
 import com.pdfchemy.app.security.SecurityLimits
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 
 /** Worker capabilities and host-only commit snapshots never name a user destination. */
 class HostOutputTransaction(
     private val context: Context,
     targets: List<Uri>,
-    storage: BoundedWorkerStorage? = null
+    storage: BoundedWorkerStorage? = null,
+    previousPublicationOwner: Any? = null
 ) : Closeable {
     private val ownsStorage = storage == null
     private val storage = storage ?: BoundedWorkerStorage(context)
@@ -41,7 +46,11 @@ class HostOutputTransaction(
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
-        com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
+        if (previousPublicationOwner == null) {
+            com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
+        } else {
+            com.pdfchemy.app.security.FreshOutputRegistry.transferKnown(targets, previousPublicationOwner, publicationOwner)
+        }
         try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
@@ -60,6 +69,54 @@ class HostOutputTransaction(
         require(OsConstants.S_ISREG(stat.st_mode)) { "Output must be a regular temporary file" }
         require(stat.st_size in 0..SecurityLimits.MAX_OUTPUT_BYTES) { "Output size quota exceeded" }
         return stat.st_size
+    }
+
+    /** Closing a pipe does not wake a blocked write on every supported Android release. */
+    private class ProviderWriter(private val output: OutputStream) {
+        private val pipe = (output as? FileOutputStream)?.fd?.takeIf {
+            OsConstants.S_ISFIFO(Os.fstat(it).st_mode)
+        }?.also {
+            val flags = Os.fcntlInt(it, OsConstants.F_GETFL, 0)
+            Os.fcntlInt(it, OsConstants.F_SETFL, flags or OsConstants.O_NONBLOCK)
+        }
+        private val polls = pipe?.let { descriptor ->
+            arrayOf(StructPollfd().apply {
+                fd = descriptor
+                events = OsConstants.POLLOUT.toShort()
+            })
+        }
+
+        suspend fun write(bytes: ByteArray, count: Int) {
+            val descriptor = pipe
+            if (descriptor == null) {
+                output.write(bytes, 0, count)
+                return
+            }
+            var offset = 0
+            while (offset < count) {
+                currentCoroutineContext().ensureActive()
+                try {
+                    val written = Os.write(descriptor, bytes, offset, count - offset)
+                    if (written <= 0) throw IOException("Unable to write destination")
+                    offset += written
+                } catch (error: ErrnoException) {
+                    if (error.errno == OsConstants.EINTR) continue
+                    if (error.errno != OsConstants.EAGAIN) {
+                        currentCoroutineContext().ensureActive()
+                        throw IOException("Unable to write destination", error)
+                    }
+                    // Never enter an unbounded pipe write: cancellation is checked at
+                    // least every 50 ms even when the provider stops reading entirely.
+                    try { Os.poll(requireNotNull(polls), 50) }
+                    catch (pollError: ErrnoException) {
+                        if (pollError.errno != OsConstants.EINTR) {
+                            currentCoroutineContext().ensureActive()
+                            throw IOException("Unable to wait for destination", pollError)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun validateResult(result: String) {
@@ -184,6 +241,7 @@ class HostOutputTransaction(
                 }
                 handle.registerStream(stream).use {
                     stream.use { output ->
+                        val writer = ProviderWriter(output)
                         var offset = 0L
                         while (offset < sizes[index]) {
                             currentCoroutineContext().ensureActive()
@@ -191,7 +249,7 @@ class HostOutputTransaction(
                                 minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
                             if (count <= 0) throw IOException("Incomplete commit snapshot")
                             require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
-                            output.write(buffer, 0, count)
+                            writer.write(buffer, count)
                             offset += count; committed += count
                         }
                     }

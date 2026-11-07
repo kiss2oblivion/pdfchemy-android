@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.viewModelScope
 import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.logic.PdfManipulator
 import com.pdfchemy.app.logic.PdfGateway
@@ -40,6 +41,54 @@ class CancellationPublicationTest {
         }
     }
 
+    private fun publishedBeforeResultSurvivesCleanup(clear: Boolean = false, error: Boolean = false) = runBlocking<Unit> {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val vm = MainViewModel(app)
+        val output = Uri.parse("content://fixture/published-before-result.pdf")
+        val published = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val store = androidx.lifecycle.ViewModelStore().also { it.put("publication", vm) }
+        mockkObject(PdfManipulator)
+        mockkStatic(DocumentFile::class)
+        val document = mockk<DocumentFile>()
+        every { DocumentFile.fromSingleUri(any(), output) } returns document
+        every { document.delete() } returns true
+        coEvery { PdfManipulator.mergePdfs(any(), any(), output) } coAnswers {
+            // The host transaction retires freshness before a dispatcher delivers its result.
+            com.pdfchemy.app.logic.OutputPolicy.markPublished(output)
+            published.complete(Unit)
+            withContext(NonCancellable) { release.await() }
+        }
+        try {
+            com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(output)
+            vm.mergePdfs(app, listOf(Uri.parse("content://fixture/source.pdf")), output)
+            withTimeout(5000) { published.await() }
+            when {
+                clear -> store.clear()
+                error -> vm.setUiStateForTesting(MainViewModel.UiState.Error("Result delivery failed"))
+                else -> vm.cancelOperation(app)
+            }
+            release.complete(Unit)
+            val cleanup = if (clear) {
+                MainViewModel::class.java.getDeclaredField("lastCleanupJob").apply { isAccessible = true }.get(vm) as Job
+            } else null
+            withTimeout(5000) {
+                if (cleanup != null) cleanup.join()
+                else vm.viewModelScope.coroutineContext[Job]!!.children.toList().joinAll()
+            }
+            verify(exactly = 0) { document.delete() }
+            assertFalse(com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(output))
+        } finally {
+            release.complete(Unit)
+            store.clear()
+            com.pdfchemy.app.logic.OutputPolicy.unregisterFreshCopy(output)
+        }
+    }
+
+    @Test fun cancellationPreservesPublicationBeforeResultDelivery() = publishedBeforeResultSurvivesCleanup()
+    @Test fun errorPreservesPublicationBeforeResultDelivery() = publishedBeforeResultSurvivesCleanup(error = true)
+    @Test fun destructionPreservesPublicationBeforeResultDelivery() = publishedBeforeResultSurvivesCleanup(clear = true)
+
     @Test fun staleCancellationPreservesFreshDestinationClaimedByNewerOperation() = runBlocking<Unit> {
         val app = ApplicationProvider.getApplicationContext<Application>()
         val vm = MainViewModel(app)
@@ -64,6 +113,7 @@ class CancellationPublicationTest {
         }
         try {
             com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(shared)
+            com.pdfchemy.app.logic.OutputPolicy.registerFreshCopy(sentinel)
             vm.mergePdfs(app, listOf(Uri.parse("content://fixture/input.pdf")), shared)
             withTimeout(5000) { started.await() }
             vm.addPendingOutputUri(sentinel, true)

@@ -88,6 +88,7 @@ class PublishedBatchCancellationSecurityTest {
             val existing = document("existing")
             val existingBytes = read(existing)
             val sentinel = requireNotNull(DocumentsContract.createDocument(resolver, document("root"), "application/pdf", "cleanup-sentinel.pdf"))
+            OutputPolicy.registerFreshCopy(sentinel)
             withContext(Dispatchers.Main) {
                 vm.addPendingOutputUri(existing, false)
                 vm.addPendingOutputUri(sentinel, true)
