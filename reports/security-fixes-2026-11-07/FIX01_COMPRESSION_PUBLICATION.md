@@ -2,7 +2,7 @@
 
 Baseline: `454ab9c033ec867c6ba5995782b92e1fb3333669` on `kiss2oblivion/pdfchemy-android`.
 Implementation branch: `fix/2.1.0-compressor-publication`.
-Disposition: local verification passes. Complete CI and release-device evidence remain separate gates. FIX-02 through FIX-04 are not included.
+Disposition: the first implementation passed its local scope but failed complete native CI. The cancellation repair below passes fresh local verification; complete CI remains open. Release-device evidence remains a separate gate. FIX-02 through FIX-04 are not included.
 
 ## Behavior
 
@@ -30,7 +30,7 @@ New native compressor coverage exercises the real public API and isolated worker
 
 Two IPC unit tests cover exclusive ownership transfer and preservation of every original claim when a batch transfer is rejected. Existing batch cleanup sentinels now register real freshness rather than supplying only a Boolean claim.
 
-## Final local verification
+## Initial implementation local verification
 
 | Check | Result |
 |---|---|
@@ -64,3 +64,27 @@ The local native harness uses `adb install --no-streaming`, then `am instrument 
 Local evidence is retained in the isolated implementation worktree: `fix01-baseline-unit.log`, `.fix01-evidence/baseline-cancellation-publication.xml`, `.fix01-evidence/emulator-5582/initial-blocked-write-failure.log`, `fix01-final-verification.log`, `fix01-native-5580-final.log`, `fix01-native-5582-final.log`, and the raw instrumentation logs under `.fix01-evidence/`. Local runtime logs and machine configuration are not part of the application change.
 
 No signed-release or physical-device run was performed for this fix. Existing checkout work was preserved in place; implementation and verification used a separate worktree and newly created test emulators.
+
+## Complete CI failure and cancellation repair
+
+[CI run 42408757583](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/42408757583) tested implementation commit `7c3bc83c22a09fb1deb1d9e19da18286e14d7db2`. Unit, architecture, dependency-security and secrets jobs passed. Native jobs on API 24, 30, 34 and 36 each failed the same existing method: `TextOutputPublicationIntegrityTest.cancellationDuringOpenCleansOnlyAfterWriterReturns`. Each native job reported one failed method; the build job was skipped.
+
+When a blocked provider open returned after cancellation, registration closed the returned stream correctly. The new pipe probe then called `fstat` on that closed descriptor and raised `EBADF`, replacing cancellation with a failure. The initial local scope omitted this existing text-publication class.
+
+The repair checks cancellation before constructing the provider writer and checks it again when any exception escapes the publication I/O block. This preserves cancellation if a concurrent close races with probing, writing or closing, while preserving the original I/O exception for an active coroutine. The entire seven-method `TextOutputPublicationIntegrityTest` class is added to the local native scope, including successful text publication and genuine provider failures.
+
+Repair verification:
+
+- 115 IPC and 522 host unit tests pass, zero failures/errors/skips.
+- API 24 and API 36 each pass 30 native methods: the original 23 plus all seven text-publication methods. Every declared method completed with a passing status; both runs have a valid terminal summary.
+- Debug app/test assembly, release lint (zero errors; 624 warnings), security audit, architecture checks and `git diff --check` pass.
+- The sandboxed full-history secret scan was incomplete. Its unrestricted retry completed with TruffleHog 3.97.9: six exact reviewed historical matches and zero rejected findings.
+- Gradle command: identical to the initial verification command above; result `BUILD SUCCESSFUL in 6m 26s`.
+- Raw evidence: `fix01-repair-verification.log`, `fix01-repair-native-emulator-5580.log`, `fix01-repair-native-emulator-5582.log`, and `.fix01-evidence/emulator-5580-fix01-repair/` and `emulator-5582-fix01-repair/`.
+
+Both native repair runs installed identical artifacts:
+
+| Artifact | SHA-256 |
+|---|---|
+| Debug app APK | `cf568584e50ee25d0f4fb5b214fa1af8ea3c24c63de73800b3c67be33809f280` |
+| Instrumentation APK | `bf74898a84fae7ce130f1f693577415a733bfb7ead34301382bfaedbdb0ac7e7` |

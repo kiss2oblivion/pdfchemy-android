@@ -241,6 +241,7 @@ class HostOutputTransaction(
                 }
                 handle.registerStream(stream).use {
                     stream.use { output ->
+                        currentCoroutineContext().ensureActive()
                         val writer = ProviderWriter(output)
                         var offset = 0L
                         while (offset < sizes[index]) {
@@ -258,6 +259,11 @@ class HostOutputTransaction(
             completedNormally = true
             published = true
             com.pdfchemy.app.security.FreshOutputRegistry.published(targets, publicationOwner)
+        } catch (error: Exception) {
+            // Cancellation may close a provider stream between any readiness
+            // check and descriptor access, including the initial pipe probe.
+            currentCoroutineContext().ensureActive()
+            throw error
         } finally {
             watcher.cancel()
             handle.close()
