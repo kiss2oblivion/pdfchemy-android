@@ -25,7 +25,7 @@ class OutputWorkflowTest {
         every { context.contentResolver } returns resolver
         every { resolver.query(any(), any(), any(), any(), any()) } answers {
             val uri = firstArg<Uri>()
-            MatrixCursor(arrayOf("_display_name", "_size")).apply { addRow(arrayOf(if (uri.lastPathSegment == "csv") "table.csv" else "My taxes 2026.pdf", 100)) }
+            MatrixCursor(arrayOf("_display_name", "_size")).apply { addRow(arrayOf<Any?>(if (uri.lastPathSegment == "csv") "table.csv" else "My taxes 2026.pdf", 100)) }
         }
         every { resolver.getType(any()) } answers { if (firstArg<Uri>().lastPathSegment == "csv") "text/csv" else "application/pdf" }
         return context

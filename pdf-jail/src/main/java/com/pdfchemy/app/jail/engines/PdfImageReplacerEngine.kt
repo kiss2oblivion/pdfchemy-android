@@ -52,18 +52,20 @@ object PdfImageReplacerEngine {
                             var thumb: Bitmap? = null
                             try {
                                 val fullImage = SafePdfImage.decode(xObject)
-                                if (fullImage != null) {
-                                    val scale = calculateThumbnailScale(width, height, maxDim = 300)
-                                    thumb = if (scale < 1.0f) {
-                                        Bitmap.createScaledBitmap(
-                                            fullImage,
-                                            (width * scale).toInt().coerceAtLeast(1),
-                                            (height * scale).toInt().coerceAtLeast(1),
-                                            true
-                                        )
-                                    } else {
-                                        fullImage
+                                val scale = calculateThumbnailScale(width, height, maxDim = 300)
+                                thumb = if (scale < 1.0f) {
+                                    val scaled = Bitmap.createScaledBitmap(
+                                        fullImage,
+                                        (width * scale).toInt().coerceAtLeast(1),
+                                        (height * scale).toInt().coerceAtLeast(1),
+                                        true
+                                    )
+                                    if (scaled !== fullImage) {
+                                        fullImage.recycle()
                                     }
+                                    scaled
+                                } else {
+                                    fullImage
                                 }
                             } catch (e: Throwable) {
                                 AppLogger.w("PdfImageReplacerEngine: Failed to extract thumbnail for $cosName: ${e.message}")

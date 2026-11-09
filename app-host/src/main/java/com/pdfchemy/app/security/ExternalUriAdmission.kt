@@ -64,31 +64,7 @@ object ExternalUriAdmission {
     }
 
     fun extractCandidateUri(intent: Intent): Uri? {
-        val action = intent.action
-        return when (action) {
-            Intent.ACTION_VIEW -> {
-                intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-            }
-            Intent.ACTION_SEND -> {
-                val streamUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-                }
-                streamUri ?: intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-            }
-            Intent.ACTION_SEND_MULTIPLE -> {
-                val list = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-                }
-                list?.firstOrNull() ?: intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-            }
-            else -> null
-        }
+        return extractCandidateUris(intent).firstOrNull()
     }
 
     fun extractCandidateUris(intent: Intent): List<Uri> {

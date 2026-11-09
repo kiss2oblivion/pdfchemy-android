@@ -127,7 +127,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
@@ -137,7 +137,7 @@ dependencies {
     // Image Loading
 
     // 2. Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // 3. PdfJail and Native Renderer (Process Isolation)
     implementation(project(":pdf-ipc"))
@@ -152,7 +152,7 @@ dependencies {
     implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 
     // ML Kit Document Scanner
-    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1")
+    implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     // ML Kit Text Recognition
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
@@ -165,13 +165,13 @@ dependencies {
 
     // Text Conversion Libraries
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.11")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("io.mockk:mockk:1.13.10")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("com.tngtech.archunit:archunit:1.3.0")
@@ -179,7 +179,7 @@ dependencies {
     // Independent interoperability oracle for preference records shipped before this migration.
     androidTestImplementation("androidx.security:security-crypto:1.1.0-alpha06")
     androidTestImplementation("io.mockk:mockk-android:1.13.10")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     androidTestImplementation("com.tom-roush:pdfbox-android:2.0.27.0")
     androidTestImplementation("org.bouncycastle:bcpkix-jdk18on:1.86")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
