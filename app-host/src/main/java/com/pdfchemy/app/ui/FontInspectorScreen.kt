@@ -76,6 +76,23 @@ fun FontInspectorScreen(
                     }
                 },
                 actions = {
+                    if (fontList.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                val reportText = buildString {
+                                    appendLine("PDF Font Inspection Report (${fontList.size} fonts)")
+                                    fontList.forEach { f ->
+                                        appendLine("- ${f.familyName}: ${f.formatType} | ${if (f.isEmbedded) "Embedded" else "System"} | ${f.encoding} (${f.pageCountUsed}p)")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Font Report", reportText))
+                                android.widget.Toast.makeText(context, "Copied font report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Font Report")
+                        }
+                    }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { refreshFonts() }) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "Refresh")

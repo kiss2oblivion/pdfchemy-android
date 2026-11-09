@@ -360,6 +360,18 @@ fun FormBuilderScreen(
                     .padding(paddingValues)
             ) {
                 // Page Navigator Bar
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && totalPages > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = totalPages,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 Surface(
                     tonalElevation = 2.dp,
                     color = MaterialTheme.colorScheme.surface
@@ -380,7 +392,11 @@ fun FormBuilderScreen(
                         Text(
                             text = "${currentPageIndex + 1} / ${totalPages.coerceAtLeast(1)}",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         IconButton(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },

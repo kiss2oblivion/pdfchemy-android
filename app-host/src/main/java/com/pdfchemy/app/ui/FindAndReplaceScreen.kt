@@ -271,9 +271,23 @@ fun FindAndReplaceScreen(
                         placeholder = { Text(stringResource(R.string.hint_replace_with)) },
                         leadingIcon = { Icon(Icons.Rounded.EditNote, contentDescription = null) },
                         trailingIcon = {
-                            if (replaceText.isNotEmpty()) {
-                                IconButton(onClick = { replaceText = "" }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (findQuery.isNotEmpty() || replaceText.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            val oldFind = findQuery
+                                            findQuery = replaceText
+                                            replaceText = oldFind
+                                            searchSummary = null
+                                        }
+                                    ) {
+                                        Icon(Icons.Rounded.SwapVert, contentDescription = "Swap Find & Replace", modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                                if (replaceText.isNotEmpty()) {
+                                    IconButton(onClick = { replaceText = "" }) {
+                                        Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                                    }
                                 }
                             }
                         },

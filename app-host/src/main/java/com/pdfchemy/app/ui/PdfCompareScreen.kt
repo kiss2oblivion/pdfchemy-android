@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.DocumentDiffSummary
 import com.pdfchemy.app.logic.PdfDiffEngine
+import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,7 +54,8 @@ fun PdfCompareScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var doc1Uri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var doc1Uri by remember { mutableStateOf<Uri?>(continuityUri) }
     var doc2Uri by remember { mutableStateOf<Uri?>(null) }
 
     var diffSummary by remember { mutableStateOf<DocumentDiffSummary?>(null) }
@@ -101,6 +103,31 @@ fun PdfCompareScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    if (doc1Uri != null && doc2Uri != null && !isComparing) {
+                        IconButton(
+                            onClick = {
+                                val u1 = doc2Uri!!
+                                val u2 = doc1Uri!!
+                                doc1Uri = u1
+                                doc2Uri = u2
+                                runComparison(u1, u2)
+                            }
+                        ) {
+                            Icon(Icons.Rounded.SwapHoriz, contentDescription = "Swap Original & Modified")
+                        }
+                    }
+                    if (diffSummary != null && !isComparing) {
+                        IconButton(
+                            onClick = {
+                                diffSummary?.pageDiffs?.forEach { it.diffBitmap?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
+                                diffSummary = null
+                            }
+                        ) {
+                            Icon(Icons.Rounded.Refresh, contentDescription = "Select Different PDFs")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -155,10 +182,11 @@ fun PdfCompareScreen(
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        if (doc1Uri != null) stringResource(R.string.doc1_selected) else stringResource(R.string.select_original_pdf),
+                                        doc1Uri?.let { FileUtils.getFileName(context, it) } ?: stringResource(R.string.select_original_pdf),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
                                     )
                                 }
                             }
@@ -179,10 +207,11 @@ fun PdfCompareScreen(
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        if (doc2Uri != null) stringResource(R.string.doc2_selected) else stringResource(R.string.select_modified_pdf),
+                                        doc2Uri?.let { FileUtils.getFileName(context, it) } ?: stringResource(R.string.select_modified_pdf),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2
                                     )
                                 }
                             }
@@ -302,6 +331,18 @@ fun PdfCompareScreen(
                 }
 
                 // Page Navigation Bar
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && summary.pageDiffs.size > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = summary.pageDiffs.size,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            currentPageIndex = targetZeroBased.coerceIn(0, summary.pageDiffs.size - 1)
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -317,7 +358,11 @@ fun PdfCompareScreen(
                     Text(
                         "${currentPageIndex + 1} / ${summary.pageDiffs.size}",
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = summary.pageDiffs.size > 1) { showPageJumpDialog = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     )
 
                     IconButton(

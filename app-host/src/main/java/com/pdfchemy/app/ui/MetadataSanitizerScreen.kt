@@ -143,6 +143,32 @@ fun MetadataSanitizerScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
+                },
+                actions = {
+                    if (metadataInfo != null) {
+                        IconButton(
+                            onClick = {
+                                val info = metadataInfo ?: return@IconButton
+                                val summaryText = buildString {
+                                    appendLine("PDF Metadata Summary")
+                                    appendLine("Title: ${info.title}")
+                                    appendLine("Author: ${info.author}")
+                                    appendLine("Subject: ${info.subject}")
+                                    appendLine("Keywords: ${info.keywords}")
+                                    appendLine("Creator: ${info.creator}")
+                                    appendLine("Producer: ${info.producer}")
+                                    appendLine("Created: ${info.creationDate}")
+                                    appendLine("Modified: ${info.modificationDate}")
+                                    appendLine("XMP Metadata: ${info.hasXmpMetadata}")
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF Metadata", summaryText))
+                                android.widget.Toast.makeText(context, "Copied metadata summary to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Metadata Summary")
+                        }
+                    }
                 }
             )
         }

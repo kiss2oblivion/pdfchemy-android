@@ -50,9 +50,15 @@ fun EbookConverterScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
     var selectedMode by remember { mutableStateOf(EbookMode.PDF_TO_EPUB) }
-    var selectedSourceUri by remember { mutableStateOf<Uri?>(initialUri) }
-    var bookTitle by remember { mutableStateOf("") }
+    var selectedSourceUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
+    var bookTitle by remember {
+        mutableStateOf(
+            effectiveInitialUri?.let { FileUtils.getFileName(context, it)?.substringBeforeLast(".") } ?: ""
+        )
+    }
     var authorName by remember { mutableStateOf("") }
     var isProcessing by remember { mutableStateOf(false) }
     var progressCurrent by remember { mutableIntStateOf(0) }

@@ -73,6 +73,24 @@ fun PdfAValidatorScreen(
                     }
                 },
                 actions = {
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val r = report ?: return@IconButton
+                                val reportText = buildString {
+                                    appendLine("PDF/A Compliance Report: ${r.certificationStatus} (${r.checks.count { it.isPassed }}/${r.checks.size} passed)")
+                                    r.checks.forEach { c ->
+                                        appendLine("[${if (c.isPassed) "PASS" else "FAIL"}] ${c.rule}: ${c.details}")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF/A Report", reportText))
+                                android.widget.Toast.makeText(context, "Copied PDF/A report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy PDF/A Report")
+                        }
+                    }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { auditGeneration++ }) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "Re-scan")
