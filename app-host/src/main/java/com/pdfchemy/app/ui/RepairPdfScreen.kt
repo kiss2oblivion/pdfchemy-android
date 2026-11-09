@@ -40,7 +40,9 @@ fun RepairPdfScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember(effectiveInitialUri) { mutableStateOf<Uri?>(effectiveInitialUri) }
     var diagnostic by remember { mutableStateOf<RepairDiagnostic?>(null) }
     var isDiagnosing by remember { mutableStateOf(false) }
     var diagnosisFailed by remember { mutableStateOf(false) }

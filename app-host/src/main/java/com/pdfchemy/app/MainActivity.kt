@@ -1129,10 +1129,29 @@ fun MainApp(
                                         }
                                     }
                                 }
-                                OutlinedButton(onClick = { browseOutput.launch(state.outputUris.first()) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
+                                val firstOutput = state.outputUris.first()
+                                val firstOutputMime = com.pdfchemy.app.utils.FileUtils.getMimeType(context, firstOutput)
+                                if (firstOutputMime == "application/pdf" || firstOutputMime == "application/epub+zip") {
+                                    OutlinedButton(
+                                        onClick = {
+                                            resetAndShowAd()
+                                            currentScreen = if (firstOutputMime == "application/epub+zip") {
+                                                Screen.ReflowReader(firstOutput)
+                                            } else {
+                                                Screen.PdfReader(firstOutput)
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(stringResource(R.string.select_pdf_for_reading))
+                                    }
+                                }
+                                OutlinedButton(onClick = { browseOutput.launch(firstOutput) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
                                 OutlinedButton(
                                     onClick = { 
-                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, state.outputUris.first()) }
+                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, firstOutput) }
                                             .onFailure { viewModel.notifyError("No app can open this file. Check file access or use Share.") }
                                     },
                                     modifier = Modifier.fillMaxWidth()
@@ -4299,6 +4318,7 @@ fun RecentFilesSection(
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var showFileInaccessibleDialog by remember { mutableStateOf(false) }
     var showDamagedPdfDialog by remember { mutableStateOf(false) }
+    var vanguardPendingDamagedUri by remember { mutableStateOf<Uri?>(null) }
     var vanguardPendingEncryptedUri by remember { mutableStateOf<Uri?>(null) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
@@ -4320,19 +4340,27 @@ fun RecentFilesSection(
 
     if (showDamagedPdfDialog) {
         AlertDialog(
-            onDismissRequest = { showDamagedPdfDialog = false },
+            onDismissRequest = {
+                showDamagedPdfDialog = false
+                vanguardPendingDamagedUri = null
+            },
             title = { Text(stringResource(R.string.vanguard_damaged_title)) },
             text = { Text(stringResource(R.string.vanguard_damaged_message)) },
             confirmButton = {
                 Button(onClick = {
                     showDamagedPdfDialog = false
+                    vanguardPendingDamagedUri?.let { viewModel.setContinuityUri(it) }
+                    vanguardPendingDamagedUri = null
                     onNavigate?.invoke(Screen.RepairPdf)
                 }) {
                     Text(stringResource(R.string.menu_repair_pdf))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDamagedPdfDialog = false }) {
+                TextButton(onClick = {
+                    showDamagedPdfDialog = false
+                    vanguardPendingDamagedUri = null
+                }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -4471,6 +4499,7 @@ fun RecentFilesSection(
                                                     viewModel.removeHistoryItem(item.uriString)
                                                     showFileInaccessibleDialog = true
                                                 } else {
+                                                    vanguardPendingDamagedUri = uri
                                                     showDamagedPdfDialog = true
                                                 }
                                             }) {
@@ -4494,6 +4523,7 @@ fun RecentFilesSection(
                                                             }
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
                                                                 com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                vanguardPendingDamagedUri = uri
                                                                 showDamagedPdfDialog = true
                                                             }
                                                         }

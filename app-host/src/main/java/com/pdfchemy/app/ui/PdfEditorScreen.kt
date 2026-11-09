@@ -165,6 +165,7 @@ fun PdfEditorScreen(
 
     var showStampPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
+    var showPageJumpDialog by remember { mutableStateOf(false) }
 
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -605,6 +606,7 @@ fun PdfEditorScreen(
                     currentPage = currentPageIndex,
                     totalPages = totalPages,
                     pageLabel = pageLabel,
+                    onPageLabelClick = { if (totalPages > 1) showPageJumpDialog = true },
                     onPrevPage = {
                         if (isDualPageMode) {
                             currentPageIndex = (currentPageIndex - 2).coerceAtLeast(0)
@@ -743,7 +745,11 @@ fun PdfEditorScreen(
                         Text(
                             text = "${currentPageIndex + 1} / $totalPages",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
 
@@ -766,6 +772,7 @@ fun PdfEditorScreen(
                             onColorClick = { showColorPicker = true },
                             currentPage = currentPageIndex,
                             totalPages = totalPages,
+                            onPageLabelClick = { if (totalPages > 1) showPageJumpDialog = true },
                             onPrevPage = { if (currentPageIndex > 0) currentPageIndex-- },
                             onNextPage = { if (currentPageIndex < totalPages - 1) currentPageIndex++ }
                         )
@@ -974,9 +981,42 @@ fun PdfEditorScreen(
                         )
                     }
                 }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf(3f to "3pt", 6f to "6pt", 12f to "12pt", 20f to "20pt").forEach { (presetWidth, label) ->
+                        ElevatedFilterChip(
+                            selected = kotlin.math.abs(strokeWidth - presetWidth) < 0.5f,
+                            onClick = { strokeWidth = presetWidth },
+                            label = { Text(label) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Slider(
+                    value = strokeWidth,
+                    onValueChange = { strokeWidth = it },
+                    valueRange = 2f..28f,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showPageJumpDialog && totalPages > 1) {
+        PageJumpDialog(
+            currentPageZeroBased = currentPageIndex,
+            totalPages = totalPages,
+            onDismiss = { showPageJumpDialog = false },
+            onJumpToPage = { targetZeroBased ->
+                showPageJumpDialog = false
+                currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+            }
+        )
     }
 
     if (showUnsavedDialog) {
@@ -1103,6 +1143,7 @@ fun EditorBottomBar(
     currentPage: Int,
     totalPages: Int,
     pageLabel: String = "${currentPage + 1} / $totalPages",
+    onPageLabelClick: () -> Unit = {},
     onPrevPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
@@ -1181,7 +1222,11 @@ fun EditorBottomBar(
                 Text(
                     text = pageLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = totalPages > 1, onClick = onPageLabelClick)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                 )
 
                 IconButton(onClick = onNextPage, enabled = currentPage < totalPages - 1) {

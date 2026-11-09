@@ -193,6 +193,7 @@ private fun PdfReaderDocument(
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
     var showTocSheet by rememberSaveable { mutableStateOf(false) }
     var showCommandCentreSheet by rememberSaveable { mutableStateOf(false) }
+    var showPageJumpDialog by rememberSaveable { mutableStateOf(false) }
 
     fun applyControlsState(next: ReaderControlsUiState) {
         showControls = next.showControls
@@ -710,6 +711,23 @@ private fun PdfReaderDocument(
                     ) {
                         Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.menu_edit_pdf))
                     }
+                    IconButton(
+                        onClick = {
+                            val targetUri = selectedPdfUri ?: initialUri
+                            runCatching {
+                                com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                    context,
+                                    listOf(targetUri),
+                                    fileName.ifBlank { context.getString(R.string.share) }
+                                )
+                            }.onFailure {
+                                viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                            }
+                        },
+                        enabled = actionsEnabled
+                    ) {
+                        Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
@@ -851,7 +869,15 @@ private fun PdfReaderDocument(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = if (barLayout.compactLandscape) 4.dp else 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = actionsEnabled && totalPages > 1) {
+                                showPageJumpDialog = true
+                            }
+                            .padding(
+                                horizontal = 10.dp,
+                                vertical = if (barLayout.compactLandscape) 2.dp else 4.dp
+                            )
+                            .padding(bottom = if (barLayout.compactLandscape) 2.dp else 4.dp)
                     )
                     
                     Row(
@@ -994,7 +1020,116 @@ private fun PdfReaderDocument(
                 }
             }
         }
+
+        if (showPageJumpDialog && totalPages > 1) {
+            PageJumpDialog(
+                currentPageZeroBased = listState.firstVisibleItemIndex,
+                totalPages = totalPages,
+                onDismiss = { showPageJumpDialog = false },
+                onJumpToPage = { targetZeroBased ->
+                    showPageJumpDialog = false
+                    coroutineScope.launch {
+                        listState.scrollToItem(targetZeroBased.coerceIn(0, totalPages - 1))
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+internal fun PageJumpDialog(
+    currentPageZeroBased: Int,
+    totalPages: Int,
+    onDismiss: () -> Unit,
+    onJumpToPage: (Int) -> Unit
+) {
+    var pageInput by remember(currentPageZeroBased, totalPages) {
+        mutableStateOf((currentPageZeroBased + 1).coerceIn(1, totalPages).toString())
+    }
+    val parsedPage = pageInput.trim().toIntOrNull()
+    val isValid = parsedPage != null && parsedPage in 1..totalPages
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "${stringResource(R.string.visual_page_number, (currentPageZeroBased + 1).coerceIn(1, totalPages))} (1–$totalPages)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = pageInput,
+                    onValueChange = { next ->
+                        if (next.length <= 6 && next.all { it.isDigit() }) {
+                            pageInput = next
+                        }
+                    },
+                    label = { Text("1 – $totalPages") },
+                    singleLine = true,
+                    isError = pageInput.isNotBlank() && !isValid,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Go
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onGo = {
+                            if (isValid) {
+                                onJumpToPage(parsedPage - 1)
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { onJumpToPage(0) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("1")
+                    }
+                    if (totalPages >= 4) {
+                        val midPage = (totalPages + 1) / 2
+                        OutlinedButton(
+                            onClick = { onJumpToPage(midPage - 1) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("$midPage")
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { onJumpToPage(totalPages - 1) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("$totalPages")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (isValid) {
+                        onJumpToPage(parsedPage - 1)
+                    }
+                },
+                enabled = isValid
+            ) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 private fun readerCommandPresentation(
