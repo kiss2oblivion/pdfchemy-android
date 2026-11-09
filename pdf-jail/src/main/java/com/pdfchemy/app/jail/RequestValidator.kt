@@ -17,6 +17,7 @@ object RequestValidator {
                 else if (character == '"') quoted = false
             } else when (character) {
                 '"' -> quoted = true
+                '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$character'")
                 '{', '[' -> require(++nesting <= SecurityLimits.MAX_REQUEST_DEPTH + 1) { "Parameter nesting quota exceeded" }
                 '}', ']' -> require(--nesting >= 0) { "Invalid parameter nesting" }
             }

@@ -30,8 +30,8 @@ object AudioOutputPublisher {
         destination: Uri,
         isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
     ) {
-        if (!isFreshCopy) {
-            // Existing or unknown destinations must not be deleted during pre-publication failure cleanup
+        if (!isFreshCopy || !OutputPolicy.isFreshCopy(destination)) {
+            // Existing, unknown, or already-published destinations must not be deleted during pre-publication failure cleanup
             return
         }
         if (com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(destination)) {

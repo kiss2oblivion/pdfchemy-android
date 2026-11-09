@@ -157,6 +157,20 @@ The application supports the following locales. The 38 previously baselined rele
 
 ---
 
+## 🔒 Security Hardening & Remediation Registry (2.1.0)
+- **Fail-Closed Flattening:** `PdfFlattenEngineWorker` enforces strict failure propagation if form flattening or annotation rasterization fails.
+- **ReDoS Prevention:** `PdfRedactionEngineWorker` pre-compiles search regexes and enforces input length boundaries.
+- **Spreadsheet Formula Neutralization:** `OfficeExportEngineWorker.exportToExcel` neutralizes leading formula metacharacters (`=`, `+`, `-`, `@`, `\t`, `\r`) in non-numeric cells.
+- **Audio Publication & Late Cancellation Guard:** `AudioOutputPublisher` guarantees already-published audio outputs are never deleted during late-cancellation cleanups.
+- **Deep Metadata Sanitization:** `PdfMetadataEngineWorker` and `JailCompressionWorker` recursively purge embedded `/Metadata` and `/PieceInfo` dictionaries from document object graphs and trailer `/ID`.
+- **Private Offline TTS Policy:** `ReflowReaderScreen` and `AudioExportService` enforce offline voice selection and set `KEY_FEATURE_NETWORK_SYNTHESIS = "false"` to prevent text transmission over network interfaces.
+- **Watermark & Bates Quota Bounding:** `PdfStampAndNumberWorker` strictly clamps font sizes, tile steps, and numbering digits.
+- **Image Decode Quota Alignment:** `PdfImageExtractorEngine` and `PdfServiceEngineWorker` use `SecurityLimits.requireImageDecodePixels` (up to 32 MP) and recycle bitmaps promptly.
+- **Path Traversal Accuracy:** `ExternalUriAdmission` checks directory segments to prevent false rejection of filenames containing consecutive dots.
+- **Device-to-Device Backup Hardening:** `data_extraction_rules.xml` and manifest exclude exports, shared copies, and staged caches from cloud backup and D2D device transfers on Android 12+ (API 31+).
+
+---
+
 ## ⏳ What Is NOT Yet Implemented (Future Roadmap)
 1. **Audiobook / MP3 Audio Export:** Exporting TTS read aloud output to `.mp3` / `.wav` audio files.
 

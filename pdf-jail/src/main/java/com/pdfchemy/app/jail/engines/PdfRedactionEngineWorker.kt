@@ -60,6 +60,11 @@ object PdfRedactionEngineWorker {
         private val isRegex: Boolean
     ) : PDFTextStripper() {
 
+        private val compiledRegex: Regex? = if (isRegex) {
+            com.pdfchemy.app.security.SecurityLimits.enforceStringLength(query, 1024, "Regex query")
+            Regex(query)
+        } else null
+
         init {
             sortByPosition = true
         }
@@ -85,7 +90,7 @@ object PdfRedactionEngineWorker {
             if (line.isEmpty() || charToPosition.isEmpty()) return
 
             if (isRegex) {
-                val regex = Regex(query)
+                val regex = compiledRegex ?: return
                 val results = regex.findAll(line)
                 for (match in results) {
                     val start = match.range.first

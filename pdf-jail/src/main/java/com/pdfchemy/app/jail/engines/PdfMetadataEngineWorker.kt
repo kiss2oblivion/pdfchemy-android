@@ -11,7 +11,12 @@ import java.util.Calendar
 import java.util.Locale
 
 object PdfMetadataEngineWorker {
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    private fun formatDate(calendar: Calendar?): String {
+        if (calendar == null) return ""
+        return try {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(calendar.time)
+        } catch (_: Exception) { "" }
+    }
 
     fun readMetadata(sourceFd: ParcelFileDescriptor): String {
         var document: PDDocument? = null
@@ -20,8 +25,8 @@ object PdfMetadataEngineWorker {
             val info = document.documentInformation
             val catalog = document.documentCatalog
 
-            val creationStr = try { info?.creationDate?.let { dateFormatter.format(it.time) } ?: "" } catch (_: Exception) { "" }
-            val modStr = try { info?.modificationDate?.let { dateFormatter.format(it.time) } ?: "" } catch (_: Exception) { "" }
+            val creationStr = formatDate(info?.creationDate)
+            val modStr = formatDate(info?.modificationDate)
 
             val obj = JSONObject()
             obj.put("title", info?.title ?: "")
@@ -51,10 +56,16 @@ object PdfMetadataEngineWorker {
             document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
 
             if (wipeAllMetadata) {
-                val blankInfo = PDDocumentInformation()
-                document.documentInformation = blankInfo
+                document.documentInformation = PDDocumentInformation()
                 document.documentCatalog?.metadata = null
                 document.document.trailer.removeItem(com.tom_roush.pdfbox.cos.COSName.ID)
+                for (cosObject in document.document.objects) {
+                    val obj = cosObject.`object`
+                    if (obj is com.tom_roush.pdfbox.cos.COSDictionary) {
+                        obj.removeItem(com.tom_roush.pdfbox.cos.COSName.METADATA)
+                        obj.removeItem(com.tom_roush.pdfbox.cos.COSName.getPDFName("PieceInfo"))
+                    }
+                }
             } else if (params.has("newMetadata")) {
                 val md = params.getJSONObject("newMetadata")
                 var info = document.documentInformation

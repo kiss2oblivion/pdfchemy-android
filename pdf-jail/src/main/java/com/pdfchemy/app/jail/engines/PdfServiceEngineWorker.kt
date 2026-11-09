@@ -12,7 +12,7 @@ object PdfServiceEngineWorker {
                             val resources = page.resources ?: continue
                             for (name in resources.xObjectNames) {
                                 val image = resources.getXObject(name) as? com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject ?: continue
-                                SecurityLimits.requirePixels(image.width, image.height)
+                                SecurityLimits.requireImageDecodePixels(image.width, image.height)
                                 val bitmap = SafePdfImage.decode(image) ?: continue
                                 try { resources.put(name, com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory.createFromImage(document, bitmap, quality, targetDpi.toInt())) } finally { bitmap.recycle() }
                             }

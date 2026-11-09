@@ -144,7 +144,8 @@ object ExternalUriAdmission {
             }
 
             // Path traversal patterns
-            if (path.contains("..") || path.contains("%2e%2e", ignoreCase = true)) {
+            val hasTraversal = path.replace("%2e", ".", ignoreCase = true).split('/', '\\').any { it == ".." }
+            if (hasTraversal) {
                 return AdmissionResult.Rejected("Path traversal pattern rejected in file URI: $path", uri)
             }
 

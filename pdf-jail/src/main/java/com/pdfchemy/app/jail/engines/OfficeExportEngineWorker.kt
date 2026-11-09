@@ -408,12 +408,19 @@ object OfficeExportEngineWorker {
                 for ((colIdx, token) in rowTokens.withIndex()) {
                     val colLetter = getColumnLetter(colIdx)
                     val cellRef = "$colLetter$rowIndex"
-                    val cleanText = escapeXml(token)
-                    
                     val isNumber = token.toDoubleOrNull() != null
                     if (isNumber) {
                         sheetSb.append("<c r=\"$cellRef\" t=\"n\"><v>$token</v></c>")
                     } else {
+                        val sanitized = if (token.isNotEmpty()) {
+                            val trimmed = token.trimStart(' ', '\t', '\r', '\n')
+                            val firstChar = token[0]
+                            val isTrigger = firstChar == '=' || firstChar == '+' || firstChar == '-' || firstChar == '@' ||
+                                    firstChar == '\t' || firstChar == '\r' || firstChar == '\u0000' ||
+                                    (trimmed.isNotEmpty() && (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@'))
+                            if (isTrigger) "'$token" else token
+                        } else token
+                        val cleanText = escapeXml(sanitized)
                         sheetSb.append("<c r=\"$cellRef\" t=\"inlineStr\"><is><t>$cleanText</t></is></c>")
                     }
                     totalCells++

@@ -15,8 +15,8 @@ object PdfStampAndNumberWorker {
         val params = JSONObject(paramsJson)
         val text = params.optString("text", "")
         val rotationDegrees = params.optDouble("rotationDegrees", 45.0).toFloat()
-        val opacity = params.optDouble("opacity", 0.3).toFloat()
-        val fontSize = params.optDouble("fontSize", 40.0).toFloat()
+        val opacity = params.optDouble("opacity", 0.3).toFloat().coerceIn(0.01f, 1.0f)
+        val fontSize = params.optDouble("fontSize", 40.0).toFloat().coerceIn(8f, 200f)
         val isTiled = params.optBoolean("isTiled", false)
 
         var doc: PDDocument? = null
@@ -44,11 +44,11 @@ object PdfStampAndNumberWorker {
                             val textHeight = font.fontDescriptor.fontBoundingBox.height / 1000f * fontSize
 
                             if (isTiled) {
-                                val xStep = textWidth * 1.5f
-                                val yStep = textHeight * 3.0f
+                                val xStep = (textWidth * 1.5f).toInt().coerceAtLeast(36)
+                                val yStep = (textHeight * 3.0f).toInt().coerceAtLeast(36)
 
-                                for (y in 0..pageHeight.toInt() step yStep.toInt()) {
-                                    for (x in 0..pageWidth.toInt() step xStep.toInt()) {
+                                for (y in 0..pageHeight.toInt() step yStep) {
+                                    for (x in 0..pageWidth.toInt() step xStep) {
                                         cs.saveGraphicsState()
                                         val rad = Math.toRadians(rotationDegrees.toDouble())
                                         val matrix = Matrix.getRotateInstance(rad, x.toFloat(), y.toFloat())
@@ -169,7 +169,7 @@ object PdfStampAndNumberWorker {
         val prefix = params.optString("prefix", "")
         val suffix = params.optString("suffix", "")
         val startNumber = params.optInt("startNumber", 1)
-        val digits = params.optInt("digits", 6)
+        val digits = params.optInt("digits", 6).coerceIn(1, 16)
         val position = params.optString("position", "BOTTOM_RIGHT")
         val fontSize = params.optDouble("fontSize", 10.0).toFloat()
         val marginPts = params.optDouble("marginPts", 36.0).toFloat()

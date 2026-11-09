@@ -62,15 +62,12 @@ object PdfFlattenEngineWorker {
                 val acroForm = document!!.documentCatalog.acroForm
 
                 if (flattenForms && acroForm != null) {
-                    try {
-                        if (acroForm.defaultResources == null) {
-                            val dr = com.tom_roush.pdfbox.pdmodel.PDResources()
-                            dr.put(COSName.getPDFName("Helv"), com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA)
-                            acroForm.defaultResources = dr
-                        }
-                        acroForm.flatten()
-                    } catch (e: Exception) {
+                    if (acroForm.defaultResources == null) {
+                        val dr = com.tom_roush.pdfbox.pdmodel.PDResources()
+                        dr.put(COSName.getPDFName("Helv"), com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA)
+                        acroForm.defaultResources = dr
                     }
+                    acroForm.flatten()
                 }
 
                 val pagesToFlatten = mutableSetOf<Int>()
@@ -134,7 +131,7 @@ object PdfFlattenEngineWorker {
                         baseDoc.close()
                         document = bakedDoc
                     } catch (e: Exception) {
-                        document = com.pdfchemy.app.jail.CapabilityIo.input(intermediateFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
+                        throw IllegalStateException("Failed to rasterize annotations during flattening: ${e.message}", e)
                     } finally {
                         try { renderer?.close() } catch (_: Exception) {}
                         try { pfd?.close() } catch (_: Exception) {}

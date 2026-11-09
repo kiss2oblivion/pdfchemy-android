@@ -425,8 +425,10 @@ fun ReflowReaderScreen(
         if (index in allParagraphs.indices && ttsEngine != null) {
             currentSpeakingIndex = index
             val text = allParagraphs[index]
-            val params = android.os.Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "para_$index")
+            val params = android.os.Bundle().apply {
+                putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "para_$index")
+                putString(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS, "false")
+            }
             ttsEngine?.setSpeechRate(ttsRate)
             ttsEngine?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "para_$index")
             isTtsPlaying = true
@@ -439,7 +441,14 @@ fun ReflowReaderScreen(
     DisposableEffect(context) {
         val tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                ttsEngine?.language = Locale.getDefault()
+                val offline = ttsEngine?.voices.orEmpty().filter { !it.isNetworkConnectionRequired }
+                val voice = offline.firstOrNull { it.locale == Locale.getDefault() }
+                    ?: offline.firstOrNull { it.locale.language == Locale.getDefault().language }
+                if (voice != null) {
+                    ttsEngine?.voice = voice
+                } else {
+                    ttsEngine?.language = Locale.getDefault()
+                }
             }
         }
         tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -457,7 +466,11 @@ fun ReflowReaderScreen(
                     if (currentSpeakingIndex + 1 < allParagraphs.size) {
                         currentSpeakingIndex++
                         val nextText = allParagraphs[currentSpeakingIndex]
-                        tts.speak(nextText, TextToSpeech.QUEUE_FLUSH, null, "P_$currentSpeakingIndex")
+                        val nextParams = android.os.Bundle().apply {
+                            putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "P_$currentSpeakingIndex")
+                            putString(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS, "false")
+                        }
+                        tts.speak(nextText, TextToSpeech.QUEUE_FLUSH, nextParams, "P_$currentSpeakingIndex")
                     } else {
                         isTtsPlaying = false
                     }
