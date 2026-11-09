@@ -56,7 +56,8 @@ fun ImageReplacerScreen(
     val scope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var embeddedImages by remember { mutableStateOf<List<EmbeddedImageInfo>>(emptyList()) }
     var isScanningImages by remember { mutableStateOf(false) }
 

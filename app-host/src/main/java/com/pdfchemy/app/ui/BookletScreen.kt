@@ -50,7 +50,8 @@ fun BookletScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var pageCount by remember { mutableIntStateOf(0) }
     var bookletPlan by remember { mutableStateOf<List<BookletSheetPlan>>(emptyList()) }
     var selectedPaperSize by remember { mutableStateOf(TargetPaperSize.A4) }

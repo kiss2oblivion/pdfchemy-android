@@ -41,7 +41,8 @@ fun PdfAValidatorScreen(
     val context = LocalContext.current
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var report by remember { mutableStateOf<PdfAReport?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 

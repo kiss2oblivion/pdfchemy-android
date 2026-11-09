@@ -43,7 +43,8 @@ fun NUpScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var selectedLayout by remember { mutableStateOf(NUpLayout.FOUR_UP) }
     var selectedOrder by remember { mutableStateOf(NUpOrder.HORIZONTAL) }
     var drawBorders by remember { mutableStateOf(true) }

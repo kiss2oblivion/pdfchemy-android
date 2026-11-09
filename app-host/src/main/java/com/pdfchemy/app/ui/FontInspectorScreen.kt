@@ -39,7 +39,8 @@ fun FontInspectorScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var fontList by remember { mutableStateOf<List<PdfFontInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
 

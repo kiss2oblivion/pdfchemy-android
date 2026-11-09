@@ -48,7 +48,9 @@ fun MetadataSanitizerScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var metadataInfo by remember { mutableStateOf<DocumentMetadataInfo?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -86,8 +88,8 @@ fun MetadataSanitizerScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        initialPdfUri?.let {
+    LaunchedEffect(effectiveInitialPdfUri) {
+        effectiveInitialPdfUri?.let {
             selectedPdfUri = it
             loadMetadata(it)
         }

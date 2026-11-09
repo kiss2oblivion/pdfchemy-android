@@ -191,7 +191,8 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         onBack() 
     }
     val context = LocalContext.current
-    var sourceUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
     
     val currentMetadata by viewModel.currentMetadata.collectAsState()
     val analysis by viewModel.pdfAnalysis.collectAsState()
@@ -203,6 +204,12 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var keywords by remember { mutableStateOf("") }
     var creator by remember { mutableStateOf("") }
     var producer by remember { mutableStateOf("") }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && sourceUri == continuityUri && currentMetadata == null && !isAnalyzing) {
+            viewModel.loadMetadata(context, continuityUri!!)
+        }
+    }
 
     // Update local state when metadata is loaded
     LaunchedEffect(currentMetadata) {
@@ -346,8 +353,12 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var sourceUri by remember { mutableStateOf<Uri?>(null) }
-    var fileName by remember { mutableStateOf("") }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
+    var fileName by remember {
+        mutableStateOf(continuityUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) } ?: "")
+    }
+    var showOverwriteConfirmDialog by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         sourceUri = uri
@@ -359,6 +370,33 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             val src = sourceUri ?: return@rememberPreferredDocumentCreator
             viewModel.clearMetadata(context, src, destUri)
         }
+    }
+
+    if (showOverwriteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showOverwriteConfirmDialog = false },
+            title = { Text(stringResource(R.string.overwrite_original)) },
+            text = { Text(stringResource(R.string.select_a_pdf_to_strip_all_meta)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOverwriteConfirmDialog = false
+                        sourceUri?.let { viewModel.clearMetadataOverwrite(context, it) }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.overwrite_original))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOverwriteConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -425,7 +463,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
-                        onClick = { sourceUri?.let { viewModel.clearMetadataOverwrite(context, it) } },
+                        onClick = { showOverwriteConfirmDialog = true },
                         modifier = Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 52.dp),
@@ -472,7 +510,12 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 @Composable
 fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<androidx.documentfile.provider.DocumentFile?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedFile by remember {
+        mutableStateOf<androidx.documentfile.provider.DocumentFile?>(
+            continuityUri?.let { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, it) }
+        )
+    }
     
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)

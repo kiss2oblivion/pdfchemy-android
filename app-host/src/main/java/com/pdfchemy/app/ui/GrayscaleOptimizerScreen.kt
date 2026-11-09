@@ -48,7 +48,8 @@ fun GrayscaleOptimizerScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var selectedMode by remember { mutableStateOf(GrayscaleMode.GRAYSCALE_8BIT) }
     var threshold by remember { mutableFloatStateOf(128f) }
     var previewPageIndex by remember { mutableIntStateOf(0) }

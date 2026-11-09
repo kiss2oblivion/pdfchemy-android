@@ -53,7 +53,8 @@ fun FindAndReplaceScreen(
     val scope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var findQuery by remember { mutableStateOf("") }
     var replaceText by remember { mutableStateOf("") }
     var matchCase by remember { mutableStateOf(false) }

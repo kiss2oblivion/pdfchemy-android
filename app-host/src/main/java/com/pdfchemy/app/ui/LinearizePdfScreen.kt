@@ -40,7 +40,8 @@ fun LinearizePdfScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var status by remember { mutableStateOf<LinearizeStatus?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 

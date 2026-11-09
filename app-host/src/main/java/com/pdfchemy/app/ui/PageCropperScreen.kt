@@ -68,7 +68,9 @@ fun PageCropperScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var pageCount by remember { mutableIntStateOf(0) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -115,8 +117,8 @@ fun PageCropperScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        initialPdfUri?.let {
+    LaunchedEffect(effectiveInitialPdfUri) {
+        effectiveInitialPdfUri?.let {
             selectedPdfUri = it
             loadPagePreview(it, 0)
         }

@@ -43,7 +43,8 @@ fun HeaderFooterScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var isBatesMode by remember { mutableStateOf(false) }
 
     var templateText by remember { mutableStateOf("Page {page} of {total}") }

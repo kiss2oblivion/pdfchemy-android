@@ -40,7 +40,8 @@ fun FlattenPdfScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var diagnostic by remember { mutableStateOf<FlattenDiagnostic?>(null) }
     var flattenForms by remember { mutableStateOf(true) }
     var flattenAnnotations by remember { mutableStateOf(true) }

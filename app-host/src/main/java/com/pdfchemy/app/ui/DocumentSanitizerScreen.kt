@@ -48,7 +48,9 @@ fun DocumentSanitizerScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var auditReport by remember { mutableStateOf<SanitizerAuditReport?>(null) }
     var isAuditing by remember { mutableStateOf(false) }
     var isSanitizing by remember { mutableStateOf(false) }
@@ -80,9 +82,9 @@ fun DocumentSanitizerScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        if (initialPdfUri != null) {
-            runAudit(initialPdfUri)
+    LaunchedEffect(effectiveInitialPdfUri) {
+        if (effectiveInitialPdfUri != null) {
+            runAudit(effectiveInitialPdfUri)
         }
     }
 

@@ -44,7 +44,8 @@ fun AttachmentManagerScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var attachments by remember { mutableStateOf<List<PdfAttachment>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
 

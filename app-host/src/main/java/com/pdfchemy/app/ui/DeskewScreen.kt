@@ -65,7 +65,9 @@ fun DeskewScreen(
     val previewOwner = remember(scope, previewLoader) { DeskewPreviewOwner(scope, previewLoader) }
     val preview by previewOwner.state.collectAsState()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     val detectedAngle = preview.angle
     val isAnalyzing = preview.loading
     var isProcessing by remember { mutableStateOf(false) }
@@ -78,9 +80,9 @@ fun DeskewScreen(
         previewOwner.analyze(uri)
     }
 
-    LaunchedEffect(initialPdfUri, previewOwner) {
-        if (initialPdfUri != null) {
-            analyzeDocument(initialPdfUri)
+    LaunchedEffect(effectiveInitialPdfUri, previewOwner) {
+        if (effectiveInitialPdfUri != null) {
+            analyzeDocument(effectiveInitialPdfUri)
         } else {
             selectedPdfUri = null
             straightenedCount = -1

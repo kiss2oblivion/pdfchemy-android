@@ -77,7 +77,10 @@ fun ReflowReaderScreen(
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
+    var showPageJumpDialog by remember { mutableStateOf(false) }
     var uriHash by remember { mutableStateOf("default") }
     var reflowSections by remember { mutableStateOf<List<ReflowSection>>(emptyList()) }
     var bookmarks by remember { mutableStateOf<List<OutlineBookmark>>(emptyList()) }
@@ -286,14 +289,14 @@ fun ReflowReaderScreen(
         }
     }
 
-    LaunchedEffect(initialUri) {
+    LaunchedEffect(effectiveInitialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
             isVanguardScanning = false
             isLoading = false
         }) {
-            if (initialUri != null) {
-                val originalUri = initialUri
+            if (effectiveInitialUri != null) {
+                val originalUri = effectiveInitialUri
                 val stagedLease = com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellationSafe(
                     context = context,
                     sourceUri = originalUri,
@@ -306,6 +309,7 @@ fun ReflowReaderScreen(
                 val oldUri = currentStagedUri
                 activeSessionLease = newLease
                 currentStagedUri = initialUri
+                selectedPdfUri = initialUri
                 oldLease?.close()
                 if (oldUri != null && oldUri != initialUri && viewModel.continuityDocumentUri.value != oldUri) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.release(oldUri) }
@@ -678,6 +682,20 @@ fun ReflowReaderScreen(
         }
     }
 
+    if (showPageJumpDialog && reflowSections.size > 1) {
+        PageJumpDialog(
+            currentPageZeroBased = listState.firstVisibleItemIndex.coerceIn(0, reflowSections.size - 1),
+            totalPages = reflowSections.size,
+            onDismiss = { showPageJumpDialog = false },
+            onJumpToPage = { targetZeroBased ->
+                showPageJumpDialog = false
+                scope.launch {
+                    listState.animateScrollToItem(targetZeroBased.coerceIn(0, reflowSections.size - 1))
+                }
+            }
+        )
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = bookmarks.isNotEmpty(),
@@ -797,6 +815,41 @@ fun ReflowReaderScreen(
                                         expanded = showOverflowMenu,
                                         onDismissRequest = { showOverflowMenu = false }
                                     ) {
+                                        if (reflowSections.size > 1) {
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        stringResource(
+                                                            R.string.visual_page_number,
+                                                            (listState.firstVisibleItemIndex + 1).coerceIn(1, reflowSections.size),
+                                                            reflowSections.size
+                                                        )
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    showPageJumpDialog = true
+                                                },
+                                                leadingIcon = { Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null) }
+                                            )
+                                        }
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.share)) },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val shareTarget = selectedPdfUri ?: return@DropdownMenuItem
+                                                runCatching {
+                                                    com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                                        context,
+                                                        listOf(shareTarget),
+                                                        context.getString(R.string.desc_share_output)
+                                                    )
+                                                }.onFailure {
+                                                    viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                                                }
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) }
+                                        )
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.reader_reset_defaults)) },
                                             onClick = {

@@ -985,7 +985,10 @@ fun MainApp(
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)
                 Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Interactive Form Builder] — Converts flat PDFs into genuine fillable forms (PDAcroForm)
-                Screen.FormBuilder -> FormBuilderScreen { returnFromTool(Screen.CreateCategory) }
+                Screen.FormBuilder -> {
+                    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+                    FormBuilderScreen(initialPdfUri = continuityUri) { returnFromTool(Screen.CreateCategory) }
+                }
                 // [FEATURE: AcroForm Interactive Filler] — Inspects and fills standard interactive PDF forms
                 Screen.FillForm -> FillFormScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Visual Signer] — Draw smoothed vector signatures and place on page
@@ -1905,13 +1908,6 @@ fun HomeScreen(
                         )
                     }
                     
-                    val homeReaderPicker = rememberVanguardPdfPicker(
-                        onNavigateToUnlock = { unlockUri -> onNavigate(Screen.UnlockPdf(unlockUri)) },
-                        onPdfSelected = { pickedUri ->
-                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
-                        }
-                    )
-
                     com.pdfchemy.app.ui.ToolSearchBar(
                         modifier = Modifier.padding(bottom = 12.dp),
                         onToolSelected = onNavigate
@@ -1919,7 +1915,13 @@ fun HomeScreen(
 
                     val readerPicker = com.pdfchemy.app.ui.rememberVanguardPdfPicker(
                         onNavigateToUnlock = { onNavigate(Screen.UnlockPdf(it)) },
-                        onPdfSelected = { onNavigate(Screen.PdfReader(it)) }
+                        onNavigateToRepair = { damagedUri ->
+                            viewModel.setContinuityUri(damagedUri)
+                            onNavigate(Screen.RepairPdf)
+                        },
+                        onPdfSelected = { pickedUri ->
+                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
+                        }
                     )
                     OutlinedButton(
                         onClick = { readerPicker.launch() },

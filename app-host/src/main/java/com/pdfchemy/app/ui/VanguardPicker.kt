@@ -54,6 +54,7 @@ class VanguardPickerLauncher(
 @Composable
 fun rememberVanguardPdfPicker(
     onNavigateToUnlock: ((Uri) -> Unit)? = null,
+    onNavigateToRepair: ((Uri) -> Unit)? = null,
     onPdfSelected: (Uri) -> Unit
 ): VanguardPickerLauncher {
     val context = LocalContext.current
@@ -78,6 +79,7 @@ fun rememberVanguardPdfPicker(
     var showBlockedDialog by remember { mutableStateOf(false) }
     var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
+    var damagedPendingUri by remember { mutableStateOf<Uri?>(null) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
@@ -127,7 +129,10 @@ fun rememberVanguardPdfPicker(
 
     if (showDamagedDialog) {
         AlertDialog(
-            onDismissRequest = { showDamagedDialog = false },
+            onDismissRequest = {
+                showDamagedDialog = false
+                damagedPendingUri = null
+            },
             icon = {
                 Icon(
                     imageVector = Icons.Rounded.WarningAmber,
@@ -150,16 +155,46 @@ fun rememberVanguardPdfPicker(
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = { showDamagedDialog = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.ok))
+                if (onNavigateToRepair != null && damagedPendingUri != null) {
+                    Button(
+                        onClick = {
+                            val targetUri = damagedPendingUri
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                            if (targetUri != null) {
+                                onNavigateToRepair(targetUri)
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.menu_repair_pdf))
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text(stringResource(R.string.ok))
+                    }
                 }
-            }
+            },
+            dismissButton = if (onNavigateToRepair != null && damagedPendingUri != null) {
+                {
+                    TextButton(
+                        onClick = {
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            } else null
         )
     }
 
@@ -290,6 +325,7 @@ fun rememberVanguardPdfPicker(
                             showEncryptedDialog = true
                         }
                         is PickerOutcome.Damaged -> {
+                            damagedPendingUri = originalUri
                             showDamagedDialog = true
                         }
                         is PickerOutcome.ProviderError -> {
@@ -319,6 +355,7 @@ fun rememberVanguardPdfPicker(
 @Composable
 fun rememberVanguardMultiplePdfPicker(
     onNavigateToUnlock: ((Uri) -> Unit)? = null,
+    onNavigateToRepair: ((Uri) -> Unit)? = null,
     onPdfsSelected: (List<Uri>) -> Unit
 ): VanguardPickerLauncher {
     val context = LocalContext.current
@@ -343,6 +380,7 @@ fun rememberVanguardMultiplePdfPicker(
     var showBlockedDialog by remember { mutableStateOf(false) }
     var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
+    var damagedPendingUri by remember { mutableStateOf<Uri?>(null) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
@@ -392,7 +430,10 @@ fun rememberVanguardMultiplePdfPicker(
 
     if (showDamagedDialog) {
         AlertDialog(
-            onDismissRequest = { showDamagedDialog = false },
+            onDismissRequest = {
+                showDamagedDialog = false
+                damagedPendingUri = null
+            },
             icon = {
                 Icon(
                     imageVector = Icons.Rounded.WarningAmber,
@@ -415,16 +456,46 @@ fun rememberVanguardMultiplePdfPicker(
                 )
             },
             confirmButton = {
-                Button(
-                    onClick = { showDamagedDialog = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.ok))
+                if (onNavigateToRepair != null && damagedPendingUri != null) {
+                    Button(
+                        onClick = {
+                            val targetUri = damagedPendingUri
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                            if (targetUri != null) {
+                                onNavigateToRepair(targetUri)
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.menu_repair_pdf))
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text(stringResource(R.string.ok))
+                    }
                 }
-            }
+            },
+            dismissButton = if (onNavigateToRepair != null && damagedPendingUri != null) {
+                {
+                    TextButton(
+                        onClick = {
+                            showDamagedDialog = false
+                            damagedPendingUri = null
+                        }
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            } else null
         )
     }
 
@@ -541,11 +612,13 @@ fun rememberVanguardMultiplePdfPicker(
         if (uris.isNotEmpty()) {
             scope.launch {
                 try {
+                    var currentItemUri: Uri? = uris.firstOrNull()
                     val outcome = VanguardPickerProcessor.processMultiple(
                         context = context,
                         uris = uris,
                         isVanguardEnabled = isVanguardEnabled,
                         onItemScanning = { itemUri ->
+                            currentItemUri = itemUri
                             if (isVanguardEnabled) {
                                 isScanning = true
                                 scanningFileName = FileUtils.getFileName(context, itemUri)
@@ -565,6 +638,7 @@ fun rememberVanguardMultiplePdfPicker(
                             showEncryptedDialog = true
                         }
                         is PickerOutcome.Damaged -> {
+                            damagedPendingUri = currentItemUri
                             showDamagedDialog = true
                         }
                         is PickerOutcome.ProviderError -> {
