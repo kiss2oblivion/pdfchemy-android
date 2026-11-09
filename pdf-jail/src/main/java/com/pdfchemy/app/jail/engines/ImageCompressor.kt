@@ -18,10 +18,6 @@ import java.util.Locale
 
 object ImageCompressor {
 
-    private val ALLOWED_MIME_TYPES = setOf(
-        "image/jpeg", "image/jpg", "image/png", "image/webp", "image/bmp", "image/x-ms-bmp", "image/heic", "image/heif"
-    )
-
     private val DENIED_VECTOR_OR_ANIMATED = setOf(
         "image/svg+xml", "image/gif", "application/pdf"
     )

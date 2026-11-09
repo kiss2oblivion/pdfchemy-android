@@ -171,6 +171,14 @@ The application supports the following locales. The 38 previously baselined rele
 
 ---
 
+## 🧹 Code Cleanup & Architectural Hygiene Registry (2.1.0)
+- **Dead Asset Purge:** Removed unreferenced `mascot.jpg` (saving 618.7 KB in release APK and AAB bundles).
+- **Dead Code Elimination:** Removed uncalled `extractPdfUri` in `MainActivity.kt` and unread `ALLOWED_MIME_TYPES` in `ImageCompressor.kt`.
+- **Hot-Path Memory Optimization:** Replaced per-request `Gson()` instantiations with cached singletons across `JailEngineBridge`, `MigratedEngineDispatch`, `PdfFlattenEngineWorker`, `PdfJailService`, `PdfEditor`, and `PdfFlattenEngine`, reducing heap allocation churn and GC pauses during high-throughput PDF processing.
+- **Unified Telemetry & Logging:** Routed raw `Log.w` calls in `MainActivity.kt` to `AppLogger.w`, ensuring uniform debug-mode logging controls.
+
+---
+
 ## ⏳ What Is NOT Yet Implemented (Future Roadmap)
 1. **Audiobook / MP3 Audio Export:** Exporting TTS read aloud output to `.mp3` / `.wav` audio files.
 

@@ -18,6 +18,7 @@ import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfFlattenEngineWorker {
+    private val gson = Gson()
 
     fun inspect(context: Context, sourceFd: ParcelFileDescriptor): String {
         PDFBoxResourceLoader.init(context)
@@ -40,7 +41,7 @@ object PdfFlattenEngineWorker {
                     "annotationCount" to annotationCount,
                     "hasSignatures" to hasSignatures
                 )
-                return Gson().toJson(map)
+                return gson.toJson(map)
             }
         } finally {
             try { document?.close() } catch (_: Exception) {}
@@ -52,7 +53,7 @@ object PdfFlattenEngineWorker {
         var document: PDDocument? = null
         var intermediateFile: File? = null
 
-        val map = Gson().fromJson(paramsJson, Map::class.java)
+        val map = gson.fromJson(paramsJson, Map::class.java)
         val flattenForms = map["flattenForms"] as? Boolean ?: true
         val flattenAnnotations = map["flattenAnnotations"] as? Boolean ?: true
 

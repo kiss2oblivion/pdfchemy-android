@@ -6,14 +6,14 @@ import android.graphics.Bitmap
 import com.pdfchemy.app.security.PixelWire
 import com.pdfchemy.app.security.SecurityLimits
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 
 internal object JailEngineBridge {
+    private val gson = Gson()
+
     suspend fun call(context: Context, name: String, source: Uri?, dest: Uri?, params: Any = emptyMap<String, Any>(), extra: Uri? = null): OperationContract =
-        if (extra == null) PdfGateway.executeEngine(context, name, source, dest, Gson().toJson(params))
-        else PdfGateway.executeEngineExtra(context, name, source, dest, extra, Gson().toJson(params))
+        if (extra == null) PdfGateway.executeEngine(context, name, source, dest, gson.toJson(params))
+        else PdfGateway.executeEngineExtra(context, name, source, dest, extra, gson.toJson(params))
 
     suspend inline fun <reified T : OperationContract> callTyped(context: Context, name: String, source: Uri?, dest: Uri?, params: Any = emptyMap<String, Any>(), extra: Uri? = null): T =
         call(context, name, source, dest, params, extra) as T

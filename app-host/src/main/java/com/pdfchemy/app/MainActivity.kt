@@ -54,7 +54,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.res.stringResource
 import com.pdfchemy.app.R
 import java.io.File
-import android.util.Log
 import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
@@ -361,13 +360,13 @@ class MainActivity : AppCompatActivity() {
                     this
                 ) { loadAndShowError ->
                     if (loadAndShowError != null) {
-                        Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
+                        AppLogger.w("UMP: ${loadAndShowError.errorCode}: ${loadAndShowError.message}")
                     }
                     initializeMobileAdsIfPermitted()
                 }
             },
             { requestConsentError ->
-                Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
+                AppLogger.w("UMP: ${requestConsentError.errorCode}: ${requestConsentError.message}")
                 initializeMobileAdsIfPermitted()
             }
         )
@@ -409,10 +408,6 @@ class MainActivity : AppCompatActivity() {
                 incomingPdfUriState.value = null
             }
         }
-    }
-
-    private fun extractPdfUri(intent: Intent?): Uri? {
-        return if (intent != null) com.pdfchemy.app.security.ExternalUriAdmission.extractCandidateUri(intent) else null
     }
 
     private fun cleanupOrphanedCacheFiles(context: Context) {

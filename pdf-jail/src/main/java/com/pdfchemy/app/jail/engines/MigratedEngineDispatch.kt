@@ -29,7 +29,7 @@ object MigratedEngineDispatch {
             "TEXT_FORMAT" -> TextFormatConverter.convert(p.getString("text"), TextFormatConverter.Format.valueOf(p.getString("from")), TextFormatConverter.Format.valueOf(p.getString("to"))).getOrThrow()
             "LAYOUT_RESIZE" -> PdfLayoutEngine.resizePages(context, src, dst, TargetPaperSize.valueOf(p.getString("size"))).also { check(it) }
             "LAYOUT_NUP" -> PdfLayoutEngine.createNUpLayout(context, src, dst, NUpMode.valueOf(p.getString("mode")), TargetPaperSize.valueOf(p.getString("size")), p.getBoolean("drawBorders")).also { check(it) }
-            "HEADER_FOOTER" -> PdfHeaderFooterEngine.applyHeaderFooter(context, src, dst, Gson().fromJson(json, StampConfig::class.java)).getOrThrow()
+            "HEADER_FOOTER" -> PdfHeaderFooterEngine.applyHeaderFooter(context, src, dst, gson.fromJson(json, StampConfig::class.java)).getOrThrow()
             "FIND_OCCURRENCES" -> PdfFindAndReplaceEngine.findOccurrences(context, src, p.getString("query"), p.getBoolean("matchCase"))
             "REPLACE_ALL" -> PdfFindAndReplaceEngine.replaceAll(context, src, dst, p.getString("findText"), p.getString("replaceText"), p.getBoolean("matchCase"), rgb("maskColorRgb"), rgb("textColorRgb")).getOrThrow()
             "GRAYSCALE_CONVERT" -> PdfGrayscaleEngine.convertPdf(context, src, dst, GrayscaleMode.valueOf(p.getString("mode")), p.getInt("threshold")).getOrThrow()

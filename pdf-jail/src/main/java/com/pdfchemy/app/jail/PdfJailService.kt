@@ -13,6 +13,11 @@ import com.pdfchemy.app.jail.capabilityInput
 import kotlinx.coroutines.*
 
 class PdfJailService : Service() {
+    companion object {
+        private val gson = com.google.gson.Gson()
+        private val pageModificationsType = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
+    }
+
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val gate = WorkerGate { Process.killProcess(Process.myPid()) }
     @Volatile private var debugOutput: ParcelFileDescriptor? = null
@@ -176,8 +181,7 @@ class PdfJailService : Service() {
         ) {
             submit(operationId, listOfNotNull(sourceFd), listOfNotNull(targetFd), listOf(expectedSha256), listOf(expectedSize), modificationsJson ?: "{}", numeric(operationId, callback), scratchBinder) {
                 require(sourceFd != null && targetFd != null && modificationsJson != null && callback != null)
-                val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
-                val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(modificationsJson, type) ?: emptyMap()
+                val modifications = gson.fromJson<Map<Int, PageModification>>(modificationsJson, pageModificationsType) ?: emptyMap()
                 check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, sourceFd, targetFd, modifications))
                 org.json.JSONObject().put("size", JailScratch.outputSize(targetFd.fileDescriptor)).toString()
             }
@@ -286,8 +290,7 @@ class PdfJailService : Service() {
         return when (engineName) {
             "COMPRESS" -> JailCompressionWorker.compress(requireNotNull(sourceFd), requireNotNull(targetFd), org.json.JSONObject(paramsJson))
             "EDITOR_EXPORT" -> {
-                val type = object : com.google.gson.reflect.TypeToken<Map<Int, PageModification>>() {}.type
-                val modifications = com.google.gson.Gson().fromJson<Map<Int, PageModification>>(paramsJson, type)
+                val modifications = gson.fromJson<Map<Int, PageModification>>(paramsJson, pageModificationsType)
                 check(PdfEditorWorker.exportModifiedPdf(this@PdfJailService, requireNotNull(sourceFd), requireNotNull(targetFd), modifications))
                 org.json.JSONObject().put("size", JailScratch.outputSize(requireNotNull(targetFd).fileDescriptor)).toString()
             }
