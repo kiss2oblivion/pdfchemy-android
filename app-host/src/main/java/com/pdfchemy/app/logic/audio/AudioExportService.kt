@@ -11,7 +11,8 @@ import androidx.core.app.NotificationCompat
 import com.pdfchemy.app.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import java.util.Locale
+import com.pdfchemy.app.logic.OfflineSpeechPolicy
+import com.pdfchemy.app.logic.OfflineSpeechUnavailableException
 import java.util.UUID
 
 class AudioExportService : Service() {
@@ -111,13 +112,9 @@ class AudioExportService : Service() {
             val destination = AudioExportDependencies.destination(id)
             val initialized = CompletableDeferred<Int>()
             tts = TextToSpeech(this) { initialized.complete(it) }
-            check(withTimeout(30_000) { initialized.await() } == TextToSpeech.SUCCESS) { "TTS initialization failed" }
+            if (withTimeoutOrNull(30_000) { initialized.await() } != TextToSpeech.SUCCESS) throw OfflineSpeechUnavailableException()
             val engine = requireNotNull(tts)
-            val offline = engine.voices.orEmpty().filter { !it.isNetworkConnectionRequired }
-            val voice = offline.firstOrNull { it.locale == Locale.getDefault() }
-                ?: offline.firstOrNull { it.locale.language == Locale.getDefault().language }
-                ?: throw IllegalStateException("No installed offline voice for the current language")
-            check(engine.setVoice(voice) == TextToSpeech.SUCCESS) { "Unable to select offline voice" }
+            val voice = OfflineSpeechPolicy.configure(engine) ?: throw OfflineSpeechUnavailableException()
             check(store.updateState(id, AudioExportState.SYNTHESIZING))
             val chunks = withContext(Dispatchers.IO) {
                 val text = staging.getTextArtifactFile(id).readText(Charsets.UTF_8)
@@ -137,6 +134,7 @@ class AudioExportService : Service() {
             store.updateProgress(id, 0, total, 0)
             for ((index, chunk) in chunks.withIndex()) {
                 currentCoroutineContext().ensureActive()
+                if (!OfflineSpeechPolicy.matches(engine.voice, voice)) throw OfflineSpeechUnavailableException()
                 val (utterance, drained) = pcm.beginChunk(index)
                 val sink = staging.getTempChunkFile(id, index)
                 check(engine.synthesizeToFile(chunk, Bundle(), sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }

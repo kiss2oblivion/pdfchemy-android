@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Voor deze taal is een geïnstalleerde offline stem vereist. Installeer of selecteer een stem in de spraakinstellingen en probeer opnieuw. Documenttekst wordt niet naar een netwerkstem verzonden.</string>
+</resources>

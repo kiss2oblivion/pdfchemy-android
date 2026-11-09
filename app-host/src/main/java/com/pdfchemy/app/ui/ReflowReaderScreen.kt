@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import java.util.Locale
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +51,8 @@ import com.pdfchemy.app.logic.PdfOutlineReader
 import com.pdfchemy.app.logic.ReflowSection
 import com.pdfchemy.app.logic.ReflowOcrCoordinator
 import com.pdfchemy.app.logic.ReflowOcrState
+import com.pdfchemy.app.logic.OfflineReadAloudSession
+import com.pdfchemy.app.logic.OfflineSpeechUnavailableException
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,6 +69,7 @@ enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
 fun ReflowReaderScreen(
     initialUri: Uri? = null,
     viewModel: com.pdfchemy.app.ui.MainViewModel,
+    speechFactory: (Context, TextToSpeech.OnInitListener) -> TextToSpeech = { ctx, listener -> TextToSpeech(ctx, listener) },
     onBack: () -> Unit
 ) {
     SecureScreenContent()
@@ -397,10 +399,17 @@ fun ReflowReaderScreen(
     var currentMatchIndex by remember { mutableIntStateOf(0) }
 
     var isTtsBarVisible by remember { mutableStateOf(false) }
-    var isTtsPlaying by remember { mutableStateOf(false) }
     var ttsRate by remember { mutableFloatStateOf(1.0f) }
-    var currentSpeakingIndex by remember { mutableIntStateOf(0) }
-    var ttsEngine by remember { mutableStateOf<TextToSpeech?>(null) }
+    var speechSession by remember { mutableStateOf<OfflineReadAloudSession?>(null) }
+    var speechConstructionFailed by remember { mutableStateOf(false) }
+    var speechRetry by remember { mutableIntStateOf(0) }
+    var showSpeechRecovery by remember { mutableStateOf(false) }
+    val currentSpeechFactory by rememberUpdatedState(speechFactory)
+    val speechState = speechSession?.state?.collectAsState()?.value ?: OfflineReadAloudSession.State(
+        availability = if (speechConstructionFailed) OfflineReadAloudSession.Availability.UNAVAILABLE
+            else OfflineReadAloudSession.Availability.INITIALIZING)
+    val isTtsPlaying = speechState.playing
+    val currentSpeakingIndex = speechState.paragraphIndex
 
     val allParagraphs = remember(reflowSections) {
         reflowSections.flatMap { it.paragraphs }
@@ -416,60 +425,102 @@ fun ReflowReaderScreen(
         }
         map
     }
+    val currentParagraphToSection by rememberUpdatedState(paragraphToSection)
 
     fun speakParagraph(index: Int) {
-        if (index in allParagraphs.indices && ttsEngine != null) {
-            currentSpeakingIndex = index
-            val text = allParagraphs[index]
-            val params = android.os.Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "para_$index")
-            ttsEngine?.setSpeechRate(ttsRate)
-            ttsEngine?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "para_$index")
-            isTtsPlaying = true
+        if (speechState.availability == OfflineReadAloudSession.Availability.UNAVAILABLE) showSpeechRecovery = true
+        else speechSession?.play(index)
+    }
+
+    DisposableEffect(context, initialUri, selectedPdfUri, speechRetry) {
+        speechConstructionFailed = false
+        var owner: OfflineReadAloudSession? = null
+        var pendingStatus: Int? = null
+        val engine = runCatching {
+            currentSpeechFactory(context, TextToSpeech.OnInitListener { status ->
+                scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                    val session = owner
+                    if (session == null) pendingStatus = status else session.initialize(status)
+                }
+            })
+        }.getOrNull()
+        if (engine == null) {
+            speechSession = null
+            speechConstructionFailed = true
+            onDispose { }
         } else {
-            isTtsPlaying = false
+            val session = OfflineReadAloudSession(engine)
+            owner = session
+            session.replaceParagraphs(allParagraphs, initialUri to selectedPdfUri)
+            session.setRate(ttsRate)
+            speechSession = session
+            val listenerAccepted = runCatching {
+                engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                            if (session.onStart(utteranceId)) {
+                                val section = currentParagraphToSection[session.state.value.paragraphIndex]
+                                if (section != null && !listState.isScrollInProgress) listState.animateScrollToItem(section)
+                            }
+                        }
+                    }
+                    override fun onDone(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onDone(utteranceId) }
+                    }
+                    @Deprecated("Required callback for older TTS engines")
+                    override fun onError(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onError(utteranceId) }
+                    }
+                    override fun onError(utteranceId: String?, errorCode: Int) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onError(utteranceId) }
+                    }
+                }) == TextToSpeech.SUCCESS
+            }.getOrDefault(false)
+            if (!listenerAccepted) session.initialize(TextToSpeech.ERROR)
+            else pendingStatus?.let { session.initialize(it) }
+            val deadline = scope.launch {
+                kotlinx.coroutines.delay(OfflineReadAloudSession.INITIALIZATION_TIMEOUT_MILLIS)
+                session.initializationTimedOut()
+            }
+            onDispose {
+                deadline.cancel()
+                session.close()
+            }
         }
     }
 
-    // Initialize TTS
-    DisposableEffect(context) {
-        val tts = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                ttsEngine?.language = Locale.getDefault()
-            }
+    LaunchedEffect(speechSession, allParagraphs, initialUri, selectedPdfUri) {
+        speechSession?.replaceParagraphs(allParagraphs, initialUri to selectedPdfUri)
+    }
+    val readerLifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(readerLifecycle, speechSession) {
+        val session = speechSession
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) session?.stop()
         }
-        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                    isTtsPlaying = true
-                    val sIdx = paragraphToSection[currentSpeakingIndex]
-                    if (sIdx != null && !listState.isScrollInProgress) {
-                        listState.animateScrollToItem(sIdx)
-                    }
-                }
-            }
-            override fun onDone(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                    if (currentSpeakingIndex + 1 < allParagraphs.size) {
-                        currentSpeakingIndex++
-                        val nextText = allParagraphs[currentSpeakingIndex]
-                        tts.speak(nextText, TextToSpeech.QUEUE_FLUSH, null, "P_$currentSpeakingIndex")
-                    } else {
-                        isTtsPlaying = false
-                    }
-                }
-            }
-            override fun onError(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) { isTtsPlaying = false }
-            }
-        })
-        ttsEngine = tts
+        readerLifecycle.addObserver(observer)
+        onDispose { readerLifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(speechState.availability, isTtsBarVisible) {
+        if (isTtsBarVisible && speechState.availability == OfflineReadAloudSession.Availability.UNAVAILABLE) showSpeechRecovery = true
+    }
 
-        onDispose {
-            tts.stop()
-            tts.shutdown()
-            ttsEngine = null
-        }
+    fun openSpeechSettings() {
+        runCatching { context.startActivity(android.content.Intent("com.android.settings.TTS_SETTINGS")) }
+            .onFailure { runCatching { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS)) } }
+    }
+    if (showSpeechRecovery) {
+        AlertDialog(
+            onDismissRequest = { showSpeechRecovery = false },
+            title = { Text(stringResource(R.string.tts_play)) },
+            text = { Text(stringResource(R.string.tts_offline_unavailable)) },
+            confirmButton = {
+                TextButton(onClick = { showSpeechRecovery = false; speechRetry++ }) { Text(stringResource(R.string.retry)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSpeechRecovery = false; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
+            }
+        )
     }
 
     var showReadingControls by remember { mutableStateOf(true) }
@@ -609,11 +660,16 @@ fun ReflowReaderScreen(
         AlertDialog(
             onDismissRequest = { activeExportJobKey = null },
             title = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
-            text = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved) else "Error: ${activeJobState!!.error?.message}") },
+            text = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved)
+                else if (activeJobState!!.error is OfflineSpeechUnavailableException) stringResource(R.string.tts_offline_unavailable)
+                else "Error: ${activeJobState!!.error?.message}") },
             confirmButton = {
                 TextButton(onClick = { activeExportJobKey = null }) { Text("OK") }
             },
             dismissButton = {
+                if (activeJobState?.outputUri == null && activeJobState?.error is OfflineSpeechUnavailableException) {
+                    TextButton(onClick = { activeExportJobKey = null; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
+                }
                 activeJobState?.outputUri?.let { saved ->
                     val output = Uri.parse(saved)
                     Row {
@@ -759,8 +815,7 @@ fun ReflowReaderScreen(
                                     if (isTtsBarVisible && !isTtsPlaying) {
                                         speakParagraph(currentSpeakingIndex)
                                     } else if (!isTtsBarVisible) {
-                                        ttsEngine?.stop()
-                                        isTtsPlaying = false
+                                        speechSession?.stop()
                                     }
                                 }) {
                                     Icon(
@@ -924,6 +979,9 @@ fun ReflowReaderScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
+                                    if (speechState.availability == OfflineReadAloudSession.Availability.INITIALIZING) {
+                                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                                    }
                                     IconButton(
                                         onClick = {
                                             if (currentSpeakingIndex > 0) {
@@ -939,8 +997,7 @@ fun ReflowReaderScreen(
                                     IconButton(
                                         onClick = {
                                             if (isTtsPlaying) {
-                                                ttsEngine?.stop()
-                                                isTtsPlaying = false
+                                                speechSession?.stop()
                                             } else {
                                                 speakParagraph(currentSpeakingIndex)
                                             }
@@ -982,7 +1039,7 @@ fun ReflowReaderScreen(
                                         1.5f -> 2.0f
                                         else -> 0.75f
                                     }
-                                    ttsEngine?.setSpeechRate(ttsRate)
+                                    speechSession?.setRate(ttsRate)
                                 }) {
                                     Text("${ttsRate}x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 }

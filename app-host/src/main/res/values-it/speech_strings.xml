@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Per questa lingua è necessaria una voce offline installata. Installa o seleziona una voce nelle impostazioni vocali, poi riprova. Il testo del documento non viene inviato a una voce online.</string>
+</resources>

@@ -73,6 +73,9 @@ class AudioServiceLifecycleTest {
     @Implements(TextToSpeech::class)
     class PcmTtsShadow : ShadowTextToSpeech() {
         @Implementation
+        fun getVoice(): Voice? = currentVoice
+
+        @Implementation
         override fun synthesizeToFile(text: CharSequence, params: Bundle, file: File, utteranceId: String): Int {
             // Deliberately NOT a WAV. The application's authoritative data must come from callbacks.
             file.writeText("arbitrary engine container; do not concatenate")

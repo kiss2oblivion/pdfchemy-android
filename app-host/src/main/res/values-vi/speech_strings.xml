@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Ngôn ngữ này cần giọng nói ngoại tuyến đã cài đặt. Hãy cài đặt hoặc chọn giọng nói trong cài đặt lời nói, rồi thử lại. Văn bản tài liệu không được gửi đến giọng nói qua mạng.</string>
+</resources>

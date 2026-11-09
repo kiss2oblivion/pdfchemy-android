@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Für diese Sprache ist eine installierte Offline-Stimme erforderlich. Installiere oder wähle eine in den Spracheinstellungen und versuche es erneut. Der Dokumenttext wird nicht an eine Netzwerkstimme gesendet.</string>
+</resources>

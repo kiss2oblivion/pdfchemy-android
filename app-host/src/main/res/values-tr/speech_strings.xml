@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Bu dil için yüklü bir çevrimdışı ses gerekir. Konuşma ayarlarından bir ses yükleyin veya seçin ve yeniden deneyin. Belge metni ağ kullanan bir sese gönderilmez.</string>
+</resources>
