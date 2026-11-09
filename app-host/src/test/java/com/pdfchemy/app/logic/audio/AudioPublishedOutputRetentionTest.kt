@@ -61,14 +61,15 @@ class AudioPublishedOutputRetentionTest {
         every { resolver.openOutputStream(uri, "wt") } returns output
         try {
             AudioExportDependencies.registerDestination(id, uri)
-            AudioOutputPublisher.publish(context, wav, uri)
+            val cachedFreshness = AudioExportDependencies.isFreshDestination(id)
+            AudioExportDependencies.publishDestination(context, id, wav) {}
             assertArrayEquals(bytes, output.toByteArray())
             assertFalse(OutputPolicy.isFreshCopy(uri))
-            assertTrue(AudioExportDependencies.isFreshDestination(id))
-            AudioOutputPublisher.deletePartial(context, uri, AudioExportDependencies.isFreshDestination(id))
+            assertFalse(AudioExportDependencies.isFreshDestination(id))
+            AudioOutputPublisher.deletePartial(context, uri, cachedFreshness)
             assertEquals("Completed output must survive a stale cleanup request", 0, deletes)
         } finally {
-            AudioExportDependencies.forgetDestination(id)
+            AudioExportDependencies.forgetDestination(context, id)
             wav.delete()
         }
     }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.net.Uri
+import com.pdfchemy.app.logic.OutputPolicy
 import android.os.Bundle
 import android.content.ComponentName
 import android.content.pm.PackageManager
@@ -33,8 +34,9 @@ class AudioWavPlatformTest {
         destination.parentFile!!.mkdirs()
         try {
             store.createJob(id); staging.stageText(id, "Foreground service regression")
-            AudioExportDependencies.registerDestination(id,
-                FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", destination))
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", destination)
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
             store.updateState(id, AudioExportState.CANCELLING)
             ActivityScenario.launch(com.pdfchemy.app.MainActivity::class.java).use { activity ->
                 activity.onActivity { host ->
@@ -44,7 +46,7 @@ class AudioWavPlatformTest {
                 withTimeout(15_000) { requireNotNull(store.getJobFlow(id)).first { it.state == AudioExportState.CANCELLED } }
                 assertFalse(File(context.cacheDir, "audio-export/$id").exists())
             }
-        } finally { staging.clearJobStaging(id); destination.delete(); AudioExportDependencies.forgetDestination(id); store.removeJob(id) }
+        } finally { staging.clearJobStaging(id); destination.delete(); AudioExportDependencies.forgetDestination(context, id); store.removeJob(id) }
     }
 
     @Test fun assembledWavIsRecognizedByAndroid() = runBlocking {
@@ -71,6 +73,7 @@ class AudioWavPlatformTest {
         // Publication destinations are writable providers, never immutable recipient copies.
         val destination = Uri.parse("content://com.pdfchemy.app.security.outputfixture/audio-platform-$id")
         context.contentResolver.call(destination, "configure", destination.lastPathSegment, Bundle())
+        OutputPolicy.registerFreshCopy(destination)
         try {
             val raw = staging.getMasterRawFile(id); raw.writeBytes(ByteArray(16000))
             val wav = staging.getFinalWavFile(id)
@@ -94,7 +97,7 @@ class AudioWavPlatformTest {
             val wav = staging.getFinalWavFile(id)
             WavWriter.assemble(raw, wav, PcmFormat(8000, 1, 2))
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", existing)
-            assertTrue(runCatching { AudioOutputPublisher.publish(context, wav, uri) }.exceptionOrNull() is SecurityException)
+            assertTrue(runCatching { AudioOutputPublisher.publish(context, wav, uri) }.exceptionOrNull() is UnsupportedOperationException)
             assertArrayEquals(original, existing.readBytes())
         } finally { existing.delete(); staging.clearJobStaging(id) }
     }

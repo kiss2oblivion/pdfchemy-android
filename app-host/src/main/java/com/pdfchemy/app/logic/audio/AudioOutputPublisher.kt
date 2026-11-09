@@ -3,6 +3,7 @@ package com.pdfchemy.app.logic.audio
 import android.content.Context
 import android.net.Uri
 import com.pdfchemy.app.logic.OutputPolicy
+import com.pdfchemy.app.security.FreshOutputRegistry
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.OutputStream
@@ -16,13 +17,35 @@ object AudioOutputPublisher {
         isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination),
         onPublished: (Uri) -> Unit = {}
     ) {
+        require(destination.scheme == "content") { "Audio destination must be a content URI" }
+        if (!isFreshCopy) throw UnsupportedOperationException("Audio export requires a newly created output copy")
+        val owner = Any()
+        FreshOutputRegistry.claimKnown(listOf(destination), owner)
+        try {
+            publishClaimed(context, wav, destination, owner, onPublished)
+        } finally {
+            withContext(NonCancellable + Dispatchers.IO) {
+                FreshOutputRegistry.abandon(context, listOf(destination), owner)
+            }
+        }
+    }
+
+    internal suspend fun publishClaimed(
+        context: Context,
+        wav: File,
+        destination: Uri,
+        owner: Any,
+        onPublished: (Uri) -> Unit
+    ) {
+        require(destination.scheme == "content") { "Audio destination must be a content URI" }
+        FreshOutputRegistry.requireSafeSafTargets(listOf(destination), owner)
         copy(
             wav,
             listOf(destination),
             { context.contentResolver.openOutputStream(destination, "wt") },
-            { deletePartial(context, destination, isFreshCopy) },
+            {}, // The owner abandons only after copy releases its writer lease.
             {
-                OutputPolicy.markPublished(destination)
+                FreshOutputRegistry.published(listOf(destination), owner)
                 onPublished(destination)
             }
         )

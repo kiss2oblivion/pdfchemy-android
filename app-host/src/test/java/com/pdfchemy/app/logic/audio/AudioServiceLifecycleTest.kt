@@ -2,6 +2,7 @@ package com.pdfchemy.app.logic.audio
 
 import android.content.Intent
 import android.net.Uri
+import com.pdfchemy.app.logic.OutputPolicy
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.os.Bundle
@@ -51,7 +52,9 @@ class AudioServiceLifecycleTest {
         val store = AudioExportDependencies.jobStore; val staging = AudioExportDependencies.stagingManager
         try {
             store.createJob(id); staging.stageText(id, "Offline voice regression")
-            AudioExportDependencies.registerDestination(id, Uri.parse("content://missing.test/$id"))
+            val uri = Uri.parse("content://missing.test/$id")
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
             ShadowTextToSpeech.addVoice(Voice("network-test", Locale.getDefault(), Voice.QUALITY_NORMAL, Voice.LATENCY_NORMAL, true, emptySet()))
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
             runCurrent()
@@ -63,7 +66,7 @@ class AudioServiceLifecycleTest {
             repeat(100) { runCurrent(); if (source.exists()) Thread.sleep(10) }
         } finally {
             controller.destroy(); staging.clearJobStaging(id)
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id); Dispatchers.resetMain()
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id); Dispatchers.resetMain()
         }
     }
 
@@ -93,6 +96,7 @@ class AudioServiceLifecycleTest {
             val provider = OutputProvider(destination)
             provider.attachInfo(service, ProviderInfo().apply { authority = "audio.unit.test" })
             ShadowContentResolver.registerProviderInternal("audio.unit.test", provider)
+            OutputPolicy.registerFreshCopy(uri)
             AudioExportDependencies.registerDestination(id, uri)
             ShadowTextToSpeech.addVoice(Voice("offline-test", Locale.getDefault(), Voice.QUALITY_NORMAL, Voice.LATENCY_NORMAL, false, emptySet()))
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
@@ -109,7 +113,7 @@ class AudioServiceLifecycleTest {
             assertArrayEquals(byteArrayOf(1, 2, 3, 4), destination.readBytes().copyOfRange(44, 48))
         } finally {
             controller.destroy(); staging.clearJobStaging(id); destination.delete()
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id)
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
             Dispatchers.resetMain()
         }
     }
@@ -123,7 +127,9 @@ class AudioServiceLifecycleTest {
         val staging = AudioExportDependencies.stagingManager
         try {
             store.createJob(id)
-            AudioExportDependencies.registerDestination(id, Uri.parse("content://missing.test/$id"))
+            val uri = Uri.parse("content://missing.test/$id")
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
             staging.stageText(id, "Timeout regression text")
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
             runCurrent() // Pipeline is awaiting the TTS initialization callback.
@@ -142,7 +148,7 @@ class AudioServiceLifecycleTest {
             assertFalse(java.io.File(service.cacheDir, "audio-export/$id").exists())
         } finally {
             controller.destroy(); staging.clearJobStaging(id)
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id)
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
             Dispatchers.resetMain()
         }
     }

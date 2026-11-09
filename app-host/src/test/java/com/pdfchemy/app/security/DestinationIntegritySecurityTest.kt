@@ -599,15 +599,16 @@ class DestinationIntegritySecurityTest {
             true
         }
 
-        // Register with provenance = EXISTING (isFreshCopy = false)
-        AudioExportDependencies.registerDestination(jobId, existingAudio, isFreshCopy = false)
-        assertFalse(AudioExportDependencies.isFreshDestination(jobId))
+        assertTrue(runCatching {
+            AudioExportDependencies.registerDestination(jobId, existingAudio, isFreshCopy = false)
+        }.exceptionOrNull() is UnsupportedOperationException)
+        assertTrue(runCatching { AudioExportDependencies.destination(jobId) }.isFailure)
 
         // Pre-publication deletion attempt (e.g. initialization rejection or error)
         AudioOutputPublisher.deletePartial(context, existingAudio, isFreshCopy = false)
 
         verify(exactly = 0) { docFile.delete() }
-        AudioExportDependencies.forgetDestination(jobId)
+        AudioExportDependencies.forgetDestination(context, jobId)
     }
 
     @Test
@@ -617,20 +618,23 @@ class DestinationIntegritySecurityTest {
         val jobId = UUID.randomUUID()
 
         mockkStatic(DocumentFile::class)
-        val docFile = mockk<DocumentFile>()
-        every { DocumentFile.fromSingleUri(any(), freshAudio) } returns docFile
         var deleted = false
-        every { docFile.delete() } answers { deleted = true; true }
+        val resolver = mockk<android.content.ContentResolver>()
+        val cleanupContext = mockk<Context>()
+        mockkStatic(android.provider.DocumentsContract::class)
+        every { android.provider.DocumentsContract.isDocumentUri(cleanupContext, freshAudio) } returns false
+        every { cleanupContext.contentResolver } returns resolver
+        every { resolver.delete(freshAudio, null, null) } answers { deleted = true; 1 }
 
         OutputPolicy.registerFreshCopy(freshAudio)
         AudioExportDependencies.registerDestination(jobId, freshAudio, isFreshCopy = true)
         assertTrue(AudioExportDependencies.isFreshDestination(jobId))
 
         AudioOutputPublisher.deletePartial(context, freshAudio, isFreshCopy = true)
-
+        assertFalse("Generic cleanup cannot delete an owned destination", deleted)
+        AudioExportDependencies.forgetDestination(cleanupContext, jobId)
         assertTrue("Fresh incomplete audio file must be deleted", deleted)
-        verify(exactly = 1) { docFile.delete() }
-        AudioExportDependencies.forgetDestination(jobId)
+        verify(exactly = 1) { resolver.delete(freshAudio, null, null) }
     }
 
     @Test

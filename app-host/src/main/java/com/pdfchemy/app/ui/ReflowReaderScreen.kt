@@ -671,7 +671,7 @@ fun ReflowReaderScreen(
                         com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.clearJobStaging(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(jobId)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(context, jobId)
                     }
                     if (error is kotlinx.coroutines.CancellationException) throw error
                     audioStartError = error.message ?: "Unable to start audio export"

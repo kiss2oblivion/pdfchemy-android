@@ -121,7 +121,7 @@ class AudioServicePublicationRetentionTest {
             driveUntil { service.exportJobForTesting?.isCompleted != false }
             service.afterPublicationForTesting = null
             staging.clearJobStaging(id)
-            AudioExportDependencies.forgetDestination(id)
+            AudioExportDependencies.forgetDestination(service, id)
             store.removeJob(id)
             OutputPolicy.unregisterFreshCopy(uri)
             output.delete()
