@@ -56,6 +56,7 @@ fun BookletScreen(
     var bookletPlan by remember { mutableStateOf<List<BookletSheetPlan>>(emptyList()) }
     var selectedPaperSize by remember { mutableStateOf(TargetPaperSize.A4) }
     var drawFoldGuide by remember { mutableStateOf(true) }
+    var showAllSheets by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
     var progressCurrent by remember { mutableIntStateOf(0) }
     var progressTotal by remember { mutableIntStateOf(0) }
@@ -102,14 +103,6 @@ fun BookletScreen(
                     )
                 } finally {
                     isProcessing = false
-                }
-                
-                if (false) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_booklet_success),
-                        context.getString(R.string.desc_booklet_success)
-                    , destUri)
-                    onBack()
                 }
             }
         }
@@ -215,7 +208,8 @@ fun BookletScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        bookletPlan.take(6).forEach { side ->
+                        val visibleSheets = if (showAllSheets) bookletPlan else bookletPlan.take(6)
+                        visibleSheets.forEach { side ->
                             val sideName = if (side.isFront) stringResource(R.string.sheet_front) else stringResource(R.string.sheet_back)
                             val leftStr = side.leftPageOriginalIndex?.let { "P${it + 1}" } ?: stringResource(R.string.page_blank)
                             val rightStr = side.rightPageOriginalIndex?.let { "P${it + 1}" } ?: stringResource(R.string.page_blank)
@@ -237,9 +231,13 @@ fun BookletScreen(
                         }
                         if (bookletPlan.size > 6) {
                             Text(
-                                stringResource(R.string.label_more_sheets, bookletPlan.size - 6),
+                                text = if (showAllSheets) "Show fewer sheets ▲" else stringResource(R.string.label_more_sheets, bookletPlan.size - 6) + " ▼",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .clickable { showAllSheets = !showAllSheets }
+                                    .padding(vertical = 4.dp)
                             )
                         }
                     }
@@ -250,6 +248,20 @@ fun BookletScreen(
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.label_booklet_settings), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+                    Text(stringResource(R.string.label_target_paper_size), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TargetPaperSize.values().forEach { size ->
+                            FilterChip(
+                                selected = selectedPaperSize == size,
+                                onClick = { selectedPaperSize = size },
+                                label = { Text(size.displayName, fontSize = 12.sp) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -282,8 +294,7 @@ fun BookletScreen(
             // Action
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_booklet.pdf")
+                    saveFileLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "booklet"))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

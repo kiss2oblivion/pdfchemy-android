@@ -238,9 +238,7 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
                     Button(
                         onClick = {
-                            val originalName = FileUtils.getFileName(context, selectedPdfUri!!) ?: "Document.pdf"
-                            val defaultName = "Searchable_${originalName}"
-                            saveDocLauncher.launch(defaultName)
+                            saveDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "searchable"))
                         },
                         modifier = Modifier
                             .fillMaxWidth()

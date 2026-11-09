@@ -149,6 +149,27 @@ fun DocumentSanitizerScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
+                },
+                actions = {
+                    val report = auditReport
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val summary = buildString {
+                                    appendLine("Status: ${if (report.isClean) "Clean" else "${report.threatsFound} threats detected"}")
+                                    appendLine("JavaScript Triggers: ${report.jsCount}")
+                                    appendLine("Launch Actions: ${report.launchActionsCount}")
+                                    appendLine("Other Actions: ${report.otherActionsCount}")
+                                    append("Attachments: ${report.attachmentCount}")
+                                }
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Sanitizer Audit Report", summary))
+                                Toast.makeText(context, "Copied audit report to clipboard", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Audit Report")
+                        }
+                    }
                 }
             )
         }

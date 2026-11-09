@@ -124,17 +124,21 @@ fun ToolSearchBar(
 
     val context = androidx.compose.ui.platform.LocalContext.current
     // Read localized resources on composition so locale changes refresh matching.
-    val filteredTools = ToolRegistry.search(query) { context.getString(it) }
+    val filteredTools = if (query.isBlank()) ToolRegistry.allTools else ToolRegistry.search(query) { context.getString(it) }
 
     // Material's compact SearchBar input has a fixed height. Use a wrapping
     // field at enlarged fonts so its query and placeholder remain readable.
     if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.2f) {
+        androidx.activity.compose.BackHandler(enabled = active) {
+            active = false
+            query = ""
+        }
         Column(modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             OutlinedTextField(value = query, onValueChange = { query = it; active = true },
                 label = { Text(stringResource(R.string.tool_search_hint)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
-                    if (query.isNotEmpty()) IconButton(onClick = { query = ""; active = false }) {
+                    if (query.isNotEmpty() || active) IconButton(onClick = { query = ""; active = false }) {
                         Icon(Icons.Default.Close, stringResource(R.string.clear))
                     }
                 }, modifier = Modifier.fillMaxWidth(), maxLines = 3)

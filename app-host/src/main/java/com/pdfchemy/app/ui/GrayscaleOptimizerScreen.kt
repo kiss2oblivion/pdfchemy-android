@@ -54,6 +54,7 @@ fun GrayscaleOptimizerScreen(
     var threshold by remember { mutableFloatStateOf(128f) }
     var previewPageIndex by remember { mutableIntStateOf(0) }
     var totalPages by remember { mutableIntStateOf(1) }
+    var showPageJumpDialog by remember { mutableStateOf(false) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isRenderingPreview by remember { mutableStateOf(false) }
 
@@ -87,6 +88,23 @@ fun GrayscaleOptimizerScreen(
         }
     }
 
+    LaunchedEffect(selectedPdfUri) {
+        val uri = selectedPdfUri
+        if (uri != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                        val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
+                        withContext(Dispatchers.Main) {
+                            totalPages = count.coerceAtLeast(1)
+                            if (previewPageIndex >= totalPages) previewPageIndex = 0
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     LaunchedEffect(selectedPdfUri, selectedMode, threshold, previewPageIndex) {
         if (selectedPdfUri != null) {
             refreshPreview()
@@ -96,16 +114,6 @@ fun GrayscaleOptimizerScreen(
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
         previewPageIndex = 0
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                    val count = com.pdfchemy.app.sandbox.NativeRendererCoordinator.getPageCount(context, pfd) ?: 0
-                    withContext(Dispatchers.Main) {
-                        totalPages = count.coerceAtLeast(1)
-                    }
-                }
-            } catch (_: Exception) {}
-        }
     }
 
     val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
@@ -291,7 +299,8 @@ fun GrayscaleOptimizerScreen(
                             Text(
                                 stringResource(R.string.label_preview_page, previewPageIndex + 1, totalPages),
                                 fontWeight = FontWeight.SemiBold,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
                             )
                             IconButton(
                                 onClick = { if (previewPageIndex < totalPages - 1) previewPageIndex++ },
@@ -340,9 +349,8 @@ fun GrayscaleOptimizerScreen(
             // Convert and Save Button
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
                     val suffix = if (selectedMode == GrayscaleMode.MONOCHROME_BINARY) "bw" else "gray"
-                    saveFileLauncher.launch("${base}_$suffix.pdf")
+                    saveFileLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, suffix))
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -365,5 +373,17 @@ fun GrayscaleOptimizerScreen(
                 }
             }
         }
+    }
+
+    if (showPageJumpDialog && totalPages > 1) {
+        PageJumpDialog(
+            currentPageZeroBased = previewPageIndex,
+            totalPages = totalPages,
+            onDismiss = { showPageJumpDialog = false },
+            onJumpToPage = { targetPageZeroBased ->
+                previewPageIndex = targetPageZeroBased.coerceIn(0, totalPages - 1)
+                showPageJumpDialog = false
+            }
+        )
     }
 }

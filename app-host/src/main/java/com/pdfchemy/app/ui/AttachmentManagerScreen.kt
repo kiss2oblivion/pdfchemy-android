@@ -126,17 +126,12 @@ fun AttachmentManagerScreen(
                         context.getString(R.string.error_embed_failed),
                         e.localizedMessage ?: ""
                     )
-                }
-                if (false) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success)
-                    , destUri)
-                    selectedPdfUri = destUri
+                } finally {
                     fileToEmbedUri = null
-                    refreshAttachments()
                 }
             }
+        } else {
+            fileToEmbedUri = null
         }
     }
 
@@ -144,8 +139,7 @@ fun AttachmentManagerScreen(
         val fileUri = fileToEmbedUri
         val pdfUri = selectedPdfUri
         if (fileUri != null && pdfUri != null) {
-            val base = FileUtils.getFileName(context, pdfUri)?.removeSuffix(".pdf") ?: "document"
-            saveAttachedPdfLauncher.launch("${base}_with_attachment.pdf")
+            saveAttachedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, pdfUri, "with_attachment"))
         }
     }
 

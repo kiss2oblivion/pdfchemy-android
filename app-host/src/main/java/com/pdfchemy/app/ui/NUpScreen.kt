@@ -244,6 +244,20 @@ fun NUpScreen(
             // Options: Borders and Paper Size
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(stringResource(R.string.label_target_paper_size), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TargetPaperSize.values().forEach { size ->
+                            FilterChip(
+                                selected = selectedPaperSize == size,
+                                onClick = { selectedPaperSize = size },
+                                label = { Text(size.displayName) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -272,8 +286,7 @@ fun NUpScreen(
             // Generate Button
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_${selectedLayout.pagesPerSheet}up_handout.pdf")
+                    saveFileLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "${selectedLayout.pagesPerSheet}up_handout"))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

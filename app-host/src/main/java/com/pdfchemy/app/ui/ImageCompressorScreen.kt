@@ -271,6 +271,10 @@ fun ImageCompressorScreen(
                             onClearClick = {
                                 selectedBatchUris = emptyList()
                                 batchResult = null
+                            },
+                            onRemoveUri = { uriToRemove ->
+                                selectedBatchUris = selectedBatchUris.filterNot { it == uriToRemove }
+                                batchResult = null
                             }
                         )
                     }
@@ -838,7 +842,8 @@ fun BatchImagesSelectCard(
     selectedUris: List<Uri>,
     context: Context,
     onPickClick: () -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    onRemoveUri: (Uri) -> Unit = {}
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -909,14 +914,32 @@ fun BatchImagesSelectCard(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(selectedUris, key = { it.toString() }, contentType = { "imageThumb" }) { uri ->
-                        IsolatedImage(
-                            model = uri,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
+                        Box(modifier = Modifier.size(56.dp)) {
+                            IsolatedImage(
+                                model = uri,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(2.dp)
+                                    .size(18.dp)
+                                    .background(Color.Black.copy(alpha = 0.65f), CircleShape)
+                                    .clickable { onRemoveUri(uri) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Close,
+                                    contentDescription = stringResource(R.string.clear),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

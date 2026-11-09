@@ -3416,8 +3416,50 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     BackHandler { onBack() }
 
-    Scaffold(containerColor = Color.Transparent, 
-        topBar = { PremiumTopAppBar(stringResource(R.string.history_text_to_pdf), onBack) }
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    val wordCount = remember(inputText) {
+        if (inputText.isBlank()) 0 else inputText.trim().split(Regex("\\s+")).size
+    }
+    val charCount = inputText.length
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.history_text_to_pdf)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val pasted = clipboardManager.getText()?.text
+                            if (!pasted.isNullOrEmpty()) {
+                                viewModel.setInputText(if (inputText.isEmpty()) pasted else "$inputText\n$pasted")
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = "Paste")
+                    }
+                    if (inputText.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(inputText))
+                                Toast.makeText(context, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy")
+                        }
+                        IconButton(onClick = { viewModel.setInputText("") }) {
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.clear))
+                        }
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
             Card(
@@ -3430,6 +3472,21 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     label = { Text(stringResource(R.string.type_or_paste_text_here)) },
                     modifier = Modifier.fillMaxSize().padding(8.dp),
                     placeholder = { Text(stringResource(R.string.enter_the_content_of_your_pdf)) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Words: $wordCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Chars: $charCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
