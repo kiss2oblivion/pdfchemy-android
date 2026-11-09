@@ -425,14 +425,31 @@ $ncxNavPoints
     }
 
     private fun sanitizeText(text: String): String {
-        return text.replace("“", "\"")
+        val replaced = text.replace("“", "\"")
             .replace("”", "\"")
             .replace("‘", "'")
             .replace("’", "'")
             .replace("—", "--")
             .replace("–", "-")
             .replace("…", "...")
-            .filter { it.code in 32..126 || it.code in 160..255 }
+        return buildString(replaced.length) {
+            for (ch in replaced) {
+                when {
+                    ch.code in 32..126 || ch.code in 160..255 -> append(ch)
+                    ch == 'ł' -> append('l')
+                    ch == 'Ł' -> append('L')
+                    ch == 'đ' -> append('d')
+                    ch == 'Đ' -> append('D')
+                    ch.code > 255 -> {
+                        val decomposed = java.text.Normalizer.normalize(ch.toString(), java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{Mn}+"), "")
+                        for (dc in decomposed) {
+                            if (dc.code in 32..126 || dc.code in 160..255) append(dc)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun wordWrap(text: String, font: com.tom_roush.pdfbox.pdmodel.font.PDFont, fontSize: Float, maxWidth: Float): List<String> {

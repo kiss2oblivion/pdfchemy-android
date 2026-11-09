@@ -75,12 +75,15 @@ object SignatureEngineWorker {
                             cs.drawImage(pdImage, stampX, stampY, stampW, stampH)
 
                             if (dateStamp.isNotBlank()) {
-                                cs.beginText()
-                                cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
-                                cs.setNonStrokingColor(0f, 0f, 0f)
-                                cs.newLineAtOffset(stampX, stampY - 12f)
-                                cs.showText("Signed: $dateStamp")
-                                cs.endText()
+                                val safeDateStamp = sanitizeForWinAnsi("Signed: $dateStamp")
+                                if (safeDateStamp.isNotBlank()) {
+                                    cs.beginText()
+                                    cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
+                                    cs.setNonStrokingColor(0f, 0f, 0f)
+                                    cs.newLineAtOffset(stampX, stampY - 12f)
+                                    cs.showText(safeDateStamp)
+                                    cs.endText()
+                                }
                             }
 
                             cs.restoreGraphicsState()
@@ -145,5 +148,13 @@ object SignatureEngineWorker {
             sourceFile?.delete()
             destFile?.delete()
         }
+    }
+
+    internal fun sanitizeForWinAnsi(text: String): String {
+        val decomposed = java.text.Normalizer.normalize(
+            text.replace('ł', 'l').replace('Ł', 'L').replace('đ', 'd').replace('Đ', 'D'),
+            java.text.Normalizer.Form.NFD
+        ).replace(Regex("\\p{Mn}+"), "")
+        return decomposed.filter { it.code in 32..126 || it.code in 160..255 }
     }
 }

@@ -290,7 +290,7 @@ object DocumentStager {
             var size = 0L
             val digest = MessageDigest.getInstance("SHA-256")
             file.outputStream().use { output ->
-                val buffer = ByteArray(8192)
+                val buffer = ByteArray(64 * 1024)
                 while (true) {
                     checkCancellation()
                     if (Thread.currentThread().isInterrupted) throw java.io.InterruptedIOException("Staging cancelled")

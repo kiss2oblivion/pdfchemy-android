@@ -273,7 +273,7 @@ internal object RedactionResources {
 
     private fun removeDocumentCarriers(document: PDDocument) {
         val carrierKeys = setOf("Metadata", "PieceInfo", "EmbeddedFiles", "AF", "EF", "FS", "SE",
-            "StructTreeRoot", "MarkInfo", "Info").mapTo(mutableSetOf(), COSName::getPDFName)
+            "StructTreeRoot", "MarkInfo", "Info", "JavaScript", "JS").mapTo(mutableSetOf(), COSName::getPDFName)
         val seeds = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val structureSeeds = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         fun record(raw: COSBase?, structure: Boolean = false) {
@@ -356,7 +356,7 @@ internal object RedactionResources {
                 node.removeItem(COSName.getPDFName("StructParent"))
             }
         }
-        ActiveContentScrubber.inspect(document, scrub = true, purgeJs = false,
+        ActiveContentScrubber.inspect(document, scrub = true, purgeJs = true,
             purgeActions = false, purgeAttachments = true)
         detachReferences(document, removed)
     }

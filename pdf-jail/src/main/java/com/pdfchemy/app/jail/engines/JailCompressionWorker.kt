@@ -43,21 +43,46 @@ object JailCompressionWorker {
                                 val replacement = replacements[original] ?: run {
                                     val bitmap = SafePdfImage.decode(xObject)
                                     var filtered: Bitmap? = null
+                                    var scaled: Bitmap? = null
                                     try {
-                                        val image = if (params.optBoolean("useGrayscale")) {
-                                            Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888).also {
+                                        val useLossless = params.optBoolean("useLossless")
+                                        val useGrayscale = params.optBoolean("useGrayscale")
+                                        val maxDimension = if (useLossless) {
+                                            SecurityLimits.MAX_IMAGE_DECODE_DIMENSION
+                                        } else {
+                                            (dpi * 11.7f * (0.6f + 0.4f * quality)).toInt()
+                                                .coerceIn(512, SecurityLimits.MAX_IMAGE_DECODE_DIMENSION)
+                                        }
+                                        val sourceBitmap = if (maxOf(bitmap.width, bitmap.height) > maxDimension) {
+                                            val ratio = maxDimension.toFloat() / maxOf(bitmap.width, bitmap.height).toFloat()
+                                            val targetW = (bitmap.width * ratio).toInt().coerceAtLeast(1)
+                                            val targetH = (bitmap.height * ratio).toInt().coerceAtLeast(1)
+                                            Bitmap.createScaledBitmap(bitmap, targetW, targetH, true).also {
+                                                if (it !== bitmap) scaled = it
+                                            }
+                                        } else bitmap
+                                        val image = if (useGrayscale) {
+                                            Bitmap.createBitmap(sourceBitmap.width, sourceBitmap.height, Bitmap.Config.ARGB_8888).also {
                                                 filtered = it
-                                                Canvas(it).drawBitmap(bitmap, 0f, 0f, Paint().apply {
+                                                Canvas(it).drawBitmap(sourceBitmap, 0f, 0f, Paint().apply {
                                                     colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
                                                 })
                                             }
-                                        } else bitmap
-                                        val encoded = if (params.optBoolean("useLossless") || hasTransparentPixels(image)) LosslessFactory.createFromImage(document, image)
+                                        } else sourceBitmap
+                                        val encoded = if (useLossless || hasTransparentPixels(image)) LosslessFactory.createFromImage(document, image)
                                             else JPEGFactory.createFromImage(document, image, quality, dpi.toInt())
-                                        replacements[original] = encoded
+                                        val keepEncoded = useGrayscale ||
+                                            xObject.cosObject.length <= 0L ||
+                                            encoded.cosObject.length < xObject.cosObject.length
+                                        val chosen = if (keepEncoded) encoded else xObject
+                                        replacements[original] = chosen
                                         processed++
-                                        encoded
-                                    } finally { filtered?.recycle(); bitmap.recycle() }
+                                        chosen
+                                    } finally {
+                                        filtered?.recycle()
+                                        scaled?.recycle()
+                                        bitmap.recycle()
+                                    }
                                 }
                                 resources.put(name, replacement)
                             }
