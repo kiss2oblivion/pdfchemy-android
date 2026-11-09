@@ -7,11 +7,11 @@ import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject
 object SafePdfImage {
     fun decode(image: PDImageXObject): Bitmap {
         // Some PDFBox filters allocate a full intermediate raster despite subsampling.
-        SecurityLimits.requirePixels(image.width, image.height)
-        image.mask?.let { SecurityLimits.requirePixels(it.width, it.height) }
-        image.softMask?.let { SecurityLimits.requirePixels(it.width, it.height) }
+        SecurityLimits.requireImageDecodePixels(image.width, image.height)
+        image.mask?.let { SecurityLimits.requireImageDecodePixels(it.width, it.height) }
+        image.softMask?.let { SecurityLimits.requireImageDecodePixels(it.width, it.height) }
         val bitmap = requireNotNull(image.image)
-        try { SecurityLimits.requirePixels(bitmap.width, bitmap.height) }
+        try { SecurityLimits.requireImageDecodePixels(bitmap.width, bitmap.height) }
         catch (error: Exception) { bitmap.recycle(); throw error }
         return bitmap
     }

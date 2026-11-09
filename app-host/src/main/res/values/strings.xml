@@ -998,7 +998,7 @@
     <string name="manifesto_g1_title">100%% Free Forever</string>
     <string name="manifesto_g1_desc">Zero subscriptions, zero paywalls, zero artificial page/file limits, and zero watermark vandalism.</string>
     <string name="manifesto_g2_title">100%% Offline &amp; Private</string>
-    <string name="manifesto_g2_desc">Zero files ever leave this computer. Zero analytics or tracking telemetry. 100%% safe for confidential documents.</string>
+    <string name="manifesto_g2_desc">Zero document files or metadata ever leave your device. 100%% on-device document processing, safe for confidential files.</string>
     <string name="manifesto_g3_title">Original-Safe</string>
     <string name="manifesto_g3_desc">We never overwrite or destroy your source files without explicit confirmation.</string>
     <string name="manifesto_g4_title">Built For The People</string>

@@ -34,6 +34,8 @@ object SecurityLimits {
     const val MAX_PAGE_COUNT = 10_000
     const val MAX_RENDER_DIMENSION = 2048
     const val MAX_RENDER_PIXELS = 4_194_304L
+    const val MAX_IMAGE_DECODE_DIMENSION = 8192
+    const val MAX_IMAGE_DECODE_PIXELS = 33_554_432L
     const val MAX_SIGNATURE_BYTES = 2 * 1024 * 1024
     const val MAX_SIGNATURES = 100
     const val WORKER_DEADLINE_MS = 120_000L
@@ -66,6 +68,10 @@ object SecurityLimits {
 
     fun requirePixels(width: Int, height: Int) {
         require(width in 1..MAX_RENDER_DIMENSION && height in 1..MAX_RENDER_DIMENSION && width.toLong() * height <= MAX_RENDER_PIXELS) { "Raster quota exceeded" }
+    }
+
+    fun requireImageDecodePixels(width: Int, height: Int) {
+        require(width in 1..MAX_IMAGE_DECODE_DIMENSION && height in 1..MAX_IMAGE_DECODE_DIMENSION && width.toLong() * height <= MAX_IMAGE_DECODE_PIXELS) { "Image raster quota exceeded" }
     }
 
     fun safeRenderSize(width: Double, height: Double, requestedScale: Double = 2.0): Pair<Int, Int> {

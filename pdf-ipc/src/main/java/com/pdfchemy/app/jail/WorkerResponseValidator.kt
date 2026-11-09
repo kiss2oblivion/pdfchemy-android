@@ -46,7 +46,7 @@ object WorkerResponseValidator {
     }
 
     private const val MAX_FILE_RESULT_BYTES = 2 * 1024 * 1024L // 2 MiB for result files
-    private const val MAX_TOTAL_NODES = 5000
+    private const val MAX_TOTAL_NODES = 50_000
     private const val MAX_STRING_LENGTH = 1024
     private const val MAX_LONG_STRING_LENGTH = 1_000_000
 
@@ -67,6 +67,7 @@ object WorkerResponseValidator {
                 if (escaped) escaped = false else if (char == '\\') escaped = true else if (char == '"') quoted = false
             } else when (char) {
                 '"' -> quoted = true
+                '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$char'")
                 '{', '[' -> {
                     depth++
                     require(depth <= SecurityLimits.MAX_RESPONSE_DEPTH) { "Result nesting quota exceeded" }
