@@ -29,7 +29,22 @@ class AudioExportJobStore {
         val flow = _jobs[jobId] ?: return false
         val current = flow.value
         if (state !in transitions(current.state)) return false
-        flow.value = current.copy(state = state, error = error, outputUri = if (state == AudioExportState.COMPLETED) outputUri else null)
+        if (current.publication != null && outputUri != null && current.outputUri != outputUri) return false
+        val publication = current.publication ?: outputUri?.takeIf { state == AudioExportState.COMPLETED }
+            ?.let(::AudioPublicationReceipt)
+        flow.value = current.copy(state = state, error = error, publication = publication)
+        return true
+    }
+
+    /** Called synchronously at the publisher's commit point, before cancellable result delivery. */
+    @Synchronized
+    internal fun recordPublication(jobId: UUID, outputUri: String): Boolean {
+        require(outputUri.isNotBlank())
+        val flow = _jobs[jobId] ?: return false
+        val current = flow.value
+        current.publication?.let { return it.outputUri == outputUri }
+        if (current.state !in setOf(AudioExportState.PUBLISHING, AudioExportState.CANCELLING, AudioExportState.FAILED)) return false
+        flow.value = current.copy(publication = AudioPublicationReceipt(outputUri))
         return true
     }
 

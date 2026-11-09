@@ -2,7 +2,6 @@ package com.pdfchemy.app.logic.audio
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import com.pdfchemy.app.logic.OutputPolicy
 import kotlinx.coroutines.*
 import java.io.File
@@ -14,15 +13,19 @@ object AudioOutputPublisher {
         context: Context,
         wav: File,
         destination: Uri,
-        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
+        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination),
+        onPublished: (Uri) -> Unit = {}
     ) {
         copy(
             wav,
             listOf(destination),
             { context.contentResolver.openOutputStream(destination, "wt") },
-            { deletePartial(context, destination, isFreshCopy) }
+            { deletePartial(context, destination, isFreshCopy) },
+            {
+                OutputPolicy.markPublished(destination)
+                onPublished(destination)
+            }
         )
-        OutputPolicy.markPublished(destination)
     }
 
     fun deletePartial(
@@ -34,12 +37,8 @@ object AudioOutputPublisher {
             // Existing or unknown destinations must not be deleted during pre-publication failure cleanup
             return
         }
-        if (com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(destination)) {
-            // Uninterruptible writer still active: do not delete destination while writer is writing
-            return
-        }
-        OutputPolicy.unregisterFreshCopy(destination)
-        runCatching { DocumentFile.fromSingleUri(context, destination)?.delete() }
+        // A historical Boolean cannot authorize deletion after publication, claim or failed cleanup.
+        OutputPolicy.deleteIfFresh(context, destination)
     }
 
     // Small separate abstraction: HostOutputTransaction is a PDF-worker FD/JSON validator
@@ -56,7 +55,8 @@ object AudioOutputPublisher {
         wav: File,
         targets: List<Uri>,
         open: () -> OutputStream?,
-        deletePartial: () -> Unit
+        deletePartial: () -> Unit,
+        onPublished: () -> Unit = {}
     ) = kotlinx.coroutines.coroutineScope {
         val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, wav.length())
         var completedNormally = false
@@ -89,6 +89,9 @@ object AudioOutputPublisher {
                     }
                 }
             }
+            currentCoroutineContext().ensureActive()
+            // Retire freshness and record the result before coroutineScope can cancel result delivery.
+            onPublished()
             completedNormally = true
         } catch (error: Throwable) {
             runCatching { deletePartial() }

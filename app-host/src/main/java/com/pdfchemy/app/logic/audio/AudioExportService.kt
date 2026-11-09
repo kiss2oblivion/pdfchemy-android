@@ -30,6 +30,11 @@ class AudioExportService : Service() {
     private var writer: PcmWriter? = null
     private var abort: AudioExportAbort? = null
 
+    @androidx.annotation.VisibleForTesting
+    internal var afterPublicationForTesting: (suspend () -> Unit)? = null
+    @androidx.annotation.VisibleForTesting
+    internal val exportJobForTesting: Job? get() = pipeline
+
     override fun onCreate() {
         super.onCreate()
         AudioExportDependencies.initialize(this)
@@ -159,7 +164,12 @@ class AudioExportService : Service() {
             withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
             check(store.updateState(id, AudioExportState.PUBLISHING))
             val isFresh = AudioExportDependencies.isFreshDestination(id)
-            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination, isFresh) }
+            withContext(Dispatchers.IO) {
+                AudioOutputPublisher.publish(this@AudioExportService, wav, destination, isFresh) { published ->
+                    check(store.recordPublication(id, published.toString())) { "Unable to retain published audio result" }
+                }
+                afterPublicationForTesting?.invoke()
+            }
             currentCoroutineContext().ensureActive()
             check(store.updateState(id, AudioExportState.COMPLETED, outputUri = destination.toString()))
         } catch (error: CancellationException) {

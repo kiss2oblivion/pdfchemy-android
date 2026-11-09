@@ -603,11 +603,13 @@ fun ReflowReaderScreen(
                 }
             }
         )
-    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED || activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) {
+    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED ||
+        activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED ||
+        (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.CANCELLED && activeJobState?.outputUri != null)) {
         AlertDialog(
             onDismissRequest = { activeExportJobKey = null },
-            title = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
-            text = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved) else "Error: ${activeJobState!!.error?.message}") },
+            title = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
+            text = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved) else "Error: ${activeJobState!!.error?.message}") },
             confirmButton = {
                 TextButton(onClick = { activeExportJobKey = null }) { Text("OK") }
             },
