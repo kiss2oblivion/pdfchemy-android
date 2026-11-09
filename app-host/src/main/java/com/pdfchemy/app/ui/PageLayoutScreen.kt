@@ -291,7 +291,10 @@ fun PageLayoutScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("layout_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "layout")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),

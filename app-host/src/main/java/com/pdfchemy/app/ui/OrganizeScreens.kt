@@ -383,13 +383,20 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.desc_back)) }
+                },
+                actions = {
+                    if (selectedFiles.isNotEmpty()) {
+                        IconButton(onClick = { selectedFiles = emptyList() }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = "Clear all", tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 }
             )
         },
         floatingActionButton = {
             if (selectedFiles.size >= 2) {
                 ExtendedFloatingActionButton(
-                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "merged")) },
+                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedFiles.firstOrNull()?.uri, "merged")) },
                     icon = { Icon(Icons.Rounded.Merge, stringResource(R.string.desc_merge)) },
                     text = { Text(stringResource(R.string.merge)) }
                 )
@@ -672,9 +679,12 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedPdfName by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
+    var selectedPdfName by remember {
+        mutableStateOf<String?>(continuityUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) })
+    }
     val uiState by viewModel.uiState.collectAsState()
 
     val directoryPickerLauncher = rememberLauncherForActivityResult(
@@ -845,8 +855,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ExtendedFloatingActionButton(
                     onClick = {
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
-                        val originalName = com.pdfchemy.app.utils.FileUtils.getFileName(context, file.uri) ?: context.getString(R.string.default_document_name)
-                        val suggestedName = "${originalName.substringBeforeLast(".")}_deleted.pdf"
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, file.uri, "deleted")
                         createDocumentLauncher.launch(suggestedName)
                     },
                     icon = { Icon(Icons.Rounded.Delete, stringResource(R.string.desc_delete)) },
@@ -859,7 +868,8 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
@@ -941,7 +951,8 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ExtendedFloatingActionButton(
                     onClick = { 
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
-                        saveFileLauncher.launch("rotated_${file.name}") 
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, file.uri, "rotated")
+                        saveFileLauncher.launch(suggestedName) 
                     },
                     icon = { Icon(Icons.AutoMirrored.Rounded.RotateRight, contentDescription = stringResource(R.string.desc_save)) },
                     text = { Text(stringResource(R.string.rotate_save)) },

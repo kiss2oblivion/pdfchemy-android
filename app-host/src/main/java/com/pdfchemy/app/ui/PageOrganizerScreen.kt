@@ -204,6 +204,16 @@ fun PageOrganizerScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
+                actions = {
+                    if (selectedPdfUri != null) {
+                        IconButton(
+                            onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) },
+                            enabled = !isOrganizing
+                        ) {
+                            Icon(Icons.Rounded.FolderOpen, contentDescription = stringResource(R.string.select_pdf))
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
@@ -551,7 +561,10 @@ fun PageOrganizerScreen(
 
                 // Save Reorganized PDF Button
                 Button(
-                    onClick = { savePdfLauncher.launch("reorganized_document_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "organized")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),

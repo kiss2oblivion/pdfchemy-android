@@ -376,6 +376,26 @@ fun RedactionScreen(
             }
 
             // Results List
+            if (foundBoxes.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Targets Found (${foundBoxes.size})",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(
+                        onClick = { foundBoxes = emptyList() },
+                        enabled = !isProcessing,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text("Clear All", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                    }
+                }
+            }
             Box(modifier = Modifier.height(240.dp).fillMaxWidth()) {
                 if (foundBoxes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

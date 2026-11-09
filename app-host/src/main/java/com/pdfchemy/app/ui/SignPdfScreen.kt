@@ -778,7 +778,10 @@ fun SignPdfScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("signed_document_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -941,7 +944,10 @@ fun SignPdfScreen(
             },
             confirmButton = {
                 Button(
-                    onClick = { pkiSignLauncher.launch("signed_document_pki_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed_pki")
+                        pkiSignLauncher.launch(suggestedName)
+                    },
                     enabled = pkiSignerName.isNotBlank() && !isSaving
                 ) {
                     if (isSaving) {

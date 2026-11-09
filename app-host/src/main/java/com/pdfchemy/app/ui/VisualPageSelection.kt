@@ -4,8 +4,10 @@ import android.net.Uri
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,7 +21,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -99,29 +103,74 @@ private fun VisualPageDialog(uri: Uri, range: String, dismiss: () -> Unit, apply
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { failed = true }
     }
-    AlertDialog(onDismissRequest = dismiss, title = { Text(stringResource(R.string.select_pages_visually)) },
+    AlertDialog(onDismissRequest = dismiss, title = {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stringResource(R.string.select_pages_visually), modifier = Modifier.weight(1f))
+            if (count > 0) {
+                Text(
+                    text = "${selected.size} / $count",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    },
         text = {
             if (failed) TextButton(onClick = { retry++ }) { Text(stringResource(R.string.retry)) }
             else if (count == 0) CircularProgressIndicator()
-            else LazyVerticalGrid(GridCells.Fixed(2), Modifier.fillMaxWidth().height(420.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(count, key = { it }) { index ->
-                    val page = index + 1
-                    OutlinedCard(Modifier.clickable {
-                        selected = if (page in selected) selected - page else selected + page
-                    }) {
-                        PdfPagePreview(uri, index, Modifier.fillMaxWidth().height(150.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(page in selected, onCheckedChange = {
-                                selected = if (it) selected + page else selected - page
-                            })
-                            Text(stringResource(R.string.visual_page_number, page))
+            else Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    AssistChip(
+                        onClick = { selected = (1..count).toSet() },
+                        label = { Text("All", fontSize = 11.sp) }
+                    )
+                    AssistChip(
+                        onClick = { selected = emptySet() },
+                        label = { Text("None", fontSize = 11.sp) }
+                    )
+                    AssistChip(
+                        onClick = { selected = (1..count).toSet() - selected },
+                        label = { Text("Invert", fontSize = 11.sp) }
+                    )
+                    AssistChip(
+                        onClick = { selected = (1..count).filter { it % 2 == 1 }.toSet() },
+                        label = { Text("Odd", fontSize = 11.sp) }
+                    )
+                    AssistChip(
+                        onClick = { selected = (1..count).filter { it % 2 == 0 }.toSet() },
+                        label = { Text("Even", fontSize = 11.sp) }
+                    )
+                }
+                LazyVerticalGrid(GridCells.Fixed(2), Modifier.fillMaxWidth().height(380.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(count, key = { it }) { index ->
+                        val page = index + 1
+                        OutlinedCard(Modifier.clickable {
+                            selected = if (page in selected) selected - page else selected + page
+                        }) {
+                            PdfPagePreview(uri, index, Modifier.fillMaxWidth().height(150.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(page in selected, onCheckedChange = {
+                                    selected = if (it) selected + page else selected - page
+                                })
+                                Text(stringResource(R.string.visual_page_number, page))
+                            }
                         }
                     }
                 }
             }
         }, confirmButton = {
-            TextButton(enabled = selected.isNotEmpty(), onClick = { apply(com.pdfchemy.app.logic.VisualPageRanges.format(selected)) }) {
+            TextButton(enabled = count > 0, onClick = { apply(com.pdfchemy.app.logic.VisualPageRanges.format(selected)) }) {
                 Text(stringResource(R.string.apply))
             }
         }, dismissButton = { TextButton(onClick = dismiss) { Text(stringResource(R.string.cancel)) } })

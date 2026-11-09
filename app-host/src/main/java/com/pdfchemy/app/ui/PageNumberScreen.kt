@@ -382,7 +382,10 @@ fun PageNumberScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("numbered_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "numbered")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),

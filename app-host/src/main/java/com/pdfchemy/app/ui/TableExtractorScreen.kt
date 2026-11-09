@@ -195,6 +195,17 @@ fun TableExtractorScreen(
                         IconButton(
                             onClick = {
                                 val csvSnapshot = extractedCsv
+                                if (csvSnapshot.isBlank()) return@IconButton
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("CSV Table", csvSnapshot))
+                                Toast.makeText(context, "Copied CSV to clipboard", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy CSV")
+                        }
+                        IconButton(
+                            onClick = {
+                                val csvSnapshot = extractedCsv
                                 if (csvSnapshot.isBlank() || isSharing) return@IconButton
                                 isSharing = true
                                 shareError = null

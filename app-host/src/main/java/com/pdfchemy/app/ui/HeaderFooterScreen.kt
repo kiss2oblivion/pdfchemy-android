@@ -20,10 +20,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.BatesConfig
 import com.pdfchemy.app.logic.HeaderFooterPosition
@@ -56,8 +61,10 @@ fun HeaderFooterScreen(
     // Bates config
     var batesPrefix by remember { mutableStateOf("CONFIDENTIAL-") }
     var batesSuffix by remember { mutableStateOf("") }
-    var batesStartNumber by remember { mutableIntStateOf(1) }
-    var batesDigits by remember { mutableIntStateOf(6) }
+    var batesStartInput by remember { mutableStateOf("1") }
+    var batesDigitsInput by remember { mutableStateOf("6") }
+    val batesStartNumber = batesStartInput.toIntOrNull()?.coerceAtLeast(1) ?: 1
+    val batesDigits = batesDigitsInput.toIntOrNull()?.coerceIn(1, 10) ?: 6
 
     var isProcessing by remember { mutableStateOf(false) }
 
@@ -212,6 +219,13 @@ fun HeaderFooterScreen(
 
             // Custom Header/Footer Inputs
             if (!isBatesMode) {
+                val sampleFileName = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "Document"
+                val todayStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+                val previewText = templateText
+                    .replace("{page}", "1")
+                    .replace("{total}", "10")
+                    .replace("{date}", todayStr)
+                    .replace("{filename}", sampleFileName)
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(stringResource(R.string.label_template_text), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -229,10 +243,25 @@ fun HeaderFooterScreen(
                             FilledTonalButton(onClick = { templateText += " {date}" }) { Text("{date}") }
                             FilledTonalButton(onClick = { templateText += " {filename}" }) { Text("{filename}") }
                         }
+
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Preview (Page 1): $previewText",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
                     }
                 }
             } else {
                 // Bates Numbering Inputs
+                val batesPreview = batesPrefix + batesStartNumber.toString().padStart(batesDigits, '0') + batesSuffix
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(stringResource(R.string.label_bates_settings), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -246,18 +275,34 @@ fun HeaderFooterScreen(
                         )
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
-                                value = batesStartNumber.toString(),
-                                onValueChange = { batesStartNumber = it.toIntOrNull() ?: 1 },
+                                value = batesStartInput,
+                                onValueChange = { input -> batesStartInput = input.filter { it.isDigit() } },
                                 label = { Text(stringResource(R.string.label_bates_start_num)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
                             )
                             OutlinedTextField(
-                                value = batesDigits.toString(),
-                                onValueChange = { batesDigits = it.toIntOrNull()?.coerceIn(1, 10) ?: 6 },
+                                value = batesDigitsInput,
+                                onValueChange = { input -> batesDigitsInput = input.filter { it.isDigit() } },
                                 label = { Text(stringResource(R.string.label_bates_digits)) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
+                            )
+                        }
+
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Preview (Page 1): $batesPreview",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             )
                         }
                     }
