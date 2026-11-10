@@ -15,6 +15,8 @@ import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.pdfchemy.app.R
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Rule
@@ -23,8 +25,10 @@ import java.io.File
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class ReflowOfflineSpeechTest {
-    @get:Rule val compose = createComposeRule()
+    // IO completion must queue composition on the rule's clock, never recompose inline on an IO thread.
+    @get:Rule val compose = createComposeRule(effectContext = StandardTestDispatcher())
     private val app = ApplicationProvider.getApplicationContext<Application>()
     private val store = ViewModelStore()
     private val model = MainViewModel(app).also { store.put("offline-speech", it) }
