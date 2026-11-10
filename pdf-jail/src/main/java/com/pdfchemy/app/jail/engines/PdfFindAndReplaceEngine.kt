@@ -249,11 +249,14 @@ object PdfFindAndReplaceEngine {
                         baseBmp.recycle()
                         baseBmp = null
 
-                        // Replace page content stream and clear annotations to completely destroy original text
+                        // Replace page content stream, reset resources, and clear private carriers/annotations to forensically destroy original text
                         page.rotation = 0
                         page.cropBox = null
                         page.mediaBox = com.tom_roush.pdfbox.pdmodel.common.PDRectangle(origW.toFloat(), origH.toFloat())
-                        page.cosObject.removeItem(com.tom_roush.pdfbox.cos.COSName.ANNOTS)
+                        page.resources = com.tom_roush.pdfbox.pdmodel.PDResources()
+                        for (key in listOf("Annots", "Thumb", "Metadata", "PieceInfo", "AA", "AF", "StructParents", "StructParent")) {
+                            page.cosObject.removeItem(com.tom_roush.pdfbox.cos.COSName.getPDFName(key))
+                        }
 
                         PDPageContentStream(document, page, PDPageContentStream.AppendMode.OVERWRITE, false, false).use { cs ->
                             cs.drawImage(pdImage, 0f, 0f, origW.toFloat(), origH.toFloat())
@@ -292,6 +295,11 @@ object PdfFindAndReplaceEngine {
                 if (!rasterized) {
                     throw SecurityException("Cannot forensically rasterize the PDF page because PdfRenderer is unavailable. Aborting find and replace to ensure maximum security without data loss.")
                 }
+            }
+
+            if (matchesByPage.isNotEmpty()) {
+                RedactionResources.prepareForRedaction(document)
+                RedactionResources.pruneUnused(document)
             }
 
             tempFile = com.pdfchemy.app.jail.JailScratch.namedFile("find_replace_tmp_${System.currentTimeMillis()}.pdf")

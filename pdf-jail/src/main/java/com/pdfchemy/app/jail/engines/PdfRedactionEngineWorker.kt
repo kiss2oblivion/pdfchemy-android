@@ -30,7 +30,7 @@ object PdfRedactionEngineWorker {
             val config = RedactionConfig(
                 isBlackout = configObj.optBoolean("isBlackout", true),
                 defaultOverlayText = configObj.optString("defaultOverlayText", ""),
-                forensicSanitize = configObj.optBoolean("forensicSanitize", true)
+                forensicSanitize = true
             )
             
             val boxesArr = params.getJSONArray("boxes")
@@ -62,6 +62,8 @@ object PdfRedactionEngineWorker {
 
         private val compiledRegex: Regex? = if (isRegex) {
             com.pdfchemy.app.security.SecurityLimits.enforceStringLength(query, 1024, "Regex query")
+            val nestedQuantifier = Regex("""\([^)]*[+*]\s*\)\s*[+*{]""")
+            require(!nestedQuantifier.containsMatchIn(query)) { "Unsafe regular expression pattern with nested quantifiers rejected" }
             Regex(query)
         } else null
 

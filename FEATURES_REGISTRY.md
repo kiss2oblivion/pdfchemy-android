@@ -159,8 +159,11 @@ The application supports the following locales. The 38 previously baselined rele
 
 ## 🔒 Security Hardening & Remediation Registry (2.1.0)
 - **Fail-Closed Flattening:** `PdfFlattenEngineWorker` enforces strict failure propagation if form flattening or annotation rasterization fails.
-- **ReDoS Prevention:** `PdfRedactionEngineWorker` pre-compiles search regexes and enforces input length boundaries.
-- **Spreadsheet Formula Neutralization:** `OfficeExportEngineWorker.exportToExcel` neutralizes leading formula metacharacters (`=`, `+`, `-`, `@`, `\t`, `\r`) in non-numeric cells.
+- **ReDoS Prevention & Regex Guard:** `PdfRedactionEngineWorker` pre-compiles search regexes, enforces input length boundaries (1024 chars), and rejects nested quantifier patterns to prevent catastrophic backtracking.
+- **Forensic Find & Replace Destruction:** `PdfFindAndReplaceEngine` resets page resources (`PDResources()`), purges page carriers (`Annots`, `Thumb`, `Metadata`, `PieceInfo`, `AA`, `AF`, `StructParents`), and runs `RedactionResources.prepareForRedaction` and `pruneUnused` to prevent replaced text from surviving in structure trees (`/StructTreeRoot`), outlines, or XMP streams.
+- **Unconditional Forensic Redaction:** `PdfRedactionEngineWorker` deprecates cosmetic non-forensic overlay modes, ensuring all redaction operations perform forensic rasterization and carrier scrubbing.
+- **Spreadsheet Formula Neutralization:** `OfficeExportEngineWorker.exportToExcel` and `StructuredTextCodec.writeCsv` neutralize leading formula metacharacters (`=`, `+`, `-`, `@`, `\t`, `\r`, `\0`) in non-numeric cells.
+- **Strict Canonical File Admission:** `DocumentStager` resolves canonical paths for external `file://` URIs and verifies boundaries before staging.
 - **Audio Publication & Late Cancellation Guard:** `AudioOutputPublisher` guarantees already-published audio outputs are never deleted during late-cancellation cleanups.
 - **Deep Metadata Sanitization:** `PdfMetadataEngineWorker` and `JailCompressionWorker` recursively purge embedded `/Metadata` and `/PieceInfo` dictionaries from document object graphs and trailer `/ID`.
 - **Private Offline TTS Policy:** `ReflowReaderScreen` and `AudioExportService` enforce offline voice selection and set `KEY_FEATURE_NETWORK_SYNTHESIS = "false"` to prevent text transmission over network interfaces.

@@ -295,7 +295,20 @@ internal object StructuredTextCodec {
         require(tree.isJsonArray && tree.asJsonArray.size() > 0 && tree.asJsonArray[0].isJsonObject) { "Source must be a non-empty array of objects for CSV conversion." }
         val headers = tree.asJsonArray[0].asJsonObject.keySet().toList()
         require(headers.size in 1..128 && tree.asJsonArray.size() <= 5000) { "CSV exceeds row or column limits" }
-        fun quote(value: String) = if (value.any { it == separator || it == '"' || it == '\r' || it == '\n' }) "\"${value.replace("\"", "\"\"") }\"" else value
+        fun sanitize(value: String): String {
+            if (value.isEmpty()) return value
+            if (value.toDoubleOrNull() != null) return value
+            val trimmed = value.trimStart(' ', '\t', '\r', '\n')
+            val first = value[0]
+            val isTrigger = first == '=' || first == '+' || first == '-' || first == '@' ||
+                    first == '\t' || first == '\r' || first == '\u0000' ||
+                    (trimmed.isNotEmpty() && (trimmed[0] == '=' || trimmed[0] == '+' || trimmed[0] == '-' || trimmed[0] == '@'))
+            return if (isTrigger) "'$value" else value
+        }
+        fun quote(value: String): String {
+            val sanitized = sanitize(value)
+            return if (sanitized.any { it == separator || it == '"' || it == '\r' || it == '\n' }) "\"${sanitized.replace("\"", "\"\"")}\"" else sanitized
+        }
         return BoundedWriter().apply {
             append(headers.joinToString(separator.toString()) { quote(it) }).append('\n')
             for (row in tree.asJsonArray) {

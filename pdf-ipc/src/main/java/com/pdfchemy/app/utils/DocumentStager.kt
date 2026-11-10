@@ -60,8 +60,12 @@ object DocumentStager {
 
         if (sourceUri.scheme == "file") {
             val path = sourceUri.path
-            if (path != null && isPrivateAppPath(context, File(path), includeCacheAndFiles = false)) {
-                throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+            if (path != null) {
+                val file = File(path)
+                val canonical = runCatching { file.canonicalFile }.getOrNull()
+                if (canonical == null || isPrivateAppPath(context, canonical, includeCacheAndFiles = false)) {
+                    throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+                }
             }
         }
 
