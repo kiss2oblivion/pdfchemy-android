@@ -88,12 +88,13 @@ tasks.withType<Test>().configureEach {
     systemProperty("benignPdfCorpus", benignCorpus.absolutePath)
 }
 
-val pinnedTesseractSha256 = "d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa"
+val pinnedTesseractSha256 = "ef7a618021f07d98bbebdc99884ffd7c0458e4b89b277f34227c26ab2b00909e"
 
 val verifyTesseractAarHash = tasks.register("verifyTesseractAarHash") {
     description = "Enforces executable policy: verifies the vendored Tesseract4Android AAR SHA-256 against pinned cryptographic hash."
     val aarFile = file("libs/tesseract4android-4.9.0-inmemory.aar")
     inputs.file(aarFile)
+    inputs.property("pinnedTesseractSha256", pinnedTesseractSha256)
     outputs.upToDateWhen { true }
     doLast {
         if (!aarFile.exists()) {
