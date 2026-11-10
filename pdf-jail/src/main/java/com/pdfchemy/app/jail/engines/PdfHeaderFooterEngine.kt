@@ -73,7 +73,7 @@ object PdfHeaderFooterEngine {
                         .replace("{title}", title)
                 }
 
-                text = text.filter { it.code in 32..126 } // ASCII safe
+                text = sanitizeForType1(text)
                 if (text.isBlank()) continue
 
                 val textWidth = (font.getStringWidth(text) / 1000f) * fontSize
@@ -134,5 +134,25 @@ object PdfHeaderFooterEngine {
             try { inputStream?.close() } catch (_: Exception) {}
             tempFile?.delete()
         }
+    }
+
+    private fun sanitizeForType1(input: String): String {
+        val mapped = input
+            .replace('“', '"').replace('”', '"')
+            .replace('‘', '\'').replace('’', '\'')
+            .replace('—', '-').replace('–', '-')
+            .replace("…", "...").replace('•', '*')
+            .replace("™", "(TM)").replace("©", "(C)").replace("®", "(R)")
+            .replace('ł', 'l').replace('Ł', 'L')
+            .replace('đ', 'd').replace('Đ', 'D')
+            .replace('ș', 's').replace('Ș', 'S')
+            .replace('ț', 't').replace('Ț', 'T')
+            .replace('ş', 's').replace('Ş', 'S')
+            .replace('ţ', 't').replace('Ţ', 'T')
+
+        val decomposed = java.text.Normalizer.normalize(mapped, java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "")
+
+        return decomposed.filter { it.code in 32..126 || it.code in 160..255 }
     }
 }

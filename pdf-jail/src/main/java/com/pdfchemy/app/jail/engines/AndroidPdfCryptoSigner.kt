@@ -112,6 +112,22 @@ object AndroidPdfCryptoSigner {
     }
 
     /**
+     * Loads KeyPairInfo from a PKCS#12 (.p12 / .pfx) keystore stream.
+     */
+    fun loadPkcs12(stream: InputStream, password: CharArray): KeyPairInfo {
+        val keystore = java.security.KeyStore.getInstance("PKCS12")
+        keystore.load(stream, password)
+        val alias = keystore.aliases().toList().firstOrNull { keystore.isKeyEntry(it) }
+            ?: throw IllegalArgumentException("No private key entry found in PKCS#12 keystore")
+        val privateKey = keystore.getKey(alias, password) as? PrivateKey
+            ?: throw IllegalArgumentException("Key entry '$alias' is not a PrivateKey")
+        val cert = keystore.getCertificate(alias) as? X509Certificate
+            ?: throw IllegalArgumentException("Certificate entry '$alias' is not an X509Certificate")
+        val keyPair = KeyPair(cert.publicKey, privateKey)
+        return KeyPairInfo(keyPair, cert)
+    }
+
+    /**
      * Digitally signs the PDF file using the provided private key and certificate.
      */
     fun signPdf(sourceFile: File, destFile: File, keyPairInfo: KeyPairInfo, reason: String = "Signed by PDFchemy", location: String = "Local Device") {

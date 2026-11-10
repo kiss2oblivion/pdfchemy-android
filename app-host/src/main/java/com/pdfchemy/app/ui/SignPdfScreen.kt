@@ -112,18 +112,39 @@ fun SignPdfScreen(
     var pkiSignerName by remember { mutableStateOf("") }
     var pkiReason by remember { mutableStateOf("Signed by PDFchemy") }
     var pkiLocation by remember { mutableStateOf("Local Device") }
+    var p12Uri by remember { mutableStateOf<Uri?>(null) }
+    var p12Password by remember { mutableStateOf("") }
+
+    val p12PickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            if (uri != null) {
+                p12Uri = uri
+            }
+        }
+    )
     
     val pkiSignLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null && selectedPdfUri != null) {
             isSaving = true
             coroutineScope.launch {
+                val p12Base64 = p12Uri?.let { uri ->
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)?.use { stream ->
+                            val bytes = stream.readBytes()
+                            android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                        }
+                    }.getOrNull()
+                }
                 val success = SignatureEngine.applyDigitalSignature(
                     context = context,
                     sourceUri = selectedPdfUri!!,
                     destUri = destUri,
                     signerName = pkiSignerName,
                     reason = pkiReason,
-                    location = pkiLocation
+                    location = pkiLocation,
+                    keystoreBase64 = p12Base64,
+                    keystorePassword = p12Password
                 )
                 isSaving = false
                 if (success) {
@@ -963,6 +984,26 @@ fun SignPdfScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    OutlinedButton(
+                        onClick = { p12PickerLauncher.launch(arrayOf("*/*")) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Rounded.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (p12Uri != null) "Keystore Selected" else "Import PKCS#12 (.p12/.pfx)")
+                    }
+
+                    if (p12Uri != null) {
+                        OutlinedTextField(
+                            value = p12Password,
+                            onValueChange = { p12Password = it },
+                            label = { Text("Keystore Password") },
+                            singleLine = true,
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             },
             confirmButton = {

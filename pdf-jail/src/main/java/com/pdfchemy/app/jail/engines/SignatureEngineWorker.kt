@@ -126,7 +126,17 @@ object SignatureEngineWorker {
             }
 
             val subjectStr = signerName
-            val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
+            val keystoreBase64 = if (params.has("keystoreBase64")) params.getString("keystoreBase64") else null
+            val keystorePassword = params.optString("keystorePassword", "")
+
+            val keyPairInfo = if (!keystoreBase64.isNullOrBlank()) {
+                val p12Bytes = android.util.Base64.decode(keystoreBase64, android.util.Base64.DEFAULT)
+                java.io.ByteArrayInputStream(p12Bytes).use { p12In ->
+                    AndroidPdfCryptoSigner.loadPkcs12(p12In, keystorePassword.toCharArray())
+                }
+            } else {
+                AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
+            }
 
             AndroidPdfCryptoSigner.signPdf(
                 sourceFile = sourceFile,

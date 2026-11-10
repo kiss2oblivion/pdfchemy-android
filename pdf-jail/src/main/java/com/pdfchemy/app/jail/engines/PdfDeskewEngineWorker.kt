@@ -196,6 +196,23 @@ object PdfDeskewEngineWorker {
         val cx = box.lowerLeftX + box.width / 2f
         val cy = box.lowerLeftY + box.height / 2f
 
+        // Expand mediaBox and cropBox so rotated corners are not clipped outside boundaries
+        val origW = box.width
+        val origH = box.height
+        val newW = abs(origW * cos) + abs(origH * sin)
+        val newH = abs(origW * sin) + abs(origH * cos)
+        val deltaX = (newW - origW) / 2f
+        val deltaY = (newH - origH) / 2f
+
+        val expandedBox = com.tom_roush.pdfbox.pdmodel.common.PDRectangle(
+            box.lowerLeftX - deltaX,
+            box.lowerLeftY - deltaY,
+            newW,
+            newH
+        )
+        page.cropBox = expandedBox
+        page.mediaBox = expandedBox
+
         PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, false, false).use { cs ->
             cs.saveGraphicsState()
             val translateToCenter = PdfMatrix.getTranslateInstance(cx, cy)

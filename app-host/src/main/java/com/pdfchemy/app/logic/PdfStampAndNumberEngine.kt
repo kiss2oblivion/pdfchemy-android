@@ -27,7 +27,8 @@ enum class NumberPosition {
 enum class NumberFormat {
     SIMPLE,        // "1"
     PAGE_X_OF_Y,   // "Page 1 of 5"
-    SLASH          // "1 / 5"
+    SLASH,         // "1 / 5"
+    ROMAN          // "I"
 }
 
 data class PageNumberOptions(

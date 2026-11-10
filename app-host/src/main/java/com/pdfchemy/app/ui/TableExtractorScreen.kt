@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.CsvParser
 import com.pdfchemy.app.logic.FileUtil
+import com.pdfchemy.app.logic.OfficeExportEngine
 import com.pdfchemy.app.logic.PdfTableExtractorEngine
 import com.pdfchemy.app.logic.ShareUtil
 import com.pdfchemy.app.logic.TableExtractionResult
@@ -176,6 +177,29 @@ fun TableExtractorScreen(
             }
         } else {
             exportSourceUri = null
+        }
+    }
+
+    val saveXlsxLauncher = rememberPreferredDocumentCreator("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") { destUri ->
+        val srcUri = selectedPdfUri
+        if (destUri != null && srcUri != null) {
+            if (isExporting) return@rememberPreferredDocumentCreator
+            isExporting = true
+            scope.launch {
+                try {
+                    val result = OfficeExportEngine.exportToExcel(context, srcUri, destUri)
+                    if (result.isSuccess) {
+                        Toast.makeText(context, context.getString(R.string.table_extractor_success), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.table_extractor_error_save), Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e("Excel export failed", e)
+                    Toast.makeText(context, context.getString(R.string.table_extractor_error_save), Toast.LENGTH_SHORT).show()
+                } finally {
+                    isExporting = false
+                }
+            }
         }
     }
 
@@ -360,25 +384,43 @@ fun TableExtractorScreen(
                     }
                 }
 
-                Button(
-                    onClick = {
-                        if (isExporting) return@Button
-                        exportSourceUri = selectedPdfUri
-                        exportSafeMode = isSpreadsheetSafeCsv
-                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
-                        saveCsvLauncher.launch(suggestedName)
-                    },
-                    enabled = !isExporting && selectedPdfUri != null && parsedRows.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (isExporting) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                    } else {
-                        Icon(Icons.Rounded.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (isExporting) return@Button
+                            exportSourceUri = selectedPdfUri
+                            exportSafeMode = isSpreadsheetSafeCsv
+                            val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
+                            saveCsvLauncher.launch(suggestedName)
+                        },
+                        enabled = !isExporting && selectedPdfUri != null && parsedRows.isNotEmpty(),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            Spacer(modifier = Modifier.width(6.dp))
+                        } else {
+                            Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text("Export CSV")
                     }
-                    Text(stringResource(R.string.table_extractor_action_export))
+                    FilledTonalButton(
+                        onClick = {
+                            if (isExporting) return@FilledTonalButton
+                            val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "xlsx")
+                            saveXlsxLauncher.launch(suggestedName)
+                        },
+                        enabled = !isExporting && selectedPdfUri != null && parsedRows.isNotEmpty(),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Rounded.TableChart, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Export Excel")
+                    }
                 }
             } else if (extractionError != null) {
                 Card(

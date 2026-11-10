@@ -126,6 +126,7 @@ object PdfStampAndNumberWorker {
                         "SIMPLE" -> "${i + 1}"
                         "PAGE_X_OF_Y" -> "Page ${i + 1} of $totalPages"
                         "SLASH" -> "${i + 1} / $totalPages"
+                        "ROMAN" -> toRoman(i + 1)
                         else -> "Page ${i + 1} of $totalPages"
                     }
 
@@ -225,5 +226,20 @@ object PdfStampAndNumberWorker {
         } finally {
             doc?.close()
         }
+    }
+
+    private fun toRoman(number: Int): String {
+        if (number <= 0) return number.toString()
+        val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+        val symbols = arrayOf("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
+        val sb = StringBuilder()
+        var num = number
+        for (idx in values.indices) {
+            while (num >= values[idx]) {
+                num -= values[idx]
+                sb.append(symbols[idx])
+            }
+        }
+        return sb.toString()
     }
 }

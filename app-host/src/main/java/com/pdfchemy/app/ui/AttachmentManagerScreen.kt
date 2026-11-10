@@ -50,6 +50,7 @@ fun AttachmentManagerScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     var targetExtractAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
+    var targetDeleteAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
     var fileToEmbedUri by remember { mutableStateOf<Uri?>(null) }
 
     fun refreshAttachments() {
@@ -132,6 +133,33 @@ fun AttachmentManagerScreen(
             }
         } else {
             fileToEmbedUri = null
+        }
+    }
+
+    val saveDeletedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
+        if (destUri != null && selectedPdfUri != null && targetDeleteAttachment != null) {
+            coroutineScope.launch {
+                try {
+                    val params = JSONObject().put("attachmentName", targetDeleteAttachment!!.name)
+                    PdfGateway.executeEngine(context, "ATTACHMENT_REMOVE", selectedPdfUri!!, destUri, params.toString())
+                    viewModel.showSuccessToast(
+                        context.getString(R.string.title_extract_success),
+                        context.getString(R.string.desc_extract_success),
+                        destUri
+                    )
+                    selectedPdfUri = destUri
+                    refreshAttachments()
+                } catch (e: Exception) {
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_extract_failed),
+                        e.localizedMessage ?: ""
+                    )
+                } finally {
+                    targetDeleteAttachment = null
+                }
+            }
+        } else {
+            targetDeleteAttachment = null
         }
     }
 
@@ -282,6 +310,15 @@ fun AttachmentManagerScreen(
                                         }
                                     ) {
                                         Icon(Icons.Rounded.FileDownload, contentDescription = "Extract", tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            targetDeleteAttachment = item
+                                            val baseName = selectedPdfUri?.let { FileUtils.getFileName(context, it) }?.substringBeforeLast('.') ?: "document"
+                                            saveDeletedPdfLauncher.launch("${baseName}_detached.pdf")
+                                        }
+                                    ) {
+                                        Icon(Icons.Rounded.DeleteOutline, contentDescription = stringResource(R.string.desc_delete), tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }

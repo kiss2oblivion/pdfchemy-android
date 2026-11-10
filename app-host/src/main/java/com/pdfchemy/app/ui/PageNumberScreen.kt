@@ -242,6 +242,7 @@ fun PageNumberScreen(
                             NumberFormat.PAGE_X_OF_Y -> "Page 1 of $totalPages"
                             NumberFormat.SLASH -> "1 / $totalPages"
                             NumberFormat.SIMPLE -> "1"
+                            NumberFormat.ROMAN -> "I"
                         }
 
                         Box(
@@ -278,7 +279,8 @@ fun PageNumberScreen(
                     listOf(
                         NumberFormat.PAGE_X_OF_Y to "Page 1 of $totalPages",
                         NumberFormat.SLASH to "1 / $totalPages",
-                        NumberFormat.SIMPLE to "1"
+                        NumberFormat.SIMPLE to "1",
+                        NumberFormat.ROMAN to "I"
                     ).forEach { (fmt, label) ->
                         FilterChip(
                             selected = selectedFormat == fmt,

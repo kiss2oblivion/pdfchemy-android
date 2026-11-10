@@ -112,7 +112,7 @@ object PdfManipulatorWorker {
         var renderer: PdfRenderer? = null
         try {
             val params = JSONObject(paramsJson)
-            val whiteThreshold = params.optDouble("whiteThreshold", 0.999).toFloat()
+            val whiteThreshold = params.optDouble("whiteThreshold", 0.985).toFloat()
             
             renderer = PdfRenderer(sourceFd)
             val totalPages = renderer.pageCount
@@ -123,6 +123,8 @@ object PdfManipulatorWorker {
             val sampleH = 96
             val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); Bitmap.createBitmap(sampleW, sampleH, Bitmap.Config.ARGB_8888) }
             val pixels = IntArray(sampleW * sampleH)
+            val marginX = (sampleW * 0.05f).toInt()
+            val marginY = (sampleH * 0.05f).toInt()
 
             try {
                 for (i in 0 until totalPages) {
@@ -133,14 +135,20 @@ object PdfManipulatorWorker {
                         page.render(sampleBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         sampleBmp.getPixels(pixels, 0, sampleW, 0, 0, sampleW, sampleH)
 
+                        var evaluatedPixels = 0
                         var nonWhite = 0
-                        for (p in pixels) {
-                            val r = (p shr 16) and 0xFF
-                            val g = (p shr 8) and 0xFF
-                            val b = p and 0xFF
-                            if (r < 240 || g < 240 || b < 240) nonWhite++
+                        for (y in marginY until (sampleH - marginY)) {
+                            val rowOffset = y * sampleW
+                            for (x in marginX until (sampleW - marginX)) {
+                                val p = pixels[rowOffset + x]
+                                val r = (p shr 16) and 0xFF
+                                val g = (p shr 8) and 0xFF
+                                val b = p and 0xFF
+                                if (r < 240 || g < 240 || b < 240) nonWhite++
+                                evaluatedPixels++
+                            }
                         }
-                        val whiteRatio = (pixels.size - nonWhite).toFloat() / pixels.size.toFloat()
+                        val whiteRatio = if (evaluatedPixels > 0) (evaluatedPixels - nonWhite).toFloat() / evaluatedPixels.toFloat() else 1.0f
                         whiteRatio >= whiteThreshold
                     } catch (e: Exception) {
                         false

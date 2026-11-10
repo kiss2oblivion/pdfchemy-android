@@ -103,6 +103,13 @@ object ComicBookEngineWorker {
                 }
             }
 
+            val magic = ByteArray(4)
+            java.io.FileInputStream(tempFile).use { it.read(magic) }
+            val isRar = magic.size >= 4 && magic[0] == 0x52.toByte() && magic[1] == 0x61.toByte() && magic[2] == 0x72.toByte() && magic[3] == 0x21.toByte()
+            if (isRar) {
+                throw IllegalArgumentException("RAR-compressed CBR archives require conversion to standard CBZ (ZIP) format before processing.")
+            }
+
             zip = ZipFile(tempFile)
             document = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             
