@@ -1146,4 +1146,14 @@
     <string name="form_builder_tool_radio">Radio Group</string>
     <string name="form_builder_tool_signature">Signature Field</string>
     <string name="table_extractor_action_export_excel">Export to Excel (.xlsx)</string>
+    <string name="tool_shape">Shapes</string>
+    <string name="shape_picker_desc">Select a geometric shape to draw on the document</string>
+    <string name="shape_rect">Rectangle</string>
+    <string name="shape_circle">Circle</string>
+    <string name="shape_line">Line</string>
+    <string name="shape_arrow">Arrow</string>
+    <string name="custom_stamp_label">Custom Stamp Text</string>
+    <string name="btn_apply_custom_stamp">Apply Stamp</string>
+    <string name="btn_indent_bookmark">Indent</string>
+    <string name="btn_outdent_bookmark">Outdent</string>
 </resources>

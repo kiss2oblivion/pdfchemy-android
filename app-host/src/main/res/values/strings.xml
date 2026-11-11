@@ -514,6 +514,14 @@
 <string name="history_searchable_ocr_pdf">Searchable OCR PDF</string>
 <string name="menu_redact_pdf">Permanent Redaction</string>
 <string name="tool_redact">Redact</string>
+<string name="tool_shape">Shapes</string>
+<string name="shape_picker_desc">Select a geometric shape to draw on the document</string>
+<string name="shape_rect">Rectangle</string>
+<string name="shape_circle">Circle</string>
+<string name="shape_line">Line</string>
+<string name="shape_arrow">Arrow</string>
+<string name="custom_stamp_label">Custom Stamp Text</string>
+<string name="btn_apply_custom_stamp">Apply Stamp</string>
 <string name="title_redact_success">PDF Redacted Successfully!</string>
 <string name="desc_redact_success">Targeted areas have been permanently sanitized and redacted.</string>
 <string name="error_redact_failed">Failed to apply redactions.</string>
@@ -880,6 +888,8 @@
 <string name="label_target_page">Target Page (1 to %1$d)</string>
 <string name="btn_add_bookmark">Add Bookmark</string>
 <string name="btn_save_bookmarks_pdf">Save Bookmarks to PDF</string>
+<string name="btn_indent_bookmark">Indent</string>
+<string name="btn_outdent_bookmark">Outdent</string>
 <string name="title_bookmark_success">Bookmarks Saved</string>
 <string name="desc_bookmark_success">PDF table of contents updated successfully</string>
 <string name="error_bookmark_failed">Failed to Save Bookmarks</string>

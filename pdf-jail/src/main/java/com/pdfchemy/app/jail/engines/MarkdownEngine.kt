@@ -329,7 +329,7 @@ object MarkdownEngine {
             .replace('“', '"').replace('”', '"')
             .replace('‘', '\'').replace('’', '\'')
             .replace('—', '-').replace('–', '-')
-            .replace('…', "...")
+            .replace("…", "...")
             .replace("\t", "    ")
         return normalized.filter { it.code in 32..126 || it == '\n' || it == '\r' }
     }

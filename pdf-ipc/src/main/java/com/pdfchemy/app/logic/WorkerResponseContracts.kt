@@ -139,7 +139,8 @@ data class FontInspectContract(
  */
 data class BookmarkItemContract(
     val title: String,
-    val pageIndex: Int
+    val pageIndex: Int,
+    val level: Int = 0
 )
 
 /**

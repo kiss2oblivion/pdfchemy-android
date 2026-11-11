@@ -353,7 +353,8 @@ object WorkerResponseValidator {
             val obj = arr.getJSONObject(i)
             bookmarks.add(BookmarkItemContract(
                 title = obj.requireString("title", maxLength = 256),
-                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
+                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT),
+                level = obj.optInt("level", 0).coerceIn(0, 10)
             ))
         }
         return BookmarkReadContract(bookmarks = bookmarks)

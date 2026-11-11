@@ -90,8 +90,8 @@ object PdfEditorWorker {
                                 isFakeBoldText = true
                             }
 
-                            // If the page also has drawings, text annotations, or stamps, draw them onto the base raster
-                            if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
+                            // If the page also has drawings, text annotations, stamps, or shapes, draw them onto the base raster
+                            if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty() || mod.shapes.isNotEmpty()) {
                                 val overlayBmp = renderAnnotationOverlayBitmap(mod, finalW, finalH)
                                 if (overlayBmp != null) {
                                     canvas.drawBitmap(overlayBmp, 0f, 0f, null)
@@ -146,7 +146,7 @@ object PdfEditorWorker {
                     page.rotation = (currentRotation + mod.rotationDegrees) % 360
                 }
 
-                if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
+                if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty() || mod.shapes.isNotEmpty()) {
                     val cropBox = page.cropBox ?: page.mediaBox
                     val pageWidthPts = cropBox.width
                     val pageHeightPts = cropBox.height
@@ -304,7 +304,8 @@ object PdfEditorWorker {
             val textSize = 60f * scaleFactor
             stampTextPaint.textSize = textSize
             
-            val textWidth = stampTextPaint.measureText(stamp.type.text)
+            val stampText = stamp.customText?.takeIf { it.isNotBlank() } ?: stamp.type.text
+            val textWidth = stampTextPaint.measureText(stampText)
             val textHeight = textSize
             val paddingX = textWidth * 0.2f
             val paddingY = textHeight * 0.5f
@@ -321,9 +322,78 @@ object PdfEditorWorker {
 
             val cornerRadius = 15f * scaleFactor
             canvas.drawRoundRect(rectLeft, rectTop, rectRight, rectBottom, cornerRadius, cornerRadius, stampPaint)
-            canvas.drawText(stamp.type.text, rectLeft + paddingX, posY + textHeight * 0.35f, stampTextPaint)
+            canvas.drawText(stampText, rectLeft + paddingX, posY + textHeight * 0.35f, stampTextPaint)
 
             canvas.restore()
+        }
+
+        val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        val shapeFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+        }
+
+        for (shape in mod.shapes) {
+            val startX = shape.startXRatio * targetWidth
+            val startY = shape.startYRatio * targetHeight
+            val endX = shape.endXRatio * targetWidth
+            val endY = shape.endYRatio * targetHeight
+            val scaleFactor = (targetWidth / 1000f).coerceAtLeast(1f)
+            shapePaint.color = shape.strokeColor
+            shapePaint.strokeWidth = shape.strokeWidth * scaleFactor
+
+            val left = minOf(startX, endX)
+            val top = minOf(startY, endY)
+            val right = maxOf(startX, endX)
+            val bottom = maxOf(startY, endY)
+
+            when (shape.type) {
+                com.pdfchemy.app.logic.ShapeType.RECTANGLE -> {
+                    if (shape.fillColor != android.graphics.Color.TRANSPARENT) {
+                        shapeFillPaint.color = shape.fillColor
+                        canvas.drawRect(left, top, right, bottom, shapeFillPaint)
+                    }
+                    canvas.drawRect(left, top, right, bottom, shapePaint)
+                }
+                com.pdfchemy.app.logic.ShapeType.CIRCLE -> {
+                    if (shape.fillColor != android.graphics.Color.TRANSPARENT) {
+                        shapeFillPaint.color = shape.fillColor
+                        canvas.drawOval(RectF(left, top, right, bottom), shapeFillPaint)
+                    }
+                    canvas.drawOval(RectF(left, top, right, bottom), shapePaint)
+                }
+                com.pdfchemy.app.logic.ShapeType.LINE -> {
+                    canvas.drawLine(startX, startY, endX, endY, shapePaint)
+                }
+                com.pdfchemy.app.logic.ShapeType.ARROW -> {
+                    canvas.drawLine(startX, startY, endX, endY, shapePaint)
+                    val dx = endX - startX
+                    val dy = endY - startY
+                    val length = Math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
+                    if (length > 5f) {
+                        val arrowHeadLength = (20f * scaleFactor).coerceAtMost(length * 0.4f)
+                        val arrowHeadAngle = Math.toRadians(25.0)
+                        val angle = Math.atan2(dy.toDouble(), dx.toDouble())
+
+                        val x1 = (endX - arrowHeadLength * Math.cos(angle - arrowHeadAngle)).toFloat()
+                        val y1 = (endY - arrowHeadLength * Math.sin(angle - arrowHeadAngle)).toFloat()
+                        val x2 = (endX - arrowHeadLength * Math.cos(angle + arrowHeadAngle)).toFloat()
+                        val y2 = (endY - arrowHeadLength * Math.sin(angle + arrowHeadAngle)).toFloat()
+
+                        val arrowPath = Path().apply {
+                            moveTo(endX, endY)
+                            lineTo(x1, y1)
+                            lineTo(x2, y2)
+                            close()
+                        }
+                        shapeFillPaint.color = shape.strokeColor
+                        canvas.drawPath(arrowPath, shapeFillPaint)
+                    }
+                }
+            }
         }
 
         return bitmap

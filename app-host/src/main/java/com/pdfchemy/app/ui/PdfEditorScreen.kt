@@ -125,12 +125,15 @@ fun PdfEditorScreen(
     var selectedColor by remember { mutableStateOf(Color(0xFFD32F2F)) } // Red default
     var strokeWidth by remember { mutableFloatStateOf(6f) }
     var selectedStampType by remember { mutableStateOf(StampType.APPROVED) }
+    var selectedShapeType by remember { mutableStateOf(com.pdfchemy.app.logic.ShapeType.RECTANGLE) }
+    var customStampText by remember { mutableStateOf("") }
 
     // Active In-Progress Stroke & Redaction
 
     var textColorOption by remember { mutableStateOf(Color.Black) }
 
     var showStampPicker by remember { mutableStateOf(false) }
+    var showShapePicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
 
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -531,6 +534,7 @@ fun PdfEditorScreen(
                         onToolSelect = { tool ->
                             activeTool = tool
                             if (tool == EditorTool.STAMP) showStampPicker = true
+                            if (tool == EditorTool.SHAPE) showShapePicker = true
                         },
                         selectedColor = selectedColor,
                         onColorClick = { showColorPicker = true },
@@ -642,6 +646,8 @@ fun PdfEditorScreen(
                             onUpdateScale = {},
                             onUpdatePan = {},
                             onToggleChrome = {},
+                            selectedShapeType = selectedShapeType,
+                            customStampText = customStampText,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(currentPageBitmap!!.width.toFloat() / currentPageBitmap!!.height.toFloat())
@@ -697,6 +703,7 @@ fun PdfEditorScreen(
                             onToolSelect = { tool ->
                                 activeTool = tool
                                 if (tool == EditorTool.STAMP) showStampPicker = true
+                                if (tool == EditorTool.SHAPE) showShapePicker = true
                             },
                             selectedColor = selectedColor,
                             onColorClick = { showColorPicker = true },
@@ -731,6 +738,8 @@ fun PdfEditorScreen(
                         onUpdateScale = {},
                         onUpdatePan = {},
                         onToggleChrome = {},
+                        selectedShapeType = selectedShapeType,
+                        customStampText = customStampText,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -770,6 +779,8 @@ fun PdfEditorScreen(
                         onUpdateScale = {},
                         onUpdatePan = {},
                         onToggleChrome = {},
+                        selectedShapeType = selectedShapeType,
+                        customStampText = customStampText,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -794,7 +805,9 @@ fun PdfEditorScreen(
                     onUpdateScale = { scale = it },
                     onUpdatePan = { panOffset = it },
                     onToggleChrome = { showChrome = !showChrome },
-                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    selectedShapeType = selectedShapeType,
+                    customStampText = customStampText
                 )
             }
         }
@@ -825,11 +838,12 @@ fun PdfEditorScreen(
                         OutlinedButton(
                             onClick = {
                                 selectedStampType = stamp
+                                customStampText = ""
                                 showStampPicker = false
                             },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (selectedStampType == stamp) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                containerColor = if (selectedStampType == stamp && customStampText.isBlank()) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
                             ),
                             border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color(stamp.colorHex)))
                         ) {
@@ -838,6 +852,93 @@ fun PdfEditorScreen(
                                 color = Color(stamp.colorHex),
                                 fontWeight = FontWeight.Bold
                             )
+                        }
+                    }
+                }
+
+                HorizontalDivider()
+
+                Text(
+                    text = stringResource(R.string.custom_stamp_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = customStampText,
+                        onValueChange = { customStampText = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("e.g. REVIEWED, COPY, CONFIDENTIAL") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Button(
+                        onClick = {
+                            if (customStampText.isNotBlank()) {
+                                showStampPicker = false
+                            }
+                        },
+                        enabled = customStampText.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.btn_apply_custom_stamp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // --- SHAPE PICKER SHEET ---
+    if (showShapePicker) {
+        ModalBottomSheet(onDismissRequest = { showShapePicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.tool_shape),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.shape_picker_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val shapes = listOf(
+                        Triple(com.pdfchemy.app.logic.ShapeType.RECTANGLE, Icons.Rounded.CropSquare, stringResource(R.string.shape_rect)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.CIRCLE, Icons.Rounded.Circle, stringResource(R.string.shape_circle)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.LINE, Icons.Rounded.HorizontalRule, stringResource(R.string.shape_line)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.ARROW, Icons.Rounded.ArrowForward, stringResource(R.string.shape_arrow))
+                    )
+                    shapes.forEach { (type, icon, label) ->
+                        OutlinedButton(
+                            onClick = {
+                                selectedShapeType = type
+                                showShapePicker = false
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selectedShapeType == type) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                            )
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp))
+                                Text(label, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
@@ -1066,6 +1167,12 @@ fun EditorBottomBar(
                     onClick = { onToolSelect(EditorTool.STAMP) }
                 )
                 EditorToolButton(
+                    icon = Icons.Rounded.Category,
+                    label = stringResource(R.string.tool_shape),
+                    selected = activeTool == EditorTool.SHAPE,
+                    onClick = { onToolSelect(EditorTool.SHAPE) }
+                )
+                EditorToolButton(
                     icon = Icons.Rounded.Security,
                     label = stringResource(R.string.tool_redact),
                     selected = activeTool == EditorTool.REDACT,
@@ -1142,12 +1249,16 @@ fun InteractivePdfPage(
     onUpdateScale: (Float) -> Unit,
     onUpdatePan: (androidx.compose.ui.geometry.Offset) -> Unit,
     onToggleChrome: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedShapeType: com.pdfchemy.app.logic.ShapeType = com.pdfchemy.app.logic.ShapeType.RECTANGLE,
+    customStampText: String = ""
 ) {
     val currentMod = remember(sessionTick, pageIndex) { session.getModification(pageIndex) }
     var currentStrokePoints by remember { mutableStateOf<List<com.pdfchemy.app.logic.DrawingPoint>>(emptyList()) }
     var redactDragStart by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
     var redactDragCurrent by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+    var shapeDragStart by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+    var shapeDragCurrent by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
     var canvasSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
     var showTextDialog by remember { mutableStateOf(false) }
     var textInputContent by remember { mutableStateOf("") }
@@ -1219,12 +1330,50 @@ fun InteractivePdfPage(
                                     val yR = offset.y / canvasSize.height
                                     val newStamp = com.pdfchemy.app.logic.StampAnnotation(
                                         type = selectedStampType,
+                                        customText = customStampText.ifBlank { null },
                                         xRatio = xR,
                                         yRatio = yR
                                     )
                                     session.addStamp(pageIndex, newStamp)
                                 }
                             }
+                        }
+                        EditorTool.SHAPE -> {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    shapeDragStart = offset
+                                    shapeDragCurrent = offset
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    shapeDragCurrent = change.position
+                                },
+                                onDragEnd = {
+                                    val start = shapeDragStart
+                                    val end = shapeDragCurrent
+                                    if (start != null && end != null && canvasSize.width > 0 && canvasSize.height > 0) {
+                                        val sX = (start.x / canvasSize.width).coerceIn(0f, 1f)
+                                        val sY = (start.y / canvasSize.height).coerceIn(0f, 1f)
+                                        val eX = (end.x / canvasSize.width).coerceIn(0f, 1f)
+                                        val eY = (end.y / canvasSize.height).coerceIn(0f, 1f)
+                                        val dist = Math.hypot((eX - sX).toDouble(), (eY - sY).toDouble())
+                                        if (dist > 0.01) {
+                                            val newShape = com.pdfchemy.app.logic.ShapeAnnotation(
+                                                type = selectedShapeType,
+                                                startXRatio = sX,
+                                                startYRatio = sY,
+                                                endXRatio = eX,
+                                                endYRatio = eY,
+                                                strokeColor = selectedColor.hashCode(),
+                                                strokeWidth = strokeWidth
+                                            )
+                                            session.addShape(pageIndex, newShape)
+                                        }
+                                    }
+                                    shapeDragStart = null
+                                    shapeDragCurrent = null
+                                }
+                            )
                         }
                         EditorTool.REDACT -> {
                             detectDragGestures(
@@ -1350,6 +1499,145 @@ fun InteractivePdfPage(
                         size = androidx.compose.ui.geometry.Size(width, height)
                     )
                 }
+
+                // Render Saved Shapes
+                for (shape in currentMod.shapes) {
+                    val sColor = androidx.compose.ui.graphics.Color(shape.strokeColor)
+                    val sStroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = shape.strokeWidth,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                    )
+                    val sX = shape.startXRatio * size.width
+                    val sY = shape.startYRatio * size.height
+                    val eX = shape.endXRatio * size.width
+                    val eY = shape.endYRatio * size.height
+
+                    val left = minOf(sX, eX)
+                    val top = minOf(sY, eY)
+                    val w = kotlin.math.abs(eX - sX)
+                    val h = kotlin.math.abs(eY - sY)
+
+                    when (shape.type) {
+                        com.pdfchemy.app.logic.ShapeType.RECTANGLE -> {
+                            drawRect(
+                                color = sColor,
+                                topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                                size = androidx.compose.ui.geometry.Size(w, h),
+                                style = sStroke
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.CIRCLE -> {
+                            drawOval(
+                                color = sColor,
+                                topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                                size = androidx.compose.ui.geometry.Size(w, h),
+                                style = sStroke
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.LINE -> {
+                            drawLine(
+                                color = sColor,
+                                start = androidx.compose.ui.geometry.Offset(sX, sY),
+                                end = androidx.compose.ui.geometry.Offset(eX, eY),
+                                strokeWidth = shape.strokeWidth,
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.ARROW -> {
+                            drawLine(
+                                color = sColor,
+                                start = androidx.compose.ui.geometry.Offset(sX, sY),
+                                end = androidx.compose.ui.geometry.Offset(eX, eY),
+                                strokeWidth = shape.strokeWidth,
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+                            val dx = eX - sX
+                            val dy = eY - sY
+                            val len = kotlin.math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
+                            if (len > 5f) {
+                                val aLen = minOf(20f, len * 0.4f)
+                                val aAngle = Math.toRadians(25.0)
+                                val angle = Math.atan2(dy.toDouble(), dx.toDouble())
+                                val p = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(eX, eY)
+                                    lineTo((eX - aLen * Math.cos(angle - aAngle)).toFloat(), (eY - aLen * Math.sin(angle - aAngle)).toFloat())
+                                    lineTo((eX - aLen * Math.cos(angle + aAngle)).toFloat(), (eY - aLen * Math.sin(angle + aAngle)).toFloat())
+                                    close()
+                                }
+                                drawPath(p, sColor)
+                            }
+                        }
+                    }
+                }
+
+                // Render In-Progress Shape
+                if (activeTool == EditorTool.SHAPE && shapeDragStart != null && shapeDragCurrent != null) {
+                    val start = shapeDragStart!!
+                    val end = shapeDragCurrent!!
+                    val sColor = selectedColor
+                    val sStroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = strokeWidth,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                    )
+                    val left = minOf(start.x, end.x)
+                    val top = minOf(start.y, end.y)
+                    val w = kotlin.math.abs(end.x - start.x)
+                    val h = kotlin.math.abs(end.y - start.y)
+
+                    when (selectedShapeType) {
+                        com.pdfchemy.app.logic.ShapeType.RECTANGLE -> {
+                            drawRect(
+                                color = sColor,
+                                topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                                size = androidx.compose.ui.geometry.Size(w, h),
+                                style = sStroke
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.CIRCLE -> {
+                            drawOval(
+                                color = sColor,
+                                topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                                size = androidx.compose.ui.geometry.Size(w, h),
+                                style = sStroke
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.LINE -> {
+                            drawLine(
+                                color = sColor,
+                                start = start,
+                                end = end,
+                                strokeWidth = strokeWidth,
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+                        }
+                        com.pdfchemy.app.logic.ShapeType.ARROW -> {
+                            drawLine(
+                                color = sColor,
+                                start = start,
+                                end = end,
+                                strokeWidth = strokeWidth,
+                                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                            )
+                            val dx = end.x - start.x
+                            val dy = end.y - start.y
+                            val len = kotlin.math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
+                            if (len > 5f) {
+                                val aLen = minOf(20f, len * 0.4f)
+                                val aAngle = Math.toRadians(25.0)
+                                val angle = Math.atan2(dy.toDouble(), dx.toDouble())
+                                val p = androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(end.x, end.y)
+                                    lineTo((end.x - aLen * Math.cos(angle - aAngle)).toFloat(), (end.y - aLen * Math.sin(angle - aAngle)).toFloat())
+                                    lineTo((end.x - aLen * Math.cos(angle + aAngle)).toFloat(), (end.y - aLen * Math.sin(angle + aAngle)).toFloat())
+                                    close()
+                                }
+                                drawPath(p, sColor)
+                            }
+                        }
+                    }
+                }
             }
 
             // Render Text Annotations
@@ -1376,6 +1664,7 @@ fun InteractivePdfPage(
 
             // Render Stamps
             for (stamp in currentMod.stamps) {
+                val stampText = stamp.customText?.takeIf { it.isNotBlank() } ?: stamp.type.text
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -1390,7 +1679,7 @@ fun InteractivePdfPage(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = stamp.type.text,
+                        text = stampText,
                         color = androidx.compose.ui.graphics.Color(stamp.type.colorHex),
                         fontWeight = FontWeight.Black,
                         fontSize = 14.sp,
