@@ -583,9 +583,7 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("audio/wav")
-    ) { uri ->
+    val onAudioExportDestinationSelected: (Uri?) -> Unit = { uri ->
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {
@@ -619,6 +617,16 @@ fun ReflowReaderScreen(
             }
         }
     }
+
+    val audioExportM4aLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("audio/mp4"),
+        onResult = onAudioExportDestinationSelected
+    )
+
+    val audioExportWavLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("audio/wav"),
+        onResult = onAudioExportDestinationSelected
+    )
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -735,12 +743,32 @@ fun ReflowReaderScreen(
                                         onDismissRequest = { showOverflowMenu = false }
                                     ) {
                                         DropdownMenuItem(
-                                            text = { Text("Export to Audio (WAV)") },
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_m4a_title))
+                                                    Text(stringResource(R.string.audio_export_m4a_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audiobook.m4a") ?: "audiobook.m4a"
+                                                pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
+                                                audioExportM4aLauncher.launch(suggestedName)
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.VolumeUp, contentDescription = null) }
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_wav_title))
+                                                    Text(stringResource(R.string.audio_export_wav_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
                                             onClick = {
                                                 showOverflowMenu = false
                                                 val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audio.wav") ?: "audio_export.wav"
                                                 pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
-                                                audioExportLauncher.launch(suggestedName)
+                                                audioExportWavLauncher.launch(suggestedName)
                                             },
                                             leadingIcon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) }
                                         )

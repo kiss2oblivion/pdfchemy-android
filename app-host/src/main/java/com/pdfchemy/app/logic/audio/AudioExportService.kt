@@ -147,9 +147,25 @@ class AudioExportService : Service() {
             }
             withContext(Dispatchers.IO) { pcm.closeAndJoin() }
             check(store.updateState(id, AudioExportState.ASSEMBLING))
-            withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+            val isM4a = runCatching {
+                val displayName = contentResolver.query(destination, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getString(0) else null
+                }
+                displayName?.endsWith(".m4a", ignoreCase = true) == true ||
+                destination.path?.endsWith(".m4a", ignoreCase = true) == true ||
+                contentResolver.getType(destination)?.let { it.contains("mp4") || it.contains("aac") } == true
+            }.getOrDefault(false)
+
+            val finalFile = if (isM4a && AacM4aWriter.isCodecAvailable()) {
+                val m4a = staging.getFinalM4aFile(id)
+                withContext(Dispatchers.IO) { AacM4aWriter.assemble(raw, m4a, pcm.format) }
+                m4a
+            } else {
+                withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+                wav
+            }
             check(store.updateState(id, AudioExportState.PUBLISHING))
-            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination) }
+            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, finalFile, destination) }
             currentCoroutineContext().ensureActive()
             check(store.updateState(id, AudioExportState.COMPLETED, outputUri = destination.toString()))
         } catch (error: CancellationException) {

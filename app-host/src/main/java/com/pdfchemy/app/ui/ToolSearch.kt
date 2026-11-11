@@ -49,6 +49,9 @@ object ToolRegistry {
         ToolEntry(R.string.menu_inspect_metadata, R.string.menu_inspect_metadata_desc, Icons.Rounded.Info, Screen.InspectMetadata, listOf("properties", "author", "title", "document info")),
         ToolEntry(R.string.menu_remove_metadata, R.string.menu_remove_metadata_desc, Icons.Rounded.CleaningServices, Screen.StripMetadata, listOf("scrub meta", "remove properties", "clean author", "sanitize metadata")),
         
+        // Reading & Audiobook
+        ToolEntry(R.string.menu_reflow_reader, R.string.menu_reflow_reader_desc, Icons.Rounded.MenuBook, Screen.ReflowReader(), listOf("audiobook", "read aloud", "tts", "listen to pdf", "text to speech", "export audio", "m4a", "wav")),
+
         // Editing & Forms
         ToolEntry(R.string.menu_quick_fill_sign, R.string.menu_quick_fill_sign_desc, Icons.Rounded.Draw, Screen.QuickFillSign, listOf("fill out", "type on pdf", "add text", "flat form")),
         ToolEntry(R.string.menu_grayscale_optimizer, R.string.menu_grayscale_optimizer_desc, Icons.Rounded.Draw, Screen.GrayscaleOptimizer, listOf("black and white", "monochrome", "color to bw", "reduce size"))
