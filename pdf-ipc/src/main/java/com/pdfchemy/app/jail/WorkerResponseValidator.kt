@@ -469,7 +469,12 @@ object WorkerResponseValidator {
                     value = f.requireString("value", maxLength = 4096),
                     possibleOptions = opts,
                     isReadOnly = f.optBoolean("isReadOnly", false),
-                    isRequired = f.optBoolean("isRequired", false)
+                    isRequired = f.optBoolean("isRequired", false),
+                    pageIndex = f.optInt("pageIndex", 0),
+                    xRatio = f.optDouble("xRatio", 0.0).toFloat(),
+                    yRatio = f.optDouble("yRatio", 0.0).toFloat(),
+                    widthRatio = f.optDouble("widthRatio", 0.0).toFloat(),
+                    heightRatio = f.optDouble("heightRatio", 0.0).toFloat()
                 ))
             }
             return AcroFormFieldsContract(fields = fields)

@@ -500,6 +500,8 @@
 <string name="desc_form_save_success">Your form entries have been saved to the document.</string>
 <string name="error_form_save_failed">Failed to save filled PDF form.</string>
 <string name="history_filled_form">Filled Form</string>
+<string name="form_fill_mode_list">List View</string>
+<string name="form_fill_mode_insitu">Document View</string>
 <string name="menu_ocr_pdf">OCR &amp; Searchable PDF</string>
 <string name="menu_ocr_pdf_desc">Make scanned documents and images fully searchable</string>
 <string name="ocr_pdf_headline">Make Scanned PDF Searchable</string>

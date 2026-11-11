@@ -1168,4 +1168,6 @@
     <string name="desc_share_text">Share Text</string>
     <string name="msg_copied_to_clipboard">Text copied to clipboard</string>
     <string name="msg_text_saved_success">Text saved successfully</string>
+    <string name="form_fill_mode_list">List View</string>
+    <string name="form_fill_mode_insitu">Document View</string>
 </resources>
