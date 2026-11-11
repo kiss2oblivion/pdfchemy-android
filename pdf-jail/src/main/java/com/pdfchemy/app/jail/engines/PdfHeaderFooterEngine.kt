@@ -154,6 +154,6 @@ object PdfHeaderFooterEngine {
 
         val normalized = java.text.Normalizer.normalize(commonPunctuation, java.text.Normalizer.Form.NFD)
         val stripped = normalized.replace("\\p{M}".toRegex(), "")
-        return stripped.filter { it.code in 32..126 }
+        return stripped.filter { it.code in 32..126 || it.code in 160..255 }
     }
 }
