@@ -73,9 +73,8 @@ object TextToPdfConverter {
                         yOffset = startY
                     }
                     
-                    // PDFBox Type1 fonts don't support all Unicode chars.
-                    // Sanitize before showText to prevent IllegalArgumentException.
-                    val sanitized = wrappedLine.filter { it.code in 32..126 || it.code in 160..255 }
+                    // Sanitize diacritics and typography before showText to prevent IllegalArgumentException
+                    val sanitized = sanitizeForType1(wrappedLine)
                     contentStream.showText(sanitized)
                     contentStream.newLineAtOffset(0f, -LEADING)
                     yOffset -= LEADING
@@ -99,6 +98,27 @@ object TextToPdfConverter {
         }
     }
 
+    private fun sanitizeForType1(input: String): String {
+        if (input.isEmpty()) return ""
+        val commonPunctuation = input
+            .replace('\u201C', '"')
+            .replace('\u201D', '"')
+            .replace('\u2018', '\'')
+            .replace('\u2019', '\'')
+            .replace('\u2014', '-')
+            .replace('\u2013', '-')
+            .replace('\u201E', '"')
+            .replace("\u2026", "...")
+            .replace('ș', 's').replace('Ș', 'S')
+            .replace('ț', 't').replace('Ț', 'T')
+            .replace('ł', 'l').replace('Ł', 'L')
+            .replace('đ', 'd').replace('Đ', 'D')
+
+        val normalized = java.text.Normalizer.normalize(commonPunctuation, java.text.Normalizer.Form.NFD)
+        val stripped = normalized.replace("\\p{M}".toRegex(), "")
+        return stripped.filter { it.code in 32..126 || it.code in 160..255 }
+    }
+
     private fun wrapText(text: String, font: PDType1Font, fontSize: Float, width: Float): List<String> {
         val wrappedLines = mutableListOf<String>()
         var currentLine = StringBuilder()
@@ -107,7 +127,7 @@ object TextToPdfConverter {
         for (word in words) {
             val prospectiveLine = if (currentLine.isEmpty()) word else "$currentLine $word"
             // Sanitize for PDType1Font compatibility before measuring
-            val sanitizedProspective = prospectiveLine.filter { it.code in 32..126 || it.code in 160..255 }
+            val sanitizedProspective = sanitizeForType1(prospectiveLine)
             val lineWidth = try {
                 fontSize * font.getStringWidth(sanitizedProspective) / 1000
             } catch (e: Exception) {

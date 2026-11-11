@@ -132,11 +132,42 @@ object PdfImageReplacerEngine {
                 throw IllegalArgumentException("Resource $resourceName on page $pageIndex is not an image XObject")
             }
 
+            // Aspect ratio fitting: prevent anamorphic stretching by letterboxing if aspect ratios differ
+            val origW = existingXObject.width
+            val origH = existingXObject.height
+            val origAR = origW.toFloat() / origH.toFloat().coerceAtLeast(1f)
+            val repAR = replacementBitmap.width.toFloat() / replacementBitmap.height.toFloat().coerceAtLeast(1f)
+
+            var fittedBitmap = replacementBitmap
+            var isTemporaryBitmap = false
+
+            if (kotlin.math.abs(origAR - repAR) > 0.01f && origW in 1..4096 && origH in 1..4096) {
+                com.pdfchemy.app.security.SecurityLimits.requirePixels(origW, origH)
+                val canvasBmp = Bitmap.createBitmap(origW, origH, Bitmap.Config.ARGB_8888)
+                val canvas = android.graphics.Canvas(canvasBmp)
+                val scale = minOf(origW.toFloat() / replacementBitmap.width, origH.toFloat() / replacementBitmap.height)
+                val dw = replacementBitmap.width * scale
+                val dh = replacementBitmap.height * scale
+                val dx = (origW - dw) / 2f
+                val dy = (origH - dh) / 2f
+                val srcRect = android.graphics.Rect(0, 0, replacementBitmap.width, replacementBitmap.height)
+                val dstRect = android.graphics.RectF(dx, dy, dx + dw, dy + dh)
+                canvas.drawBitmap(replacementBitmap, srcRect, dstRect, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+                fittedBitmap = canvasBmp
+                isTemporaryBitmap = true
+            }
+
             // Create replacement PDImageXObject
-            val newImageXObject = if (isLossless) {
-                LosslessFactory.createFromImage(document, replacementBitmap)
-            } else {
-                JPEGFactory.createFromImage(document, replacementBitmap, 0.90f)
+            val newImageXObject = try {
+                if (isLossless) {
+                    LosslessFactory.createFromImage(document, fittedBitmap)
+                } else {
+                    JPEGFactory.createFromImage(document, fittedBitmap, 0.90f)
+                }
+            } finally {
+                if (isTemporaryBitmap) {
+                    fittedBitmap.recycle()
+                }
             }
 
             // Replace the object in the page resources dictionary

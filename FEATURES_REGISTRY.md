@@ -25,13 +25,13 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Merge PDFs** | `MergePdfsScreen.kt` | `PdfManipulator.kt` | ✅ Live | Multi-document combiner with drag-and-drop reordering |
 | **Split PDFs (Range / All)** | `OrganizeScreens.kt` | `PdfManipulator.kt` | ✅ Live | Split into individual pages or arbitrary page ranges (e.g. `1-3, 5, 8-10`) |
-| **Split by Blank Pages** | `OrganizeScreens.kt` | `MainViewModel.splitByBlankPages` | ✅ Live | Auto-detects blank separator sheets in batch scanner feeds and splits into individual documents |
+| **Split by Blank Pages** | `OrganizeScreens.kt` | `MainViewModel.splitByBlankPages` | ✅ Live | Auto-detects blank separator sheets in batch scanner feeds with 5% margin insets and perceptual luminance, eliminating false negatives from scanner edge lines, roller marks, and feed shadows |
 | **Split by Bookmarks / Chapters** | `OrganizeScreens.kt` | `MainViewModel.splitByBookmarks` | ✅ Live | Auto-splits multi-chapter books or court bundles based on PDF document outlines |
 | **Page Organizer** | `PageOrganizerScreen.kt` | `PdfManipulator.kt` | ✅ Live | Visual thumbnail grid: reorder, delete, duplicate, rotate individual pages. Integrated bounded chronological history for safe Undo/Redo |
 | **Rotate Pages** | `OrganizeScreens.kt` | `PdfManipulator.kt` | ✅ Live | Lossless 90°, 180°, 270° orientation correction |
-| **Auto-Deskew & Straighten** | `DeskewScreen.kt` | `PdfDeskewEngine.kt` | ✅ Live | Hough transform scan tilt auto-detection, manual angle slider, live rotation preview |
+| **Auto-Deskew & Straighten** | `DeskewScreen.kt` | `PdfDeskewEngine.kt` | ✅ Live | Scan tilt auto-detection, manual angle slider, live rotation preview, with bounding box scale preservation to prevent rotated corner clipping |
 | **Page Cropper & Margin Trimmer** | `PageCropperScreen.kt` | `PdfManipulator.kt` | ✅ Live | CropBox adjustment to remove scanner borders and margins |
-| **Paper Canvas Resizer** | `PageLayoutScreen.kt` | `PdfLayoutEngine.kt` | ✅ Live | Resizes standard paper dimensions (A4, Letter, Legal, A3, Executive) with content re-centering |
+| **Paper Canvas Resizer** | `PageLayoutScreen.kt` | `PdfLayoutEngine.kt` | ✅ Live | Resizes standard paper dimensions (A4, Letter, Legal, A3, Executive) with vector Matrix scaling and centering via LayerUtility to prevent content clipping or rasterization |
 | **N-Up Handouts** | `NUpScreen.kt` | `PdfManipulator.kt` | ✅ Live | Imposes 2, 4, 6, 9, or 16 pages per sheet with Z-order / N-order and subtle borders |
 | **Booklet Imposition** | `BookletScreen.kt` | `PdfManipulator.kt` | ✅ Live | Saddle-stitch fold printer ordering (4-page signature booklet imposition) |
 
@@ -63,11 +63,11 @@
 | **AcroForm Interactive Filler** | `AcroFormScreens.kt` | `AcroFormEngine.fillAndSaveForm`, `PdfEditor.kt` | ✅ Live | Inspects and fills standard interactive PDF forms, text boxes, and checkboxes; preserves `NeedAppearances = true` for unflattened forms and supports full form flattening with Helvetica font fallback |
 | **Visual Signer** | `SignPdfScreen.kt` | `SignatureEngine.kt`, `PdfEditor.kt` | ✅ Live | Real-time drag-and-drop repositioning, aspect-ratio lock box, LocalDensity pixel-to-dp scaling, selection badge with delete icon, vector smoothing, date stamps, and full coordinate transformation alignment with `cropBox.lowerLeftX/Y` offsets and 90°/180°/270° Matrix rotations |
 | **Watermark Studio** | `WatermarkScreen.kt` | `PdfEditor.kt` | ✅ Live | Custom text/image watermarks with opacity, angle, scaling, and diagonal tiling |
-| **Header & Footer Studio** | `HeaderFooterScreen.kt` | `PdfEditor.kt` | ✅ Live | Embed running headers and footers with custom margins and alignment |
+| **Header & Footer Studio** | `HeaderFooterScreen.kt` | `PdfEditor.kt` | ✅ Live | Embed running headers and footers with custom margins, alignment, Bates numbers, and Unicode diacritic/typographic quote preservation |
 | **Page Numbering Studio** | `PageNumberScreen.kt` | `PdfEditor.kt` | ✅ Live | Custom page numbers (`Page X of Y`, `X/Y`, `X`), position, font, and start offset |
 | **Bates Numbering** | `BatesNumberScreen.kt` | `PdfEditor.kt` | ✅ Live | Legal numbering (`PREFIX-00001-SUFFIX`), 6 placement positions, custom zero-padding |
 | **Find & Replace Text** | `FindAndReplaceScreen.kt` | `PdfFindAndReplaceEngine.replaceAll` | ✅ Live | True text obliteration via selective 2x print rasterization (`AppendMode.OVERWRITE`) on modified pages with transparent WinAnsi-sanitized searchable text layer (full Unicode diacritic & ligature decomposition); purges original content streams and annotations to guarantee zero plaintext leakage; untouched pages remain 100% native vector text |
-| **Image Replacer** | `ImageReplacerScreen.kt` | `PdfEditor.kt` | ✅ Live | Replace embedded raster image objects in PDF streams without touching text |
+| **Image Replacer** | `ImageReplacerScreen.kt` | `PdfEditor.kt` | ✅ Live | Replace embedded raster image objects in PDF streams without touching text; aspect-ratio letterboxing eliminates anamorphic stretching/distortion |
 | **Bookmark Studio** | `BookmarkEditorScreen.kt` | `PdfBookmarkEngineWorker.kt`, `PdfBookmarkEngine.kt` | ✅ Live | Hierarchical outline/table of contents editor: inspects, adds, edits title, updates page destinations, and deletes outline items |
 | **Cryptographic PKI Signer** | `SignPdfScreen.kt` | `AndroidPdfCryptoSigner.kt` | ⚠️ Underdeveloped | Applies on-the-fly ephemeral self-signed RSA-2048 certificate verifying document integrity; lacks custom `.p12`/`.pfx` keystore loading and Android KeyStore integration |
 

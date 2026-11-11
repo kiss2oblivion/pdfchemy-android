@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.util.Matrix as PdfMatrix
 import org.json.JSONObject
 import java.io.File
@@ -190,17 +191,26 @@ object PdfDeskewEngineWorker {
         val cos = cos(rad).toFloat()
         val sin = sin(rad).toFloat()
 
-        val mb = page.mediaBox
-        val cx = mb.width / 2f
-        val cy = mb.height / 2f
+        val mb = page.mediaBox ?: PDRectangle.A4
+        val w = mb.width
+        val h = mb.height
+        val cx = w / 2f
+        val cy = h / 2f
+
+        // Proportional scale factor so rotated corners never clip outside paper boundaries
+        val rotW = abs(w * cos) + abs(h * sin)
+        val rotH = abs(w * sin) + abs(h * cos)
+        val scale = minOf(w / rotW, h / rotH)
 
         PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, false, false).use { cs ->
             cs.saveGraphicsState()
             val translateToCenter = PdfMatrix.getTranslateInstance(cx, cy)
+            val scaleMatrix = PdfMatrix(scale, 0f, 0f, scale, 0f, 0f)
             val rotateMatrix = PdfMatrix(cos, sin, -sin, cos, 0f, 0f)
             val translateBack = PdfMatrix.getTranslateInstance(-cx, -cy)
 
             cs.transform(translateToCenter)
+            cs.transform(scaleMatrix)
             cs.transform(rotateMatrix)
             cs.transform(translateBack)
         }

@@ -8,11 +8,13 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.pdfchemy.app.jail.AppLogger
+import com.tom_roush.pdfbox.multipdf.LayerUtility
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
+import com.tom_roush.pdfbox.util.Matrix
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -25,23 +27,55 @@ object PdfLayoutEngine {
         destUri: Uri,
         targetSize: TargetPaperSize
     ): Boolean = withContext(Dispatchers.IO) {
-        var doc: PDDocument? = null
+        var srcDoc: PDDocument? = null
+        var outDoc: PDDocument? = null
         try {
             com.pdfchemy.app.jail.CapabilityIo.input(context, sourceUri)?.use { inStream ->
-                doc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
-                if (doc == null) return@withContext false
+                srcDoc = PDDocument.load(inStream, com.pdfchemy.app.jail.JailMemory.settings())
+                if (srcDoc == null) return@withContext false
 
-                val totalPages = doc!!.numberOfPages
-                val targetRect = PDRectangle(targetSize.widthPts, targetSize.heightPts)
+                val totalPages = srcDoc!!.numberOfPages
+                if (totalPages == 0) return@withContext false
+
+                outDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
+                val layerUtil = LayerUtility(outDoc)
+
+                val targetBaseW = targetSize.widthPts
+                val targetBaseH = targetSize.heightPts
 
                 for (i in 0 until totalPages) {
-                    val page = doc!!.getPage(i)
-                    page.mediaBox = targetRect
-                    page.cropBox = targetRect
+                    val srcPage = srcDoc!!.getPage(i)
+                    val srcBox = srcPage.cropBox ?: srcPage.mediaBox ?: PDRectangle.A4
+                    val origW = srcBox.width
+                    val origH = srcBox.height
+
+                    // Preserve page orientation (portrait vs landscape)
+                    val isLandscape = origW > origH
+                    val targetW = if (isLandscape) maxOf(targetBaseW, targetBaseH) else minOf(targetBaseW, targetBaseH)
+                    val targetH = if (isLandscape) minOf(targetBaseW, targetBaseH) else maxOf(targetBaseW, targetBaseH)
+
+                    val targetRect = PDRectangle(targetW, targetH)
+                    val newPage = PDPage(targetRect)
+                    outDoc!!.addPage(newPage)
+
+                    // Proportional scale factor
+                    val scale = minOf(targetW / origW, targetH / origH)
+                    val scaledW = origW * scale
+                    val scaledH = origH * scale
+                    val tx = (targetW - scaledW) / 2f
+                    val ty = (targetH - scaledH) / 2f
+
+                    val form = layerUtil.importPageAsForm(srcDoc, i)
+                    PDPageContentStream(outDoc, newPage).use { cs ->
+                        cs.saveGraphicsState()
+                        cs.transform(Matrix(scale, 0f, 0f, scale, tx, ty))
+                        cs.drawForm(form)
+                        cs.restoreGraphicsState()
+                    }
                 }
 
                 com.pdfchemy.app.jail.CapabilityIo.output(context, destUri)?.let { com.pdfchemy.app.security.BoundedOutputStream(it) }?.use { outStream ->
-                    doc!!.save(outStream)
+                    outDoc!!.save(outStream)
                 }
                 true
             } ?: false
@@ -49,7 +83,8 @@ object PdfLayoutEngine {
             AppLogger.e("Failed to resize PDF pages: ${e.message}", e)
             false
         } finally {
-            doc?.close()
+            try { srcDoc?.close() } catch (_: Exception) {}
+            try { outDoc?.close() } catch (_: Exception) {}
         }
     }
 

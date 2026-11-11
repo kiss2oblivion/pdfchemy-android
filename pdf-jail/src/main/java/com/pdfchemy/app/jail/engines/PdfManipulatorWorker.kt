@@ -133,15 +133,32 @@ object PdfManipulatorWorker {
                         page.render(sampleBmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         sampleBmp.getPixels(pixels, 0, sampleW, 0, 0, sampleW, sampleH)
 
+                        // 5% margin inset to ignore scanner feed edge shadows, staple holes, and roller marks
+                        val insetX = (sampleW * 0.05f).toInt().coerceAtLeast(2)
+                        val insetY = (sampleH * 0.05f).toInt().coerceAtLeast(2)
+                        var evaluatedPixels = 0
                         var nonWhite = 0
-                        for (p in pixels) {
-                            val r = (p shr 16) and 0xFF
-                            val g = (p shr 8) and 0xFF
-                            val b = p and 0xFF
-                            if (r < 240 || g < 240 || b < 240) nonWhite++
+
+                        for (y in insetY until (sampleH - insetY)) {
+                            val rowOffset = y * sampleW
+                            for (x in insetX until (sampleW - insetX)) {
+                                val p = pixels[rowOffset + x]
+                                val r = (p shr 16) and 0xFF
+                                val g = (p shr 8) and 0xFF
+                                val b = p and 0xFF
+                                val lum = (0.299f * r + 0.587f * g + 0.114f * b)
+                                if (lum < 235f) {
+                                    nonWhite++
+                                }
+                                evaluatedPixels++
+                            }
                         }
-                        val whiteRatio = (pixels.size - nonWhite).toFloat() / pixels.size.toFloat()
-                        whiteRatio >= whiteThreshold
+                        val whiteRatio = if (evaluatedPixels > 0) {
+                            (evaluatedPixels - nonWhite).toFloat() / evaluatedPixels.toFloat()
+                        } else 1.0f
+
+                        val effectiveThreshold = minOf(whiteThreshold, 0.992f)
+                        whiteRatio >= effectiveThreshold
                     } catch (e: Exception) {
                         false
                     } finally {
