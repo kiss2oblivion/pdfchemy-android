@@ -101,7 +101,7 @@
 ### 6. 📖 Reading & Accessibility
 | Feature | UI Screen | Engine / Logic | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Reflow Reader Studio** | `ReflowReaderScreen.kt` | `ReflowEngine.kt` | ✅ Live | E-reader mode with font scaling, themes (Light, Sepia, Dark, OLED), continuous flow |
+| **Reflow Reader Studio** | `ReflowReaderScreen.kt` | `ReflowEngine.kt` | ✅ Live | E-reader mode with font scaling, themes (Light, Warmth/Eye-Comfort blue-light filter, Sepia, Dark, OLED), Bionic Focus Reading (saccadic eye movement fixation bolding), Dyslexia line & letter spacing suite, continuous flow |
 | **Offline TTS (Read Aloud)** | `ReflowReaderScreen.kt` | `android.speech.tts.TextToSpeech` | ✅ Live | 100% offline text-to-speech with speed controls (0.75x–2.0x) and synced paragraph tracking |
 | **Continuous Document Reader** | `PdfReaderScreen.kt` | `PdfRenderer` | ✅ Live | Hardware-accelerated continuous vertical page renderer with bookmark outline navigation, in-document keyword search, and page slider controls |
 | **Audiobook & TTS Audio Export** | `ReflowReaderScreen.kt` | `AudioExportService.kt`, `AacM4aWriter.kt`, `WavWriter.kt` | ✅ Live | Synthesizes reflowed document text via foreground service with quota projection into either compressed AAC `.m4a` (~0.9 MB/min via native hardware MediaCodec encoder) or studio-quality 16-bit PCM `.wav` (~10.5 MB/min); surfaced in Reflow Reader and Tool Registry |

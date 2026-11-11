@@ -54,6 +54,7 @@ import kotlinx.coroutines.withContext
 
 enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
     LIGHT(Color(0xFFFFFFFF), Color(0xFF1E293B), "Light"),
+    WARMTH(Color(0xFFFFF8E7), Color(0xFF3E2723), "Warmth"),
     SEPIA(Color(0xFFFBF0D9), Color(0xFF5F4B32), "Sepia"),
     DARK(Color(0xFF1E293B), Color(0xFFF1F5F9), "Dark"),
     OLED(Color(0xFF000000), Color(0xFFE2E8F0), "OLED")
@@ -302,6 +303,8 @@ fun ReflowReaderScreen(
     var selectedTheme by remember { mutableStateOf(ReaderTheme.LIGHT) }
     var fontSizeSp by remember { mutableStateOf(16f) }
     var useSerifFont by remember { mutableStateOf(false) }
+    var isBionicReading by remember { mutableStateOf(false) }
+    var isDyslexiaSpacing by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
 
@@ -1009,6 +1012,28 @@ fun ReflowReaderScreen(
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", color = selectedTheme.text, style = MaterialTheme.typography.labelSmall)
                                     }
+                                    IconButton(
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Bio",
+                                            color = if (isBionicReading) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isBionicReading) FontWeight.ExtraBold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Dys",
+                                            color = if (isDyslexiaSpacing) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isDyslexiaSpacing) FontWeight.Bold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1193,7 +1218,9 @@ fun ReflowReaderScreen(
                                                     searchQuery = searchQuery,
                                                     textColor = selectedTheme.text,
                                                     fontSizeSp = fontSizeSp,
-                                                    useSerifFont = useSerifFont
+                                                    useSerifFont = useSerifFont,
+                                                    isBionicReading = isBionicReading,
+                                                    isDyslexiaSpacing = isDyslexiaSpacing
                                                 )
                                             }
                                         }
@@ -1312,6 +1339,18 @@ fun ReflowReaderScreen(
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", style = MaterialTheme.typography.labelMedium)
                                     }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isBionicReading,
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        label = { Text("Bionic") }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isDyslexiaSpacing,
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        label = { Text("Dyslexia") }
+                                    )
                                 }
                             }
                         }
@@ -1358,7 +1397,9 @@ fun ReflowReaderScreen(
                                             searchQuery = searchQuery,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1404,7 +1445,9 @@ fun ReflowReaderScreen(
                                             searchQuery = searchQuery,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1424,32 +1467,28 @@ private fun HighlightedParagraph(
     searchQuery: String,
     textColor: Color,
     fontSizeSp: Float,
-    useSerifFont: Boolean
+    useSerifFont: Boolean,
+    isBionicReading: Boolean = false,
+    isDyslexiaSpacing: Boolean = false
 ) {
     val trimmed = searchQuery.trim()
-    if (trimmed.length < 2 || !text.contains(trimmed, ignoreCase = true)) {
-        Text(
-            text = text,
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
-    } else {
-        val annotated = remember(text, trimmed) {
-            buildAnnotatedString {
+    val lineHeightSp = (fontSizeSp * if (isDyslexiaSpacing) 1.85f else 1.55f).sp
+    val letterSpacingSp = if (isDyslexiaSpacing) 0.06.sp else 0.sp
+
+    val annotated = remember(text, trimmed, isBionicReading) {
+        buildAnnotatedString {
+            if (trimmed.length >= 2 && text.contains(trimmed, ignoreCase = true)) {
                 var startIndex = 0
                 val lowerText = text.lowercase()
                 val lowerQuery = trimmed.lowercase()
                 while (startIndex < text.length) {
                     val matchIdx = lowerText.indexOf(lowerQuery, startIndex)
                     if (matchIdx == -1) {
-                        append(text.substring(startIndex))
+                        appendBionicText(text.substring(startIndex), isBionicReading)
                         break
                     }
                     if (matchIdx > startIndex) {
-                        append(text.substring(startIndex, matchIdx))
+                        appendBionicText(text.substring(startIndex, matchIdx), isBionicReading)
                     }
                     val matchEnd = matchIdx + trimmed.length
                     pushStyle(
@@ -1463,15 +1502,40 @@ private fun HighlightedParagraph(
                     pop()
                     startIndex = matchEnd
                 }
+            } else if (isBionicReading) {
+                appendBionicText(text, true)
+            } else {
+                append(text)
             }
         }
-        Text(
-            text = annotated,
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
+    }
+
+    Text(
+        text = annotated,
+        color = textColor,
+        fontSize = fontSizeSp.sp,
+        lineHeight = lineHeightSp,
+        letterSpacing = letterSpacingSp,
+        fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
+        textAlign = TextAlign.Start
+    )
+}
+
+private fun androidx.compose.ui.text.AnnotatedString.Builder.appendBionicText(segment: String, isBionic: Boolean) {
+    if (!isBionic) {
+        append(segment)
+        return
+    }
+    val words = segment.split(Regex("(?<=\\s)|(?=\\s)"))
+    for (word in words) {
+        if (word.isBlank() || word.length == 1) {
+            append(word)
+        } else {
+            val half = kotlin.math.ceil(word.length * 0.45f).toInt().coerceIn(1, word.length)
+            pushStyle(SpanStyle(fontWeight = FontWeight.ExtraBold))
+            append(word.substring(0, half))
+            pop()
+            append(word.substring(half))
+        }
     }
 }
