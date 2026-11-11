@@ -916,6 +916,12 @@
 <string name="title_embed_success">File Embedded</string>
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
+<string name="title_remove_attachment_success">Attachment Removed</string>
+<string name="desc_remove_attachment_success">Attachment removed and document saved successfully</string>
+<string name="error_remove_attachment_failed">Failed to remove attachment</string>
+<string name="btn_remove_attachment">Remove Attachment</string>
+<string name="dialog_remove_attachment_title">Remove Attachment?</string>
+<string name="dialog_remove_attachment_msg">Remove \"%1$s\" from this PDF? The updated document will be saved as a new file.</string>
 <string name="menu_fast_web_view">Fast Web View (Linearize)</string>
 <string name="menu_fast_web_view_desc">Restructure PDF streams for instant web and mobile streaming</string>
 <string name="linearize_headline">Fast Web View Streamer</string>
@@ -1035,6 +1041,7 @@
     <string name="menu_table_extractor_desc">Pull tabular data and forms from PDF into clean RFC 4180 CSV / Excel</string>
     <string name="table_extractor_title">PDF Table &amp; Spreadsheet Extractor</string>
     <string name="table_extractor_action_export">Export Tables to CSV</string>
+    <string name="table_extractor_action_export_excel">Export to Excel (.xlsx)</string>
     <string name="table_extractor_preview">Detected Tabular Data</string>
     <string name="table_extractor_no_tables">No tabular data detected on this page.</string>
     <string name="table_extractor_success">Tables Exported to CSV!</string>
@@ -1089,6 +1096,8 @@
     <string name="form_builder_tool_text">Text Field</string>
     <string name="form_builder_tool_checkbox">Checkbox</string>
     <string name="form_builder_tool_dropdown">Dropdown</string>
+    <string name="form_builder_tool_radio">Radio Group</string>
+    <string name="form_builder_tool_signature">Signature Field</string>
     <string name="form_builder_hint">Tap anywhere on the page to insert an interactive field</string>
     <string name="form_builder_field_name_label">Field Name</string>
     <string name="form_builder_options_label">Options (comma-separated)</string>

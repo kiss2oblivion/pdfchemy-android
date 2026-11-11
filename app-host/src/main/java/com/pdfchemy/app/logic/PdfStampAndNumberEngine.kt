@@ -27,13 +27,19 @@ enum class NumberPosition {
 enum class NumberFormat {
     SIMPLE,        // "1"
     PAGE_X_OF_Y,   // "Page 1 of 5"
-    SLASH          // "1 / 5"
+    SLASH,         // "1 / 5"
+    ROMAN_LOWER,   // "i, ii, iii"
+    ROMAN_UPPER,   // "I, II, III"
+    CUSTOM         // prefix + num + suffix
 }
 
 data class PageNumberOptions(
     val position: NumberPosition = NumberPosition.BOTTOM_CENTER,
     val format: NumberFormat = NumberFormat.PAGE_X_OF_Y,
     val skipFirstPage: Boolean = false,
+    val startNumber: Int = 1,
+    val prefix: String = "",
+    val suffix: String = "",
     val fontSize: Float = 10f,
     val marginPts: Float = 36f
 )
@@ -84,6 +90,9 @@ object PdfStampAndNumberEngine {
             put("position", options.position.name)
             put("format", options.format.name)
             put("skipFirstPage", options.skipFirstPage)
+            put("startNumber", options.startNumber)
+            put("prefix", options.prefix)
+            put("suffix", options.suffix)
             put("fontSize", options.fontSize.toDouble())
             put("marginPts", options.marginPts.toDouble())
         }

@@ -1123,4 +1123,16 @@
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
     <string name="running_ocr">Running On-Device OCR...</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
+    <string name="title_remove_attachment_success">Attachment Removed</string>
+    <string name="desc_remove_attachment_success">Attachment removed and document saved successfully</string>
+    <string name="error_remove_attachment_failed">Failed to remove attachment</string>
+    <string name="btn_remove_attachment">Remove Attachment</string>
+    <string name="dialog_remove_attachment_title">Remove Attachment?</string>
+    <string name="dialog_remove_attachment_msg">Remove \"%1$s\" from this PDF? The updated document will be saved as a new file.</string>
+    <string name="menu_read_pdf">Open PDF</string>
+    <string name="menu_read_pdf_desc">Read and annotate documents</string>
+    <string name="menu_home">Home</string>
+    <string name="form_builder_tool_radio">Radio Group</string>
+    <string name="form_builder_tool_signature">Signature Field</string>
+    <string name="table_extractor_action_export_excel">Export to Excel (.xlsx)</string>
 </resources>

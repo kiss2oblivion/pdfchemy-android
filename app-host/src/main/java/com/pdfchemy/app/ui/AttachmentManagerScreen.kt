@@ -48,6 +48,8 @@ fun AttachmentManagerScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     var targetExtractAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
+    var targetRemoveAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
+    var showRemoveConfirmDialog by remember { mutableStateOf(false) }
     var fileToEmbedUri by remember { mutableStateOf<Uri?>(null) }
 
     fun refreshAttachments() {
@@ -105,6 +107,31 @@ fun AttachmentManagerScreen(
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_extract_failed),
+                        e.localizedMessage ?: ""
+                    )
+                }
+            }
+        }
+    }
+
+    val removeAttachmentSaveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { destUri ->
+        if (destUri != null && selectedPdfUri != null && targetRemoveAttachment != null) {
+            coroutineScope.launch {
+                try {
+                    val params = JSONObject().put("attachmentName", targetRemoveAttachment!!.name)
+                    PdfGateway.executeEngine(context, "ATTACHMENT_REMOVE", selectedPdfUri!!, destUri, params.toString())
+                    viewModel.notifySuccess(
+                        context.getString(R.string.title_remove_attachment_success),
+                        context.getString(R.string.desc_remove_attachment_success),
+                        destUri
+                    )
+                    selectedPdfUri = destUri
+                    refreshAttachments()
+                } catch (e: Exception) {
+                    viewModel.showErrorToast(
+                        context.getString(R.string.error_remove_attachment_failed),
                         e.localizedMessage ?: ""
                     )
                 }
@@ -294,6 +321,18 @@ fun AttachmentManagerScreen(
                                     ) {
                                         Icon(Icons.Rounded.FileDownload, contentDescription = "Extract", tint = MaterialTheme.colorScheme.primary)
                                     }
+                                    IconButton(
+                                        onClick = {
+                                            targetRemoveAttachment = item
+                                            showRemoveConfirmDialog = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Rounded.DeleteOutline,
+                                            contentDescription = stringResource(R.string.btn_remove_attachment),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -321,5 +360,30 @@ fun AttachmentManagerScreen(
                 )
             }
         }
+    }
+
+    if (showRemoveConfirmDialog && targetRemoveAttachment != null) {
+        AlertDialog(
+            onDismissRequest = { showRemoveConfirmDialog = false },
+            title = { Text(stringResource(R.string.dialog_remove_attachment_title)) },
+            text = { Text(stringResource(R.string.dialog_remove_attachment_msg, targetRemoveAttachment!!.name)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRemoveConfirmDialog = false
+                        val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                        val attachSafe = targetRemoveAttachment!!.name.replace(Regex("[^a-zA-Z0-9_.-]"), "_")
+                        removeAttachmentSaveLauncher.launch("${base}_without_${attachSafe}.pdf")
+                    }
+                ) {
+                    Text(stringResource(R.string.btn_remove_attachment), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

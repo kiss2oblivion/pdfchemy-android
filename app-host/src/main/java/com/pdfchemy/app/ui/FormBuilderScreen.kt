@@ -20,6 +20,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -58,7 +59,9 @@ import kotlinx.coroutines.withContext
 enum class FormBuilderToolType {
     TEXT,
     CHECKBOX,
-    DROPDOWN
+    DROPDOWN,
+    RADIO,
+    SIGNATURE
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -365,29 +368,39 @@ fun FormBuilderScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.TEXT,
                         onClick = { selectedTool = FormBuilderToolType.TEXT },
                         label = { Text(stringResource(R.string.form_builder_tool_text)) },
-                        leadingIcon = { Icon(Icons.Rounded.TextFields, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1f)
+                        leadingIcon = { Icon(Icons.Rounded.TextFields, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.CHECKBOX,
                         onClick = { selectedTool = FormBuilderToolType.CHECKBOX },
                         label = { Text(stringResource(R.string.form_builder_tool_checkbox)) },
-                        leadingIcon = { Icon(Icons.Rounded.CheckBox, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1f)
+                        leadingIcon = { Icon(Icons.Rounded.CheckBox, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                    FilterChip(
+                        selected = selectedTool == FormBuilderToolType.RADIO,
+                        onClick = { selectedTool = FormBuilderToolType.RADIO },
+                        label = { Text(stringResource(R.string.form_builder_tool_radio)) },
+                        leadingIcon = { Icon(Icons.Rounded.RadioButtonChecked, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.DROPDOWN,
                         onClick = { selectedTool = FormBuilderToolType.DROPDOWN },
                         label = { Text(stringResource(R.string.form_builder_tool_dropdown)) },
-                        leadingIcon = { Icon(Icons.Rounded.ArrowDropDownCircle, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1.1f)
+                        leadingIcon = { Icon(Icons.Rounded.ArrowDropDownCircle, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                    FilterChip(
+                        selected = selectedTool == FormBuilderToolType.SIGNATURE,
+                        onClick = { selectedTool = FormBuilderToolType.SIGNATURE },
+                        label = { Text(stringResource(R.string.form_builder_tool_signature)) },
+                        leadingIcon = { Icon(Icons.Rounded.Draw, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                 }
 
@@ -446,6 +459,8 @@ fun FormBuilderScreen(
                                                         FormBuilderToolType.TEXT -> "text_$fieldNum"
                                                         FormBuilderToolType.CHECKBOX -> "check_$fieldNum"
                                                         FormBuilderToolType.DROPDOWN -> "choice_$fieldNum"
+                                                        FormBuilderToolType.RADIO -> "radio_$fieldNum"
+                                                        FormBuilderToolType.SIGNATURE -> "signature_$fieldNum"
                                                     }
                                                     fieldNameInput = defaultName
                                                     defaultValueInput = ""
@@ -532,6 +547,18 @@ fun FormBuilderScreen(
                                                         tint = Color(0xFFE65100),
                                                         modifier = Modifier.size(14.dp)
                                                     )
+                                                    FormFieldType.RADIO -> Icon(
+                                                        Icons.Rounded.RadioButtonChecked,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF7B1FA2),
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    FormFieldType.SIGNATURE -> Icon(
+                                                        Icons.Rounded.Draw,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFC2185B),
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
                                                     else -> {}
                                                 }
                                                 Text(
@@ -563,6 +590,8 @@ fun FormBuilderScreen(
                         FormBuilderToolType.TEXT -> stringResource(R.string.form_builder_tool_text)
                         FormBuilderToolType.CHECKBOX -> stringResource(R.string.form_builder_tool_checkbox)
                         FormBuilderToolType.DROPDOWN -> stringResource(R.string.form_builder_tool_dropdown)
+                        FormBuilderToolType.RADIO -> stringResource(R.string.form_builder_tool_radio)
+                        FormBuilderToolType.SIGNATURE -> stringResource(R.string.form_builder_tool_signature)
                     }
                 )
             },
@@ -608,6 +637,8 @@ fun FormBuilderScreen(
                             FormBuilderToolType.TEXT -> Pair(0.35f, 0.045f)
                             FormBuilderToolType.CHECKBOX -> Pair(0.06f, 0.038f)
                             FormBuilderToolType.DROPDOWN -> Pair(0.35f, 0.045f)
+                            FormBuilderToolType.RADIO -> Pair(0.06f, 0.038f)
+                            FormBuilderToolType.SIGNATURE -> Pair(0.35f, 0.08f)
                         }
                         val options = if (selectedTool == FormBuilderToolType.DROPDOWN) {
                             dropdownOptionsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -621,6 +652,8 @@ fun FormBuilderScreen(
                                     FormBuilderToolType.TEXT -> FormFieldType.TEXT
                                     FormBuilderToolType.CHECKBOX -> FormFieldType.CHECKBOX
                                     FormBuilderToolType.DROPDOWN -> FormFieldType.CHOICE
+                                    FormBuilderToolType.RADIO -> FormFieldType.RADIO
+                                    FormBuilderToolType.SIGNATURE -> FormFieldType.SIGNATURE
                                 },
                                 xRatio = xRatio.coerceIn(0f, 1f - wRatio),
                                 yRatio = yRatio.coerceIn(0f, 1f - hRatio),

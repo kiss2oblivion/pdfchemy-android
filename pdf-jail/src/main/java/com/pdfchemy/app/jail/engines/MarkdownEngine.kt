@@ -324,8 +324,14 @@ object MarkdownEngine {
     }
 
     private fun sanitizeText(input: String): String {
-        return input.replace("\t", "    ")
-            .filter { it.code in 32..126 || it == '\n' || it == '\r' }
+        val normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD)
+            .replace("\\p{M}".toRegex(), "")
+            .replace('“', '"').replace('”', '"')
+            .replace('‘', '\'').replace('’', '\'')
+            .replace('—', '-').replace('–', '-')
+            .replace('…', "...")
+            .replace("\t", "    ")
+        return normalized.filter { it.code in 32..126 || it == '\n' || it == '\r' }
     }
 
     private fun wrapText(text: String, maxCharsPerLine: Int): List<String> {

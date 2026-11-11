@@ -137,6 +137,18 @@ fun TableExtractorScreen(
         }
     }
 
+    val saveXlsxLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument(com.pdfchemy.app.logic.OfficeFormat.EXCEL.mimeType)
+    ) { destUri ->
+        val srcUri = selectedPdfUri
+        if (destUri != null && srcUri != null) {
+            isExporting = true
+            viewModel.exportPdfToOffice(context, srcUri, destUri, com.pdfchemy.app.logic.OfficeFormat.EXCEL) {
+                isExporting = false
+            }
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
@@ -288,22 +300,40 @@ fun TableExtractorScreen(
                     }
                 }
 
-                Button(
-                    onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
-                        saveCsvLauncher.launch(suggestedName)
-                    },
-                    enabled = !isExporting,
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    if (isExporting) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                    } else {
-                        Icon(Icons.Rounded.Download, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
+                            saveCsvLauncher.launch(suggestedName)
+                        },
+                        enabled = !isExporting,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("CSV", maxLines = 1)
                     }
-                    Text(stringResource(R.string.table_extractor_action_export))
+
+                    Button(
+                        onClick = {
+                            val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "xlsx")
+                            saveXlsxLauncher.launch(suggestedName)
+                        },
+                        enabled = !isExporting,
+                        modifier = Modifier.weight(1.3f)
+                    ) {
+                        if (isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            Spacer(modifier = Modifier.width(6.dp))
+                        } else {
+                            Icon(Icons.Rounded.TableChart, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+                        Text(stringResource(R.string.table_extractor_action_export_excel), maxLines = 1)
+                    }
                 }
             } else if (selectedPdfUri != null) {
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {

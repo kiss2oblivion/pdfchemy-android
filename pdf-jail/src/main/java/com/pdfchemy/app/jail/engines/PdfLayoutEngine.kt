@@ -96,18 +96,18 @@ object PdfLayoutEngine {
         targetSize: TargetPaperSize = TargetPaperSize.A4,
         drawBorders: Boolean = true
     ): Boolean = withContext(Dispatchers.IO) {
-        var pfd: ParcelFileDescriptor? = null
-        var renderer: PdfRenderer? = null
+        var srcDoc: PDDocument? = null
         var outDoc: PDDocument? = null
         try {
-            pfd = com.pdfchemy.app.jail.CapabilityIo.descriptor(context, sourceUri, "r")
-            if (pfd == null) return@withContext false
+            srcDoc = com.pdfchemy.app.jail.CapabilityIo.input(context, sourceUri)?.let {
+                PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+            } ?: return@withContext false
 
-            renderer = PdfRenderer(pfd)
-            val totalSrcPages = renderer.pageCount
+            val totalSrcPages = srcDoc.numberOfPages
             if (totalSrcPages == 0) return@withContext false
 
             outDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
+            val layerUtil = LayerUtility(outDoc)
             val sheetRect = PDRectangle(targetSize.widthPts, targetSize.heightPts)
             val cols = mode.cols
             val rows = mode.rows
@@ -134,40 +134,31 @@ object PdfLayoutEngine {
                         val x = marginX + (col * cellW)
                         val y = targetSize.heightPts - marginY - ((row + 1) * cellH)
 
-                        // Render source page into bitmap
-                        val srcPage = renderer.openPage(currentSrcPage)
-                        var bitmap: Bitmap? = null
-                        try {
-                            val renderScale = 2f
-                            val bmpW = (srcPage.width * renderScale).toInt().coerceIn(100, 2048)
-                            val bmpH = (srcPage.height * renderScale).toInt().coerceIn(100, 2048)
-                            bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpW, bmpH); Bitmap.createBitmap(bmpW, bmpH, Bitmap.Config.ARGB_8888) }
-                            val canvas = android.graphics.Canvas(bitmap)
-                            canvas.drawColor(android.graphics.Color.WHITE)
-                            srcPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                        val form = layerUtil.importPageAsForm(srcDoc, currentSrcPage)
+                        val origBBox = form.bBox
+                        val origW = if (origBBox.width > 0) origBBox.width else 595.28f
+                        val origH = if (origBBox.height > 0) origBBox.height else 841.89f
 
-                            // Calculate fit scaling within cell
-                            val pad = 6f
-                            val availW = cellW - (pad * 2f)
-                            val availH = cellH - (pad * 2f)
-                            val scale = minOf(availW / bmpW, availH / bmpH)
-                            val drawW = bmpW * scale
-                            val drawH = bmpH * scale
-                            val drawX = x + pad + ((availW - drawW) / 2f)
-                            val drawY = y + pad + ((availH - drawH) / 2f)
+                        // Calculate fit scaling within cell
+                        val pad = 6f
+                        val availW = cellW - (pad * 2f)
+                        val availH = cellH - (pad * 2f)
+                        val scale = minOf(availW / origW, availH / origH)
+                        val drawW = origW * scale
+                        val drawH = origH * scale
+                        val drawX = x + pad + ((availW - drawW) / 2f)
+                        val drawY = y + pad + ((availH - drawH) / 2f)
 
-                            val pdImage = JPEGFactory.createFromImage(outDoc, bitmap, 0.85f)
-                            cs.drawImage(pdImage, drawX, drawY, drawW, drawH)
+                        cs.saveGraphicsState()
+                        cs.transform(Matrix(scale, 0f, 0f, scale, drawX, drawY))
+                        cs.drawForm(form)
+                        cs.restoreGraphicsState()
 
-                            if (drawBorders) {
-                                cs.setStrokingColor(200, 200, 200)
-                                cs.setLineWidth(0.5f)
-                                cs.addRect(drawX, drawY, drawW, drawH)
-                                cs.stroke()
-                            }
-                        } finally {
-                            bitmap?.recycle()
-                            srcPage.close()
+                        if (drawBorders) {
+                            cs.setStrokingColor(0.784f, 0.784f, 0.784f)
+                            cs.setLineWidth(0.5f)
+                            cs.addRect(drawX, drawY, drawW, drawH)
+                            cs.stroke()
                         }
 
                         currentSrcPage++
@@ -183,9 +174,8 @@ object PdfLayoutEngine {
             AppLogger.e("Failed to generate N-Up layout: ${e.message}", e)
             false
         } finally {
-            outDoc?.close()
-            renderer?.close()
-            pfd?.close()
+            try { srcDoc?.close() } catch (_: Exception) {}
+            try { outDoc?.close() } catch (_: Exception) {}
         }
     }
 }

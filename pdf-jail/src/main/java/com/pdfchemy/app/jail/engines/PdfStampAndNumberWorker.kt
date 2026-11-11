@@ -102,8 +102,27 @@ object PdfStampAndNumberWorker {
         val position = params.optString("position", "BOTTOM_CENTER")
         val format = params.optString("format", "PAGE_X_OF_Y")
         val skipFirstPage = params.optBoolean("skipFirstPage", false)
+        val startNumber = params.optInt("startNumber", 1)
+        val prefix = params.optString("prefix", "")
+        val suffix = params.optString("suffix", "")
         val fontSize = params.optDouble("fontSize", 10.0).toFloat()
         val marginPts = params.optDouble("marginPts", 36.0).toFloat()
+
+        fun toRoman(number: Int, uppercase: Boolean): String {
+            if (number <= 0) return number.toString()
+            val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+            val romanLiterals = arrayOf("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
+            val sb = StringBuilder()
+            var num = number
+            for (idx in values.indices) {
+                while (num >= values[idx]) {
+                    num -= values[idx]
+                    sb.append(romanLiterals[idx])
+                }
+            }
+            val res = sb.toString()
+            return if (uppercase) res else res.lowercase()
+        }
 
         var doc: PDDocument? = null
         try {
@@ -122,11 +141,15 @@ object PdfStampAndNumberWorker {
                     val pageWidth = mediaBox.width
                     val pageHeight = mediaBox.height
 
+                    val effectiveIndex = startNumber + i
                     val pageNumberText = when (format) {
-                        "SIMPLE" -> "${i + 1}"
-                        "PAGE_X_OF_Y" -> "Page ${i + 1} of $totalPages"
-                        "SLASH" -> "${i + 1} / $totalPages"
-                        else -> "Page ${i + 1} of $totalPages"
+                        "SIMPLE" -> "$effectiveIndex"
+                        "PAGE_X_OF_Y" -> "Page $effectiveIndex of $totalPages"
+                        "SLASH" -> "$effectiveIndex / $totalPages"
+                        "ROMAN_LOWER" -> toRoman(effectiveIndex, false)
+                        "ROMAN_UPPER" -> toRoman(effectiveIndex, true)
+                        "CUSTOM" -> "$prefix$effectiveIndex$suffix"
+                        else -> "Page $effectiveIndex of $totalPages"
                     }
 
                     val textWidth = (font.getStringWidth(pageNumberText) / 1000f) * fontSize

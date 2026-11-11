@@ -41,8 +41,9 @@ object PdfDiffEngine {
                     bmp2 = if (page < texts2.size) PdfEditor.renderPageBitmap(context, second.uri, page, 720) else null
                     val lines1 = texts1.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
                     val lines2 = texts2.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
+                    val (added, removed) = computeLineDiff(lines1, lines2)
                     val visual = if (bmp1 != null && bmp2 != null) generateVisualDiff(bmp1, bmp2) else 100f to null
-                    diffs.add(PageDiffResult(page, visual.first, visual.second, lines2.filter { it !in lines1 }, lines1.filter { it !in lines2 }))
+                    diffs.add(PageDiffResult(page, visual.first, visual.second, added, removed))
                 } finally { bmp1?.recycle(); bmp2?.recycle() }
             }
             val identical = diffs.count { it.diffPercent < 0.05f && it.textAddedLines.isEmpty() && it.textRemovedLines.isEmpty() }
@@ -95,5 +96,52 @@ object PdfDiffEngine {
         } catch (e: Exception) {
             Pair(0f, null)
         }
+    }
+
+    private fun computeLineDiff(lines1: List<String>, lines2: List<String>): Pair<List<String>, List<String>> {
+        if (lines1.isEmpty()) return lines2 to emptyList<String>()
+        if (lines2.isEmpty()) return emptyList<String>() to lines1
+        if (lines1 == lines2) return emptyList<String>() to emptyList<String>()
+
+        val maxLines = 600
+        val l1 = if (lines1.size > maxLines) lines1.take(maxLines) else lines1
+        val l2 = if (lines2.size > maxLines) lines2.take(maxLines) else lines2
+
+        val n = l1.size
+        val m = l2.size
+        val dp = Array(n + 1) { IntArray(m + 1) }
+
+        for (i in 1..n) {
+            val item1 = l1[i - 1]
+            for (j in 1..m) {
+                dp[i][j] = if (item1 == l2[j - 1]) {
+                    dp[i - 1][j - 1] + 1
+                } else {
+                    maxOf(dp[i - 1][j], dp[i][j - 1])
+                }
+            }
+        }
+
+        val added = mutableListOf<String>()
+        val removed = mutableListOf<String>()
+        var i = n
+        var j = m
+
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && l1[i - 1] == l2[j - 1]) {
+                i--
+                j--
+            } else if (j > 0 && (i == 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                added.add(l2[j - 1])
+                j--
+            } else if (i > 0 && (j == 0 || dp[i][j - 1] < dp[i - 1][j])) {
+                removed.add(l1[i - 1])
+                i--
+            }
+        }
+
+        added.reverse()
+        removed.reverse()
+        return added to removed
     }
 }

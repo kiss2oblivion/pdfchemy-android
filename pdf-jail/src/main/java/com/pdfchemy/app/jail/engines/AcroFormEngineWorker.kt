@@ -309,6 +309,33 @@ object AcroFormEngineWorker {
                             }
                             acroForm.fields.add(combo)
                         }
+                        FormFieldType.RADIO -> {
+                            val radio = PDRadioButton(acroForm)
+                            radio.partialName = spec.name
+                            val widget = radio.widgets.firstOrNull() ?: PDAnnotationWidget().also {
+                                radio.widgets = listOf(it)
+                            }
+                            widget.rectangle = rect
+                            widget.page = page
+                            widget.isPrinted = true
+                            page.annotations.add(widget)
+                            if (spec.defaultValue.isNotBlank()) {
+                                try { radio.setValue(spec.defaultValue) } catch (_: Exception) {}
+                            }
+                            acroForm.fields.add(radio)
+                        }
+                        FormFieldType.SIGNATURE -> {
+                            val sig = PDSignatureField(acroForm)
+                            sig.partialName = spec.name
+                            val widget = sig.widgets.firstOrNull() ?: PDAnnotationWidget().also {
+                                sig.widgets = listOf(it)
+                            }
+                            widget.rectangle = rect
+                            widget.page = page
+                            widget.isPrinted = true
+                            page.annotations.add(widget)
+                            acroForm.fields.add(sig)
+                        }
                         else -> {
                             val tf = PDTextField(acroForm)
                             tf.partialName = spec.name
