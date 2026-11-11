@@ -34,7 +34,11 @@ object DocumentStager {
             onInputOpened(it)
             stageStream(context, it, name?.substringAfterLast('.')?.lowercase(), checkCancellation)
         }
-        name?.take(512)?.let { displayNames[requireNotNull(snapshot.uri.path)] = it }
+        name?.take(512)?.let { 
+            val path = requireNotNull(snapshot.uri.path)
+            displayNames[path] = it 
+            context.getSharedPreferences("doc_names", Context.MODE_PRIVATE).edit().putString(path, it).apply()
+        }
         return snapshot
     }
     @Synchronized
@@ -142,5 +146,8 @@ object DocumentStager {
     fun release(uri: Uri) {
         if (uri.scheme == "file") uri.path?.let { staged[it]?.let(::release) }
     }
-    fun displayName(uri: Uri): String? = uri.path?.let(displayNames::get)
+    fun displayName(context: Context, uri: Uri): String? {
+        val path = uri.path ?: return null
+        return displayNames[path] ?: context.getSharedPreferences("doc_names", Context.MODE_PRIVATE).getString(path, null)?.takeIf { it.isNotBlank() }
+    }
 }

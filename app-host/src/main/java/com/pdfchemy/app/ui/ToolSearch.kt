@@ -34,7 +34,7 @@ object ToolRegistry {
         
         // Page Studio
         ToolEntry(R.string.menu_merge, R.string.menu_merge_desc, Icons.Rounded.MergeType, Screen.MergePdf, listOf("combine", "join", "append", "add together")),
-        ToolEntry(R.string.menu_split, R.string.menu_split_desc, Icons.Rounded.CallSplit, Screen.SplitPdf, listOf("separate", "divide", "extract pages", "break apart")),
+        ToolEntry(R.string.menu_split, R.string.menu_split_desc, Icons.Rounded.CallSplit, Screen.SplitPdf(), listOf("separate", "divide", "extract pages", "break apart")),
         ToolEntry(R.string.menu_delete_pages, R.string.menu_delete_pages_desc, Icons.Rounded.Delete, Screen.DeletePages, listOf("remove pages", "trash pages")),
         ToolEntry(R.string.menu_rotate_pages, R.string.menu_rotate_pages_desc, Icons.Rounded.RotateRight, Screen.RotatePdf, listOf("turn pages", "orientation", "flip")),
         
@@ -47,7 +47,11 @@ object ToolRegistry {
         
         // Security & Metadata
         ToolEntry(R.string.menu_inspect_metadata, R.string.menu_inspect_metadata_desc, Icons.Rounded.Info, Screen.InspectMetadata, listOf("properties", "author", "title", "document info")),
-        ToolEntry(R.string.menu_remove_metadata, R.string.menu_remove_metadata_desc, Icons.Rounded.CleaningServices, Screen.StripMetadata, listOf("scrub meta", "remove properties", "clean author", "sanitize metadata"))
+        ToolEntry(R.string.menu_remove_metadata, R.string.menu_remove_metadata_desc, Icons.Rounded.CleaningServices, Screen.StripMetadata, listOf("scrub meta", "remove properties", "clean author", "sanitize metadata")),
+        
+        // Editing & Forms
+        ToolEntry(R.string.menu_quick_fill_sign, R.string.menu_quick_fill_sign_desc, Icons.Rounded.Draw, Screen.QuickFillSign, listOf("fill out", "type on pdf", "add text", "flat form")),
+        ToolEntry(R.string.menu_grayscale_optimizer, R.string.menu_grayscale_optimizer_desc, Icons.Rounded.Draw, Screen.GrayscaleOptimizer, listOf("black and white", "monochrome", "color to bw", "reduce size"))
     )
 }
 

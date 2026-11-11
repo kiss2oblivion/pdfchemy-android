@@ -107,7 +107,7 @@ fun MarkdownStudioScreen(
             if (result.isSuccess) {
                 markdownText = result.getOrThrow()
                 documentTitle = FileUtils.getFileName(context, uri)?.removeSuffix(".pdf") ?: "Extracted Doc"
-                viewModel.showSuccessToast(
+                viewModel.notifySuccess(
                     context.getString(R.string.title_pdf_to_md_success),
                     context.getString(R.string.desc_pdf_to_md_success)
                 )
@@ -135,9 +135,10 @@ fun MarkdownStudioScreen(
                 )
                 isProcessing = false
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_md_to_pdf_success),
-                        context.getString(R.string.desc_md_to_pdf_success)
+                        context.getString(R.string.desc_md_to_pdf_success),
+                        destUri
                     )
                 } else {
                     viewModel.showErrorToast(
@@ -160,9 +161,10 @@ fun MarkdownStudioScreen(
                         out.write(markdownText.toByteArray(Charsets.UTF_8))
                     }
                     withContext(Dispatchers.Main) {
-                        viewModel.showSuccessToast(
+                        viewModel.notifySuccess(
                             context.getString(R.string.title_save_md_success),
-                            context.getString(R.string.desc_save_md_success)
+                            context.getString(R.string.desc_save_md_success),
+                            destUri
                         )
                     }
                 } catch (e: Exception) {

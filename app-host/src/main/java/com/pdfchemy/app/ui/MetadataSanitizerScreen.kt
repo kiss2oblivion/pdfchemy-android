@@ -123,8 +123,7 @@ fun MetadataSanitizerScreen(
                 if (result.isSuccess) {
                     val titleRes = if (isWipeAction) R.string.title_sanitize_success else R.string.title_update_metadata_success
                     val descRes = if (isWipeAction) R.string.desc_sanitize_success else R.string.desc_update_metadata_success
-                    viewModel.showSuccessToast(context.getString(titleRes), context.getString(descRes))
-                    onBack()
+                    viewModel.notifySuccess(context.getString(titleRes), context.getString(descRes), destUri)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_sanitize_failed),

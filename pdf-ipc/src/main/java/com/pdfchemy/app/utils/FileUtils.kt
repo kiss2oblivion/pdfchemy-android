@@ -7,7 +7,7 @@ import java.util.Locale
 
 object FileUtils {
     fun getFileName(context: Context, uri: Uri): String? {
-        if (uri.scheme == "file") DocumentStager.displayName(uri)?.let { return it }
+        if (uri.scheme == "file") DocumentStager.displayName(context, uri)?.takeIf { it.isNotBlank() }?.let { return it }
         var result: String? = null
         if (uri.scheme == "content") {
             try {

@@ -76,11 +76,11 @@ fun LinearizePdfScreen(
 
                 if (result.isSuccess) {
                     val outBytes = result.getOrThrow()
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_linearize_success),
-                        context.getString(R.string.desc_linearize_success, FileUtils.formatFileSize(outBytes))
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_linearize_success),
+    context.getString(R.string.desc_linearize_success, FileUtils.formatFileSize(outBytes)),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_linearize_failed),

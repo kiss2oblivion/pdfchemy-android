@@ -290,7 +290,7 @@ fun TableExtractorScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "tables", extension = "csv")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "tables", extension = "csv")
                         saveCsvLauncher.launch(suggestedName)
                     },
                     enabled = !isExporting,

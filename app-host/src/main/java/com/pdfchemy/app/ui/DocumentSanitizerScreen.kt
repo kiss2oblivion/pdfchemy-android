@@ -275,7 +275,7 @@ fun DocumentSanitizerScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "sanitized")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "sanitized")
                         saveFileLauncher.launch(suggestedName)
                     },
                     enabled = !isSanitizing,

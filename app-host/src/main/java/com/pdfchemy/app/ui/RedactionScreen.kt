@@ -116,11 +116,10 @@ fun RedactionScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_redaction_success),
                         context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
-                    onBack()
+                    , destUri)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_redaction_failed),
@@ -151,11 +150,10 @@ fun RedactionScreen(
                 )
                 isProcessing = false
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_redaction_success),
                         context.getString(R.string.desc_redaction_success, result.getOrThrow())
-                    )
-                    onBack()
+                    , destUri)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_redaction_failed),

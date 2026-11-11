@@ -97,9 +97,10 @@ fun AttachmentManagerScreen(
                 try {
                     val params = JSONObject().put("attachmentName", targetExtractAttachment!!.name)
                     PdfGateway.executeEngine(context, "ATTACHMENT_EXTRACT", selectedPdfUri!!, destUri, params.toString())
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_extract_success),
-                        context.getString(R.string.desc_extract_success)
+                        context.getString(R.string.desc_extract_success),
+                        destUri
                     )
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
@@ -119,9 +120,10 @@ fun AttachmentManagerScreen(
                 try {
                     val params = JSONObject().put("fileName", FileUtils.getFileName(context, fileToEmbedUri!!)).put("fileSize", FileUtils.getFileSize(context, fileToEmbedUri!!))
                     PdfGateway.executeEngineExtra(context, "ATTACHMENT_EMBED", selectedPdfUri!!, destUri, fileToEmbedUri!!, params.toString())
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success)
+                        context.getString(R.string.desc_embed_success),
+                        destUri
                     )
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
@@ -130,9 +132,10 @@ fun AttachmentManagerScreen(
                     )
                 }
                 if (false) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success)
+                        context.getString(R.string.desc_embed_success),
+                        destUri
                     )
                     selectedPdfUri = destUri
                     fileToEmbedUri = null

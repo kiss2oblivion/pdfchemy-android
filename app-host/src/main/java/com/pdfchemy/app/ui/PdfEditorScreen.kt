@@ -14,6 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -53,6 +54,7 @@ import androidx.compose.material.icons.automirrored.rounded.Redo
 import androidx.compose.material.icons.automirrored.rounded.RotateRight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.roundToInt
 import com.pdfchemy.app.logic.DrawingPath
 import com.pdfchemy.app.logic.DrawingPoint
@@ -125,15 +127,7 @@ fun PdfEditorScreen(
     var selectedStampType by remember { mutableStateOf(StampType.APPROVED) }
 
     // Active In-Progress Stroke & Redaction
-    var currentStrokePoints by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
-    var redactDragStart by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
-    var redactDragCurrent by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
-    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
-    // Dialogs & Sheets
-    var showTextDialog by remember { mutableStateOf(false) }
-    var pendingTextPosition by remember { mutableStateOf<Offset?>(null) }
-    var textInputContent by remember { mutableStateOf("") }
     var textColorOption by remember { mutableStateOf(Color.Black) }
 
     var showStampPicker by remember { mutableStateOf(false) }
@@ -146,6 +140,16 @@ fun PdfEditorScreen(
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
     var reloadTrigger by remember { mutableIntStateOf(0) }
+
+    // UX-15 & UX-16: Reader Experience State
+    var showChrome by remember { mutableStateOf(true) }
+    var scale by remember { mutableFloatStateOf(1f) }
+    var panOffset by remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(currentPageIndex) {
+        scale = 1f
+        panOffset = Offset.Zero
+    }
 
     if (showVanguardBlockedDialog) {
         AlertDialog(
@@ -403,7 +407,12 @@ fun PdfEditorScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            AnimatedVisibility(
+                visible = showChrome,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+            ) {
+                TopAppBar(
                 title = {
                     Column {
                         Text(
@@ -491,7 +500,7 @@ fun PdfEditorScreen(
                         // Save Modified PDF
                         FilledTonalButton(
                             onClick = {
-                                val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "edited", "Document", "pdf")
+                                val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "edited", "Document", "pdf")
                                 savePdfLauncher.launch(suggestedName)
                             },
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -503,44 +512,51 @@ fun PdfEditorScreen(
                     }
                 }
             )
+            }
         },
         bottomBar = {
-            if (selectedPdfUri != null && totalPages > 0 && !isTabletopMode) {
-                val pageLabel = if (isDualPageMode && secondaryPageBitmap != null) {
-                    "${currentPageIndex + 1}-${currentPageIndex + 2} / $totalPages"
-                } else {
-                    "${currentPageIndex + 1} / $totalPages"
-                }
-                EditorBottomBar(
-                    activeTool = activeTool,
-                    onToolSelect = { tool ->
-                        activeTool = tool
-                        if (tool == EditorTool.STAMP) showStampPicker = true
-                    },
-                    selectedColor = selectedColor,
-                    onColorClick = { showColorPicker = true },
-                    currentPage = currentPageIndex,
-                    totalPages = totalPages,
-                    pageLabel = pageLabel,
-                    onPrevPage = {
-                        if (isDualPageMode) {
-                            currentPageIndex = (currentPageIndex - 2).coerceAtLeast(0)
-                        } else {
-                            if (currentPageIndex > 0) currentPageIndex--
-                        }
-                    },
-                    onNextPage = {
-                        if (isDualPageMode) {
-                            if (currentPageIndex + 2 < totalPages) {
-                                currentPageIndex += 2
-                            } else if (currentPageIndex + 1 < totalPages) {
-                                currentPageIndex++
-                            }
-                        } else {
-                            if (currentPageIndex < totalPages - 1) currentPageIndex++
-                        }
+            AnimatedVisibility(
+                visible = showChrome,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                if (selectedPdfUri != null && totalPages > 0 && !isTabletopMode) {
+                    val pageLabel = if (isDualPageMode && secondaryPageBitmap != null) {
+                        "${currentPageIndex + 1}-${currentPageIndex + 2} / $totalPages"
+                    } else {
+                        "${currentPageIndex + 1} / $totalPages"
                     }
-                )
+                    EditorBottomBar(
+                        activeTool = activeTool,
+                        onToolSelect = { tool ->
+                            activeTool = tool
+                            if (tool == EditorTool.STAMP) showStampPicker = true
+                        },
+                        selectedColor = selectedColor,
+                        onColorClick = { showColorPicker = true },
+                        currentPage = currentPageIndex,
+                        totalPages = totalPages,
+                        pageLabel = pageLabel,
+                        onPrevPage = {
+                            if (isDualPageMode) {
+                                currentPageIndex = (currentPageIndex - 2).coerceAtLeast(0)
+                            } else {
+                                if (currentPageIndex > 0) currentPageIndex--
+                            }
+                        },
+                        onNextPage = {
+                            if (isDualPageMode) {
+                                if (currentPageIndex + 2 < totalPages) {
+                                    currentPageIndex += 2
+                                } else if (currentPageIndex + 1 < totalPages) {
+                                    currentPageIndex++
+                                }
+                            } else {
+                                if (currentPageIndex < totalPages - 1) currentPageIndex++
+                            }
+                        }
+                    )
+                }
             }
         }
     ) { padding ->
@@ -612,21 +628,27 @@ fun PdfEditorScreen(
                             .padding(12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
+                        InteractivePdfPage(
+                            bitmap = currentPageBitmap!!,
+                            pageIndex = currentPageIndex,
+                            session = session,
+                            sessionTick = sessionTick,
+                            activeTool = activeTool,
+                            selectedColor = selectedColor,
+                            strokeWidth = strokeWidth,
+                            selectedStampType = selectedStampType,
+                            scale = 1f,
+                            panOffset = androidx.compose.ui.geometry.Offset.Zero,
+                            onUpdateScale = {},
+                            onUpdatePan = {},
+                            onToggleChrome = {},
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(currentPageBitmap!!.width.toFloat() / currentPageBitmap!!.height.toFloat())
                                 .shadow(8.dp, RoundedCornerShape(8.dp))
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color.White)
-                        ) {
-                            Image(
-                                bitmap = currentPageBitmap!!.asImageBitmap(),
-                                contentDescription = "Page ${currentPageIndex + 1}",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
+                        )
                     }
 
                     // Horizontal Hinge Divider & Posture Indicator
@@ -695,22 +717,27 @@ fun PdfEditorScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Left Page (Page N)
-                    Box(
+                    InteractivePdfPage(
+                        bitmap = currentPageBitmap!!,
+                        pageIndex = currentPageIndex,
+                        session = session,
+                        sessionTick = sessionTick,
+                        activeTool = activeTool,
+                        selectedColor = selectedColor,
+                        strokeWidth = strokeWidth,
+                        selectedStampType = selectedStampType,
+                        scale = 1f,
+                        panOffset = androidx.compose.ui.geometry.Offset.Zero,
+                        onUpdateScale = {},
+                        onUpdatePan = {},
+                        onToggleChrome = {},
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .shadow(8.dp, RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
                             .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            bitmap = currentPageBitmap!!.asImageBitmap(),
-                            contentDescription = "Page ${currentPageIndex + 1}",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+                            .background(Color.White)
+                    )
 
                     // Center Book Spine / Crease Gutter
                     Box(
@@ -729,290 +756,48 @@ fun PdfEditorScreen(
                     )
 
                     // Right Page (Page N + 1)
-                    Box(
+                    InteractivePdfPage(
+                        bitmap = secondaryPageBitmap!!,
+                        pageIndex = currentPageIndex + 1,
+                        session = session,
+                        sessionTick = sessionTick,
+                        activeTool = activeTool,
+                        selectedColor = selectedColor,
+                        strokeWidth = strokeWidth,
+                        selectedStampType = selectedStampType,
+                        scale = 1f,
+                        panOffset = androidx.compose.ui.geometry.Offset.Zero,
+                        onUpdateScale = {},
+                        onUpdatePan = {},
+                        onToggleChrome = {},
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .shadow(8.dp, RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
                             .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                            .background(Color.White),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            bitmap = secondaryPageBitmap!!.asImageBitmap(),
-                            contentDescription = "Page ${currentPageIndex + 2}",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+                            .background(Color.White)
+                    )
                 }
             } else {
                 // Interactive PDF Canvas
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(currentPageBitmap!!.width.toFloat() / currentPageBitmap!!.height.toFloat())
-                            .shadow(12.dp, RoundedCornerShape(8.dp))
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White)
-                            .rotate(currentMod.rotationDegrees.toFloat())
-                            .onSizeChanged { canvasSize = it }
-                            .pointerInput(activeTool, currentPageIndex) {
-                                when (activeTool) {
-                                    EditorTool.PEN, EditorTool.HIGHLIGHTER -> {
-                                        detectDragGestures(
-                                            onDragStart = { offset ->
-                                                if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    currentStrokePoints = listOf(
-                                                        DrawingPoint(offset.x / canvasSize.width, offset.y / canvasSize.height)
-                                                    )
-                                                }
-                                            },
-                                            onDrag = { change, _ ->
-                                                change.consume()
-                                                if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    val pt = DrawingPoint(
-                                                        (change.position.x / canvasSize.width).coerceIn(0f, 1f),
-                                                        (change.position.y / canvasSize.height).coerceIn(0f, 1f)
-                                                    )
-                                                    currentStrokePoints = currentStrokePoints + pt
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                if (currentStrokePoints.size >= 2) {
-                                                    val newPath = DrawingPath(
-                                                        points = currentStrokePoints,
-                                                        color = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f).hashCode() else selectedColor.hashCode(),
-                                                        strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
-                                                        isHighlighter = activeTool == EditorTool.HIGHLIGHTER
-                                                    )
-                                                    session.addDrawing(currentPageIndex, newPath)
-                                                    sessionTick++
-                                                }
-                                                currentStrokePoints = emptyList()
-                                            }
-                                        )
-                                    }
-                                    EditorTool.TEXT -> {
-                                        detectTapGestures { offset ->
-                                            if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                pendingTextPosition = offset
-                                                showTextDialog = true
-                                            }
-                                        }
-                                    }
-                                    EditorTool.STAMP -> {
-                                        detectTapGestures { offset ->
-                                            if (canvasSize.width > 0 && canvasSize.height > 0) {
-                                                val xR = offset.x / canvasSize.width
-                                                val yR = offset.y / canvasSize.height
-                                                val newStamp = StampAnnotation(
-                                                    type = selectedStampType,
-                                                    xRatio = xR,
-                                                    yRatio = yR
-                                                )
-                                                session.addStamp(currentPageIndex, newStamp)
-                                                sessionTick++
-                                            }
-                                        }
-                                    }
-                                    EditorTool.REDACT -> {
-                                        detectDragGestures(
-                                            onDragStart = { offset ->
-                                                redactDragStart = offset
-                                                redactDragCurrent = offset
-                                            },
-                                            onDrag = { change, _ ->
-                                                change.consume()
-                                                redactDragCurrent = change.position
-                                            },
-                                            onDragEnd = {
-                                                val start = redactDragStart
-                                                val end = redactDragCurrent
-                                                if (start != null && end != null && canvasSize.width > 0 && canvasSize.height > 0) {
-                                                    val leftNorm = (minOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
-                                                    val topNorm = (minOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
-                                                    val rightNorm = (maxOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
-                                                    val bottomNorm = (maxOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
-
-                                                    if (rightNorm - leftNorm > 0.02f && bottomNorm - topNorm > 0.01f) {
-                                                        val newRedaction = com.pdfchemy.app.logic.RedactionBox(
-                                                            pageIndex = currentPageIndex,
-                                                            normalizedRect = android.graphics.RectF(leftNorm, topNorm, rightNorm, bottomNorm),
-                                                            overlayLabel = "REDACTED"
-                                                        )
-                                                        session.addRedaction(currentPageIndex, newRedaction)
-                                                        sessionTick++
-                                                    }
-                                                }
-                                                redactDragStart = null
-                                                redactDragCurrent = null
-                                            }
-                                        )
-                                    }
-                                    EditorTool.VIEW -> { /* View mode allows page inspection */ }
-                                }
-                            }
-                    ) {
-                        // 1. Render Background PDF Page Bitmap
-                        Image(
-                            bitmap = currentPageBitmap!!.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-
-                        // 2. Render Overlay Annotations (Drawings, Texts, Stamps, Redactions)
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            // Render Saved Drawings
-                            for (drawing in currentMod.drawings) {
-                                drawPathStroke(drawing, size.width, size.height)
-                            }
-                            // Render In-Progress Stroke
-                            if (currentStrokePoints.size >= 2) {
-                                val tempDrawing = DrawingPath(
-                                    points = currentStrokePoints,
-                                    color = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f).hashCode() else selectedColor.hashCode(),
-                                    strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
-                                    isHighlighter = activeTool == EditorTool.HIGHLIGHTER
-                                )
-                                drawPathStroke(tempDrawing, size.width, size.height)
-                            }
-
-                            // Render Saved Redactions
-                            for (redaction in currentMod.redactions) {
-                                val norm = redaction.normalizedRect
-                                drawRect(
-                                    color = Color.Black,
-                                    topLeft = androidx.compose.ui.geometry.Offset(norm.left * size.width, norm.top * size.height),
-                                    size = androidx.compose.ui.geometry.Size((norm.right - norm.left) * size.width, (norm.bottom - norm.top) * size.height)
-                                )
-                            }
-
-                            // Render In-Progress Redaction Box
-                            if (activeTool == EditorTool.REDACT && redactDragStart != null && redactDragCurrent != null) {
-                                val start = redactDragStart!!
-                                val end = redactDragCurrent!!
-                                val left = minOf(start.x, end.x)
-                                val top = minOf(start.y, end.y)
-                                val width = kotlin.math.abs(end.x - start.x)
-                                val height = kotlin.math.abs(end.y - start.y)
-                                drawRect(
-                                    color = Color.Black.copy(alpha = 0.75f),
-                                    topLeft = androidx.compose.ui.geometry.Offset(left, top),
-                                    size = androidx.compose.ui.geometry.Size(width, height)
-                                )
-                            }
-                        }
-
-                        // Render Text Annotations
-                        for (textAnn in currentMod.textAnnotations) {
-                            Box(
-                                modifier = Modifier
-                                    .offset {
-                                        IntOffset(
-                                            (canvasSize.width * textAnn.xRatio).roundToInt(),
-                                            (canvasSize.height * textAnn.yRatio).roundToInt()
-                                        )
-                                    }
-                                    .background(Color(textAnn.backgroundColor), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = textAnn.text,
-                                    color = Color(textAnn.textColor),
-                                    fontSize = textAnn.fontSize.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
-                        // Render Stamps
-                        val density = LocalDensity.current
-                        val stampWidthPx = with(density) { 90.dp.toPx() }
-                        val stampHeightPx = with(density) { 36.dp.toPx() }
-                        for (stamp in currentMod.stamps) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .offset {
-                                        IntOffset(
-                                            (canvasSize.width * stamp.xRatio - stampWidthPx / 2f).roundToInt(),
-                                            (canvasSize.height * stamp.yRatio - stampHeightPx / 2f).roundToInt()
-                                        )
-                                    }
-                                    .rotate(stamp.rotation)
-                                    .border(2.5.dp, Color(stamp.type.colorHex), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = stamp.type.text,
-                                    color = Color(stamp.type.colorHex),
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 14.sp,
-                                    letterSpacing = 1.sp
-                                )
-                            }
-                        }
-                    }
-                }
+                InteractivePdfPage(
+                    bitmap = currentPageBitmap!!,
+                    pageIndex = currentPageIndex,
+                    session = session,
+                    sessionTick = sessionTick,
+                    activeTool = activeTool,
+                    selectedColor = selectedColor,
+                    strokeWidth = strokeWidth,
+                    selectedStampType = selectedStampType,
+                    scale = scale,
+                    panOffset = panOffset,
+                    onUpdateScale = { scale = it },
+                    onUpdatePan = { panOffset = it },
+                    onToggleChrome = { showChrome = !showChrome },
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                )
             }
         }
-    }
-
-    // --- ADD TEXT ANNOTATION DIALOG ---
-    if (showTextDialog) {
-        AlertDialog(
-            onDismissRequest = { showTextDialog = false },
-            title = { Text(stringResource(R.string.dialog_add_text_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = textInputContent,
-                        onValueChange = { textInputContent = it },
-                        placeholder = { Text(stringResource(R.string.dialog_add_text_placeholder)) },
-                        singleLine = false,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (textInputContent.isNotBlank() && pendingTextPosition != null) {
-                            val xRatio = if (canvasSize.width > 0) (pendingTextPosition!!.x / canvasSize.width.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
-                            val yRatio = if (canvasSize.height > 0) (pendingTextPosition!!.y / canvasSize.height.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
-                            val newTextAnn = TextAnnotation(
-                                text = textInputContent.trim(),
-                                xRatio = xRatio,
-                                yRatio = yRatio,
-                                fontSize = 16f,
-                                textColor = selectedColor.hashCode()
-                            )
-                            session.addTextAnnotation(currentPageIndex, newTextAnn)
-                            sessionTick++
-                        }
-                        textInputContent = ""
-                        showTextDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.action_add))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTextDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 
     // --- STAMP PICKER SHEET ---
@@ -1122,7 +907,7 @@ fun PdfEditorScreen(
                 Button(
                     onClick = {
                         showUnsavedDialog = false
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "edited", "Document", "pdf")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "edited", "Document", "pdf")
                         savePdfLauncher.launch(suggestedName)
                     }
                 ) {
@@ -1339,5 +1124,326 @@ fun EditorToolButton(
         )
     ) {
         Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+fun InteractivePdfPage(
+    bitmap: android.graphics.Bitmap,
+    pageIndex: Int,
+    session: com.pdfchemy.app.logic.EditorSession,
+    sessionTick: Int,
+    activeTool: com.pdfchemy.app.logic.EditorTool,
+    selectedColor: androidx.compose.ui.graphics.Color,
+    strokeWidth: Float,
+    selectedStampType: com.pdfchemy.app.logic.StampType,
+    scale: Float,
+    panOffset: androidx.compose.ui.geometry.Offset,
+    onUpdateScale: (Float) -> Unit,
+    onUpdatePan: (androidx.compose.ui.geometry.Offset) -> Unit,
+    onToggleChrome: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val currentMod = remember(sessionTick, pageIndex) { session.getModification(pageIndex) }
+    var currentStrokePoints by remember { mutableStateOf<List<com.pdfchemy.app.logic.DrawingPoint>>(emptyList()) }
+    var redactDragStart by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+    var redactDragCurrent by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+    var canvasSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    var showTextDialog by remember { mutableStateOf(false) }
+    var textInputContent by remember { mutableStateOf("") }
+    var pendingTextPosition by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(bitmap.width.toFloat() / bitmap.height.toFloat())
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = panOffset.x
+                    translationY = panOffset.y
+                }
+                .rotate(currentMod.rotationDegrees.toFloat())
+                .onSizeChanged { canvasSize = it }
+                .pointerInput(activeTool, pageIndex) {
+                    when (activeTool) {
+                        EditorTool.PEN, EditorTool.HIGHLIGHTER -> {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    if (canvasSize.width > 0 && canvasSize.height > 0) {
+                                        currentStrokePoints = listOf(
+                                            com.pdfchemy.app.logic.DrawingPoint(offset.x / canvasSize.width, offset.y / canvasSize.height)
+                                        )
+                                    }
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    if (canvasSize.width > 0 && canvasSize.height > 0) {
+                                        val pt = com.pdfchemy.app.logic.DrawingPoint(
+                                            (change.position.x / canvasSize.width).coerceIn(0f, 1f),
+                                            (change.position.y / canvasSize.height).coerceIn(0f, 1f)
+                                        )
+                                        currentStrokePoints = currentStrokePoints + pt
+                                    }
+                                },
+                                onDragEnd = {
+                                    if (currentStrokePoints.size >= 2) {
+                                        val newPath = com.pdfchemy.app.logic.DrawingPath(
+                                            points = currentStrokePoints,
+                                            color = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f).hashCode() else selectedColor.hashCode(),
+                                            strokeWidth = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
+                                            isHighlighter = activeTool == EditorTool.HIGHLIGHTER
+                                        )
+                                        session.addDrawing(pageIndex, newPath)
+                                    }
+                                    currentStrokePoints = emptyList()
+                                }
+                            )
+                        }
+                        EditorTool.TEXT -> {
+                            detectTapGestures { offset ->
+                                if (canvasSize.width > 0 && canvasSize.height > 0) {
+                                    pendingTextPosition = offset
+                                    showTextDialog = true
+                                }
+                            }
+                        }
+                        EditorTool.STAMP -> {
+                            detectTapGestures { offset ->
+                                if (canvasSize.width > 0 && canvasSize.height > 0) {
+                                    val xR = offset.x / canvasSize.width
+                                    val yR = offset.y / canvasSize.height
+                                    val newStamp = com.pdfchemy.app.logic.StampAnnotation(
+                                        type = selectedStampType,
+                                        xRatio = xR,
+                                        yRatio = yR
+                                    )
+                                    session.addStamp(pageIndex, newStamp)
+                                }
+                            }
+                        }
+                        EditorTool.REDACT -> {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    redactDragStart = offset
+                                    redactDragCurrent = offset
+                                },
+                                onDrag = { change, _ ->
+                                    change.consume()
+                                    redactDragCurrent = change.position
+                                },
+                                onDragEnd = {
+                                    val start = redactDragStart
+                                    val end = redactDragCurrent
+                                    if (start != null && end != null && canvasSize.width > 0 && canvasSize.height > 0) {
+                                        val leftNorm = (minOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
+                                        val topNorm = (minOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
+                                        val rightNorm = (maxOf(start.x, end.x) / canvasSize.width).coerceIn(0f, 1f)
+                                        val bottomNorm = (maxOf(start.y, end.y) / canvasSize.height).coerceIn(0f, 1f)
+                                        if (rightNorm - leftNorm > 0.02f && bottomNorm - topNorm > 0.01f) {
+                                            val newRedaction = com.pdfchemy.app.logic.RedactionBox(
+                                                pageIndex = pageIndex,
+                                                normalizedRect = android.graphics.RectF(leftNorm, topNorm, rightNorm, bottomNorm),
+                                                overlayLabel = "REDACTED"
+                                            )
+                                            session.addRedaction(pageIndex, newRedaction)
+                                        }
+                                    }
+                                    redactDragStart = null
+                                    redactDragCurrent = null
+                                }
+                            )
+                        }
+                        EditorTool.VIEW -> {
+                            kotlinx.coroutines.coroutineScope {
+                                launch {
+                                    this@pointerInput.detectTransformGestures { _, pan, zoom, _ ->
+                                        onUpdateScale((scale * zoom).coerceIn(1f, 5f))
+                                        onUpdatePan(panOffset + pan)
+                                    }
+                                }
+                                launch {
+                                    this@pointerInput.detectTapGestures {
+                                        onToggleChrome()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+        ) {
+            // 1. Render Background PDF Page Bitmap
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+
+            // 2. Render Overlay Annotations (Drawings, Texts, Stamps, Redactions)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                // Render Saved Drawings
+                for (drawing in currentMod.drawings) {
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = drawing.strokeWidth,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                    )
+                    val p = androidx.compose.ui.graphics.Path()
+                    drawing.points.forEachIndexed { i, pt ->
+                        val x = pt.x * size.width
+                        val y = pt.y * size.height
+                        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+                    }
+                    if (drawing.isHighlighter) {
+                        drawPath(p, androidx.compose.ui.graphics.Color(drawing.color), style = stroke, blendMode = androidx.compose.ui.graphics.BlendMode.Multiply)
+                    } else {
+                        drawPath(p, androidx.compose.ui.graphics.Color(drawing.color), style = stroke)
+                    }
+                }
+                // Render In-Progress Stroke
+                if (currentStrokePoints.size >= 2) {
+                    val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = if (activeTool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        join = androidx.compose.ui.graphics.StrokeJoin.Round
+                    )
+                    val p = androidx.compose.ui.graphics.Path()
+                    currentStrokePoints.forEachIndexed { i, pt ->
+                        val x = pt.x * size.width
+                        val y = pt.y * size.height
+                        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+                    }
+                    val drawColor = if (activeTool == EditorTool.HIGHLIGHTER) selectedColor.copy(alpha = 0.45f) else selectedColor
+                    if (activeTool == EditorTool.HIGHLIGHTER) {
+                        drawPath(p, drawColor, style = stroke, blendMode = androidx.compose.ui.graphics.BlendMode.Multiply)
+                    } else {
+                        drawPath(p, drawColor, style = stroke)
+                    }
+                }
+
+                // Render Saved Redactions
+                for (redaction in currentMod.redactions) {
+                    val norm = redaction.normalizedRect
+                    drawRect(
+                        color = androidx.compose.ui.graphics.Color.Black,
+                        topLeft = androidx.compose.ui.geometry.Offset(norm.left * size.width, norm.top * size.height),
+                        size = androidx.compose.ui.geometry.Size((norm.right - norm.left) * size.width, (norm.bottom - norm.top) * size.height)
+                    )
+                }
+
+                // Render In-Progress Redaction Box
+                if (activeTool == EditorTool.REDACT && redactDragStart != null && redactDragCurrent != null) {
+                    val start = redactDragStart!!
+                    val end = redactDragCurrent!!
+                    val left = minOf(start.x, end.x)
+                    val top = minOf(start.y, end.y)
+                    val width = kotlin.math.abs(end.x - start.x)
+                    val height = kotlin.math.abs(end.y - start.y)
+                    drawRect(
+                        color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.75f),
+                        topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                        size = androidx.compose.ui.geometry.Size(width, height)
+                    )
+                }
+            }
+
+            // Render Text Annotations
+            for (textAnn in currentMod.textAnnotations) {
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            androidx.compose.ui.unit.IntOffset(
+                                (canvasSize.width * textAnn.xRatio).toInt(),
+                                (canvasSize.height * textAnn.yRatio).toInt()
+                            )
+                        }
+                        .background(androidx.compose.ui.graphics.Color(textAnn.backgroundColor), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = textAnn.text,
+                        color = androidx.compose.ui.graphics.Color(textAnn.textColor),
+                        fontSize = textAnn.fontSize.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Render Stamps
+            for (stamp in currentMod.stamps) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset {
+                            androidx.compose.ui.unit.IntOffset(
+                                (canvasSize.width * stamp.xRatio - 120f / 2f).toInt(),
+                                (canvasSize.height * stamp.yRatio - 48f / 2f).toInt()
+                            )
+                        }
+                        .rotate(stamp.rotation)
+                        .border(2.5.dp, androidx.compose.ui.graphics.Color(stamp.type.colorHex), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = stamp.type.text,
+                        color = androidx.compose.ui.graphics.Color(stamp.type.colorHex),
+                        fontWeight = FontWeight.Black,
+                        fontSize = 14.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+    }
+
+    if (showTextDialog) {
+        AlertDialog(
+            onDismissRequest = { showTextDialog = false },
+            title = { Text(stringResource(R.string.dialog_add_text_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = textInputContent,
+                        onValueChange = { textInputContent = it },
+                        placeholder = { Text(stringResource(R.string.dialog_add_text_placeholder)) },
+                        singleLine = false,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (textInputContent.isNotBlank() && pendingTextPosition != null) {
+                            val xRatio = if (canvasSize.width > 0) (pendingTextPosition!!.x / canvasSize.width.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
+                            val yRatio = if (canvasSize.height > 0) (pendingTextPosition!!.y / canvasSize.height.toFloat()).coerceIn(0.02f, 0.95f) else 0.1f
+                            val newTextAnn = com.pdfchemy.app.logic.TextAnnotation(
+                                text = textInputContent.trim(),
+                                xRatio = xRatio,
+                                yRatio = yRatio,
+                                fontSize = 16f,
+                                textColor = selectedColor.hashCode()
+                            )
+                            session.addTextAnnotation(pageIndex, newTextAnn)
+                        }
+                        textInputContent = ""
+                        showTextDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.action_add))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTextDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

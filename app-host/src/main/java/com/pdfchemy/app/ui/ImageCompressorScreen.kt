@@ -544,7 +544,7 @@ fun ImageCompressorScreen(
                     Button(
                         onClick = {
                             if (selectedTab == 0 && selectedSingleUri != null) {
-                                val suggestedName = FileUtil.generateSuggestedName(
+                                val suggestedName = FileUtil.generateSuggestedName(context, 
                                     selectedSingleUri,
                                     "compressed",
                                     "Image",

@@ -14,6 +14,8 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -80,6 +82,11 @@ fun PdfReaderScreen(
     var searchMatches by remember { mutableStateOf<List<com.pdfchemy.app.logic.TextMatchOccurrence>>(emptyList()) }
     var currentMatchIndex by remember { mutableStateOf(0) }
     var isSearching by remember { mutableStateOf(false) }
+
+    // Display Preferences
+    val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+    var isHorizontalMode by remember { mutableStateOf(false) }
+    var isInvertColors by remember { mutableStateOf(systemInDark) }
     
     // Vanguard Threat state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -222,22 +229,55 @@ fun PdfReaderScreen(
                         }
                     }
             ) {
-                LazyColumn(
-                    state = listState,
-                    userScrollEnabled = false, // We control scroll via transform gestures for perfect sync
-                    contentPadding = PaddingValues(top = 80.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offsetX,
-                            translationY = offsetY
-                        )
-                ) {
-                    items(totalPages, key = { it }) { index ->
-                        PdfReaderPageItem(context, selectedPdfUri!!, index)
+                if (isHorizontalMode) {
+                    LazyRow(
+                        state = listState,
+                        userScrollEnabled = false,
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 80.dp, bottom = 120.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offsetX,
+                                translationY = offsetY
+                            )
+                    ) {
+                        items(totalPages, key = { it }) { index ->
+                            PdfReaderPageItem(
+                                context = context, 
+                                uri = selectedPdfUri!!, 
+                                pageIndex = index, 
+                                invertColors = isInvertColors,
+                                modifier = Modifier.fillParentMaxWidth().wrapContentHeight()
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        userScrollEnabled = false,
+                        contentPadding = PaddingValues(top = 80.dp, bottom = 120.dp, start = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offsetX,
+                                translationY = offsetY
+                            )
+                    ) {
+                        items(totalPages, key = { it }) { index ->
+                            PdfReaderPageItem(
+                                context = context, 
+                                uri = selectedPdfUri!!, 
+                                pageIndex = index, 
+                                invertColors = isInvertColors,
+                                modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                            )
+                        }
                     }
                 }
             }
@@ -273,6 +313,20 @@ fun PdfReaderScreen(
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
                             Icon(Icons.Rounded.Menu, contentDescription = "Table of Contents")
                         }
+                    }
+                    var overflowExpanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { overflowExpanded = true }) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(if (isHorizontalMode) "Vertical Scroll" else "Horizontal Scroll") },
+                            onClick = { isHorizontalMode = !isHorizontalMode; overflowExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (isInvertColors) "Normal Colors" else "Invert Colors") },
+                            onClick = { isInvertColors = !isInvertColors; overflowExpanded = false }
+                        )
                     }
                     IconButton(onClick = { onNavigateToTool(Screen.PdfEditor(initialPdfUri = selectedPdfUri)) }) {
                         Icon(Icons.Rounded.Edit, contentDescription = "Edit")
@@ -436,7 +490,13 @@ fun ContinuityToolButton(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 }
 
 @Composable
-fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
+fun PdfReaderPageItem(
+    context: Context, 
+    uri: Uri, 
+    pageIndex: Int, 
+    invertColors: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth().wrapContentHeight()
+) {
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     
     LaunchedEffect(uri, pageIndex) {
@@ -454,19 +514,31 @@ fun PdfReaderPageItem(context: Context, uri: Uri, pageIndex: Int) {
     }
     
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
+        modifier = modifier
             .shadow(4.dp, RoundedCornerShape(4.dp))
             .background(Color.White)
             .clip(RoundedCornerShape(4.dp)),
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
+            val colorFilter = if (invertColors) {
+                androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+                    androidx.compose.ui.graphics.ColorMatrix(
+                        floatArrayOf(
+                            -1f,  0f,  0f,  0f, 255f,
+                             0f, -1f,  0f,  0f, 255f,
+                             0f,  0f, -1f,  0f, 255f,
+                             0f,  0f,  0f,  1f,   0f
+                        )
+                    )
+                )
+            } else null
+            
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
                 contentDescription = "Page ${pageIndex + 1}",
                 contentScale = ContentScale.FillWidth,
+                colorFilter = colorFilter,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {

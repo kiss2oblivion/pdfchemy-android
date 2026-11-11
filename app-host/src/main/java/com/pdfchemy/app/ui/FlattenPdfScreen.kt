@@ -76,11 +76,11 @@ fun FlattenPdfScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_flatten_success),
-                        context.getString(R.string.desc_flatten_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_flatten_success),
+    context.getString(R.string.desc_flatten_success),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_flatten_failed),

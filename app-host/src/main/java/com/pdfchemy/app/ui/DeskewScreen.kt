@@ -267,7 +267,7 @@ fun DeskewScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(
+                        val suggestedName = FileUtil.generateSuggestedName(context, 
                             selectedPdfUri,
                             "straightened"
                         )

@@ -449,8 +449,22 @@ class MainActivity : AppCompatActivity() {
             var hasConsented by remember { mutableStateOf(hasConsentedInitial) }
             var hasCompletedOnboarding by remember { mutableStateOf(hasCompletedOnboardingInitial) }
             var showTourManually by remember { mutableStateOf(false) }
-            
-            ShrinkPdfTheme(useDarkTheme = useDark) {
+
+            val systemHaptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+            val customHaptic = remember(systemHaptic) {
+                object : androidx.compose.ui.hapticfeedback.HapticFeedback {
+                    override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) {
+                        if (prefs.getBoolean("haptic", true)) {
+                            systemHaptic.performHapticFeedback(hapticFeedbackType)
+                        }
+                    }
+                }
+            }
+
+            CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalHapticFeedback provides customHaptic
+            ) {
+                ShrinkPdfTheme(useDarkTheme = useDark) {
                 if (!hasConsented) {
                     AlertDialog(
                         onDismissRequest = { /* Must explicitly decide to continue */ },
@@ -504,7 +518,8 @@ class MainActivity : AppCompatActivity() {
                     onOpenTour = {
                         showTourManually = true
                     }
-                )
+                    )
+                }
             }
         }
     }
@@ -731,10 +746,10 @@ fun MainApp(
                 viewModel.dismissSafeguardAssessment()
                 when (action) {
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.SPLIT_FIRST -> {
-                        currentScreen = Screen.SplitPdf
+                        currentScreen = Screen.SplitPdf(assessment.sourceUri)
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.PAGE_RANGE -> {
-                        currentScreen = Screen.PageOrganizer
+                        currentScreen = Screen.PageOrganizer()
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.LIGHTWEIGHT_MODE -> {
                         viewModel.setUseGrayscale(true)
@@ -789,14 +804,8 @@ fun MainApp(
                 Screen.Home -> HomeScreen(
                     windowWidthSizeClass = windowWidthSizeClass,
                     isDarkTheme = isDarkTheme,
-                    onToggleTheme = {
-                        val nextMode = when (themeMode) {
-                            "SYSTEM" -> "LIGHT"
-                            "LIGHT" -> "DARK"
-                            else -> "SYSTEM"
-                        }
-                        onChangeThemeMode(nextMode)
-                    },
+                    themeMode = themeMode,
+                    onChangeThemeMode = onChangeThemeMode,
                     onNavigate = { screen -> currentScreen = screen },
                     viewModel = viewModel
                 )
@@ -834,13 +843,13 @@ fun MainApp(
                 // [FEATURE: Merge PDFs] — Multi-document combiner with drag-and-drop reordering
                 Screen.MergePdf -> MergePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Split PDFs (Range / All)] — Split into individual pages or arbitrary page ranges
-                Screen.SplitPdf -> SplitPdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                is Screen.SplitPdf -> SplitPdfScreen(viewModel, targetScreen.initialPdfUri, onNavigate = { currentScreen = it }) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Page Organizer] — Visual thumbnail grid: reorder, delete, duplicate, rotate
-                Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                is Screen.PageOrganizer -> PageOrganizerScreen(viewModel, targetScreen.initialPdfUri) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Delete Pages] — Visual single-page or multi-page removal
-                Screen.DeletePages -> DeletePagesScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.DeletePages -> DeletePagesScreen(viewModel, onNavigate = { currentScreen = it }) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Rotate Pages] — Lossless 90°, 180°, 270° orientation correction
-                Screen.RotatePdf -> RotatePdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.RotatePdf -> RotatePdfScreen(viewModel, onNavigate = { currentScreen = it }) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Auto-Deskew & Straighten] — Hough transform scan tilt auto-correction
                 Screen.Deskew -> DeskewScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Page Cropper & Margin Trimmer] — CropBox adjustment to remove scanner borders
@@ -876,8 +885,8 @@ fun MainApp(
                 // [FEATURE: On-Device OCR] — 100% offline optical character recognition
                 Screen.OcrPdf -> OcrPdfScreen(viewModel) { currentScreen = Screen.CreateCategory }
                 // [FEATURE: Extract Text & Images] — Strips raw uncompressed text and raster bitmaps
-                Screen.ExtractText -> ExtractTextScreen(viewModel) { currentScreen = Screen.CheckCategory }
-                Screen.ExtractImages -> ExtractImagesScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
+                Screen.ExtractText -> ExtractTextScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.ExtractImages -> ExtractImagesScreen(viewModel) { currentScreen = Screen.CreateCategory }
 
                 // =========================================================================================
                 // 4. ✍️ FORM FILLING & DOCUMENT EDITING (FEATURES_REGISTRY Section 4)
@@ -899,11 +908,11 @@ fun MainApp(
                     )
                 }
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)
-                Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Interactive Form Builder] — Converts flat PDFs into genuine fillable forms (PDAcroForm)
-                Screen.FormBuilder -> FormBuilderScreen { currentScreen = Screen.CreateCategory }
+                Screen.FormBuilder -> FormBuilderScreen { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: AcroForm Interactive Filler] — Inspects and fills standard interactive PDF forms
-                Screen.FillForm -> FillFormScreen(viewModel) { currentScreen = Screen.CreateCategory }
+                Screen.FillForm -> FillFormScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Visual Signer] — Draw smoothed vector signatures and place on page
                 Screen.SignPdf -> SignPdfScreen(viewModel) { currentScreen = Screen.OrganizeCategory }
                 // [FEATURE: Watermark Studio] — Custom text/image watermarks with opacity and diagonal tiling
@@ -1027,7 +1036,18 @@ fun MainApp(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(state.message)
                             Spacer(modifier = Modifier.height(16.dp))
-                            if (state.outputUris.isNotEmpty()) {
+                            if (state.outputFolderUri != null) {
+                                OutlinedButton(
+                                    onClick = { 
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                            setDataAndType(state.outputFolderUri, "vnd.android.document/directory")
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        try { context.startActivity(intent) } catch (e: Exception) { }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.btn_open_file)) } // We use open file string for folders too, or define a new one later
+                            } else if (state.outputUris.isNotEmpty()) {
                                 OutlinedButton(
                                     onClick = { 
                                         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
@@ -1046,14 +1066,14 @@ fun MainApp(
                             OutlinedButton(
                                 onClick = resetAndShowAd,
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Another Operation") }
+                            ) { Text(stringResource(R.string.ok)) }
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Home") }
+                            ) { Text(stringResource(R.string.menu_home)) }
                         }
                     },
                     confirmButton = {}
@@ -1266,9 +1286,9 @@ sealed class Screen {
     // [FEATURE: Merge PDFs] — Multi-document combiner
     object MergePdf : Screen()
     // [FEATURE: Split PDFs] — Range or single page split
-    object SplitPdf : Screen()
+    data class SplitPdf(val initialPdfUri: android.net.Uri? = null) : Screen()
     // [FEATURE: Page Organizer] — Visual thumbnail grid
-    object PageOrganizer : Screen()
+    data class PageOrganizer(val initialPdfUri: Uri? = null) : Screen()
     // [FEATURE: Delete Pages] — Visual page deletion
     object DeletePages : Screen()
     // [FEATURE: Rotate Pages] — Orientation correction
@@ -1412,7 +1432,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "CreateCategory" -> Screen.CreateCategory
             str == "OrganizeCategory" -> Screen.OrganizeCategory
             str == "MergePdf" -> Screen.MergePdf
-            str == "SplitPdf" -> Screen.SplitPdf
+            str == "SplitPdf" -> Screen.SplitPdf()
             str == "DeletePages" -> Screen.DeletePages
             str == "ExtractImages" -> Screen.ExtractImages
             str == "CheckCategory" -> Screen.CheckCategory
@@ -1429,7 +1449,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "OcrPdf" -> Screen.OcrPdf
             str == "ScanPdf" -> Screen.ScanPdf
             str == "SignPdf" -> Screen.SignPdf
-            str == "PageOrganizer" -> Screen.PageOrganizer
+            str == "PageOrganizer" -> Screen.PageOrganizer()
             str == "Watermark" -> Screen.Watermark
             str == "PageNumber" -> Screen.PageNumber
             str == "PageLayout" -> Screen.PageLayout
@@ -1570,7 +1590,8 @@ fun AnimatedMeshBackground() {
 fun HomeScreen(
     windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit,
+    themeMode: String = "SYSTEM",
+    onChangeThemeMode: (String) -> Unit,
     onNavigate: (Screen) -> Unit,
     viewModel: MainViewModel
 ) {
@@ -1637,12 +1658,29 @@ fun HomeScreen(
                 Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            IconButton(onClick = onToggleTheme) {
-                Icon(
-                    imageVector = if (isDarkTheme) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-                    contentDescription = stringResource(R.string.desc_toggle_theme),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            var themeMenuExpanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { themeMenuExpanded = true }) {
+                    Icon(
+                        imageVector = if (isDarkTheme) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                        contentDescription = stringResource(R.string.desc_toggle_theme),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                DropdownMenu(expanded = themeMenuExpanded, onDismissRequest = { themeMenuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.theme_system)) },
+                        onClick = { onChangeThemeMode("SYSTEM"); themeMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.theme_light)) },
+                        onClick = { onChangeThemeMode("LIGHT"); themeMenuExpanded = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.theme_dark)) },
+                        onClick = { onChangeThemeMode("DARK"); themeMenuExpanded = false }
+                    )
+                }
             }
         }
 
@@ -1699,6 +1737,15 @@ fun HomeScreen(
                             translationY = cardsOffsetY.value  // slide up from below
                         }
                     ) {
+                        // [UX-02] Primary reading entry in dashboard
+                        CategoryCard(
+                            title = stringResource(R.string.menu_read_pdf),
+                            subtitle = stringResource(R.string.menu_read_pdf_desc),
+                            icon = Icons.Rounded.MenuBook,
+                            onClick = { onNavigate(Screen.PdfEditor()) },
+                            modifier = Modifier.fillMaxWidth().height(100.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().height(150.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1743,7 +1790,10 @@ fun CategoryCard(
 
     LaunchedEffect(isPressed) {
         if (isPressed) {
-            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            val prefs = view.context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+            if (prefs.getBoolean("haptic", true)) {
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            }
         }
     }
 
@@ -1906,7 +1956,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                             duration = SnackbarDuration.Short
                         )
                         if (snackbarResult == SnackbarResult.ActionPerformed) {
-                            saveScannedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, context.getString(R.string.default_scanned_doc_name)))
+                            saveScannedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, context.getString(R.string.default_scanned_doc_name)))
                         }
                     } catch (cancelled: kotlinx.coroutines.CancellationException) {
                         savedScanFile?.delete()
@@ -2036,6 +2086,14 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     subtitle = stringResource(R.string.menu_extract_images_desc),
                     icon = Icons.Rounded.Image,
                     onClick = { onNavigate(Screen.ExtractImages) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_extract),
+                    subtitle = stringResource(R.string.menu_extract_desc),
+                    icon = Icons.Rounded.TextSnippet,
+                    onClick = { onNavigate(Screen.ExtractText) }
                 )
             }
             item {
@@ -2183,7 +2241,10 @@ fun ToolCard(
 
     Card(
         onClick = { 
-            view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            val prefs = view.context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+            if (prefs.getBoolean("haptic", true)) {
+                view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+            }
             onClick() 
         },
         modifier = modifier
@@ -2426,7 +2487,7 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
                                 stripMetadata = stripMetadata,
                                 pdfAnalysis = pdfAnalysis,
                                 viewModel = viewModel,
-                                    onSaveSingle = { savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(sourceUri, context.getString(R.string.compressed_prefix))) },
+                                    onSaveSingle = { savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, sourceUri, context.getString(R.string.compressed_prefix))) },
                                 onSaveBatch = { selectDirectoryLauncher.launch(null) }
                             )
                         }
@@ -2489,7 +2550,7 @@ fun CompressPdfScreen(viewModel: MainViewModel, initialTab: Int = 0, isScreensho
                             pdfAnalysis = pdfAnalysis,
                             viewModel = viewModel,
                             onSaveSingle = { 
-                                savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(sourceUri, context.getString(R.string.compressed_prefix))) 
+                                savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, sourceUri, context.getString(R.string.compressed_prefix))) 
                             },
                             onSaveBatch = { 
                                 selectDirectoryLauncher.launch(null) 
@@ -3185,7 +3246,7 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         if (inputText.isBlank()) {
                             Toast.makeText(context, context.getString(R.string.msg_enter_text), Toast.LENGTH_SHORT).show()
                         } else {
-                            savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, "converted_text"))
+                            savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "converted_text"))
                         }
                     },
                     modifier = Modifier
@@ -3272,6 +3333,7 @@ fun SettingsScreen(
     onOpenTour: () -> Unit = {},
     onBack: () -> Unit
 ) {
+    androidx.activity.compose.BackHandler { onBack() }
     val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
     val isSfxEnabled by viewModel.isSfxEnabled.collectAsState()
     val isHistoryEnabled by viewModel.isHistoryEnabled.collectAsState()
@@ -4250,6 +4312,7 @@ fun BannerAd(isPremium: Boolean, modifier: Modifier = Modifier) {
 
 @Composable
 fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler { onBack() }
     val isPremium by viewModel.isPremium.collectAsState()
     val price by viewModel.premiumPrice.collectAsState()
     val context = LocalContext.current as android.app.Activity

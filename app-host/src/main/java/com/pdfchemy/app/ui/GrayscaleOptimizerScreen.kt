@@ -127,11 +127,11 @@ fun GrayscaleOptimizerScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_grayscale_success),
-                        context.getString(R.string.desc_grayscale_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_grayscale_success),
+    context.getString(R.string.desc_grayscale_success),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_grayscale_failed),

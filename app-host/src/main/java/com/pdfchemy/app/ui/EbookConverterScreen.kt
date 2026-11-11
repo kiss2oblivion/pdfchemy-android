@@ -146,11 +146,11 @@ fun EbookConverterScreen(
 
                 if (result.isSuccess) {
                     viewModel.refreshHistory()
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_ebook_success),
-                        context.getString(R.string.desc_ebook_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_ebook_success),
+    context.getString(R.string.desc_ebook_success),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_ebook_failed),

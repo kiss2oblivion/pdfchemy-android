@@ -91,7 +91,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         floatingActionButton = {
             if (selectedImages.isNotEmpty()) {
                 ExtendedFloatingActionButton(
-                    onClick = { createPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(null, "images")) },
+                    onClick = { createPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "images")) },
                     icon = { Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Convert") },
                     text = { Text(stringResource(R.string.convert_to_pdf)) },
                     containerColor = MaterialTheme.colorScheme.primary,

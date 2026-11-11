@@ -94,11 +94,11 @@ fun HeaderFooterScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_stamp_success),
-                        context.getString(R.string.desc_stamp_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_stamp_success),
+    context.getString(R.string.desc_stamp_success),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_stamp_failed),

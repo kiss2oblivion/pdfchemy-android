@@ -91,9 +91,10 @@ fun BookletScreen(
                         .put("paperWidthPts", selectedPaperSize.widthPts)
                         .put("drawFoldGuide", drawFoldGuide)
                     PdfGateway.executeEngine(context, "BOOKLET_GENERATE", selectedPdfUri!!, destUri, params.toString())
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_booklet_success),
-                        context.getString(R.string.desc_booklet_success)
+                        context.getString(R.string.desc_booklet_success),
+                        destUri
                     )
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
@@ -105,11 +106,11 @@ fun BookletScreen(
                 }
                 
                 if (false) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_booklet_success),
-                        context.getString(R.string.desc_booklet_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+                        context.getString(R.string.title_booklet_success, destUri),
+                        context.getString(R.string.desc_booklet_success),
+    destUri
+)
                 }
             }
         }

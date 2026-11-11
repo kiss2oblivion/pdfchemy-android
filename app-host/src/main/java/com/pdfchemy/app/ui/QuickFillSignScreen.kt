@@ -375,7 +375,7 @@ fun QuickFillSignScreen(
                         }
                         Button(
                             onClick = {
-                                val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "filled")
+                                val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "filled")
                                 saveFileLauncher.launch(suggestedName)
                             },
                             enabled = !isSaving
@@ -596,7 +596,7 @@ fun QuickFillSignScreen(
                 Button(
                     onClick = {
                         showUnsavedDialog = false
-                        val suggestedName = FileUtil.generateSuggestedName(selectedPdfUri, "filled")
+                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "filled")
                         saveFileLauncher.launch(suggestedName)
                     }
                 ) {

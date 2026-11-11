@@ -15,12 +15,20 @@ object FileUtil {
      * @return A smart filename string like "document_compressed.pdf".
      */
     fun generateSuggestedName(originalUri: Uri?, action: String, defaultName: String = "Document", extension: String = "pdf"): String {
+        return generateSuggestedName(null, originalUri, action, defaultName, extension)
+    }
+
+    fun generateSuggestedName(context: android.content.Context?, originalUri: Uri?, action: String, defaultName: String = "Document", extension: String = "pdf"): String {
         if (originalUri == null) {
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             return "${action}_$timestamp.$extension"
         }
 
-        val originalName = originalUri.lastPathSegment ?: defaultName
+        val originalName = if (context != null) {
+            com.pdfchemy.app.utils.FileUtils.getFileName(context, originalUri) ?: defaultName
+        } else {
+            originalUri.lastPathSegment ?: defaultName
+        }
         
         // Remove extension
         val nameWithoutExt = if (originalName.contains(".")) {

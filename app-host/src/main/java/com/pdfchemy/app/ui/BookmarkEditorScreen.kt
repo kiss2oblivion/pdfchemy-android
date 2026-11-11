@@ -95,11 +95,11 @@ fun BookmarkEditorScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
-                        context.getString(R.string.title_bookmark_success),
-                        context.getString(R.string.desc_bookmark_success)
-                    )
-                    onBack()
+                    viewModel.notifySuccess(
+    context.getString(R.string.title_bookmark_success),
+    context.getString(R.string.desc_bookmark_success),
+    destUri
+)
                 } else {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_bookmark_failed),

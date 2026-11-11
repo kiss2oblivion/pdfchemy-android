@@ -56,6 +56,7 @@ import kotlin.coroutines.coroutineContext
 @Composable
 fun PageOrganizerScreen(
     viewModel: MainViewModel,
+    initialUri: Uri? = null,
     onBack: () -> Unit
 ) {
     SecureScreenContent()
@@ -78,7 +79,7 @@ fun PageOrganizerScreen(
         }
     }
 
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
+    val loadPdf: (Uri) -> Unit = { uri ->
         selectedPdfUri = uri
         coroutineScope.launch(Dispatchers.IO) {
             var pfd: ParcelFileDescriptor? = null
@@ -113,6 +114,14 @@ fun PageOrganizerScreen(
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
             }
+        }
+    }
+
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri -> loadPdf(uri) }
+
+    LaunchedEffect(initialUri) {
+        if (initialUri != null) {
+            loadPdf(initialUri)
         }
     }
 

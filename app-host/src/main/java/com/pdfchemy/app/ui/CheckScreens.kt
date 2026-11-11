@@ -105,14 +105,7 @@ fun CheckCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.TextCleaner) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_extract),
-                    subtitle = stringResource(R.string.menu_extract_desc),
-                    icon = Icons.Rounded.DocumentScanner,
-                    onClick = { onNavigate(Screen.ExtractText) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_compare_pdfs),
@@ -324,7 +317,7 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 Button(
-                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "metadata_updated")) } },
+                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "metadata_updated")) } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -447,7 +440,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                     Button(
-                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(it, "stripped")) } },
+                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "stripped")) } },
                         modifier = Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 52.dp),
