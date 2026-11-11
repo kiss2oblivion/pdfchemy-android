@@ -42,6 +42,7 @@ fun FontInspectorScreen(
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var fontList by remember { mutableStateOf<List<PdfFontInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isExporting by remember { mutableStateOf(false) }
 
     fun refreshFonts() {
         val uri = selectedPdfUri ?: return
@@ -63,6 +64,24 @@ fun FontInspectorScreen(
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedPdfUri = uri
+    }
+
+    val saveZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { destUri ->
+        if (destUri != null && selectedPdfUri != null) {
+            coroutineScope.launch {
+                isExporting = true
+                val result = PdfFontInspectorEngine.extractEmbeddedFonts(context, selectedPdfUri!!, destUri)
+                isExporting = false
+                if (result.isSuccess) {
+                    val count = fontList.count { it.isEmbedded }
+                    android.widget.Toast.makeText(context, context.getString(R.string.title_fonts_exported_success, count), android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(context, context.getString(R.string.error_fonts_export_failed), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -231,6 +250,35 @@ fun FontInspectorScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Export Embedded Fonts Action Button
+            val embeddedCount = fontList.count { it.isEmbedded }
+            if (embeddedCount > 0) {
+                Button(
+                    onClick = {
+                        val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                        saveZipLauncher.launch("${base}_embedded_fonts.zip")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp),
+                    enabled = !isLoading && !isExporting
+                ) {
+                    if (isExporting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(stringResource(R.string.btn_exporting_fonts))
+                    } else {
+                        Icon(Icons.Rounded.Download, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.btn_export_embedded_fonts))
                     }
                 }
             }

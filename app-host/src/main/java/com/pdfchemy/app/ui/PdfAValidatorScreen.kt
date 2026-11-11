@@ -45,6 +45,7 @@ fun PdfAValidatorScreen(
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
     var report by remember { mutableStateOf<PdfAReport?>(null) }
     var isChecking by remember { mutableStateOf(false) }
+    var isConverting by remember { mutableStateOf(false) }
 
     fun runAudit() {
         val uri = selectedPdfUri ?: return
@@ -61,6 +62,23 @@ fun PdfAValidatorScreen(
     LaunchedEffect(selectedPdfUri) {
         if (selectedPdfUri != null) {
             runAudit()
+        }
+    }
+
+    val savePdfALauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { destUri ->
+        if (destUri != null && selectedPdfUri != null) {
+            coroutineScope.launch {
+                isConverting = true
+                val success = PdfArchiveValidatorEngine.convertToPdfA(context, selectedPdfUri!!, destUri)
+                isConverting = false
+                if (success) {
+                    android.widget.Toast.makeText(context, context.getString(R.string.title_pdfa_converted_success), android.widget.Toast.LENGTH_SHORT).show()
+                } else {
+                    android.widget.Toast.makeText(context, context.getString(R.string.error_pdfa_conversion_failed), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -245,6 +263,32 @@ fun PdfAValidatorScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+            }
+
+            // Convert to PDF/A-1b Action Button
+            Button(
+                onClick = {
+                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                    savePdfALauncher.launch("${base}_pdfa1b.pdf")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 52.dp),
+                enabled = selectedPdfUri != null && !isChecking && !isConverting
+            ) {
+                if (isConverting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(stringResource(R.string.btn_converting_pdfa))
+                } else {
+                    Icon(Icons.Rounded.VerifiedUser, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.btn_convert_to_pdfa))
                 }
             }
         }

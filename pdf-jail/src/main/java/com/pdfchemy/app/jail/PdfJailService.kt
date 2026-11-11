@@ -327,6 +327,7 @@ class PdfJailService : Service() {
             "IMAGE_EXTRACT_FRAMED" -> com.pdfchemy.app.jail.engines.PdfImageExtractorEngine.extractImagesFramed(sourceFd!!, targetFd!!)
             "IMAGE_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfImageExtractorEngine.extractImagesToZip(sourceFd!!, targetFd!!)
             "FONT_INSPECT" -> com.pdfchemy.app.jail.engines.PdfFontInspectorEngineWorker.inspectFonts(sourceFd!!)
+            "FONT_EXTRACT" -> com.pdfchemy.app.jail.engines.PdfFontInspectorEngineWorker.extractEmbeddedFonts(sourceFd!!, targetFd!!)
             "ARCHIVE_INSPECT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.inspectPdfACompliance(sourceFd!!)
             "ARCHIVE_CONVERT" -> com.pdfchemy.app.jail.engines.PdfArchiveValidatorEngineWorker.convertToPdfA(sourceFd!!, targetFd!!)
             "LINEARIZE_CHECK" -> com.pdfchemy.app.jail.engines.PdfLinearizeEngineWorker.checkLinearized(sourceFd!!)
