@@ -69,7 +69,7 @@
 | **Find & Replace Text** | `FindAndReplaceScreen.kt` | `PdfFindAndReplaceEngine.replaceAll` | ✅ Live | True text obliteration via selective 2x print rasterization (`AppendMode.OVERWRITE`) on modified pages with transparent WinAnsi-sanitized searchable text layer (full Unicode diacritic & ligature decomposition); purges original content streams and annotations to guarantee zero plaintext leakage; untouched pages remain 100% native vector text |
 | **Image Replacer** | `ImageReplacerScreen.kt` | `PdfEditor.kt` | ✅ Live | Replace embedded raster image objects in PDF streams without touching text; aspect-ratio letterboxing eliminates anamorphic stretching/distortion |
 | **Bookmark Studio** | `BookmarkEditorScreen.kt` | `PdfBookmarkEngineWorker.kt`, `PdfBookmarkEngine.kt` | ✅ Live | Hierarchical outline/table of contents editor: inspects, adds, edits title, updates page destinations, deletes outline items, with multi-level nesting up to 5 levels (indent/outdent chevrons) and move up/down reordering |
-| **Cryptographic PKI Signer** | `SignPdfScreen.kt` | `AndroidPdfCryptoSigner.kt` | ⚠️ Underdeveloped | Applies on-the-fly ephemeral self-signed RSA-2048 certificate verifying document integrity; lacks custom `.p12`/`.pfx` keystore loading and Android KeyStore integration |
+| **Cryptographic PKI Signer** | `SignPdfScreen.kt` | `AndroidPdfCryptoSigner.kt`, `SignatureEngineWorker.kt` | ✅ Live | Cryptographic PDF digital signature engine: supports custom PKCS#12 (.p12 / .pfx) client certificates with password protection and full certificate chain embedding (JcaCertStore), with fallback to ephemeral on-device RSA-2048 keypairs |
 
 ---
 
@@ -177,5 +177,4 @@ The application supports the following locales. Android release lint tracks 38 i
 ## ⏳ What Is NOT Yet Implemented (Future Roadmap)
 1. **Directory-Wide Spotlight Search:** Multi-document keyword search crawling external folder trees via SAF ACTION_OPEN_DOCUMENT_TREE (parity with Desktop Spotlight Search).
 2. **Unified Multi-File Batch Studio:** Unified batch queue for Batch Compress, Batch Decrypt, Batch PDF/A, and Batch Flatten (parity with Desktop Batch Studio).
-3. **PKI Keystore Loading (.p12/.pfx):** Ability for users to import external PKCS#12 certificates with private keys and integrate with hardware-backed Android KeyStore.
-4. **Desktop Parity (Dyslexia & Paper Warmth):** Specialized reader filters for Bionic reading fixation and amber candlelight warmth.
+3. **Desktop Parity (Dyslexia & Paper Warmth):** Specialized reader filters for Bionic reading fixation and amber candlelight warmth.

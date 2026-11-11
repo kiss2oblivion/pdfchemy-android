@@ -208,13 +208,19 @@ object SignatureEngine {
         destUri: Uri,
         signerName: String,
         reason: String,
-        location: String
+        location: String,
+        p12Base64: String? = null,
+        password: String? = null
     ): Boolean = withContext(Dispatchers.IO) {
         try {
             val params = JSONObject().apply {
                 put("signerName", signerName)
                 put("reason", reason)
                 put("location", location)
+                if (!p12Base64.isNullOrBlank()) {
+                    put("p12Base64", p12Base64)
+                    put("password", password ?: "")
+                }
             }
 
             val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(

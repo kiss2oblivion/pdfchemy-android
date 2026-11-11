@@ -1145,4 +1145,15 @@
     <string name="btn_apply_custom_stamp">Apply Stamp</string>
     <string name="btn_indent_bookmark">Indent</string>
     <string name="btn_outdent_bookmark">Outdent</string>
+    <string name="pki_dialog_title">Apply PKI Digital Signature</string>
+    <string name="pki_dialog_desc">Cryptographically sign this document to verify authenticity and tamper-evidence.</string>
+    <string name="pki_keystore_load">Load Keystore (.p12 / .pfx)</string>
+    <string name="pki_keystore_loaded">Keystore: %1$s</string>
+    <string name="pki_keystore_remove">Clear Keystore</string>
+    <string name="pki_keystore_password">Keystore Password</string>
+    <string name="pki_ephemeral_notice">Using ephemeral on-device RSA-2048 certificate. Load a .p12/.pfx keystore above for enterprise PKI compliance.</string>
+    <string name="pki_signer_name">Signer Name</string>
+    <string name="pki_reason">Reason</string>
+    <string name="pki_location">Location</string>
+    <string name="pki_sign_and_save">Sign &amp; Save</string>
 </resources>

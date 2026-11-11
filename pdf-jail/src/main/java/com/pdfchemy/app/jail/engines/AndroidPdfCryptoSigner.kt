@@ -30,13 +30,13 @@ import java.util.Date
  */
 class AndroidBouncyCastleSignature(
     private val privateKey: PrivateKey,
-    private val certificate: Certificate
+    private val certificate: Certificate,
+    private val certificateChain: List<Certificate> = listOf(certificate)
 ) : SignatureInterface {
     override fun sign(content: InputStream): ByteArray {
         var tempFile: File? = null
         try {
-            val certList = listOf(certificate)
-            val certStore = org.bouncycastle.cert.jcajce.JcaCertStore(certList)
+            val certStore = org.bouncycastle.cert.jcajce.JcaCertStore(certificateChain)
 
             val signer = CMSSignedDataGenerator()
             val signerInfoBuilder = JcaSignerInfoGeneratorBuilder(
@@ -79,6 +79,40 @@ object AndroidPdfCryptoSigner {
         val certificate: X509Certificate
     )
 
+    data class SignerCredentials(
+        val privateKey: PrivateKey,
+        val certificate: X509Certificate,
+        val certificateChain: List<Certificate> = listOf(certificate)
+    )
+
+    /**
+     * Loads a private key and X509 certificate chain from a PKCS#12 (.p12 / .pfx) byte payload.
+     */
+    fun loadPkcs12Credentials(p12Bytes: ByteArray, password: CharArray): SignerCredentials {
+        require(p12Bytes.isNotEmpty()) { "PKCS#12 keystore data is empty" }
+        val keyStore = java.security.KeyStore.getInstance("PKCS12")
+        keyStore.load(java.io.ByteArrayInputStream(p12Bytes), password)
+
+        val aliases = keyStore.aliases()
+        var selectedAlias: String? = null
+        while (aliases.hasMoreElements()) {
+            val alias = aliases.nextElement()
+            if (keyStore.isKeyEntry(alias)) {
+                selectedAlias = alias
+                break
+            }
+        }
+        requireNotNull(selectedAlias) { "No private key entry found in the provided PKCS#12 keystore" }
+
+        val key = keyStore.getKey(selectedAlias, password) as? PrivateKey
+            ?: throw IllegalArgumentException("Failed to extract PrivateKey from alias: $selectedAlias")
+        val cert = keyStore.getCertificate(selectedAlias) as? X509Certificate
+            ?: throw IllegalArgumentException("Failed to extract X509Certificate from alias: $selectedAlias")
+        val chain = keyStore.getCertificateChain(selectedAlias)?.filterIsInstance<Certificate>() ?: listOf(cert)
+
+        return SignerCredentials(key, cert, chain)
+    }
+
     /**
      * Generates an ephemeral self-signed RSA-2048 certificate. The supplied name
      * is one literal CN value; this certificate establishes no trusted identity.
@@ -112,20 +146,26 @@ object AndroidPdfCryptoSigner {
     }
 
     /**
-     * Digitally signs the PDF file using the provided private key and certificate.
+     * Digitally signs the PDF file using SignerCredentials (private key + cert chain).
      */
-    fun signPdf(sourceFile: File, destFile: File, keyPairInfo: KeyPairInfo, reason: String = "Signed by PDFchemy", location: String = "Local Device") {
+    fun signPdf(
+        sourceFile: File,
+        destFile: File,
+        credentials: SignerCredentials,
+        reason: String = "Signed by PDFchemy",
+        location: String = "Local Device"
+    ) {
         com.pdfchemy.app.jail.CapabilityIo.input(sourceFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
             val signature = PDSignature()
             signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE)
             signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED)
-            signature.name = keyPairInfo.certificate.subjectX500Principal.name
+            signature.name = credentials.certificate.subjectX500Principal.name
             signature.location = location
             signature.reason = reason
             signature.signDate = Calendar.getInstance()
 
             // The BouncyCastle signature provider
-            val signatureInterface = AndroidBouncyCastleSignature(keyPairInfo.keyPair.private, keyPairInfo.certificate)
+            val signatureInterface = AndroidBouncyCastleSignature(credentials.privateKey, credentials.certificate, credentials.certificateChain)
 
             // Register signature and write to destination
             document.addSignature(signature, signatureInterface)
@@ -133,5 +173,12 @@ object AndroidPdfCryptoSigner {
                 document.saveIncremental(os)
             }
         }
+    }
+
+    /**
+     * Digitally signs the PDF file using the provided private key and certificate.
+     */
+    fun signPdf(sourceFile: File, destFile: File, keyPairInfo: KeyPairInfo, reason: String = "Signed by PDFchemy", location: String = "Local Device") {
+        signPdf(sourceFile, destFile, SignerCredentials(keyPairInfo.keyPair.private, keyPairInfo.certificate), reason, location)
     }
 }

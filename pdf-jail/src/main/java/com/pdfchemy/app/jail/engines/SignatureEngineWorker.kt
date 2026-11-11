@@ -122,13 +122,21 @@ object SignatureEngineWorker {
                 }
             }
 
-            val subjectStr = signerName
-            val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
+            val p12Base64 = params.optString("p12Base64", "")
+            val password = params.optString("password", "")
+
+            val credentials = if (p12Base64.isNotBlank()) {
+                val p12Bytes = android.util.Base64.decode(p12Base64, android.util.Base64.DEFAULT)
+                AndroidPdfCryptoSigner.loadPkcs12Credentials(p12Bytes, password.toCharArray())
+            } else {
+                val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(signerName)
+                AndroidPdfCryptoSigner.SignerCredentials(keyPairInfo.keyPair.private, keyPairInfo.certificate)
+            }
 
             AndroidPdfCryptoSigner.signPdf(
                 sourceFile = sourceFile,
                 destFile = destFile,
-                keyPairInfo = keyPairInfo,
+                credentials = credentials,
                 reason = reason,
                 location = location
             )
