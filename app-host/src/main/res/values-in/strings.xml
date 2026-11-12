@@ -280,7 +280,7 @@
 <string name="btn_add_more_files">Tambahkan Lebih Banyak File (%1$d dipilih)</string>
 <string name="label_original_size_analyzing">Ukuran Asli: %1$s (Menganalisis...)</string>
 <string name="label_original_size_to_compressed">Ukuran Asli: %1$s → %2$s</string>
-<string name="label_target_mb_batch">Target: %%1$.1f MB</string>
+<string name="label_target_mb_batch">Target: %1$.1f MB</string>
 <string name="label_target_unknown">Sasaran: Tidak diketahui</string>
 <string name="label_analyzing">Menganalisis...</string>
 <string name="label_target_mb">Target: %1$s MB</string>
@@ -967,13 +967,13 @@
     <string name="settings_manifesto_title">Manifesto Seumur Hidup</string>
     <string name="settings_manifesto_desc">Janji kami: Pembaruan 100%% gratis, tanpa cloud, dibangun untuk semua.</string>
     <string name="manifesto_dialog_title">Manifesto Seumur Hidup</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">"Pembaruan seumur hidup sampai saya tiada — dan 100% gratis. Cukup ajukan permintaan yang jelas dan masuk akal, maka akan dikerjakan dan diwujudkan; karena ini dari masyarakat untuk masyarakat.\n\nMungkin sama atau berbeda dengan aplikasi korporat, tapi setidaknya ini gratis dan akan saya buat sebaik mungkin. Jika saya tidak sanggup, ya sudah — setidaknya Anda punya pilihan."</string>
     <string name="manifesto_author">— Andrei Ioan Cucoș (John), Pengembang</string>
     <string name="manifesto_guarantees_title">4 Jaminan Mutlak Kami:</string>
     <string name="manifesto_g1_title">100%% Gratis Selamanya</string>
     <string name="manifesto_g1_desc">Tanpa langganan, tanpa batasan berbayar, tanpa batas halaman, dan tanpa watermark.</string>
     <string name="manifesto_g2_title">100%% Offline &amp; Privat</string>
-    <string name="manifesto_g2_desc">Tidak ada file yang keluar dari komputer ini. Nol telemetri. 100%% aman untuk dokumen rahasia.</string>
+    <string name="manifesto_g2_desc" formatted="false">Tidak ada file dokumen atau metadata yang keluar dari perangkat Anda. Pemrosesan 100% di perangkat, aman untuk file rahasia.</string>
     <string name="manifesto_g3_title">Asli Terlindungi</string>
     <string name="manifesto_g3_desc">Kami tidak pernah menimpa atau merusak file sumber Anda tanpa konfirmasi yang jelas.</string>
     <string name="manifesto_g4_title">Dibuat Untuk Masyarakat</string>
@@ -991,7 +991,7 @@
     <string name="menu_deskew">Luruskan &amp; Hilangkan Kemiringan Otomatis</string>
     <string name="menu_deskew_desc">Perbaiki pindaian miring dan sejajarkan halaman yang diputar tanpa kehilangan kualitas</string>
     <string name="deskew_title">Pelurus Sudut &amp; Kemiringan Otomatis</string>
-    <string name="deskew_detected_angle">Kemiringan Terdeteksi: %%1$.1f°</string>
+    <string name="deskew_detected_angle">Kemiringan Terdeteksi: %1$.1f°</string>
     <string name="deskew_action_straighten">Luruskan &amp; Simpan</string>
     <string name="deskew_success">Dokumen Berhasil Diluruskan!</string>
     <string name="deskew_success_desc">Halaman telah diputar dan disejajarkan.</string>
@@ -1041,7 +1041,7 @@
     <string name="tts_play">Baca dengan Suara</string>
     <string name="tts_pause">Jeda</string>
     <string name="tts_stop">Berhenti</string>
-    <string name="tts_speed">Kecepatan: %%1$.2fx</string>
+    <string name="tts_speed">Kecepatan: %1$.2fx</string>
     <string name="tts_prev_paragraph">Sebelumnya</string>
     <string name="tts_next_paragraph">Berikutnya</string>
     <string name="tts_not_supported">Teks-ke-suara tidak didukung atau data bahasa hilang.</string>
@@ -1103,13 +1103,7 @@
     <string name="settings_default_pdf_app">Penampil PDF Default</string>
     <string name="settings_default_pdf_app_desc">Jadikan PdfChemy aplikasi default untuk membuka file PDF</string>
     <string name="settings_default_pdf_dialog_title">Atur Penampil PDF Default</string>
-    <string name="settings_default_pdf_dialog_body">Untuk menjadikan PdfChemy sebagai penampil PDF default Anda:
-
-1. Buka file PDF apa pun dari pengelola file atau unduhan.
-2. Saat diminta dengan "Buka dengan", pilih PdfChemy.
-3. Pilih "Selalu" untuk membuka dokumen PDF dengan PdfChemy secara otomatis.
-
-Anda juga dapat mengatur asosiasi aplikasi default di Pengaturan Android.</string>
+    <string name="settings_default_pdf_dialog_body">Untuk menjadikan PdfChemy sebagai penampil PDF default Anda:\n\n1. Buka file PDF apa pun dari pengelola file atau unduhan.\n2. Saat diminta dengan \"Buka dengan\", pilih PdfChemy.\n3. Pilih \"Selalu\" untuk membuka dokumen PDF dengan PdfChemy secara otomatis.\n\nAnda juga dapat mengatur asosiasi aplikasi default di Pengaturan Android.</string>
     <string name="settings_open_android_settings">Buka Setelan Sistem</string>
     <string name="text_to_pdf">Teks ke PDF</string>
     <string name="editor_rendering_page">Merender halaman %1$d…</string>
@@ -1255,4 +1249,112 @@ Anda juga dapat mengatur asosiasi aplikasi default di Pengaturan Android.</strin
     <string name="msg_text_saved_success">Teks berhasil disimpan</string>
     <string name="form_fill_mode_list">Tampilan Daftar</string>
     <string name="form_fill_mode_insitu">Tampilan Dokumen</string>
+    <string name="form_fields_count">%1$d Kolom</string>
+    <string name="action_reset_fields">Reset Kolom</string>
+    <string name="desc_paste">Tempel</string>
+    <string name="bookmarks_count">Penanda (%1$d)</string>
+    <string name="btn_browse_files">Jelajahi file</string>
+    <string name="settings_output_folder">Folder keluaran</string>
+    <string name="error_no_email_app">Aplikasi email tidak ditemukan</string>
+    <string name="error_cannot_open_browser">Tidak dapat membuka browser</string>
+    <string name="action_view_all_history">Lihat semua riwayat</string>
+    <string name="error_no_app_open_file">Tidak ada aplikasi untuk membuka %1$s</string>
+    <string name="desc_premium">Premium</string>
+    <string name="hint_enter_value">Masukkan nilai…</string>
+    <string name="desc_checked">Dicentang</string>
+    <string name="action_sort_by_page">Urutkan per Halaman</string>
+    <string name="desc_move_up">Naikkan</string>
+    <string name="desc_move_down">Turunkan</string>
+    <string name="desc_edit">Edit</string>
+    <string name="msg_metadata_report_copied">Laporan metadata disalin ke papan klip</string>
+    <string name="desc_copy_metadata_report">Salin Laporan Metadata</string>
+    <string name="desc_clear_all_images">Hapus semua gambar</string>
+    <string name="action_convert">Konversi</string>
+    <string name="action_gallery">Galeri</string>
+    <string name="action_take_photo">Ambil Foto</string>
+    <string name="desc_selected_image">Gambar Terpilih</string>
+    <string name="desc_remove_image">Hapus Gambar</string>
+    <string name="error_straightening_doc">Kesalahan saat meluruskan dokumen</string>
+    <string name="error_unable_analyze_doc">Tidak dapat menganalisis dokumen ini</string>
+    <string name="desc_page_preview">Pratinjau Halaman</string>
+    <string name="msg_new_copy_chosen_folder">Salinan baru disimpan di folder yang Anda pilih.</string>
+    <string name="msg_audit_report_copied">Laporan audit disalin ke papan klip</string>
+    <string name="desc_copy_audit_report">Salin Laporan Audit</string>
+    <string name="sanitizer_purge_js">Hapus Pemicu Payload JavaScript</string>
+    <string name="sanitizer_purge_actions">Hapus Tindakan Peluncuran &amp; URL</string>
+    <string name="sanitizer_purge_embedded">Hapus File Tersemat Tersembunyi</string>
+    <string name="sanitizer_purge_metadata">Hapus Metadata &amp; ID Pelacakan</string>
+    <string name="desc_swap_find_replace">Tukar Cari &amp; Ganti</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% Lokal &amp; Menjaga Tata Letak</string>
+    <string name="msg_font_report_copied">Laporan font disalin ke papan klip</string>
+    <string name="desc_copy_font_report">Salin Laporan Font</string>
+    <string name="desc_refresh">Segarkan</string>
+    <string name="desc_preview">Pratinjau</string>
+    <string name="history_title">Riwayat</string>
+    <string name="history_disabled_notice">Riwayat nonaktif. Aktifkan riwayat lokal di Pengaturan untuk menyimpan hingga 20 file terbaru.</string>
+    <string name="history_empty_notice">Tidak ada file terbaru. Salinan yang disimpan muncul di sini saat riwayat lokal aktif.</string>
+    <string name="action_open">Buka</string>
+    <string name="history_item_folder">Folder</string>
+    <string name="history_item_unavailable">Tidak tersedia — pilih file lagi atau hapus entri ini</string>
+    <string name="history_checking_access">Memeriksa akses…</string>
+    <string name="error_no_app_open_item">Tidak ada aplikasi yang dapat membuka item ini. Periksa akses file dan coba lagi.</string>
+    <string name="error_no_sharing_app">Tidak ada aplikasi berbagi. Buka atau jelajahi file yang disimpan sebagai gantinya.</string>
+    <string name="history_remove_entry_desc">Hapus %1$s dari riwayat</string>
+    <string name="linearize_label_size">Ukuran:</string>
+    <string name="linearize_label_pages">Halaman:</string>
+    <string name="dialog_clear_markdown_title">Bersihkan Editor Markdown?</string>
+    <string name="dialog_clear_markdown_desc">Yakin ingin menghapus dokumen Markdown saat ini?</string>
+    <string name="msg_markdown_copied">Markdown disalin ke papan klip</string>
+    <string name="desc_copy_markdown">Salin Markdown</string>
+    <string name="msg_metadata_summary_copied">Ringkasan metadata disalin ke papan klip</string>
+    <string name="desc_copy_metadata_summary">Salin Ringkasan Metadata</string>
+    <string name="action_anonymize">Anonimkan</string>
+    <string name="badge_offline_text_layer" formatted="false">Lapisan Teks 100% Offline</string>
+    <string name="label_margins_colon">Margin:</string>
+    <string name="desc_decrement">Kurangi</string>
+    <string name="desc_increment">Tambah</string>
+    <string name="msg_pdfa_report_copied">Laporan PDF/A disalin ke papan klip</string>
+    <string name="desc_copy_pdfa_report">Salin Laporan PDF/A</string>
+    <string name="desc_rescan">Pindai ulang</string>
+    <string name="desc_swap_compare_pdfs">Tukar Asli &amp; Diubah</string>
+    <string name="desc_select_different_pdfs">Pilih PDF Lain</string>
+    <string name="editor_load_failed_msg">Tidak dapat memuat dokumen ini. Periksa izin akses atau pilih salinan lain.</string>
+    <string name="desc_more_options">Opsi lainnya</string>
+    <string name="reader_vertical_scroll">Gulir Vertikal</string>
+    <string name="reader_horizontal_scroll">Gulir Horizontal</string>
+    <string name="reader_normal_colors">Warna Normal</string>
+    <string name="reader_invert_colors">Balikkan Warna</string>
+    <string name="error_create_output_folder">Tidak dapat membuat salinan keluaran di folder ini</string>
+    <string name="dialog_save_copy_title">Simpan salinan</string>
+    <string name="dialog_save_copy_desc">Gunakan folder keluaran tersimpan Anda. File yang ada tetap aman; nama yang sama akan diberi nomor.</string>
+    <string name="label_file_name">Nama file</string>
+    <string name="error_saved_folder_unavailable">Folder tersimpan tidak tersedia. Pilih lokasi untuk menyimpan salinan ini.</string>
+    <string name="action_save_copy">Simpan salinan</string>
+    <string name="action_choose_folder">Pilih folder</string>
+    <string name="redact_forensic_title">Sanitasi Vektor Forensik</string>
+    <string name="redact_forensic_desc">Meraster halaman yang disunting agar byte teks di bawahnya terhapus total.</string>
+    <string name="redact_smart_pii_title">Redaksi PII Cerdas</string>
+    <string name="reflow_find_placeholder">Cari teks di dokumen...</string>
+    <string name="desc_previous_match">Kecocokan Sebelumnya</string>
+    <string name="desc_next_match">Kecocokan Berikutnya</string>
+    <string name="desc_play_pause">Putar/Jeda</string>
+    <string name="reflow_bionic_mode">Bionik</string>
+    <string name="reflow_dyslexia_mode">Disleksia</string>
+    <string name="msg_diagnostic_report_copied">Laporan diagnostik disalin ke papan klip</string>
+    <string name="desc_copy_diagnostic_report">Salin Laporan Diagnostik</string>
+    <string name="desc_move_page_left">Geser halaman ke kiri</string>
+    <string name="desc_move_page_right">Geser halaman ke kanan</string>
+    <string name="desc_delete_scanned_page">Hapus halaman pindaian</string>
+    <string name="action_save_open_reader">Simpan &amp; Buka di Pembaca</string>
+    <string name="action_save_ocr">Simpan &amp; OCR</string>
+    <string name="action_save_compress">Simpan &amp; Kompres</string>
+    <string name="msg_csv_copied">CSV disalin ke papan klip</string>
+    <string name="desc_copy_csv">Salin CSV</string>
+    <string name="label_lines_count">Baris: %1$d</string>
+    <string name="error_invalid_json_format">Format JSON tidak valid</string>
+    <string name="page_select_all">Semua</string>
+    <string name="page_select_invert">Balik</string>
+    <string name="page_select_odd">Ganjil</string>
+    <string name="page_select_even">Genap</string>
+    <string name="desc_swap_formats">Tukar Format</string>
 </resources>

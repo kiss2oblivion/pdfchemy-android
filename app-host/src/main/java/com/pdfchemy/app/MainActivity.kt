@@ -1158,7 +1158,7 @@ fun MainApp(
                                         Text(stringResource(R.string.select_pdf_for_reading))
                                     }
                                 }
-                                OutlinedButton(onClick = { browseOutput.launch(firstOutput) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
+                                OutlinedButton(onClick = { browseOutput.launch(firstOutput) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_browse_files)) }
                                 OutlinedButton(
                                     onClick = { 
                                         runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, firstOutput) }
@@ -3466,16 +3466,16 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.ContentPaste, contentDescription = "Paste")
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = stringResource(R.string.desc_paste))
                     }
                     if (inputText.isNotEmpty()) {
                         IconButton(
                             onClick = {
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(inputText))
-                                Toast.makeText(context, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.msg_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                             }
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_clipboard))
                         }
                         IconButton(onClick = { viewModel.setInputText("") }) {
                             Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.clear))
@@ -3785,11 +3785,11 @@ fun SettingsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             // Theme Selector
 
-            Text("Output folder", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_output_folder), style = MaterialTheme.typography.titleMedium)
             Text(if (preferredOutput == null) "Ask where to save each time" else "Saved folder selected. New copies keep existing files.", style = MaterialTheme.typography.bodySmall)
             Row {
-                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) "Choose folder" else "Change folder") }
-                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text("Reset") }
+                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) stringResource(R.string.action_choose_folder) else "Change folder") }
+                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text(stringResource(R.string.action_reset)) }
             }
                             var themeExpanded by remember { mutableStateOf(false) }
                             val themeOptions = mapOf(
@@ -4059,7 +4059,7 @@ fun SettingsScreen(
                                     try {
                                         context.startActivity(Intent.createChooser(emailIntent, context.getString(R.string.settings_feedback)))
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.error_no_email_app), Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -4229,7 +4229,7 @@ fun AndroidManifestoDialog(onDismiss: () -> Unit) {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "Cannot open browser", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.error_cannot_open_browser), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -4548,7 +4548,7 @@ fun RecentFilesSection(
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        TextButton(onClick = { onNavigate?.invoke(Screen.History) }) { Text("View all history") }
+        TextButton(onClick = { onNavigate?.invoke(Screen.History) }) { Text(stringResource(R.string.action_view_all_history)) }
     }
     if (history.isNotEmpty()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -4640,7 +4640,7 @@ fun RecentFilesSection(
                                                     onNavigate(Screen.PdfReader(initialPdfUri = uri))
                                                 } else {
                                                     AppLogger.e("Cannot open file from recent activity: ${item.name}", e2)
-                                                    Toast.makeText(context, "No app available to open ${item.name}", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, context.getString(R.string.error_no_app_open_file, item.name), Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         }
@@ -4721,7 +4721,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             ) {
                 Icon(
                 imageVector = Icons.Rounded.WorkspacePremium,
-                contentDescription = "Premium",
+                contentDescription = stringResource(R.string.desc_premium),
                 modifier = Modifier.size(120.dp),
                 tint = Color(0xFFFFD700)
             )

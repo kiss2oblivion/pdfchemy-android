@@ -256,11 +256,11 @@ fun QuickFillSignScreen(
                     textToPlace = tempText
                     showTextDialog = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showTextDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showTextDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -328,7 +328,7 @@ fun QuickFillSignScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSignDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showSignDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -549,7 +549,7 @@ fun QuickFillSignScreen(
                                                 color = Color(annot.textColor)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Icon(Icons.Rounded.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp), tint = Color.Red)
+                                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.desc_delete), modifier = Modifier.size(12.dp), tint = Color.Red)
                                         }
                                     }
                                 }

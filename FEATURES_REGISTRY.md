@@ -3,7 +3,7 @@
 > **Single Source of Truth for Implemented Capabilities**
 > **Core Invariant:** 100% Local-First & Private. Zero Cloud. Zero AI/LLMs. Zero Telemetry. Original-Safe.
 > **Performance Architecture:** Linear-Time O(N) Document Traversal. Single-pass custom TextStripper architecture eliminates quadratic O(N^2) page-tree lookups across all text search, redaction, reflow reading, visual diffing, EPUB conversion, and Office export modules.
-> **Last Updated:** October 2026
+> **Last Updated:** November 2026
 
 ---
 
@@ -46,7 +46,7 @@
 | **EPUB to PDF & PDF to EPUB** | `EbookConverterScreen.kt` | `EpubConverter.kt`, `PdfToEpubEngine.kt` | ✅ Live | Bi-directional EPUB suite: EPUB to PDF with Unicode NFD diacritic preservation, and PDF to EPUB with document outline/bookmarks chapter extraction, dynamic metadata language detection, and EPUB 3/NCX navigation structures |
 | **Comic Book Suite (CBZ & CBR)** | `EbookConverterScreen.kt` | `ComicBookEngineWorker.kt`, `ComicBookEngine.kt` | ✅ Live | Bi-directional comic archive conversions: CBZ/CBR to PDF with pre-flight RAR 4.x/5.0 and 7-Zip magic byte inspection and user-facing guidance, and PDF to CBZ with isolated native renderer streaming, sequential JPEG compression, bounded memory limits, and zero accumulator leaks |
 | **Markdown to PDF Studio** | `MarkdownStudioScreen.kt` | `MarkdownEngine.kt`, `MarkdownParser.kt` | ✅ Live | Rich Markdown text editor with instant live HTML/PDF rendering; Unicode NFD decomposition (sanitizeForType1) preserves accented glyphs and typographical punctuation without character dropping |
-| **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents |
+| **Text to PDF Converter** | `TextConverterScreen.kt` | `TextConverter.kt` | ✅ Live | Converts `.txt`, logs, and source code into clean paginated documents with NFD diacritic decomposition and typographic mapping |
 | **Table Extractor to CSV & Excel** | `TableExtractorScreen.kt` | `PdfTableExtractorEngine.kt`, `OfficeExportEngine.kt` | ✅ Live | Spatial 2D column clustering: page-by-page extraction prevents cross-page Y coordinate collisions; dual export supports both RFC 4180 CSV and direct native OpenXML Excel (.xlsx) spreadsheets |
 | **Office Export (Word / Excel / PPTX)** | `OfficeExportScreen.kt` | `OfficeExportEngine.kt` | ✅ Live | Pure OpenXML archive generators: exports PDF to `.docx`, `.xlsx`, and `.pptx` (with XML 1.0 control character sanitization) |
 | **Extract Plain Text** | `TextScreens.kt`, `CheckScreens.kt` | `PdfTextExtractorWorker.kt` | ✅ Live | Extracts raw plaintext streams from all or selected pages into `.txt` documents or system clipboard |
@@ -153,7 +153,7 @@
 ---
 
 ## 🌍 Supported Locales (20 Languages / 21 Locales)
-Android reconciliation adopts Gemini's localization while retaining later security messages and revised capability descriptions. Completeness, duplicate resources and format arguments must pass the current candidate's validation before a full-coverage claim is made. Desktop coverage is outside this Android reconciliation.
+Android reconciliation unifies all 20 localized `values-*` resource sets with base English (1,338 translatable keys per locale), retaining later security messages, revised honest capability descriptions (preliminary-only PDF/A and inspection-only Fast Web View), and localized UI string wiring across Android screens. Desktop coverage is outside this Android reconciliation.
 1. `en` (English)
 2. `ro` (Română)
 3. `de` (Deutsch)

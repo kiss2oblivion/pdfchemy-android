@@ -657,7 +657,7 @@ fun ReflowReaderScreen(
                 TextButton(onClick = { 
                     com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING) 
                 }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -671,7 +671,7 @@ fun ReflowReaderScreen(
                 else if (activeJobState!!.error is OfflineSpeechUnavailableException) stringResource(R.string.tts_offline_unavailable)
                 else "Error: ${activeJobState!!.error?.message}") },
             confirmButton = {
-                TextButton(onClick = { activeExportJobKey = null }) { Text("OK") }
+                TextButton(onClick = { activeExportJobKey = null }) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
                 if (activeJobState?.outputUri == null && activeJobState?.error is OfflineSpeechUnavailableException) {
@@ -833,7 +833,7 @@ fun ReflowReaderScreen(
                             IconButton(onClick = { showReadingControls = false }) { Icon(Icons.Rounded.Fullscreen, "Hide reading controls") }
                             if (bookmarks.isNotEmpty()) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
+                                    Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = stringResource(R.string.reader_toc_title), tint = selectedTheme.text)
                                 }
                             }
                             if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
@@ -847,7 +847,7 @@ fun ReflowReaderScreen(
                                 }) {
                                     Icon(
                                         if (isTtsPlaying) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeMute,
-                                        contentDescription = "Read Aloud",
+                                        contentDescription = stringResource(R.string.tts_play),
                                         tint = if (isTtsBarVisible) MaterialTheme.colorScheme.primary else selectedTheme.text
                                     )
                                 }
@@ -857,7 +857,7 @@ fun ReflowReaderScreen(
                                 }) {
                                     Icon(
                                         Icons.Rounded.Search,
-                                        contentDescription = "Search Text",
+                                        contentDescription = stringResource(R.string.reader_action_search),
                                         tint = if (isSearchActive) MaterialTheme.colorScheme.primary else selectedTheme.text
                                     )
                                 }
@@ -870,12 +870,12 @@ fun ReflowReaderScreen(
                                 )
                             }
                             IconButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf", "application/epub+zip", "application/zip", "application/octet-stream")) }) {
-                                Icon(Icons.Rounded.FolderOpen, contentDescription = "Open Document", tint = selectedTheme.text)
+                                Icon(Icons.Rounded.FolderOpen, contentDescription = stringResource(R.string.desc_open_file), tint = selectedTheme.text)
                             }
                             if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
                                 Box {
                                     IconButton(onClick = { showOverflowMenu = true }) {
-                                        Icon(Icons.Rounded.MoreVert, contentDescription = "More Options", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.desc_more_options), tint = selectedTheme.text)
                                     }
                                     DropdownMenu(
                                         expanded = showOverflowMenu,
@@ -996,14 +996,14 @@ fun ReflowReaderScreen(
                                             }
                                         }
                                     },
-                                    placeholder = { Text("Find text in document...", fontSize = 13.sp) },
+                                    placeholder = { Text(stringResource(R.string.reflow_find_placeholder), fontSize = 13.sp) },
                                     singleLine = true,
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(10.dp),
                                     trailingIcon = {
                                         if (searchQuery.isNotEmpty()) {
                                             IconButton(onClick = { searchQuery = "" }) {
-                                                Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear), modifier = Modifier.size(18.dp))
                                             }
                                         }
                                     },
@@ -1026,7 +1026,7 @@ fun ReflowReaderScreen(
                                         enabled = searchMatches.isNotEmpty(),
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.ExpandLess, contentDescription = "Previous Match", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.ExpandLess, contentDescription = stringResource(R.string.desc_previous_match), tint = selectedTheme.text)
                                     }
 
                                     IconButton(
@@ -1034,7 +1034,7 @@ fun ReflowReaderScreen(
                                         enabled = searchMatches.isNotEmpty(),
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.ExpandMore, contentDescription = "Next Match", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.desc_next_match), tint = selectedTheme.text)
                                     }
                                 }
                             }
@@ -1075,7 +1075,7 @@ fun ReflowReaderScreen(
                                         enabled = currentSpeakingIndex > 0,
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous Paragraph", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.SkipPrevious, contentDescription = stringResource(R.string.tts_prev_paragraph), tint = selectedTheme.text)
                                     }
 
                                     IconButton(
@@ -1090,7 +1090,7 @@ fun ReflowReaderScreen(
                                     ) {
                                         Icon(
                                             if (isTtsPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
-                                            contentDescription = "Play/Pause",
+                                            contentDescription = stringResource(R.string.desc_play_pause),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(32.dp)
                                         )
@@ -1105,7 +1105,7 @@ fun ReflowReaderScreen(
                                         enabled = currentSpeakingIndex + 1 < allParagraphs.size,
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.SkipNext, contentDescription = "Next Paragraph", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.SkipNext, contentDescription = stringResource(R.string.tts_next_paragraph), tint = selectedTheme.text)
                                     }
                                 }
 
@@ -1489,13 +1489,13 @@ fun ReflowReaderScreen(
                                     FilterChip(
                                         selected = isBionicReading,
                                         onClick = { isBionicReading = !isBionicReading },
-                                        label = { Text("Bionic") }
+                                        label = { Text(stringResource(R.string.reflow_bionic_mode)) }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     FilterChip(
                                         selected = isDyslexiaSpacing,
                                         onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
-                                        label = { Text("Dyslexia") }
+                                        label = { Text(stringResource(R.string.reflow_dyslexia_mode)) }
                                     )
                                 }
                             }

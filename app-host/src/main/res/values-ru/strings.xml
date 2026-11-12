@@ -272,7 +272,7 @@
 <string name="btn_add_more_files">Добавить файлы (выбрано: %1$d)</string>
 <string name="label_original_size_analyzing">Исходный размер: %1$s (Анализ...)</string>
 <string name="label_original_size_to_compressed">Исходный: %1$s  →  %2$s</string>
-<string name="label_target_mb_batch">Целевой размер: %%1$.1f МБ</string>
+<string name="label_target_mb_batch">Целевой размер: %1$.1f МБ</string>
 <string name="label_target_unknown">Цель: Не указана</string>
 <string name="label_analyzing">Анализ...</string>
 <string name="label_target_mb">Целевой размер: %1$s МБ</string>
@@ -959,13 +959,13 @@
     <string name="settings_manifesto_title">Пожизненный манифест</string>
     <string name="settings_manifesto_desc">Наше обещание: 100%% бесплатные обновления, без облака, для людей.</string>
     <string name="manifesto_dialog_title">Пожизненный манифест</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">«Пожизненные обновления, пока я жив — и на 100% бесплатно. Всё, что нужно, — оставить чёткий, обоснованный запрос, и он будет реализован; ведь это от людей и для людей.\n\nВозможно, это не похоже на корпоративное приложение, но оно хотя бы бесплатно, и я сделаю его настолько хорошо, насколько смогу. Если не смогу — что ж, по крайней мере у вас есть выбор.»</string>
     <string name="manifesto_author">— Андрей Иоан Кукош (John), Разработчик</string>
     <string name="manifesto_guarantees_title">Наши 4 нерушимые гарантии:</string>
     <string name="manifesto_g1_title">100%% Бесплатно навсегда</string>
     <string name="manifesto_g1_desc">Никаких подписок, платных ограничений, лимитов на страницы и водяных знаков.</string>
     <string name="manifesto_g2_title">100%% Офлайн и конфиденциально</string>
-    <string name="manifesto_g2_desc">Файлы никогда не покидают этот компьютер. Без слежки. Безопасно для конфиденциальных данных.</string>
+    <string name="manifesto_g2_desc" formatted="false">Ни один файл документа и никакие метаданные не покидают ваше устройство. 100% локальная обработка, безопасная для конфиденциальных файлов.</string>
     <string name="manifesto_g3_title">Безопасность оригинала</string>
     <string name="manifesto_g3_desc">Исходные файлы никогда не перезаписываются без явного подтверждения.</string>
     <string name="manifesto_g4_title">Создано для людей</string>
@@ -983,7 +983,7 @@
     <string name="menu_deskew">Автовыравнивание страниц</string>
     <string name="menu_deskew_desc">Коррекция перекоса сканов и выравнивание страниц без потери качества</string>
     <string name="deskew_title">Автовыравнивание и устранение перекоса</string>
-    <string name="deskew_detected_angle">Обнаруженный наклон: %%1$.1f°</string>
+    <string name="deskew_detected_angle">Обнаруженный наклон: %1$.1f°</string>
     <string name="deskew_action_straighten">Выровнять и сохранить</string>
     <string name="deskew_success">Документ успешно выровнен!</string>
     <string name="deskew_success_desc">Страницы были повернуты и выровнены.</string>
@@ -1033,7 +1033,7 @@
     <string name="tts_play">Читать вслух</string>
     <string name="tts_pause">Пауза</string>
     <string name="tts_stop">Стоп</string>
-    <string name="tts_speed">Скорость: %%1$.2fx</string>
+    <string name="tts_speed">Скорость: %1$.2fx</string>
     <string name="tts_prev_paragraph">Назад</string>
     <string name="tts_next_paragraph">Вперед</string>
     <string name="tts_not_supported">Синтез речи (TTS) не поддерживается или отсутствуют языковые данные.</string>
@@ -1095,13 +1095,7 @@
     <string name="settings_default_pdf_app">Просмотрщик PDF по умолчанию</string>
     <string name="settings_default_pdf_app_desc">Назначить PdfChemy приложением по умолчанию для открытия PDF</string>
     <string name="settings_default_pdf_dialog_title">Назначить просмотрщик PDF по умолчанию</string>
-    <string name="settings_default_pdf_dialog_body">Чтобы назначить PdfChemy средством просмотра по умолчанию:
-
-1. Откройте любой файл PDF в файловом менеджере или загрузках.
-2. В окне "Открыть с помощью" выберите PdfChemy.
-3. Нажмите "Всегда", чтобы открывать документы PDF автоматически.
-
-Вы также можете изменить ассоциации приложений в системных настройках Android.</string>
+    <string name="settings_default_pdf_dialog_body">Чтобы назначить PdfChemy средством просмотра по умолчанию:\n\n1. Откройте любой файл PDF в файловом менеджере или загрузках.\n2. В окне \"Открыть с помощью\" выберите PdfChemy.\n3. Нажмите \"Всегда\", чтобы открывать документы PDF автоматически.\n\nВы также можете изменить ассоциации приложений в системных настройках Android.</string>
     <string name="settings_open_android_settings">Открыть системные настройки</string>
     <string name="tab_epub_to_pdf">EPUB в PDF</string>
     <string name="select_epub_for_pdf">Выбрать документ EPUB</string>
@@ -1245,4 +1239,112 @@
     <string name="msg_text_saved_success">Текст успешно сохранен</string>
     <string name="form_fill_mode_list">Просмотр списка</string>
     <string name="form_fill_mode_insitu">Просмотр документа</string>
+    <string name="form_fields_count">Поля: %1$d</string>
+    <string name="action_reset_fields">Сбросить поля</string>
+    <string name="desc_paste">Вставить</string>
+    <string name="bookmarks_count">Закладки (%1$d)</string>
+    <string name="btn_browse_files">Обзор файлов</string>
+    <string name="settings_output_folder">Папка вывода</string>
+    <string name="error_no_email_app">Почтовое приложение не найдено</string>
+    <string name="error_cannot_open_browser">Не удалось открыть браузер</string>
+    <string name="action_view_all_history">Посмотреть всю историю</string>
+    <string name="error_no_app_open_file">Нет приложения для открытия %1$s</string>
+    <string name="desc_premium">Премиум</string>
+    <string name="hint_enter_value">Введите значение…</string>
+    <string name="desc_checked">Отмечено</string>
+    <string name="action_sort_by_page">Сортировать по странице</string>
+    <string name="desc_move_up">Переместить вверх</string>
+    <string name="desc_move_down">Переместить вниз</string>
+    <string name="desc_edit">Изменить</string>
+    <string name="msg_metadata_report_copied">Отчёт о метаданных скопирован в буфер обмена</string>
+    <string name="desc_copy_metadata_report">Копировать отчёт о метаданных</string>
+    <string name="desc_clear_all_images">Удалить все изображения</string>
+    <string name="action_convert">Конвертировать</string>
+    <string name="action_gallery">Галерея</string>
+    <string name="action_take_photo">Сделать фото</string>
+    <string name="desc_selected_image">Выбранное изображение</string>
+    <string name="desc_remove_image">Удалить изображение</string>
+    <string name="error_straightening_doc">Ошибка выравнивания документа</string>
+    <string name="error_unable_analyze_doc">Не удалось проанализировать этот документ</string>
+    <string name="desc_page_preview">Предпросмотр страницы</string>
+    <string name="msg_new_copy_chosen_folder">Новая копия будет сохранена в выбранную вами папку.</string>
+    <string name="msg_audit_report_copied">Отчёт аудита скопирован в буфер обмена</string>
+    <string name="desc_copy_audit_report">Копировать отчёт аудита</string>
+    <string name="sanitizer_purge_js">Удалить триггеры JavaScript</string>
+    <string name="sanitizer_purge_actions">Удалить действия запуска и URL</string>
+    <string name="sanitizer_purge_embedded">Удалить скрытые встроенные файлы</string>
+    <string name="sanitizer_purge_metadata">Удалить отслеживающие метаданные и ID</string>
+    <string name="desc_swap_find_replace">Поменять местами поиск и замену</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% локально с сохранением макета</string>
+    <string name="msg_font_report_copied">Отчёт о шрифтах скопирован в буфер обмена</string>
+    <string name="desc_copy_font_report">Копировать отчёт о шрифтах</string>
+    <string name="desc_refresh">Обновить</string>
+    <string name="desc_preview">Предпросмотр</string>
+    <string name="history_title">История</string>
+    <string name="history_disabled_notice">История отключена. Включите локальную историю в настройках для хранения до 20 недавних файлов.</string>
+    <string name="history_empty_notice">Нет недавних файлов. Сохранённые копии отображаются здесь при включённой локальной истории.</string>
+    <string name="action_open">Открыть</string>
+    <string name="history_item_folder">Папка</string>
+    <string name="history_item_unavailable">Недоступно — выберите файл снова или удалите запись</string>
+    <string name="history_checking_access">Проверка доступа…</string>
+    <string name="error_no_app_open_item">Нет приложения для открытия этого объекта. Проверьте доступ к файлу и повторите попытку.</string>
+    <string name="error_no_sharing_app">Нет доступного приложения для отправки. Откройте или найдите сохранённые файлы.</string>
+    <string name="history_remove_entry_desc">Удалить %1$s из истории</string>
+    <string name="linearize_label_size">Размер:</string>
+    <string name="linearize_label_pages">Страницы:</string>
+    <string name="dialog_clear_markdown_title">Очистить редактор Markdown?</string>
+    <string name="dialog_clear_markdown_desc">Вы уверены, что хотите очистить текущий документ Markdown?</string>
+    <string name="msg_markdown_copied">Markdown скопирован в буфер обмена</string>
+    <string name="desc_copy_markdown">Копировать Markdown</string>
+    <string name="msg_metadata_summary_copied">Сводка метаданных скопирована в буфер обмена</string>
+    <string name="desc_copy_metadata_summary">Копировать сводку метаданных</string>
+    <string name="action_anonymize">Анонимизировать</string>
+    <string name="badge_offline_text_layer" formatted="false">100% офлайн-текстовый слой</string>
+    <string name="label_margins_colon">Поля:</string>
+    <string name="desc_decrement">Уменьшить</string>
+    <string name="desc_increment">Увеличить</string>
+    <string name="msg_pdfa_report_copied">Отчёт PDF/A скопирован в буфер обмена</string>
+    <string name="desc_copy_pdfa_report">Копировать отчёт PDF/A</string>
+    <string name="desc_rescan">Повторно проверить</string>
+    <string name="desc_swap_compare_pdfs">Поменять местами оригинал и изменённый</string>
+    <string name="desc_select_different_pdfs">Выбрать другие PDF</string>
+    <string name="editor_load_failed_msg">Не удалось загрузить документ. Проверьте права доступа или выберите другую копию.</string>
+    <string name="desc_more_options">Ещё</string>
+    <string name="reader_vertical_scroll">Вертикальная прокрутка</string>
+    <string name="reader_horizontal_scroll">Горизонтальная прокрутка</string>
+    <string name="reader_normal_colors">Обычные цвета</string>
+    <string name="reader_invert_colors">Инвертировать цвета</string>
+    <string name="error_create_output_folder">Не удалось создать выходную копию в этой папке</string>
+    <string name="dialog_save_copy_title">Сохранить копию</string>
+    <string name="dialog_save_copy_desc">Использовать сохранённую папку вывода. Существующие файлы сохраняются; совпадения получают номерную копию.</string>
+    <string name="label_file_name">Имя файла</string>
+    <string name="error_saved_folder_unavailable">Сохранённая папка недоступна. Выберите место для сохранения этой копии.</string>
+    <string name="action_save_copy">Сохранить копию</string>
+    <string name="action_choose_folder">Выбрать папку</string>
+    <string name="redact_forensic_title">Криминалистическая очистка векторов</string>
+    <string name="redact_forensic_desc">Растеризует скрытые страницы для полного уничтожения исходных байтов текста.</string>
+    <string name="redact_smart_pii_title">Умное скрытие ПДн</string>
+    <string name="reflow_find_placeholder">Найти текст в документе...</string>
+    <string name="desc_previous_match">Предыдущее совпадение</string>
+    <string name="desc_next_match">Следующее совпадение</string>
+    <string name="desc_play_pause">Воспроизведение/Пауза</string>
+    <string name="reflow_bionic_mode">Бионик</string>
+    <string name="reflow_dyslexia_mode">Дислексия</string>
+    <string name="msg_diagnostic_report_copied">Диагностический отчёт скопирован в буфер обмена</string>
+    <string name="desc_copy_diagnostic_report">Копировать диагностический отчёт</string>
+    <string name="desc_move_page_left">Сдвинуть страницу влево</string>
+    <string name="desc_move_page_right">Сдвинуть страницу вправо</string>
+    <string name="desc_delete_scanned_page">Удалить отсканированную страницу</string>
+    <string name="action_save_open_reader">Сохранить и открыть в читателе</string>
+    <string name="action_save_ocr">Сохранить и OCR</string>
+    <string name="action_save_compress">Сохранить и сжать</string>
+    <string name="msg_csv_copied">CSV скопирован в буфер обмена</string>
+    <string name="desc_copy_csv">Копировать CSV</string>
+    <string name="label_lines_count">Строки: %1$d</string>
+    <string name="error_invalid_json_format">Неверный формат JSON</string>
+    <string name="page_select_all">Все</string>
+    <string name="page_select_invert">Инвертировать</string>
+    <string name="page_select_odd">Нечётные</string>
+    <string name="page_select_even">Чётные</string>
+    <string name="desc_swap_formats">Поменять форматы</string>
 </resources>

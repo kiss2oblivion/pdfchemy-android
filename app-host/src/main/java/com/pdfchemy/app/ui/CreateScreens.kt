@@ -84,13 +84,13 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
                 actions = {
                     if (selectedImages.isNotEmpty()) {
                         IconButton(onClick = { selectedImages = emptyList() }) {
-                            Icon(Icons.Rounded.DeleteSweep, contentDescription = "Clear all images", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.desc_clear_all_images), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -100,7 +100,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             if (selectedImages.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = { createPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "images")) },
-                    icon = { Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Convert") },
+                    icon = { Icon(Icons.Rounded.PictureAsPdf, contentDescription = stringResource(R.string.action_convert)) },
                     text = { Text(stringResource(R.string.convert_to_pdf)) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -132,7 +132,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         .defaultMinSize(minHeight = 48.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = "Gallery", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = stringResource(R.string.action_gallery), modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.gallery),
@@ -157,7 +157,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     ),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Rounded.PhotoCamera, contentDescription = "Take Photo", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.PhotoCamera, contentDescription = stringResource(R.string.action_take_photo), modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.camera),
@@ -188,7 +188,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             ) {
                                 IsolatedImage(
                                     model = uri,
-                                    contentDescription = "Selected Image",
+                                    contentDescription = stringResource(R.string.desc_selected_image),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .size(64.dp)
@@ -198,7 +198,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Page ${index + 1}",
+                                        text = stringResource(R.string.reader_page_content_desc, index + 1),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -243,7 +243,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 IconButton(onClick = {
                                     selectedImages = selectedImages.filter { it != uri }
                                 }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Remove Image", tint = MaterialTheme.colorScheme.error)
+                                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.desc_remove_image), tint = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }

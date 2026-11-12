@@ -713,15 +713,15 @@ private fun PdfReaderDocument(
                     }
                     var overflowExpanded by remember { mutableStateOf(false) }
                     IconButton(onClick = { overflowExpanded = true }) {
-                        Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.desc_more_options))
                     }
                     DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
                         DropdownMenuItem(
-                            text = { Text(if (isHorizontalMode) "Vertical Scroll" else "Horizontal Scroll") },
+                            text = { Text(stringResource(if (isHorizontalMode) R.string.reader_vertical_scroll else R.string.reader_horizontal_scroll)) },
                             onClick = { isHorizontalMode = !isHorizontalMode; overflowExpanded = false }
                         )
                         DropdownMenuItem(
-                            text = { Text(if (isInvertColors) "Normal Colors" else "Invert Colors") },
+                            text = { Text(stringResource(if (isInvertColors) R.string.reader_normal_colors else R.string.reader_invert_colors)) },
                             onClick = { isInvertColors = !isInvertColors; overflowExpanded = false }
                         )
                     }

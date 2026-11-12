@@ -174,8 +174,8 @@ fun MarkdownStudioScreen(
     if (showClearConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showClearConfirmDialog = false },
-            title = { Text("Clear Markdown Editor?") },
-            text = { Text("Are you sure you want to clear the current Markdown document?") },
+            title = { Text(stringResource(R.string.dialog_clear_markdown_title)) },
+            text = { Text(stringResource(R.string.dialog_clear_markdown_desc)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -208,9 +208,9 @@ fun MarkdownStudioScreen(
                         IconButton(onClick = {
                             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                             clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Markdown", markdownText))
-                            android.widget.Toast.makeText(context, "Copied Markdown to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.msg_markdown_copied), android.widget.Toast.LENGTH_SHORT).show()
                         }) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Markdown")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_markdown))
                         }
                         IconButton(onClick = { showClearConfirmDialog = true }) {
                             Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.action_clear), tint = MaterialTheme.colorScheme.error)

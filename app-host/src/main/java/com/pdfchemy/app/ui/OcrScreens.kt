@@ -224,7 +224,7 @@ fun OcrPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Rounded.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Text("100% Offline Text Layer", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.badge_offline_text_layer), fontWeight = FontWeight.Bold)
                             }
                             Text(
                                 "Scanned documents and pictures of text will be indexed with an invisible, high-precision text layer. You can select, copy, and search words anywhere inside the new PDF.",

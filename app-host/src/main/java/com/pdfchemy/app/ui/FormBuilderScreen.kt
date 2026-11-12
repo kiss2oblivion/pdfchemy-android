@@ -248,7 +248,7 @@ fun FormBuilderScreen(
                                         },
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                                     ) {
-                                        Text("Clear All", color = MaterialTheme.colorScheme.error)
+                                        Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }

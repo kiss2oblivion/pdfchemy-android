@@ -272,7 +272,7 @@
 <string name="btn_add_more_files">और फ़ाइलें जोड़ें (%1$d चयनित)</string>
 <string name="label_original_size_analyzing">मूल आकार: %1$s (विश्लेषण जारी...)</string>
 <string name="label_original_size_to_compressed">मूल आकार: %1$s  →  %2$s</string>
-<string name="label_target_mb_batch">लक्ष्य: %%1$.1f MB</string>
+<string name="label_target_mb_batch">लक्ष्य: %1$.1f MB</string>
 <string name="label_target_unknown">लक्ष्य: अज्ञात</string>
 <string name="label_analyzing">विश्लेषण हो रहा है...</string>
 <string name="label_target_mb">लक्ष्य: %1$s MB</string>
@@ -959,13 +959,13 @@
     <string name="settings_manifesto_title">आजीवन घोषणापत्र</string>
     <string name="settings_manifesto_desc">हमारा वादा: 100%% मुफ्त अपडेट, शून्य क्लाउड, लोगों के लिए समर्पित।</string>
     <string name="manifesto_dialog_title">आजीवन घोषणापत्र</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">"जब तक मैं जीवित हूँ, जीवन भर के अपडेट — और 100% मुफ़्त। आपको बस एक ठोस, मान्य अनुरोध करना है और उसे पूरा किया जाएगा; क्योंकि यह लोगों द्वारा, लोगों के लिए है।\n\nयह किसी कॉर्पोरेट ऐप जैसा हो भी सकता है और नहीं भी, लेकिन कम से कम यह मुफ़्त होगा और मैं इसे जितना बेहतर बना सकता हूँ उतना बनाऊँगा। अगर नहीं कर पाया, तो बस यही सही — कम से कम आपके पास एक विकल्प तो है।"</string>
     <string name="manifesto_author">— आंद्रेई इओआन कुकोश (जॉन), डेवलपर</string>
     <string name="manifesto_guarantees_title">हमारी 4 अटूट गारंटी:</string>
     <string name="manifesto_g1_title">हमेशा के लिए 100%% निःशुल्क</string>
     <string name="manifesto_g1_desc">कोई सदस्यता नहीं, कोई पेवॉल नहीं, कोई कृत्रिम सीमा नहीं और कोई वॉटरमार्क नहीं।</string>
     <string name="manifesto_g2_title">100%% ऑफ़लाइन और निजी</string>
-    <string name="manifesto_g2_desc">कोई भी फ़ाइल इस कंप्यूटर से बाहर नहीं जाती। शून्य टेलीमेट्री। गोपनीय दस्तावेज़ों के लिए 100%% सुरक्षित।</string>
+    <string name="manifesto_g2_desc" formatted="false">कोई भी दस्तावेज़ फ़ाइल या मेटाडेटा कभी आपके डिवाइस से बाहर नहीं जाता। गोपनीय फ़ाइलों के लिए सुरक्षित, 100% डिवाइस पर प्रोसेसिंग।</string>
     <string name="manifesto_g3_title">मूल फ़ाइल सुरक्षित</string>
     <string name="manifesto_g3_desc">हम बिना स्पष्ट पुष्टि के आपकी मूल फ़ाइलों को कभी ओवरराइट नहीं करते हैं।</string>
     <string name="manifesto_g4_title">लोगों के लिए निर्मित</string>
@@ -983,7 +983,7 @@
     <string name="menu_deskew">स्वतः-डीस्क्यू और सीधा करें</string>
     <string name="menu_deskew_desc">तिरछे स्कैन ठीक करें और बिना किसी हानि के घूमे हुए पृष्ठों को संरेखित करें</string>
     <string name="deskew_title">स्वतः-डीस्क्यू और कोण संरेखक</string>
-    <string name="deskew_detected_angle">पहचाना गया झुकाव: %%1$.1f°</string>
+    <string name="deskew_detected_angle">पहचाना गया झुकाव: %1$.1f°</string>
     <string name="deskew_action_straighten">सीधा करें और सहेजें</string>
     <string name="deskew_success">दस्तावेज़ सफलतापूर्वक सीधा किया गया!</string>
     <string name="deskew_success_desc">पृष्ठों को घुमाकर संरेखित कर दिया गया है।</string>
@@ -1033,7 +1033,7 @@
     <string name="tts_play">ज़ोर से पढ़ें</string>
     <string name="tts_pause">रोकें</string>
     <string name="tts_stop">बंद करें</string>
-    <string name="tts_speed">गति: %%1$.2fx</string>
+    <string name="tts_speed">गति: %1$.2fx</string>
     <string name="tts_prev_paragraph">पिछला</string>
     <string name="tts_next_paragraph">अगला</string>
     <string name="tts_not_supported">टेक्स्ट-टू-स्पीच समर्थित नहीं है या भाषा डेटा अनुपलब्ध है।</string>
@@ -1095,13 +1095,7 @@
     <string name="settings_default_pdf_app">डिफ़ॉल्ट PDF व्यूअर</string>
     <string name="settings_default_pdf_app_desc">PDF फ़ाइलें खोलने के लिए PdfChemy को डिफ़ॉल्ट ऐप बनाएँ</string>
     <string name="settings_default_pdf_dialog_title">डिफ़ॉल्ट PDF व्यूअर सेट करें</string>
-    <string name="settings_default_pdf_dialog_body">PdfChemy को अपना डिफ़ॉल्ट PDF व्यूअर बनाने के लिए:
-
-1. अपने फ़ाइल मैनेजर या डाउनलोड से कोई भी PDF फ़ाइल खोलें।
-2. जब "इसके साथ खोलें" का संकेत मिले, तो PdfChemy चुनें।
-3. PDF दस्तावेज़ स्वचालित रूप से PdfChemy के साथ खोलने के लिए "हमेशा" चुनें।
-
-आप Android सेटिंग्स में डिफ़ॉल्ट ऐप एसोसिएशन भी कॉन्फ़िगर कर सकते हैं।</string>
+    <string name="settings_default_pdf_dialog_body">PdfChemy को अपना डिफ़ॉल्ट PDF व्यूअर बनाने के लिए:\n\n1. अपने फ़ाइल मैनेजर या डाउनलोड से कोई भी PDF फ़ाइल खोलें।\n2. जब \"इसके साथ खोलें\" का संकेत मिले, तो PdfChemy चुनें।\n3. PDF दस्तावेज़ स्वचालित रूप से PdfChemy के साथ खोलने के लिए \"हमेशा\" चुनें।\n\nआप Android सेटिंग्स में डिफ़ॉल्ट ऐप एसोसिएशन भी कॉन्फ़िगर कर सकते हैं।</string>
     <string name="settings_open_android_settings">सिस्टम सेटिंग खोलें</string>
     <string name="tab_epub_to_pdf">EPUB से PDF</string>
     <string name="select_epub_for_pdf">EPUB दस्तावेज़ चुनें</string>
@@ -1245,4 +1239,112 @@
     <string name="msg_text_saved_success">टेक्स्ट सफलतापूर्वक सहेजा गया</string>
     <string name="form_fill_mode_list">सूची दृश्य</string>
     <string name="form_fill_mode_insitu">दस्तावेज़ दृश्य</string>
+    <string name="form_fields_count">%1$d फ़ील्ड</string>
+    <string name="action_reset_fields">फ़ील्ड रीसेट करें</string>
+    <string name="desc_paste">पेस्ट करें</string>
+    <string name="bookmarks_count">बुकमार्क (%1$d)</string>
+    <string name="btn_browse_files">फ़ाइलें ब्राउज़ करें</string>
+    <string name="settings_output_folder">आउटपुट फ़ोल्डर</string>
+    <string name="error_no_email_app">कोई ईमेल ऐप नहीं मिला</string>
+    <string name="error_cannot_open_browser">ब्राउज़र नहीं खुल सका</string>
+    <string name="action_view_all_history">पूरा इतिहास देखें</string>
+    <string name="error_no_app_open_file">%1$s खोलने के लिए कोई ऐप उपलब्ध नहीं है</string>
+    <string name="desc_premium">प्रीमियम</string>
+    <string name="hint_enter_value">मान दर्ज करें…</string>
+    <string name="desc_checked">चयनित</string>
+    <string name="action_sort_by_page">पृष्ठ के अनुसार क्रमबद्ध करें</string>
+    <string name="desc_move_up">ऊपर ले जाएं</string>
+    <string name="desc_move_down">नीचे ले जाएं</string>
+    <string name="desc_edit">संपादित करें</string>
+    <string name="msg_metadata_report_copied">मेटाडेटा रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
+    <string name="desc_copy_metadata_report">मेटाडेटा रिपोर्ट कॉपी करें</string>
+    <string name="desc_clear_all_images">सभी छवियाँ साफ़ करें</string>
+    <string name="action_convert">बदलें</string>
+    <string name="action_gallery">गैलरी</string>
+    <string name="action_take_photo">फ़ोटो लें</string>
+    <string name="desc_selected_image">चयनित छवि</string>
+    <string name="desc_remove_image">छवि हटाएं</string>
+    <string name="error_straightening_doc">दस्तावेज़ सीधा करने में त्रुटि</string>
+    <string name="error_unable_analyze_doc">इस दस्तावेज़ का विश्लेषण करने में असमर्थ</string>
+    <string name="desc_page_preview">पृष्ठ पूर्वावलोकन</string>
+    <string name="msg_new_copy_chosen_folder">आपके द्वारा चुने गए फ़ोल्डर में एक नई प्रति सहेजी जाएगी।</string>
+    <string name="msg_audit_report_copied">ऑडिट रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
+    <string name="desc_copy_audit_report">ऑडिट रिपोर्ट कॉपी करें</string>
+    <string name="sanitizer_purge_js">JavaScript पेलोड ट्रिगर हटाएं</string>
+    <string name="sanitizer_purge_actions">लॉन्च और URL क्रियाएँ हटाएं</string>
+    <string name="sanitizer_purge_embedded">छिपी हुई एम्बेडेड फ़ाइलें हटाएं</string>
+    <string name="sanitizer_purge_metadata">ट्रैकिंग मेटाडेटा और ID हटाएं</string>
+    <string name="desc_swap_find_replace">खोजें और बदलें स्वैप करें</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% स्थानीय और लेआउट-सुरक्षित</string>
+    <string name="msg_font_report_copied">फ़ॉन्ट रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
+    <string name="desc_copy_font_report">फ़ॉन्ट रिपोर्ट कॉपी करें</string>
+    <string name="desc_refresh">रीफ़्रेश करें</string>
+    <string name="desc_preview">पूर्वावलोकन</string>
+    <string name="history_title">इतिहास</string>
+    <string name="history_disabled_notice">इतिहास बंद है। हाल की अधिकतम 20 फ़ाइलें सहेजने के लिए सेटिंग्स में स्थानीय इतिहास सक्षम करें।</string>
+    <string name="history_empty_notice">कोई हाल की फ़ाइल नहीं। स्थानीय इतिहास चालू रहने पर सहेजी गई प्रतियाँ यहाँ दिखती हैं।</string>
+    <string name="action_open">खोलें</string>
+    <string name="history_item_folder">फ़ोल्डर</string>
+    <string name="history_item_unavailable">अनुपलब्ध — फ़ाइल फिर से चुनें या यह प्रविष्टि हटाएं</string>
+    <string name="history_checking_access">पहुँच की जाँच हो रही है…</string>
+    <string name="error_no_app_open_item">कोई ऐप इस आइटम को खोल नहीं सकता। फ़ाइल पहुँच जांचें और पुनः प्रयास करें।</string>
+    <string name="error_no_sharing_app">साझा करने के लिए कोई ऐप उपलब्ध नहीं है। इसके बजाय सहेजी गई फ़ाइलें खोलें या ब्राउज़ करें।</string>
+    <string name="history_remove_entry_desc">इतिहास से %1$s हटाएं</string>
+    <string name="linearize_label_size">आकार:</string>
+    <string name="linearize_label_pages">पृष्ठ:</string>
+    <string name="dialog_clear_markdown_title">Markdown संपादक साफ़ करें?</string>
+    <string name="dialog_clear_markdown_desc">क्या आप वाकई वर्तमान Markdown दस्तावेज़ साफ़ करना चाहते हैं?</string>
+    <string name="msg_markdown_copied">Markdown क्लिपबोर्ड पर कॉपी किया गया</string>
+    <string name="desc_copy_markdown">Markdown कॉपी करें</string>
+    <string name="msg_metadata_summary_copied">मेटाडेटा सारांश क्लिपबोर्ड पर कॉपी किया गया</string>
+    <string name="desc_copy_metadata_summary">मेटाडेटा सारांश कॉपी करें</string>
+    <string name="action_anonymize">गुमनाम करें</string>
+    <string name="badge_offline_text_layer" formatted="false">100% ऑफ़लाइन टेक्स्ट लेयर</string>
+    <string name="label_margins_colon">मार्जिन:</string>
+    <string name="desc_decrement">घटाएं</string>
+    <string name="desc_increment">बढ़ाएं</string>
+    <string name="msg_pdfa_report_copied">PDF/A रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
+    <string name="desc_copy_pdfa_report">PDF/A रिपोर्ट कॉपी करें</string>
+    <string name="desc_rescan">पुनः स्कैन करें</string>
+    <string name="desc_swap_compare_pdfs">मूल और संशोधित स्वैप करें</string>
+    <string name="desc_select_different_pdfs">अन्य PDF चुनें</string>
+    <string name="editor_load_failed_msg">यह दस्तावेज़ लोड नहीं हो सका। पहुँच अनुमति जाँचें या दूसरी प्रति चुनें।</string>
+    <string name="desc_more_options">अधिक विकल्प</string>
+    <string name="reader_vertical_scroll">लंबवत स्क्रॉल</string>
+    <string name="reader_horizontal_scroll">क्षैतिज स्क्रॉल</string>
+    <string name="reader_normal_colors">सामान्य रंग</string>
+    <string name="reader_invert_colors">रंग उलटें</string>
+    <string name="error_create_output_folder">इस फ़ोल्डर में आउटपुट प्रति नहीं बनाई जा सकी</string>
+    <string name="dialog_save_copy_title">प्रति सहेजें</string>
+    <string name="dialog_save_copy_desc">अपने सहेजे गए आउटपुट फ़ोल्डर का उपयोग करें। मौजूदा फ़ाइलें सुरक्षित रहती हैं; समान नामों की क्रमांकित प्रति बनाई जाती है।</string>
+    <string name="label_file_name">फ़ाइल नाम</string>
+    <string name="error_saved_folder_unavailable">सहेजा गया फ़ोल्डर उपलब्ध नहीं है। इस प्रति को सहेजने के लिए कोई स्थान चुनें।</string>
+    <string name="action_save_copy">प्रति सहेजें</string>
+    <string name="action_choose_folder">फ़ोल्डर चुनें</string>
+    <string name="redact_forensic_title">फ़ोरेंसिक वेक्टर सैनिटाइज़ेशन</string>
+    <string name="redact_forensic_desc">अंतर्निहित टेक्स्ट बाइट्स को पूरी तरह मिटाने के लिए संपादित पृष्ठों को रास्टराइज़ करता है।</string>
+    <string name="redact_smart_pii_title">स्मार्ट PII संपादन</string>
+    <string name="reflow_find_placeholder">दस्तावेज़ में टेक्स्ट खोजें...</string>
+    <string name="desc_previous_match">पिछला मिलान</string>
+    <string name="desc_next_match">अगला मिलान</string>
+    <string name="desc_play_pause">चलाएं/रोकें</string>
+    <string name="reflow_bionic_mode">बायोनिक</string>
+    <string name="reflow_dyslexia_mode">डिस्लेक्सिया</string>
+    <string name="msg_diagnostic_report_copied">नैदानिक रिपोर्ट क्लिपबोर्ड पर कॉपी की गई</string>
+    <string name="desc_copy_diagnostic_report">नैदानिक रिपोर्ट कॉपी करें</string>
+    <string name="desc_move_page_left">पृष्ठ बाईं ओर ले जाएं</string>
+    <string name="desc_move_page_right">पृष्ठ दाईं ओर ले जाएं</string>
+    <string name="desc_delete_scanned_page">स्कैन किया गया पृष्ठ हटाएं</string>
+    <string name="action_save_open_reader">सहेजें और रीडर में खोलें</string>
+    <string name="action_save_ocr">सहेजें और OCR</string>
+    <string name="action_save_compress">सहेजें और संपीड़ित करें</string>
+    <string name="msg_csv_copied">CSV क्लिपबोर्ड पर कॉपी किया गया</string>
+    <string name="desc_copy_csv">CSV कॉपी करें</string>
+    <string name="label_lines_count">पंक्तियाँ: %1$d</string>
+    <string name="error_invalid_json_format">अमान्य JSON प्रारूप</string>
+    <string name="page_select_all">सभी</string>
+    <string name="page_select_invert">उलटें</string>
+    <string name="page_select_odd">विषम</string>
+    <string name="page_select_even">सम</string>
+    <string name="desc_swap_formats">प्रारूप स्वैप करें</string>
 </resources>

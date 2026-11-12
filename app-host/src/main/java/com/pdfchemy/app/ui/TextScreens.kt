@@ -156,7 +156,7 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(stringResource(R.string.label_words, wordCount), style = MaterialTheme.typography.labelLarge)
-                    Text("Lines: $lineCount", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.label_lines_count, lineCount), style = MaterialTheme.typography.labelLarge)
                     Text(stringResource(R.string.label_chars, charCount), style = MaterialTheme.typography.labelLarge)
                 }
             }
@@ -194,10 +194,10 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                         } else if (trimmed.startsWith("{")) {
                             textContent = JSONObject(trimmed).toString(4)
                         } else {
-                            Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.error_invalid_json_format), Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: JSONException) {
-                        Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.error_invalid_json_format), Toast.LENGTH_SHORT).show()
                     }
                 }
                 ActionChip(stringResource(R.string.btn_minify_json)) {
@@ -208,10 +208,10 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                         } else if (trimmed.startsWith("{")) {
                             textContent = JSONObject(trimmed).toString()
                         } else {
-                            Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.error_invalid_json_format), Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: JSONException) {
-                        Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.error_invalid_json_format), Toast.LENGTH_SHORT).show()
                     }
                 }
                 ActionChip(stringResource(R.string.btn_clear)) { textContent = "" }

@@ -82,13 +82,14 @@ object ComicBookEngineWorker {
     }
 
     private fun convertCbzToPdf(context: Context, sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor): String {
+        checkArchiveFormat(sourceFd)
         var tempFile: File? = null
         var zip: ZipFile? = null
         var document: PDDocument? = null
         
         try {
             tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("cbz_worker_", ".cbz", context.cacheDir)
-            FileInputStream(sourceFd.fileDescriptor).use { input ->
+            openInput(sourceFd).use { input ->
                 FileOutputStream(tempFile).use { output ->
                     var totalRead = 0L
                     val buffer = ByteArray(8192)
@@ -103,7 +104,6 @@ object ComicBookEngineWorker {
                 }
             }
 
-            checkArchiveFormat(tempFile)
             zip = ZipFile(tempFile)
             document = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             
@@ -185,9 +185,13 @@ object ComicBookEngineWorker {
             tempFile?.delete()
         }
     }
-    private fun checkArchiveFormat(file: File) {
+    private fun openInput(sourceFd: ParcelFileDescriptor): java.io.InputStream =
+        runCatching { FileInputStream(sourceFd.fileDescriptor) }
+            .getOrElse { ParcelFileDescriptor.AutoCloseInputStream(sourceFd.dup()) }
+
+    private fun checkArchiveFormat(sourceFd: ParcelFileDescriptor) {
         val header = ByteArray(8)
-        val count = com.pdfchemy.app.jail.CapabilityIo.input(file).use { input ->
+        val count = openInput(sourceFd).use { input ->
             var offset = 0
             while (offset < header.size) {
                 val read = input.read(header, offset, header.size - offset)
@@ -198,10 +202,10 @@ object ComicBookEngineWorker {
             offset
         }
         if (count >= 4 && header.take(4) == listOf(0x52, 0x61, 0x72, 0x21).map(Int::toByte)) {
-            throw IllegalArgumentException("RAR-compressed archives (.cbr) are unsupported; convert to ZIP (.cbz).")
+            throw IllegalArgumentException("RAR-compressed archive detected (.cbr). RAR format cannot be unpacked directly on-device; convert to ZIP (.cbz) first.")
         }
         if (count >= 6 && header.take(6) == listOf(0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c).map(Int::toByte)) {
-            throw IllegalArgumentException("7-Zip archives (.cb7) are unsupported; convert to ZIP (.cbz).")
+            throw IllegalArgumentException("7-Zip compressed archive detected (.cb7). 7z format cannot be unpacked directly on-device; convert to ZIP (.cbz) first.")
         }
     }
 }

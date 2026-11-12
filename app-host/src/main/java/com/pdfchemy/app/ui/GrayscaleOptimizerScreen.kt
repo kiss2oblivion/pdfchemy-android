@@ -322,7 +322,7 @@ fun GrayscaleOptimizerScreen(
                             } else if (previewBitmap != null) {
                                 Image(
                                     bitmap = previewBitmap!!.asImageBitmap(),
-                                    contentDescription = "Preview",
+                                    contentDescription = stringResource(R.string.desc_preview),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Fit
                                 )

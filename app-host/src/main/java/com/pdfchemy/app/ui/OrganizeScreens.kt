@@ -387,7 +387,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 actions = {
                     if (selectedFiles.isNotEmpty()) {
                         IconButton(onClick = { selectedFiles = emptyList() }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Clear all", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.clear_all), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -543,7 +543,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = "Remove file", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_remove_file), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }

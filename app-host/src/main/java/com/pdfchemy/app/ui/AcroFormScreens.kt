@@ -365,7 +365,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                 OutlinedTextField(
                                                     value = fieldValues[field.fullyQualifiedName] ?: "",
                                                     onValueChange = { fieldValues[field.fullyQualifiedName] = it },
-                                                    placeholder = { Text("Enter value…") },
+                                                    placeholder = { Text(stringResource(R.string.hint_enter_value)) },
                                                     singleLine = true,
                                                     modifier = Modifier.fillMaxWidth()
                                                 )
@@ -407,7 +407,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     Box(modifier = Modifier.size(renderedW, renderedH)) {
                                         Image(
                                             bitmap = bmp.asImageBitmap(),
-                                            contentDescription = "Page ${currentPage + 1}",
+                                            contentDescription = stringResource(R.string.reader_page_content_desc, currentPage + 1),
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.FillBounds
                                         )
@@ -550,7 +550,7 @@ fun InSituFieldWidget(
                 if (isChecked) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Checked",
+                        contentDescription = stringResource(R.string.desc_checked),
                         modifier = Modifier.fillMaxSize(0.85f),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )

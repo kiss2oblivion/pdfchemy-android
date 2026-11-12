@@ -166,12 +166,12 @@ fun LinearizePdfScreen(
                         }
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Size:", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.linearize_label_size), style = MaterialTheme.typography.bodyMedium)
                             Text(FileUtils.formatFileSize(status!!.fileSizeOriginal), fontWeight = FontWeight.Bold)
                         }
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Pages:", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.linearize_label_pages), style = MaterialTheme.typography.bodyMedium)
                             Text("${status!!.pageCount}", fontWeight = FontWeight.Bold)
                         }
                     }

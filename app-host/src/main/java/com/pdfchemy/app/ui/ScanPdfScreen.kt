@@ -412,7 +412,7 @@ fun ScanPdfScreen(
                                 enabled = selectedIndex > 0,
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Rounded.ChevronLeft, contentDescription = "Move page left")
+                                Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(R.string.desc_move_page_left))
                             }
                             IconButton(
                                 onClick = {
@@ -428,7 +428,7 @@ fun ScanPdfScreen(
                                 enabled = selectedIndex < scannedBitmaps.size - 1,
                                 modifier = Modifier.size(32.dp)
                             ) {
-                                Icon(Icons.Rounded.ChevronRight, contentDescription = "Move page right")
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.desc_move_page_right))
                             }
                         }
                         IconButton(
@@ -441,7 +441,7 @@ fun ScanPdfScreen(
                             },
                             modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Delete scanned page", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_delete_scanned_page), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -515,7 +515,7 @@ fun ScanPdfScreen(
                         } else {
                             Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Save & Open in Reader", fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(R.string.action_save_open_reader), fontWeight = FontWeight.Bold)
                         }
                     }
                     
@@ -534,7 +534,7 @@ fun ScanPdfScreen(
                         ) {
                             Icon(Icons.Rounded.DocumentScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Save & OCR", fontSize = 13.sp)
+                            Text(text = stringResource(R.string.action_save_ocr), fontSize = 13.sp)
                         }
                         
                         OutlinedButton(
@@ -548,7 +548,7 @@ fun ScanPdfScreen(
                         ) {
                             Icon(Icons.Rounded.Compress, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Save & Compress", fontSize = 13.sp)
+                            Text(text = stringResource(R.string.action_save_compress), fontSize = 13.sp)
                         }
                     }
                 }

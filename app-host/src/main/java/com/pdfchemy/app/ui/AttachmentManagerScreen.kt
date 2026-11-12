@@ -311,7 +311,7 @@ fun AttachmentManagerScreen(
                                             extractSaveLauncher.launch(item.name)
                                         }
                                     ) {
-                                        Icon(Icons.Rounded.FileDownload, contentDescription = "Extract", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Rounded.FileDownload, contentDescription = stringResource(R.string.desc_extract), tint = MaterialTheme.colorScheme.primary)
                                     }
                                     IconButton(
                                         onClick = {

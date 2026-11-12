@@ -279,7 +279,7 @@
 <string name="btn_add_more_files">Adicionar mais arquivos (%1$d selecionado)</string>
 <string name="label_original_size_analyzing">Tamanho original: %1$s (Analisando...)</string>
 <string name="label_original_size_to_compressed">Tamanho original: %1$s → %2$s</string>
-<string name="label_target_mb_batch">Alvo: %%1$.1f MB</string>
+<string name="label_target_mb_batch">Alvo: %1$.1f MB</string>
 <string name="label_target_unknown">Alvo: Desconhecido</string>
 <string name="label_analyzing">Analisando...</string>
 <string name="label_target_mb">Alvo: %1$s MB</string>
@@ -962,13 +962,13 @@
     <string name="settings_manifesto_title">O Manifesto Vitalício</string>
     <string name="settings_manifesto_desc">Nossa promessa: atualizações 100%% gratuitas, zero nuvem, feito para as pessoas.</string>
     <string name="manifesto_dialog_title">O Manifesto Vitalício</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">"Atualizações vitalícias até eu partir — e 100% gratuito. Basta fazer um pedido sólido e válido e será implementado; porque é feito pelas pessoas para as pessoas.\n\nPode ser igual ou diferente de uma app empresarial, mas pelo menos será gratuita e farei o melhor possível. Se não conseguir, paciência — ao menos tens uma opção, caro caso raro."</string>
     <string name="manifesto_author">— Andrei Ioan Cucoș (John), Programador</string>
     <string name="manifesto_guarantees_title">Nossas 4 Garantias Inabaláveis:</string>
     <string name="manifesto_g1_title">100%% Gratuito para Sempre</string>
     <string name="manifesto_g1_desc">Sem subscrições, sem paywalls, sem limites artificiais e sem marcas de água forçadas.</string>
     <string name="manifesto_g2_title">100%% Offline e Privado</string>
-    <string name="manifesto_g2_desc">Nenhum ficheiro sai deste computador. Zero telemetria. 100%% seguro para documentos confidenciais.</string>
+    <string name="manifesto_g2_desc" formatted="false">Nenhum ficheiro ou metadado sai do teu dispositivo. Processamento 100% no dispositivo, seguro para ficheiros confidenciais.</string>
     <string name="manifesto_g3_title">Original Protegido</string>
     <string name="manifesto_g3_desc">Nunca substituímos ou eliminamos os seus ficheiros originais sem confirmação explícita.</string>
     <string name="manifesto_g4_title">Criado Para as Pessoas</string>
@@ -1098,13 +1098,7 @@
     <string name="settings_default_pdf_app">Leitor de PDF predefinido</string>
     <string name="settings_default_pdf_app_desc">Definir o PdfChemy como aplicação predefinida para abrir ficheiros PDF</string>
     <string name="settings_default_pdf_dialog_title">Definir o leitor de PDF predefinido</string>
-    <string name="settings_default_pdf_dialog_body">Para tornar o PdfChemy o seu visualizador de PDF predefinido:
-
-1. Abra qualquer ficheiro PDF a partir do gestor de ficheiros ou transferências.
-2. Quando surgir a mensagem «Abrir com», selecione o PdfChemy.
-3. Escolha «Sempre» para abrir documentos PDF com o PdfChemy automaticamente.
-
-Também pode configurar as associações predefinidas nas Definições do Android.</string>
+    <string name="settings_default_pdf_dialog_body">Para tornar o PdfChemy o seu visualizador de PDF predefinido:\n\n1. Abra qualquer ficheiro PDF a partir do gestor de ficheiros ou transferências.\n2. Quando surgir a mensagem «Abrir com», selecione o PdfChemy.\n3. Escolha «Sempre» para abrir documentos PDF com o PdfChemy automaticamente.\n\nTambém pode configurar as associações predefinidas nas Definições do Android.</string>
     <string name="settings_open_android_settings">Abrir definições do sistema</string>
     <string name="text_to_pdf">Texto para PDF</string>
     <string name="editor_rendering_page">A renderizar a página %1$d…</string>
@@ -1250,4 +1244,112 @@ Também pode configurar as associações predefinidas nas Definições do Androi
     <string name="msg_text_saved_success">Texto guardado com sucesso</string>
     <string name="form_fill_mode_list">Vista de lista</string>
     <string name="form_fill_mode_insitu">Vista de documento</string>
+    <string name="form_fields_count">%1$d campos</string>
+    <string name="action_reset_fields">Repor campos</string>
+    <string name="desc_paste">Colar</string>
+    <string name="bookmarks_count">Marcadores (%1$d)</string>
+    <string name="btn_browse_files">Explorar ficheiros</string>
+    <string name="settings_output_folder">Pasta de destino</string>
+    <string name="error_no_email_app">Nenhuma app de e-mail encontrada</string>
+    <string name="error_cannot_open_browser">Não é possível abrir o navegador</string>
+    <string name="action_view_all_history">Ver todo o histórico</string>
+    <string name="error_no_app_open_file">Nenhuma app disponível para abrir %1$s</string>
+    <string name="desc_premium">Premium</string>
+    <string name="hint_enter_value">Introduzir valor…</string>
+    <string name="desc_checked">Marcado</string>
+    <string name="action_sort_by_page">Ordenar por página</string>
+    <string name="desc_move_up">Mover para cima</string>
+    <string name="desc_move_down">Mover para baixo</string>
+    <string name="desc_edit">Editar</string>
+    <string name="msg_metadata_report_copied">Relatório de metadados copiado</string>
+    <string name="desc_copy_metadata_report">Copiar relatório de metadados</string>
+    <string name="desc_clear_all_images">Limpar todas as imagens</string>
+    <string name="action_convert">Converter</string>
+    <string name="action_gallery">Galeria</string>
+    <string name="action_take_photo">Tirar foto</string>
+    <string name="desc_selected_image">Imagem selecionada</string>
+    <string name="desc_remove_image">Remover imagem</string>
+    <string name="error_straightening_doc">Erro ao endireitar o documento</string>
+    <string name="error_unable_analyze_doc">Não foi possível analisar este documento</string>
+    <string name="desc_page_preview">Pré-visualização da página</string>
+    <string name="msg_new_copy_chosen_folder">Uma nova cópia é guardada na pasta escolhida.</string>
+    <string name="msg_audit_report_copied">Relatório de auditoria copiado</string>
+    <string name="desc_copy_audit_report">Copiar relatório de auditoria</string>
+    <string name="sanitizer_purge_js">Remover acionadores JavaScript</string>
+    <string name="sanitizer_purge_actions">Remover ações de execução e URL</string>
+    <string name="sanitizer_purge_embedded">Remover ficheiros incorporados ocultos</string>
+    <string name="sanitizer_purge_metadata">Remover metadados de seguimento e IDs</string>
+    <string name="desc_swap_find_replace">Trocar Localizar e Substituir</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% local e preserva o esquema</string>
+    <string name="msg_font_report_copied">Relatório de tipos de letra copiado</string>
+    <string name="desc_copy_font_report">Copiar relatório de tipos de letra</string>
+    <string name="desc_refresh">Atualizar</string>
+    <string name="desc_preview">Pré-visualização</string>
+    <string name="history_title">Histórico</string>
+    <string name="history_disabled_notice">O histórico está desativado. Ative o histórico local nas Definições para guardar até 20 ficheiros recentes.</string>
+    <string name="history_empty_notice">Sem ficheiros recentes. As cópias guardadas aparecem aqui enquanto o histórico estiver ativo.</string>
+    <string name="action_open">Abrir</string>
+    <string name="history_item_folder">Pasta</string>
+    <string name="history_item_unavailable">Indisponível — selecione novamente o ficheiro ou remova esta entrada</string>
+    <string name="history_checking_access">A verificar acesso…</string>
+    <string name="error_no_app_open_item">Nenhuma app consegue abrir este item. Verifique o acesso e tente novamente.</string>
+    <string name="error_no_sharing_app">Nenhuma app de partilha disponível. Abra ou explore os ficheiros guardados.</string>
+    <string name="history_remove_entry_desc">Remover %1$s do histórico</string>
+    <string name="linearize_label_size">Tamanho:</string>
+    <string name="linearize_label_pages">Páginas:</string>
+    <string name="dialog_clear_markdown_title">Limpar editor Markdown?</string>
+    <string name="dialog_clear_markdown_desc">Tem a certeza de que pretende limpar o documento Markdown atual?</string>
+    <string name="msg_markdown_copied">Markdown copiado para a área de transferência</string>
+    <string name="desc_copy_markdown">Copiar Markdown</string>
+    <string name="msg_metadata_summary_copied">Resumo de metadados copiado</string>
+    <string name="desc_copy_metadata_summary">Copiar resumo de metadados</string>
+    <string name="action_anonymize">Anonimizar</string>
+    <string name="badge_offline_text_layer" formatted="false">Camada de texto 100% offline</string>
+    <string name="label_margins_colon">Margens:</string>
+    <string name="desc_decrement">Diminuir</string>
+    <string name="desc_increment">Aumentar</string>
+    <string name="msg_pdfa_report_copied">Relatório PDF/A copiado</string>
+    <string name="desc_copy_pdfa_report">Copiar relatório PDF/A</string>
+    <string name="desc_rescan">Reanalisar</string>
+    <string name="desc_swap_compare_pdfs">Trocar original e modificado</string>
+    <string name="desc_select_different_pdfs">Selecionar outros PDF</string>
+    <string name="editor_load_failed_msg">Não foi possível carregar este documento. Verifique as permissões ou escolha outra cópia.</string>
+    <string name="desc_more_options">Mais opções</string>
+    <string name="reader_vertical_scroll">Deslocamento vertical</string>
+    <string name="reader_horizontal_scroll">Deslocamento horizontal</string>
+    <string name="reader_normal_colors">Cores normais</string>
+    <string name="reader_invert_colors">Inverter cores</string>
+    <string name="error_create_output_folder">Não foi possível criar a cópia nesta pasta</string>
+    <string name="dialog_save_copy_title">Guardar uma cópia</string>
+    <string name="dialog_save_copy_desc">Use a pasta de destino guardada. Os ficheiros existentes são mantidos; nomes iguais recebem uma cópia numerada.</string>
+    <string name="label_file_name">Nome do ficheiro</string>
+    <string name="error_saved_folder_unavailable">Pasta guardada indisponível. Escolha um local para guardar esta cópia.</string>
+    <string name="action_save_copy">Guardar cópia</string>
+    <string name="action_choose_folder">Escolher pasta</string>
+    <string name="redact_forensic_title">Saneamento vetorial forense</string>
+    <string name="redact_forensic_desc">Rasteriza páginas ocultadas para destruir completamente os bytes de texto subjacentes.</string>
+    <string name="redact_smart_pii_title">Ocultação inteligente de PII</string>
+    <string name="reflow_find_placeholder">Procurar texto no documento...</string>
+    <string name="desc_previous_match">Correspondência anterior</string>
+    <string name="desc_next_match">Próxima correspondência</string>
+    <string name="desc_play_pause">Reproduzir/Pausar</string>
+    <string name="reflow_bionic_mode">Biónico</string>
+    <string name="reflow_dyslexia_mode">Dislexia</string>
+    <string name="msg_diagnostic_report_copied">Relatório de diagnóstico copiado</string>
+    <string name="desc_copy_diagnostic_report">Copiar relatório de diagnóstico</string>
+    <string name="desc_move_page_left">Mover página para a esquerda</string>
+    <string name="desc_move_page_right">Mover página para a direita</string>
+    <string name="desc_delete_scanned_page">Eliminar página digitalizada</string>
+    <string name="action_save_open_reader">Guardar e abrir no leitor</string>
+    <string name="action_save_ocr">Guardar e OCR</string>
+    <string name="action_save_compress">Guardar e comprimir</string>
+    <string name="msg_csv_copied">CSV copiado para a área de transferência</string>
+    <string name="desc_copy_csv">Copiar CSV</string>
+    <string name="label_lines_count">Linhas: %1$d</string>
+    <string name="error_invalid_json_format">Formato JSON inválido</string>
+    <string name="page_select_all">Todas</string>
+    <string name="page_select_invert">Inverter</string>
+    <string name="page_select_odd">Ímpares</string>
+    <string name="page_select_even">Pares</string>
+    <string name="desc_swap_formats">Trocar formatos</string>
 </resources>

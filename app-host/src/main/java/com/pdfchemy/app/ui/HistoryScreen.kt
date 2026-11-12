@@ -65,9 +65,9 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
     }
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text("History") },
+            title = { Text(stringResource(R.string.history_title)) },
             navigationIcon = {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.desc_back)) }
             },
             actions = {
                 if (enabled && items.isNotEmpty()) {
@@ -80,11 +80,11 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             if (!enabled) {
-                Text("History is off. Enable local history in Settings to keep up to 20 recent files.")
-                TextButton(onClick = { onNavigate(Screen.Settings) }) { Text("Settings") }
+                Text(stringResource(R.string.history_disabled_notice))
+                TextButton(onClick = { onNavigate(Screen.Settings) }) { Text(stringResource(R.string.settings_title)) }
             } else if (items.isEmpty()) {
-                Text("No recent files. Saved copies appear here while local history is enabled.")
-                TextButton(onClick = { picker.launch() }) { Text("Open PDF") }
+                Text(stringResource(R.string.history_empty_notice))
+                TextButton(onClick = { picker.launch() }) { Text(stringResource(R.string.menu_read_pdf)) }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(items, key = { it.uriString }) { item ->
@@ -92,7 +92,11 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                             Column(Modifier.padding(12.dp)) {
                                 Text(item.name, style = MaterialTheme.typography.titleMedium)
                                 Text(item.action, style = MaterialTheme.typography.bodySmall)
-                                Text(when (availability[item.uriString]) { true -> if (item.isDirectory) "Folder" else item.mimeType; false -> "Unavailable — select the file again or remove this entry"; null -> "Checking access…" })
+                                Text(when (availability[item.uriString]) {
+                                    true -> if (item.isDirectory) stringResource(R.string.history_item_folder) else item.mimeType
+                                    false -> stringResource(R.string.history_item_unavailable)
+                                    null -> stringResource(R.string.history_checking_access)
+                                })
                                 Row {
                                     TextButton(enabled = availability[item.uriString] == true, onClick = {
                                         val uri = Uri.parse(item.uriString)
@@ -100,9 +104,9 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                             !item.isDirectory && item.mimeType == "application/pdf" -> onNavigate(Screen.PdfReader(uri))
                                             !item.isDirectory && item.mimeType == "application/epub+zip" -> onNavigate(Screen.ReflowReader(uri))
                                             else -> runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
-                                                .onFailure { viewModel.notifyError("No app can open this item. Check file access and try again.") }
+                                                .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_open_item)) }
                                         }
-                                    }) { Text("Open") }
+                                    }) { Text(stringResource(R.string.action_open)) }
                                     if (!item.isDirectory) {
                                         TextButton(
                                             enabled = availability[item.uriString] == true,
@@ -115,7 +119,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                                         context.getString(R.string.desc_share_output)
                                                     )
                                                 }.onFailure {
-                                                    viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                                                    viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
                                                 }
                                             }
                                         ) {
@@ -125,7 +129,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                         }
                                     }
                                     Spacer(Modifier.weight(1f))
-                                    IconButton(onClick = { viewModel.removeHistory(item.uriString) }) { Icon(Icons.Rounded.Delete, "Remove ${item.name} from history") }
+                                    IconButton(onClick = { viewModel.removeHistory(item.uriString) }) { Icon(Icons.Rounded.Delete, stringResource(R.string.history_remove_entry_desc, item.name)) }
                                 }
                             }
                         }

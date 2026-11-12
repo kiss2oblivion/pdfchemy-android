@@ -106,17 +106,17 @@ fun TextConverterScreen(
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.ContentPaste, contentDescription = "Paste")
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = stringResource(R.string.desc_paste))
                     }
                     if (inputText.isNotEmpty()) {
                         IconButton(
                             onClick = {
                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                                 clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Text", inputText))
-                                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.msg_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                             }
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_clipboard))
                         }
                         IconButton(onClick = { viewModel.setInputText("") }) {
                             Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.clear), tint = MaterialTheme.colorScheme.error)
@@ -179,7 +179,7 @@ fun TextConverterScreen(
                     ) {
                         Icon(
                             if (canSwapFormats) Icons.Rounded.SwapHoriz else Icons.AutoMirrored.Rounded.ArrowForward,
-                            contentDescription = "Swap Formats",
+                            contentDescription = stringResource(R.string.desc_swap_formats),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

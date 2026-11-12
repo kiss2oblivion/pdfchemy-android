@@ -319,7 +319,7 @@ fun PageNumberScreen(
                             enabled = startNumber > 1,
                             modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Rounded.Remove, contentDescription = "Decrement", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.desc_decrement), modifier = Modifier.size(18.dp))
                         }
                         Text(
                             text = "$startNumber",
@@ -332,7 +332,7 @@ fun PageNumberScreen(
                             onClick = { startNumber++ },
                             modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Rounded.Add, contentDescription = "Increment", modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.desc_increment), modifier = Modifier.size(18.dp))
                         }
                     }
                 }

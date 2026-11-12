@@ -54,7 +54,7 @@ fun CheckCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -241,7 +241,7 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         viewModel.resetMetadata()
                         onBack() 
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
                 actions = {
@@ -265,10 +265,10 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     append("Producer: $producer")
                                 }
                                 clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(report))
-                                android.widget.Toast.makeText(context, "Metadata report copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_metadata_report_copied), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Metadata Report")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_metadata_report))
                         }
                     }
                 }
@@ -456,7 +456,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -586,7 +586,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 title = { Text(stringResource(R.string.extract_text_ocr)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 }
             )
@@ -602,7 +602,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             )
                         )
                     },
-                    icon = { Icon(Icons.Rounded.DocumentScanner, contentDescription = "Extract") },
+                    icon = { Icon(Icons.Rounded.DocumentScanner, contentDescription = stringResource(R.string.desc_extract)) },
                     text = { Text(stringResource(R.string.extract_save_as_txt)) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary

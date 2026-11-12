@@ -649,9 +649,9 @@ fun PdfEditorScreen(
                 CircularProgressIndicator()
             } else if (loadFailed) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Cannot load this document. Check access permission or select another copy.")
-                    TextButton(onClick = { loadFailed = false; reloadTrigger++; documentLoading = true }) { Text("Retry") }
-                    TextButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) { Text("Select PDF") }
+                    Text(stringResource(R.string.editor_load_failed_msg))
+                    TextButton(onClick = { loadFailed = false; reloadTrigger++; documentLoading = true }) { Text(stringResource(R.string.action_retry)) }
+                    TextButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) { Text(stringResource(R.string.select_pdf)) }
                 }
             } else if (selectedPdfUri == null) {
                 // Empty Picker View

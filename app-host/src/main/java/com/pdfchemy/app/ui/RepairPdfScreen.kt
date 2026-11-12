@@ -126,10 +126,10 @@ fun RepairPdfScreen(
                                 }.trim()
                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                                 clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF Repair Diagnostic", summary))
-                                android.widget.Toast.makeText(context, "Copied diagnostic report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_diagnostic_report_copied), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Diagnostic Report")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_diagnostic_report))
                         }
                     }
                 }

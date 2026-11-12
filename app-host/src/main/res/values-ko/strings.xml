@@ -272,7 +272,7 @@
 <string name="btn_add_more_files">파일 추가 (%1$d개 선택됨)</string>
 <string name="label_original_size_analyzing">원본 크기: %1$s (분석 중...)</string>
 <string name="label_original_size_to_compressed">원본 크기: %1$s  →  %2$s</string>
-<string name="label_target_mb_batch">목표: %%1$.1f MB</string>
+<string name="label_target_mb_batch">목표: %1$.1f MB</string>
 <string name="label_target_unknown">목표: 알 수 없음</string>
 <string name="label_analyzing">분석 중...</string>
 <string name="label_target_mb">목표: %1$s MB</string>
@@ -959,13 +959,13 @@
     <string name="settings_manifesto_title">평생 선언문</string>
     <string name="settings_manifesto_desc">우리의 약속: 100%% 무료 업데이트, 클라우드 없음, 사람들을 위해 제작.</string>
     <string name="manifesto_dialog_title">평생 선언문</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">"제가 살아있는 한 평생 업데이트 — 그리고 100% 무료입니다. 타당하고 명확한 요청만 해주시면 직접 구현해 드립니다. 사람들에 의해, 사람들을 위해 만든 앱이니까요.\n\n대기업 앱과 같을 수도 다를 수도 있지만, 적어도 무료이고 제가 할 수 있는 최선을 다할 것입니다. 못 하면 어쩔 수 없지만 — 적어도 선택지는 생기니까요."</string>
     <string name="manifesto_author">— Andrei Ioan Cucoș (John), Developer</string>
     <string name="manifesto_guarantees_title">4가지 불변의 보증:</string>
     <string name="manifesto_g1_title">영구 100%% 무료</string>
     <string name="manifesto_g1_desc">구독 없음, 유료 결제 유도 없음, 인위적인 페이지 제한 없음, 워터마크 없음.</string>
     <string name="manifesto_g2_title">100%% 오프라인 및 개인 정보 보호</string>
-    <string name="manifesto_g2_desc">어떤 파일도 이 컴퓨터를 벗어나지 않습니다. 원격 측정 없음. 기밀 문서에 100%% 안전.</string>
+    <string name="manifesto_g2_desc" formatted="false">문서 파일이나 메타데이터가 기기 밖으로 나가지 않습니다. 기밀 파일에도 안전한 100% 온디바이스 처리.</string>
     <string name="manifesto_g3_title">원본 안전 보장</string>
     <string name="manifesto_g3_desc">명시적인 확인 없이 원본 파일을 덮어쓰거나 훼손하지 않습니다.</string>
     <string name="manifesto_g4_title">사용자를 위한 앱</string>
@@ -983,7 +983,7 @@
     <string name="menu_deskew">자동 기울기 보정 (디스큐)</string>
     <string name="menu_deskew_desc">스캔 문서의 기울기를 보정하고 품질 저하 없이 페이지 정렬</string>
     <string name="deskew_title">자동 기울기 보정 (디스큐)</string>
-    <string name="deskew_detected_angle">감지된 기울기: %%1$.1f°</string>
+    <string name="deskew_detected_angle">감지된 기울기: %1$.1f°</string>
     <string name="deskew_action_straighten">기울기 보정 및 저장</string>
     <string name="deskew_success">문서 기울기 보정 완료!</string>
     <string name="deskew_success_desc">페이지 회전 및 정렬이 완료되었습니다.</string>
@@ -1033,7 +1033,7 @@
     <string name="tts_play">음성으로 읽기</string>
     <string name="tts_pause">일시정지</string>
     <string name="tts_stop">중지</string>
-    <string name="tts_speed">재생 속도: %%1$.2fx</string>
+    <string name="tts_speed">재생 속도: %1$.2fx</string>
     <string name="tts_prev_paragraph">이전</string>
     <string name="tts_next_paragraph">다음</string>
     <string name="tts_not_supported">음성 변환(TTS)을 지원하지 않거나 언어 데이터가 누락되었습니다.</string>
@@ -1095,13 +1095,7 @@
     <string name="settings_default_pdf_app">기본 PDF 뷰어</string>
     <string name="settings_default_pdf_app_desc">PDF 파일을 여는 기본 앱으로 PdfChemy 설정</string>
     <string name="settings_default_pdf_dialog_title">기본 PDF 뷰어 설정</string>
-    <string name="settings_default_pdf_dialog_body">PdfChemy를 기본 PDF 뷰어로 설정하는 방법:
-
-1. 파일 관리자나 다운로드에서 아무 PDF 파일이나 엽니다.
-2. \'다음으로 열기\' 메시지가 표시되면 PdfChemy를 선택합니다.
-3. \'항상\'을 선택하면 앞으로 PDF 문서가 자동으로 PdfChemy에서 열립니다.
-
-Android 시스템 설정에서도 기본 앱 연결을 구성할 수 있습니다.</string>
+    <string name="settings_default_pdf_dialog_body">PdfChemy를 기본 PDF 뷰어로 설정하는 방법:\n\n1. 파일 관리자나 다운로드에서 아무 PDF 파일이나 엽니다.\n2. \'다음으로 열기\' 메시지가 표시되면 PdfChemy를 선택합니다.\n3. \'항상\'을 선택하면 앞으로 PDF 문서가 자동으로 PdfChemy에서 열립니다.\n\nAndroid 시스템 설정에서도 기본 앱 연결을 구성할 수 있습니다.</string>
     <string name="settings_open_android_settings">시스템 설정 열기</string>
     <string name="tab_epub_to_pdf">EPUB를 PDF로</string>
     <string name="select_epub_for_pdf">EPUB 문서 선택</string>
@@ -1245,4 +1239,112 @@ Android 시스템 설정에서도 기본 앱 연결을 구성할 수 있습니�
     <string name="msg_text_saved_success">텍스트가 성공적으로 저장되었습니다</string>
     <string name="form_fill_mode_list">목록 보기</string>
     <string name="form_fill_mode_insitu">문서 보기</string>
+    <string name="form_fields_count">%1$d개 필드</string>
+    <string name="action_reset_fields">필드 재설정</string>
+    <string name="desc_paste">붙여넣기</string>
+    <string name="bookmarks_count">북마크 (%1$d)</string>
+    <string name="btn_browse_files">파일 찾아보기</string>
+    <string name="settings_output_folder">저장 폴더</string>
+    <string name="error_no_email_app">이메일 앱을 찾을 수 없습니다</string>
+    <string name="error_cannot_open_browser">브라우저를 열 수 없습니다</string>
+    <string name="action_view_all_history">전체 기록 보기</string>
+    <string name="error_no_app_open_file">%1$s을(를) 열 수 있는 앱이 없습니다</string>
+    <string name="desc_premium">프리미엄</string>
+    <string name="hint_enter_value">값 입력…</string>
+    <string name="desc_checked">선택됨</string>
+    <string name="action_sort_by_page">페이지순 정렬</string>
+    <string name="desc_move_up">위로 이동</string>
+    <string name="desc_move_down">아래로 이동</string>
+    <string name="desc_edit">편집</string>
+    <string name="msg_metadata_report_copied">메타데이터 보고서가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_metadata_report">메타데이터 보고서 복사</string>
+    <string name="desc_clear_all_images">모든 이미지 지우기</string>
+    <string name="action_convert">변환</string>
+    <string name="action_gallery">갤러리</string>
+    <string name="action_take_photo">사진 촬영</string>
+    <string name="desc_selected_image">선택된 이미지</string>
+    <string name="desc_remove_image">이미지 제거</string>
+    <string name="error_straightening_doc">문서 기울기 보정 중 오류 발생</string>
+    <string name="error_unable_analyze_doc">이 문서를 분석할 수 없습니다</string>
+    <string name="desc_page_preview">페이지 미리보기</string>
+    <string name="msg_new_copy_chosen_folder">선택한 폴더에 새 사본이 저장됩니다.</string>
+    <string name="msg_audit_report_copied">감사 보고서가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_audit_report">감사 보고서 복사</string>
+    <string name="sanitizer_purge_js">JavaScript 페이로드 트리거 제거</string>
+    <string name="sanitizer_purge_actions">실행 및 URL 작업 제거</string>
+    <string name="sanitizer_purge_embedded">숨겨진 내장 파일 제거</string>
+    <string name="sanitizer_purge_metadata">추적 메타데이터 및 ID 제거</string>
+    <string name="desc_swap_find_replace">찾기/바꾸기 전환</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% 로컬 · 레이아웃 보존</string>
+    <string name="msg_font_report_copied">글꼴 보고서가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_font_report">글꼴 보고서 복사</string>
+    <string name="desc_refresh">새로 고침</string>
+    <string name="desc_preview">미리보기</string>
+    <string name="history_title">기록</string>
+    <string name="history_disabled_notice">기록이 꺼져 있습니다. 설정에서 로컬 기록을 켜면 최근 파일 최대 20개를 보관할 수 있습니다.</string>
+    <string name="history_empty_notice">최근 파일이 없습니다. 로컬 기록이 켜져 있으면 저장된 사본이 여기에 표시됩니다.</string>
+    <string name="action_open">열기</string>
+    <string name="history_item_folder">폴더</string>
+    <string name="history_item_unavailable">사용할 수 없음 — 파일을 다시 선택하거나 이 항목을 삭제하세요</string>
+    <string name="history_checking_access">액세스 확인 중…</string>
+    <string name="error_no_app_open_item">이 항목을 열 수 있는 앱이 없습니다. 파일 접근 권한을 확인하고 다시 시도하세요.</string>
+    <string name="error_no_sharing_app">공유할 수 있는 앱이 없습니다. 대신 저장된 파일을 열거나 찾아보세요.</string>
+    <string name="history_remove_entry_desc">기록에서 %1$s 삭제</string>
+    <string name="linearize_label_size">크기:</string>
+    <string name="linearize_label_pages">페이지:</string>
+    <string name="dialog_clear_markdown_title">Markdown 편집기를 비우시겠습니까?</string>
+    <string name="dialog_clear_markdown_desc">현재 Markdown 문서를 지우시겠습니까?</string>
+    <string name="msg_markdown_copied">Markdown이 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_markdown">Markdown 복사</string>
+    <string name="msg_metadata_summary_copied">메타데이터 요약이 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_metadata_summary">메타데이터 요약 복사</string>
+    <string name="action_anonymize">익명화</string>
+    <string name="badge_offline_text_layer" formatted="false">100% 오프라인 텍스트 레이어</string>
+    <string name="label_margins_colon">여백:</string>
+    <string name="desc_decrement">감소</string>
+    <string name="desc_increment">증가</string>
+    <string name="msg_pdfa_report_copied">PDF/A 보고서가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_pdfa_report">PDF/A 보고서 복사</string>
+    <string name="desc_rescan">다시 스캔</string>
+    <string name="desc_swap_compare_pdfs">원본 및 수정본 전환</string>
+    <string name="desc_select_different_pdfs">다른 PDF 선택</string>
+    <string name="editor_load_failed_msg">이 문서를 불러올 수 없습니다. 접근 권한을 확인하거나 다른 사본을 선택하세요.</string>
+    <string name="desc_more_options">추가 옵션</string>
+    <string name="reader_vertical_scroll">세로 스크롤</string>
+    <string name="reader_horizontal_scroll">가로 스크롤</string>
+    <string name="reader_normal_colors">일반 색상</string>
+    <string name="reader_invert_colors">색상 반전</string>
+    <string name="error_create_output_folder">이 폴더에 출력 사본을 만들 수 없습니다</string>
+    <string name="dialog_save_copy_title">사본 저장</string>
+    <string name="dialog_save_copy_desc">저장된 출력 폴더를 사용합니다. 기존 파일은 유지되며, 이름이 같으면 번호가 붙은 사본이 생성됩니다.</string>
+    <string name="label_file_name">파일 이름</string>
+    <string name="error_saved_folder_unavailable">저장된 폴더를 사용할 수 없습니다. 이 사본을 저장할 위치를 선택하세요.</string>
+    <string name="action_save_copy">사본 저장</string>
+    <string name="action_choose_folder">폴더 선택</string>
+    <string name="redact_forensic_title">포렌식 벡터 정밀 삭제</string>
+    <string name="redact_forensic_desc">가려진 페이지를 래스터화하여 숨겨진 텍스트 바이트를 완전히 제거합니다.</string>
+    <string name="redact_smart_pii_title">스마트 개인정보(PII) 가리기</string>
+    <string name="reflow_find_placeholder">문서에서 텍스트 찾기...</string>
+    <string name="desc_previous_match">이전 결과</string>
+    <string name="desc_next_match">다음 결과</string>
+    <string name="desc_play_pause">재생/일시정지</string>
+    <string name="reflow_bionic_mode">바이오닉</string>
+    <string name="reflow_dyslexia_mode">난독증</string>
+    <string name="msg_diagnostic_report_copied">진단 보고서가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_diagnostic_report">진단 보고서 복사</string>
+    <string name="desc_move_page_left">페이지 왼쪽으로 이동</string>
+    <string name="desc_move_page_right">페이지 오른쪽으로 이동</string>
+    <string name="desc_delete_scanned_page">스캔한 페이지 삭제</string>
+    <string name="action_save_open_reader">저장 후 뷰어에서 열기</string>
+    <string name="action_save_ocr">저장 후 OCR</string>
+    <string name="action_save_compress">저장 후 압축</string>
+    <string name="msg_csv_copied">CSV가 클립보드에 복사되었습니다</string>
+    <string name="desc_copy_csv">CSV 복사</string>
+    <string name="label_lines_count">줄 수: %1$d</string>
+    <string name="error_invalid_json_format">잘못된 JSON 형식입니다</string>
+    <string name="page_select_all">모두</string>
+    <string name="page_select_invert">반전</string>
+    <string name="page_select_odd">홀수</string>
+    <string name="page_select_even">짝수</string>
+    <string name="desc_swap_formats">형식 전환</string>
 </resources>

@@ -242,7 +242,7 @@ fun RedactionScreen(
                                         if (isSearching) {
                                             CircularProgressIndicator(modifier = Modifier.size(18.dp))
                                         } else {
-                                            Icon(Icons.Rounded.Search, contentDescription = "Search")
+                                            Icon(Icons.Rounded.Search, contentDescription = stringResource(R.string.action_search))
                                         }
                                     }
                                 }
@@ -316,8 +316,8 @@ fun RedactionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text("Forensic Vector Sanitization", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-                        Text("Rasterizes redacted pages to obliterate underlying text bytes completely.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.redact_forensic_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.redact_forensic_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = forensicSanitize,
@@ -332,7 +332,7 @@ fun RedactionScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Smart PII Redaction", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.redact_smart_pii_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                         Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             RedactPattern.values().forEach { pattern ->
                                 FilterChip(
@@ -392,7 +392,7 @@ fun RedactionScreen(
                         enabled = !isProcessing,
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
-                        Text("Clear All", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                     }
                 }
             }
@@ -441,7 +441,7 @@ fun RedactionScreen(
                                         },
                                         enabled = !isProcessing
                                     ) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_delete), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
                                     }
                                 }
                             }

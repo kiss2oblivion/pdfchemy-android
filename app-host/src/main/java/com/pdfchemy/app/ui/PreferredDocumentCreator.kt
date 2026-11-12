@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.documentfile.provider.DocumentFile
+import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.DestinationProvenance
 import com.pdfchemy.app.logic.OutputDestination
 import com.pdfchemy.app.logic.OutputPolicy
@@ -55,7 +57,7 @@ fun rememberPreferredDocumentDestinationCreator(
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                Toast.makeText(context, "Unable to create output copy in this folder", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.error_create_output_folder), Toast.LENGTH_LONG).show()
                 currentResult(null)
             } finally {
                 if (!handedOff) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
@@ -73,11 +75,11 @@ fun rememberPreferredDocumentDestinationCreator(
     if (requestedName != null) {
         AlertDialog(
             onDismissRequest = { if (!working) { requestedName = null; currentResult(null) } },
-            title = { Text("Save a copy") },
+            title = { Text(stringResource(R.string.dialog_save_copy_title)) },
             text = {
                 Column {
-                    Text("Use your saved output folder. Existing files are kept; matching names get a numbered copy.")
-                    OutlinedTextField(editedName, { editedName = it }, label = { Text("File name") }, singleLine = true, enabled = !working)
+                    Text(stringResource(R.string.dialog_save_copy_desc))
+                    OutlinedTextField(editedName, { editedName = it }, label = { Text(stringResource(R.string.label_file_name)) }, singleLine = true, enabled = !working)
                     if (working) LinearProgressIndicator()
                 }
             },
@@ -102,7 +104,7 @@ fun rememberPreferredDocumentDestinationCreator(
                                 handedOff = true
                             } else {
                                 result.exceptionOrNull()?.let { if (it is kotlinx.coroutines.CancellationException) throw it }
-                                Toast.makeText(context, "Saved folder unavailable. Choose a location to save this copy.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.error_saved_folder_unavailable), Toast.LENGTH_LONG).show()
                                 chooseFolder(name)
                             }
                         } finally {
@@ -114,10 +116,10 @@ fun rememberPreferredDocumentDestinationCreator(
                             }
                         }
                     }
-                }) { Text("Save copy") }
+                }) { Text(stringResource(R.string.action_save_copy)) }
             },
             dismissButton = {
-                TextButton(enabled = !working, onClick = { val name = OutputPolicy.safeName(editedName); requestedName = null; chooseFolder(name) }) { Text("Choose folder") }
+                TextButton(enabled = !working, onClick = { val name = OutputPolicy.safeName(editedName); requestedName = null; chooseFolder(name) }) { Text(stringResource(R.string.action_choose_folder)) }
             }
         )
     }

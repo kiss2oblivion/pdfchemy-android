@@ -132,23 +132,23 @@ private fun VisualPageDialog(uri: Uri, range: String, dismiss: () -> Unit, apply
                 ) {
                     AssistChip(
                         onClick = { selected = (1..count).toSet() },
-                        label = { Text("All", fontSize = 11.sp) }
+                        label = { Text(stringResource(R.string.page_select_all), fontSize = 11.sp) }
                     )
                     AssistChip(
                         onClick = { selected = emptySet() },
-                        label = { Text("None", fontSize = 11.sp) }
+                        label = { Text(stringResource(R.string.val_none), fontSize = 11.sp) }
                     )
                     AssistChip(
                         onClick = { selected = (1..count).toSet() - selected },
-                        label = { Text("Invert", fontSize = 11.sp) }
+                        label = { Text(stringResource(R.string.page_select_invert), fontSize = 11.sp) }
                     )
                     AssistChip(
                         onClick = { selected = (1..count).filter { it % 2 == 1 }.toSet() },
-                        label = { Text("Odd", fontSize = 11.sp) }
+                        label = { Text(stringResource(R.string.page_select_odd), fontSize = 11.sp) }
                     )
                     AssistChip(
                         onClick = { selected = (1..count).filter { it % 2 == 0 }.toSet() },
-                        label = { Text("Even", fontSize = 11.sp) }
+                        label = { Text(stringResource(R.string.page_select_even), fontSize = 11.sp) }
                     )
                 }
                 LazyVerticalGrid(GridCells.Fixed(2), Modifier.fillMaxWidth().height(380.dp),

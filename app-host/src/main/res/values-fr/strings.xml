@@ -278,7 +278,7 @@
 <string name="btn_add_more_files">Ajouter plus de fichiers (%1$d sélectionné)</string>
 <string name="label_original_size_analyzing">Taille originale : %1$s (Analyse...)</string>
 <string name="label_original_size_to_compressed">Taille d\'origine : %1$s → %2$s</string>
-<string name="label_target_mb_batch">Cible : %%1$.1f Mo</string>
+<string name="label_target_mb_batch">Cible : %1$.1f Mo</string>
 <string name="label_target_unknown">Cible : Inconnu</string>
 <string name="label_analyzing">Analyser...</string>
 <string name="label_target_mb">Cible : %1$s Mo</string>
@@ -966,13 +966,13 @@
     <string name="settings_manifesto_title">Le Manifeste à Vie</string>
     <string name="settings_manifesto_desc">Notre promesse : mises à jour 100%% gratuites, zéro cloud, fait pour le peuple.</string>
     <string name="manifesto_dialog_title">Le Manifeste à Vie</string>
-    <string name="manifesto_quote">\</string>
+    <string name="manifesto_quote" formatted="false">"Des mises à jour à vie jusqu\'à ma mort — et 100% gratuit. Il suffit de faire une demande solide et valide et elle sera réalisée ; parce que c\'est par les gens et pour les gens.\n\nCe ne sera peut-être pas pareil qu\'une appli d\'entreprise, mais au moins ce sera gratuit et je le ferai du mieux possible. Si je ne peux pas, tant pis — au moins tu auras une option, ô énigmatique cas particulier."</string>
     <string name="manifesto_author">— Andrei Ioan Cucoș (John), Développeur</string>
     <string name="manifesto_guarantees_title">Nos 4 Garanties Inébranlables :</string>
     <string name="manifesto_g1_title">100%% Gratuit pour Toujours</string>
     <string name="manifesto_g1_desc">Zéro abonnement, zéro paywall, aucune limite artificielle et aucun filigrane ajouté.</string>
     <string name="manifesto_g2_title">100%% Hors Ligne et Privé</string>
-    <string name="manifesto_g2_desc">Aucun fichier ne quitte cet ordinateur. Zéro suivi ou télémétrie. Totalement sûr pour documents confidentiels.</string>
+    <string name="manifesto_g2_desc" formatted="false">Aucun fichier ni aucune métadonnée ne quitte votre appareil. Traitement 100% sur l\'appareil, sûr pour les fichiers confidentiels.</string>
     <string name="manifesto_g3_title">Original Préservé</string>
     <string name="manifesto_g3_desc">Nous n\'écrasons jamais vos fichiers sources sans confirmation explicite.</string>
     <string name="manifesto_g4_title">Créé Pour Tous</string>
@@ -990,7 +990,7 @@
     <string name="menu_deskew">Redressement auto &amp; Deskew</string>
     <string name="menu_deskew_desc">Corrigez les numérisations de travers et alignez les pages sans perte</string>
     <string name="deskew_title">Redressement automatique d\'angle</string>
-    <string name="deskew_detected_angle">Inclinaison détectée : %%1$.1f°</string>
+    <string name="deskew_detected_angle">Inclinaison détectée : %1$.1f°</string>
     <string name="deskew_action_straighten">Redresser et enregistrer</string>
     <string name="deskew_success">Document redressé avec succès !</string>
     <string name="deskew_success_desc">Les pages ont été tournées et alignées.</string>
@@ -1040,7 +1040,7 @@
     <string name="tts_play">Lecture à voix haute</string>
     <string name="tts_pause">Pause</string>
     <string name="tts_stop">Arrêter</string>
-    <string name="tts_speed">Vitesse : %%1$.2fx</string>
+    <string name="tts_speed">Vitesse : %1$.2fx</string>
     <string name="tts_prev_paragraph">Précédent</string>
     <string name="tts_next_paragraph">Suivant</string>
     <string name="tts_not_supported">Synthèse vocale non prise en charge ou données linguistiques manquantes.</string>
@@ -1102,13 +1102,7 @@
     <string name="settings_default_pdf_app">Lecteur PDF par défaut</string>
     <string name="settings_default_pdf_app_desc">Définir PdfChemy comme application par défaut pour ouvrir les fichiers PDF</string>
     <string name="settings_default_pdf_dialog_title">Définir le lecteur PDF par défaut</string>
-    <string name="settings_default_pdf_dialog_body">Pour faire de PdfChemy votre lecteur PDF par défaut :
-
-1. Ouvrez n\'importe quel fichier PDF depuis votre gestionnaire de fichiers ou téléchargements.
-2. Lorsque « Ouvrir avec » s\'affiche, sélectionnez PdfChemy.
-3. Choisissez « Toujours » pour ouvrir automatiquement les documents PDF avec PdfChemy.
-
-Vous pouvez également configurer les associations d\'applications dans les Paramètres Android.</string>
+    <string name="settings_default_pdf_dialog_body">Pour faire de PdfChemy votre lecteur PDF par défaut :\n\n1. Ouvrez n\'importe quel fichier PDF depuis votre gestionnaire de fichiers ou téléchargements.\n2. Lorsque « Ouvrir avec » s\'affiche, sélectionnez PdfChemy.\n3. Choisissez « Toujours » pour ouvrir automatiquement les documents PDF avec PdfChemy.\n\nVous pouvez également configurer les associations d\'applications dans les Paramètres Android.</string>
     <string name="settings_open_android_settings">Ouvrir les paramètres système</string>
     <string name="text_to_pdf">Texte vers PDF</string>
     <string name="tab_epub_to_pdf">EPUB vers PDF</string>
@@ -1253,4 +1247,112 @@ Vous pouvez également configurer les associations d\'applications dans les Para
     <string name="msg_text_saved_success">Texte enregistré avec succès</string>
     <string name="form_fill_mode_list">Vue liste</string>
     <string name="form_fill_mode_insitu">Vue document</string>
+    <string name="form_fields_count">%1$d champs</string>
+    <string name="action_reset_fields">Réinitialiser les champs</string>
+    <string name="desc_paste">Coller</string>
+    <string name="bookmarks_count">Signets (%1$d)</string>
+    <string name="btn_browse_files">Parcourir les fichiers</string>
+    <string name="settings_output_folder">Dossier de sortie</string>
+    <string name="error_no_email_app">Aucune application de messagerie trouvée</string>
+    <string name="error_cannot_open_browser">Impossible d\'ouvrir le navigateur</string>
+    <string name="action_view_all_history">Voir tout l\'historique</string>
+    <string name="error_no_app_open_file">Aucune application disponible pour ouvrir %1$s</string>
+    <string name="desc_premium">Premium</string>
+    <string name="hint_enter_value">Saisir une valeur…</string>
+    <string name="desc_checked">Coché</string>
+    <string name="action_sort_by_page">Trier par page</string>
+    <string name="desc_move_up">Monter</string>
+    <string name="desc_move_down">Descendre</string>
+    <string name="desc_edit">Modifier</string>
+    <string name="msg_metadata_report_copied">Rapport de métadonnées copié dans le presse-papiers</string>
+    <string name="desc_copy_metadata_report">Copier le rapport de métadonnées</string>
+    <string name="desc_clear_all_images">Effacer toutes les images</string>
+    <string name="action_convert">Convertir</string>
+    <string name="action_gallery">Galerie</string>
+    <string name="action_take_photo">Prendre une photo</string>
+    <string name="desc_selected_image">Image sélectionnée</string>
+    <string name="desc_remove_image">Supprimer l\'image</string>
+    <string name="error_straightening_doc">Erreur lors du redressement du document</string>
+    <string name="error_unable_analyze_doc">Impossible d\'analyser ce document</string>
+    <string name="desc_page_preview">Aperçu de la page</string>
+    <string name="msg_new_copy_chosen_folder">Une nouvelle copie est enregistrée dans le dossier de votre choix.</string>
+    <string name="msg_audit_report_copied">Rapport d\'audit copié dans le presse-papiers</string>
+    <string name="desc_copy_audit_report">Copier le rapport d\'audit</string>
+    <string name="sanitizer_purge_js">Purger les déclencheurs JavaScript</string>
+    <string name="sanitizer_purge_actions">Purger les actions de lancement et d\'URL</string>
+    <string name="sanitizer_purge_embedded">Purger les fichiers intégrés cachés</string>
+    <string name="sanitizer_purge_metadata">Purger les métadonnées et identifiants de suivi</string>
+    <string name="desc_swap_find_replace">Inverser Rechercher et Remplacer</string>
+    <string name="badge_local_layout_preserving" formatted="false">100% local et fidèle à la mise en page</string>
+    <string name="msg_font_report_copied">Rapport des polices copié dans le presse-papiers</string>
+    <string name="desc_copy_font_report">Copier le rapport des polices</string>
+    <string name="desc_refresh">Actualiser</string>
+    <string name="desc_preview">Aperçu</string>
+    <string name="history_title">Historique</string>
+    <string name="history_disabled_notice">L\'historique est désactivé. Activez l\'historique local dans les Paramètres pour garder jusqu\'à 20 fichiers récents.</string>
+    <string name="history_empty_notice">Aucun fichier récent. Les copies enregistrées apparaissent ici lorsque l\'historique local est activé.</string>
+    <string name="action_open">Ouvrir</string>
+    <string name="history_item_folder">Dossier</string>
+    <string name="history_item_unavailable">Indisponible — sélectionnez à nouveau le fichier ou supprimez cette entrée</string>
+    <string name="history_checking_access">Vérification de l\'accès…</string>
+    <string name="error_no_app_open_item">Aucune application ne peut ouvrir cet élément. Vérifiez l\'accès au fichier et réessayez.</string>
+    <string name="error_no_sharing_app">Aucune application de partage disponible. Ouvrez ou parcourez plutôt les fichiers enregistrés.</string>
+    <string name="history_remove_entry_desc">Supprimer %1$s de l\'historique</string>
+    <string name="linearize_label_size">Taille :</string>
+    <string name="linearize_label_pages">Pages :</string>
+    <string name="dialog_clear_markdown_title">Vider l\'éditeur Markdown ?</string>
+    <string name="dialog_clear_markdown_desc">Voulez-vous vraiment effacer le document Markdown actuel ?</string>
+    <string name="msg_markdown_copied">Markdown copié dans le presse-papiers</string>
+    <string name="desc_copy_markdown">Copier le Markdown</string>
+    <string name="msg_metadata_summary_copied">Résumé des métadonnées copié dans le presse-papiers</string>
+    <string name="desc_copy_metadata_summary">Copier le résumé des métadonnées</string>
+    <string name="action_anonymize">Anonymiser</string>
+    <string name="badge_offline_text_layer" formatted="false">Couche texte 100% hors ligne</string>
+    <string name="label_margins_colon">Marges :</string>
+    <string name="desc_decrement">Diminuer</string>
+    <string name="desc_increment">Augmenter</string>
+    <string name="msg_pdfa_report_copied">Rapport PDF/A copié dans le presse-papiers</string>
+    <string name="desc_copy_pdfa_report">Copier le rapport PDF/A</string>
+    <string name="desc_rescan">Réanalyser</string>
+    <string name="desc_swap_compare_pdfs">Inverser original et modifié</string>
+    <string name="desc_select_different_pdfs">Sélectionner d\'autres PDF</string>
+    <string name="editor_load_failed_msg">Impossible de charger ce document. Vérifiez les droits d\'accès ou choisissez une autre copie.</string>
+    <string name="desc_more_options">Plus d\'options</string>
+    <string name="reader_vertical_scroll">Défilement vertical</string>
+    <string name="reader_horizontal_scroll">Défilement horizontal</string>
+    <string name="reader_normal_colors">Couleurs normales</string>
+    <string name="reader_invert_colors">Inverser les couleurs</string>
+    <string name="error_create_output_folder">Impossible de créer la copie de sortie dans ce dossier</string>
+    <string name="dialog_save_copy_title">Enregistrer une copie</string>
+    <string name="dialog_save_copy_desc">Utilisez votre dossier de sortie enregistré. Les fichiers existants sont conservés ; les noms identiques reçoivent une copie numérotée.</string>
+    <string name="label_file_name">Nom du fichier</string>
+    <string name="error_saved_folder_unavailable">Dossier enregistré indisponible. Choisissez un emplacement pour enregistrer cette copie.</string>
+    <string name="action_save_copy">Enregistrer la copie</string>
+    <string name="action_choose_folder">Choisir un dossier</string>
+    <string name="redact_forensic_title">Assainissement vectoriel forensique</string>
+    <string name="redact_forensic_desc">Pixellise les pages biffées pour détruire complètement les données textuelles sous-jacentes.</string>
+    <string name="redact_smart_pii_title">Caviardage intelligent des données personnelles</string>
+    <string name="reflow_find_placeholder">Rechercher dans le document...</string>
+    <string name="desc_previous_match">Occurrence précédente</string>
+    <string name="desc_next_match">Occurrence suivante</string>
+    <string name="desc_play_pause">Lecture/Pause</string>
+    <string name="reflow_bionic_mode">Bionique</string>
+    <string name="reflow_dyslexia_mode">Dyslexie</string>
+    <string name="msg_diagnostic_report_copied">Rapport de diagnostic copié dans le presse-papiers</string>
+    <string name="desc_copy_diagnostic_report">Copier le rapport de diagnostic</string>
+    <string name="desc_move_page_left">Déplacer la page à gauche</string>
+    <string name="desc_move_page_right">Déplacer la page à droite</string>
+    <string name="desc_delete_scanned_page">Supprimer la page numérisée</string>
+    <string name="action_save_open_reader">Enregistrer et ouvrir dans le lecteur</string>
+    <string name="action_save_ocr">Enregistrer et OCR</string>
+    <string name="action_save_compress">Enregistrer et compresser</string>
+    <string name="msg_csv_copied">CSV copié dans le presse-papiers</string>
+    <string name="desc_copy_csv">Copier le CSV</string>
+    <string name="label_lines_count">Lignes : %1$d</string>
+    <string name="error_invalid_json_format">Format JSON invalide</string>
+    <string name="page_select_all">Toutes</string>
+    <string name="page_select_invert">Inverser</string>
+    <string name="page_select_odd">Impaires</string>
+    <string name="page_select_even">Paires</string>
+    <string name="desc_swap_formats">Inverser les formats</string>
 </resources>

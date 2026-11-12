@@ -285,7 +285,7 @@ fun BookmarkEditorScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Bookmarks (${bookmarks.size})",
+                        text = stringResource(R.string.bookmarks_count, bookmarks.size),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -293,11 +293,11 @@ fun BookmarkEditorScreen(
                         if (bookmarks.size > 1) {
                             AssistChip(
                                 onClick = { bookmarks = bookmarks.sortedBy { it.pageIndex } },
-                                label = { Text("Sort by Page", fontSize = 11.sp) }
+                                label = { Text(stringResource(R.string.action_sort_by_page), fontSize = 11.sp) }
                             )
                         }
                         TextButton(onClick = { bookmarks = emptyList() }) {
-                            Text("Clear All", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                            Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                         }
                     }
                 }
@@ -435,7 +435,7 @@ fun BookmarkEditorScreen(
                                         ) {
                                             Icon(
                                                 Icons.Rounded.KeyboardArrowUp,
-                                                contentDescription = "Move Up",
+                                                contentDescription = stringResource(R.string.desc_move_up),
                                                 modifier = Modifier.size(18.dp),
                                                 tint = if (idx > 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
                                             )
@@ -455,7 +455,7 @@ fun BookmarkEditorScreen(
                                         ) {
                                             Icon(
                                                 Icons.Rounded.KeyboardArrowDown,
-                                                contentDescription = "Move Down",
+                                                contentDescription = stringResource(R.string.desc_move_down),
                                                 modifier = Modifier.size(18.dp),
                                                 tint = if (idx < bookmarks.size - 1) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
                                             )
@@ -471,7 +471,7 @@ fun BookmarkEditorScreen(
                                             },
                                             modifier = Modifier.size(30.dp)
                                         ) {
-                                            Icon(Icons.Rounded.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.desc_edit), modifier = Modifier.size(18.dp))
                                         }
 
                                         // Delete
@@ -483,7 +483,7 @@ fun BookmarkEditorScreen(
                                             },
                                             modifier = Modifier.size(30.dp)
                                         ) {
-                                            Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_delete), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                                         }
                                     }
                                 }

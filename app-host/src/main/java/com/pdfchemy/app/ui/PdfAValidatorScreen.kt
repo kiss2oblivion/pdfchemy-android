@@ -26,7 +26,6 @@ import com.pdfchemy.app.logic.CheckSeverity
 import com.pdfchemy.app.logic.PdfAReport
 import com.pdfchemy.app.logic.PdfArchiveValidatorEngine
 import com.pdfchemy.app.utils.FileUtils
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,15 +82,15 @@ fun PdfAValidatorScreen(
                                 }.trim()
                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
                                 clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF/A Report", reportText))
-                                android.widget.Toast.makeText(context, "Copied PDF/A report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_pdfa_report_copied), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         ) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy PDF/A Report")
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_pdfa_report))
                         }
                     }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { auditGeneration++ }) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Re-scan")
+                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.desc_rescan))
                         }
                     }
                 }

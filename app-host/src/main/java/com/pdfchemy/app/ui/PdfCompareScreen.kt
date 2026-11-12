@@ -116,7 +116,7 @@ fun PdfCompareScreen(
                                 runComparison(u1, u2)
                             }
                         ) {
-                            Icon(Icons.Rounded.SwapHoriz, contentDescription = "Swap Original & Modified")
+                            Icon(Icons.Rounded.SwapHoriz, contentDescription = stringResource(R.string.desc_swap_compare_pdfs))
                         }
                     }
                     if (diffSummary != null && !isComparing) {
@@ -126,7 +126,7 @@ fun PdfCompareScreen(
                                 diffSummary = null
                             }
                         ) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Select Different PDFs")
+                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.desc_select_different_pdfs))
                         }
                     }
                 },

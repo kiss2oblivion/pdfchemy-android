@@ -243,7 +243,7 @@ fun FindAndReplaceScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (findQuery.isNotEmpty()) {
                                     IconButton(onClick = { findQuery = ""; searchSummary = null }) {
-                                        Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear), modifier = Modifier.size(18.dp))
                                     }
                                 }
                                 if (findQuery.isNotBlank()) {
@@ -281,12 +281,12 @@ fun FindAndReplaceScreen(
                                             searchSummary = null
                                         }
                                     ) {
-                                        Icon(Icons.Rounded.SwapVert, contentDescription = "Swap Find & Replace", modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Rounded.SwapVert, contentDescription = stringResource(R.string.desc_swap_find_replace), modifier = Modifier.size(18.dp))
                                     }
                                 }
                                 if (replaceText.isNotEmpty()) {
                                     IconButton(onClick = { replaceText = "" }) {
-                                        Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear), modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
@@ -481,7 +481,7 @@ fun FindAndReplaceScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("100% Local & Layout-Preserving", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.badge_local_layout_preserving), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
                         Text(
                             "Search for words or phrases across all pages. PDFchemy inspects matches on-device without cloud uploads or rasterizing untouched pages.",
