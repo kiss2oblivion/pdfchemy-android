@@ -136,4 +136,68 @@ class AudioDestinationAdmissionDeviceTest {
             assertTrue(runCatching { AudioExportDependencies.destination(id) }.isFailure)
         } finally { AudioExportDependencies.forgetDestination(context, id); OutputPolicy.unregisterFreshCopy(uri) }
     }
+
+    @Test(timeout = 35_000) fun cancellationStopsAWriterWhenTheProviderNeverReads() = runBlocking<Unit> {
+        val uri = destination(Bundle().apply { putBoolean("blockRead", true) })
+        val source = wav(large = true)
+        val expected = source.readBytes()
+        val published = java.util.concurrent.atomic.AtomicBoolean(false)
+        OutputPolicy.registerFreshCopy(uri)
+        val job = launch(Dispatchers.IO) {
+            AudioOutputPublisher.publish(context, source, uri) { published.set(true) }
+        }
+        try {
+            // Observe kernel-buffered bytes while the fixture still forbids any read.
+            withContext(Dispatchers.IO) { state(uri, "awaitPipeBuffered") }
+            assertTrue(PublicationCoordinator.hasActiveWriter(uri))
+            job.cancel()
+            val stopped = withTimeoutOrNull(2_000) { job.join(); true } ?: false
+            assertTrue("Cancellation must finish while the real provider reader is stalled", stopped)
+            assertTrue(job.isCancelled)
+            assertFalse(published.get())
+            assertFalse(PublicationCoordinator.hasActiveWriter(uri))
+            assertTrue(state(uri).getBoolean("deleted"))
+            assertFalse(OutputPolicy.isFreshCopy(uri))
+            assertArrayEquals(expected, source.readBytes())
+        } finally {
+            state(uri, "releaseRead")
+            job.cancel()
+            withTimeout(10_000) { job.join() }
+            state(uri, "awaitWritten")
+            OutputPolicy.unregisterFreshCopy(uri)
+            source.delete()
+        }
+    }
+
+    @Test(timeout = 35_000) fun resumedPipeReaderReceivesEveryByteAndPublishesOnce() = runBlocking<Unit> {
+        val uri = destination(Bundle().apply { putBoolean("blockRead", true); putBoolean("digestOnly", true) })
+        val source = wav(large = true)
+        val expected = source.readBytes()
+        var receipts = 0
+        OutputPolicy.registerFreshCopy(uri)
+        val job = async(Dispatchers.IO) {
+            AudioOutputPublisher.publish(context, source, uri) { receipts++ }
+        }
+        try {
+            withContext(Dispatchers.IO) { state(uri, "awaitPipeBuffered") }
+            assertTrue(PublicationCoordinator.hasActiveWriter(uri))
+            assertTrue(FreshOutputRegistry.isClaimed(uri))
+            state(uri, "releaseRead")
+            withTimeout(10_000) { job.await() }
+            val saved = state(uri, "awaitWritten")
+            assertEquals(1, receipts)
+            assertEquals(expected.size, saved.getInt("byteCount"))
+            assertArrayEquals(java.security.MessageDigest.getInstance("SHA-256").digest(expected), saved.getByteArray("sha256"))
+            assertArrayEquals(expected, source.readBytes())
+            assertFalse(state(uri).getBoolean("deleted"))
+            assertFalse(PublicationCoordinator.hasActiveWriter(uri))
+            assertFalse(OutputPolicy.isFreshCopy(uri))
+        } finally {
+            state(uri, "releaseRead")
+            job.cancel()
+            withTimeout(10_000) { job.join() }
+            OutputPolicy.unregisterFreshCopy(uri)
+            source.delete()
+        }
+    }
 }

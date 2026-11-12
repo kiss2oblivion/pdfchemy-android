@@ -33,6 +33,20 @@ import java.util.UUID
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], shadows = [AudioServiceLifecycleTest.PcmTtsShadow::class])
 class AudioServiceLifecycleTest {
+    @org.junit.Before fun configureRegularFileMetadata() = AudioRegularFileMetadata.install()
+    @org.junit.After fun clearRegularFileMetadata() = AudioRegularFileMetadata.clear()
+
+    @Test fun `service fixture descriptors retain their regular file type`() {
+        val file = File.createTempFile("audio_regular_", ".wav")
+        try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE).use { descriptor ->
+                val mode = android.system.Os.fstat(descriptor.fileDescriptor).st_mode
+                assertTrue(android.system.OsConstants.S_ISREG(mode))
+                assertFalse(android.system.OsConstants.S_ISFIFO(mode))
+            }
+        } finally { file.delete() }
+    }
+
     private class OutputProvider(private val output: File) : ContentProvider() {
         override fun onCreate() = true
         override fun getType(uri: Uri) = "audio/wav"
@@ -110,7 +124,7 @@ class AudioServiceLifecycleTest {
                 if (store.getJob(id)!!.state !in AudioExportJobStore.terminalStates) Thread.sleep(10)
             }
             runCurrent()
-            assertEquals(store.getJob(id)!!.error?.toString(), AudioExportState.COMPLETED, store.getJob(id)!!.state)
+            assertEquals(store.getJob(id)!!.error?.stackTraceToString(), AudioExportState.COMPLETED, store.getJob(id)!!.state)
             assertEquals(uri.toString(), store.getJob(id)!!.outputUri)
             assertEquals(48L, destination.length())
             assertArrayEquals(byteArrayOf(1, 2, 3, 4), destination.readBytes().copyOfRange(44, 48))

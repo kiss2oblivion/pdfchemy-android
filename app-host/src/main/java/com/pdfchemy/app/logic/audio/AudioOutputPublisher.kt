@@ -2,6 +2,8 @@ package com.pdfchemy.app.logic.audio
 
 import android.content.Context
 import android.net.Uri
+import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.jail.CancellableProviderWriter
 import com.pdfchemy.app.logic.OutputPolicy
 import com.pdfchemy.app.security.FreshOutputRegistry
 import kotlinx.coroutines.*
@@ -42,7 +44,7 @@ object AudioOutputPublisher {
         copy(
             wav,
             listOf(destination),
-            { context.contentResolver.openOutputStream(destination, "wt") },
+            { openWholeFile(context, destination) },
             {}, // The owner abandons only after copy releases its writer lease.
             {
                 FreshOutputRegistry.published(listOf(destination), owner)
@@ -50,6 +52,13 @@ object AudioOutputPublisher {
             }
         )
     }
+
+    /** Whole-file access rejects bounded asset slices before raw FD pipe writes. */
+    internal fun openWholeFile(context: Context, destination: Uri): OutputStream? =
+        context.contentResolver.openFileDescriptor(destination, "wt")?.let {
+            try { ParcelFileDescriptor.AutoCloseOutputStream(it) }
+            catch (error: Throwable) { runCatching { it.close() }; throw error }
+        }
 
     fun deletePartial(
         context: Context,
@@ -100,13 +109,14 @@ object AudioOutputPublisher {
             val stream = requireNotNull(open()) { "Unable to open audio destination" }
             handle.registerStream(stream).use {
                 stream.use { output ->
+                    val writer = CancellableProviderWriter.create(output)
                     wav.inputStream().use { input ->
                         val buffer = ByteArray(64 * 1024)
                         while (true) {
                             currentCoroutineContext().ensureActive()
                             val count = input.read(buffer)
                             if (count < 0) break
-                            output.write(buffer, 0, count)
+                            writer.write(buffer, count)
                         }
                         currentCoroutineContext().ensureActive()
                     }
@@ -118,9 +128,9 @@ object AudioOutputPublisher {
             completedNormally = true
         } catch (error: Throwable) {
             runCatching { deletePartial() }
-            // Aborting a blocked provider write can surface as IOException.
-            // Preserve cancellation while retaining genuine active-copy errors.
-            if (error is java.io.IOException) currentCoroutineContext().ensureActive()
+            // A canceled provider can return null, fail during open, or close a stream.
+            // Preserve cancellation while retaining genuine active-copy exceptions.
+            if (error is Exception) currentCoroutineContext().ensureActive()
             throw error
         } finally {
             watcher.cancel()

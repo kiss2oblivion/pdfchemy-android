@@ -35,6 +35,7 @@ class AudioPublishedOutputRetentionTest {
     private var deleteFailure: IOException? = null
 
     private fun configure() {
+        mockkObject(AudioOutputPublisher)
         mockkStatic(DocumentFile::class)
         every { context.contentResolver } returns resolver
         every { DocumentFile.fromSingleUri(context, uri) } returns document
@@ -58,7 +59,7 @@ class AudioPublishedOutputRetentionTest {
         val bytes = "Synthetic publication bytes".toByteArray()
         val wav = File.createTempFile("audio_retention_", ".wav", app.cacheDir).apply { writeBytes(bytes) }
         val output = ByteArrayOutputStream()
-        every { resolver.openOutputStream(uri, "wt") } returns output
+        every { AudioOutputPublisher.openWholeFile(context, uri) } returns output
         try {
             AudioExportDependencies.registerDestination(id, uri)
             val cachedFreshness = AudioExportDependencies.isFreshDestination(id)

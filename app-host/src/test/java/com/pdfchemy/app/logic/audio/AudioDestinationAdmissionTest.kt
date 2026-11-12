@@ -34,10 +34,11 @@ class AudioDestinationAdmissionTest {
     private val output = ByteArrayOutputStream()
 
     private fun configure() {
+        mockkObject(AudioOutputPublisher)
         mockkStatic(DocumentsContract::class)
         every { DocumentsContract.isDocumentUri(context, uri) } returns false
         every { context.contentResolver } returns resolver
-        every { resolver.openOutputStream(uri, "wt") } answers { opens++; output }
+        every { AudioOutputPublisher.openWholeFile(context, uri) } answers { opens++; output }
         every { resolver.delete(uri, null, null) } answers { deletes++; 1 }
     }
 
@@ -141,7 +142,7 @@ class AudioDestinationAdmissionTest {
     @Test fun openFailureReleasesWriterBeforeOwnedCleanup() = runBlocking {
         configure()
         OutputPolicy.registerFreshCopy(uri)
-        every { resolver.openOutputStream(uri, "wt") } answers { opens++; throw java.io.FileNotFoundException("after truncation") }
+        every { AudioOutputPublisher.openWholeFile(context, uri) } answers { opens++; throw java.io.FileNotFoundException("after truncation") }
         val wav = File.createTempFile("audio_open_", ".wav", app.cacheDir).apply { writeText("source stays intact") }
         try {
             assertNotNull(runCatching { AudioOutputPublisher.publish(context, wav, uri) }.exceptionOrNull())
@@ -156,7 +157,7 @@ class AudioDestinationAdmissionTest {
         configure()
         OutputPolicy.registerFreshCopy(uri)
         AudioExportDependencies.registerDestination(jobId, uri)
-        every { resolver.openOutputStream(uri, "wt") } answers {
+        every { AudioOutputPublisher.openWholeFile(context, uri) } answers {
             opens++
             assertTrue(runCatching { AudioExportDependencies.forgetDestination(context, jobId) }.isFailure)
             assertEquals(uri, AudioExportDependencies.destination(jobId))
@@ -176,7 +177,7 @@ class AudioDestinationAdmissionTest {
     @Test fun closeFailureNeverRetiresPublicationAndCleansOwnedOutput() = runBlocking {
         configure()
         OutputPolicy.registerFreshCopy(uri)
-        every { resolver.openOutputStream(uri, "wt") } returns object : ByteArrayOutputStream() {
+        every { AudioOutputPublisher.openWholeFile(context, uri) } returns object : ByteArrayOutputStream() {
             override fun close() { throw java.io.IOException("synthetic close failure") }
         }
         val wav = File.createTempFile("audio_close_", ".wav", app.cacheDir).apply { writeText("source stays intact") }

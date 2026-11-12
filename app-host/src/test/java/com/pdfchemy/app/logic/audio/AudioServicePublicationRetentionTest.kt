@@ -31,6 +31,9 @@ import java.util.UUID
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], shadows = [AudioServiceLifecycleTest.PcmTtsShadow::class])
 class AudioServicePublicationRetentionTest {
+    @org.junit.Before fun configureRegularFileMetadata() = AudioRegularFileMetadata.install()
+    @org.junit.After fun clearRegularFileMetadata() = AudioRegularFileMetadata.clear()
+
     private class OutputProvider(private val output: File) : ContentProvider() {
         var deletes = 0
         override fun onCreate() = true
