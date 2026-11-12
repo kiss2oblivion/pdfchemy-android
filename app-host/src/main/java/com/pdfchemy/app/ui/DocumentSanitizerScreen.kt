@@ -48,7 +48,9 @@ fun DocumentSanitizerScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var auditReport by remember { mutableStateOf<SanitizerAuditReport?>(null) }
     var isAuditing by remember { mutableStateOf(false) }
     var isSanitizing by remember { mutableStateOf(false) }
@@ -80,9 +82,9 @@ fun DocumentSanitizerScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        if (initialPdfUri != null) {
-            runAudit(initialPdfUri)
+    LaunchedEffect(effectiveInitialPdfUri) {
+        if (effectiveInitialPdfUri != null) {
+            runAudit(effectiveInitialPdfUri)
         }
     }
 
@@ -146,6 +148,27 @@ fun DocumentSanitizerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    val report = auditReport
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val summary = buildString {
+                                    appendLine("Status: ${if (report.isClean) "Clean" else "${report.threatsFound} threats detected"}")
+                                    appendLine("JavaScript Triggers: ${report.jsCount}")
+                                    appendLine("Launch Actions: ${report.launchActionsCount}")
+                                    appendLine("Other Actions: ${report.otherActionsCount}")
+                                    append("Attachments: ${report.attachmentCount}")
+                                }
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Sanitizer Audit Report", summary))
+                                Toast.makeText(context, "Copied audit report to clipboard", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Audit Report")
+                        }
                     }
                 }
             )

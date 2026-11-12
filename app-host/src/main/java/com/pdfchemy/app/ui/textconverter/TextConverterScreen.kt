@@ -14,6 +14,10 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.ContentPaste
+import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -92,7 +96,33 @@ fun TextConverterScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
                 },
-                
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                            val pasted = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString()
+                            if (!pasted.isNullOrEmpty()) {
+                                viewModel.setInputText(if (inputText.isEmpty()) pasted else "$inputText\n$pasted")
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = "Paste")
+                    }
+                    if (inputText.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Text", inputText))
+                                Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy")
+                        }
+                        IconButton(onClick = { viewModel.setInputText("") }) {
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.clear), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
             )
         }
     ) { padding ->
@@ -135,12 +165,24 @@ fun TextConverterScreen(
                         }
                     }
 
-                    Icon(
-                        Icons.AutoMirrored.Rounded.ArrowForward,
-                        contentDescription = "to", 
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    val canSwapFormats = inputFormat in viewModel.getValidOutputFormats(outputFormat)
+                    IconButton(
+                        onClick = {
+                            if (canSwapFormats) {
+                                val prevIn = inputFormat
+                                val prevOut = outputFormat
+                                viewModel.setInputFormat(prevOut)
+                                viewModel.setOutputFormat(prevIn)
+                            }
+                        },
+                        enabled = canSwapFormats
+                    ) {
+                        Icon(
+                            if (canSwapFormats) Icons.Rounded.SwapHoriz else Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = "Swap Formats",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
 
                     // Output Format Dropdown
                     Box(modifier = Modifier.weight(1f)) {
@@ -184,6 +226,15 @@ fun TextConverterScreen(
                         modifier = Modifier.fillMaxSize().padding(8.dp),
                         placeholder = { Text(stringResource(R.string.enter_content)) }
                     )
+                }
+
+                val wordCount = if (inputText.isBlank()) 0 else inputText.trim().split("\\s+".toRegex()).size
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp, start = 4.dp, end = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(stringResource(R.string.label_words, wordCount), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.label_chars, inputText.length), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
                 Row(

@@ -455,21 +455,39 @@ $ncxNavPoints
 
     private fun sanitizeText(text: String): String {
         if (text.isEmpty()) return ""
-        val commonPunctuation = text.replace("“", "\"")
+        val replaced = text.replace("“", "\"")
             .replace("”", "\"")
             .replace("‘", "'")
             .replace("’", "'")
             .replace("—", "--")
             .replace("–", "-")
             .replace("…", "...")
-            .replace('ș', 's').replace('Ș', 'S')
-            .replace('ț', 't').replace('Ț', 'T')
-            .replace('ł', 'l').replace('Ł', 'L')
-            .replace('đ', 'd').replace('Đ', 'D')
-
-        val normalized = java.text.Normalizer.normalize(commonPunctuation, java.text.Normalizer.Form.NFD)
-        val stripped = normalized.replace("\\p{M}".toRegex(), "")
-        return stripped.filter { it.code in 32..126 || it.code in 160..255 }
+        return buildString(replaced.length) {
+            for (ch in replaced) {
+                when {
+                    ch.code in 32..126 || ch.code in 160..255 -> append(ch)
+                    ch == 'ș' -> append('s')
+                    ch == 'Ș' -> append('S')
+                    ch == 'ț' -> append('t')
+                    ch == 'Ț' -> append('T')
+                    ch == 'ş' -> append('s')
+                    ch == 'Ş' -> append('S')
+                    ch == 'ţ' -> append('t')
+                    ch == 'Ţ' -> append('T')
+                    ch == 'ł' -> append('l')
+                    ch == 'Ł' -> append('L')
+                    ch == 'đ' -> append('d')
+                    ch == 'Đ' -> append('D')
+                    ch.code > 255 -> {
+                        val decomposed = java.text.Normalizer.normalize(ch.toString(), java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{M}+"), "")
+                        for (dc in decomposed) {
+                            if (dc.code in 32..126 || dc.code in 160..255) append(dc)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun wordWrap(text: String, font: com.tom_roush.pdfbox.pdmodel.font.PDFont, fontSize: Float, maxWidth: Float): List<String> {

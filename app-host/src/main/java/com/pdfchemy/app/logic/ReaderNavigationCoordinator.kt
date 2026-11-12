@@ -2,8 +2,8 @@ package com.pdfchemy.app.logic
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import com.pdfchemy.app.Screen
+import com.pdfchemy.app.security.ExternalUriAdmission
 import java.util.Locale
 
 /**
@@ -84,28 +84,7 @@ class ReaderNavigationCoordinator {
          */
         fun extractIncomingDocumentUri(intent: Intent?): Uri? {
             if (intent == null) return null
-            return when (intent.action) {
-                Intent.ACTION_VIEW -> intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-                Intent.ACTION_SEND -> {
-                    val streamUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-                    }
-                    streamUri ?: intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-                }
-                Intent.ACTION_SEND_MULTIPLE -> {
-                    val list = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)
-                    }
-                    list?.firstOrNull() ?: intent.data ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-                }
-                else -> null
-            }
+            return ExternalUriAdmission.extractCandidateUri(intent)
         }
     }
 }

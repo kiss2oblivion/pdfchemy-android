@@ -1,15 +1,12 @@
 package com.pdfchemy.app.logic
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
-import android.os.ParcelFileDescriptor
+import com.google.gson.Gson
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.InputStream
 
 data class FlattenDiagnostic(
     val fieldCount: Int = 0,
@@ -18,6 +15,7 @@ data class FlattenDiagnostic(
 )
 
 object PdfFlattenEngine {
+    private val gson = Gson()
 
     /**
      * Inspects a PDF to count fillable form fields, signatures, and annotations.
@@ -51,7 +49,7 @@ object PdfFlattenEngine {
         flattenAnnotations: Boolean = true
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            val params = com.google.gson.Gson().toJson(mapOf(
+            val params = gson.toJson(mapOf(
                 "flattenForms" to flattenForms,
                 "flattenAnnotations" to flattenAnnotations
             ))

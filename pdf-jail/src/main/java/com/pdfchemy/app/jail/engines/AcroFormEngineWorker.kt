@@ -220,7 +220,7 @@ object AcroFormEngineWorker {
                                     field.unCheck()
                                 }
                             } else {
-                                field.setValue(value)
+                                setFieldValueSafely(field, value)
                             }
                         } catch (e: Exception) {
                             com.pdfchemy.app.jail.AppLogger.w("Could not set field ${fqn} to ${value}: ${e.message}")
@@ -349,9 +349,9 @@ object AcroFormEngineWorker {
                             widget.isPrinted = true
                             page.annotations.add(widget)
                             if (spec.defaultValue.isNotBlank()) {
-                                combo.setValue(spec.defaultValue)
+                                setFieldValueSafely(combo, spec.defaultValue)
                             } else if (spec.options.isNotEmpty()) {
-                                combo.setValue(spec.options.first())
+                                setFieldValueSafely(combo, spec.options.first())
                             }
                             acroForm.fields.add(combo)
                         }
@@ -394,7 +394,7 @@ object AcroFormEngineWorker {
                             widget.isPrinted = true
                             page.annotations.add(widget)
                             if (spec.defaultValue.isNotBlank()) {
-                                tf.setValue(spec.defaultValue)
+                                setFieldValueSafely(tf, spec.defaultValue)
                             }
                             acroForm.fields.add(tf)
                         }
@@ -414,6 +414,14 @@ object AcroFormEngineWorker {
             false
         } finally {
             doc?.close()
+        }
+    }
+
+    internal fun setFieldValueSafely(field: PDField, value: String) {
+        try {
+            field.setValue(value)
+        } catch (_: IllegalArgumentException) {
+            field.setValue(SignatureEngineWorker.sanitizeForWinAnsi(value))
         }
     }
 }

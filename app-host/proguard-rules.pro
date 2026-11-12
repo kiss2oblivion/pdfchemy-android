@@ -94,12 +94,9 @@
 -dontwarn org.bouncycastle.jsse.**
 -dontwarn org.bouncycastle.jcajce.provider.asymmetric.util.**
 
-# Google Play Billing Library
--keep class com.android.billingclient.api.** { *; }
-
-# Note: Google Mobile Ads and UMP libraries package their own consumer ProGuard/R8 rules.
-# Blanket keep rules for com.google.android.gms.ads and com.google.android.ump have been removed
-# to allow R8 to perform proper dead-code elimination and resource shrinking on release builds.
+# Note: Google Play Billing, Mobile Ads, and UMP libraries package their own consumer ProGuard/R8 rules.
+# Blanket keep rules for com.android.billingclient.api, com.google.android.gms.ads, and com.google.android.ump
+# have been removed to allow R8 to perform proper dead-code elimination and resource shrinking on release builds.
 
 # Bouncy Castle's optional LDAP certificate/CRL stores require desktop JNDI.
 # PDFchemy signs with in-memory certificates and does not call these stores or

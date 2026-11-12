@@ -40,7 +40,9 @@ fun RepairPdfScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember(effectiveInitialUri) { mutableStateOf<Uri?>(effectiveInitialUri) }
     var diagnostic by remember { mutableStateOf<RepairDiagnostic?>(null) }
     var isDiagnosing by remember { mutableStateOf(false) }
     var diagnosisFailed by remember { mutableStateOf(false) }
@@ -107,6 +109,28 @@ fun RepairPdfScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    val diag = diagnostic
+                    if (diag != null) {
+                        IconButton(
+                            onClick = {
+                                val summary = buildString {
+                                    appendLine("PDF Header: ${if (diag.hasValidHeader) "Valid (%PDF-)" else "Corrupted / Missing"}")
+                                    appendLine("EOF Marker: ${if (diag.hasValidEof) "Valid (%%EOF)" else "Truncated / Missing"}")
+                                    appendLine("Recovered Pages: ${diag.recoveredPages}")
+                                    if (diag.issueSummary.isNotBlank()) {
+                                        append("Issues: ${diag.issueSummary}")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF Repair Diagnostic", summary))
+                                android.widget.Toast.makeText(context, "Copied diagnostic report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Diagnostic Report")
+                        }
                     }
                 }
             )
@@ -261,8 +285,7 @@ fun RepairPdfScreen(
             // Repair & Save Action Button
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_repaired.pdf")
+                    saveFileLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "repaired"))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

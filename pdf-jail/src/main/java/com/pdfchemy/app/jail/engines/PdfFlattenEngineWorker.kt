@@ -18,6 +18,7 @@ import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
 object PdfFlattenEngineWorker {
+    private val gson = Gson()
 
     fun inspect(context: Context, sourceFd: ParcelFileDescriptor): String {
         PDFBoxResourceLoader.init(context)
@@ -40,7 +41,7 @@ object PdfFlattenEngineWorker {
                     "annotationCount" to annotationCount,
                     "hasSignatures" to hasSignatures
                 )
-                return Gson().toJson(map)
+                return gson.toJson(map)
             }
         } finally {
             try { document?.close() } catch (_: Exception) {}
@@ -52,7 +53,7 @@ object PdfFlattenEngineWorker {
         var document: PDDocument? = null
         var intermediateFile: File? = null
 
-        val map = Gson().fromJson(paramsJson, Map::class.java)
+        val map = gson.fromJson(paramsJson, Map::class.java)
         val flattenForms = map["flattenForms"] as? Boolean ?: true
         val flattenAnnotations = map["flattenAnnotations"] as? Boolean ?: true
 
@@ -62,15 +63,12 @@ object PdfFlattenEngineWorker {
                 val acroForm = document!!.documentCatalog.acroForm
 
                 if (flattenForms && acroForm != null) {
-                    try {
-                        if (acroForm.defaultResources == null) {
-                            val dr = com.tom_roush.pdfbox.pdmodel.PDResources()
-                            dr.put(COSName.getPDFName("Helv"), com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA)
-                            acroForm.defaultResources = dr
-                        }
-                        acroForm.flatten()
-                    } catch (e: Exception) {
+                    if (acroForm.defaultResources == null) {
+                        val dr = com.tom_roush.pdfbox.pdmodel.PDResources()
+                        dr.put(COSName.getPDFName("Helv"), com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA)
+                        acroForm.defaultResources = dr
                     }
+                    acroForm.flatten()
                 }
 
                 val pagesToFlatten = mutableSetOf<Int>()
@@ -134,7 +132,7 @@ object PdfFlattenEngineWorker {
                         baseDoc.close()
                         document = bakedDoc
                     } catch (e: Exception) {
-                        document = com.pdfchemy.app.jail.CapabilityIo.input(intermediateFile).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
+                        throw IllegalStateException("Failed to rasterize annotations during flattening: ${e.message}", e)
                     } finally {
                         try { renderer?.close() } catch (_: Exception) {}
                         try { pfd?.close() } catch (_: Exception) {}

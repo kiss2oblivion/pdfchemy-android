@@ -2,8 +2,6 @@ package com.pdfchemy.app.ui
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,10 +39,10 @@ fun PdfAValidatorScreen(
     val context = LocalContext.current
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var report by remember { mutableStateOf<PdfAReport?>(null) }
     var isChecking by remember { mutableStateOf(false) }
-    var isConverting by remember { mutableStateOf(false) }
 
     var auditGeneration by remember { mutableStateOf(0) }
     LaunchedEffect(selectedPdfUri, auditGeneration) {
@@ -56,23 +54,6 @@ fun PdfAValidatorScreen(
             report = PdfArchiveValidatorEngine.inspectPdfACompliance(context, uri).getOrNull()
         } finally {
             if (selectedPdfUri == uri && auditGeneration == requestedGeneration) isChecking = false
-        }
-    }
-
-    val savePdfALauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/pdf")
-    ) { destUri ->
-        if (destUri != null && selectedPdfUri != null) {
-            coroutineScope.launch {
-                isConverting = true
-                val success = PdfArchiveValidatorEngine.convertToPdfA(context, selectedPdfUri!!, destUri)
-                isConverting = false
-                if (success) {
-                    android.widget.Toast.makeText(context, context.getString(R.string.title_pdfa_converted_success), android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    android.widget.Toast.makeText(context, context.getString(R.string.error_pdfa_conversion_failed), android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
         }
     }
 
@@ -90,6 +71,24 @@ fun PdfAValidatorScreen(
                     }
                 },
                 actions = {
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val r = report ?: return@IconButton
+                                val reportText = buildString {
+                                    appendLine("PDF/A Compliance Report: ${r.certificationStatus} (${r.checks.count { it.isPassed }}/${r.checks.size} passed)")
+                                    r.checks.forEach { c ->
+                                        appendLine("[${if (c.isPassed) "PASS" else "FAIL"}] ${c.rule}: ${c.details}")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF/A Report", reportText))
+                                android.widget.Toast.makeText(context, "Copied PDF/A report to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy PDF/A Report")
+                        }
+                    }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { auditGeneration++ }) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "Re-scan")
@@ -255,32 +254,6 @@ fun PdfAValidatorScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-            }
-
-            // Convert to PDF/A-1b Action Button
-            Button(
-                onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    savePdfALauncher.launch("${base}_pdfa1b.pdf")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 52.dp),
-                enabled = selectedPdfUri != null && !isChecking && !isConverting
-            ) {
-                if (isConverting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(stringResource(R.string.btn_converting_pdfa))
-                } else {
-                    Icon(Icons.Rounded.VerifiedUser, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.btn_convert_to_pdfa))
                 }
             }
         }

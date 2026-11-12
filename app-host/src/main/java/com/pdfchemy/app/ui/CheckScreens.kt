@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.rounded.FactCheck
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.DocumentScanner
@@ -184,7 +185,8 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         onBack() 
     }
     val context = LocalContext.current
-    var sourceUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
     
     val currentMetadata by viewModel.currentMetadata.collectAsState()
     val analysis by viewModel.pdfAnalysis.collectAsState()
@@ -196,6 +198,12 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var keywords by remember { mutableStateOf("") }
     var creator by remember { mutableStateOf("") }
     var producer by remember { mutableStateOf("") }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && sourceUri == continuityUri && currentMetadata == null && !isAnalyzing) {
+            viewModel.loadMetadata(context, continuityUri!!)
+        }
+    }
 
     // Update local state when metadata is loaded
     LaunchedEffect(currentMetadata) {
@@ -234,6 +242,34 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         onBack() 
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (sourceUri != null && !isAnalyzing) {
+                        val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+                        IconButton(
+                            onClick = {
+                                val report = buildString {
+                                    analysis?.let { a ->
+                                        appendLine("Pages: ${a.pageCount}")
+                                        appendLine("Images: ${a.imageCount}")
+                                        appendLine("Signed: ${a.hasSignatures}")
+                                        appendLine("Type: ${a.scenario.name}")
+                                        appendLine()
+                                    }
+                                    appendLine("Title: $title")
+                                    appendLine("Author: $author")
+                                    appendLine("Subject: $subject")
+                                    appendLine("Keywords: $keywords")
+                                    appendLine("Creator: $creator")
+                                    append("Producer: $producer")
+                                }
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(report))
+                                android.widget.Toast.makeText(context, "Metadata report copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy Metadata Report")
+                        }
                     }
                 }
             )
@@ -305,7 +341,27 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(stringResource(R.string.metadata_fields), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(stringResource(R.string.metadata_fields), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            if (title.isNotEmpty() || author.isNotEmpty() || subject.isNotEmpty() || keywords.isNotEmpty() || creator.isNotEmpty() || producer.isNotEmpty()) {
+                                TextButton(
+                                    onClick = {
+                                        title = ""
+                                        author = ""
+                                        subject = ""
+                                        keywords = ""
+                                        creator = ""
+                                        producer = ""
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.clear))
+                                }
+                            }
+                        }
                         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.title)) }, modifier = Modifier.fillMaxWidth())
                         OutlinedTextField(value = author, onValueChange = { author = it }, label = { Text(stringResource(R.string.author)) }, modifier = Modifier.fillMaxWidth())
                         OutlinedTextField(value = subject, onValueChange = { subject = it }, label = { Text(stringResource(R.string.subject)) }, modifier = Modifier.fillMaxWidth())
@@ -339,8 +395,19 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
-    var sourceUri by remember { mutableStateOf<Uri?>(null) }
-    var fileName by remember { mutableStateOf("") }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
+    var fileName by remember {
+        mutableStateOf(continuityUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) } ?: "")
+    }
+    var showOverwriteConfirmDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && sourceUri == null) {
+            sourceUri = continuityUri
+            fileName = com.pdfchemy.app.utils.FileUtils.getFileName(context, continuityUri!!) ?: "Document.pdf"
+        }
+    }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         sourceUri = uri
@@ -352,6 +419,33 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             val src = sourceUri ?: return@rememberPreferredDocumentCreator
             viewModel.clearMetadata(context, src, destUri)
         }
+    }
+
+    if (showOverwriteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showOverwriteConfirmDialog = false },
+            title = { Text(stringResource(R.string.overwrite_original)) },
+            text = { Text(stringResource(R.string.select_a_pdf_to_strip_all_meta)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOverwriteConfirmDialog = false
+                        sourceUri?.let { viewModel.clearMetadataOverwrite(context, it) }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.overwrite_original))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOverwriteConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -372,6 +466,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -418,7 +513,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
-                        onClick = { sourceUri?.let { viewModel.clearMetadataOverwrite(context, it) } },
+                        onClick = { showOverwriteConfirmDialog = true },
                         modifier = Modifier
                             .weight(1f)
                             .defaultMinSize(minHeight = 52.dp),
@@ -465,7 +560,12 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 @Composable
 fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
-    var selectedFile by remember { mutableStateOf<androidx.documentfile.provider.DocumentFile?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedFile by remember {
+        mutableStateOf<androidx.documentfile.provider.DocumentFile?>(
+            continuityUri?.let { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, it) }
+        )
+    }
     
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)

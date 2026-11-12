@@ -135,12 +135,15 @@ class AudioExportService : Service() {
             check(engine.setOnUtteranceProgressListener(TtsPcmAssembler(pcm)) == TextToSpeech.SUCCESS)
             var processed = 0
             store.updateProgress(id, 0, total, 0)
+            val synthParams = Bundle().apply {
+                putString(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS, "false")
+            }
             for ((index, chunk) in chunks.withIndex()) {
                 currentCoroutineContext().ensureActive()
                 if (!OfflineSpeechPolicy.matches(engine.voice, voice)) throw OfflineSpeechUnavailableException()
                 val (utterance, drained) = pcm.beginChunk(index)
                 val sink = staging.getTempChunkFile(id, index)
-                check(engine.synthesizeToFile(chunk, Bundle(), sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }
+                check(engine.synthesizeToFile(chunk, synthParams, sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }
                 val bytes = withTimeout(120_000) { drained.await() }
                 // onDone alone cannot release this sink; drained acknowledges the application's writer flush.
                 withContext(Dispatchers.IO) { sink.delete() }

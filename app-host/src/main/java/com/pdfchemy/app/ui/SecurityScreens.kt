@@ -227,7 +227,15 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        isError = confirmPassword.isNotEmpty() && confirmPassword != password
+                        isError = confirmPassword.isNotEmpty() && confirmPassword != password,
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null
+                                )
+                            }
+                        }
                     )
 
                     if (confirmPassword.isNotEmpty() && confirmPassword != password) {
@@ -246,9 +254,7 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     Button(
                         onClick = {
                             if (canProtect) {
-                                val originalName = FileUtils.getFileName(context, selectedPdfUri!!) ?: "Document.pdf"
-                                val defaultName = "Protected_${originalName}"
-                                createDocLauncher.launch(defaultName)
+                                createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "protected"))
                             }
                         },
                         enabled = canProtect,
@@ -285,7 +291,8 @@ fun UnlockPdfScreen(
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
@@ -445,9 +452,7 @@ fun UnlockPdfScreen(
                     Button(
                         onClick = {
                             if (password.isNotBlank()) {
-                                val originalName = FileUtils.getFileName(context, selectedPdfUri!!) ?: "Document.pdf"
-                                val defaultName = "Unlocked_${originalName}"
-                                createDocLauncher.launch(defaultName)
+                                createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "unlocked"))
                             }
                         },
                         enabled = password.isNotBlank(),
@@ -479,7 +484,8 @@ fun PdfToImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     BackHandler { onBack() }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var selectedFormat by remember { mutableStateOf("JPEG") }
     var qualitySlider by remember { mutableStateOf(90f) }
     var targetResolution by remember { mutableStateOf(1440) }
@@ -495,7 +501,8 @@ fun PdfToImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (treeUri != null && selectedPdfUri != null) {
             val docFile = DocumentFile.fromTreeUri(context, treeUri)
             if (docFile != null) {
-                val originalName = (FileUtils.getFileName(context, selectedPdfUri!!) ?: "Document.pdf").removeSuffix(".pdf")
+                val originalName = (FileUtils.getFileName(context, selectedPdfUri!!) ?: "Document.pdf")
+                    .replace(Regex("(?i)\\.pdf$"), "")
                 viewModel.convertPdfToImages(
                     context = context,
                     sourceUri = selectedPdfUri!!,

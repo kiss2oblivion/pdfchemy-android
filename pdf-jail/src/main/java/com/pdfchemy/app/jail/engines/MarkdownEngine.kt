@@ -324,14 +324,40 @@ object MarkdownEngine {
     }
 
     private fun sanitizeText(input: String): String {
-        val normalized = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD)
-            .replace("\\p{M}".toRegex(), "")
-            .replace('“', '"').replace('”', '"')
-            .replace('‘', '\'').replace('’', '\'')
-            .replace('—', '-').replace('–', '-')
+        val replaced = input.replace("\t", "    ")
+            .replace("“", "\"")
+            .replace("”", "\"")
+            .replace("‘", "'")
+            .replace("’", "'")
+            .replace("—", "--")
+            .replace("–", "-")
             .replace("…", "...")
-            .replace("\t", "    ")
-        return normalized.filter { it.code in 32..126 || it == '\n' || it == '\r' }
+        return buildString(replaced.length) {
+            for (ch in replaced) {
+                when {
+                    ch.code in 32..126 || ch.code in 160..255 || ch == '\n' || ch == '\r' -> append(ch)
+                    ch == 'ș' -> append('s')
+                    ch == 'Ș' -> append('S')
+                    ch == 'ț' -> append('t')
+                    ch == 'Ț' -> append('T')
+                    ch == 'ş' -> append('s')
+                    ch == 'Ş' -> append('S')
+                    ch == 'ţ' -> append('t')
+                    ch == 'Ţ' -> append('T')
+                    ch == 'ł' -> append('l')
+                    ch == 'Ł' -> append('L')
+                    ch == 'đ' -> append('d')
+                    ch == 'Đ' -> append('D')
+                    ch.code > 255 -> {
+                        val decomposed = java.text.Normalizer.normalize(ch.toString(), java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{M}+"), "")
+                        for (dc in decomposed) {
+                            if (dc.code in 32..126 || dc.code in 160..255) append(dc)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun wrapText(text: String, maxCharsPerLine: Int): List<String> {

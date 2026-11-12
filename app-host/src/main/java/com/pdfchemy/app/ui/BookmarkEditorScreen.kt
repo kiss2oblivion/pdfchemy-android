@@ -20,10 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.BookmarkItem
 import com.pdfchemy.app.logic.PdfBookmarkEngine
@@ -44,7 +47,8 @@ fun BookmarkEditorScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var bookmarks by remember { mutableStateOf<List<BookmarkItem>>(emptyList()) }
     var totalPages by remember { mutableIntStateOf(1) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -52,7 +56,7 @@ fun BookmarkEditorScreen(
     // Dialog state
     var showAddDialog by remember { mutableStateOf(false) }
     var newBookmarkTitle by remember { mutableStateOf("") }
-    var newBookmarkPage by remember { mutableIntStateOf(1) }
+    var newBookmarkPageInput by remember { mutableStateOf("1") }
     var editingIndex by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(selectedPdfUri) {
@@ -109,6 +113,8 @@ fun BookmarkEditorScreen(
     }
 
     if (showAddDialog) {
+        val parsedPage = newBookmarkPageInput.trim().toIntOrNull()
+        val isPageValid = parsedPage != null && parsedPage in 1..totalPages
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
             title = {
@@ -127,22 +133,28 @@ fun BookmarkEditorScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
-                        value = newBookmarkPage.toString(),
-                        onValueChange = { newBookmarkPage = it.toIntOrNull()?.coerceIn(1, totalPages) ?: 1 },
+                        value = newBookmarkPageInput,
+                        onValueChange = { input ->
+                            newBookmarkPageInput = input.filter { it.isDigit() }
+                        },
                         label = { Text(stringResource(R.string.label_target_page, totalPages)) },
                         singleLine = true,
+                        isError = newBookmarkPageInput.isNotEmpty() && !isPageValid,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
                 Button(
+                    enabled = newBookmarkTitle.isNotBlank() && isPageValid,
                     onClick = {
-                        if (newBookmarkTitle.isNotBlank()) {
+                        if (newBookmarkTitle.isNotBlank() && isPageValid) {
                             val currentLevel = editingIndex?.let { bookmarks.getOrNull(it)?.level } ?: 0
+                            val targetPage = parsedPage.coerceIn(1, totalPages)
                             val newItem = BookmarkItem(
                                 title = newBookmarkTitle.trim(),
-                                pageIndex = (newBookmarkPage - 1).coerceAtLeast(0),
+                                pageIndex = (targetPage - 1).coerceAtLeast(0),
                                 level = currentLevel
                             )
                             val mutable = bookmarks.toMutableList()
@@ -182,7 +194,7 @@ fun BookmarkEditorScreen(
                             onClick = {
                                 editingIndex = null
                                 newBookmarkTitle = ""
-                                newBookmarkPage = 1
+                                newBookmarkPageInput = "1"
                                 showAddDialog = true
                             }
                         ) {
@@ -266,6 +278,30 @@ fun BookmarkEditorScreen(
             }
 
             // Bookmarks list
+            if (bookmarks.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Bookmarks (${bookmarks.size})",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (bookmarks.size > 1) {
+                            AssistChip(
+                                onClick = { bookmarks = bookmarks.sortedBy { it.pageIndex } },
+                                label = { Text("Sort by Page", fontSize = 11.sp) }
+                            )
+                        }
+                        TextButton(onClick = { bookmarks = emptyList() }) {
+                            Text("Clear All", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 if (bookmarks.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -430,7 +466,7 @@ fun BookmarkEditorScreen(
                                             onClick = {
                                                 editingIndex = idx
                                                 newBookmarkTitle = item.title
-                                                newBookmarkPage = item.pageIndex + 1
+                                                newBookmarkPageInput = (item.pageIndex + 1).toString()
                                                 showAddDialog = true
                                             },
                                             modifier = Modifier.size(30.dp)

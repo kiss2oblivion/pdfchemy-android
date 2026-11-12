@@ -171,6 +171,51 @@ class RedactionResourcesTest {
         }
     }
 
+    @Test fun redactionRemovesJavaScriptActionsAndNameTrees() {
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            val jsAction = COSDictionary().apply {
+                setName(COSName.S, "JavaScript")
+                setString(COSName.getPDFName("JS"), "app.alert('PRIVATE_JS_SECRET_4419');")
+            }
+            doc.documentCatalog.cosObject.setItem(COSName.OPEN_ACTION, jsAction)
+            doc.documentCatalog.cosObject.setItem(COSName.NAMES, COSDictionary().apply {
+                setItem(COSName.getPDFName("JavaScript"), COSDictionary().apply {
+                    setItem(COSName.NAMES, COSArray().apply {
+                        add(COSString("script1"))
+                        add(COSDictionary().apply {
+                            setName(COSName.S, "JavaScript")
+                            setString(COSName.getPDFName("JS"), "console.println('PRIVATE_NAMED_JS_8821');")
+                        })
+                    })
+                })
+            })
+            replace(doc, page)
+            assertAbsent(doc, "PRIVATE_JS_SECRET_4419")
+            assertAbsent(doc, "PRIVATE_NAMED_JS_8821")
+        }
+    }
+
+    @Test fun winAnsiSanitizerTransliteratesExtendedLatinWithoutThrowingInHelvetica() {
+        val raw = "Signed: 2026-11-09 București, Łódź, İstanbul, Čačak, Đakovo"
+        val sanitized = SignatureEngineWorker.sanitizeForWinAnsi(raw)
+        assertTrue(sanitized.contains("Bucuresti"))
+        assertTrue(sanitized.contains("Lodz"))
+        assertTrue(sanitized.contains("Istanbul"))
+        assertTrue(sanitized.contains("Cacak"))
+        assertTrue(sanitized.contains("Dakovo"))
+        PDDocument().use { doc ->
+            val page = PDPage().also(doc::addPage)
+            PDPageContentStream(doc, page).use { cs ->
+                cs.beginText()
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
+                cs.newLineAtOffset(20f, 50f)
+                cs.showText(sanitized)
+                cs.endText()
+            }
+        }
+    }
+
     @Test fun sharedStreamsPropagateRasterizationWithoutSelectingIndependentPages() {
         PDDocument().use { doc ->
             val pages = List(4) { PDPage().also(doc::addPage) }

@@ -68,7 +68,9 @@ fun PageCropperScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var pageCount by remember { mutableIntStateOf(0) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -115,8 +117,8 @@ fun PageCropperScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        initialPdfUri?.let {
+    LaunchedEffect(effectiveInitialPdfUri) {
+        effectiveInitialPdfUri?.let {
             selectedPdfUri = it
             loadPagePreview(it, 0)
         }
@@ -277,6 +279,21 @@ fun PageCropperScreen(
             // Interactive Crop Canvas & Page Navigation
             if (selectedPdfUri != null) {
                 // Page selector
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && pageCount > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = pageCount,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            val target = targetZeroBased.coerceIn(0, pageCount - 1)
+                            if (target != currentPageIndex) {
+                                loadPagePreview(selectedPdfUri!!, target)
+                            }
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 if (pageCount > 1) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -297,7 +314,11 @@ fun PageCropperScreen(
                         Text(
                             text = stringResource(R.string.label_page_num_of, currentPageIndex + 1, pageCount),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(enabled = !isRendering) { showPageJumpDialog = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
 
                         IconButton(

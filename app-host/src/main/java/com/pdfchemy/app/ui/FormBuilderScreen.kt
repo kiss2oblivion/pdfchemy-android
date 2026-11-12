@@ -230,12 +230,28 @@ fun FormBuilderScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Text(
-                                text = "Total: ${placedFields.size}",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Total: ${placedFields.size}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                if (placedFields.isNotEmpty()) {
+                                    TextButton(
+                                        onClick = {
+                                            placedFields.clear()
+                                            editingField = null
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                    ) {
+                                        Text("Clear All", color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -243,7 +259,8 @@ fun FormBuilderScreen(
                                 if (placedFields.isEmpty()) {
                                     Toast.makeText(context, context.getString(R.string.form_builder_no_fields_warn), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    saveFileLauncher.launch("fillable_form.pdf")
+                                    val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "fillable")
+                                    saveFileLauncher.launch(suggestedName)
                                 }
                             },
                             modifier = Modifier
@@ -346,6 +363,18 @@ fun FormBuilderScreen(
                     .padding(paddingValues)
             ) {
                 // Page Navigator Bar
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && totalPages > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = totalPages,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 Surface(
                     tonalElevation = 2.dp,
                     color = MaterialTheme.colorScheme.surface
@@ -366,7 +395,11 @@ fun FormBuilderScreen(
                         Text(
                             text = "${currentPageIndex + 1} / ${totalPages.coerceAtLeast(1)}",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         IconButton(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },

@@ -34,6 +34,18 @@ class SecurityLimitsTest {
         rejected { SecurityLimits.safeRenderSize(0.0, 1.0) }
         rejected { SecurityLimits.requirePixels(8192, 8192) }
     }
+    @Test fun imageDecodeRasterAllowsScansAndRejectsExcessiveBombs() {
+        // Standard 300 DPI A4 page is 2480x3508 (~8.7 MP) -> accepted
+        SecurityLimits.requireImageDecodePixels(2480, 3508)
+        // 12 MP phone camera capture (4000x3000) -> accepted
+        SecurityLimits.requireImageDecodePixels(4000, 3000)
+        // 24 MP capture (6000x4000) -> accepted
+        SecurityLimits.requireImageDecodePixels(6000, 4000)
+        // Decompression bomb exceeding 8192 or 32 MP -> rejected
+        rejected { SecurityLimits.requireImageDecodePixels(8193, 1000) }
+        rejected { SecurityLimits.requireImageDecodePixels(8000, 8000) } // 64 MP > 32 MP
+        rejected { SecurityLimits.requireImageDecodePixels(0, 1000) }
+    }
     @Test fun outputQuotaRejectsBeforeWritingTheExcessByte() {
         val bytes = ByteArrayOutputStream()
         val bounded = BoundedOutputStream(bytes, 5)

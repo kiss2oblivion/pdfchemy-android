@@ -44,7 +44,8 @@ fun AttachmentManagerScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var attachments by remember { mutableStateOf<List<PdfAttachment>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -146,24 +147,21 @@ fun AttachmentManagerScreen(
                     PdfGateway.executeEngineExtra(context, "ATTACHMENT_EMBED", selectedPdfUri!!, destUri, fileToEmbedUri!!, params.toString())
                     viewModel.notifySuccess(
                         context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success)
-                    , destUri)
+                        context.getString(R.string.desc_embed_success),
+                        destUri
+                    )
+                    selectedPdfUri = destUri
                 } catch (e: Exception) {
                     viewModel.showErrorToast(
                         context.getString(R.string.error_embed_failed),
                         e.localizedMessage ?: ""
                     )
-                }
-                if (false) {
-                    viewModel.notifySuccess(
-                        context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success)
-                    , destUri)
-                    selectedPdfUri = destUri
+                } finally {
                     fileToEmbedUri = null
-                    refreshAttachments()
                 }
             }
+        } else {
+            fileToEmbedUri = null
         }
     }
 
@@ -171,8 +169,7 @@ fun AttachmentManagerScreen(
         val fileUri = fileToEmbedUri
         val pdfUri = selectedPdfUri
         if (fileUri != null && pdfUri != null) {
-            val base = FileUtils.getFileName(context, pdfUri)?.removeSuffix(".pdf") ?: "document"
-            saveAttachedPdfLauncher.launch("${base}_with_attachment.pdf")
+            saveAttachedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, pdfUri, "with_attachment"))
         }
     }
 

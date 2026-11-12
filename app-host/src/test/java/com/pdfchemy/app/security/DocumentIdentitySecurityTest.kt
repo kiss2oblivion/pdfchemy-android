@@ -60,7 +60,7 @@ class DocumentIdentitySecurityTest {
         every { mockContext.contentResolver } returns mockResolver
         every { mockResolver.query(any(), any(), any(), any(), any()) } answers {
             MatrixCursor(arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)).apply {
-                addRow(arrayOf("invoice.pdf", 16L))
+                addRow(arrayOf<Any?>("invoice.pdf", 16L))
             }
         }
         every { mockResolver.openInputStream(doc1Uri) } answers { ByteArrayInputStream(content1) }

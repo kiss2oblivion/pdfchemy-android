@@ -178,6 +178,31 @@ Android reconciliation adopts Gemini's localization while retaining later securi
 
 ---
 
+## 🔒 Security Hardening & Remediation Registry (2.1.0)
+- **Fail-Closed Flattening:** `PdfFlattenEngineWorker` enforces strict failure propagation if form flattening or annotation rasterization fails.
+- **ReDoS Prevention & Regex Guard:** `PdfRedactionEngineWorker` pre-compiles search regexes, enforces input length boundaries (1024 chars), and rejects nested quantifier patterns to prevent catastrophic backtracking.
+- **Forensic Find & Replace Destruction:** `PdfFindAndReplaceEngine` resets page resources (`PDResources()`), purges page carriers (`Annots`, `Thumb`, `Metadata`, `PieceInfo`, `AA`, `AF`, `StructParents`), and runs `RedactionResources.prepareForRedaction` and `pruneUnused` to prevent replaced text from surviving in structure trees (`/StructTreeRoot`), outlines, or XMP streams.
+- **Unconditional Forensic Redaction:** `PdfRedactionEngineWorker` deprecates cosmetic non-forensic overlay modes, ensuring all redaction operations perform forensic rasterization and carrier scrubbing.
+- **Spreadsheet Formula Neutralization:** `OfficeExportEngineWorker.exportToExcel` and `StructuredTextCodec.writeCsv` neutralize leading formula metacharacters (`=`, `+`, `-`, `@`, `\t`, `\r`, `\0`) in non-numeric cells.
+- **Strict Canonical File Admission:** `DocumentStager` resolves canonical paths for external `file://` URIs and verifies boundaries before staging.
+- **Audio Publication & Late Cancellation Guard:** `AudioOutputPublisher` guarantees already-published audio outputs are never deleted during late-cancellation cleanups.
+- **Deep Metadata Sanitization:** `PdfMetadataEngineWorker` and `JailCompressionWorker` recursively purge embedded `/Metadata` and `/PieceInfo` dictionaries from document object graphs and trailer `/ID`.
+- **Private Offline TTS Policy:** `ReflowReaderScreen` and `AudioExportService` enforce offline voice selection and set `KEY_FEATURE_NETWORK_SYNTHESIS = "false"` to prevent text transmission over network interfaces.
+- **Watermark & Bates Quota Bounding:** `PdfStampAndNumberWorker` strictly clamps font sizes, tile steps, and numbering digits.
+- **Image Decode Quota Alignment:** `PdfImageExtractorEngine` and `PdfServiceEngineWorker` use `SecurityLimits.requireImageDecodePixels` (up to 32 MP) and recycle bitmaps promptly.
+- **Path Traversal Accuracy:** `ExternalUriAdmission` checks directory segments to prevent false rejection of filenames containing consecutive dots.
+- **Device-to-Device Backup Hardening:** `data_extraction_rules.xml` and manifest exclude exports, shared copies, and staged caches from cloud backup and D2D device transfers on Android 12+ (API 31+).
+
+---
+
+## 🧹 Code Cleanup & Architectural Hygiene Registry (2.1.0)
+- **Dead Asset Purge:** Removed unreferenced `mascot.jpg` (saving 618.7 KB in release APK and AAB bundles).
+- **Dead Code Elimination:** Removed uncalled `extractPdfUri` in `MainActivity.kt` and unread `ALLOWED_MIME_TYPES` in `ImageCompressor.kt`.
+- **Hot-Path Memory Optimization:** Replaced per-request `Gson()` instantiations with cached singletons across `JailEngineBridge`, `MigratedEngineDispatch`, `PdfFlattenEngineWorker`, `PdfJailService`, `PdfEditor`, and `PdfFlattenEngine`, reducing heap allocation churn and GC pauses during high-throughput PDF processing.
+- **Unified Telemetry & Logging:** Routed raw `Log.w` calls in `MainActivity.kt` to `AppLogger.w`, ensuring uniform debug-mode logging controls.
+
+---
+
 ## ⏳ What Is NOT Yet Implemented (Future Roadmap)
 1. **Directory-Wide Spotlight Search:** Multi-document keyword search crawling external folder trees via SAF ACTION_OPEN_DOCUMENT_TREE (parity with Desktop Spotlight Search).
 2. **Unified Multi-File Batch Studio:** Unified batch queue for Batch Compress, Batch Decrypt, Batch PDF/A, and Batch Flatten (parity with Desktop Batch Studio).

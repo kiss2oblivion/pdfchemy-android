@@ -56,7 +56,8 @@ fun ImageReplacerScreen(
     val scope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri ?: continuityUri) }
     var embeddedImages by remember { mutableStateOf<List<EmbeddedImageInfo>>(emptyList()) }
     var isScanningImages by remember { mutableStateOf(false) }
 
@@ -439,6 +440,12 @@ fun ImageReplacerScreen(
                                     )
                                 }
                             }
+                            Text(
+                                text = "${selectedTargetImage!!.width} × ${selectedTargetImage!!.height} px",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
 
                         // New Replacement Image
@@ -486,6 +493,14 @@ fun ImageReplacerScreen(
                                     }
                                 }
                             }
+                            if (replacementBitmap != null) {
+                                Text(
+                                    text = "${replacementBitmap!!.width} × ${replacementBitmap!!.height} px",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -493,9 +508,7 @@ fun ImageReplacerScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val baseName = selectedPdfUri?.let { FileUtils.getFileName(context, it) } ?: "document.pdf"
-                        val suggestedName = "image_swapped_$baseName"
-                        savePdfLauncher.launch(suggestedName)
+                        savePdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "image_swapped"))
                     },
                     enabled = replacementBitmap != null
                 ) {

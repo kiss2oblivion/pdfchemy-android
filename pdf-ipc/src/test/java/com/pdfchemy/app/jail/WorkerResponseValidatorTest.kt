@@ -64,14 +64,27 @@ class WorkerResponseValidatorTest {
 
     @Test
     fun nodeLimitEnforced() {
-        // Exceed MAX_TOTAL_NODES (5000)
+        // Exceed MAX_TOTAL_NODES (50_000)
         val sb = StringBuilder("[")
-        for (i in 0..5005) {
+        for (i in 0..50005) {
             if (i > 0) sb.append(",")
             sb.append("\"item$i\"")
         }
         sb.append("]")
         assertRejected { WorkerResponseValidator.validate("TEXT_PAGES", sb.toString()) }
+    }
+
+    @Test
+    fun singleQuoteNestingBypassRejected() {
+        // Single quotes outside double-quoted strings are rejected to prevent JSONTokener depth bypasses
+        val bypassPayload = "['\"',[[[[[[[[[\"deep\"]]]]]]]]]],'\"']"
+        assertRejected { WorkerResponseValidator.validate("TEXT_PAGES", bypassPayload) }
+
+        // Single quotes inside double-quoted strings are completely valid
+        val validWithApostrophe = "[\"John's file\", \"second's test\"]"
+        val contract = WorkerResponseValidator.validate("TEXT_PAGES", validWithApostrophe)
+        assertTrue(contract is TextPagesContract)
+        assertEquals(2, (contract as TextPagesContract).pages.size)
     }
 
     @Test

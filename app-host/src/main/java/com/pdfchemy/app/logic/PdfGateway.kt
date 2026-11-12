@@ -57,7 +57,11 @@ object PdfGateway {
                 inputLeases.add(stagedLease.lease)
             }
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
-            val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
+            val inputs = staged.map {
+                (context.contentResolver.openFileDescriptor(it.uri, "r")
+                    ?: throw java.io.FileNotFoundException("Cannot open descriptor for staged document: ${it.uri}"))
+                    .also(descriptors::add)
+            }
             val outputs = outputTransaction.workerDescriptors
 
             suspend fun bind(className: String): IBinder {
@@ -128,6 +132,8 @@ object PdfGateway {
                     finally { outputTransaction.releaseWorkerDescriptors() }
                     response.await()
                 }
+            } catch (t: kotlinx.coroutines.TimeoutCancellationException) {
+                throw WorkerTimeoutException("Worker operation timed out after ${SecurityLimits.WORKER_DEADLINE_MS}ms: $operation")
             } finally { runCatching { binder.unlinkToDeath(death, 0) } }
 
             // Worker rendering is finished; SAF publication must not occupy the renderer.

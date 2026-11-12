@@ -998,7 +998,7 @@
     <string name="manifesto_g1_title" formatted="false">100% Free Forever</string>
     <string name="manifesto_g1_desc">Zero subscriptions, zero paywalls, zero artificial page/file limits, and zero watermark vandalism.</string>
     <string name="manifesto_g2_title" formatted="false">100% Offline &amp; Private</string>
-    <string name="manifesto_g2_desc" formatted="false">Zero files ever leave this computer. Zero analytics or tracking telemetry. 100% safe for confidential documents.</string>
+    <string name="manifesto_g2_desc" formatted="false">Zero document files or metadata ever leave your device. 100% on-device document processing, safe for confidential files.</string>
     <string name="manifesto_g3_title">Original-Safe</string>
     <string name="manifesto_g3_desc">We never overwrite or destroy your source files without explicit confirmation.</string>
     <string name="manifesto_g4_title">Built For The People</string>
@@ -1267,5 +1267,8 @@
     <string name="desc_share_text">Share Text</string>
     <string name="msg_copied_to_clipboard">Text copied to clipboard</string>
     <string name="msg_text_saved_success">Text saved successfully</string>
+    <string name="form_fields_count">%1$d Fields</string>
+    <string name="action_reset_fields">Reset Fields</string>
+    <string name="desc_paste">Paste</string>
 </resources>
 

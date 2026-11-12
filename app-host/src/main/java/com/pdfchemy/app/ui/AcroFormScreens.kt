@@ -267,6 +267,28 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                     }
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.form_fields_count, formFields.size),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(
+                            onClick = {
+                                formFields.forEach { field ->
+                                    fieldValues[field.fullyQualifiedName] = if (field.type == FormFieldType.CHECKBOX) "Off" else ""
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(stringResource(R.string.action_reset_fields), color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+
                     if (fillMode == FormFillMode.LIST) {
                         LazyColumn(
                             modifier = Modifier

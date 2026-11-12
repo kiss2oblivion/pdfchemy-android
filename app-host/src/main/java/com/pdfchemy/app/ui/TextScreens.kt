@@ -40,11 +40,11 @@ fun TextCleanerScreen(onBack: () -> Unit) {
     BackHandler { onBack() }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
     var textContent by remember { mutableStateOf("") }
 
     val wordCount = if (textContent.isBlank()) 0 else textContent.trim().split("\\s+".toRegex()).size
     val charCount = textContent.length
+    val lineCount = if (textContent.isEmpty()) 0 else textContent.lines().size
 
     val openFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -110,13 +110,24 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                     IconButton(onClick = { openFileLauncher.launch(arrayOf("text/plain", "text/*", "application/pdf", "application/json")) }) {
                         Icon(Icons.Rounded.FolderOpen, contentDescription = stringResource(R.string.desc_open_file))
                     }
+                    IconButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            val pasted = clipboard?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString()
+                            if (!pasted.isNullOrEmpty()) {
+                                textContent = if (textContent.isEmpty()) pasted else "$textContent\n$pasted"
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = stringResource(R.string.desc_paste))
+                    }
                     if (textContent.isNotBlank()) {
                         IconButton(onClick = { saveFileLauncher.launch("cleaned_text.txt") }) {
                             Icon(Icons.Rounded.Save, contentDescription = stringResource(R.string.desc_save_file))
                         }
                         IconButton(onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("Cleaned Text", textContent))
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                            clipboard?.setPrimaryClip(ClipData.newPlainText("Cleaned Text", textContent))
                             Toast.makeText(context, context.getString(R.string.msg_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                         }) {
                             Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_clipboard))
@@ -145,6 +156,7 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(stringResource(R.string.label_words, wordCount), style = MaterialTheme.typography.labelLarge)
+                    Text("Lines: $lineCount", style = MaterialTheme.typography.labelLarge)
                     Text(stringResource(R.string.label_chars, charCount), style = MaterialTheme.typography.labelLarge)
                 }
             }
@@ -181,9 +193,11 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                             textContent = JSONArray(trimmed).toString(4)
                         } else if (trimmed.startsWith("{")) {
                             textContent = JSONObject(trimmed).toString(4)
+                        } else {
+                            Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: JSONException) {
-                        // ignore or show toast
+                        Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
                     }
                 }
                 ActionChip(stringResource(R.string.btn_minify_json)) {
@@ -193,9 +207,11 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                             textContent = JSONArray(trimmed).toString()
                         } else if (trimmed.startsWith("{")) {
                             textContent = JSONObject(trimmed).toString()
+                        } else {
+                            Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: JSONException) {
-                        // ignore or show toast
+                        Toast.makeText(context, "Invalid JSON format", Toast.LENGTH_SHORT).show()
                     }
                 }
                 ActionChip(stringResource(R.string.btn_clear)) { textContent = "" }

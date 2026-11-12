@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -88,21 +89,23 @@ fun PdfEditorScreen(
     var sessionTick by remember { mutableIntStateOf(0) }
     val pageModifications = remember(sessionTick) { session.getModifications() }
 
-    remember(initialPdfUri) {
-        if (initialPdfUri != null && viewModel.editorSourceUri != initialPdfUri) {
-            session.clear(); viewModel.editorSourceUri = initialPdfUri; viewModel.editorUri = initialPdfUri; viewModel.editorPage = 0
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    remember(effectiveInitialPdfUri) {
+        if (effectiveInitialPdfUri != null && viewModel.editorSourceUri != effectiveInitialPdfUri) {
+            session.clear(); viewModel.editorSourceUri = effectiveInitialPdfUri; viewModel.editorUri = effectiveInitialPdfUri; viewModel.editorPage = 0
         }
         true
     }
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(viewModel.editorUri ?: initialPdfUri) }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(viewModel.editorUri ?: effectiveInitialPdfUri) }
     var documentId by remember { mutableStateOf("") }
     val rememberPosition by viewModel.isRememberPositionEnabled.collectAsState()
     var totalPages by remember { mutableIntStateOf(0) }
     var currentPageIndex by remember { mutableIntStateOf(viewModel.editorPage) }
     var currentPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var secondaryPageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isRenderingPage by remember { mutableStateOf(initialPdfUri != null || viewModel.editorUri != null) }
-    var documentLoading by remember { mutableStateOf(initialPdfUri != null || viewModel.editorUri != null) }
+    var isRenderingPage by remember { mutableStateOf(effectiveInitialPdfUri != null || viewModel.editorUri != null) }
+    var documentLoading by remember { mutableStateOf(effectiveInitialPdfUri != null || viewModel.editorUri != null) }
     var loadFailed by remember { mutableStateOf(false) }
 
     var pendingInput by remember { mutableStateOf<Uri?>(null) }
@@ -164,10 +167,12 @@ fun PdfEditorScreen(
     var showTextDialog by remember { mutableStateOf(false) }
     var pendingTextPosition by remember { mutableStateOf<Offset?>(null) }
     var textInputContent by remember { mutableStateOf("") }
+    var textFontSize by remember { mutableFloatStateOf(16f) }
     var textColorOption by remember { mutableStateOf(Color.Black) }
 
     var showStampPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
+    var showPageJumpDialog by remember { mutableStateOf(false) }
 
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -611,6 +616,7 @@ fun PdfEditorScreen(
                     currentPage = currentPageIndex,
                     totalPages = totalPages,
                     pageLabel = pageLabel,
+                    onPageLabelClick = { if (totalPages > 1) showPageJumpDialog = true },
                     onPrevPage = {
                         if (isDualPageMode) {
                             currentPageIndex = (currentPageIndex - 2).coerceAtLeast(0)
@@ -749,7 +755,11 @@ fun PdfEditorScreen(
                         Text(
                             text = "${currentPageIndex + 1} / $totalPages",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
 
@@ -773,6 +783,7 @@ fun PdfEditorScreen(
                             onColorClick = { showColorPicker = true },
                             currentPage = currentPageIndex,
                             totalPages = totalPages,
+                            onPageLabelClick = { if (totalPages > 1) showPageJumpDialog = true },
                             onPrevPage = { if (currentPageIndex > 0) currentPageIndex-- },
                             onNextPage = { if (currentPageIndex < totalPages - 1) currentPageIndex++ }
                         )
@@ -850,6 +861,30 @@ fun PdfEditorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
+                    Text(
+                        text = "${textFontSize.toInt()} pt",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(12f, 16f, 22f, 30f).forEach { preset ->
+                            FilterChip(
+                                selected = kotlin.math.abs(textFontSize - preset) < 0.5f,
+                                onClick = { textFontSize = preset },
+                                label = { Text("${preset.toInt()}pt") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                    Slider(
+                        value = textFontSize,
+                        onValueChange = { textFontSize = it },
+                        valueRange = 8f..40f,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {
@@ -862,8 +897,8 @@ fun PdfEditorScreen(
                                 text = textInputContent.trim(),
                                 xRatio = xRatio,
                                 yRatio = yRatio,
-                                fontSize = 16f,
-                                textColor = selectedColor.hashCode()
+                                fontSize = textFontSize,
+                                textColor = selectedColor.toArgb()
                             )
                             session.addTextAnnotation(pendingTextPage, newTextAnn)
                             sessionTick++
@@ -1069,9 +1104,42 @@ fun PdfEditorScreen(
                         )
                     }
                 }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf(3f to "3pt", 6f to "6pt", 12f to "12pt", 20f to "20pt").forEach { (presetWidth, label) ->
+                        ElevatedFilterChip(
+                            selected = kotlin.math.abs(strokeWidth - presetWidth) < 0.5f,
+                            onClick = { strokeWidth = presetWidth },
+                            label = { Text(label) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Slider(
+                    value = strokeWidth,
+                    onValueChange = { strokeWidth = it },
+                    valueRange = 2f..28f,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showPageJumpDialog && totalPages > 1) {
+        PageJumpDialog(
+            currentPageZeroBased = currentPageIndex,
+            totalPages = totalPages,
+            onDismiss = { showPageJumpDialog = false },
+            onJumpToPage = { targetZeroBased ->
+                showPageJumpDialog = false
+                currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+            }
+        )
     }
 
     if (showUnsavedDialog) {
@@ -1198,6 +1266,7 @@ fun EditorBottomBar(
     currentPage: Int,
     totalPages: Int,
     pageLabel: String = "${currentPage + 1} / $totalPages",
+    onPageLabelClick: () -> Unit = {},
     onPrevPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
@@ -1282,7 +1351,11 @@ fun EditorBottomBar(
                 Text(
                     text = pageLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = totalPages > 1, onClick = onPageLabelClick)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
                 )
 
                 IconButton(onClick = onNextPage, enabled = currentPage < totalPages - 1) {

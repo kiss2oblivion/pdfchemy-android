@@ -547,7 +547,30 @@ fun SignPdfScreen(
                         Icon(Icons.Rounded.ChevronLeft, contentDescription = null)
                     }
 
-                    Text("${currentPageIndex + 1} / $totalPages", fontWeight = FontWeight.Bold)
+                    var showPageJumpDialog by remember { mutableStateOf(false) }
+                    if (showPageJumpDialog && totalPages > 1) {
+                        PageJumpDialog(
+                            currentPageZeroBased = currentPageIndex,
+                            totalPages = totalPages,
+                            onDismiss = { showPageJumpDialog = false },
+                            onJumpToPage = { targetZeroBased ->
+                                val target = targetZeroBased.coerceIn(0, totalPages - 1)
+                                if (target != currentPageIndex) {
+                                    currentPageIndex = target
+                                    renderPage(selectedPdfUri!!, currentPageIndex)
+                                }
+                                showPageJumpDialog = false
+                            }
+                        )
+                    }
+                    Text(
+                        text = "${currentPageIndex + 1} / $totalPages",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
 
                     IconButton(
                         onClick = {
@@ -814,7 +837,10 @@ fun SignPdfScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("signed_document_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -1037,7 +1063,10 @@ fun SignPdfScreen(
             },
             confirmButton = {
                 Button(
-                    onClick = { pkiSignLauncher.launch("signed_document_pki_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed_pki")
+                        pkiSignLauncher.launch(suggestedName)
+                    },
                     enabled = (pkiKeystoreUri != null || pkiSignerName.isNotBlank()) && !isSaving
                 ) {
                     if (isSaving) {
