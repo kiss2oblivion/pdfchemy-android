@@ -85,7 +85,7 @@ fun RepairPdfScreen(
 
                 if (result.isSuccess) {
                     val count = result.getOrThrow()
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_repair_success),
                         context.getString(R.string.desc_repair_success, count)
                     , destUri)

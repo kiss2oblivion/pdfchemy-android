@@ -315,7 +315,11 @@ fun PdfCompareScreen(
                     }
 
                     Text(
-                        "${currentPageIndex + 1} / ${summary.pageDiffs.size}",
+                        if (currentDiff?.alignmentLabel?.isNotBlank() == true) {
+                            "${currentPageIndex + 1} / ${summary.pageDiffs.size} • ${currentDiff.alignmentLabel}"
+                        } else {
+                            "${currentPageIndex + 1} / ${summary.pageDiffs.size}"
+                        },
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyMedium
                     )

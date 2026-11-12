@@ -7,6 +7,28 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SignerIdentitySecurityTest {
+    @Test fun p12KeystoreImportExtractsPrivateKeyAndCertChain() {
+        val keyInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate("Corporate Signing Authority")
+        val password = "TestPassword123".toCharArray()
+
+        // Create an in-memory PKCS#12 keystore
+        val ks = java.security.KeyStore.getInstance("PKCS12")
+        ks.load(null, password)
+        val chain = arrayOf<java.security.cert.Certificate>(keyInfo.certificate)
+        ks.setKeyEntry("client_alias", keyInfo.keyPair.private, password, chain)
+
+        val baos = java.io.ByteArrayOutputStream()
+        ks.store(baos, password)
+        val p12Bytes = baos.toByteArray()
+
+        // Load credentials via AndroidPdfCryptoSigner
+        val credentials = AndroidPdfCryptoSigner.loadPkcs12Credentials(p12Bytes, password)
+        assertNotNull(credentials.privateKey)
+        assertNotNull(credentials.certificate)
+        assertEquals("Corporate Signing Authority", (X500Name.getInstance(credentials.certificate.subjectX500Principal.encoded).getRDNs(BCStyle.CN).single().first.value as ASN1String).string)
+        assertEquals(1, credentials.certificateChain.size)
+    }
+
     @Test fun hostileNameRemainsOneLiteralCommonNameInAnEphemeralSelfSignedCertificate() {
         val supplied = "Alice, O=Injected+OU=Root\\\"\nCN=Someone Else"
         val first = AndroidPdfCryptoSigner.generateSelfSignedCertificate(supplied)
@@ -19,5 +41,26 @@ class SignerIdentitySecurityTest {
         first.certificate.verify(first.keyPair.public)
         val second = AndroidPdfCryptoSigner.generateSelfSignedCertificate(supplied)
         assertFalse(first.keyPair.public.encoded.contentEquals(second.keyPair.public.encoded))
+    }
+
+    @Test fun importedKeystoreRejectsMultiplePrivateKeys() {
+        val first = AndroidPdfCryptoSigner.generateSelfSignedCertificate("First")
+        val second = AndroidPdfCryptoSigner.generateSelfSignedCertificate("Second")
+        val password = "fixture-only".toCharArray()
+        val store = java.security.KeyStore.getInstance("PKCS12").apply { load(null, password) }
+        store.setKeyEntry("first", first.keyPair.private, password, arrayOf(first.certificate))
+        store.setKeyEntry("second", second.keyPair.private, password, arrayOf(second.certificate))
+        val bytes = java.io.ByteArrayOutputStream().also { store.store(it, password) }.toByteArray()
+        assertNotNull(runCatching { AndroidPdfCryptoSigner.loadPkcs12Credentials(bytes, password) }.exceptionOrNull())
+    }
+
+    @Test fun importedCertificateMustMatchItsPrivateKey() {
+        val first = AndroidPdfCryptoSigner.generateSelfSignedCertificate("Key owner")
+        val second = AndroidPdfCryptoSigner.generateSelfSignedCertificate("Different certificate")
+        val password = "fixture-only".toCharArray()
+        val store = java.security.KeyStore.getInstance("PKCS12").apply { load(null, password) }
+        store.setKeyEntry("mismatch", first.keyPair.private, password, arrayOf(second.certificate))
+        val bytes = java.io.ByteArrayOutputStream().also { store.store(it, password) }.toByteArray()
+        assertNotNull(runCatching { AndroidPdfCryptoSigner.loadPkcs12Credentials(bytes, password) }.exceptionOrNull())
     }
 }

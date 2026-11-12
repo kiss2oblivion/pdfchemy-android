@@ -40,7 +40,8 @@ internal val LocalEditorOverlayRenderer = staticCompositionLocalOf {
 @Composable
 internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification, tool: EditorTool,
     color: Color, strokeWidth: Float, onDrawing: (DrawingPath) -> Unit, onText: (Offset) -> Unit,
-    onStamp: (Offset) -> Unit, onRedaction: (RedactionBox) -> Unit) {
+    onStamp: (Offset) -> Unit, onRedaction: (RedactionBox) -> Unit,
+    shapeType: ShapeType = ShapeType.RECTANGLE, onShape: (ShapeAnnotation) -> Unit = {}) {
     var bounds by remember { mutableStateOf(IntSize.Zero) }
     var points by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
     var redactStart by remember { mutableStateOf<Offset?>(null) }
@@ -51,9 +52,12 @@ internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification
         strokeWidth = if (tool == EditorTool.HIGHLIGHTER) strokeWidth * 2.5f else strokeWidth,
         isHighlighter = tool == EditorTool.HIGHLIGHTER) else null
     val preview = modification.copy(drawings = modification.drawings + listOfNotNull(draft),
-        redactions = modification.redactions + listOfNotNull(if (redactStart != null && redactEnd != null)
+        redactions = modification.redactions + listOfNotNull(if (tool == EditorTool.REDACT && redactStart != null && redactEnd != null)
             RedactionBox(modification.pageIndex, RectF(minOf(redactStart!!.x, redactEnd!!.x), minOf(redactStart!!.y, redactEnd!!.y),
-                maxOf(redactStart!!.x, redactEnd!!.x), maxOf(redactStart!!.y, redactEnd!!.y))) else null))
+                maxOf(redactStart!!.x, redactEnd!!.x), maxOf(redactStart!!.y, redactEnd!!.y))) else null),
+        shapes = modification.shapes + listOfNotNull(if (tool == EditorTool.SHAPE && redactStart != null && redactEnd != null)
+            ShapeAnnotation(type = shapeType, startXRatio = redactStart!!.x, startYRatio = redactStart!!.y,
+                endXRatio = redactEnd!!.x, endYRatio = redactEnd!!.y, strokeColor = color.toArgb(), strokeWidth = strokeWidth) else null))
     LaunchedEffect(preview, bitmap, overlayRenderer) {
         var rendered: Bitmap? = null
         try {
@@ -72,12 +76,12 @@ internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification
         val pageWidth = if (sideways) minOf(maxHeight, maxWidth * ratio) else minOf(maxWidth, maxHeight * ratio)
         Box(Modifier.requiredSize(pageWidth, pageWidth / ratio).rotate(modification.rotationDegrees.toFloat())
             .background(Color.White).onSizeChanged { bounds = it }
-            .pointerInput(tool, modification.pageIndex, color, strokeWidth) {
+            .pointerInput(tool, modification.pageIndex, color, strokeWidth, shapeType) {
                 when (tool) {
                     EditorTool.TEXT, EditorTool.STAMP -> detectTapGestures { point ->
                         if (tool == EditorTool.TEXT) onText(normalized(point)) else onStamp(normalized(point))
                     }
-                    EditorTool.REDACT -> awaitEachGesture {
+                    EditorTool.REDACT, EditorTool.SHAPE -> awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val drag = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                         if (drag != null) {
@@ -91,7 +95,15 @@ internal fun AnnotationPageCanvas(bitmap: Bitmap, modification: PageModification
                                     if (!change.pressed) {
                                         val start = redactStart!!
                                         val end = redactEnd!!
-                                        if (kotlin.math.abs(start.x - end.x) > .02f && kotlin.math.abs(start.y - end.y) > .01f)
+                                        if (tool == EditorTool.SHAPE) {
+                                            val dx = kotlin.math.abs(start.x - end.x)
+                                            val dy = kotlin.math.abs(start.y - end.y)
+                                            val line = shapeType == ShapeType.LINE || shapeType == ShapeType.ARROW
+                                            if ((line && dx + dy > .01f) || (!line && dx > .02f && dy > .01f)) {
+                                                onShape(ShapeAnnotation(type = shapeType, startXRatio = start.x, startYRatio = start.y,
+                                                    endXRatio = end.x, endYRatio = end.y, strokeColor = color.toArgb(), strokeWidth = strokeWidth))
+                                            }
+                                        } else if (kotlin.math.abs(start.x - end.x) > .02f && kotlin.math.abs(start.y - end.y) > .01f)
                                             onRedaction(RedactionBox(modification.pageIndex, RectF(
                                                 minOf(start.x, end.x), minOf(start.y, end.y),
                                                 maxOf(start.x, end.x), maxOf(start.y, end.y))))

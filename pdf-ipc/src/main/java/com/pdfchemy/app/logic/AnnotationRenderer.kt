@@ -87,7 +87,7 @@ object AnnotationRenderer {
             stampTextPaint.color = color
             stampTextPaint.textSize = 28f * scaleFactor
 
-            val text = stamp.type.text
+            val text = stamp.customText?.take(80)?.takeIf { it.isNotBlank() } ?: stamp.type.text
             val textWidth = stampTextPaint.measureText(text)
             val boxWidth = textWidth + (32f * scaleFactor)
             val boxHeight = 54f * scaleFactor
@@ -101,6 +101,76 @@ object AnnotationRenderer {
             canvas.drawText(text, 0f, (boxHeight / 4f), stampTextPaint)
 
             canvas.restore()
+        }
+
+        // 3b. Render Vector Shapes
+        if (mod.shapes.isNotEmpty()) {
+            val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
+            }
+            val shapeFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+            }
+            val scaleFactor = (targetWidth / 1000f).coerceAtLeast(0.4f)
+            for (shape in mod.shapes) {
+                val startX = shape.startXRatio * targetWidth
+                val startY = shape.startYRatio * targetHeight
+                val endX = shape.endXRatio * targetWidth
+                val endY = shape.endYRatio * targetHeight
+                shapePaint.color = shape.strokeColor
+                shapePaint.strokeWidth = shape.strokeWidth * scaleFactor
+
+                val left = minOf(startX, endX)
+                val top = minOf(startY, endY)
+                val right = maxOf(startX, endX)
+                val bottom = maxOf(startY, endY)
+
+                when (shape.type) {
+                    ShapeType.RECTANGLE -> {
+                        if (shape.fillColor != Color.TRANSPARENT) {
+                            shapeFillPaint.color = shape.fillColor
+                            canvas.drawRect(left, top, right, bottom, shapeFillPaint)
+                        }
+                        canvas.drawRect(left, top, right, bottom, shapePaint)
+                    }
+                    ShapeType.CIRCLE -> {
+                        val oval = RectF(left, top, right, bottom)
+                        if (shape.fillColor != Color.TRANSPARENT) {
+                            shapeFillPaint.color = shape.fillColor
+                            canvas.drawOval(oval, shapeFillPaint)
+                        }
+                        canvas.drawOval(oval, shapePaint)
+                    }
+                    ShapeType.LINE -> {
+                        canvas.drawLine(startX, startY, endX, endY, shapePaint)
+                    }
+                    ShapeType.ARROW -> {
+                        canvas.drawLine(startX, startY, endX, endY, shapePaint)
+                        val dx = (endX - startX).toDouble()
+                        val dy = (endY - startY).toDouble()
+                        val length = kotlin.math.hypot(dx, dy).toFloat()
+                        if (length > 5f) {
+                            val arrowHeadLength = (20f * scaleFactor).coerceAtMost(length * 0.4f)
+                            val arrowHeadAngle = Math.toRadians(25.0)
+                            val angle = kotlin.math.atan2(dy, dx)
+                            val x1 = (endX - arrowHeadLength * kotlin.math.cos(angle - arrowHeadAngle)).toFloat()
+                            val y1 = (endY - arrowHeadLength * kotlin.math.sin(angle - arrowHeadAngle)).toFloat()
+                            val x2 = (endX - arrowHeadLength * kotlin.math.cos(angle + arrowHeadAngle)).toFloat()
+                            val y2 = (endY - arrowHeadLength * kotlin.math.sin(angle + arrowHeadAngle)).toFloat()
+                            val arrowPath = Path().apply {
+                                moveTo(endX, endY)
+                                lineTo(x1, y1)
+                                lineTo(x2, y2)
+                                close()
+                            }
+                            shapeFillPaint.color = shape.strokeColor
+                            canvas.drawPath(arrowPath, shapeFillPaint)
+                        }
+                    }
+                }
+            }
         }
 
         // 4. Render Redactions (Solid Black Opaque Blocks)

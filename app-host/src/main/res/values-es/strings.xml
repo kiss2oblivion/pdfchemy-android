@@ -968,7 +968,7 @@
     <string name="settings_manifesto_desc">Nuestra promesa: actualizaciones 100%% gratis, sin nube, hecho para la gente.</string>
     <string name="manifesto_dialog_title">El Manifiesto de Por Vida</string>
     <string name="manifesto_quote">\</string>
-    <string name="manifesto_author">— Andrei Ioan Cucoș (John), Developer</string>
+    <string name="manifesto_author">— Andrei Ioan Cucoș (John), Desarrollador</string>
     <string name="manifesto_guarantees_title">Nuestras 4 Garantías Inquebrantables:</string>
     <string name="manifesto_g1_title">100%% Gratis para Siempre</string>
     <string name="manifesto_g1_desc">Cero suscripciones, cero muros de pago, cero límites artificiales y cero marcas de agua.</string>
@@ -981,7 +981,7 @@
     <string name="manifesto_btn_got_it">Entendido, a trabajar</string>
     <string name="manifesto_btn_edge_case">Solicitar Función</string>
     <string name="manifesto_btn_email">Enviar correo a John</string>
-    <string name="manifesto_btn_kofi">Ko-fi Tip</string>
+    <string name="manifesto_btn_kofi">Propina en Ko-fi</string>
     <string name="manifesto_btn_revolut">Revolut (@andreiy886)</string>
     <string name="settings_version_title">Versión de la aplicación y actualizaciones</string>
     <string name="settings_version_desc">%1$s • Buscar actualizaciones en Google Play</string>
@@ -1103,7 +1103,13 @@
     <string name="settings_default_pdf_app">Visor PDF predeterminado</string>
     <string name="settings_default_pdf_app_desc">Establecer PdfChemy como aplicación predeterminada para abrir archivos PDF</string>
     <string name="settings_default_pdf_dialog_title">Establecer el visor PDF predeterminado</string>
-    <string name="settings_default_pdf_dialog_body">To make PdfChemy your default PDF viewer:\n\n1. Open any PDF file from your file manager or downloads.\n2. When prompted with \\"Open with\\", select PdfChemy.\n3. Choose \\"Always\\" to open PDF documents with PdfChemy automatically.\n\nYou can also configure default app associations in Android Settings.</string>
+    <string name="settings_default_pdf_dialog_body">Para que PdfChemy sea tu lector de PDF predeterminado:
+
+1. Abre cualquier archivo PDF desde tu administrador de archivos o descargas.
+2. Cuando aparezca «Abrir con», selecciona PdfChemy.
+3. Elige «Siempre» para abrir documentos PDF con PdfChemy automáticamente.
+
+También puedes configurar las asociaciones de aplicaciones predeterminadas en los Ajustes de Android.</string>
     <string name="settings_open_android_settings">Abrir ajustes del sistema</string>
     <string name="text_to_pdf">Texto a PDF</string>
     <string name="tab_epub_to_pdf">EPUB a PDF</string>
@@ -1199,4 +1205,53 @@
     <string name="reader_reset_zoom_fmt">%1$.1fx • Restablecer</string>
     <string name="previous_match">Coincidencia anterior</string>
     <string name="next_match">Coincidencia siguiente</string>
+    <string name="title_remove_attachment_success">Adjunto eliminado</string>
+    <string name="desc_remove_attachment_success">Adjunto eliminado y documento guardado con éxito</string>
+    <string name="error_remove_attachment_failed">Error al eliminar el adjunto</string>
+    <string name="btn_remove_attachment">Eliminar adjunto</string>
+    <string name="dialog_remove_attachment_title">¿Eliminar adjunto?</string>
+    <string name="dialog_remove_attachment_msg">¿Eliminar «%1$s» de este PDF? El documento actualizado se guardará como un archivo nuevo.</string>
+    <string name="menu_read_pdf">Abrir PDF</string>
+    <string name="menu_read_pdf_desc">Leer y anotar documentos</string>
+    <string name="menu_home">Inicio</string>
+    <string name="form_builder_tool_radio">Botones de opción</string>
+    <string name="form_builder_tool_signature">Campo de firma</string>
+    <string name="table_extractor_action_export_excel">Exportar a Excel (.xlsx)</string>
+    <string name="tool_shape">Formas</string>
+    <string name="shape_picker_desc">Selecciona una forma geométrica para dibujar en el documento</string>
+    <string name="shape_rect">Rectángulo</string>
+    <string name="shape_circle">Círculo</string>
+    <string name="shape_line">Línea</string>
+    <string name="shape_arrow">Flecha</string>
+    <string name="custom_stamp_label">Texto del sello personalizado</string>
+    <string name="btn_apply_custom_stamp">Aplicar sello</string>
+    <string name="btn_indent_bookmark">Aumentar sangría</string>
+    <string name="btn_outdent_bookmark">Reducir sangría</string>
+    <string name="pki_dialog_title">Aplicar firma digital PKI</string>
+    <string name="pki_dialog_desc">Firma este documento criptográficamente para verificar su autenticidad e integridad frente a alteraciones.</string>
+    <string name="pki_keystore_load">Cargar almacén de claves (.p12 / .pfx)</string>
+    <string name="pki_keystore_loaded">Almacén de claves: %1$s</string>
+    <string name="pki_keystore_remove">Borrar almacén de claves</string>
+    <string name="pki_keystore_password">Contraseña del almacén de claves</string>
+    <string name="pki_ephemeral_notice">Usando certificado efímero RSA-2048 en el dispositivo. Carga un almacén de claves .p12/.pfx arriba para cumplimiento PKI empresarial.</string>
+    <string name="pki_signer_name">Nombre del firmante</string>
+    <string name="pki_reason">Motivo</string>
+    <string name="pki_location">Ubicación</string>
+    <string name="pki_sign_and_save">Firmar y guardar</string>
+    <string name="btn_convert_to_pdfa">Convertir a PDF/A-1b</string>
+    <string name="btn_converting_pdfa">Convirtiendo a PDF/A-1b…</string>
+    <string name="title_pdfa_converted_success">Conversión a PDF/A-1b completada con éxito</string>
+    <string name="error_pdfa_conversion_failed">Error en la conversión a PDF/A</string>
+    <string name="btn_export_embedded_fonts">Exportar fuentes incrustadas (.zip)</string>
+    <string name="btn_exporting_fonts">Exportando fuentes…</string>
+    <string name="title_fonts_exported_success">Fuentes incrustadas exportadas con éxito (%1$d)</string>
+    <string name="error_fonts_export_failed">Error al extraer las fuentes incrustadas</string>
+    <string name="desc_open_file">Abrir archivo</string>
+    <string name="desc_save_file">Guardar archivo</string>
+    <string name="desc_copy_clipboard">Copiar al portapapeles</string>
+    <string name="desc_share_text">Compartir texto</string>
+    <string name="msg_copied_to_clipboard">Texto copiado al portapapeles</string>
+    <string name="msg_text_saved_success">Texto guardado con éxito</string>
+    <string name="form_fill_mode_list">Vista de lista</string>
+    <string name="form_fill_mode_insitu">Vista de documento</string>
 </resources>

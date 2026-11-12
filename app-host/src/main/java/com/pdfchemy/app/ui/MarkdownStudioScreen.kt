@@ -122,7 +122,7 @@ fun MarkdownStudioScreen(
             if (result.isSuccess) {
                 markdownText = result.getOrThrow()
                 documentTitle = FileUtils.getFileName(context, uri)?.removeSuffix(".pdf") ?: "Extracted Doc"
-                viewModel.showSuccessToast(
+                viewModel.notifySuccess(
                     context.getString(R.string.title_pdf_to_md_success),
                     context.getString(R.string.desc_pdf_to_md_success)
                 )

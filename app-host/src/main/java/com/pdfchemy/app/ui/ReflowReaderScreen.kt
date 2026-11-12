@@ -59,6 +59,7 @@ import kotlinx.coroutines.withContext
 
 enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
     LIGHT(Color(0xFFFFFFFF), Color(0xFF1E293B), "Light"),
+    WARMTH(Color(0xFFFFF8E7), Color(0xFF3E2723), "Warmth"),
     SEPIA(Color(0xFFFBF0D9), Color(0xFF5F4B32), "Sepia"),
     DARK(Color(0xFF1E293B), Color(0xFFF1F5F9), "Dark"),
     OLED(Color(0xFF000000), Color(0xFFE2E8F0), "OLED")
@@ -366,8 +367,10 @@ fun ReflowReaderScreen(
     var selectedTheme by remember { mutableStateOf(ReaderTheme.valueOf(defaults.theme)) }
     var fontSizeSp by remember { mutableStateOf(defaults.fontSize) }
     var useSerifFont by remember { mutableStateOf(defaults.serif) }
-    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont) {
-        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont))
+    var isBionicReading by remember { mutableStateOf(defaults.bionic) }
+    var isDyslexiaSpacing by remember { mutableStateOf(defaults.dyslexia) }
+    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont, isBionicReading, isDyslexiaSpacing) {
+        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont, isBionicReading, isDyslexiaSpacing))
     }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
@@ -699,9 +702,7 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { dest ->
-        val uri = dest?.uri
-        val isFresh = dest?.isFreshCopy ?: (uri?.let { com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(it) } ?: false)
+    val onAudioExportDestinationSelected: (Uri?, Boolean, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat) -> Unit = { uri, isFresh, outputFormat ->
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {
@@ -713,7 +714,7 @@ fun ReflowReaderScreen(
                     withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         jobs.createJob(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh, outputFormat)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.stageText(jobId, text)
                     }
                     check(audioLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) { "Return to the Reader and retry export" }
@@ -734,6 +735,14 @@ fun ReflowReaderScreen(
                 }
             }
         }
+    }
+
+    val audioExportM4aLauncher = rememberPreferredDocumentDestinationCreator("audio/mp4") { destination ->
+        onAudioExportDestinationSelected(destination?.uri, destination?.isFreshCopy ?: false, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.M4A)
+    }
+
+    val audioExportWavLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { destination ->
+        onAudioExportDestinationSelected(destination?.uri, destination?.isFreshCopy ?: false, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.WAV)
     }
 
     ModalNavigationDrawer(
@@ -861,16 +870,38 @@ fun ReflowReaderScreen(
                                                 selectedTheme = ReaderTheme.LIGHT
                                                 fontSizeSp = 16f
                                                 useSerifFont = false
+                                                isBionicReading = false
+                                                isDyslexiaSpacing = false
                                                 showOverflowMenu = false
                                             }
                                         )
                                         DropdownMenuItem(
-                                            text = { Text("Export to Audio (WAV)") },
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_m4a_title))
+                                                    Text(stringResource(R.string.audio_export_m4a_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audiobook.m4a") ?: "audiobook.m4a"
+                                                pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
+                                                audioExportM4aLauncher.launch(suggestedName)
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.VolumeUp, contentDescription = null) }
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_wav_title))
+                                                    Text(stringResource(R.string.audio_export_wav_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
                                             onClick = {
                                                 showOverflowMenu = false
                                                 val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audio.wav") ?: "audio_export.wav"
                                                 pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
-                                                audioExportLauncher.launch(suggestedName)
+                                                audioExportWavLauncher.launch(suggestedName)
                                             },
                                             leadingIcon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) }
                                         )
@@ -1098,6 +1129,28 @@ fun ReflowReaderScreen(
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", color = selectedTheme.text, style = MaterialTheme.typography.labelSmall)
                                     }
+                                    IconButton(
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Bio",
+                                            color = if (isBionicReading) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isBionicReading) FontWeight.ExtraBold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Dys",
+                                            color = if (isDyslexiaSpacing) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isDyslexiaSpacing) FontWeight.Bold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1279,7 +1332,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                                     textColor = selectedTheme.text,
                                                     fontSizeSp = fontSizeSp,
-                                                    useSerifFont = useSerifFont
+                                                    useSerifFont = useSerifFont,
+                                                    isBionicReading = isBionicReading,
+                                                    isDyslexiaSpacing = isDyslexiaSpacing
                                                 )
                                             }
                                         }
@@ -1377,6 +1432,18 @@ fun ReflowReaderScreen(
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", style = MaterialTheme.typography.labelMedium)
                                     }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isBionicReading,
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        label = { Text("Bionic") }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isDyslexiaSpacing,
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        label = { Text("Dyslexia") }
+                                    )
                                 }
                             }
                         }
@@ -1424,7 +1491,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1471,7 +1540,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1485,6 +1556,7 @@ fun ReflowReaderScreen(
     }
 }
 
+
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun HighlightedParagraph(
@@ -1493,61 +1565,64 @@ private fun HighlightedParagraph(
     textColor: Color,
     fontSizeSp: Float,
     useSerifFont: Boolean,
-    activeMatchStart: Int? = null
+    activeMatchStart: Int? = null,
+    isBionicReading: Boolean = false,
+    isDyslexiaSpacing: Boolean = false
 ) {
     val requester = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
     var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
     LaunchedEffect(activeMatchStart, layout) {
         val result = layout
-        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) {
+            requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+        }
     }
-    val trimmed = searchQuery.trim()
-    if (trimmed.length < 2 || !text.contains(trimmed, ignoreCase = true)) {
-        Text(
-            text = text,
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
-    } else {
-        val annotated = remember(text, trimmed, activeMatchStart) {
-            buildAnnotatedString {
-                var startIndex = 0
-                
-                while (startIndex < text.length) {
-                    val matchIdx = text.indexOf(trimmed, startIndex, ignoreCase = true)
-                    if (matchIdx == -1) {
-                        append(text.substring(startIndex))
-                        break
-                    }
-                    if (matchIdx > startIndex) {
-                        append(text.substring(startIndex, matchIdx))
-                    }
-                    val matchEnd = matchIdx + trimmed.length
-                    pushStyle(
-                        SpanStyle(
-                            background = if (matchIdx == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
-                            color = Color(0xFF1E293B),
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    append(text.substring(matchIdx, matchEnd))
-                    pop()
-                    startIndex = matchEnd
-                }
+    val annotated = remember(text, searchQuery, activeMatchStart, isBionicReading) {
+        readableParagraph(text, searchQuery, activeMatchStart, isBionicReading)
+    }
+    Text(
+        text = annotated,
+        modifier = Modifier.bringIntoViewRequester(requester),
+        onTextLayout = { layout = it },
+        color = textColor,
+        fontSize = fontSizeSp.sp,
+        lineHeight = (fontSizeSp * if (isDyslexiaSpacing) 1.85f else 1.55f).sp,
+        letterSpacing = if (isDyslexiaSpacing) 0.06.sp else 0.sp,
+        fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
+        textAlign = TextAlign.Start
+    )
+}
+
+internal fun readableParagraph(
+    text: String,
+    searchQuery: String,
+    activeMatchStart: Int?,
+    isBionicReading: Boolean
+): androidx.compose.ui.text.AnnotatedString = buildAnnotatedString {
+    append(text)
+    if (isBionicReading) {
+        for (word in Regex("\\S+").findAll(text)) {
+            val count = word.value.codePointCount(0, word.value.length)
+            if (count > 1) {
+                val boldCount = kotlin.math.ceil(count * 0.45).toInt().coerceIn(1, count)
+                val end = word.range.first + word.value.offsetByCodePoints(0, boldCount)
+                addStyle(SpanStyle(fontWeight = FontWeight.ExtraBold), word.range.first, end)
             }
         }
-        Text(
-            text = annotated,
-            modifier = Modifier.bringIntoViewRequester(requester),
-            onTextLayout = { layout = it },
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
+    }
+    val query = searchQuery.trim()
+    if (query.length >= 2) {
+        var start = 0
+        while (start < text.length) {
+            val index = text.indexOf(query, start, ignoreCase = true)
+            if (index < 0) break
+            val end = index + query.length
+            addStyle(SpanStyle(
+                background = if (index == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
+                color = Color(0xFF1E293B),
+                fontWeight = FontWeight.Bold
+            ), index, end)
+            start = end
+        }
     }
 }

@@ -35,6 +35,10 @@ class AudioStagingManager(private val cacheDir: File) {
         return File(getJobDir(jobId), "master.wav")
     }
 
+    fun getFinalM4aFile(jobId: UUID): File {
+        return File(getJobDir(jobId), "master.m4a")
+    }
+
     fun getTextArtifactFile(jobId: UUID): File {
         return File(getJobDir(jobId), "source_text.txt")
     }

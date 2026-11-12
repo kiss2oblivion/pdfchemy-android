@@ -81,7 +81,7 @@ fun NUpScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_nup_success),
                         context.getString(R.string.desc_nup_success, selectedLayout.pagesPerSheet)
                     , destUri)

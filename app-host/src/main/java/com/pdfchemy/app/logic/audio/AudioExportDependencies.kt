@@ -11,21 +11,23 @@ import java.util.UUID
 object AudioExportDependencies {
     val jobStore = AudioExportJobStore()
     lateinit var stagingManager: AudioStagingManager
-    private class Destination(val uri: Uri, val owner: Any, var publishing: Boolean = false)
+    enum class OutputFormat { WAV, M4A }
+    private class Destination(val uri: Uri, val owner: Any, val format: OutputFormat, var publishing: Boolean = false)
     private val destinations = mutableMapOf<UUID, Destination>()
 
-    @Synchronized fun registerDestination(jobId: UUID, uri: Uri, isFreshCopy: Boolean = OutputPolicy.isFreshCopy(uri)) {
+    @Synchronized fun registerDestination(jobId: UUID, uri: Uri, isFreshCopy: Boolean = OutputPolicy.isFreshCopy(uri), outputFormat: OutputFormat = OutputFormat.WAV) {
         require(uri.scheme == "content") { "Audio destination must be a content URI" }
         check(jobId !in destinations) { "Audio job already has a destination" }
         if (!isFreshCopy) throw UnsupportedOperationException("Audio export requires a newly created output copy")
         val owner = Any()
         FreshOutputRegistry.claimKnown(listOf(uri), owner)
         FreshOutputRegistry.requireSafeSafTargets(listOf(uri), owner)
-        destinations[jobId] = Destination(uri, owner)
+        destinations[jobId] = Destination(uri, owner, outputFormat)
     }
     @Synchronized private fun registered(jobId: UUID): Destination =
         requireNotNull(destinations[jobId]) { "Export destination no longer available" }
     fun destination(jobId: UUID): Uri = registered(jobId).uri
+    fun outputFormat(jobId: UUID): OutputFormat = registered(jobId).format
     fun isFreshDestination(jobId: UUID): Boolean = OutputPolicy.isFreshCopy(destination(jobId))
 
     internal suspend fun publishDestination(context: Context, jobId: UUID, wav: File, onPublished: (Uri) -> Unit) {

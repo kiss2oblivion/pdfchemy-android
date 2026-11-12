@@ -644,6 +644,8 @@ object DocumentStager {
         if (uri.scheme == "file") uri.path?.let { staged[it]?.let(::release) }
     }
     fun displayName(uri: Uri): String? = uri.path?.let(displayNames::get)
+    // Context overload preserves ephemeral metadata and lease-aware cleanup.
+    fun displayName(context: Context, uri: Uri): String? = displayName(uri)
     fun originalSourceFor(uri: Uri): Uri? {
         if (uri.scheme == "file") {
             val path = uri.path ?: return null

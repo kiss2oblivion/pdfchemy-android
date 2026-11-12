@@ -32,7 +32,8 @@ object DeviceGuard {
         val availableMemMb: Int,
         val requiredMemMb: Int,
         val recommendedAlternative: AlternativeAction,
-        val canProceedAnyway: Boolean = true
+        val canProceedAnyway: Boolean = true,
+        val sourceUri: android.net.Uri? = null
     )
 
     /**
@@ -96,7 +97,8 @@ object DeviceGuard {
         context: Context,
         pageCount: Int,
         fileSizeBytes: Long,
-        isImageHeavy: Boolean = false
+        isImageHeavy: Boolean = false,
+        sourceUri: android.net.Uri? = null
     ): CapacityAssessment {
         val availableMb = getAvailableMemoryMb(context)
 
@@ -130,7 +132,8 @@ object DeviceGuard {
                     availableMemMb = availableMb,
                     requiredMemMb = totalEstimatedRequiredMb,
                     recommendedAlternative = alternative,
-                    canProceedAnyway = false
+                    canProceedAnyway = false,
+                    sourceUri = sourceUri
                 )
             }
 
@@ -148,7 +151,8 @@ object DeviceGuard {
                     availableMemMb = availableMb,
                     requiredMemMb = totalEstimatedRequiredMb,
                     recommendedAlternative = alternative,
-                    canProceedAnyway = true
+                    canProceedAnyway = true,
+                    sourceUri = sourceUri
                 )
             }
 
@@ -161,7 +165,8 @@ object DeviceGuard {
                     availableMemMb = availableMb,
                     requiredMemMb = totalEstimatedRequiredMb,
                     recommendedAlternative = AlternativeAction.LIGHTWEIGHT_MODE,
-                    canProceedAnyway = true
+                    canProceedAnyway = true,
+                    sourceUri = sourceUri
                 )
             }
         }

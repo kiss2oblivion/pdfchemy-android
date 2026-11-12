@@ -122,13 +122,28 @@ object SignatureEngineWorker {
                 }
             }
 
-            val subjectStr = signerName
-            val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
+            val p12Base64 = params.optString("p12Base64", "")
+            val password = params.optString("password", "")
+
+            val credentials = if (params.has("p12Base64")) {
+                require(p12Base64.isNotBlank() && p12Base64.length <= 43692) { "Invalid imported keystore size" }
+                val p12Bytes = android.util.Base64.decode(p12Base64, android.util.Base64.DEFAULT)
+                val passwordChars = password.toCharArray()
+                try {
+                    AndroidPdfCryptoSigner.loadPkcs12Credentials(p12Bytes, passwordChars)
+                } finally {
+                    p12Bytes.fill(0)
+                    passwordChars.fill(0.toChar())
+                }
+            } else {
+                val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(signerName)
+                AndroidPdfCryptoSigner.SignerCredentials(keyPairInfo.keyPair.private, keyPairInfo.certificate)
+            }
 
             AndroidPdfCryptoSigner.signPdf(
                 sourceFile = sourceFile,
                 destFile = destFile,
-                keyPairInfo = keyPairInfo,
+                credentials = credentials,
                 reason = reason,
                 location = location
             )

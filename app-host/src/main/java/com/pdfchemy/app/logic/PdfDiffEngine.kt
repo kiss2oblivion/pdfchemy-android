@@ -1,5 +1,6 @@
 package com.pdfchemy.app.logic
 
+import kotlinx.coroutines.ensureActive
 import android.content.Context
 import android.net.Uri
 import android.graphics.Bitmap
@@ -10,7 +11,10 @@ data class PageDiffResult(
     val diffPercent: Float,
     val diffBitmap: Bitmap?,
     val textAddedLines: List<String>,
-    val textRemovedLines: List<String>
+    val textRemovedLines: List<String>,
+    val doc1PageIndex: Int? = pageIndex,
+    val doc2PageIndex: Int? = pageIndex,
+    val alignmentLabel: String = ""
 )
 
 data class DocumentDiffSummary(
@@ -22,6 +26,13 @@ data class DocumentDiffSummary(
 )
 
 object PdfDiffEngine {
+
+    data class PageAlignment(
+        val doc1PageIndex: Int?,
+        val doc2PageIndex: Int?,
+        val similarity: Float
+    )
+
     suspend fun compareDocuments(context: Context, uri1: Uri, uri2: Uri): DocumentDiffSummary {
         val stager = com.pdfchemy.app.utils.DocumentStager
         val snapshots = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
@@ -33,25 +44,186 @@ object PdfDiffEngine {
             val second = stager.stageDocumentCancellableWithLease(context, uri2).also { snapshots.add(it.document); leases.add(it.lease) }.document
             val texts1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null).pages
             val texts2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null).pages
-            for (page in 0 until maxOf(texts1.size, texts2.size)) {
+
+            val comparisonContext = kotlinx.coroutines.currentCoroutineContext()
+            val alignments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                alignPagesChecked(texts1, texts2) { comparisonContext.ensureActive() }
+            }
+            for ((idx, pair) in alignments.withIndex()) {
+                val p1 = pair.doc1PageIndex
+                val p2 = pair.doc2PageIndex
                 var bmp1: Bitmap? = null
                 var bmp2: Bitmap? = null
                 try {
-                    bmp1 = if (page < texts1.size) PdfEditor.renderPageBitmap(context, first.uri, page, 720) else null
-                    bmp2 = if (page < texts2.size) PdfEditor.renderPageBitmap(context, second.uri, page, 720) else null
-                    val lines1 = texts1.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
-                    val lines2 = texts2.getOrNull(page)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty()
-                    val visual = if (bmp1 != null && bmp2 != null) generateVisualDiff(bmp1, bmp2) else 100f to null
-                    diffs.add(PageDiffResult(page, visual.first, visual.second, lines2.filter { it !in lines1 }, lines1.filter { it !in lines2 }))
-                } finally { bmp1?.recycle(); bmp2?.recycle() }
+                    bmp1 = if (p1 != null) PdfEditor.renderPageBitmap(context, first.uri, p1, 720) else null
+                    bmp2 = if (p2 != null) PdfEditor.renderPageBitmap(context, second.uri, p2, 720) else null
+
+                    val lines1 = if (p1 != null) texts1.getOrNull(p1)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
+                    val lines2 = if (p2 != null) texts2.getOrNull(p2)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
+
+                    val (added, removed) = computeLineDiff(lines1, lines2)
+                    val visual = if (bmp1 != null && bmp2 != null) {
+                        generateVisualDiff(bmp1, bmp2)
+                    } else if (bmp1 == null && bmp2 != null) {
+                        100f to generateSinglePageTinted(bmp2, Color.argb(160, 46, 125, 50))
+                    } else if (bmp1 != null && bmp2 == null) {
+                        100f to generateSinglePageTinted(bmp1, Color.argb(160, 198, 40, 40))
+                    } else {
+                        100f to null
+                    }
+
+                    val label = when {
+                        p1 != null && p2 != null -> "Page ${p1 + 1} vs ${p2 + 1}"
+                        p1 != null -> "Page ${p1 + 1} (Removed in Doc 2)"
+                        p2 != null -> "Page ${p2 + 1} (Added in Doc 2)"
+                        else -> "Page ${idx + 1}"
+                    }
+
+                    diffs.add(
+                        PageDiffResult(
+                            pageIndex = idx,
+                            diffPercent = visual.first,
+                            diffBitmap = visual.second,
+                            textAddedLines = added,
+                            textRemovedLines = removed,
+                            doc1PageIndex = p1,
+                            doc2PageIndex = p2,
+                            alignmentLabel = label
+                        )
+                    )
+                } finally {
+                    bmp1?.recycle()
+                    bmp2?.recycle()
+                }
             }
-            val identical = diffs.count { it.diffPercent < 0.05f && it.textAddedLines.isEmpty() && it.textRemovedLines.isEmpty() }
+
+            val identical = diffs.count {
+                it.diffPercent < 0.05f &&
+                    it.textAddedLines.isEmpty() &&
+                    it.textRemovedLines.isEmpty() &&
+                    it.doc1PageIndex != null &&
+                    it.doc2PageIndex != null
+            }
             completed = true
             return DocumentDiffSummary(texts1.size, texts2.size, identical, diffs.size - identical, diffs)
         } finally {
             if (!completed) diffs.forEach { it.diffBitmap?.recycle() }
             snapshots.zip(listOf(uri1, uri2)).filter { (snapshot, original) -> snapshot.uri != original }.forEach { stager.release(it.first) }
             leases.forEach { it.close() }
+        }
+    }
+
+    fun alignPages(texts1: List<String>, texts2: List<String>): List<PageAlignment> =
+        alignPagesChecked(texts1, texts2) {}
+
+    private fun alignPagesChecked(texts1: List<String>, texts2: List<String>, checkCancellation: () -> Unit): List<PageAlignment> {
+        checkCancellation()
+        val n = texts1.size
+        val m = texts2.size
+        require(n <= com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT &&
+            m <= com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) { "Too many pages to compare" }
+        require((n.toLong() + 1) * (m.toLong() + 1) <= 1_000_000L) {
+            "Page alignment exceeds its memory budget; compare smaller page ranges"
+        }
+
+        if (n == 0 && m == 0) return emptyList()
+        if (n == 0) return (0 until m).map { PageAlignment(null, it, 0f) }
+        if (m == 0) return (0 until n).map { PageAlignment(it, null, 0f) }
+
+        val tokens1 = texts1.map { extractPageTokens(it) }
+        val tokens2 = texts2.map { extractPageTokens(it) }
+
+        val simMatrix = Array(n) { i ->
+            checkCancellation()
+            FloatArray(m) { j ->
+                computePageSimilarity(tokens1[i], tokens2[j], texts1[i], texts2[j], i == j)
+            }
+        }
+
+        val dp = Array(n + 1) { FloatArray(m + 1) }
+
+        for (i in 1..n) {
+            checkCancellation()
+            for (j in 1..m) {
+                val s = simMatrix[i - 1][j - 1]
+                val matchScore = if (s >= 0.20f) {
+                    (s * 10f) + (if (i == j) 0.5f else 0f)
+                } else {
+                    -1000f
+                }
+                val diag = dp[i - 1][j - 1] + matchScore
+                val up = dp[i - 1][j]
+                val left = dp[i][j - 1]
+                dp[i][j] = maxOf(up, left, diag)
+            }
+        }
+
+        val alignment = mutableListOf<PageAlignment>()
+        var i = n
+        var j = m
+
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0) {
+                val s = simMatrix[i - 1][j - 1]
+                val matchScore = if (s >= 0.20f) (s * 10f) + (if (i == j) 0.5f else 0f) else -1000f
+                if (s >= 0.20f && kotlin.math.abs(dp[i][j] - (dp[i - 1][j - 1] + matchScore)) < 0.001f) {
+                    alignment.add(PageAlignment(i - 1, j - 1, s))
+                    i--
+                    j--
+                    continue
+                }
+            }
+            if (j > 0 && (i == 0 || kotlin.math.abs(dp[i][j] - dp[i][j - 1]) < 0.001f)) {
+                alignment.add(PageAlignment(null, j - 1, 0f))
+                j--
+            } else if (i > 0) {
+                alignment.add(PageAlignment(i - 1, null, 0f))
+                i--
+            } else {
+                break
+            }
+        }
+
+        alignment.reverse()
+        return alignment
+    }
+
+    private fun extractPageTokens(text: String): Set<String> {
+        if (text.isBlank()) return emptySet()
+        return text.lowercase()
+            .split(Regex("[^\\p{L}\\p{Nd}]+"))
+            .filter { it.length >= 2 }
+            .toSet()
+    }
+
+    private fun computePageSimilarity(
+        tokens1: Set<String>,
+        tokens2: Set<String>,
+        raw1: String,
+        raw2: String,
+        isSameIndex: Boolean
+    ): Float {
+        if (tokens1.isEmpty() && tokens2.isEmpty()) {
+            return if (raw1.trim() == raw2.trim() && raw1.isNotBlank()) 1.0f
+            else if (isSameIndex) 0.8f
+            else 0.0f
+        }
+        if (tokens1.isEmpty() || tokens2.isEmpty()) return 0.0f
+        val intersectionSize = tokens1.intersect(tokens2).size
+        val unionSize = tokens1.union(tokens2).size
+        if (unionSize == 0) return 1.0f
+        return intersectionSize.toFloat() / unionSize.toFloat()
+    }
+
+    private fun generateSinglePageTinted(source: Bitmap, tintColor: Int): Bitmap? {
+        return try {
+            val bmp = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bmp)
+            canvas.drawBitmap(source, 0f, 0f, null)
+            canvas.drawColor(tintColor)
+            bmp
+        } catch (_: Exception) {
+            null
         }
     }
     private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap): Pair<Float, Bitmap?> {
@@ -95,5 +267,52 @@ object PdfDiffEngine {
         } catch (e: Exception) {
             Pair(0f, null)
         }
+    }
+
+    private fun computeLineDiff(lines1: List<String>, lines2: List<String>): Pair<List<String>, List<String>> {
+        if (lines1.isEmpty()) return lines2 to emptyList<String>()
+        if (lines2.isEmpty()) return emptyList<String>() to lines1
+        if (lines1 == lines2) return emptyList<String>() to emptyList<String>()
+
+        val maxLines = 600
+        val l1 = if (lines1.size > maxLines) lines1.take(maxLines) else lines1
+        val l2 = if (lines2.size > maxLines) lines2.take(maxLines) else lines2
+
+        val n = l1.size
+        val m = l2.size
+        val dp = Array(n + 1) { IntArray(m + 1) }
+
+        for (i in 1..n) {
+            val item1 = l1[i - 1]
+            for (j in 1..m) {
+                dp[i][j] = if (item1 == l2[j - 1]) {
+                    dp[i - 1][j - 1] + 1
+                } else {
+                    maxOf(dp[i - 1][j], dp[i][j - 1])
+                }
+            }
+        }
+
+        val added = mutableListOf<String>()
+        val removed = mutableListOf<String>()
+        var i = n
+        var j = m
+
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && l1[i - 1] == l2[j - 1]) {
+                i--
+                j--
+            } else if (j > 0 && (i == 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                added.add(l2[j - 1])
+                j--
+            } else if (i > 0 && (j == 0 || dp[i][j - 1] < dp[i - 1][j])) {
+                removed.add(l1[i - 1])
+                i--
+            }
+        }
+
+        added.reverse()
+        removed.reverse()
+        return added to removed
     }
 }

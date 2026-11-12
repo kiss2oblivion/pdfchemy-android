@@ -150,6 +150,9 @@ fun PdfEditorScreen(
     var selectedColor by remember { mutableStateOf(Color(0xFFD32F2F)) } // Red default
     var strokeWidth by remember { mutableFloatStateOf(6f) }
     var selectedStampType by remember { mutableStateOf(StampType.APPROVED) }
+    var selectedShapeType by remember { mutableStateOf(com.pdfchemy.app.logic.ShapeType.RECTANGLE) }
+    var customStampText by remember { mutableStateOf("") }
+    var showShapePicker by remember { mutableStateOf(false) }
 
     // Active In-Progress Stroke & Redaction
     var currentStrokePoints by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
@@ -479,8 +482,10 @@ fun PdfEditorScreen(
         AnnotationPageCanvas(bitmap, modification, activeTool, selectedColor, strokeWidth,
             onDrawing = { session.addDrawing(pageIndex, it); sessionTick++ },
             onText = { pendingTextPage = pageIndex; pendingTextPosition = it; showTextDialog = true },
-            onStamp = { session.addStamp(pageIndex, StampAnnotation(type = selectedStampType, xRatio = it.x, yRatio = it.y)); sessionTick++ },
-            onRedaction = { session.addRedaction(pageIndex, it); sessionTick++ })
+            onStamp = { session.addStamp(pageIndex, StampAnnotation(type = selectedStampType, xRatio = it.x, yRatio = it.y, customText = customStampText.ifBlank { null })); sessionTick++ },
+            onRedaction = { session.addRedaction(pageIndex, it); sessionTick++ },
+            shapeType = selectedShapeType,
+            onShape = { session.addShape(pageIndex, it); sessionTick++ })
     }
 
     Scaffold(
@@ -599,6 +604,7 @@ fun PdfEditorScreen(
                     onToolSelect = { tool ->
                         activeTool = tool
                         if (tool == EditorTool.STAMP) showStampPicker = true
+                        if (tool == EditorTool.SHAPE) showShapePicker = true
                     },
                     selectedColor = selectedColor,
                     onColorClick = { showColorPicker = true },
@@ -761,6 +767,7 @@ fun PdfEditorScreen(
                             onToolSelect = { tool ->
                                 activeTool = tool
                                 if (tool == EditorTool.STAMP) showStampPicker = true
+                        if (tool == EditorTool.SHAPE) showShapePicker = true
                             },
                             selectedColor = selectedColor,
                             onColorClick = { showColorPicker = true },
@@ -901,11 +908,12 @@ fun PdfEditorScreen(
                         OutlinedButton(
                             onClick = {
                                 selectedStampType = stamp
+                                customStampText = ""
                                 showStampPicker = false
                             },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (selectedStampType == stamp) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                                containerColor = if (selectedStampType == stamp && customStampText.isBlank()) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
                             ),
                             border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color(stamp.colorHex)))
                         ) {
@@ -914,6 +922,93 @@ fun PdfEditorScreen(
                                 color = Color(stamp.colorHex),
                                 fontWeight = FontWeight.Bold
                             )
+                        }
+                    }
+                }
+
+                HorizontalDivider()
+
+                Text(
+                    text = stringResource(R.string.custom_stamp_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = customStampText,
+                        onValueChange = { customStampText = it.take(80) },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("e.g. REVIEWED, COPY, CONFIDENTIAL") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Button(
+                        onClick = {
+                            if (customStampText.isNotBlank()) {
+                                showStampPicker = false
+                            }
+                        },
+                        enabled = customStampText.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.btn_apply_custom_stamp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // --- SHAPE PICKER SHEET ---
+    if (showShapePicker) {
+        ModalBottomSheet(onDismissRequest = { showShapePicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.tool_shape),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.shape_picker_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val shapes = listOf(
+                        Triple(com.pdfchemy.app.logic.ShapeType.RECTANGLE, Icons.Rounded.CropSquare, stringResource(R.string.shape_rect)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.CIRCLE, Icons.Rounded.Circle, stringResource(R.string.shape_circle)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.LINE, Icons.Rounded.HorizontalRule, stringResource(R.string.shape_line)),
+                        Triple(com.pdfchemy.app.logic.ShapeType.ARROW, Icons.Rounded.ArrowForward, stringResource(R.string.shape_arrow))
+                    )
+                    shapes.forEach { (type, icon, label) ->
+                        OutlinedButton(
+                            onClick = {
+                                selectedShapeType = type
+                                showShapePicker = false
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selectedShapeType == type) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                            )
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp))
+                                Text(label, style = MaterialTheme.typography.labelSmall)
+                            }
                         }
                     }
                 }
@@ -1147,6 +1242,12 @@ fun EditorBottomBar(
                     label = stringResource(R.string.tool_stamp),
                     selected = activeTool == EditorTool.STAMP,
                     onClick = { onToolSelect(EditorTool.STAMP) }
+                )
+                EditorToolButton(
+                    icon = Icons.Rounded.Category,
+                    label = stringResource(R.string.tool_shape),
+                    selected = activeTool == EditorTool.SHAPE,
+                    onClick = { onToolSelect(EditorTool.SHAPE) }
                 )
                 EditorToolButton(
                     icon = Icons.Rounded.Security,

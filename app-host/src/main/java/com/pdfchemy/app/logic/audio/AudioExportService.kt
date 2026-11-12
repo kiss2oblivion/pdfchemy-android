@@ -110,6 +110,9 @@ class AudioExportService : Service() {
         }
         try {
             val destination = AudioExportDependencies.destination(id)
+            if (AudioExportDependencies.outputFormat(id) == AudioExportDependencies.OutputFormat.M4A) {
+                check(withContext(Dispatchers.IO) { AacM4aWriter.isCodecAvailable() }) { "AAC encoder unavailable; choose WAV export" }
+            }
             val initialized = CompletableDeferred<Int>()
             tts = TextToSpeech(this) { initialized.complete(it) }
             if (withTimeoutOrNull(30_000) { initialized.await() } != TextToSpeech.SUCCESS) throw OfflineSpeechUnavailableException()
@@ -149,10 +152,19 @@ class AudioExportService : Service() {
             }
             withContext(Dispatchers.IO) { pcm.closeAndJoin() }
             check(store.updateState(id, AudioExportState.ASSEMBLING))
-            withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+            val isM4a = AudioExportDependencies.outputFormat(id) == AudioExportDependencies.OutputFormat.M4A
+
+            val finalFile = if (isM4a) {
+                val m4a = staging.getFinalM4aFile(id)
+                withContext(Dispatchers.IO) { AacM4aWriter.assemble(raw, m4a, pcm.format) }
+                m4a
+            } else {
+                withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+                wav
+            }
             check(store.updateState(id, AudioExportState.PUBLISHING))
             withContext(Dispatchers.IO) {
-                AudioExportDependencies.publishDestination(this@AudioExportService, id, wav) { published ->
+                AudioExportDependencies.publishDestination(this@AudioExportService, id, finalFile) { published ->
                     check(store.recordPublication(id, published.toString())) { "Unable to retain published audio result" }
                 }
                 afterPublicationForTesting?.invoke()

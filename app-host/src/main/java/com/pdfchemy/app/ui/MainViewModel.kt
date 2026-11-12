@@ -610,7 +610,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         object Idle : UiState()
         data class Processing(val taskNameResId: Int? = null, val completedPages: Int = 0, val totalPages: Int = 0) : UiState()
         data class BatchProcessing(val current: Int, val total: Int, val currentFileName: String, val completed: Int = (current - 1).coerceAtLeast(0)) : UiState()
-        data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
+        data class Success(val title: String, val message: String, val outputUris: List<Uri> = emptyList(), val outputFolderUri: Uri? = null) : UiState()
         data class Warning(val title: String, val message: String, val outputUris: List<Uri> = emptyList()) : UiState()
         data class Error(val message: String, val technicalDetails: String? = null) : UiState()
     }
@@ -699,7 +699,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         context = context,
                         pageCount = analysis.pageCount,
                         fileSizeBytes = size,
-                        isImageHeavy = analysis.imageCount > 10
+                        isImageHeavy = analysis.imageCount > 10,
+                        sourceUri = uri
                     )
                     if (guardCheck.status != com.pdfchemy.app.logic.DeviceGuard.CapacityStatus.SAFE) {
                         _safeguardSourceUri.value = uri
@@ -1270,7 +1271,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val results = PdfManipulator.splitPdf(context, sourceUri, directory, baseName, pageRange)
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.success_split_success), results)
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.success_split_success), results, destTreeUri)
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF.")
@@ -1300,7 +1301,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_blank_pages_found, results.size), results)
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_blank_pages_found, results.size), results, destTreeUri)
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF by blank pages.")
@@ -1330,7 +1331,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
-                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_bookmarks_found, results.size), results)
+                _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_bookmarks_found, results.size), results, destTreeUri)
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 _uiState.value = UiState.Error(e.message ?: "Failed to split PDF by bookmarks.")
@@ -2398,12 +2399,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun notifySuccess(title: String, message: String, outputUri: Uri) {
-        historyRepository.addHistoryItem(outputUri, title, message)
+    fun notifySuccess(title: String, message: String, outputUri: Uri? = null) {
+        if (outputUri != null) {
+            historyRepository.addHistoryItem(outputUri, title, message)
+        }
         refreshHistory()
-        markOutputPublished(outputUri)
-        com.pdfchemy.app.logic.OutputPolicy.markPublished(outputUri)
-        _uiState.value = UiState.Success(title, message, listOf(outputUri))
+        if (outputUri != null) {
+            markOutputPublished(outputUri)
+            com.pdfchemy.app.logic.OutputPolicy.markPublished(outputUri)
+        }
+        _uiState.value = UiState.Success(title, message, listOfNotNull(outputUri))
     }
 
     fun notifyError(message: String, technicalDetails: String? = null) {

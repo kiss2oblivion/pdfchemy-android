@@ -157,7 +157,7 @@ object WorkerResponseValidator {
             // Standard output / status operations
             "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
             "BOOKMARK_WRITE", "TEXT_EXTRACT", "IMAGE_EXTRACT_FRAMED", "IMAGE_EXTRACT",
-            "ARCHIVE_CONVERT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
+            "ARCHIVE_CONVERT", "FONT_EXTRACT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
             "CROP", "FLATTEN_APPLY", "REDACT",
             "ATTACHMENT_EXTRACT", "ATTACHMENT_REMOVE", "ATTACHMENT_EMBED", "BOOKLET_GENERATE",
             "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
@@ -369,7 +369,8 @@ object WorkerResponseValidator {
             val obj = arr.getJSONObject(i)
             bookmarks.add(BookmarkItemContract(
                 title = obj.requireString("title", maxLength = 256),
-                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
+                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT),
+                level = obj.optInt("level", 0).coerceIn(0, 10)
             ))
         }
         return BookmarkReadContract(bookmarks = bookmarks)
@@ -484,7 +485,12 @@ object WorkerResponseValidator {
                     value = f.requireString("value", maxLength = 4096),
                     possibleOptions = opts,
                     isReadOnly = f.optBoolean("isReadOnly", false),
-                    isRequired = f.optBoolean("isRequired", false)
+                    isRequired = f.optBoolean("isRequired", false),
+                    pageIndex = f.optInt("pageIndex", 0),
+                    xRatio = f.optDouble("xRatio", 0.0).toFloat(),
+                    yRatio = f.optDouble("yRatio", 0.0).toFloat(),
+                    widthRatio = f.optDouble("widthRatio", 0.0).toFloat(),
+                    heightRatio = f.optDouble("heightRatio", 0.0).toFloat()
                 ))
             }
             return AcroFormFieldsContract(fields = fields)

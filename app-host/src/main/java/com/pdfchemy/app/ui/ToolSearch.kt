@@ -60,7 +60,7 @@ object ToolRegistry {
         ToolEntry(R.string.menu_delete_pages, R.string.menu_delete_pages_desc, Icons.Rounded.Delete, Screen.DeletePages, listOf("remove pages", "delete pages")),
         ToolEntry(R.string.menu_rotate_pages, R.string.menu_rotate_pages_desc, Icons.AutoMirrored.Rounded.RotateRight, Screen.RotatePdf, listOf("turn pages", "orientation", "rotate pages")),
         ToolEntry(R.string.menu_reflow_reader, R.string.menu_reflow_reader_desc, Icons.AutoMirrored.Rounded.MenuBook, Screen.ReflowReader(), listOf("reflow", "text to speech", "tts", "audio export", "wav", "listen", "read aloud")),
-        ToolEntry(R.string.menu_page_organizer, R.string.menu_page_organizer_desc, Icons.Rounded.ViewModule, Screen.PageOrganizer, listOf("reorder", "move pages", "page thumbnails", "insert blank page")),
+        ToolEntry(R.string.menu_page_organizer, R.string.menu_page_organizer_desc, Icons.Rounded.ViewModule, Screen.PageOrganizer(), listOf("reorder", "move pages", "page thumbnails", "insert blank page")),
         ToolEntry(R.string.menu_watermark_pdf, R.string.menu_watermark_pdf_desc, Icons.AutoMirrored.Rounded.BrandingWatermark, Screen.Watermark, listOf("watermark", "add logo")),
         ToolEntry(R.string.menu_page_number_pdf, R.string.menu_page_number_pdf_desc, Icons.Rounded.Numbers, Screen.PageNumber, listOf("page numbers", "pagination")),
         ToolEntry(R.string.menu_page_layout, R.string.menu_page_layout_desc, Icons.Rounded.Dashboard, Screen.PageLayout, listOf("resize paper", "page size", "a4", "letter")),

@@ -90,7 +90,7 @@ fun BookletScreen(
                         .put("paperWidthPts", selectedPaperSize.widthPts)
                         .put("drawFoldGuide", drawFoldGuide)
                     PdfGateway.executeEngine(context, "BOOKLET_GENERATE", selectedPdfUri!!, destUri, params.toString())
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_booklet_success),
                         context.getString(R.string.desc_booklet_success)
                     , destUri)

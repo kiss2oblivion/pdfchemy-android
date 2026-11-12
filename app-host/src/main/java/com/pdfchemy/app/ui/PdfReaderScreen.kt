@@ -21,6 +21,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -233,6 +234,11 @@ private fun PdfReaderDocument(
             searchCoordinator.dispose()
         }
     }
+
+    // Display Preferences
+    val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+    var isHorizontalMode by remember { mutableStateOf(false) }
+    var isInvertColors by remember { mutableStateOf(systemInDark) }
     
     // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -487,7 +493,7 @@ private fun PdfReaderDocument(
                             }
                         )
                     }
-                    .pointerInput(Unit) {
+                    .pointerInput(isHorizontalMode) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
                             do {
@@ -513,9 +519,12 @@ private fun PdfReaderDocument(
                                     scale = result.scale
                                     offsetX = result.offsetX
                                     offsetY = result.offsetY
-                                    if (result.verticalScrollDelta != 0f) {
+                                    val scrollDelta = if (isHorizontalMode) {
+                                        if (!ReaderZoomCalculator.isZoomed(result.scale)) -panChange.x else 0f
+                                    } else result.verticalScrollDelta
+                                    if (scrollDelta != 0f) {
                                         coroutineScope.launch {
-                                            listState.scrollBy(result.verticalScrollDelta)
+                                            listState.scrollBy(scrollDelta)
                                         }
                                     }
                                     event.changes.forEach { change ->
@@ -529,7 +538,8 @@ private fun PdfReaderDocument(
                         }
                     }
             ) {
-                LazyColumn(
+                ReaderPageList(
+                    horizontal = isHorizontalMode,
                     state = listState,
                     userScrollEnabled = ReaderZoomCalculator.isNativeScrollEnabled(scale, activePointerCount),
                     contentPadding = PaddingValues(
@@ -555,7 +565,9 @@ private fun PdfReaderDocument(
                             pageIndex = index,
                             fitPage = fitPage,
                             bitmapCache = bitmapCache,
-                            renderGate = renderGate
+                            renderGate = renderGate,
+                            invertColors = isInvertColors,
+                            modifier = if (isHorizontalMode) Modifier.fillParentMaxWidth() else Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -697,6 +709,20 @@ private fun PdfReaderDocument(
                         ) {
                             Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.reader_toc_title))
                         }
+                    }
+                    var overflowExpanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { overflowExpanded = true }) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(if (isHorizontalMode) "Vertical Scroll" else "Horizontal Scroll") },
+                            onClick = { isHorizontalMode = !isHorizontalMode; overflowExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(if (isInvertColors) "Normal Colors" else "Invert Colors") },
+                            onClick = { isInvertColors = !isInvertColors; overflowExpanded = false }
+                        )
                     }
                     IconButton(
                         onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) },
@@ -1063,7 +1089,9 @@ fun PdfReaderPageItem(
     pageIndex: Int,
     fitPage: Boolean = false,
     bitmapCache: BoundedPageBitmapCache,
-    renderGate: ReaderRenderGate
+    renderGate: ReaderRenderGate,
+    invertColors: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth()
 ) {
     val targetWidth = remember(context, fitPage) {
         val baseWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(360)
@@ -1128,8 +1156,7 @@ fun PdfReaderPageItem(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .then(if (fitPage) Modifier.heightIn(max = maxPageHeightDp) else Modifier.wrapContentHeight())
             .shadow(4.dp, RoundedCornerShape(4.dp))
             .background(Color.White)
@@ -1138,9 +1165,20 @@ fun PdfReaderPageItem(
     ) {
         val activeBitmap = bitmap?.takeIf { !it.isRecycled }
         if (activeBitmap != null) {
+            val colorFilter = if (invertColors) {
+                androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+                    androidx.compose.ui.graphics.ColorMatrix(floatArrayOf(
+                        -1f, 0f, 0f, 0f, 255f,
+                        0f, -1f, 0f, 0f, 255f,
+                        0f, 0f, -1f, 0f, 255f,
+                        0f, 0f, 0f, 1f, 0f
+                    ))
+                )
+            } else null
             Image(
                 bitmap = activeBitmap.asImageBitmap(),
                 contentDescription = stringResource(R.string.reader_page_content_desc, pageIndex + 1),
+                colorFilter = colorFilter,
                 contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1177,5 +1215,36 @@ fun PdfReaderPageItem(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun ReaderPageList(
+    horizontal: Boolean,
+    state: androidx.compose.foundation.lazy.LazyListState,
+    userScrollEnabled: Boolean,
+    contentPadding: PaddingValues,
+    verticalArrangement: Arrangement.Vertical,
+    modifier: Modifier,
+    content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit
+) {
+    if (horizontal) {
+        LazyRow(
+            state = state,
+            userScrollEnabled = userScrollEnabled,
+            contentPadding = contentPadding,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = modifier,
+            content = content
+        )
+    } else {
+        LazyColumn(
+            state = state,
+            userScrollEnabled = userScrollEnabled,
+            contentPadding = contentPadding,
+            verticalArrangement = verticalArrangement,
+            modifier = modifier,
+            content = content
+        )
     }
 }

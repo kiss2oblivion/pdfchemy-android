@@ -143,7 +143,7 @@ fun PageCropperScreen(
                 )
                 isProcessing = false
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_crop_success),
                         context.getString(R.string.desc_crop_success)
                     , destUri)

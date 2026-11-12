@@ -57,6 +57,7 @@ import kotlin.coroutines.coroutineContext
 @Composable
 fun PageOrganizerScreen(
     viewModel: MainViewModel,
+    initialUri: Uri? = null,
     onBack: () -> Unit
 ) {
     SecureScreenContent()
@@ -66,7 +67,7 @@ fun PageOrganizerScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     val session = remember { OrganizerSession() }
     var sessionTick by remember { mutableIntStateOf(0) }
     var isOrganizing by remember { mutableStateOf(false) }
@@ -156,8 +157,12 @@ fun PageOrganizerScreen(
         }
     }
 
+    LaunchedEffect(initialUri) {
+        if (initialUri != null) loadOrganizerDocument(initialUri)
+    }
+
     LaunchedEffect(continuityUri) {
-        if (continuityUri != null && selectedPdfUri == continuityUri && session.pages.isEmpty()) {
+        if (initialUri == null && continuityUri != null && selectedPdfUri == continuityUri && session.pages.isEmpty()) {
             loadOrganizerDocument(continuityUri!!)
         }
     }

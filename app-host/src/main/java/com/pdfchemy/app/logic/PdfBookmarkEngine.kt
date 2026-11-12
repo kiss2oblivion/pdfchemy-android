@@ -13,7 +13,8 @@ import java.util.UUID
 data class BookmarkItem(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
-    val pageIndex: Int // 0-based
+    val pageIndex: Int, // 0-based
+    val level: Int = 0 // 0-based hierarchy depth
 )
 
 object PdfBookmarkEngine {
@@ -21,7 +22,7 @@ object PdfBookmarkEngine {
     suspend fun readBookmarks(context: Context, pdfUri: Uri): Result<List<BookmarkItem>> = withContext(Dispatchers.IO) {
         try {
             val contract = PdfGateway.executeEngineTyped<BookmarkReadContract>(context, "BOOKMARK_READ", pdfUri, null, "{}")
-            val result = contract.bookmarks.map { BookmarkItem(title = it.title, pageIndex = it.pageIndex) }
+            val result = contract.bookmarks.map { BookmarkItem(title = it.title, pageIndex = it.pageIndex, level = it.level) }
             Result.success(result)
         } catch (e: Exception) {
             AppLogger.e("PdfBookmarkEngine: Error reading bookmarks", e)
@@ -36,6 +37,7 @@ object PdfBookmarkEngine {
                 val obj = JSONObject()
                 obj.put("title", item.title)
                 obj.put("pageIndex", item.pageIndex)
+                obj.put("level", item.level)
                 arr.put(obj)
             }
             PdfGateway.executeEngine(context, "BOOKMARK_WRITE", sourcePdfUri, destPdfUri, arr.toString())

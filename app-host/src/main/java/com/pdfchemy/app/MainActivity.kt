@@ -482,8 +482,22 @@ class MainActivity : AppCompatActivity() {
             var hasConsented by remember { mutableStateOf(hasConsentedInitial) }
             var hasCompletedOnboarding by remember { mutableStateOf(hasCompletedOnboardingInitial) }
             var showTourManually by remember { mutableStateOf(false) }
-            
-            ShrinkPdfTheme(useDarkTheme = useDark) {
+
+            val systemHaptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+            val customHaptic = remember(systemHaptic) {
+                object : androidx.compose.ui.hapticfeedback.HapticFeedback {
+                    override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) {
+                        if (prefs.getBoolean("haptic", true)) {
+                            systemHaptic.performHapticFeedback(hapticFeedbackType)
+                        }
+                    }
+                }
+            }
+
+            CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalHapticFeedback provides customHaptic
+            ) {
+                ShrinkPdfTheme(useDarkTheme = useDark) {
                 if (!hasConsented) {
                     AlertDialog(
                         onDismissRequest = { /* Must explicitly decide to continue */ },
@@ -537,7 +551,8 @@ class MainActivity : AppCompatActivity() {
                     onOpenTour = {
                         showTourManually = true
                     }
-                )
+                    )
+                }
             }
         }
     }
@@ -806,7 +821,7 @@ fun MainApp(
                         currentScreen = Screen.SplitPdf(initialUri = sourceUri)
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.PAGE_RANGE -> {
-                        currentScreen = Screen.PageOrganizer
+                        currentScreen = Screen.PageOrganizer()
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.LIGHTWEIGHT_MODE -> {
                         viewModel.setUseGrayscale(true)
@@ -907,13 +922,10 @@ fun MainApp(
                 // [FEATURE: Merge PDFs] — Multi-document combiner with drag-and-drop reordering
                 Screen.MergePdf -> MergePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Split PDFs (Range / All)] — Split into individual pages or arbitrary page ranges
-                is Screen.SplitPdf -> SplitPdfScreen(viewModel, initialUri = targetScreen.initialUri) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Page Organizer] — Visual thumbnail grid: reorder, delete, duplicate, rotate
-                Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Delete Pages] — Visual single-page or multi-page removal
-                Screen.DeletePages -> DeletePagesScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Rotate Pages] — Lossless 90°, 180°, 270° orientation correction
-                Screen.RotatePdf -> RotatePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
+                is Screen.SplitPdf -> SplitPdfScreen(viewModel, initialUri = targetScreen.initialUri, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
+                is Screen.PageOrganizer -> PageOrganizerScreen(viewModel, initialUri = targetScreen.initialPdfUri) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.DeletePages -> DeletePagesScreen(viewModel, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.RotatePdf -> RotatePdfScreen(viewModel, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Auto-Deskew & Straighten] — Hough transform scan tilt auto-correction
                 Screen.Deskew -> DeskewScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Page Cropper & Margin Trimmer] — CropBox adjustment to remove scanner borders
@@ -1145,7 +1157,7 @@ fun MainApp(
                             OutlinedButton(
                                 onClick = resetAndShowAd,
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Another Operation") }
+                            ) { Text(stringResource(R.string.ok)) }
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
@@ -1154,7 +1166,7 @@ fun MainApp(
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Home") }
+                            ) { Text(stringResource(R.string.menu_home)) }
                         }
                     },
                     confirmButton = {}
@@ -1384,7 +1396,7 @@ sealed class Screen {
     // [FEATURE: Split PDFs] — Range or single page split
     data class SplitPdf(val initialUri: Uri? = null) : Screen()
     // [FEATURE: Page Organizer] — Visual thumbnail grid
-    object PageOrganizer : Screen()
+    data class PageOrganizer(val initialPdfUri: Uri? = null) : Screen()
     // [FEATURE: Delete Pages] — Visual page deletion
     object DeletePages : Screen()
     // [FEATURE: Rotate Pages] — Orientation correction
@@ -1514,7 +1526,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             Screen.LinearizePdf -> "LinearizePdf"
             Screen.FlattenPdf -> "FlattenPdf"
             Screen.MergePdf -> "MergePdf"
-            Screen.PageOrganizer -> "PageOrganizer"
+            is Screen.PageOrganizer -> "PageOrganizer"
             Screen.DeletePages -> "DeletePages"
             Screen.RotatePdf -> "RotatePdf"
             Screen.Deskew -> "Deskew"
@@ -1616,7 +1628,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "OcrPdf" -> Screen.OcrPdf
             str == "ScanPdf" -> Screen.ScanPdf
             str == "SignPdf" -> Screen.SignPdf
-            str == "PageOrganizer" -> Screen.PageOrganizer
+            str == "PageOrganizer" -> Screen.PageOrganizer()
             str == "Watermark" -> Screen.Watermark
             str == "PageNumber" -> Screen.PageNumber
             str == "PageLayout" -> Screen.PageLayout
@@ -1918,6 +1930,15 @@ fun HomeScreen(
                             translationY = cardsOffsetY.value  // slide up from below
                         }
                     ) {
+                        // [UX-02] Primary reading entry in dashboard
+                        CategoryCard(
+                            title = stringResource(R.string.menu_read_pdf),
+                            subtitle = stringResource(R.string.menu_read_pdf_desc),
+                            icon = Icons.Rounded.MenuBook,
+                            onClick = { onNavigate(Screen.PdfEditor()) },
+                            modifier = Modifier.fillMaxWidth().height(100.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().heightIn(min = categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -2261,6 +2282,14 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     subtitle = stringResource(R.string.menu_extract_images_desc),
                     icon = Icons.Rounded.Image,
                     onClick = { onNavigate(Screen.ExtractImages) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_extract),
+                    subtitle = stringResource(R.string.menu_extract_desc),
+                    icon = Icons.Rounded.TextSnippet,
+                    onClick = { onNavigate(Screen.ExtractText) }
                 )
             }
             item {

@@ -106,14 +106,7 @@ fun CheckCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     onClick = { onNavigate(Screen.TextCleaner) }
                 )
             }
-            item {
-                ToolCard(
-                    title = stringResource(R.string.menu_extract),
-                    subtitle = stringResource(R.string.menu_extract_desc),
-                    icon = Icons.Rounded.DocumentScanner,
-                    onClick = { onNavigate(Screen.ExtractText) }
-                )
-            }
+
             item {
                 ToolCard(
                     title = stringResource(R.string.menu_compare_pdfs),

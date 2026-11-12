@@ -206,8 +206,8 @@
 <string name="msg_scanner_not_available">Scanner not available.</string>
 <string name="msg_history_cleared">History cleared</string>
 <string name="label_type_or_paste">Type or paste %1$s here</string>
-<string name="menu_extract">Extract Text / OCR</string>
-<string name="menu_extract_desc">Extract text from PDFs or scanned documents</string>
+<string name="menu_extract">Extract Text</string>
+<string name="menu_extract_desc">Extract plain text from PDFs</string>
 <string name="label_words">Words: %1$d</string>
 <string name="label_chars">Characters: %1$d</string>
 <string name="label_from_format">From: %1$s</string>
@@ -344,12 +344,12 @@
 <string name="consent_dialog_title">Welcome to PDFchemy</string>
 <string name="consent_dialog_body">Your privacy is our priority. All PDF processing happens strictly offline on your device.\n\nTo keep this app free, we use third-party services like Google AdMob to display ads. These services may collect and use data (like your device identifier and location) to provide personalized advertising.\n\nBy clicking "I Agree", you consent to the use of this data for advertising purposes.</string>
 <string name="consent_dialog_agree">I Agree</string>
-    
+
 <string name="refund_policy_title">Refund Policy</string>
 <string name="refund_policy_body">If you have not requested a refund within 14 days of purchase, there will be no refund issued.</string>
 <string name="settings_refund_policy">Refund Policy</string>
 <string name="settings_refund_policy_desc">View our refund policy for premium purchases</string>
-    
+
 <string name="settings_theme">App Theme</string>
 <string name="settings_theme_desc">Choose between Light, Dark, or System Default theme</string>
 <string name="theme_system">System Default</string>
@@ -361,30 +361,30 @@
     <string name="settings_share_app">Share PDFchemy Tools</string>
     <string name="settings_share_app_desc">Tell friends and colleagues about this app</string>
     <string name="settings_share_app_message">Check out PDFchemy Tools — a fast, 100%% offline and private PDF compressor and editor for Android: %1$s</string>
-    
+
 <string name="settings_app_tour">App Tour</string>
 <string name="settings_app_tour_desc">Revisit the quick walkthrough of key features</string>
 <string name="settings_feedback">Send Feedback &amp; Support</string>
 <string name="settings_feedback_desc">Report bugs, request features, or ask questions</string>
 <string name="feedback_email_subject">PDFchemy Tools Feedback &amp; Support</string>
-    
+
     <!-- Onboarding Walkthrough Strings -->
 <string name="onboarding_skip">Skip</string>
 <string name="onboarding_next">Next</string>
 <string name="onboarding_get_started">Get Started</string>
-    
+
 <string name="onboarding_slide1_title">Smart PDF Compression</string>
 <string name="onboarding_slide1_desc">Shrink large PDFs to fit email and upload limits while preserving crisp readability and formatting.</string>
-    
+
 <string name="onboarding_slide2_title">Scan &amp; Create</string>
 <string name="onboarding_slide2_desc">Turn camera photos and gallery images into clean PDFs, or convert raw text with a single tap.</string>
-    
+
 <string name="onboarding_slide3_title">Organize &amp; Merge</string>
 <string name="onboarding_slide3_desc">Combine multiple documents with drag-and-drop ordering, extract pages, or split PDFs effortlessly.</string>
-    
-<string name="onboarding_slide4_title">100%% Private &amp; Offline</string>
+
+<string name="onboarding_slide4_title" formatted="false">100% Private &amp; Offline</string>
 <string name="onboarding_slide4_desc">Your documents stay on your device. Zero cloud uploads, zero account requirements—total privacy.</string>
-    
+
     <!-- Image Compressor Strings -->
 <string name="menu_compress_image">Compress Images</string>
 <string name="menu_compress_image_desc">Shrink JPG, PNG, WebP</string>
@@ -404,10 +404,10 @@
 <string name="preset_extreme">Extreme (40%%)</string>
 <string name="preset_optimal">Optimal (65%%)</string>
 <string name="preset_crisp">Crisp (85%%)</string>
-<string name="preset_max">Max (100%%)</string>
+<string name="preset_max" formatted="false">Max (100%)</string>
 <string name="image_output_format">Output Format</string>
 <string name="image_max_resolution">Max Resolution</string>
-<string name="res_original">Original (100%%)</string>
+<string name="res_original" formatted="false">Original (100%)</string>
 <string name="image_strip_exif">Strip EXIF &amp; Location</string>
 <string name="image_strip_exif_desc">Removes GPS tags, camera details &amp; metadata</string>
 <string name="image_btn_compress">Compress Image</string>
@@ -464,7 +464,7 @@
 <string name="history_unlocked_pdf">Unlocked PDF</string>
 <string name="history_pdf_to_images_folder">PDF Image Pages</string>
 <string name="protect_pdf_headline">Lock PDF with Password</string>
-<string name="protect_pdf_subtitle">100%% on-device AES encryption. Your password is never stored or uploaded.</string>
+<string name="protect_pdf_subtitle" formatted="false">100% on-device AES encryption. Your password is never stored or uploaded.</string>
 <string name="select_pdf_to_protect">Select PDF to Protect</string>
 <string name="enter_password_label">Set Password</string>
 <string name="confirm_password_label">Confirm Password</string>
@@ -506,7 +506,7 @@
 <string name="menu_ocr_pdf">OCR &amp; Searchable PDF</string>
 <string name="menu_ocr_pdf_desc">Make scanned documents and images fully searchable</string>
 <string name="ocr_pdf_headline">Make Scanned PDF Searchable</string>
-<string name="ocr_pdf_subtitle">100%% on-device text recognition. Generate a searchable, selectable text layer.</string>
+<string name="ocr_pdf_subtitle" formatted="false">100% on-device text recognition. Generate a searchable, selectable text layer.</string>
 <string name="select_pdf_for_ocr">Select PDF Document</string>
 <string name="ocr_processing_generic">Analyzing and recognizing text…</string>
 <string name="ocr_processing_progress">OCR Processing: Page %1$d of %2$d…</string>
@@ -644,7 +644,7 @@
     <!-- Office Exporter Strings -->
 <string name="title_office_exporter">Office Exporter</string>
 <string name="banner_office_exporter_title">Export PDF to Office</string>
-<string name="banner_office_exporter_desc">Convert your PDF into editable Microsoft Word, Excel, or PowerPoint files with 100%% offline privacy.</string>
+<string name="banner_office_exporter_desc" formatted="false">Convert your PDF into editable Microsoft Word, Excel, or PowerPoint files with 100% offline privacy.</string>
 <string name="step_select_pdf">1. Select PDF Document</string>
 <string name="btn_choose_pdf_file">Choose PDF Document</string>
 <string name="tap_to_change_file">Tap to choose a different PDF</string>
@@ -941,7 +941,7 @@
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
 <string name="menu_pdfa_validator_desc">Run preliminary checks; PDF/A conformance is not certified</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
+<string name="status_archival_ready" formatted="false">Archival Ready (100% Compliant)</string>
 <string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
 <string name="menu_font_inspector_desc">Inspect embedded fonts, subtypes, and encodings</string>
@@ -990,15 +990,15 @@
 
     <!-- The Lifetime Manifesto -->
     <string name="settings_manifesto_title">The Lifetime Manifesto</string>
-    <string name="settings_manifesto_desc">Our promise: 100%% free updates, zero cloud, built for the people.</string>
+    <string name="settings_manifesto_desc" formatted="false">Our promise: 100% free updates, zero cloud, built for the people.</string>
     <string name="manifesto_dialog_title">The Lifetime Manifesto</string>
     <string name="manifesto_quote">\</string>
     <string name="manifesto_author">— Andrei Ioan Cucoș (John), Developer</string>
     <string name="manifesto_guarantees_title">Our 4 Unbreakable Guarantees:</string>
-    <string name="manifesto_g1_title">100%% Free Forever</string>
+    <string name="manifesto_g1_title" formatted="false">100% Free Forever</string>
     <string name="manifesto_g1_desc">Zero subscriptions, zero paywalls, zero artificial page/file limits, and zero watermark vandalism.</string>
-    <string name="manifesto_g2_title">100%% Offline &amp; Private</string>
-    <string name="manifesto_g2_desc">Zero files ever leave this computer. Zero analytics or tracking telemetry. 100%% safe for confidential documents.</string>
+    <string name="manifesto_g2_title" formatted="false">100% Offline &amp; Private</string>
+    <string name="manifesto_g2_desc" formatted="false">Zero files ever leave this computer. Zero analytics or tracking telemetry. 100% safe for confidential documents.</string>
     <string name="manifesto_g3_title">Original-Safe</string>
     <string name="manifesto_g3_desc">We never overwrite or destroy your source files without explicit confirmation.</string>
     <string name="manifesto_g4_title">Built For The People</string>
@@ -1112,7 +1112,7 @@
     <string name="vanguard_blocked_message_launch">External process launch action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_uri">Suspicious or automated network activity detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message_other">Active content or automated form submission detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
-    <string name="sanitizer_other_action_threats">Other active behaviors: %1</string>
+    <string name="sanitizer_other_action_threats">Other active behaviors: %1$d</string>
     <string name="vanguard_blocked_message_default">Automatic external action detected. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_blocked_message">This PDF contains embedded scripts or automated execution hooks. In accordance with zero-trust security, PDFchemy will not open this document.</string>
     <string name="vanguard_encrypted_title">Password-Protected Document</string>
@@ -1207,5 +1207,65 @@
     <string name="reader_reset_zoom_fmt">%1$.1fx • Reset</string>
     <string name="previous_match">Previous Match</string>
     <string name="next_match">Next Match</string>
+    <string name="form_fill_mode_list">List View</string>
+    <string name="form_fill_mode_insitu">Document View</string>
+    <string name="tool_shape">Shapes</string>
+    <string name="shape_picker_desc">Select a geometric shape to draw on the document</string>
+    <string name="shape_rect">Rectangle</string>
+    <string name="shape_circle">Circle</string>
+    <string name="shape_line">Line</string>
+    <string name="shape_arrow">Arrow</string>
+    <string name="custom_stamp_label">Custom Stamp Text</string>
+    <string name="btn_apply_custom_stamp">Apply Stamp</string>
+    <string name="btn_indent_bookmark">Indent</string>
+    <string name="btn_outdent_bookmark">Outdent</string>
+    <string name="title_remove_attachment_success">Attachment Removed</string>
+    <string name="desc_remove_attachment_success">Attachment removed and document saved successfully</string>
+    <string name="error_remove_attachment_failed">Failed to remove attachment</string>
+    <string name="btn_remove_attachment">Remove Attachment</string>
+    <string name="dialog_remove_attachment_title">Remove Attachment?</string>
+    <string name="dialog_remove_attachment_msg">Remove \"%1$s\" from this PDF? The updated document will be saved as a new file.</string>
+
+
+
+
+
+
+
+
+
+
+
+    <string name="table_extractor_action_export_excel">Export to Excel (.xlsx)</string>
+    <string name="form_builder_tool_radio">Radio Group</string>
+    <string name="form_builder_tool_signature">Signature Field</string>
+    <string name="menu_read_pdf">Open PDF</string>
+    <string name="menu_read_pdf_desc">Read and annotate documents</string>
+    <string name="menu_home">Home</string>
+    <string name="pki_dialog_title">Apply PKI Digital Signature</string>
+    <string name="pki_dialog_desc">Cryptographically sign this document to verify authenticity and tamper-evidence.</string>
+    <string name="pki_keystore_load">Load Keystore (.p12 / .pfx)</string>
+    <string name="pki_keystore_loaded">Keystore: %1$s</string>
+    <string name="pki_keystore_remove">Clear Keystore</string>
+    <string name="pki_keystore_password">Keystore Password</string>
+    <string name="pki_ephemeral_notice">Using ephemeral on-device RSA-2048 certificate. Load a .p12/.pfx keystore above for enterprise PKI compliance.</string>
+    <string name="pki_signer_name">Signer Name</string>
+    <string name="pki_reason">Reason</string>
+    <string name="pki_location">Location</string>
+    <string name="pki_sign_and_save">Sign &amp; Save</string>
+    <string name="btn_convert_to_pdfa">Convert to PDF/A-1b</string>
+    <string name="btn_converting_pdfa">Converting to PDF/A-1b…</string>
+    <string name="title_pdfa_converted_success">PDF/A-1b Converted Successfully</string>
+    <string name="error_pdfa_conversion_failed">PDF/A Conversion Failed</string>
+    <string name="btn_export_embedded_fonts">Export Embedded Fonts (.zip)</string>
+    <string name="btn_exporting_fonts">Exporting Fonts…</string>
+    <string name="title_fonts_exported_success">Embedded fonts exported successfully (%1$d)</string>
+    <string name="error_fonts_export_failed">Failed to extract embedded fonts</string>
+    <string name="desc_open_file">Open File</string>
+    <string name="desc_save_file">Save File</string>
+    <string name="desc_copy_clipboard">Copy to Clipboard</string>
+    <string name="desc_share_text">Share Text</string>
+    <string name="msg_copied_to_clipboard">Text copied to clipboard</string>
+    <string name="msg_text_saved_success">Text saved successfully</string>
 </resources>
 

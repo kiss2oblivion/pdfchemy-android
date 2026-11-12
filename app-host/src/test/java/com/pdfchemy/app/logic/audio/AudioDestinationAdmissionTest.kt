@@ -190,4 +190,22 @@ class AudioDestinationAdmissionTest {
             assertEquals("source stays intact", wav.readText())
         } finally { wav.delete() }
     }
+    @Test fun outputFormatDefaultsToWavAndDoesNotQueryProviderMetadata() {
+        configure()
+        OutputPolicy.registerFreshCopy(uri)
+        AudioExportDependencies.registerDestination(jobId, uri)
+        assertEquals(AudioExportDependencies.OutputFormat.WAV, AudioExportDependencies.outputFormat(jobId))
+        verify(exactly = 0) { resolver.getType(any()) }
+    }
+
+    @Test fun claimedM4aFormatCannotBeChangedByDuplicateRegistration() {
+        configure()
+        OutputPolicy.registerFreshCopy(uri)
+        AudioExportDependencies.registerDestination(jobId, uri, true, AudioExportDependencies.OutputFormat.M4A)
+        assertTrue(runCatching {
+            AudioExportDependencies.registerDestination(jobId, uri, true, AudioExportDependencies.OutputFormat.WAV)
+        }.isFailure)
+        assertEquals(AudioExportDependencies.OutputFormat.M4A, AudioExportDependencies.outputFormat(jobId))
+        assertEquals(0, opens)
+    }
 }

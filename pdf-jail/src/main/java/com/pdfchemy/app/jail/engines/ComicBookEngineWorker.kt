@@ -103,6 +103,7 @@ object ComicBookEngineWorker {
                 }
             }
 
+            checkArchiveFormat(tempFile)
             zip = ZipFile(tempFile)
             document = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             
@@ -182,6 +183,25 @@ object ComicBookEngineWorker {
             try { document?.close() } catch (_: Exception) {}
             try { zip?.close() } catch (_: Exception) {}
             tempFile?.delete()
+        }
+    }
+    private fun checkArchiveFormat(file: File) {
+        val header = ByteArray(8)
+        val count = com.pdfchemy.app.jail.CapabilityIo.input(file).use { input ->
+            var offset = 0
+            while (offset < header.size) {
+                val read = input.read(header, offset, header.size - offset)
+                if (read < 0) break
+                if (read == 0) continue
+                offset += read
+            }
+            offset
+        }
+        if (count >= 4 && header.take(4) == listOf(0x52, 0x61, 0x72, 0x21).map(Int::toByte)) {
+            throw IllegalArgumentException("RAR-compressed archives (.cbr) are unsupported; convert to ZIP (.cbz).")
+        }
+        if (count >= 6 && header.take(6) == listOf(0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c).map(Int::toByte)) {
+            throw IllegalArgumentException("7-Zip archives (.cb7) are unsupported; convert to ZIP (.cbz).")
         }
     }
 }

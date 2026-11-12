@@ -141,7 +141,7 @@ object PdfEditorWorker {
                     // Overlay coordinates refer to the original rendered page plane.
                     val originalRotation = (page.rotation % 360 + 360) % 360
 
-                if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty()) {
+                if (mod.drawings.isNotEmpty() || mod.textAnnotations.isNotEmpty() || mod.stamps.isNotEmpty() || mod.shapes.isNotEmpty()) {
                     val cropBox = page.cropBox ?: page.mediaBox
                     val pageWidthPts = cropBox.width
                     val pageHeightPts = cropBox.height

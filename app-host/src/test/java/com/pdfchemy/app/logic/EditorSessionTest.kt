@@ -151,4 +151,56 @@ class EditorSessionTest {
         assertEquals(90, session.getModification(0).rotationDegrees)
         assertEquals(1, session.getModification(0).textAnnotations.size)
     }
+
+    @Test
+    fun `adding shape updates dirty state and supports undo redo`() {
+        val session = EditorSession()
+        val shape = ShapeAnnotation(
+            type = ShapeType.RECTANGLE,
+            startXRatio = 0.1f,
+            startYRatio = 0.1f,
+            endXRatio = 0.5f,
+            endYRatio = 0.5f,
+            strokeColor = Color.BLUE,
+            strokeWidth = 3f
+        )
+        session.addShape(0, shape)
+
+        assertTrue(session.canUndo)
+        assertFalse(session.canRedo)
+        assertTrue(session.isDirty)
+        assertEquals(1, session.getModification(0).shapes.size)
+        assertEquals(ShapeType.RECTANGLE, session.getModification(0).shapes[0].type)
+
+        val affectedPage = session.undo()
+        assertEquals(0, affectedPage)
+        assertFalse(session.canUndo)
+        assertTrue(session.canRedo)
+        assertFalse(session.isDirty)
+        assertEquals(0, session.getModification(0).shapes.size)
+
+        val redonePage = session.redo()
+        assertEquals(0, redonePage)
+        assertTrue(session.canUndo)
+        assertFalse(session.canRedo)
+        assertTrue(session.isDirty)
+        assertEquals(1, session.getModification(0).shapes.size)
+    }
+
+    @Test
+    fun `custom stamp preserves custom text`() {
+        val session = EditorSession()
+        val stamp = StampAnnotation(
+            type = StampType.APPROVED,
+            xRatio = 0.5f,
+            yRatio = 0.5f,
+            customText = "VERIFIED FOR RELEASE"
+        )
+        session.addStamp(0, stamp)
+
+        assertTrue(session.isDirty)
+        val mod = session.getModification(0)
+        assertEquals(1, mod.stamps.size)
+        assertEquals("VERIFIED FOR RELEASE", mod.stamps[0].customText)
+    }
 }
