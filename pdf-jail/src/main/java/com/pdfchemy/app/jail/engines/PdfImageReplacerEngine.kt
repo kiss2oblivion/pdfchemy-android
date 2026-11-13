@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.cos.COSName
@@ -56,11 +58,9 @@ object PdfImageReplacerEngine {
                                 val fullImage = SafePdfImage.decode(xObject)
                                 val scale = calculateThumbnailScale(width, height, maxDim = 300)
                                 thumb = if (scale < 1.0f) {
-                                    val scaled = Bitmap.createScaledBitmap(
-                                        fullImage,
+                                    val scaled = fullImage.scale(
                                         (width * scale).toInt().coerceAtLeast(1),
-                                        (height * scale).toInt().coerceAtLeast(1),
-                                        true
+                                        (height * scale).toInt().coerceAtLeast(1)
                                     )
                                     if (scaled !== fullImage) {
                                         fullImage.recycle()
@@ -195,7 +195,7 @@ object PdfImageReplacerEngine {
 
             if (kotlin.math.abs(origAR - repAR) > 0.01f && origW in 1..4096 && origH in 1..4096) {
                 com.pdfchemy.app.security.SecurityLimits.requirePixels(origW, origH)
-                val canvasBmp = Bitmap.createBitmap(origW, origH, Bitmap.Config.ARGB_8888)
+                val canvasBmp = createBitmap(origW, origH)
                 val canvas = android.graphics.Canvas(canvasBmp)
                 val scale = minOf(origW.toFloat() / replacementBitmap.width, origH.toFloat() / replacementBitmap.height)
                 val dw = replacementBitmap.width * scale

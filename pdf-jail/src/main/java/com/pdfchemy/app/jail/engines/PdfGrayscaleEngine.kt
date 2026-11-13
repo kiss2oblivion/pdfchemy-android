@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.jail.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
@@ -45,7 +46,7 @@ object PdfGrayscaleEngine {
             val scale = 1.5f
             val (width, height) = com.pdfchemy.app.security.SecurityLimits.safeRenderSize(page.width.toDouble(), page.height.toDouble(), scale.toDouble())
 
-            val srcBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(width, height); Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888) }
+            val srcBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(width, height); createBitmap(width, height) }
             try {
                 val canvas = Canvas(srcBitmap)
                 canvas.drawColor(Color.WHITE)
@@ -102,7 +103,7 @@ object PdfGrayscaleEngine {
                 val scale = 2f
                 val (bmpW, bmpH) = com.pdfchemy.app.security.SecurityLimits.safeRenderSize(page.width.toDouble(), page.height.toDouble(), scale.toDouble())
 
-                val rawBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpW, bmpH); Bitmap.createBitmap(bmpW, bmpH, Bitmap.Config.ARGB_8888) }
+                val rawBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpW, bmpH); createBitmap(bmpW, bmpH) }
                 try {
                     val canvas = Canvas(rawBitmap)
                     canvas.drawColor(Color.WHITE)
@@ -165,7 +166,7 @@ object PdfGrayscaleEngine {
     private fun applyFilter(bitmap: Bitmap, mode: GrayscaleMode, threshold: Int): Bitmap {
         return when (mode) {
             GrayscaleMode.GRAYSCALE_8BIT -> {
-                val grayBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bitmap.width, bitmap.height); Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888) }
+                val grayBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bitmap.width, bitmap.height); createBitmap(bitmap.width, bitmap.height) }
                 val canvas = Canvas(grayBitmap)
                 val paint = Paint()
                 val colorMatrix = ColorMatrix().apply { setSaturation(0f) }
@@ -190,7 +191,7 @@ object PdfGrayscaleEngine {
                     pixels[i] = binary
                 }
 
-                val monoBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(width, height); Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888) }
+                val monoBitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(width, height); createBitmap(width, height) }
                 monoBitmap.setPixels(pixels, 0, width, 0, 0, width, height)
                 monoBitmap
             }

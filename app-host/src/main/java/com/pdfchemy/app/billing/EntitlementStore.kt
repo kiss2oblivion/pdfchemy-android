@@ -60,6 +60,8 @@ internal class PlatformEntitlementStore(
         legacy
     }
 
+    // Synchronously returns Editor.commit()'s Boolean result to fail closed on disk write errors; KTX edit returns Unit.
+    @android.annotation.SuppressLint("UseKtx")
     override fun write(entitled: Boolean): Boolean = synchronized(lock) {
         runCatching {
             val encrypted = cipher.encrypt(entitled)

@@ -5,6 +5,8 @@ import android.app.job.JobService
 import kotlinx.coroutines.*
 
 /** Queries Play again after process death; accepts no external purchase data. */
+// Uses platform android.app.job.JobService directly (JOB_ID = 0x504442), not WorkManager.
+@android.annotation.SuppressLint("SpecifyJobSchedulerIdRange")
 class BillingRecoveryJobService : JobService() {
     private var work: Job? = null
     private var owner: CoroutineScope? = null

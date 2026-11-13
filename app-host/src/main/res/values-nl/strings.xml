@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">Binnenkort beschikbaar</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">Wissen</string>
 <string name="clear_all">Alles wissen</string>
 <string name="save">Opslaan</string>
-<string name="continue_btn">Doorgaan</string>
 <string name="home_subtitle">VEILIGE DOCUMENTVERWERKING OP HET APPARAAT</string>
 <string name="cat_compress">Comprimeren</string>
 <string name="cat_compress_desc">Verklein PDF-bestanden veilig en met behoud van kwaliteit.</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">Controleren</string>
 <string name="cat_check_desc">Controleer documenten vóór het verzenden.</string>
 <string name="menu_compress">PDF Comprimeren</string>
-<string name="menu_compress_desc">Bestandsgrootte verkleinen</string>
 <string name="menu_merge">PDF Samenvoegen</string>
 <string name="menu_merge_desc">Meerdere bestanden samenvoegen tot één</string>
 <string name="menu_split">PDF Splitsen</string>
 <string name="menu_split_desc">Pagina\'s extraheren en verdelen</string>
 <string name="menu_scan">Scannen naar PDF</string>
 <string name="menu_scan_desc">Documenten scannen met de camera</string>
-<string name="menu_ocr">Tekst Extraheren</string>
-<string name="menu_ocr_desc">Tekst uit PDF halen</string>
-<string name="menu_metadata">Metadata Inspecteren</string>
-<string name="menu_metadata_desc">Verborgen bestandseigenschappen bekijken</string>
 <string name="settings_title">Instellingen</string>
-<string name="settings_preferences">App-voorkeuren</string>
-<string name="settings_haptic">Haptische feedback</string>
-<string name="settings_haptic_desc">Trillen bij interactie</string>
-<string name="settings_sfx">Geluidseffecten</string>
-<string name="settings_sfx_desc">Geluid afspelen bij knopaanraking</string>
 <string name="settings_history">Recente bestanden onthouden</string>
 <string name="settings_history_desc">Lokale geschiedenis van bestanden bijhouden. Bestanden worden nooit geüpload.</string>
 <string name="settings_language">Taal (Language)</string>
 <string name="settings_language_desc">Weergavetaal van de app wijzigen</string>
 <string name="settings_clear_history">Geschiedenis Wissen</string>
-<string name="settings_clear_history_confirm">Weet u zeker dat u de geschiedenis van recente bestanden wilt wissen?</string>
-<string name="settings_history_cleared">Geschiedenis gewist</string>
 <string name="compress_title">PDF Comprimeren</string>
 <string name="compress_single">Enkel bestand</string>
 <string name="compress_batch">Batch-compressie</string>
 <string name="compress_select_file">Selecteer PDF-bestand</string>
-<string name="compress_compressing">PDF comprimeren...</string>
 <string name="compress_target_size">Doelbestandsgrootte</string>
 <string name="compress_preset">Compressieprofiel:</string>
-<string name="compress_exact_mb">Exacte MB</string>
-<string name="compress_options">Compressie-opties</string>
-<string name="compress_grayscale">Omzetten naar grijstinten</string>
-<string name="compress_grayscale_desc">Kleurenafbeeldingen converteren naar zwart-wit</string>
-<string name="compress_lossless">Verliesloze ZIP-compressie</string>
-<string name="compress_lossless_desc">JPEG-compressie overslaan</string>
-<string name="compress_strip_meta">Metadata Verwijderen</string>
-<string name="compress_strip_meta_desc">Auteur- en bewerkingstags wissen</string>
 <string name="warning_quality_title">Kwaliteits- en juridische waarschuwing</string>
 <string name="warning_quality_desc">Compressie kan de beeldkwaliteit beïnvloeden. Dit kan officiële documenten of digitale handtekeningen ongeldig maken. Bewaar altijd uw originele bestand.</string>
 <string name="warning_understand">Ik begrijp het</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">PDF Splitsen</string>
 <string name="split_into_folder">Splitsen naar map</string>
 <string name="extraction_options">Extractie-opties</string>
-<string name="extract_all_pages_as_individua">Alle pagina\'s extraheren als individuele bestanden</string>
-<string name="extract_custom_range">Aangepast paginabereik extraheren</string>
-<string name="e_g_1_3_5_7_10">bijv. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">bijv. 1-3, 5, 7-10</string>
 <string name="extract_images">Afbeeldingen Extraheren</string>
 <string name="ready_to_extract_all_images_ta">Klaar om alle afbeeldingen te extraheren. Tik op onderstaande knop en kies een doelmap.</string>
 <string name="change_pdf">PDF Wijzigen</string>
-<string name="extracting_images">Afbeeldingen extraheren...</string>
+<string name="extracting_images">Afbeeldingen extraheren…</string>
 <string name="delete_pages">Pagina\'s Verwijderen</string>
 <string name="save_document">Document Opslaan</string>
 <string name="pages_to_delete">Te verwijderen pagina\'s</string>
-<string name="e_g_1_3_5_10">bijv. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">bijv. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Voer paginanummers gescheiden door komma\'s of bereiken in.</string>
 <string name="rotate_pages">Pagina\'s Draaien</string>
 <string name="rotate_save">Draaien en Opslaan</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">Te draaien pagina\'s (optioneel)</string>
 <string name="leave_blank_to_rotate_all_page">Laat leeg om alle pagina\'s te draaien.</string>
 <string name="text_cleaner">Tekstreiniger</string>
-<string name="paste_your_text_here">Plak uw tekst hier...</string>
+<string name="paste_your_text_here">Plak uw tekst hier…</string>
 <string name="text_format_converter">Tekstformaat Converter</string>
-<string name="enter_content">Voer inhoud in...</string>
+<string name="enter_content">Voer inhoud in…</string>
 <string name="import_btn">Importeren</string>
-<string name="compressing_pdf">PDF comprimeren...</string>
 <string name="create">Maken</string>
 <string name="compress">Comprimeren</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Selecteer doelgrootte (MB):</string>
 <string name="exact_mb">Exacte MB</string>
-<string name="compression_options">Compressie-opties</string>
 <string name="grayscale_conversion">Omzetten naar grijstinten</string>
 <string name="convert_color_images_to_black">Kleurenafbeeldingen converteren naar zwart-wit</string>
 <string name="lossless_zip_compression">Verliesloze ZIP-compressie</string>
 <string name="skip_jpeg_lossy_compression_no">JPEG-compressie overslaan (geen kwaliteitsverlies)</string>
 <string name="strip_author_creator_editor_ta">Auteur-, maker- en bewerkingstags verwijderen</string>
 <string name="type_or_paste_text_here">Typ of plak hier tekst</string>
-<string name="enter_the_content_of_your_pdf">Voer de inhoud van uw PDF-document in...</string>
+<string name="enter_the_content_of_your_pdf">Voer de inhoud van uw PDF-document in…</string>
 <string name="import_txt">.txt Importeren</string>
 <string name="save_as_pdf">Opslaan als PDF</string>
 <string name="clear_history">Geschiedenis Wissen</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">Bestandsnaam: %1$s</string>
 <string name="selected_batch_files">Geselecteerde batch-bestanden:</string>
-<string name="analyzing_doc">Documentstructuur analyseren...</string>
+<string name="analyzing_doc">Documentstructuur analyseren…</string>
 <string name="smart_recommendation">Slimme aanbeveling</string>
 <string name="detected_type">Gedetecteerd type: %1$s</string>
 <string name="doc_stats_pages_images">Pagina\'s: %1$d | Afbeeldingen: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ Geen advertenties
 ✓ Onbeperkte batchverwerking</string>
-<string name="batch_compressing">%1$d / %2$d bestanden comprimeren...</string>
 <string name="msg_enter_text">Voer wat tekst in.</string>
 <string name="menu_delete_pages">Pagina\'s Verwijderen</string>
 <string name="menu_delete_pages_desc">Specifieke pagina\'s verwijderen uit een PDF</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">Uitvoer Delen</string>
 <string name="desc_go_premium">Neem Premium</string>
 <string name="desc_settings">Instellingen</string>
-<string name="desc_toggle_theme">Thema Wisselen</string>
-<string name="desc_app_logo">App-logo</string>
 <string name="scan_prefix">Scan_</string>
 <string name="default_scanned_doc_name">gescand_document</string>
 <string name="desc_back">Terug</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">Bestand Wijzigen</string>
 <string name="btn_select_pdf_files">Selecteer PDF-bestanden</string>
 <string name="btn_add_more_files">Meer bestanden toevoegen (%1$d geselecteerd)</string>
-<string name="label_original_size_analyzing">Originele grootte: %1$s (Analyseren...)</string>
+<string name="label_original_size_analyzing">Originele grootte: %1$s (Analyseren…)</string>
 <string name="label_original_size_to_compressed">Origineel: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">Doel: %1$.1f MB</string>
 <string name="label_target_unknown">Doel: Niet ingesteld</string>
-<string name="label_analyzing">Analyseren...</string>
+<string name="label_analyzing">Analyseren…</string>
 <string name="label_target_mb">Doel: %1$s MB</string>
 <string name="desc_remove_file">Bestand verwijderen</string>
 <string name="preset_custom">Aangepast</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">Donker</string>
 <string name="settings_rate_app">Beoordeel PDFchemy</string>
 <string name="settings_rate_app_desc">Bevalt de app? Laat een beoordeling achter op Google Play!</string>
-<string name="settings_rate_app_thanks">Bedankt voor uw steun!</string>
     <string name="settings_share_app">PDFchemy Tools delen</string>
     <string name="settings_share_app_desc">Vertel vrienden en collega\'s over deze app</string>
     <string name="settings_share_app_message">Bekijk PDFchemy Tools — een snelle, 100%% offline en veilige PDF-compressor en editor voor Android: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">100%% tekstherkenning op het apparaat. Voegt een tekstlaag toe voor selectie en zoeken.</string>
 <string name="select_pdf_for_ocr">Selecteer PDF-document</string>
 <string name="ocr_processing_generic">Tekst analyseren en herkennen…</string>
-<string name="ocr_processing_progress">OCR-verwerking: Pagina %1$d van %2$d…</string>
 <string name="action_create_searchable_pdf">Doorzoekbare PDF Maken</string>
 <string name="title_ocr_success">Doorzoekbare PDF Aangemaakt!</string>
 <string name="desc_ocr_success">Onzichtbare tekstlaag toegevoegd waarmee tekst doorzocht en gekopieerd kan worden.</string>
 <string name="error_ocr_failed">OCR-tekstherkenning mislukt.</string>
 <string name="history_searchable_ocr_pdf">Doorzoekbare OCR-PDF</string>
-<string name="menu_redact_pdf">Permanente Anonimisering (Zwartmaken)</string>
 <string name="tool_redact">Zwartmaken</string>
-<string name="title_redact_success">PDF Succesvol Geanonimiseerd!</string>
-<string name="desc_redact_success">Geselecteerde gebieden en onderliggende gegevens zijn permanent verwijderd.</string>
-<string name="error_redact_failed">Anonimisering toepassen mislukt.</string>
-<string name="history_redacted_pdf">Geanonimiseerde PDF</string>
 <string name="menu_reflow_reader">Leesmodus &amp; Inhoudsopgave</string>
 <string name="menu_reflow_reader_desc">Comfortabele e-reader leesmodus met inhoudsopgave</string>
 <string name="reflow_reader_headline">Comfortabele Mobiele Lezer</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">Levendige Kleuren</string>
 <string name="filter_bw">Zwart-wit</string>
 <string name="filter_grayscale">Grijstinten</string>
-<string name="action_save_as_pdf">%1$d Pagina\'s Opslaan als PDF</string>
 <string name="title_scan_success">Document Succesvol Gescand!</string>
 <string name="desc_scan_success">Gescande pagina\'s zijn samengevoegd tot een geoptimaliseerde PDF.</string>
 <string name="error_scan_failed">Gescande PDF maken mislukt.</string>
-<string name="history_scanned_pdf">Gescand Document</string>
 <string name="menu_sign_pdf">PDF Ondertekenen</string>
 <string name="menu_sign_pdf_desc">Digitale handtekening tekenen, opslaan en op contracten plaatsen</string>
 <string name="sign_pdf_headline">PDF-documenten Ondertekenen</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">Pagina\'s Succesvol Georganiseerd!</string>
 <string name="desc_organizer_success">Nieuwe paginavolgorde en lay-out zijn opgeslagen.</string>
 <string name="error_organizer_failed">Pagina\'s organiseren mislukt.</string>
-<string name="history_organized_pdf">Georganiseerde PDF</string>
 <string name="menu_watermark_pdf">Watermerk Toevoegen</string>
 <string name="menu_watermark_pdf_desc">Aanpasbaar tekst- of logowatermerk op alle pagina\'s aanbrengen</string>
 <string name="watermark_headline">Watermerk Toevoegen aan Document</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">Watermerk Succesvol Toegevoegd!</string>
 <string name="desc_watermark_success">Watermerk is aangebracht op uw document.</string>
 <string name="error_watermark_failed">Watermerk toevoegen mislukt.</string>
-<string name="history_watermarked_pdf">PDF met Watermerk</string>
 <string name="menu_page_number_pdf">Paginanummers Toevoegen</string>
 <string name="menu_page_number_pdf_desc">Kop- of voettekstnummering toevoegen (Pagina X van Y)</string>
 <string name="page_number_headline">Paginanummers Invoegen</string>
@@ -589,11 +549,10 @@
 <string name="title_page_number_success">Paginanummers Toegevoegd!</string>
 <string name="desc_page_number_success">Paginanummers zijn opgeslagen in het document.</string>
 <string name="error_page_number_failed">Paginanummers toevoegen mislukt.</string>
-<string name="history_numbered_pdf">Genummerde PDF</string>
 <string name="menu_page_layout">Papierformaat &amp; N-Up Afdrukken</string>
 <string name="menu_page_layout_desc">Standaard papierformaat wijzigen of 2, 4, 6 pagina\'s op één vel combineren</string>
 <string name="page_layout_headline">Paginalay-out &amp; N-Up Afdrukken</string>
-<string name="page_layout_subtitle">Printopmaak, papierformaat aanpassen of 2-op-1 / 4-op-1 hand-outs maken.</string>
+<string name="page_layout_subtitle">Printopmaak, papierformaat aanpassen of 2-op-1, 4-op-1 hand-outs maken.</string>
 <string name="select_pdf_for_layout">Selecteer PDF-document</string>
 <string name="tab_nup_handout">N-Up Meerdere Pagina\'s</string>
 <string name="tab_resize_paper">Papierformaat Wijzigen</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">Lay-out Succesvol Aangemaakt!</string>
 <string name="desc_layout_success">Uw nieuw geformatteerde PDF is opgeslagen.</string>
 <string name="error_layout_failed">Lay-out genereren mislukt.</string>
-<string name="history_layout_pdf">PDF-lay-out</string>
 <string name="menu_compare_pdfs">Twee PDF\'s Vergelijken</string>
 <string name="menu_compare_pdfs_desc">Visuele verschillen en tekstwijzigingen tussen documentversies markeren</string>
 <string name="compare_headline">PDF Versievergelijker</string>
 <string name="compare_subtitle">Kies twee revisies om visuele verschillen en tekstuele aanpassingen te bekijken.</string>
 <string name="select_original_pdf">Selecteer Origineel (Document A)</string>
 <string name="select_modified_pdf">Selecteer Gewijzigde Versie (Document B)</string>
-<string name="doc1_selected">Origineel Geselecteerd</string>
-<string name="doc2_selected">Gewijzigde Versie Geselecteerd</string>
 <string name="comparing_documents_progress">Pagina\'s en tekst vergelijken…</string>
 <string name="compare_results_title">Vergelijkingsresultaten</string>
 <string name="compare_summary_counts">%1$d Gewijzigde Pagina\'s • %2$d Identieke Pagina\'s</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">Exporteert alinea\'s, koppen en pagina-einden naar een standaard Microsoft Word (.docx)-bestand.</string>
 <string name="info_excel_export">Extraheert gestructureerde tabellen en gegevens naar een Microsoft Excel (.xlsx)-spreadsheet.</string>
 <string name="info_pptx_export">Zet pagina\'s om in presentatiedia\'s in Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Converteren naar Office...</string>
+<string name="converting_to_office">Converteren naar Office…</string>
 <string name="btn_export_office_file">Exporteren als %1$s</string>
 <string name="title_office_export_success">Export voltooid</string>
 <string name="desc_office_export_success">%1$d pagina\'s succesvol geëxporteerd naar het geselecteerde Office-formaat.</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">Insluiten mislukt</string>
 <string name="menu_fast_web_view">Fast Web View-informatie</string>
 <string name="menu_fast_web_view_desc">PDF-informatie inspecteren; Fast Web View-aanmaak niet beschikbaar</string>
-<string name="linearize_headline">Snelle webweergave streamer</string>
 <string name="linearize_subtitle">Deze versie kan geen Fast Web View-PDF\'s genereren of certificeren. Er wordt geen uitvoerbestand aangemaakt.</string>
 <string name="select_pdf_for_linearize">Selecteer een PDF om te inspecteren</string>
 <string name="label_diagnostic_status">PDF-informatie</string>
 <string name="label_fast_web_view_enabled">Linearisatie:</string>
-<string name="status_enabled">Ingeschakeld</string>
 <string name="status_disabled">Niet geverifieerd</string>
-<string name="linearize_info_explanation">Snelle webweergave ordent het bestand zo dat webbrowsers de eerste pagina direct weergeven zonder te hoeven wachten tot het hele document is gedownload.</string>
 <string name="btn_optimize_fast_web_view">Optimalisatie niet beschikbaar</string>
-<string name="title_linearize_success">PDF gelineariseerd</string>
-<string name="desc_linearize_success">Document geoptimaliseerd voor direct web-streamen (%1$s)</string>
-<string name="error_linearize_failed">Optimalisatie mislukt</string>
 
 <string name="menu_nup_handouts">N-Up raster met meerdere pagina\'s</string>
 <string name="menu_nup_handouts_desc">Druk 2, 4, 6, 9 of 16 pagina\'s per vel af voor hand-outs</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">Alleen voorlopige controles; niet gecertificeerd</string>
 <string name="pdfa_subtitle">Deze controles certificeren geen ISO 19005-naleving. PDF/A-conversie is niet beschikbaar in deze versie.</string>
 <string name="select_pdf_for_pdfa">Selecteer PDF voor voorlopige controles</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">Niet-conform (problemen gedetecteerd)</string>
 <string name="menu_font_inspector">Typografie &amp; lettertype-inspecteur</string>
 <string name="menu_font_inspector_desc">Inspecteer ingesloten lettertypen, subtypen en coderingen</string>
 <string name="font_headline">Typografie &amp; Ingesloten lettertypen</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">Systeem / Basis</string>
 
 <string name="error_developer_diagnostics">Ontwikkelaarsdiagnose</string>
-<string name="error_tap_to_view_diagnostics">Technisch logboek / Stacktrace bekijken</string>
-<string name="error_tap_to_hide_diagnostics">Technisch logboek verbergen</string>
 <string name="error_copy_diagnostics">Diagnose kopiëren</string>
 <string name="error_diagnostics_copied">Technisch diagnoselogboek gekopieerd naar klembord</string>
 <string name="error_user_encrypted">Deze PDF is met een wachtwoord beveiligd of versleuteld. Ontgrendel het document in PDF-beveiliging voordat u doorgaat.</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">Document succesvol rechtgetrokken!</string>
     <string name="deskew_success_desc">Pagina\'s zijn geroteerd en uitgelijnd.</string>
     <string name="deskew_auto_label">Scheefstand automatisch detecteren</string>
-    <string name="deskew_manual_label">Handmatige aanpassing</string>
     <string name="deskew_no_tilt">Document is al recht (0.0°)</string>
     <string name="menu_table_extractor">Tabellen exporteren naar CSV</string>
     <string name="menu_table_extractor_desc">Haal tabelgegevens en formulieren uit PDF naar zuivere RFC 4180 CSV / Excel</string>
     <string name="table_extractor_title">PDF-tabel &amp; spreadsheet extractor</string>
-    <string name="table_extractor_action_export">Tabellen exporteren naar CSV</string>
     <string name="table_extractor_preview">Gedetecteerde tabelgegevens</string>
     <string name="table_extractor_no_tables">Geen tabelgegevens gedetecteerd op deze pagina.</string>
     <string name="table_extractor_success">Tabellen geëxporteerd naar CSV!</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">%1$d dreigingsvectoren gevonden in document</string>
     <string name="sanitizer_action_sanitize">Opschonen &amp; dreigingen verwijderen</string>
     <string name="sanitizer_success">Document succesvol opgeschoond!</string>
-    <string name="sanitizer_success_desc">Alle actieve scripts, hooks en trackingbeacons zijn verwijderd.</string>
     <string name="menu_quick_fill_sign">Snel invullen &amp; ondertekenen</string>
     <string name="menu_quick_fill_sign_desc">Tik overal op platte of gescande PDF\'s om tekst, vinkjes, kruisjes en handtekeningen toe te voegen</string>
     <string name="quick_fill_title">Snel invullen &amp; ondertekenen</string>
     <string name="quick_fill_text_tool">Tekst</string>
-    <string name="quick_fill_check_tool">Vinkje (✓)</string>
-    <string name="quick_fill_cross_tool">Kruisje (✗)</string>
-    <string name="quick_fill_date_tool">Datum</string>
     <string name="quick_fill_sign_tool">Ondertekenen</string>
     <string name="quick_fill_tap_hint">Tik ergens op het document om het geselecteerde item te plaatsen</string>
     <string name="quick_fill_action_save">Formulier opslaan &amp; afvlakken</string>
     <string name="quick_fill_success">Formulier ingevuld &amp; opgeslagen!</string>
-    <string name="quick_fill_success_desc">Alle gegevens zijn definitief ingebed in de PDF.</string>
     <string name="split_mode_all">Alle pagina\'s afzonderlijk extraheren</string>
-    <string name="split_mode_range">Aangepast paginabereik (bijv. 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">Aangepast paginabereik (bijv. 1-3, 5)</string>
     <string name="split_mode_blank">Splitsen op blanco pagina\'s</string>
     <string name="split_mode_blank_desc">Detecteert blanco scheidingspagina\'s in grote stapels scans en knipt ze op in losse bestanden</string>
     <string name="split_mode_bookmarks">Splitsen op bladwijzers / hoofdstukken</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">%1$d hoofdstuksecties gevonden op basis van bladwijzers</string>
     <string name="split_no_bookmarks">Geen hoofdstukbladwijzers gevonden in dit document.</string>
     <string name="tts_play">Hardop voorlezen</string>
-    <string name="tts_pause">Pauzeren</string>
-    <string name="tts_stop">Stoppen</string>
-    <string name="tts_speed">Snelheid: %1$.2fx</string>
     <string name="tts_prev_paragraph">Vorige</string>
     <string name="tts_next_paragraph">Volgende</string>
-    <string name="tts_not_supported">Tekst-naar-spraak wordt niet ondersteund of taalgegevens ontbreken.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">Interactieve Formulierbouwer</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">Invulbare PDF Opslaan</string>
     <string name="form_builder_fields_count">Velden op pagina: %1$d</string>
     <string name="form_builder_success">Invulbare PDF succesvol aangemaakt!</string>
-    <string name="form_builder_success_desc">Interactieve formuliervelden zijn ingesloten in het document.</string>
     <string name="form_builder_no_fields_warn">Plaats minimaal één veld voordat u opslaat.</string>
     <string name="form_builder_delete_field">Veld Verwijderen</string>
     <string name="settings_vanguard">Vanguard Zero-Trust-schild</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">Dit document is versleuteld en beveiligd met een wachtwoord. Het Vanguard Zero-Trust-schild kan ingesloten scripts of beveiligingsrisico\'s niet verifiëren zolang het document vergrendeld blijft. Ontgrendel het eerst.</string>
     <string name="vanguard_action_unlock">PDF ontgrendelen</string>
     <string name="vanguard_verifying_title">Vanguard Veiligheidscontrole</string>
-    <string name="vanguard_verifying_desc">Document controleren op scripts en beveiligingsrisico\'s...</string>
+    <string name="vanguard_verifying_desc">Document controleren op scripts en beveiligingsrisico\'s…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
 
     <string name="action_redo">Opnieuw uitvoeren</string>
     <string name="action_reset">Opnieuw instellen</string>
     <string name="action_reverse">Omkeren</string>
     <string name="action_rotate_all">Alles draaien</string>
-    <string name="label_preview_unavailable">Voorbeeld niet beschikbaar</string>
     <string name="dialog_unsaved_title">Niet-opgeslagen wijzigingen</string>
     <string name="dialog_unsaved_message">U hebt niet-opgeslagen wijzigingen. Wilt u deze opslaan of verwijderen voordat u weggaat?</string>
     <string name="dialog_unsaved_save">Opslaan / Exporteren</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">Deze PDF lijkt beschadigd of afgekapt en kon niet veilig worden gelezen. Probeer Repareren uit te voeren of kies een andere kopie.</string>
     <string name="vanguard_provider_error_title">Bestand niet toegankelijk</string>
     <string name="vanguard_provider_error_message">Het geselecteerde bestand kon niet worden geopend. De opslagprovider is mogelijk niet beschikbaar of machtigingen zijn ingetrokken.</string>
-    <string name="error_invalid_page_range">Ongeldig paginabereik. Controleer de paginanummers en probeer het opnieuw.</string>
     <string name="consent_dialog_decline">Doorgaan zonder personalisatie</string>
 
     <string name="generating_previews">Voorbeelden genereren…</string>
-    <string name="label_preview_loading">Laden…</string>
-    <string name="premium_status_loading">Winkel controleren…</string>
-    <string name="premium_status_unavailable">Winkel niet beschikbaar. Tik om opnieuw te proberen.</string>
     <string name="action_retry">Opnieuw proberen</string>
     <string name="redaction_review_title">Redacties controleren</string>
     <string name="redaction_review_message">%1$d redactie(s) worden definitief toegepast. Geredigeerde inhoud kan niet worden hersteld.</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">Sluit zware achtergrondapps om werkgeheugen vrij te maken en probeer het opnieuw.</string>
     <string name="alt_free_ram_btn">Begrepen</string>
     <string name="btn_proceed_anyway">Toch doorgaan</string>
-    <string name="msg_circuit_breaker_paused">De verwerking is gepauzeerd om vastlopen van je telefoon te voorkomen. Voltooid werk is opgeslagen.</string>
     <string name="reader_dual_page_spread">Twee pagina’s naast elkaar</string>
     <string name="reader_single_page">Eén pagina</string>
     <string name="flip_tabletop_mode">Tafelmodus</string>
     <string name="flip_fullscreen_mode">Modus volledig scherm</string>
-    <string name="flip_tabletop_mode_desc">Handenvrije modus: document bovenaan, bediening onderaan</string>
     <string name="flip_tabletop_active_badge">Flex-modus</string>
     <string name="scanned_pdf_title">Gescand document</string>
     <string name="scanned_pdf_desc">Dit document bevat gescande afbeeldingen zonder selecteerbare tekstlaag.</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">Snelle camera-PDF</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">Reden</string>
     <string name="pki_location">Locatie</string>
     <string name="pki_sign_and_save">Ondertekenen &amp; opslaan</string>
-    <string name="btn_convert_to_pdfa">Converteren naar PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Converteren naar PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b succesvol geconverteerd</string>
-    <string name="error_pdfa_conversion_failed">PDF/A-conversie mislukt</string>
     <string name="btn_export_embedded_fonts">Ingesloten lettertypen exporteren (.zip)</string>
     <string name="btn_exporting_fonts">Lettertypen exporteren…</string>
     <string name="title_fonts_exported_success">Ingesloten lettertypen succesvol geëxporteerd (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">Forensische vectoropschoning</string>
     <string name="redact_forensic_desc">Rasteriseert bewerkte pagina\'s om onderliggende tekstbytes volledig te vernietigen.</string>
     <string name="redact_smart_pii_title">Slimme PII-anonimisering</string>
-    <string name="reflow_find_placeholder">Zoek tekst in document...</string>
+    <string name="reflow_find_placeholder">Zoek tekst in document…</string>
     <string name="desc_previous_match">Vorige overeenkomst</string>
     <string name="desc_next_match">Volgende overeenkomst</string>
     <string name="desc_play_pause">Afspelen/Pauzeren</string>

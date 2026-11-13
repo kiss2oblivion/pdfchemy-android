@@ -7,6 +7,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -561,7 +562,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
     return when (filter) {
         ScanFilterMode.ORIGINAL -> src
         ScanFilterMode.GRAYSCALE -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix().apply { setSaturation(0f) }
@@ -570,7 +571,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
             bmp
         }
         ScanFilterMode.MAGIC_COLOR -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix(
@@ -586,7 +587,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
             bmp
         }
         ScanFilterMode.BLACK_AND_WHITE -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix(

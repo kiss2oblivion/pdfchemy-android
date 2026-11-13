@@ -3,6 +3,7 @@ package com.pdfchemy.app.ui
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -127,7 +128,7 @@ fun rememberPreferredDocumentDestinationCreator(
         if (requestedName == null && !working) {
             val stored = prefs.getString(OutputPolicy.DIRECTORY_KEY, null)
             if (stored == null) chooseFolder(OutputPolicy.safeName(name))
-            else { folderUri = Uri.parse(stored); editedName = OutputPolicy.safeName(name); requestedName = editedName }
+            else { folderUri = stored.toUri(); editedName = OutputPolicy.safeName(name); requestedName = editedName }
         }
     }
 }

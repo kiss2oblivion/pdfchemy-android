@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -1026,7 +1027,7 @@ fun PdfEditorScreen(
                         Triple(com.pdfchemy.app.logic.ShapeType.RECTANGLE, Icons.Rounded.CropSquare, stringResource(R.string.shape_rect)),
                         Triple(com.pdfchemy.app.logic.ShapeType.CIRCLE, Icons.Rounded.Circle, stringResource(R.string.shape_circle)),
                         Triple(com.pdfchemy.app.logic.ShapeType.LINE, Icons.Rounded.HorizontalRule, stringResource(R.string.shape_line)),
-                        Triple(com.pdfchemy.app.logic.ShapeType.ARROW, Icons.Rounded.ArrowForward, stringResource(R.string.shape_arrow))
+                        Triple(com.pdfchemy.app.logic.ShapeType.ARROW, Icons.AutoMirrored.Rounded.ArrowForward, stringResource(R.string.shape_arrow))
                     )
                     shapes.forEach { (type, icon, label) ->
                         OutlinedButton(

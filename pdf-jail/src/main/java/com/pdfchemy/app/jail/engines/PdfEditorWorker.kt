@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.logic.PageModification
 import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.jail.AppLogger
@@ -86,7 +87,7 @@ object PdfEditorWorker {
                             val finalW = (origW * scale).toInt()
                             val finalH = (origH * scale).toInt()
 
-                            baseBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(finalW, finalH); Bitmap.createBitmap(finalW, finalH, Bitmap.Config.ARGB_8888) }
+                            baseBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(finalW, finalH); createBitmap(finalW, finalH) }
                             val canvas = Canvas(baseBmp)
                             canvas.drawColor(android.graphics.Color.WHITE)
 

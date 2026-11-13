@@ -3,6 +3,8 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import com.pdfchemy.app.utils.AppLogger
 import org.json.JSONArray
 import org.json.JSONObject
@@ -39,8 +41,8 @@ class HistoryRepository(private val context: Context) {
                         name = obj.getString("name"),
                         action = obj.getString("action"),
                         timestamp = obj.getLong("timestamp"),
-                        mimeType = obj.optString("mime", "").ifBlank { com.pdfchemy.app.utils.FileUtils.getMimeType(context, Uri.parse(obj.getString("uri")), obj.getString("name")) },
-                        isDirectory = obj.optBoolean("directory", android.provider.DocumentsContract.isTreeUri(Uri.parse(obj.getString("uri"))))
+                        mimeType = obj.optString("mime", "").ifBlank { com.pdfchemy.app.utils.FileUtils.getMimeType(context, obj.getString("uri").toUri(), obj.getString("name")) },
+                        isDirectory = obj.optBoolean("directory", android.provider.DocumentsContract.isTreeUri(obj.getString("uri").toUri()))
                     )
                 )
             }
@@ -83,7 +85,7 @@ class HistoryRepository(private val context: Context) {
     }
 
     fun clearHistory() {
-        prefs.edit().remove(KEY_HISTORY).apply()
+        prefs.edit { remove(KEY_HISTORY) }
     }
 
     private fun persistList(items: List<HistoryItem>) {
@@ -98,7 +100,7 @@ class HistoryRepository(private val context: Context) {
             obj.put("directory", item.isDirectory)
             jsonArray.put(obj)
         }
-        prefs.edit().putString(KEY_HISTORY, jsonArray.toString()).apply()
+        prefs.edit { putString(KEY_HISTORY, jsonArray.toString()) }
     }
     fun remove(uriString: String) = removeHistoryItem(uriString)
 }

@@ -1,6 +1,7 @@
 package com.pdfchemy.app.ui
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
@@ -302,7 +303,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     LaunchedEffect(historyItems) {
         historyAvailability = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             historyItems.associate { item -> item.uriString to runCatching {
-                context.contentResolver.openFileDescriptor(Uri.parse(item.uriString), "r")?.use { true } == true
+                context.contentResolver.openFileDescriptor(item.uriString.toUri(), "r")?.use { true } == true
             }.getOrDefault(false) }
         }
     }
@@ -341,7 +342,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clickable(enabled = historyAvailability[item.uriString] == true) {
-                                        val uri = Uri.parse(item.uriString)
+                                        val uri = item.uriString.toUri()
                                         if (isSelected) {
                                             selectedFiles = selectedFiles.filterNot { it.uri == uri }
                                         } else {

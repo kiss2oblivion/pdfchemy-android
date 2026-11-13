@@ -101,6 +101,14 @@ android {
             excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/DEPENDENCIES"
             excludes += "/META-INF/LICENSE-W3C-TEST"
+            // AGP merges /META-INF/services/** by default before checking excludes, which passes
+            // Woodstox's non-ServiceLoader schema-suffix files into R8 and triggers missing-class warnings.
+            merges.remove("/META-INF/services/**")
+            merges += "/META-INF/services/{android,androidx,com,io,java,javax,kotlin,kotlinx,net,org.apache,org.bouncycastle,org.junit,org.slf4j,org.w3c,org.xml}.*"
+            merges += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.dtd"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.relaxng"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.w3c"
         }
     }
 

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -252,7 +253,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             onClick = { fillMode = FormFillMode.LIST },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                         ) {
-                            Icon(Icons.Rounded.ViewList, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.AutoMirrored.Rounded.ViewList, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.form_fill_mode_list))
                         }

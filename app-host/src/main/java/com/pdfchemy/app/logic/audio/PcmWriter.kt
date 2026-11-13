@@ -6,13 +6,17 @@ import java.io.File
 import java.io.OutputStream
 import java.util.UUID
 
+// Synchronous staging-dir space estimate on API 24+ without Context/StorageManager coupling in pure-JVM tests.
+@android.annotation.SuppressLint("UsableSpace")
+private fun defaultAvailableBytes(raw: File): Long = raw.parentFile!!.usableSpace
+
 /** One bounded writer per job. Callback identity and queue insertion share the same lock. */
 class PcmWriter(
     private val jobId: UUID,
     private val generation: UUID,
     private val raw: File,
     scope: CoroutineScope,
-    private val availableBytes: () -> Long = { raw.parentFile!!.usableSpace },
+    private val availableBytes: () -> Long = { defaultAvailableBytes(raw) },
     private val openOutput: () -> OutputStream = { raw.outputStream() },
     private val isJobActive: () -> Boolean = { true }
 ) {

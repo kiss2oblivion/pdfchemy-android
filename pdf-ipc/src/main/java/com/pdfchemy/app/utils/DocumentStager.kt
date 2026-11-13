@@ -98,6 +98,8 @@ object DocumentStager {
         return file.length() == candidate.size
     }
 
+    // Security path-denial filter intentionally blocks direct access to private app storage prefixes.
+    @android.annotation.SuppressLint("SdCardPath")
     fun isPrivateAppPath(context: Context, file: File, includeCacheAndFiles: Boolean = true): Boolean {
         val canonicalFile = runCatching { file.canonicalFile }.getOrNull() ?: return true
         val canonicalPath = canonicalFile.path
@@ -105,9 +107,7 @@ object DocumentStager {
         val privateRoots = mutableListOf<File>()
 
         if (includeCacheAndFiles) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                runCatching { context.dataDir }.getOrNull()?.let { privateRoots.add(it) }
-            }
+            runCatching { context.dataDir }.getOrNull()?.let { privateRoots.add(it) }
             runCatching { context.applicationInfo?.dataDir?.let { File(it) } }.getOrNull()?.let { privateRoots.add(it) }
             runCatching { context.filesDir }.getOrNull()?.let { privateRoots.add(it) }
             runCatching { context.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
@@ -121,16 +121,14 @@ object DocumentStager {
             if (dataDir != null) File(dataDir, "shared_prefs") else null
         }.getOrNull()?.let { privateRoots.add(it) }
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            val dps = runCatching { context.createDeviceProtectedStorageContext() }.getOrNull()
-            if (dps != null) {
-                runCatching { dps.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
-                runCatching { File(dps.dataDir, "shared_prefs") }.getOrNull()?.let { privateRoots.add(it) }
-                if (includeCacheAndFiles) {
-                    runCatching { dps.dataDir }.getOrNull()?.let { privateRoots.add(it) }
-                    runCatching { dps.filesDir }.getOrNull()?.let { privateRoots.add(it) }
-                    runCatching { dps.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
-                }
+        val dps = runCatching { context.createDeviceProtectedStorageContext() }.getOrNull()
+        if (dps != null) {
+            runCatching { dps.getDatabasePath("unused").parentFile }.getOrNull()?.let { privateRoots.add(it) }
+            runCatching { File(dps.dataDir, "shared_prefs") }.getOrNull()?.let { privateRoots.add(it) }
+            if (includeCacheAndFiles) {
+                runCatching { dps.dataDir }.getOrNull()?.let { privateRoots.add(it) }
+                runCatching { dps.filesDir }.getOrNull()?.let { privateRoots.add(it) }
+                runCatching { dps.cacheDir }.getOrNull()?.let { privateRoots.add(it) }
             }
         }
 

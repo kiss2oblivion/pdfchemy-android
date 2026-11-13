@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">Скоро</string>
 <string name="ok">ОК</string>
@@ -9,7 +9,6 @@
 <string name="clear">Очистить</string>
 <string name="clear_all">Очистить все</string>
 <string name="save">Сохранить</string>
-<string name="continue_btn">Продолжить</string>
 <string name="home_subtitle">БЕЗОПАСНАЯ ОБРАБОТКА PDF НА УСТРОЙСТВЕ</string>
 <string name="cat_compress">Сжатие</string>
 <string name="cat_compress_desc">Уменьшайте размер PDF безопасно и качественно.</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">Проверка</string>
 <string name="cat_check_desc">Проверяйте файлы перед отправкой.</string>
 <string name="menu_compress">Сжать PDF</string>
-<string name="menu_compress_desc">Уменьшить размер файла</string>
 <string name="menu_merge">Объединить PDF</string>
 <string name="menu_merge_desc">Соединить несколько файлов</string>
 <string name="menu_split">Разделить PDF</string>
 <string name="menu_split_desc">Извлечь и разделить страницы</string>
 <string name="menu_scan">Сканировать в PDF</string>
 <string name="menu_scan_desc">Создание документов с камеры</string>
-<string name="menu_ocr">Извлечь текст</string>
-<string name="menu_ocr_desc">Распознавание текста из PDF</string>
-<string name="menu_metadata">Проверить метаданные</string>
-<string name="menu_metadata_desc">Просмотр скрытых свойств</string>
 <string name="settings_title">Настройки</string>
-<string name="settings_preferences">Параметры приложения</string>
-<string name="settings_haptic">Виброотклик</string>
-<string name="settings_haptic_desc">Вибрация при нажатии</string>
-<string name="settings_sfx">Звуковые эффекты</string>
-<string name="settings_sfx_desc">Звук при нажатии кнопок</string>
 <string name="settings_history">Запоминать недавние файлы</string>
 <string name="settings_history_desc">Хранить локальную историю файлов. Файлы никогда не отправляются в сеть.</string>
 <string name="settings_language">Язык (Language)</string>
 <string name="settings_language_desc">Сменить язык приложения</string>
 <string name="settings_clear_history">Очистить историю</string>
-<string name="settings_clear_history_confirm">Вы уверены, что хотите очистить историю файлов?</string>
-<string name="settings_history_cleared">История очищена</string>
 <string name="compress_title">Сжатие PDF</string>
 <string name="compress_single">Один файл</string>
 <string name="compress_batch">Пакетное сжатие</string>
 <string name="compress_select_file">Выбрать PDF файл</string>
-<string name="compress_compressing">Сжатие PDF...</string>
 <string name="compress_target_size">Целевой размер файла</string>
 <string name="compress_preset">Режим сжатия:</string>
-<string name="compress_exact_mb">Точный размер в МБ</string>
-<string name="compress_options">Параметры сжатия</string>
-<string name="compress_grayscale">Преобразовать в градации серого</string>
-<string name="compress_grayscale_desc">Сделать цветные изображения черно-белыми</string>
-<string name="compress_lossless">ZIP-сжатие без потерь</string>
-<string name="compress_lossless_desc">Без сжатия JPEG</string>
-<string name="compress_strip_meta">Удалить метаданные</string>
-<string name="compress_strip_meta_desc">Удалить теги автора и редактора</string>
 <string name="warning_quality_title">Предупреждение о качестве</string>
 <string name="warning_quality_desc">Сжатие может снизить четкость. Это может повлиять на официальные документы или цифровые подписи. Всегда сохраняйте оригинал.</string>
 <string name="warning_understand">Понятно</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">Разделить PDF</string>
 <string name="split_into_folder">Разделить в папку</string>
 <string name="extraction_options">Параметры извлечения</string>
-<string name="extract_all_pages_as_individua">Извлечь все страницы отдельными файлами</string>
-<string name="extract_custom_range">Извлечь диапазон страниц</string>
-<string name="e_g_1_3_5_7_10">напр. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">напр. 1-3, 5, 7-10</string>
 <string name="extract_images">Извлечь изображения</string>
 <string name="ready_to_extract_all_images_ta">Готово к извлечению изображений. Нажмите кнопку ниже и выберите папку.</string>
 <string name="change_pdf">Изменить PDF</string>
-<string name="extracting_images">Извлечение изображений...</string>
+<string name="extracting_images">Извлечение изображений…</string>
 <string name="delete_pages">Удалить страницы</string>
 <string name="save_document">Сохранить документ</string>
 <string name="pages_to_delete">Страницы для удаления</string>
-<string name="e_g_1_3_5_10">напр. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">напр. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Введите номера страниц через запятую или интервалы.</string>
 <string name="rotate_pages">Повернуть страницы</string>
 <string name="rotate_save">Повернуть и сохранить</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">Страницы для поворота (необязательно)</string>
 <string name="leave_blank_to_rotate_all_page">Оставьте пустым для поворота всех страниц.</string>
 <string name="text_cleaner">Очистка текста</string>
-<string name="paste_your_text_here">Вставьте текст сюда...</string>
+<string name="paste_your_text_here">Вставьте текст сюда…</string>
 <string name="text_format_converter">Конвертер форматов текста</string>
-<string name="enter_content">Введите текст...</string>
+<string name="enter_content">Введите текст…</string>
 <string name="import_btn">Импорт</string>
-<string name="compressing_pdf">Сжатие PDF...</string>
 <string name="create">Создать</string>
 <string name="compress">Сжать</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Целевой размер (МБ):</string>
 <string name="exact_mb">Точный размер в МБ</string>
-<string name="compression_options">Параметры сжатия</string>
 <string name="grayscale_conversion">Преобразовать в градации серого</string>
 <string name="convert_color_images_to_black">Сделать цветные изображения черно-белыми</string>
 <string name="lossless_zip_compression">ZIP-сжатие без потерь</string>
 <string name="skip_jpeg_lossy_compression_no">Пропустить сжатие JPEG</string>
 <string name="strip_author_creator_editor_ta">Удалить теги автора, создателя и редактора</string>
 <string name="type_or_paste_text_here">Введите или вставьте текст</string>
-<string name="enter_the_content_of_your_pdf">Введите содержимое PDF документа...</string>
+<string name="enter_the_content_of_your_pdf">Введите содержимое PDF документа…</string>
 <string name="import_txt">Импорт .txt</string>
 <string name="save_as_pdf">Сохранить как PDF</string>
 <string name="clear_history">Очистить историю</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">Имя файла: %1$s</string>
 <string name="selected_batch_files">Выбранные файлы для пакета:</string>
-<string name="analyzing_doc">Анализ структуры документа...</string>
+<string name="analyzing_doc">Анализ структуры документа…</string>
 <string name="smart_recommendation">Рекомендация</string>
 <string name="detected_type">Определенный тип: %1$s</string>
 <string name="doc_stats_pages_images">Страниц: %1$d | Изображений: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ Без рекламы
 ✓ Неограниченная пакетная обработка</string>
-<string name="batch_compressing">Сжатие %1$d из %2$d файлов...</string>
 <string name="msg_enter_text">Пожалуйста, введите текст.</string>
 <string name="menu_delete_pages">Удалить страницы</string>
 <string name="menu_delete_pages_desc">Удаление выбранных страниц из PDF</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">Поделиться</string>
 <string name="desc_go_premium">Премиум</string>
 <string name="desc_settings">Настройки</string>
-<string name="desc_toggle_theme">Сменить тему</string>
-<string name="desc_app_logo">Логотип приложения</string>
 <string name="scan_prefix">Скан_</string>
 <string name="default_scanned_doc_name">сканированный_документ</string>
 <string name="desc_back">Назад</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">Сменить файл</string>
 <string name="btn_select_pdf_files">Выбрать PDF файлы</string>
 <string name="btn_add_more_files">Добавить файлы (выбрано: %1$d)</string>
-<string name="label_original_size_analyzing">Исходный размер: %1$s (Анализ...)</string>
+<string name="label_original_size_analyzing">Исходный размер: %1$s (Анализ…)</string>
 <string name="label_original_size_to_compressed">Исходный: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">Целевой размер: %1$.1f МБ</string>
 <string name="label_target_unknown">Цель: Не указана</string>
-<string name="label_analyzing">Анализ...</string>
+<string name="label_analyzing">Анализ…</string>
 <string name="label_target_mb">Целевой размер: %1$s МБ</string>
 <string name="desc_remove_file">Удалить файл</string>
 <string name="preset_custom">Свой выбор</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">Темная</string>
 <string name="settings_rate_app">Оценить PDFchemy</string>
 <string name="settings_rate_app_desc">Нравится приложение? Оставьте отзыв в Google Play!</string>
-<string name="settings_rate_app_thanks">Спасибо за поддержку!</string>
     <string name="settings_share_app">Поделиться PDFchemy Tools</string>
     <string name="settings_share_app_desc">Расскажите друзьям и коллегам об этом приложении</string>
     <string name="settings_share_app_message">Попробуйте PDFchemy Tools — быстрый, 100%% офлайн и приватный компрессор и редактор PDF для Android: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">100%% распознавание текста на устройстве. Встраивание слоя для поиска и выделения.</string>
 <string name="select_pdf_for_ocr">Выбрать PDF документ</string>
 <string name="ocr_processing_generic">Анализ и распознавание текста…</string>
-<string name="ocr_processing_progress">Обработка OCR: страница %1$d из %2$d…</string>
 <string name="action_create_searchable_pdf">Создать PDF с поиском</string>
 <string name="title_ocr_success">PDF с возможностью поиска создан!</string>
 <string name="desc_ocr_success">Добавлен невидимый текстовый слой для удобного поиска и копирования.</string>
 <string name="error_ocr_failed">Ошибка распознавания текста OCR.</string>
 <string name="history_searchable_ocr_pdf">PDF с распознанным текстом</string>
-<string name="menu_redact_pdf">Безвозвратное скрытие данных (Redaction)</string>
 <string name="tool_redact">Скрыть</string>
-<string name="title_redact_success">Данные успешно удалены!</string>
-<string name="desc_redact_success">Выделенные области и скрытые данные безвозвратно удалены из файла.</string>
-<string name="error_redact_failed">Не удалось применить скрытие данных.</string>
-<string name="history_redacted_pdf">PDF с удаленными данными</string>
 <string name="menu_reflow_reader">Режим удобного чтения и оглавление</string>
 <string name="menu_reflow_reader_desc">Чтение как в электронной книге с адаптивным текстом и оглавлением</string>
 <string name="reflow_reader_headline">Удобное чтение на смартфоне</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">Улучшенный цвет</string>
 <string name="filter_bw">Черно-белый</string>
 <string name="filter_grayscale">Градации серого</string>
-<string name="action_save_as_pdf">Сохранить %1$d страниц в PDF</string>
 <string name="title_scan_success">Документ успешно отсканирован!</string>
 <string name="desc_scan_success">Отсканированные страницы собраны в оптимизированный PDF.</string>
 <string name="error_scan_failed">Не удалось создать PDF документ.</string>
-<string name="history_scanned_pdf">Отсканированный документ</string>
 <string name="menu_sign_pdf">Подписать PDF</string>
 <string name="menu_sign_pdf_desc">Создание, сохранение и нанесение цифровой подписи на договоры</string>
 <string name="sign_pdf_headline">Цифровая подпись PDF</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">Страницы успешно организованы!</string>
 <string name="desc_organizer_success">Новый порядок страниц сохранен в файле.</string>
 <string name="error_organizer_failed">Не удалось организовать страницы.</string>
-<string name="history_organized_pdf">Организованный PDF</string>
 <string name="menu_watermark_pdf">Водяной знак</string>
 <string name="menu_watermark_pdf_desc">Нанесение текста или логотипа в качестве водяного знака на все страницы</string>
 <string name="watermark_headline">Добавление водяного знака</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">Водяной знак добавлен!</string>
 <string name="desc_watermark_success">Водяной знак успешно добавлен в документ.</string>
 <string name="error_watermark_failed">Не удалось добавить водяной знак.</string>
-<string name="history_watermarked_pdf">PDF с водяным знаком</string>
 <string name="menu_page_number_pdf">Нумерация страниц</string>
 <string name="menu_page_number_pdf_desc">Добавление номеров в колонтитулы (Стр. X из Y, 1/N)</string>
 <string name="page_number_headline">Нумерация страниц PDF</string>
@@ -589,11 +549,10 @@
 <string name="title_page_number_success">Номера страниц добавлены!</string>
 <string name="desc_page_number_success">Нумерация страниц успешно сохранена в документе.</string>
 <string name="error_page_number_failed">Не удалось добавить номера страниц.</string>
-<string name="history_numbered_pdf">Пронумерованный PDF</string>
 <string name="menu_page_layout">Формат бумаги и печать N-Up</string>
 <string name="menu_page_layout_desc">Изменение формата на A4/Letter или размещение 2, 4, 6 страниц на листе</string>
 <string name="page_layout_headline">Макет страниц и раздаточные материалы (N-Up)</string>
-<string name="page_layout_subtitle">Подготовка к печати, смена размеров бумаги или создание раздаток 2-в-1 / 4-в-1.</string>
+<string name="page_layout_subtitle">Подготовка к печати, смена размеров бумаги или создание раздаток 2-в-1, 4-в-1.</string>
 <string name="select_pdf_for_layout">Выбрать PDF документ</string>
 <string name="tab_nup_handout">Несколько страниц на лист</string>
 <string name="tab_resize_paper">Сменить размер бумаги</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">Макет успешно создан!</string>
 <string name="desc_layout_success">PDF документ с новым макетом сохранен.</string>
 <string name="error_layout_failed">Не удалось создать макет.</string>
-<string name="history_layout_pdf">Макетный PDF</string>
 <string name="menu_compare_pdfs">Сравнить два PDF</string>
 <string name="menu_compare_pdfs_desc">Поиск визуальных различий и правок в тексте между версиями документа</string>
 <string name="compare_headline">Сравнение ревизий PDF</string>
 <string name="compare_subtitle">Выберите две версии файла для подсветки визуальных отличий и изменений в тексте.</string>
 <string name="select_original_pdf">Выбрать оригинал (Документ А)</string>
 <string name="select_modified_pdf">Выбрать измененный (Документ Б)</string>
-<string name="doc1_selected">Оригинал выбран</string>
-<string name="doc2_selected">Измененный выбран</string>
 <string name="comparing_documents_progress">Сравнение страниц и текста…</string>
 <string name="compare_results_title">Результаты сравнения</string>
 <string name="compare_summary_counts">%1$d измененных страниц • %2$d идентичных страниц</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">Экспортирует абзацы, заголовки и разрывы страниц в файл Microsoft Word (.docx).</string>
 <string name="info_excel_export">Извлекает таблицы и структурированные данные в таблицу Microsoft Excel (.xlsx).</string>
 <string name="info_pptx_export">Преобразует страницы в слайды презентации в Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Конвертация в Office...</string>
+<string name="converting_to_office">Конвертация в Office…</string>
 <string name="btn_export_office_file">Экспортировать как %1$s</string>
 <string name="title_office_export_success">Экспорт завершен</string>
 <string name="desc_office_export_success">%1$d страниц успешно экспортированы в выбранный формат Office.</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">Ошибка встраивания</string>
 <string name="menu_fast_web_view">Сведения о Fast Web View</string>
 <string name="menu_fast_web_view_desc">Проверка сведений о PDF; создание Fast Web View недоступно</string>
-<string name="linearize_headline">Быстрый веб-просмотр (Линеаризация)</string>
 <string name="linearize_subtitle">Эта версия не поддерживает создание или сертификацию файлов PDF с Fast Web View. Выходной файл создан не будет.</string>
 <string name="select_pdf_for_linearize">Выберите PDF для проверки</string>
 <string name="label_diagnostic_status">Сведения о PDF</string>
 <string name="label_fast_web_view_enabled">Линеаризация:</string>
-<string name="status_enabled">Включено</string>
 <string name="status_disabled">Не подтверждено</string>
-<string name="linearize_info_explanation">Линеаризация организует файл так, чтобы браузер сразу отображал первую страницу, не дожидаясь загрузки всего документа.</string>
 <string name="btn_optimize_fast_web_view">Оптимизация недоступна</string>
-<string name="title_linearize_success">PDF линеаризован</string>
-<string name="desc_linearize_success">Документ оптимизирован для мгновенной потоковой передачи в сети (%1$s)</string>
-<string name="error_linearize_failed">Ошибка оптимизации</string>
 
 <string name="menu_nup_handouts">Сетка страниц N-Up</string>
 <string name="menu_nup_handouts_desc">Печать по 2, 4, 6, 9 или 16 страниц на листе для раздаточных материалов</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">Только предварительная проверка; не сертифицировано</string>
 <string name="pdfa_subtitle">Эти проверки не подтверждают соответствие стандарту ISO 19005. Преобразование в PDF/A недоступно в этой версии.</string>
 <string name="select_pdf_for_pdfa">Выберите PDF для предварительной проверки</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">Не соответствует стандарту (найдены проблемы)</string>
 <string name="menu_font_inspector">Инспектор шрифтов и типографики</string>
 <string name="menu_font_inspector_desc">Проверка встроенных шрифтов, подтипов и кодировок</string>
 <string name="font_headline">Типографика и встроенные шрифты</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">Системные / Базовые</string>
 
 <string name="error_developer_diagnostics">Диагностика для разработчиков</string>
-<string name="error_tap_to_view_diagnostics">Показать технический журнал / стек вызовов</string>
-<string name="error_tap_to_hide_diagnostics">Скрыть технический журнал</string>
 <string name="error_copy_diagnostics">Копировать диагностику</string>
 <string name="error_diagnostics_copied">Технический диагностический отчет скопирован в буфер обмена</string>
 <string name="error_user_encrypted">Этот PDF защищен паролем или зашифрован. Разблокируйте его в разделе \'Безопасность PDF\' перед продолжением.</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">Документ успешно выровнен!</string>
     <string name="deskew_success_desc">Страницы были повернуты и выровнены.</string>
     <string name="deskew_auto_label">Автоопределение наклона</string>
-    <string name="deskew_manual_label">Ручная настройка</string>
     <string name="deskew_no_tilt">Документ уже выровнен (0.0°)</string>
     <string name="menu_table_extractor">Экспорт таблиц в CSV</string>
     <string name="menu_table_extractor_desc">Извлечение табличных данных и форм из PDF в формат CSV / Excel (RFC 4180)</string>
     <string name="table_extractor_title">Извлечение таблиц из PDF</string>
-    <string name="table_extractor_action_export">Экспортировать таблицы в CSV</string>
     <string name="table_extractor_preview">Обнаруженные табличные данные</string>
     <string name="table_extractor_no_tables">На этой странице не обнаружено табличных данных.</string>
     <string name="table_extractor_success">Таблицы успешно экспортированы в CSV!</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">В документе обнаружено %1$d векторов угроз</string>
     <string name="sanitizer_action_sanitize">Очистить и нейтрализовать угрозы</string>
     <string name="sanitizer_success">Документ успешно очищен от угроз!</string>
-    <string name="sanitizer_success_desc">Все активные скрипты, обработчики и маяки отслеживания удалены.</string>
     <string name="menu_quick_fill_sign">Быстрое заполнение и подпись</string>
     <string name="menu_quick_fill_sign_desc">Нажмите в любом месте скана или PDF, чтобы добавить текст, галочки, крестики и подписи</string>
     <string name="quick_fill_title">Быстрое заполнение и подпись</string>
     <string name="quick_fill_text_tool">Текст</string>
-    <string name="quick_fill_check_tool">Галочка (✓)</string>
-    <string name="quick_fill_cross_tool">Крестик (✗)</string>
-    <string name="quick_fill_date_tool">Дата</string>
     <string name="quick_fill_sign_tool">Подпись</string>
     <string name="quick_fill_tap_hint">Нажмите в любом месте документа, чтобы разместить выбранный элемент</string>
     <string name="quick_fill_action_save">Сохранить и зафиксировать форму</string>
     <string name="quick_fill_success">Форма заполнена и сохранена!</string>
-    <string name="quick_fill_success_desc">Все внесенные данные навсегда зафиксированы в PDF.</string>
     <string name="split_mode_all">Извлечь все страницы по отдельности</string>
-    <string name="split_mode_range">Пользовательский диапазон страниц (например, 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">Пользовательский диапазон страниц (например, 1-3, 5)</string>
     <string name="split_mode_blank">Разделение по пустым страницам</string>
     <string name="split_mode_blank_desc">Обнаруживает пустые страницы-разделители в пачках сканов и разрезает их на отдельные файлы</string>
     <string name="split_mode_bookmarks">Разделение по закладкам / главам</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">Обнаружено %1$d разделов документа на основе закладок</string>
     <string name="split_no_bookmarks">В этом документе не найдено закладок глав.</string>
     <string name="tts_play">Читать вслух</string>
-    <string name="tts_pause">Пауза</string>
-    <string name="tts_stop">Стоп</string>
-    <string name="tts_speed">Скорость: %1$.2fx</string>
     <string name="tts_prev_paragraph">Назад</string>
     <string name="tts_next_paragraph">Вперед</string>
-    <string name="tts_not_supported">Синтез речи (TTS) не поддерживается или отсутствуют языковые данные.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">Конструктор Интерактивных Форм</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">Сохранить Заполняемый PDF</string>
     <string name="form_builder_fields_count">Полей на странице: %1$d</string>
     <string name="form_builder_success">Интерактивный PDF успешно создан!</string>
-    <string name="form_builder_success_desc">Поля формы успешно внедрены в документ.</string>
     <string name="form_builder_no_fields_warn">Пожалуйста, добавьте хотя бы одно поле перед сохранением.</string>
     <string name="form_builder_delete_field">Удалить Поле</string>
     <string name="settings_vanguard">Щит Vanguard Zero-Trust</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">Этот документ зашифрован и защищен паролем. Щит Vanguard Zero-Trust не может проверить встроенные скрипты или угрозы безопасности, пока документ заблокирован. Пожалуйста, сначала разблокируйте его.</string>
     <string name="vanguard_action_unlock">Разблокировать PDF</string>
     <string name="vanguard_verifying_title">Проверка безопасности Vanguard</string>
-    <string name="vanguard_verifying_desc">Проверка документа на наличие скриптов и угроз безопасности...</string>
+    <string name="vanguard_verifying_desc">Проверка документа на наличие скриптов и угроз безопасности…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Офлайн • Zero-Trust</string>
 
     <string name="action_redo">Повторить</string>
     <string name="action_reset">Сброс</string>
     <string name="action_reverse">Обратный порядок</string>
     <string name="action_rotate_all">Повернуть все</string>
-    <string name="label_preview_unavailable">Предпросмотр недоступен</string>
     <string name="dialog_unsaved_title">Несохранённые изменения</string>
     <string name="dialog_unsaved_message">У вас есть несохранённые изменения. Сохранить или отменить их перед выходом?</string>
     <string name="dialog_unsaved_save">Сохранить / Экспорт</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">Этот PDF повреждён или обрезан и не может быть безопасно прочитан. Попробуйте выполнить восстановление или выберите другой файл.</string>
     <string name="vanguard_provider_error_title">Файл недоступен</string>
     <string name="vanguard_provider_error_message">Не удалось получить доступ к выбранному файлу. Хранилище может быть недоступно или разрешения были отозваны.</string>
-    <string name="error_invalid_page_range">Недопустимый диапазон страниц. Проверьте номера страниц и повторите попытку.</string>
     <string name="consent_dialog_decline">Продолжить без персонализации</string>
 
     <string name="generating_previews">Создание миниатюр…</string>
-    <string name="label_preview_loading">Загрузка…</string>
-    <string name="premium_status_loading">Проверка магазина…</string>
-    <string name="premium_status_unavailable">Магазин недоступен. Нажмите для повтора.</string>
     <string name="action_retry">Повторить</string>
     <string name="redaction_review_title">Проверка скрытых областей</string>
     <string name="redaction_review_message">Будет навсегда применено скрытий: %1$d. Скрытое содержимое восстановить невозможно.</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">Закройте фоновые приложения, потребляющие много оперативной памяти, и повторите попытку.</string>
     <string name="alt_free_ram_btn">Понятно</string>
     <string name="btn_proceed_anyway">Всё равно продолжить</string>
-    <string name="msg_circuit_breaker_paused">Обработка приостановлена, чтобы предотвратить зависание телефона. Завершённая работа сохранена.</string>
     <string name="reader_dual_page_spread">Две страницы рядом</string>
     <string name="reader_single_page">Одна страница</string>
     <string name="flip_tabletop_mode">Настольный режим</string>
     <string name="flip_fullscreen_mode">Полноэкранный режим</string>
-    <string name="flip_tabletop_mode_desc">Режим без помощи рук: документ сверху, элементы управления снизу</string>
     <string name="flip_tabletop_active_badge">Режим Flex</string>
     <string name="scanned_pdf_title">Отсканированный документ</string>
     <string name="scanned_pdf_desc">Этот документ содержит отсканированные изображения без слоя текста, который можно выделить.</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">Быстрый PDF с камеры</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">Причина</string>
     <string name="pki_location">Местоположение</string>
     <string name="pki_sign_and_save">Подписать и сохранить</string>
-    <string name="btn_convert_to_pdfa">Конвертировать в PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Конвертация в PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">Успешно конвертировано в PDF/A-1b</string>
-    <string name="error_pdfa_conversion_failed">Ошибка конвертации в PDF/A</string>
     <string name="btn_export_embedded_fonts">Экспортировать встроенные шрифты (.zip)</string>
     <string name="btn_exporting_fonts">Экспорт шрифтов…</string>
     <string name="title_fonts_exported_success">Встроенные шрифты успешно экспортированы (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">Криминалистическая очистка векторов</string>
     <string name="redact_forensic_desc">Растеризует скрытые страницы для полного уничтожения исходных байтов текста.</string>
     <string name="redact_smart_pii_title">Умное скрытие ПДн</string>
-    <string name="reflow_find_placeholder">Найти текст в документе...</string>
+    <string name="reflow_find_placeholder">Найти текст в документе…</string>
     <string name="desc_previous_match">Предыдущее совпадение</string>
     <string name="desc_next_match">Следующее совпадение</string>
     <string name="desc_play_pause">Воспроизведение/Пауза</string>

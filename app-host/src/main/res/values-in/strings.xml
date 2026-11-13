@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">Segera Hadir</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">Bersihkan</string>
 <string name="clear_all">Bersihkan Semua</string>
 <string name="save">Simpan</string>
-<string name="continue_btn">Lanjutkan</string>
 <string name="home_subtitle">PERBAIKI DOKUMEN SECARA LOKAL</string>
 <string name="cat_compress">Kompres</string>
 <string name="cat_compress_desc">Kecilkan PDF dengan aman.</string>
@@ -20,19 +19,13 @@
 <string name="cat_check">Periksa</string>
 <string name="cat_check_desc">Periksa sebelum mengirim.</string>
 <string name="menu_compress">Kompres PDF</string>
-<string name="menu_compress_desc">Kurangi ukuran file</string>
 <string name="menu_merge">Gabung PDF</string>
 <string name="menu_merge_desc">Gabungkan beberapa file</string>
 <string name="menu_split">Pisah PDF</string>
 <string name="menu_split_desc">Ekstrak halaman</string>
 <string name="menu_scan">Pindai ke PDF</string>
 <string name="menu_scan_desc">Kamera ke dokumen</string>
-<string name="menu_ocr">Ekstrak Teks</string>
-<string name="menu_ocr_desc">Tarik teks dari PDF</string>
-<string name="menu_metadata">Periksa Metadata</string>
-<string name="menu_metadata_desc">Lihat properti tersembunyi</string>
 <string name="settings_title">Pengaturan</string>
-<string name="settings_preferences">Preferensi Aplikasi</string>
 <string name="settings_privacy_policy">Kebijakan Privasi</string>
 <string name="settings_privacy_policy_desc">Baca kebijakan privasi dan data kami</string>
 <string name="consent_dialog_title">Selamat Datang di PDFchemy</string>
@@ -42,32 +35,17 @@
 <string name="refund_policy_body">Jika Anda belum meminta pengembalian dana dalam 14 hari setelah pembelian, tidak ada pengembalian dana yang akan dikeluarkan.</string>
 <string name="settings_refund_policy">Kebijakan Pengembalian Dana</string>
 <string name="settings_refund_policy_desc">Lihat kebijakan pengembalian dana kami untuk pembelian premium</string>
-<string name="settings_haptic">Umpan Balik Haptik</string>
-<string name="settings_haptic_desc">Getar saat berinteraksi</string>
-<string name="settings_sfx">Efek Suara</string>
-<string name="settings_sfx_desc">Putar audio saat tombol ditekan</string>
 <string name="settings_history">Ingat File Terbaru</string>
 <string name="settings_history_desc">Simpan riwayat lokal. File tidak pernah diunggah.</string>
 <string name="settings_language">Bahasa</string>
 <string name="settings_language_desc">Ubah bahasa aplikasi</string>
 <string name="settings_clear_history">Bersihkan Riwayat Terbaru</string>
-<string name="settings_clear_history_confirm">Yakin ingin menghapus riwayat file terbaru Anda?</string>
-<string name="settings_history_cleared">Riwayat dibersihkan</string>
 <string name="compress_title">Kompres PDF</string>
 <string name="compress_single">Satu File</string>
 <string name="compress_batch">Kompresi Batch</string>
 <string name="compress_select_file">Pilih File PDF</string>
-<string name="compress_compressing">Mengompres PDF...</string>
 <string name="compress_target_size">Ukuran Target</string>
 <string name="compress_preset">Preset Kompresi:</string>
-<string name="compress_exact_mb">MB Tepat</string>
-<string name="compress_options">Opsi Kompresi</string>
-<string name="compress_grayscale">Konversi Skala Abu-abu</string>
-<string name="compress_grayscale_desc">Ubah gambar warna menjadi hitam putih</string>
-<string name="compress_lossless">Kompresi ZIP Tanpa Hilang</string>
-<string name="compress_lossless_desc">Lewati kompresi JPEG lossy</string>
-<string name="compress_strip_meta">Hapus Metadata</string>
-<string name="compress_strip_meta_desc">Hapus tag pembuat, penulis, dan editor</string>
 <string name="warning_quality_title">Peringatan Kualitas &amp; Hukum</string>
 <string name="warning_quality_desc">Kompresi mengurangi kualitas. Ini dapat membatalkan dokumen resmi. Selalu simpan file asli Anda.</string>
 <string name="warning_understand">Saya Mengerti</string>
@@ -109,17 +87,15 @@
 <string name="split_pdf">Pisah PDF</string>
 <string name="split_into_folder">Pisah ke Folder</string>
 <string name="extraction_options">Opsi Ekstraksi</string>
-<string name="extract_all_pages_as_individua">Ekstrak halaman satu per satu</string>
-<string name="extract_custom_range">Ekstrak rentang khusus</string>
-<string name="e_g_1_3_5_7_10">mis. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">mis. 1-3, 5, 7-10</string>
 <string name="extract_images">Ekstrak Gambar</string>
 <string name="ready_to_extract_all_images_ta">Siap untuk mengekstrak. Ketuk tombol di bawah.</string>
 <string name="change_pdf">Ubah PDF</string>
-<string name="extracting_images">Mengekstrak gambar...</string>
+<string name="extracting_images">Mengekstrak gambar…</string>
 <string name="delete_pages">Hapus Halaman</string>
 <string name="save_document">Simpan Dokumen</string>
 <string name="pages_to_delete">Halaman untuk Dihapus</string>
-<string name="e_g_1_3_5_10">mis. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">mis. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Masukkan nomor halaman dipisahkan koma.</string>
 <string name="rotate_pages">Putar Halaman</string>
 <string name="rotate_save">Putar &amp; Simpan</string>
@@ -130,24 +106,22 @@
 <string name="pages_to_rotate_optional">Halaman untuk Diputar (Opsional)</string>
 <string name="leave_blank_to_rotate_all_page">Biarkan kosong untuk memutar semua.</string>
 <string name="text_cleaner">Pembersih Teks</string>
-<string name="paste_your_text_here">Tempel teks Anda di sini...</string>
+<string name="paste_your_text_here">Tempel teks Anda di sini…</string>
 <string name="text_format_converter">Pengonversi Format Teks</string>
-<string name="enter_content">Masukkan konten...</string>
+<string name="enter_content">Masukkan konten…</string>
 <string name="import_btn">Impor</string>
-<string name="compressing_pdf">Mengompres PDF...</string>
 <string name="create">Buat</string>
 <string name="compress">Kompres</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Pilih ukuran target (MB):</string>
 <string name="exact_mb">MB Tepat</string>
-<string name="compression_options">Opsi kompresi</string>
 <string name="grayscale_conversion">Skala Abu-abu</string>
 <string name="convert_color_images_to_black">Ubah ke hitam putih</string>
 <string name="lossless_zip_compression">Kompresi ZIP Tanpa Hilang</string>
 <string name="skip_jpeg_lossy_compression_no">Lewati kompresi JPEG</string>
 <string name="strip_author_creator_editor_ta">Hapus tag pembuat dan editor</string>
 <string name="type_or_paste_text_here">Ketik atau tempel teks di sini</string>
-<string name="enter_the_content_of_your_pdf">Masukkan konten PDF Anda...</string>
+<string name="enter_the_content_of_your_pdf">Masukkan konten PDF Anda…</string>
 <string name="import_txt">Impor .txt</string>
 <string name="save_as_pdf">Simpan sebagai PDF</string>
 <string name="clear_history">Bersihkan Riwayat</string>
@@ -168,7 +142,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">Nama File: %1$s</string>
 <string name="selected_batch_files">File Batch Terpilih:</string>
-<string name="analyzing_doc">Menganalisis dokumen...</string>
+<string name="analyzing_doc">Menganalisis dokumen…</string>
 <string name="smart_recommendation">Rekomendasi Cerdas</string>
 <string name="detected_type">Tipe Terdeteksi: %1$s</string>
 <string name="doc_stats_pages_images">Halaman: %1$d | Gambar: %2$d</string>
@@ -185,7 +159,6 @@
 
 ✓ Tanpa Iklan
 ✓ Aksi Batch Tak Terbatas</string>
-<string name="batch_compressing">Mengompresi %1$d dari %2$d file...</string>
 <string name="msg_enter_text">Silakan masukkan teks.</string>
 <string name="menu_delete_pages">Hapus Halaman</string>
 <string name="menu_delete_pages_desc">Hapus halaman tertentu dari PDF</string>
@@ -265,8 +238,6 @@
 <string name="desc_share_output">Bagikan Hasil</string>
 <string name="desc_go_premium">Gunakan Premium</string>
 <string name="desc_settings">Pengaturan</string>
-<string name="desc_toggle_theme">Alihkan Tema</string>
-<string name="desc_app_logo">Logo Aplikasi</string>
 <string name="scan_prefix">Pindai_</string>
 <string name="default_scanned_doc_name">dokumen_pindaian</string>
 <string name="desc_back">Kembali</string>
@@ -278,11 +249,11 @@
 <string name="btn_change_file">Ubah Berkas</string>
 <string name="btn_select_pdf_files">Pilih File PDF</string>
 <string name="btn_add_more_files">Tambahkan Lebih Banyak File (%1$d dipilih)</string>
-<string name="label_original_size_analyzing">Ukuran Asli: %1$s (Menganalisis...)</string>
+<string name="label_original_size_analyzing">Ukuran Asli: %1$s (Menganalisis…)</string>
 <string name="label_original_size_to_compressed">Ukuran Asli: %1$s → %2$s</string>
 <string name="label_target_mb_batch">Target: %1$.1f MB</string>
 <string name="label_target_unknown">Sasaran: Tidak diketahui</string>
-<string name="label_analyzing">Menganalisis...</string>
+<string name="label_analyzing">Menganalisis…</string>
 <string name="label_target_mb">Target: %1$s MB</string>
 <string name="desc_remove_file">Hapus berkas</string>
 <string name="preset_custom">Kebiasaan</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">Mode Gelap</string>
 <string name="settings_rate_app">Beri Nilai PDFchemy Tools</string>
 <string name="settings_rate_app_desc">Menikmati aplikasi ini? Beri kami ulasan di Google Play!</string>
-<string name="settings_rate_app_thanks">Terima kasih atas dukungan Anda!</string>
     <string name="settings_share_app">Bagikan PDFchemy Tools</string>
     <string name="settings_share_app_desc">Beri tahu teman dan kolega tentang aplikasi ini</string>
     <string name="settings_share_app_message">Coba PDFchemy Tools — kompresor dan editor PDF cepat, 100%% offline, dan privat untuk Android: %1$s</string>
@@ -500,18 +470,12 @@
 <string name="ocr_pdf_subtitle">Pengenalan teks 100%% di perangkat. Menghasilkan lapisan teks yang dapat dipilih.</string>
 <string name="select_pdf_for_ocr">Pilih Dokumen PDF</string>
 <string name="ocr_processing_generic">Menganalisis dan mengenali teks…</string>
-<string name="ocr_processing_progress">Memproses OCR: Halaman %1$d dari %2$d…</string>
 <string name="action_create_searchable_pdf">Buat PDF Dapat Dicari</string>
 <string name="title_ocr_success">PDF Dapat Dicari Berhasil Dibuat!</string>
 <string name="desc_ocr_success">Lapisan teks tak terlihat telah ditambahkan untuk pencarian kata penuh.</string>
 <string name="error_ocr_failed">Pengenalan OCR gagal.</string>
 <string name="history_searchable_ocr_pdf">PDF OCR Dapat Dicari</string>
-<string name="menu_redact_pdf">Sensor Permanen</string>
 <string name="tool_redact">Sensor</string>
-<string name="title_redact_success">PDF Berhasil Disensor!</string>
-<string name="desc_redact_success">Bagian yang dipilih telah disensor dan dihapus secara permanen.</string>
-<string name="error_redact_failed">Gagal menerapkan penyensoran.</string>
-<string name="history_redacted_pdf">PDF Disensor</string>
 <string name="menu_reflow_reader">Pembaca Nyaman &amp; Pembatas Buku</string>
 <string name="menu_reflow_reader_desc">Mode baca santai ala e-book tanpa gangguan dengan daftar isi</string>
 <string name="reflow_reader_headline">Pembaca Seluler Bebas Gangguan</string>
@@ -527,11 +491,9 @@
 <string name="filter_magic_color">Warna Cerah</string>
 <string name="filter_bw">Hitam Putih</string>
 <string name="filter_grayscale">Skala Abu-abu</string>
-<string name="action_save_as_pdf">Simpan %1$d Halaman sebagai PDF</string>
 <string name="title_scan_success">Dokumen Berhasil Dipindai!</string>
 <string name="desc_scan_success">Halaman pindaian telah dikonversi menjadi dokumen PDF yang dioptimalkan.</string>
 <string name="error_scan_failed">Gagal membuat PDF pindaian.</string>
-<string name="history_scanned_pdf">Dokumen Pindaian</string>
 <string name="menu_sign_pdf">Tanda Tangani PDF</string>
 <string name="menu_sign_pdf_desc">Gambar, simpan, dan tempel tanda tangan digital pada surat perjanjian &amp; kontrak</string>
 <string name="sign_pdf_headline">Tanda Tangani Dokumen PDF</string>
@@ -563,7 +525,6 @@
 <string name="title_organizer_success">Halaman Berhasil Diatur Ulang!</string>
 <string name="desc_organizer_success">Susunan dan tata letak halaman baru telah disimpan.</string>
 <string name="error_organizer_failed">Gagal mengatur ulang halaman PDF.</string>
-<string name="history_organized_pdf">PDF Teratur</string>
 <string name="menu_watermark_pdf">Beri Tanda Air (Watermark)</string>
 <string name="menu_watermark_pdf_desc">Bubuhkan cap tanda air teks atau logo kustom di semua halaman</string>
 <string name="watermark_headline">Tambahkan Tanda Air</string>
@@ -578,7 +539,6 @@
 <string name="title_watermark_success">Tanda Air Berhasil Diterapkan!</string>
 <string name="desc_watermark_success">Tanda air telah dicap pada dokumen Anda.</string>
 <string name="error_watermark_failed">Gagal menerapkan tanda air.</string>
-<string name="history_watermarked_pdf">PDF Bertanda Air</string>
 <string name="menu_page_number_pdf">Beri Nomor Halaman</string>
 <string name="menu_page_number_pdf_desc">Sisipkan nomor halaman header &amp; footer kustom (Halaman X dari Y, 1/N)</string>
 <string name="page_number_headline">Beri Nomor Halaman PDF</string>
@@ -597,11 +557,10 @@
 <string name="title_page_number_success">Nomor Halaman Berhasil Ditambahkan!</string>
 <string name="desc_page_number_success">Penomoran halaman telah dicap ke dalam dokumen.</string>
 <string name="error_page_number_failed">Gagal menambahkan nomor halaman.</string>
-<string name="history_numbered_pdf">PDF Bernomor</string>
 <string name="menu_page_layout">Ukuran &amp; Handout N-Up</string>
 <string name="menu_page_layout_desc">Ubah ukuran kertas standar atau gabungkan 2, 4, 6 halaman per lembar</string>
 <string name="page_layout_headline">Tata Letak Halaman &amp; Handout</string>
-<string name="page_layout_subtitle">Format PDF untuk dicetak, ubah ukuran kertas, atau buat handout 2-in-1 / 4-in-1.</string>
+<string name="page_layout_subtitle">Format PDF untuk dicetak, ubah ukuran kertas, atau buat handout 2-in-1, 4-in-1.</string>
 <string name="select_pdf_for_layout">Pilih Dokumen PDF</string>
 <string name="tab_nup_handout">Handout Multihalaman</string>
 <string name="tab_resize_paper">Ubah Ukuran Kertas</string>
@@ -615,15 +574,12 @@
 <string name="title_layout_success">Tata Letak Berhasil Dibuat!</string>
 <string name="desc_layout_success">PDF yang diformat telah disimpan.</string>
 <string name="error_layout_failed">Gagal membuat tata letak PDF.</string>
-<string name="history_layout_pdf">PDF Tata Letak</string>
 <string name="menu_compare_pdfs">Bandingkan Dua PDF</string>
 <string name="menu_compare_pdfs_desc">Temukan perbedaan visual dan perubahan teks antar revisi dokumen</string>
 <string name="compare_headline">Pembanding Revisi PDF</string>
 <string name="compare_subtitle">Pilih dua versi dokumen untuk menyoroti perubahan visual dan pengeditan teks.</string>
 <string name="select_original_pdf">Pilih PDF Asli (Dok A)</string>
 <string name="select_modified_pdf">Pilih PDF Revisi (Dok B)</string>
-<string name="doc1_selected">Asli Dipilih</string>
-<string name="doc2_selected">Revisi Dipilih</string>
 <string name="comparing_documents_progress">Membandingkan halaman dokumen &amp; teks…</string>
 <string name="compare_results_title">Hasil Perbandingan</string>
 <string name="compare_summary_counts">%1$d Halaman Berbeda • %2$d Halaman Identik</string>
@@ -644,7 +600,7 @@
 <string name="info_word_export">Mengekspor paragraf, judul, dan jeda halaman ke file Microsoft Word (.docx).</string>
 <string name="info_excel_export">Mengekstrak tabel dan data terstruktur ke lembar kerja Microsoft Excel (.xlsx).</string>
 <string name="info_pptx_export">Mengubah halaman menjadi slide presentasi di Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Mengonversi ke Office...</string>
+<string name="converting_to_office">Mengonversi ke Office…</string>
 <string name="btn_export_office_file">Ekspor sebagai %1$s</string>
 <string name="title_office_export_success">Ekspor Selesai</string>
 <string name="desc_office_export_success">Berhasil mengekspor %1$d halaman ke format Office yang dipilih.</string>
@@ -743,7 +699,7 @@
 <string name="btn_open_file">Buka File</string>
 <string name="btn_import_pdf_to_md">Ekstrak Markdown dari PDF</string>
 <string name="btn_save_md">Simpan .MD</string>
-<string name="hint_type_markdown">Ketik atau tempel Markdown di sini...</string>
+<string name="hint_type_markdown">Ketik atau tempel Markdown di sini…</string>
 <string name="label_doc_title">Judul Dokumen</string>
 <string name="btn_export_pdf">Ekspor PDF</string>
 <string name="title_pdf_to_md_success">Markdown Diekstrak</string>
@@ -807,7 +763,7 @@
 <string name="label_booklet_settings">Pengaturan Buklet</string>
 <string name="opt_center_fold_guide">Gambar Garis Panduan Lipat Tengah</string>
 <string name="desc_center_fold_guide">Menambahkan garis putus-putus halus untuk memandu melipat dan memotong</string>
-<string name="label_generating_sheet">Membuat lembar %1$d dari %2$d...</string>
+<string name="label_generating_sheet">Membuat lembar %1$d dari %2$d…</string>
 <string name="btn_create_booklet">Buat Buklet PDF</string>
 <string name="title_booklet_success">Buklet Dibuat</string>
 <string name="desc_booklet_success">Cetak bolak-balik dan lipat di tengah untuk dibaca sebagai buklet</string>
@@ -881,7 +837,7 @@
 <string name="redaction_headline">Studio Redaksi Permanen</string>
 <string name="redaction_subtitle">Bersihkan data sensitif, nama, SSN, dan kartu kredit</string>
 <string name="select_pdf_to_redact">Pilih PDF untuk Diredaksi</string>
-<string name="placeholder_search_redact">Cari teks atau regex untuk disensor...</string>
+<string name="placeholder_search_redact">Cari teks atau regex untuk disensor…</string>
 <string name="chip_preset_emails">Email</string>
 <string name="chip_preset_ssn">Nomor Jaminan Sosial (SSN)</string>
 <string name="chip_preset_credit_cards">Kartu Kredit</string>
@@ -910,18 +866,12 @@
 <string name="error_embed_failed">Penyematan Gagal</string>
 <string name="menu_fast_web_view">Informasi Fast Web View</string>
 <string name="menu_fast_web_view_desc">Periksa informasi PDF; pembuatan Fast Web View tidak tersedia</string>
-<string name="linearize_headline">Pengalir Tampilan Web Cepat</string>
 <string name="linearize_subtitle">Versi ini tidak dapat membuat atau memvalidasi PDF Fast Web View. Tidak ada berkas keluaran yang akan dibuat.</string>
 <string name="select_pdf_for_linearize">Pilih PDF untuk diperiksa</string>
 <string name="label_diagnostic_status">Informasi PDF</string>
 <string name="label_fast_web_view_enabled">Linearisasi:</string>
-<string name="status_enabled">Diaktifkan</string>
 <string name="status_disabled">Belum diverifikasi</string>
-<string name="linearize_info_explanation">Tampilan Web Cepat mengatur file sehingga browser web merender halaman pertama secara instan tanpa menunggu seluruh dokumen diunduh.</string>
 <string name="btn_optimize_fast_web_view">Pengoptimalan tidak tersedia</string>
-<string name="title_linearize_success">PDF Dilinearisi</string>
-<string name="desc_linearize_success">Dokumen dioptimalkan untuk streaming web instan (%1$s)</string>
-<string name="error_linearize_failed">Optimalisasi Gagal</string>
 
 <string name="menu_nup_handouts">Kisi Multi-Halaman N-Up</string>
 <string name="menu_nup_handouts_desc">Cetak 2, 4, 6, 9, atau 16 halaman per lembar untuk handout</string>
@@ -941,8 +891,6 @@
 <string name="pdfa_headline">Hanya pemeriksaan awal; tidak disertifikasi</string>
 <string name="pdfa_subtitle">Pemeriksaan ini tidak menjamin kepatuhan ISO 19005. Konversi PDF/A tidak tersedia dalam versi ini.</string>
 <string name="select_pdf_for_pdfa">Pilih PDF untuk pemeriksaan awal</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">Tidak Patuh (Masalah Terdeteksi)</string>
 <string name="menu_font_inspector">Inspektur Tipografi &amp; Font</string>
 <string name="menu_font_inspector_desc">Periksa font tersemat, subtipe, dan pengkodean</string>
 <string name="font_headline">Tipografi &amp; Font yang Disematkan</string>
@@ -954,8 +902,6 @@
 <string name="stat_standard_system">Sistem / Dasar</string>
 
 <string name="error_developer_diagnostics">Diagnostik Pengembang</string>
-<string name="error_tap_to_view_diagnostics">Lihat Log / Jejak Teknis</string>
-<string name="error_tap_to_hide_diagnostics">Sembunyikan Log Teknis</string>
 <string name="error_copy_diagnostics">Salin Diagnostik</string>
 <string name="error_diagnostics_copied">Jejak diagnostik teknis disalin ke papan klip</string>
 <string name="error_user_encrypted">PDF ini dilindungi kata sandi atau dienkripsi. Silakan buka kuncinya di Keamanan PDF sebelum melanjutkan.</string>
@@ -996,12 +942,10 @@
     <string name="deskew_success">Dokumen Berhasil Diluruskan!</string>
     <string name="deskew_success_desc">Halaman telah diputar dan disejajarkan.</string>
     <string name="deskew_auto_label">Deteksi Kemiringan Otomatis</string>
-    <string name="deskew_manual_label">Penyesuaian Manual</string>
     <string name="deskew_no_tilt">Dokumen sudah lurus (0.0°)</string>
     <string name="menu_table_extractor">Ekstrak Tabel ke CSV</string>
     <string name="menu_table_extractor_desc">Tarik data tabular dan formulir dari PDF ke dalam CSV / Excel RFC 4180 yang bersih</string>
     <string name="table_extractor_title">Ekstraktor Tabel &amp; Spreadsheet PDF</string>
-    <string name="table_extractor_action_export">Ekspor Tabel ke CSV</string>
     <string name="table_extractor_preview">Data Tabular Terdeteksi</string>
     <string name="table_extractor_no_tables">Tidak ada data tabular yang terdeteksi pada halaman ini.</string>
     <string name="table_extractor_success">Tabel Diekspor ke CSV!</string>
@@ -1016,21 +960,16 @@
     <string name="sanitizer_threats_detected">%1$d vektor ancaman ditemukan dalam dokumen</string>
     <string name="sanitizer_action_sanitize">Sterilkan &amp; Bersihkan Ancaman</string>
     <string name="sanitizer_success">Dokumen Berhasil Disterilkan!</string>
-    <string name="sanitizer_success_desc">Semua skrip aktif, hook, dan suar pelacak telah dihapus.</string>
     <string name="menu_quick_fill_sign">Isi &amp; Tanda Tangan Cepat (Formulir Datar)</string>
     <string name="menu_quick_fill_sign_desc">Ketuk di mana saja pada PDF datar atau hasil pemindaian untuk menambahkan teks, tanda centang, silang, dan tanda tangan</string>
     <string name="quick_fill_title">Isi &amp; Tanda Tangan Cepat</string>
     <string name="quick_fill_text_tool">Teks</string>
-    <string name="quick_fill_check_tool">Tanda Centang (✓)</string>
-    <string name="quick_fill_cross_tool">Tanda Silang (✗)</string>
-    <string name="quick_fill_date_tool">Tanggal</string>
     <string name="quick_fill_sign_tool">Tanda Tangan</string>
     <string name="quick_fill_tap_hint">Ketuk di mana saja pada dokumen untuk menempatkan item yang dipilih</string>
     <string name="quick_fill_action_save">Simpan &amp; Ratakan Formulir</string>
     <string name="quick_fill_success">Formulir Terisi &amp; Disimpan!</string>
-    <string name="quick_fill_success_desc">Semua entri telah disematkan secara permanen ke dalam PDF.</string>
     <string name="split_mode_all">Ekstrak Semua Halaman Secara Terpisah</string>
-    <string name="split_mode_range">Rentang Halaman Kustom (mis. 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">Rentang Halaman Kustom (mis. 1-3, 5)</string>
     <string name="split_mode_blank">Pisahkan berdasarkan Halaman Kosong</string>
     <string name="split_mode_blank_desc">Mendeteksi halaman pemisah kosong dalam pindaian volume tinggi dan memotongnya menjadi file individual</string>
     <string name="split_mode_bookmarks">Pisahkan berdasarkan Markah Buku / Bab</string>
@@ -1039,12 +978,8 @@
     <string name="split_bookmarks_found">Ditemukan %1$d bagian bab kerangka</string>
     <string name="split_no_bookmarks">Tidak ada markah buku bab yang ditemukan dalam dokumen ini.</string>
     <string name="tts_play">Baca dengan Suara</string>
-    <string name="tts_pause">Jeda</string>
-    <string name="tts_stop">Berhenti</string>
-    <string name="tts_speed">Kecepatan: %1$.2fx</string>
     <string name="tts_prev_paragraph">Sebelumnya</string>
     <string name="tts_next_paragraph">Berikutnya</string>
-    <string name="tts_not_supported">Teks-ke-suara tidak didukung atau data bahasa hilang.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">Pembuat Formulir Interaktif</string>
@@ -1061,7 +996,6 @@
     <string name="form_builder_action_save">Simpan PDF Interaktif</string>
     <string name="form_builder_fields_count">Bidang di Halaman: %1$d</string>
     <string name="form_builder_success">PDF Formulir Berhasil Dibuat!</string>
-    <string name="form_builder_success_desc">Bidang formulir interaktif telah disematkan ke dalam dokumen.</string>
     <string name="form_builder_no_fields_warn">Silakan tambahkan setidaknya satu bidang sebelum menyimpan.</string>
     <string name="form_builder_delete_field">Hapus Bidang</string>
     <string name="settings_vanguard">Perisai Zero-Trust Vanguard</string>
@@ -1072,14 +1006,13 @@
     <string name="vanguard_encrypted_message">Dokumen ini dienkripsi dan dilindungi kata sandi. Perisai Zero-Trust Vanguard tidak dapat memverifikasi skrip tertanam atau ancaman keamanan saat dokumen masih terkunci. Silakan buka kuncinya terlebih dahulu.</string>
     <string name="vanguard_action_unlock">Buka Kunci PDF</string>
     <string name="vanguard_verifying_title">Verifikasi Keamanan Vanguard</string>
-    <string name="vanguard_verifying_desc">Memeriksa dokumen untuk skrip dan ancaman keamanan...</string>
+    <string name="vanguard_verifying_desc">Memeriksa dokumen untuk skrip dan ancaman keamanan…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
 
     <string name="action_redo">Ulangi</string>
     <string name="action_reset">Atur Ulang</string>
     <string name="action_reverse">Balikkan</string>
     <string name="action_rotate_all">Putar Semua</string>
-    <string name="label_preview_unavailable">Pratinjau tidak tersedia</string>
     <string name="dialog_unsaved_title">Perubahan Belum Disimpan</string>
     <string name="dialog_unsaved_message">Anda memiliki perubahan yang belum disimpan. Apakah Anda ingin menyimpan atau membuangnya sebelum keluar?</string>
     <string name="dialog_unsaved_save">Simpan / Ekspor</string>
@@ -1089,13 +1022,9 @@
     <string name="vanguard_damaged_message">PDF ini tampaknya rusak atau terpotong dan tidak dapat dibaca dengan aman. Coba jalankan Perbaikan atau pilih salinan lain.</string>
     <string name="vanguard_provider_error_title">File Tidak Dapat Diakses</string>
     <string name="vanguard_provider_error_message">File yang dipilih tidak dapat diakses. Penyedia penyimpanan mungkin tidak tersedia atau izin telah dicabut.</string>
-    <string name="error_invalid_page_range">Rentang halaman tidak valid. Harap verifikasi nomor halaman dan coba lagi.</string>
     <string name="consent_dialog_decline">Lanjutkan Tanpa Personalisasi</string>
 
     <string name="generating_previews">Menghasilkan pratinjau…</string>
-    <string name="label_preview_loading">Memuat…</string>
-    <string name="premium_status_loading">Memeriksa toko…</string>
-    <string name="premium_status_unavailable">Toko tidak tersedia. Ketuk untuk mencoba lagi.</string>
     <string name="action_retry">Coba Lagi</string>
     <string name="redaction_review_title">Tinjau Redaksi</string>
     <string name="redaction_review_message">%1$d redaksi akan diterapkan secara permanen. Konten yang disunting tidak dapat dipulihkan.</string>
@@ -1127,12 +1056,10 @@
     <string name="alt_free_ram_desc">Tutup aplikasi latar belakang yang menggunakan banyak memori untuk mengosongkan RAM, lalu coba lagi.</string>
     <string name="alt_free_ram_btn">Mengerti</string>
     <string name="btn_proceed_anyway">Tetap Lanjutkan</string>
-    <string name="msg_circuit_breaker_paused">Pemrosesan dijeda untuk mencegah ponsel macet. Pekerjaan yang telah selesai disimpan.</string>
     <string name="reader_dual_page_spread">Dua Halaman Berdampingan</string>
     <string name="reader_single_page">Satu Halaman</string>
     <string name="flip_tabletop_mode">Mode Meja</string>
     <string name="flip_fullscreen_mode">Mode Layar Penuh</string>
-    <string name="flip_tabletop_mode_desc">Mode bebas genggam: dokumen di atas, kontrol di bawah</string>
     <string name="flip_tabletop_active_badge">Mode Flex</string>
     <string name="scanned_pdf_title">Dokumen Hasil Pindai</string>
     <string name="scanned_pdf_desc">Dokumen ini berisi gambar hasil pindai tanpa lapisan teks yang dapat dipilih.</string>
@@ -1158,7 +1085,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">PDF Kamera Cepat</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1233,10 +1160,6 @@
     <string name="pki_reason">Alasan</string>
     <string name="pki_location">Lokasi</string>
     <string name="pki_sign_and_save">Tandatangani &amp; Simpan</string>
-    <string name="btn_convert_to_pdfa">Konversi ke PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Mengonversi ke PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b Berhasil Dikonversi</string>
-    <string name="error_pdfa_conversion_failed">Konversi PDF/A Gagal</string>
     <string name="btn_export_embedded_fonts">Ekspor Font yang Disematkan (.zip)</string>
     <string name="btn_exporting_fonts">Mengekspor Font…</string>
     <string name="title_fonts_exported_success">Font yang disematkan berhasil diekspor (%1$d)</string>
@@ -1334,7 +1257,7 @@
     <string name="redact_forensic_title">Sanitasi Vektor Forensik</string>
     <string name="redact_forensic_desc">Meraster halaman yang disunting agar byte teks di bawahnya terhapus total.</string>
     <string name="redact_smart_pii_title">Redaksi PII Cerdas</string>
-    <string name="reflow_find_placeholder">Cari teks di dokumen...</string>
+    <string name="reflow_find_placeholder">Cari teks di dokumen…</string>
     <string name="desc_previous_match">Kecocokan Sebelumnya</string>
     <string name="desc_next_match">Kecocokan Berikutnya</string>
     <string name="desc_play_pause">Putar/Jeda</string>

@@ -12,11 +12,15 @@ import java.io.OutputStream
 
 /** Host-side writer: closing a pipe does not wake a blocked write on every Android release. */
 class CancellableProviderWriter private constructor(private val output: OutputStream) {
-    private val pipe = (output as? FileOutputStream)?.fd?.takeIf {
-        OsConstants.S_ISFIFO(Os.fstat(it).st_mode)
-    }?.also {
-        val flags = Os.fcntlInt(it, OsConstants.F_GETFL, 0)
-        Os.fcntlInt(it, OsConstants.F_SETFL, flags or OsConstants.O_NONBLOCK)
+    private val pipe = resolveNonBlockingPipe(output)
+
+    private fun resolveNonBlockingPipe(output: OutputStream): java.io.FileDescriptor? {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return null
+        val fd = (output as? FileOutputStream)?.fd ?: return null
+        if (!OsConstants.S_ISFIFO(Os.fstat(fd).st_mode)) return null
+        val flags = Os.fcntlInt(fd, OsConstants.F_GETFL, 0)
+        Os.fcntlInt(fd, OsConstants.F_SETFL, flags or OsConstants.O_NONBLOCK)
+        return fd
     }
     private val polls = pipe?.let { descriptor ->
         arrayOf(StructPollfd().apply {

@@ -2,6 +2,7 @@ package com.pdfchemy.app.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import android.app.Application
 import androidx.lifecycle.viewModelScope
@@ -497,12 +498,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setHapticEnabled(enabled: Boolean) {
         _isHapticEnabled.value = enabled
-        prefs.edit().putBoolean("haptic", enabled).apply()
+        prefs.edit { putBoolean("haptic", enabled) }
     }
 
     fun setSfxEnabled(enabled: Boolean) {
         _isSfxEnabled.value = enabled
-        prefs.edit().putBoolean("sfx", enabled).apply()
+        prefs.edit { putBoolean("sfx", enabled) }
     }
 
     private val _isHistoryEnabled = MutableStateFlow(prefs.getBoolean("history_enabled", false))
@@ -510,7 +511,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setHistoryEnabled(enabled: Boolean) {
         _isHistoryEnabled.value = enabled
-        prefs.edit().putBoolean("history_enabled", enabled).apply()
+        prefs.edit { putBoolean("history_enabled", enabled) }
         if (!enabled) {
             clearHistory()
         }
@@ -521,7 +522,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setRememberPositionEnabled(enabled: Boolean) {
         _isRememberPositionEnabled.value = enabled
-        prefs.edit().putBoolean("remember_position", enabled).apply()
+        prefs.edit { putBoolean("remember_position", enabled) }
     }
 
     fun clearHistory() {
@@ -534,7 +535,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setVanguardEnabled(enabled: Boolean) {
         _isVanguardEnabled.value = enabled
-        prefs.edit().putBoolean("vanguard_enabled", enabled).apply()
+        prefs.edit { putBoolean("vanguard_enabled", enabled) }
     }
 
     private val _warning = MutableStateFlow<String?>(null)
@@ -1149,7 +1150,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val units = arrayOf("B", "KB", "MB", "GB")
         val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
             .coerceIn(0, units.size - 1)
-        return String.format("%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+        return String.format(java.util.Locale.getDefault(), "%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
     }
 
     // =============================================================================================

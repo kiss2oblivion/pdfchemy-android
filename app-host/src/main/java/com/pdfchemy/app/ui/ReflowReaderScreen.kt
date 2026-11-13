@@ -4,6 +4,8 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.activity.compose.BackHandler
@@ -393,10 +395,10 @@ fun ReflowReaderScreen(
         androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
-                    prefs.edit()
-                        .putInt("reader_scroll_index_$uriHash", index)
-                        .putInt("reader_scroll_offset_$uriHash", offset)
-                        .apply()
+                    prefs.edit {
+                        putInt("reader_scroll_index_$uriHash", index)
+                        putInt("reader_scroll_offset_$uriHash", offset)
+                    }
                 }
             }
     }
@@ -678,7 +680,7 @@ fun ReflowReaderScreen(
                     TextButton(onClick = { activeExportJobKey = null; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
                 }
                 activeJobState?.outputUri?.let { saved ->
-                    val output = Uri.parse(saved)
+                    val output = saved.toUri()
                     Row {
                         TextButton(onClick = {
                             runCatching {
@@ -941,7 +943,7 @@ fun ReflowReaderScreen(
                                                 pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
                                                 audioExportM4aLauncher.launch(suggestedName)
                                             },
-                                            leadingIcon = { Icon(Icons.Rounded.VolumeUp, contentDescription = null) }
+                                            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, contentDescription = null) }
                                         )
                                         DropdownMenuItem(
                                             text = {

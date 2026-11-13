@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">近日公開</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">クリア</string>
 <string name="clear_all">すべてクリア</string>
 <string name="save">保存</string>
-<string name="continue_btn">次へ進む</string>
 <string name="home_subtitle">ローカルでドキュメントを安全に処理</string>
 <string name="cat_compress">圧縮</string>
 <string name="cat_compress_desc">安全かつ高画質にPDFサイズを縮小。</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">確認</string>
 <string name="cat_check_desc">送信前に安全性をチェック。</string>
 <string name="menu_compress">PDFを圧縮</string>
-<string name="menu_compress_desc">ファイルサイズを小さくする</string>
 <string name="menu_merge">PDFを結合</string>
 <string name="menu_merge_desc">複数のファイルを1つにまとめる</string>
 <string name="menu_split">PDFを分割</string>
 <string name="menu_split_desc">ページを抽出・分割する</string>
 <string name="menu_scan">PDFにスキャン</string>
 <string name="menu_scan_desc">カメラで書類をPDF化</string>
-<string name="menu_ocr">テキスト抽出</string>
-<string name="menu_ocr_desc">PDFから文字を抽出</string>
-<string name="menu_metadata">メタデータ確認</string>
-<string name="menu_metadata_desc">隠れたプロパティを確認</string>
 <string name="settings_title">設定</string>
-<string name="settings_preferences">アプリ設定</string>
-<string name="settings_haptic">触覚フィードバック</string>
-<string name="settings_haptic_desc">タップ操作時に振動</string>
-<string name="settings_sfx">効果音</string>
-<string name="settings_sfx_desc">ボタンクリック時に音を再生</string>
 <string name="settings_history">最近のファイルを記憶</string>
 <string name="settings_history_desc">最近使用したファイルの履歴を端末内に保持します。クラウドには一切アップロードされません。</string>
 <string name="settings_language">言語 (Language)</string>
 <string name="settings_language_desc">アプリの表示言語を変更</string>
 <string name="settings_clear_history">履歴を消去</string>
-<string name="settings_clear_history_confirm">最近のファイル履歴を消去してもよろしいですか？</string>
-<string name="settings_history_cleared">履歴を消去しました</string>
 <string name="compress_title">PDFを圧縮</string>
 <string name="compress_single">単一ファイル</string>
 <string name="compress_batch">一括圧縮</string>
 <string name="compress_select_file">PDFファイルを選択</string>
-<string name="compress_compressing">PDFを圧縮中...</string>
 <string name="compress_target_size">目標ファイルサイズ</string>
 <string name="compress_preset">圧縮プリセット:</string>
-<string name="compress_exact_mb">指定MB</string>
-<string name="compress_options">圧縮オプション</string>
-<string name="compress_grayscale">グレースケール変換</string>
-<string name="compress_grayscale_desc">カラー画像を白黒に変換</string>
-<string name="compress_lossless">可逆ZIP圧縮</string>
-<string name="compress_lossless_desc">JPEG非可逆圧縮をスキップ</string>
-<string name="compress_strip_meta">メタデータを削除</string>
-<string name="compress_strip_meta_desc">作成者や編集者情報を消去</string>
 <string name="warning_quality_title">品質および法的な注意事項</string>
 <string name="warning_quality_desc">圧縮により画質が低下する場合があります。公的書類、医療記録、電子署名が無効になる恐れがあるため、必ず原本を保存してください。</string>
 <string name="warning_understand">了解しました</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">PDFを分割</string>
 <string name="split_into_folder">フォルダーに分割保存</string>
 <string name="extraction_options">抽出オプション</string>
-<string name="extract_all_pages_as_individua">全ページを個別ファイルとして抽出</string>
-<string name="extract_custom_range">指定ページ範囲を抽出</string>
-<string name="e_g_1_3_5_7_10">例: 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">例: 1-3, 5, 7-10</string>
 <string name="extract_images">画像を抽出</string>
 <string name="ready_to_extract_all_images_ta">すべての画像を抽出できます。下のボタンをタップして出力フォルダーを選択してください。</string>
 <string name="change_pdf">PDFを変更</string>
-<string name="extracting_images">画像を抽出中...</string>
+<string name="extracting_images">画像を抽出中…</string>
 <string name="delete_pages">ページを削除</string>
 <string name="save_document">ドキュメントを保存</string>
 <string name="pages_to_delete">削除するページ</string>
-<string name="e_g_1_3_5_10">例: 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">例: 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">カンマ区切りでページ番号または範囲を入力してください。</string>
 <string name="rotate_pages">ページを回転</string>
 <string name="rotate_save">回転して保存</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">回転するページ (任意)</string>
 <string name="leave_blank_to_rotate_all_page">空白の場合はすべてのページを回転します。</string>
 <string name="text_cleaner">テキストクリーナー</string>
-<string name="paste_your_text_here">ここにテキストを貼り付け...</string>
+<string name="paste_your_text_here">ここにテキストを貼り付け…</string>
 <string name="text_format_converter">テキスト形式変換</string>
-<string name="enter_content">内容を入力...</string>
+<string name="enter_content">内容を入力…</string>
 <string name="import_btn">インポート</string>
-<string name="compressing_pdf">PDFを圧縮中...</string>
 <string name="create">作成</string>
 <string name="compress">圧縮</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">目標サイズを選択 (MB):</string>
 <string name="exact_mb">指定MB</string>
-<string name="compression_options">圧縮オプション</string>
 <string name="grayscale_conversion">グレースケール変換</string>
 <string name="convert_color_images_to_black">カラー画像を白黒に変換</string>
 <string name="lossless_zip_compression">可逆ZIP圧縮</string>
 <string name="skip_jpeg_lossy_compression_no">JPEG非可逆圧縮をスキップ (劣化なし)</string>
 <string name="strip_author_creator_editor_ta">作成者・編集者タグを消去</string>
 <string name="type_or_paste_text_here">ここにテキストを入力または貼り付け</string>
-<string name="enter_the_content_of_your_pdf">PDFの内容を入力してください...</string>
+<string name="enter_the_content_of_your_pdf">PDFの内容を入力してください…</string>
 <string name="import_txt">.txtをインポート</string>
 <string name="save_as_pdf">PDFとして保存</string>
 <string name="clear_history">履歴を消去</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">ファイル名: %1$s</string>
 <string name="selected_batch_files">選択されたファイル:</string>
-<string name="analyzing_doc">ドキュメント構造を解析中...</string>
+<string name="analyzing_doc">ドキュメント構造を解析中…</string>
 <string name="smart_recommendation">スマート推奨</string>
 <string name="detected_type">検出タイプ: %1$s</string>
 <string name="doc_stats_pages_images">ページ数: %1$d | 画像数: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ 広告なし
 ✓ 無制限の一括処理</string>
-<string name="batch_compressing">%1$d / %2$d ファイルを圧縮中...</string>
 <string name="msg_enter_text">テキストを入力してください。</string>
 <string name="menu_delete_pages">ページを削除</string>
 <string name="menu_delete_pages_desc">PDFから特定のページを削除</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">出力を共有</string>
 <string name="desc_go_premium">プレミアム版</string>
 <string name="desc_settings">設定</string>
-<string name="desc_toggle_theme">テーマ切り替え</string>
-<string name="desc_app_logo">アプリアイコン</string>
 <string name="scan_prefix">Scan_</string>
 <string name="default_scanned_doc_name">スキャン文書</string>
 <string name="desc_back">戻る</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">ファイルを変更</string>
 <string name="btn_select_pdf_files">PDFファイルを選択</string>
 <string name="btn_add_more_files">ファイルを追加 (%1$d 件選択中)</string>
-<string name="label_original_size_analyzing">元のサイズ: %1$s (解析中...)</string>
+<string name="label_original_size_analyzing">元のサイズ: %1$s (解析中…)</string>
 <string name="label_original_size_to_compressed">元のサイズ: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">目標: %1$.1f MB</string>
 <string name="label_target_unknown">目標: 未設定</string>
-<string name="label_analyzing">解析中...</string>
+<string name="label_analyzing">解析中…</string>
 <string name="label_target_mb">目標: %1$s MB</string>
 <string name="desc_remove_file">ファイルを削除</string>
 <string name="preset_custom">カスタム</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">ダークモード</string>
 <string name="settings_rate_app">PDFchemyを評価</string>
 <string name="settings_rate_app_desc">Google Playでのレビューをお待ちしております！</string>
-<string name="settings_rate_app_thanks">ご支援ありがとうございます！</string>
     <string name="settings_share_app">PDFchemy Toolsを共有</string>
     <string name="settings_share_app_desc">友人や同僚にこのアプリをお知らせください</string>
     <string name="settings_share_app_message">PDFchemy Toolsをお試しください — Android向けの高速・完全オフライン・プライベートなPDF圧縮・編集アプリです: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">完全端末内テキスト認識。選択・検索可能な文字レイヤーを生成。</string>
 <string name="select_pdf_for_ocr">PDFファイルを選択</string>
 <string name="ocr_processing_generic">文字を解析・認識中…</string>
-<string name="ocr_processing_progress">OCR処理中: %2$d ページ中 %1$d ページ…</string>
 <string name="action_create_searchable_pdf">検索可能PDFを生成</string>
 <string name="title_ocr_success">検索可能PDFを作成しました！</string>
 <string name="desc_ocr_success">透明なテキストレイヤーが追加され、文字選択や検索が可能になりました。</string>
 <string name="error_ocr_failed">OCR文字認識に失敗しました。</string>
 <string name="history_searchable_ocr_pdf">OCR検索可能PDF</string>
-<string name="menu_redact_pdf">完全墨消し (黒塗り)</string>
 <string name="tool_redact">墨消し</string>
-<string name="title_redact_success">墨消し処理が完了しました！</string>
-<string name="desc_redact_success">指定した領域のデータと文字が完全に抹消されました。</string>
-<string name="error_redact_failed">墨消し処理に失敗しました。</string>
-<string name="history_redacted_pdf">墨消し済みPDF</string>
 <string name="menu_reflow_reader">リフローリーダー＆目次</string>
 <string name="menu_reflow_reader_desc">目次付きでスマホで読みやすい電子書籍風ビューア</string>
 <string name="reflow_reader_headline">快適モバイルリーダー</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">マジックカラー</string>
 <string name="filter_bw">白黒</string>
 <string name="filter_grayscale">グレースケール</string>
-<string name="action_save_as_pdf">%1$d ページをPDFとして保存</string>
 <string name="title_scan_success">スキャン完了！</string>
 <string name="desc_scan_success">スキャンしたページを最適化PDFに変換しました。</string>
 <string name="error_scan_failed">PDFの生成に失敗しました。</string>
-<string name="history_scanned_pdf">スキャン書類</string>
 <string name="menu_sign_pdf">PDFに署名</string>
 <string name="menu_sign_pdf_desc">契約書や同意書に手書きデジタル署名を描いて配置</string>
 <string name="sign_pdf_headline">PDFにデジタル署名</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">ページの整理が完了しました！</string>
 <string name="desc_organizer_success">新しいページ順と構成で保存されました。</string>
 <string name="error_organizer_failed">ページの整理に失敗しました。</string>
-<string name="history_organized_pdf">整理済みPDF</string>
 <string name="menu_watermark_pdf">透かしを追加</string>
 <string name="menu_watermark_pdf_desc">全ページに文字やロゴの透かしスタンプを適用</string>
 <string name="watermark_headline">透かし (ウォーターマーク) を追加</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">透かしを適用しました！</string>
 <string name="desc_watermark_success">ドキュメントに透かしが刻印されました。</string>
 <string name="error_watermark_failed">透かしの適用に失敗しました。</string>
-<string name="history_watermarked_pdf">透かし入りPDF</string>
 <string name="menu_page_number_pdf">ページ番号を追加</string>
 <string name="menu_page_number_pdf_desc">ヘッダーまたはフッターにページ番号を挿入 (ページ X / Y 等)</string>
 <string name="page_number_headline">ページ番号の挿入</string>
@@ -589,7 +549,6 @@
 <string name="title_page_number_success">ページ番号を追加しました！</string>
 <string name="desc_page_number_success">ページ番号がドキュメントに刻印されました。</string>
 <string name="error_page_number_failed">ページ番号の付与に失敗しました。</string>
-<string name="history_numbered_pdf">ページ番号付きPDF</string>
 <string name="menu_page_layout">用紙サイズ変更・割り付け印刷</string>
 <string name="menu_page_layout_desc">A4/Letterなどサイズ変更、または1枚に2/4/6ページを配置</string>
 <string name="page_layout_headline">ページレイアウト＆割り付け (N-Up)</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">レイアウトを生成しました！</string>
 <string name="desc_layout_success">指定したレイアウトで保存されました。</string>
 <string name="error_layout_failed">レイアウトの生成に失敗しました。</string>
-<string name="history_layout_pdf">レイアウトPDF</string>
 <string name="menu_compare_pdfs">2つのPDFを比較</string>
 <string name="menu_compare_pdfs_desc">文書の変更点、視覚的な差異、テキストの修正を検出</string>
 <string name="compare_headline">PDFリビジョン比較</string>
 <string name="compare_subtitle">2つのバージョンを選択して、レイアウトの違いやテキストの変更箇所をハイライト。</string>
 <string name="select_original_pdf">原本を選択 (PDF A)</string>
 <string name="select_modified_pdf">修正版を選択 (PDF B)</string>
-<string name="doc1_selected">原本を選択済み</string>
-<string name="doc2_selected">修正版を選択済み</string>
 <string name="comparing_documents_progress">ページおよびテキストを比較中…</string>
 <string name="compare_results_title">比較結果</string>
 <string name="compare_summary_counts">%1$d ページの変更 • %2$d ページの一致</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">段落、見出し、改ページをMicrosoft Word (.docx) 形式で書き出します。</string>
 <string name="info_excel_export">表構造や数値をMicrosoft Excel (.xlsx) スプレッドシートに抽出します。</string>
 <string name="info_pptx_export">各ページをスライド化し、タイトルや箇条書きを含むMicrosoft PowerPoint (.pptx) に変換します。</string>
-<string name="converting_to_office">Office形式に変換中...</string>
+<string name="converting_to_office">Office形式に変換中…</string>
 <string name="btn_export_office_file">%1$s として書き出し</string>
 <string name="title_office_export_success">書き出し完了</string>
 <string name="desc_office_export_success">%1$d ページが選択したOffice形式に正常に書き出されました。</string>
@@ -799,7 +755,7 @@
 <string name="label_booklet_settings">小冊子設定</string>
 <string name="opt_center_fold_guide">中央の折り線の補助線を描画</string>
 <string name="desc_center_fold_guide">折り線や裁断の目安となる細い破線を追加します</string>
-<string name="label_generating_sheet">用紙を生成中 (%1$d / %2$d)...</string>
+<string name="label_generating_sheet">用紙を生成中 (%1$d / %2$d)…</string>
 <string name="btn_create_booklet">小冊子PDFを生成</string>
 <string name="title_booklet_success">小冊子を作成しました</string>
 <string name="desc_booklet_success">両面印刷して中央で折ると小冊子として読めます</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">埋め込みに失敗しました</string>
 <string name="menu_fast_web_view">Fast Web View 情報</string>
 <string name="menu_fast_web_view_desc">PDF情報を検査します。Fast Web Viewの生成は利用できません</string>
-<string name="linearize_headline">ストリーミング＆高速Web表示</string>
 <string name="linearize_subtitle">このバージョンでは Fast Web View PDF の生成や認定は行えません。出力ファイルは作成されません。</string>
 <string name="select_pdf_for_linearize">検査するPDFを選択</string>
 <string name="label_diagnostic_status">PDF情報</string>
 <string name="label_fast_web_view_enabled">線形化:</string>
-<string name="status_enabled">有効</string>
 <string name="status_disabled">未検証</string>
-<string name="linearize_info_explanation">高速Web表示は、文書全体のダウンロードを待たずにWebブラウザで最初のページを瞬時に表示できるようファイルを整理します。</string>
 <string name="btn_optimize_fast_web_view">最適化は利用不可</string>
-<string name="title_linearize_success">PDFをリニアライズしました</string>
-<string name="desc_linearize_success">Webストリーミング高速配信用に最適化しました (%1$s)</string>
-<string name="error_linearize_failed">最適化に失敗しました</string>
 
 <string name="menu_nup_handouts">Nアップ多面付けグリッド</string>
 <string name="menu_nup_handouts_desc">配布資料用に1枚の用紙に2、4、6、9、16ページを印刷</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">予備チェックのみ（未認証）</string>
 <string name="pdfa_subtitle">このチェックは ISO 19005 準拠を認定するものではありません。このバージョンでは PDF/A 変換は利用できません。</string>
 <string name="select_pdf_for_pdfa">予備チェック用PDFを選択</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">非準拠（問題が検出されました）</string>
 <string name="menu_font_inspector">フォント検査＆タイポグラフィ</string>
 <string name="menu_font_inspector_desc">埋め込みフォント、サブタイプ、エンコーディングを検査</string>
 <string name="font_headline">タイポグラフィ＆埋め込みフォント</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">システム / 標準</string>
 
 <string name="error_developer_diagnostics">開発者向け診断情報</string>
-<string name="error_tap_to_view_diagnostics">技術ログ・トレースを表示</string>
-<string name="error_tap_to_hide_diagnostics">技術ログを非表示</string>
 <string name="error_copy_diagnostics">診断情報をコピー</string>
 <string name="error_diagnostics_copied">技術診断トレースをクリップボードにコピーしました</string>
 <string name="error_user_encrypted">このPDFはパスワードで保護されているか、暗号化されています。先に「PDFセキュリティ」でロックを解除してください。</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">傾き補正が完了しました！</string>
     <string name="deskew_success_desc">ページの回転と配置補正が完了しました。</string>
     <string name="deskew_auto_label">傾きを自動検出</string>
-    <string name="deskew_manual_label">手動微調整</string>
     <string name="deskew_no_tilt">文書は水平です (0.0°)</string>
     <string name="menu_table_extractor">表をCSVに抽出</string>
     <string name="menu_table_extractor_desc">PDF内の表データやフォームを整形されたCSV / Excelに抽出</string>
     <string name="table_extractor_title">PDF表・スプレッドシート抽出</string>
-    <string name="table_extractor_action_export">表をCSVにエクスポート</string>
     <string name="table_extractor_preview">検出された表データ</string>
     <string name="table_extractor_no_tables">このページに表データは検出されませんでした。</string>
     <string name="table_extractor_success">表をCSVにエクスポートしました！</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">文書内に%1$d個の脅威ベクターが見つかりました</string>
     <string name="sanitizer_action_sanitize">脅威を除去して無害化</string>
     <string name="sanitizer_success">文書の無害化が完了しました！</string>
-    <string name="sanitizer_success_desc">すべてのアクティブスクリプト、フック、トラッキングビーコンを削除しました。</string>
     <string name="menu_quick_fill_sign">かんたん入力＆署名（簡易フォーム）</string>
     <string name="menu_quick_fill_sign_desc">スキャンPDFなどの任意の場所をタップして文字、チェック、バツ、署名を追加</string>
     <string name="quick_fill_title">かんたん入力＆署名</string>
     <string name="quick_fill_text_tool">テキスト</string>
-    <string name="quick_fill_check_tool">チェックマーク (✓)</string>
-    <string name="quick_fill_cross_tool">バツ印 (✗)</string>
-    <string name="quick_fill_date_tool">日付</string>
     <string name="quick_fill_sign_tool">署名</string>
     <string name="quick_fill_tap_hint">文書上の任意の場所をタップして選択した項目を配置します</string>
     <string name="quick_fill_action_save">フォームを保存してフラット化</string>
     <string name="quick_fill_success">フォームへの入力と保存が完了しました！</string>
-    <string name="quick_fill_success_desc">すべての入力項目がPDFに恒久的に埋め込まれました。</string>
     <string name="split_mode_all">全ページを個別に抽出</string>
-    <string name="split_mode_range">ページ範囲を指定 (例: 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">ページ範囲を指定 (例: 1-3, 5)</string>
     <string name="split_mode_blank">白紙ページで分割</string>
     <string name="split_mode_blank_desc">大量スキャン文書の白紙区切りページを検出し、個別ファイルに分割します</string>
     <string name="split_mode_bookmarks">しおり・章で分割</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">%1$d個のしおり章セクションを検出しました</string>
     <string name="split_no_bookmarks">この文書にしおりは見つかりませんでした。</string>
     <string name="tts_play">読み上げ</string>
-    <string name="tts_pause">一時停止</string>
-    <string name="tts_stop">停止</string>
-    <string name="tts_speed">再生速度: %1$.2fx</string>
     <string name="tts_prev_paragraph">前へ</string>
     <string name="tts_next_paragraph">次へ</string>
-    <string name="tts_not_supported">音声読み上げ（TTS）に対応していないか、言語データがありません。</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">対話型フォーム作成</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">入力可能PDFを保存</string>
     <string name="form_builder_fields_count">ページ上のフィールド数: %1$d</string>
     <string name="form_builder_success">入力可能なPDFが作成されました！</string>
-    <string name="form_builder_success_desc">対話型フォームフィールドが埋め込まれました。</string>
     <string name="form_builder_no_fields_warn">保存する前に対話型フィールドを1つ以上配置してください。</string>
     <string name="form_builder_delete_field">フィールド削除</string>
     <string name="settings_vanguard">Vanguardゼロトラストシールド</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">この文書は暗号化されパスワードで保護されています。文書がロックされている間、Vanguardゼロトラストシールドは埋め込みスクリプトや脅威を検証できません。先にロックを解除してください。</string>
     <string name="vanguard_action_unlock">PDFのパスワード解除</string>
     <string name="vanguard_verifying_title">Vanguardセキュリティ検証</string>
-    <string name="vanguard_verifying_desc">埋め込みスクリプトや脅威を検証中...</string>
+    <string name="vanguard_verifying_desc">埋め込みスクリプトや脅威を検証中…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% オフライン • ゼロトラスト</string>
 
     <string name="action_redo">やり直し</string>
     <string name="action_reset">リセット</string>
     <string name="action_reverse">反転</string>
     <string name="action_rotate_all">すべて回転</string>
-    <string name="label_preview_unavailable">プレビューを利用できません</string>
     <string name="dialog_unsaved_title">未保存の変更</string>
     <string name="dialog_unsaved_message">未保存の変更があります。移動する前に保存しますか、それとも破棄しますか？</string>
     <string name="dialog_unsaved_save">保存 / エクスポート</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">このPDFは破損しているか不完全なため安全に読み取れませんでした。修復を実行するか別のコピーを選択してください。</string>
     <string name="vanguard_provider_error_title">ファイルにアクセスできません</string>
     <string name="vanguard_provider_error_message">選択したファイルにアクセスできませんでした。ストレージプロバイダーが利用できないか、権限が取り消された可能性があります。</string>
-    <string name="error_invalid_page_range">無効なページ範囲です。ページ番号を確認してもう一度お試しください。</string>
     <string name="consent_dialog_decline">パーソナライズなしで続行</string>
 
     <string name="generating_previews">プレビューを生成中…</string>
-    <string name="label_preview_loading">読み込み中…</string>
-    <string name="premium_status_loading">ストアを確認中…</string>
-    <string name="premium_status_unavailable">ストアをご利用いただけません。タップして再試行。</string>
     <string name="action_retry">再試行</string>
     <string name="redaction_review_title">墨消しの確認</string>
     <string name="redaction_review_message">%1$d件の墨消しが完全に適用されます。墨消しされた内容は復元できません。</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">メモリを多く使用するバックグラウンドアプリを閉じてRAMを解放し、もう一度お試しください。</string>
     <string name="alt_free_ram_btn">確認</string>
     <string name="btn_proceed_anyway">このまま続行</string>
-    <string name="msg_circuit_breaker_paused">端末のフリーズを防ぐため、処理を一時停止しました。完了した作業は保存済みです。</string>
     <string name="reader_dual_page_spread">見開き2ページ</string>
     <string name="reader_single_page">単一ページ</string>
     <string name="flip_tabletop_mode">卓上モード</string>
     <string name="flip_fullscreen_mode">全画面モード</string>
-    <string name="flip_tabletop_mode_desc">ハンズフリーモード：上部に文書、下部に操作ボタンを表示</string>
     <string name="flip_tabletop_active_badge">フレックスモード</string>
     <string name="scanned_pdf_title">スキャンした文書</string>
     <string name="scanned_pdf_desc">この文書には、選択可能なテキスト層のないスキャン画像が含まれています。</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">クイックカメラPDF</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">理由</string>
     <string name="pki_location">場所</string>
     <string name="pki_sign_and_save">署名して保存</string>
-    <string name="btn_convert_to_pdfa">PDF/A-1bに変換</string>
-    <string name="btn_converting_pdfa">PDF/A-1bに変換中…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1bに正常に変換しました</string>
-    <string name="error_pdfa_conversion_failed">PDF/Aへの変換に失敗しました</string>
     <string name="btn_export_embedded_fonts">埋め込みフォントをエクスポート (.zip)</string>
     <string name="btn_exporting_fonts">フォントをエクスポート中…</string>
     <string name="title_fonts_exported_success">埋め込みフォントをエクスポートしました (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">フォレンジック・ベクター消去</string>
     <string name="redact_forensic_desc">墨消しされたページをラスタライズし、背後のテキストバイトを完全に消滅させます。</string>
     <string name="redact_smart_pii_title">スマート PII 墨消し</string>
-    <string name="reflow_find_placeholder">文書内のテキストを検索...</string>
+    <string name="reflow_find_placeholder">文書内のテキストを検索…</string>
     <string name="desc_previous_match">前の一致</string>
     <string name="desc_next_match">次の一致</string>
     <string name="desc_play_pause">再生/一時停止</string>

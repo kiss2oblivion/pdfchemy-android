@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">În curând</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">Curăță</string>
 <string name="clear_all">Curăță Tot</string>
 <string name="save">Salvează</string>
-<string name="continue_btn">Continuă</string>
 <string name="home_subtitle">REPARĂ DOCUMENTE LOCAL</string>
 <string name="cat_compress">Comprimare</string>
 <string name="cat_compress_desc">Redu dimensiunea fișierelor PDF.</string>
@@ -20,19 +19,13 @@
 <string name="cat_check">Verificare</string>
 <string name="cat_check_desc">Analizează detaliile fișierului.</string>
 <string name="menu_compress">Comprimă PDF</string>
-<string name="menu_compress_desc">Redu dimensiunea fișierului</string>
 <string name="menu_merge">Unește PDF</string>
 <string name="menu_merge_desc">Combină mai multe fișiere</string>
 <string name="menu_split">Separă PDF</string>
 <string name="menu_split_desc">Extrage pagini</string>
 <string name="menu_scan">Scanează în PDF</string>
 <string name="menu_scan_desc">De la cameră la document</string>
-<string name="menu_ocr">Extrage Text</string>
-<string name="menu_ocr_desc">Trage textul din PDF</string>
-<string name="menu_metadata">Verifică Metadate</string>
-<string name="menu_metadata_desc">Vezi proprietățile ascunse</string>
 <string name="settings_title">Setări</string>
-<string name="settings_preferences">Preferințe Aplicație</string>
 <string name="settings_privacy_policy">Politica de confidențialitate</string>
 <string name="settings_privacy_policy_desc">Citiți politicile noastre de confidențialitate și date</string>
 <string name="consent_dialog_title">Bun venit la PDFchemy</string>
@@ -42,32 +35,17 @@
 <string name="refund_policy_body">Dacă nu ați solicitat o rambursare în termen de 14 zile de la cumpărare, nu se va emite nicio rambursare.</string>
 <string name="settings_refund_policy">Politica de rambursare</string>
 <string name="settings_refund_policy_desc">Vizualizați politica noastră de rambursare pentru achizițiile premium</string>
-<string name="settings_haptic">Vibrații</string>
-<string name="settings_haptic_desc">Vibrează la interacțiuni</string>
-<string name="settings_sfx">Efecte Sonore</string>
-<string name="settings_sfx_desc">Redă sunet la apăsarea butoanelor</string>
 <string name="settings_history">Ține Minte Fișierele Recente</string>
 <string name="settings_history_desc">Păstrează un istoric local. Fișierele nu sunt încărcate pe internet.</string>
 <string name="settings_language">Limbă</string>
 <string name="settings_language_desc">Schimbă limba aplicației</string>
 <string name="settings_clear_history">Curăță Istoricul</string>
-<string name="settings_clear_history_confirm">Ești sigur că vrei să ștergi istoricul recent?</string>
-<string name="settings_history_cleared">Istoric șters</string>
 <string name="compress_title">Comprimă PDF</string>
 <string name="compress_single">Un Singur Fișier</string>
 <string name="compress_batch">Comprimare Multiplă</string>
 <string name="compress_select_file">Selectează Fișierul PDF</string>
-<string name="compress_compressing">Se comprimă PDF-ul...</string>
 <string name="compress_target_size">Dimensiune Țintă</string>
 <string name="compress_preset">Presetare Comprimare:</string>
-<string name="compress_exact_mb">MB Exacți</string>
-<string name="compress_options">Opțiuni Comprimare</string>
-<string name="compress_grayscale">Conversie în Tonuri de Gri</string>
-<string name="compress_grayscale_desc">Convertește imaginile color în alb-negru</string>
-<string name="compress_lossless">Comprimare ZIP Fără Pierderi</string>
-<string name="compress_lossless_desc">Sari peste comprimarea JPEG</string>
-<string name="compress_strip_meta">Elimină Metadate</string>
-<string name="compress_strip_meta_desc">Elimină autorul și editorul</string>
 <string name="warning_quality_title">Avertisment Calitate și Legal</string>
 <string name="warning_quality_desc">Comprimarea reduce calitatea. Păstrează mereu fișierul original.</string>
 <string name="warning_understand">Am Înțeles</string>
@@ -109,17 +87,15 @@
 <string name="split_pdf">Împarte PDF</string>
 <string name="split_into_folder">Împarte în dosar</string>
 <string name="extraction_options">Opțiuni de extragere</string>
-<string name="extract_all_pages_as_individua">Extrage fiecare pagină individual</string>
-<string name="extract_custom_range">Extrage un interval personalizat</string>
-<string name="e_g_1_3_5_7_10">ex. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">ex. 1-3, 5, 7-10</string>
 <string name="extract_images">Extrage Imagini</string>
 <string name="ready_to_extract_all_images_ta">Gata de extragere. Apasă pe butonul de mai jos.</string>
 <string name="change_pdf">Schimbă PDF</string>
-<string name="extracting_images">Se extrag imaginile...</string>
+<string name="extracting_images">Se extrag imaginile…</string>
 <string name="delete_pages">Șterge Pagini</string>
 <string name="save_document">Salvează Document</string>
 <string name="pages_to_delete">Pagini de Șters</string>
-<string name="e_g_1_3_5_10">ex. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">ex. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Introdu numere de pagină separate de virgule.</string>
 <string name="rotate_pages">Rotește Pagini</string>
 <string name="rotate_save">Rotește și Salvează</string>
@@ -130,24 +106,22 @@
 <string name="pages_to_rotate_optional">Pagini de Rotit (Opțional)</string>
 <string name="leave_blank_to_rotate_all_page">Lasă gol pentru a roti toate paginile.</string>
 <string name="text_cleaner">Curățător de Text</string>
-<string name="paste_your_text_here">Lipește textul aici...</string>
+<string name="paste_your_text_here">Lipește textul aici…</string>
 <string name="text_format_converter">Convertor de Format Text</string>
-<string name="enter_content">Introdu conținut...</string>
+<string name="enter_content">Introdu conținut…</string>
 <string name="import_btn">Importă</string>
-<string name="compressing_pdf">Se comprimă PDF-ul...</string>
 <string name="create">Creează</string>
 <string name="compress">Comprimă</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Selectează dimensiunea (MB):</string>
 <string name="exact_mb">MB Exacți</string>
-<string name="compression_options">Opțiuni de comprimare</string>
 <string name="grayscale_conversion">Conversie Alb-Negru</string>
 <string name="convert_color_images_to_black">Convertește imagini în alb-negru</string>
 <string name="lossless_zip_compression">Comprimare ZIP Fără Pierderi</string>
 <string name="skip_jpeg_lossy_compression_no">Sari peste comprimarea JPEG</string>
 <string name="strip_author_creator_editor_ta">Elimină autorul și editorul</string>
 <string name="type_or_paste_text_here">Tastează sau lipește text aici</string>
-<string name="enter_the_content_of_your_pdf">Introdu conținutul PDF-ului tău...</string>
+<string name="enter_the_content_of_your_pdf">Introdu conținutul PDF-ului tău…</string>
 <string name="import_txt">Importă .txt</string>
 <string name="save_as_pdf">Salvează ca PDF</string>
 <string name="clear_history">Curăță Istoricul</string>
@@ -168,7 +142,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">Nume Fișier: %1$s</string>
 <string name="selected_batch_files">Fișiere Selectate:</string>
-<string name="analyzing_doc">Se analizează structura...</string>
+<string name="analyzing_doc">Se analizează structura…</string>
 <string name="smart_recommendation">Recomandare Inteligentă</string>
 <string name="detected_type">Tip Detectat: %1$s</string>
 <string name="doc_stats_pages_images">Pagini: %1$d | Imagini: %2$d</string>
@@ -186,7 +160,6 @@
 ✓ Fără Reclame
 ✓ Fără Interstițiale
 ✓ Acțiuni Nelimitate</string>
-<string name="batch_compressing">Se comprimă %1$d din %2$d fișiere...</string>
 <string name="msg_enter_text">Te rugăm să introduci text.</string>
 <string name="menu_delete_pages">Șterge Pagini</string>
 <string name="menu_delete_pages_desc">Elimină pagini specifice dintr-un PDF</string>
@@ -266,8 +239,6 @@
 <string name="desc_share_output">Partajați rezultatul</string>
 <string name="desc_go_premium">Treci Premium</string>
 <string name="desc_settings">Setări</string>
-<string name="desc_toggle_theme">Comutați tema</string>
-<string name="desc_app_logo">Siglă PDFchemy</string>
 <string name="scan_prefix">scanare_</string>
 <string name="default_scanned_doc_name">Scanare</string>
 <string name="desc_back">Spate</string>
@@ -279,11 +250,11 @@
 <string name="btn_change_file">Schimbați fișierul</string>
 <string name="btn_select_pdf_files">Selectați Fișiere PDF</string>
 <string name="btn_add_more_files">Adăugați mai multe fișiere (%1$d selectat)</string>
-<string name="label_original_size_analyzing">Dimensiune originală: %1$s (se analizează...)</string>
+<string name="label_original_size_analyzing">Dimensiune originală: %1$s (se analizează…)</string>
 <string name="label_original_size_to_compressed">Dimensiune originală: %1$s → %2$s</string>
 <string name="label_target_mb_batch">Dimensiune țintă per fișier: %1$.1f MB</string>
 <string name="label_target_unknown">Țintă: necunoscută</string>
-<string name="label_analyzing">Se analizează...</string>
+<string name="label_analyzing">Se analizează…</string>
 <string name="label_target_mb">Dimensiune țintă: %1$s MB</string>
 <string name="desc_remove_file">Eliminați fișierul</string>
 <string name="preset_custom">Personalizat</string>
@@ -350,7 +321,6 @@
 <string name="theme_dark">Mod întunecat</string>
 <string name="settings_rate_app">Evaluează PDFchemy Tools</string>
 <string name="settings_rate_app_desc">Vă place aplicația? Lăsați-ne o recenzie pe Google Play!</string>
-<string name="settings_rate_app_thanks">Vă mulțumim pentru sprijin!</string>
     <string name="settings_share_app">Distribuie PDFchemy Tools</string>
     <string name="settings_share_app_desc">Recomandă această aplicație prietenilor și colegilor</string>
     <string name="settings_share_app_message">Încearcă PDFchemy Tools — un compresor și editor PDF rapid, 100%% offline și privat pentru Android: %1$s</string>
@@ -501,18 +471,12 @@
 <string name="ocr_pdf_subtitle">Recunoaștere text 100%% pe dispozitiv. Generează un strat de text selectabil.</string>
 <string name="select_pdf_for_ocr">Selectează Document PDF</string>
 <string name="ocr_processing_generic">Se analizează și se recunoaște textul…</string>
-<string name="ocr_processing_progress">Procesare OCR: Pagina %1$d din %2$d…</string>
 <string name="action_create_searchable_pdf">Generează PDF Căutabil</string>
 <string name="title_ocr_success">PDF Căutabil Creat cu Succes!</string>
 <string name="desc_ocr_success">A fost inserat un strat invizibil de text pentru căutarea integrală a cuvintelor.</string>
 <string name="error_ocr_failed">Recunoașterea OCR a eșuat.</string>
 <string name="history_searchable_ocr_pdf">PDF OCR Căutabil</string>
-<string name="menu_redact_pdf">Cenzurare Permanentă</string>
 <string name="tool_redact">Cenzurează</string>
-<string name="title_redact_success">PDF Cenzurat cu Succes!</string>
-<string name="desc_redact_success">Zonele selectate au fost permanent cenzurate și distruse.</string>
-<string name="error_redact_failed">Aplicarea cenzurii a eșuat.</string>
-<string name="history_redacted_pdf">PDF Cenzurat</string>
 <string name="menu_reflow_reader">Cititor Adaptabil &amp; Semne de Carte</string>
 <string name="menu_reflow_reader_desc">Mod de lectură stil e-book fără distrageri cu cuprins</string>
 <string name="reflow_reader_headline">Cititor Mobil fără Distrageri</string>
@@ -528,11 +492,9 @@
 <string name="filter_magic_color">Culoare Magică</string>
 <string name="filter_bw">Alb-Negru</string>
 <string name="filter_grayscale">Nuanțe de Gri</string>
-<string name="action_save_as_pdf">Salvează %1$d Pagini ca PDF</string>
 <string name="title_scan_success">Document Scanat cu Succes!</string>
 <string name="desc_scan_success">Paginile scanate au fost convertite într-un document PDF optimizat.</string>
 <string name="error_scan_failed">Generarea PDF-ului scanat a eșuat.</string>
-<string name="history_scanned_pdf">Document Scanat</string>
 <string name="menu_sign_pdf">Semnează PDF</string>
 <string name="menu_sign_pdf_desc">Desenează, salvează și aplică semnături digitale pe contracte și acorduri</string>
 <string name="sign_pdf_headline">Semnează Documente PDF</string>
@@ -564,7 +526,6 @@
 <string name="title_organizer_success">Paginile au fost Reorganizate!</string>
 <string name="desc_organizer_success">Noua ordine și așezare a paginilor au fost salvate.</string>
 <string name="error_organizer_failed">Reorganizarea paginilor PDF a eșuat.</string>
-<string name="history_organized_pdf">PDF Organizat</string>
 <string name="menu_watermark_pdf">Adaugă Filigran (Watermark)</string>
 <string name="menu_watermark_pdf_desc">Aplică filigrane personalizate cu text sau logo pe toate paginile</string>
 <string name="watermark_headline">Adaugă Filigran pe Document</string>
@@ -579,7 +540,6 @@
 <string name="title_watermark_success">Filigran Aplicat cu Succes!</string>
 <string name="desc_watermark_success">Filigranul a fost aplicat pe documentul tău.</string>
 <string name="error_watermark_failed">Aplicarea filigranului a eșuat.</string>
-<string name="history_watermarked_pdf">PDF cu Filigran</string>
 <string name="menu_page_number_pdf">Adaugă Numere de Pagină</string>
 <string name="menu_page_number_pdf_desc">Inserează antete și subsoluri personalizate (Pagina X din Y, 1/N)</string>
 <string name="page_number_headline">Numerotează Paginile PDF</string>
@@ -598,11 +558,10 @@
 <string name="title_page_number_success">Numere de Pagină Adăugate!</string>
 <string name="desc_page_number_success">Numerotarea paginilor a fost salvată în document.</string>
 <string name="error_page_number_failed">Adăugarea numerelor de pagină a eșuat.</string>
-<string name="history_numbered_pdf">PDF Numerotat</string>
 <string name="menu_page_layout">Dimensiune &amp; Broșuri N-Up</string>
 <string name="menu_page_layout_desc">Redimensionează hârtia standard sau îmbină 2, 4, 6 pagini pe o foaie</string>
 <string name="page_layout_headline">Așezare în Pagină &amp; Broșuri</string>
-<string name="page_layout_subtitle">Formatează PDF-uri pentru tipărire, schimbă dimensiunea paginii sau creează broșuri 2-în-1 / 4-în-1.</string>
+<string name="page_layout_subtitle">Formatează PDF-uri pentru tipărire, schimbă dimensiunea paginii sau creează broșuri 2-în-1, 4-în-1.</string>
 <string name="select_pdf_for_layout">Selectează Document PDF</string>
 <string name="tab_nup_handout">Broșuri Multipagină</string>
 <string name="tab_resize_paper">Redimensionează Hârtia</string>
@@ -616,15 +575,12 @@
 <string name="title_layout_success">Așezare Generată cu Succes!</string>
 <string name="desc_layout_success">Formatul PDF a fost salvat cu succes.</string>
 <string name="error_layout_failed">Generarea formatului a eșuat.</string>
-<string name="history_layout_pdf">PDF Formatat</string>
 <string name="menu_compare_pdfs">Compară Două PDF-uri</string>
 <string name="menu_compare_pdfs_desc">Evidențiază diferențele vizuale și modificările de text dintre revizii</string>
 <string name="compare_headline">Comparator Revizii PDF</string>
 <string name="compare_subtitle">Selectează două versiuni ale unui fișier pentru a evidenția modificările vizuale și diferențele de text.</string>
 <string name="select_original_pdf">Selectează PDF Original (Doc A)</string>
 <string name="select_modified_pdf">Selectează PDF Modificat (Doc B)</string>
-<string name="doc1_selected">Original Selectat</string>
-<string name="doc2_selected">Modificat Selectat</string>
 <string name="comparing_documents_progress">Se compară paginile și textul…</string>
 <string name="compare_results_title">Rezultatele Comparării</string>
 <string name="compare_summary_counts">%1$d Pagini Modificate • %2$d Pagini Identice</string>
@@ -645,7 +601,7 @@
 <string name="info_word_export">Exportă paragrafe, titluri și întreruperi de pagină într-un fișier Microsoft Word (.docx).</string>
 <string name="info_excel_export">Extrage tabele și date structurate într-o foaie de calcul Microsoft Excel (.xlsx).</string>
 <string name="info_pptx_export">Transformă paginile în diapozitive de prezentare în Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Se convertește în Office...</string>
+<string name="converting_to_office">Se convertește în Office…</string>
 <string name="btn_export_office_file">Exportă ca %1$s</string>
 <string name="title_office_export_success">Export finalizat</string>
 <string name="desc_office_export_success">%1$d pagini au fost exportate cu succes în formatul Office selectat.</string>
@@ -911,18 +867,12 @@
 <string name="error_embed_failed">Încorporarea a eșuat</string>
 <string name="menu_fast_web_view">Informații Fast Web View</string>
 <string name="menu_fast_web_view_desc">Inspectează informațiile PDF; generarea Fast Web View nu este disponibilă</string>
-<string name="linearize_headline">Linearizare pentru vizualizare web rapidă</string>
 <string name="linearize_subtitle">Această versiune nu poate genera sau certifica fișiere PDF Fast Web View. Nu se va crea niciun fișier de ieșire.</string>
 <string name="select_pdf_for_linearize">Selectează un PDF pentru inspectare</string>
 <string name="label_diagnostic_status">Informații PDF</string>
 <string name="label_fast_web_view_enabled">Liniarizare:</string>
-<string name="status_enabled">Activat</string>
 <string name="status_disabled">Neverificat</string>
-<string name="linearize_info_explanation">Linearizarea reorganizează un PDF astfel încât serverele web să poată transmite prima pagină imediat ce fișierul este accesat, permițând vizualizarea instantanee a fișierelor mari fără descărcarea completă prealabilă.</string>
 <string name="btn_optimize_fast_web_view">Optimizare indisponibilă</string>
-<string name="title_linearize_success">PDF linearizat cu succes!</string>
-<string name="desc_linearize_success">Document optimizat pentru streaming web instant (%1$s)</string>
-<string name="error_linearize_failed">Linearizarea a eșuat</string>
 
 <string name="menu_nup_handouts">Pliante N-Up (Pagini multiple)</string>
 <string name="menu_nup_handouts_desc">Grupează 2, 4 sau 6 pagini pe o singură coală de tipărire</string>
@@ -942,8 +892,6 @@
 <string name="pdfa_headline">Doar verificări preliminare; necertificat</string>
 <string name="pdfa_subtitle">Aceste verificări nu certifică conformitatea ISO 19005. Conversia PDF/A nu este disponibilă în această versiune.</string>
 <string name="select_pdf_for_pdfa">Selectează PDF pentru verificări preliminare</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">Probleme de conformitate detectate</string>
 <string name="menu_font_inspector">Inspector de fonturi</string>
 <string name="menu_font_inspector_desc">Inspectează și extrage fonturile încorporate în PDF</string>
 <string name="font_headline">Inspector și extractor de fonturi PDF</string>
@@ -955,8 +903,6 @@
 <string name="stat_standard_system">Sistem / Bază</string>
 
 <string name="error_developer_diagnostics">Diagnostice pentru dezvoltatori</string>
-<string name="error_tap_to_view_diagnostics">Atinge pentru a vizualiza detaliile tehnice</string>
-<string name="error_tap_to_hide_diagnostics">Atinge pentru a ascunde detaliile tehnice</string>
 <string name="error_copy_diagnostics">Copiază diagnosticele</string>
 <string name="error_diagnostics_copied">Jurnalul tehnic de diagnosticare a fost copiat în clipboard</string>
 <string name="error_user_encrypted">Documentul este protejat prin parolă. Deblochează-l mai întâi.</string>
@@ -997,12 +943,10 @@
     <string name="deskew_success">Înclinare corectată cu succes!</string>
     <string name="deskew_success_desc">Paginile scanate au fost aliniate și îndreptate orizontal.</string>
     <string name="deskew_auto_label">Detectare automată</string>
-    <string name="deskew_manual_label">Ajustare manuală</string>
     <string name="deskew_no_tilt">Nu a fost detectată nicio înclinare</string>
     <string name="menu_table_extractor">Extractor de tabele</string>
     <string name="menu_table_extractor_desc">Detectează și extrage tabele în CSV sau Excel</string>
     <string name="table_extractor_title">Extractor de tabele PDF</string>
-    <string name="table_extractor_action_export">Exportă tabele (CSV)</string>
     <string name="table_extractor_preview">Previzualizare tabel</string>
     <string name="table_extractor_no_tables">Nu s-au detectat tabele pe această pagină.</string>
     <string name="table_extractor_success">Tabele extrase cu succes!</string>
@@ -1017,19 +961,14 @@
     <string name="sanitizer_threats_detected">%1$d vectori de amenințare găsiți în document</string>
     <string name="sanitizer_action_sanitize">Sterilizează și elimină amenințările</string>
     <string name="sanitizer_success">Document sterilizat cu succes!</string>
-    <string name="sanitizer_success_desc">Toate scripturile active, cârligele și balizele de urmărire au fost eliminate.</string>
     <string name="menu_quick_fill_sign">Completare și semnare rapidă</string>
     <string name="menu_quick_fill_sign_desc">Completează formulare, bifează căsuțe și aplică semnături</string>
     <string name="quick_fill_title">Completare și semnare rapidă</string>
     <string name="quick_fill_text_tool">Text</string>
-    <string name="quick_fill_check_tool">Bifă (✓)</string>
-    <string name="quick_fill_cross_tool">Cruce (✗)</string>
-    <string name="quick_fill_date_tool">Dată</string>
     <string name="quick_fill_sign_tool">Semnătură</string>
     <string name="quick_fill_tap_hint">Atinge oriunde pe pagină pentru a plasa elementul selectat</string>
     <string name="quick_fill_action_save">Salvează documentul completat</string>
     <string name="quick_fill_success">Formular salvat cu succes!</string>
-    <string name="quick_fill_success_desc">Toate intrările și semnăturile au fost încorporate.</string>
     <string name="split_mode_all">Toate paginile individual</string>
     <string name="split_mode_range">Interval de pagini</string>
     <string name="split_mode_blank">Divizare după pagini goale</string>
@@ -1040,12 +979,8 @@
     <string name="split_bookmarks_found">S-au găsit %1$d semne de carte</string>
     <string name="split_no_bookmarks">Nu s-au găsit semne de carte în acest document</string>
     <string name="tts_play">Redare</string>
-    <string name="tts_pause">Pauză</string>
-    <string name="tts_stop">Oprire</string>
-    <string name="tts_speed">Viteză: %1$.2fx</string>
     <string name="tts_prev_paragraph">Paragraful anterior</string>
     <string name="tts_next_paragraph">Paragraful următor</string>
-    <string name="tts_not_supported">Sinteza vocală TTS nu este disponibilă pe acest dispozitiv</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">Creator Formulare Interactive</string>
@@ -1062,7 +997,6 @@
     <string name="form_builder_action_save">Salvează PDF Completabil</string>
     <string name="form_builder_fields_count">Câmpuri pe pagină: %1$d</string>
     <string name="form_builder_success">PDF Completabil creat cu succes!</string>
-    <string name="form_builder_success_desc">Câmpurile de formular interactive au fost încorporate.</string>
     <string name="form_builder_no_fields_warn">Te rugăm să plasezi cel puțin un câmp interactiv înainte de salvare.</string>
     <string name="form_builder_delete_field">Șterge Câmpul</string>
     <string name="settings_vanguard">Scutul Vanguard Zero-Trust</string>
@@ -1073,14 +1007,13 @@
     <string name="vanguard_encrypted_message">Acest document este criptat și protejat cu parolă. Scutul Vanguard Zero-Trust nu poate verifica scripturile sau amenințările de securitate cât timp documentul este blocat. Vă rugăm să îl deblocați mai întâi.</string>
     <string name="vanguard_action_unlock">Deblochează PDF</string>
     <string name="vanguard_verifying_title">Verificare de Securitate Vanguard</string>
-    <string name="vanguard_verifying_desc">Se verifică documentul pentru scripturi și amenințări...</string>
+    <string name="vanguard_verifying_desc">Se verifică documentul pentru scripturi și amenințări…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
 
     <string name="action_redo">Refă</string>
     <string name="action_reset">Resetează</string>
     <string name="action_reverse">Inversează</string>
     <string name="action_rotate_all">Rotește tot</string>
-    <string name="label_preview_unavailable">Previzualizare indisponibilă</string>
     <string name="dialog_unsaved_title">Modificări nesalvate</string>
     <string name="dialog_unsaved_message">Aveți modificări nesalvate. Doriți să le salvați sau să renunțați înainte de a părăsi pagina?</string>
     <string name="dialog_unsaved_save">Salvează / Exportă</string>
@@ -1090,13 +1023,9 @@
     <string name="vanguard_damaged_message">Acest PDF pare deteriorat sau trunchiat și nu a putut fi citit în siguranță. Încercați Reparare sau alegeți o altă copie.</string>
     <string name="vanguard_provider_error_title">Fișier inaccesibil</string>
     <string name="vanguard_provider_error_message">Fișierul selectat nu a putut fi accesat. Furnizorul de stocare poate fi indisponibil sau permisiunile au fost revocate.</string>
-    <string name="error_invalid_page_range">Interval de pagini nevalid. Verificați numerele de pagină și încercați din nou.</string>
     <string name="consent_dialog_decline">Continuă fără personalizare</string>
 
     <string name="generating_previews">Se generează previzualizările…</string>
-    <string name="label_preview_loading">Se încarcă…</string>
-    <string name="premium_status_loading">Se verifică magazinul…</string>
-    <string name="premium_status_unavailable">Magazin indisponibil. Atingeți pentru reîncercare.</string>
     <string name="action_retry">Reîncearcă</string>
     <string name="redaction_review_title">Revizuire cenzurări</string>
     <string name="redaction_review_message">%1$d cenzurări vor fi aplicate permanent. Conținutul cenzurat nu poate fi recuperat.</string>
@@ -1128,12 +1057,10 @@
     <string name="alt_free_ram_desc">Închide aplicațiile din fundal care consumă multă memorie pentru a elibera RAM, apoi încearcă din nou.</string>
     <string name="alt_free_ram_btn">Am înțeles</string>
     <string name="btn_proceed_anyway">Continuă oricum</string>
-    <string name="msg_circuit_breaker_paused">Procesarea a fost întreruptă pentru a preveni blocarea telefonului. Lucrul finalizat a fost salvat.</string>
     <string name="reader_dual_page_spread">Două pagini alăturate</string>
     <string name="reader_single_page">O singură pagină</string>
     <string name="flip_tabletop_mode">Mod pe masă</string>
     <string name="flip_fullscreen_mode">Mod ecran complet</string>
-    <string name="flip_tabletop_mode_desc">Mod fără mâini: documentul sus, comenzile jos</string>
     <string name="flip_tabletop_active_badge">Mod Flex</string>
     <string name="scanned_pdf_title">Document scanat</string>
     <string name="scanned_pdf_desc">Acest document conține imagini scanate fără un strat de text selectabil.</string>
@@ -1159,7 +1086,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">PDF rapid cu camera</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1234,10 +1161,6 @@
     <string name="pki_reason">Motiv</string>
     <string name="pki_location">Locație</string>
     <string name="pki_sign_and_save">Semnează și salvează</string>
-    <string name="btn_convert_to_pdfa">Convertește în PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Se convertește în PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b convertit cu succes</string>
-    <string name="error_pdfa_conversion_failed">Conversia PDF/A a eșuat</string>
     <string name="btn_export_embedded_fonts">Exportă fonturi încorporate (.zip)</string>
     <string name="btn_exporting_fonts">Se exportă fonturile…</string>
     <string name="title_fonts_exported_success">Fonturile încorporate au fost exportate cu succes (%1$d)</string>
@@ -1335,7 +1258,7 @@
     <string name="redact_forensic_title">Curățare vectorială forensică</string>
     <string name="redact_forensic_desc">Rasterizează paginile redactate pentru a șterge complet octeții de text de dedesubt.</string>
     <string name="redact_smart_pii_title">Redactare inteligentă PII</string>
-    <string name="reflow_find_placeholder">Caută text în document...</string>
+    <string name="reflow_find_placeholder">Caută text în document…</string>
     <string name="desc_previous_match">Potrivirea anterioară</string>
     <string name="desc_next_match">Potrivirea următoare</string>
     <string name="desc_play_pause">Redare/Pauză</string>

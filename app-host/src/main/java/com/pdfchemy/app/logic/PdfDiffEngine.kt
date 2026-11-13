@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.core.graphics.createBitmap
 
 data class PageDiffResult(
     val pageIndex: Int,
@@ -217,7 +218,7 @@ object PdfDiffEngine {
 
     private fun generateSinglePageTinted(source: Bitmap, tintColor: Int): Bitmap? {
         return try {
-            val bmp = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(source.width, source.height)
             val canvas = android.graphics.Canvas(bmp)
             canvas.drawBitmap(source, 0f, 0f, null)
             canvas.drawColor(tintColor)
@@ -230,7 +231,7 @@ object PdfDiffEngine {
         return try {
             val width = minOf(bmp1.width, bmp2.width)
             val height = minOf(bmp1.height, bmp2.height)
-            val diffBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val diffBmp = createBitmap(width, height)
 
             var diffPixelCount = 0
             val totalPixels = width * height

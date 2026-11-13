@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">출시 예정</string>
 <string name="ok">확인</string>
@@ -9,7 +9,6 @@
 <string name="clear">지우기</string>
 <string name="clear_all">모두 지우기</string>
 <string name="save">저장</string>
-<string name="continue_btn">계속</string>
 <string name="home_subtitle">오프라인 로컬 문서 처리 도구</string>
 <string name="cat_compress">압축</string>
 <string name="cat_compress_desc">품질을 유지하며 안전하게 PDF 용량 줄이기.</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">확인</string>
 <string name="cat_check_desc">전송 전 문서 안전성 점검.</string>
 <string name="menu_compress">PDF 압축</string>
-<string name="menu_compress_desc">파일 크기 줄이기</string>
 <string name="menu_merge">PDF 병합</string>
 <string name="menu_merge_desc">여러 파일을 하나로 합치기</string>
 <string name="menu_split">PDF 분할</string>
 <string name="menu_split_desc">페이지 추출 및 분할</string>
 <string name="menu_scan">PDF로 스캔</string>
 <string name="menu_scan_desc">카메라로 문서 스캔</string>
-<string name="menu_ocr">텍스트 추출</string>
-<string name="menu_ocr_desc">PDF에서 텍스트 추출</string>
-<string name="menu_metadata">메타데이터 확인</string>
-<string name="menu_metadata_desc">숨겨진 속성 검사</string>
 <string name="settings_title">설정</string>
-<string name="settings_preferences">앱 설정</string>
-<string name="settings_haptic">햅틱 피드백</string>
-<string name="settings_haptic_desc">터치 시 진동</string>
-<string name="settings_sfx">효과음</string>
-<string name="settings_sfx_desc">버튼 클릭 시 소리 재생</string>
 <string name="settings_history">최근 파일 기억</string>
 <string name="settings_history_desc">최근 작업 파일 기록을 기기에 보관합니다. 파일은 절대 업로드되지 않습니다.</string>
 <string name="settings_language">언어 (Language)</string>
 <string name="settings_language_desc">앱 표시 언어 변경</string>
 <string name="settings_clear_history">최근 기록 지우기</string>
-<string name="settings_clear_history_confirm">최근 파일 기록을 지우시겠습니까?</string>
-<string name="settings_history_cleared">기록이 삭제되었습니다</string>
 <string name="compress_title">PDF 압축</string>
 <string name="compress_single">단일 파일</string>
 <string name="compress_batch">일괄 압축</string>
 <string name="compress_select_file">PDF 파일 선택</string>
-<string name="compress_compressing">PDF 압축 중...</string>
 <string name="compress_target_size">목표 파일 크기</string>
 <string name="compress_preset">압축 프리셋:</string>
-<string name="compress_exact_mb">지정 MB</string>
-<string name="compress_options">압축 옵션</string>
-<string name="compress_grayscale">그레이스케일 변환</string>
-<string name="compress_grayscale_desc">컬러 이미지를 흑백으로 변환</string>
-<string name="compress_lossless">무손실 ZIP 압축</string>
-<string name="compress_lossless_desc">JPEG 손실 압축 생략</string>
-<string name="compress_strip_meta">메타데이터 제거</string>
-<string name="compress_strip_meta_desc">작성자 및 편집자 정보 제거</string>
 <string name="warning_quality_title">품질 및 법적 주의사항</string>
 <string name="warning_quality_desc">압축 시 품질이 저하될 수 있습니다. 공식 문서, 의료 기록 또는 디지털 서명이 무효화될 수 있으므로 원본을 항상 보관하십시오.</string>
 <string name="warning_understand">이해했습니다</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">PDF 분할</string>
 <string name="split_into_folder">폴더로 분할 저장</string>
 <string name="extraction_options">추출 옵션</string>
-<string name="extract_all_pages_as_individua">모든 페이지를 개별 파일로 추출</string>
-<string name="extract_custom_range">지정 범위 추출</string>
-<string name="e_g_1_3_5_7_10">예: 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">예: 1-3, 5, 7-10</string>
 <string name="extract_images">이미지 추출</string>
 <string name="ready_to_extract_all_images_ta">모든 이미지를 추출할 준비가 되었습니다. 아래 버튼을 눌러 저장 폴더를 선택하세요.</string>
 <string name="change_pdf">PDF 변경</string>
-<string name="extracting_images">이미지 추출 중...</string>
+<string name="extracting_images">이미지 추출 중…</string>
 <string name="delete_pages">페이지 삭제</string>
 <string name="save_document">문서 저장</string>
 <string name="pages_to_delete">삭제할 페이지</string>
-<string name="e_g_1_3_5_10">예: 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">예: 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">쉼표로 구분된 페이지 번호 또는 범위를 입력하세요.</string>
 <string name="rotate_pages">페이지 회전</string>
 <string name="rotate_save">회전 후 저장</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">회전할 페이지 (선택사항)</string>
 <string name="leave_blank_to_rotate_all_page">비워둘 경우 모든 페이지를 회전합니다.</string>
 <string name="text_cleaner">텍스트 클리너</string>
-<string name="paste_your_text_here">여기에 텍스트 붙여넣기...</string>
+<string name="paste_your_text_here">여기에 텍스트 붙여넣기…</string>
 <string name="text_format_converter">텍스트 형식 변환</string>
-<string name="enter_content">내용 입력...</string>
+<string name="enter_content">내용 입력…</string>
 <string name="import_btn">가져오기</string>
-<string name="compressing_pdf">PDF 압축 중...</string>
 <string name="create">생성</string>
 <string name="compress">압축</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">목표 크기 선택 (MB):</string>
 <string name="exact_mb">지정 MB</string>
-<string name="compression_options">압축 옵션</string>
 <string name="grayscale_conversion">그레이스케일 변환</string>
 <string name="convert_color_images_to_black">컬러 이미지를 흑백으로 변환</string>
 <string name="lossless_zip_compression">무손실 ZIP 압축</string>
 <string name="skip_jpeg_lossy_compression_no">JPEG 손실 압축 생략</string>
 <string name="strip_author_creator_editor_ta">작성자, 제작자, 편집자 태그 제거</string>
 <string name="type_or_paste_text_here">여기에 텍스트를 입력하거나 붙여넣으세요</string>
-<string name="enter_the_content_of_your_pdf">PDF의 내용을 입력하세요...</string>
+<string name="enter_the_content_of_your_pdf">PDF의 내용을 입력하세요…</string>
 <string name="import_txt">.txt 가져오기</string>
 <string name="save_as_pdf">PDF로 저장</string>
 <string name="clear_history">기록 지우기</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">파일 이름: %1$s</string>
 <string name="selected_batch_files">선택된 일괄 파일:</string>
-<string name="analyzing_doc">문서 구조 분석 중...</string>
+<string name="analyzing_doc">문서 구조 분석 중…</string>
 <string name="smart_recommendation">스마트 추천</string>
 <string name="detected_type">감지된 형식: %1$s</string>
 <string name="doc_stats_pages_images">페이지: %1$d | 이미지: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ 광고 없음
 ✓ 무제한 일괄 작업</string>
-<string name="batch_compressing">%1$d / %2$d 파일 압축 중...</string>
 <string name="msg_enter_text">텍스트를 입력해주세요.</string>
 <string name="menu_delete_pages">페이지 삭제</string>
 <string name="menu_delete_pages_desc">PDF에서 특정 페이지 삭제</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">결과물 공유</string>
 <string name="desc_go_premium">프리미엄 구매</string>
 <string name="desc_settings">설정</string>
-<string name="desc_toggle_theme">테마 전환</string>
-<string name="desc_app_logo">앱 로고</string>
 <string name="scan_prefix">Scan_</string>
 <string name="default_scanned_doc_name">스캔된_문서</string>
 <string name="desc_back">뒤로</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">파일 변경</string>
 <string name="btn_select_pdf_files">PDF 파일 선택</string>
 <string name="btn_add_more_files">파일 추가 (%1$d개 선택됨)</string>
-<string name="label_original_size_analyzing">원본 크기: %1$s (분석 중...)</string>
+<string name="label_original_size_analyzing">원본 크기: %1$s (분석 중…)</string>
 <string name="label_original_size_to_compressed">원본 크기: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">목표: %1$.1f MB</string>
 <string name="label_target_unknown">목표: 알 수 없음</string>
-<string name="label_analyzing">분석 중...</string>
+<string name="label_analyzing">분석 중…</string>
 <string name="label_target_mb">목표: %1$s MB</string>
 <string name="desc_remove_file">파일 제거</string>
 <string name="preset_custom">사용자 지정</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">다크 모드</string>
 <string name="settings_rate_app">PDFchemy 평가하기</string>
 <string name="settings_rate_app_desc">앱이 마음에 드시나요? Google Play에 리뷰를 남겨주세요!</string>
-<string name="settings_rate_app_thanks">지원해 주셔서 감사합니다!</string>
     <string name="settings_share_app">PDFchemy Tools 공유하기</string>
     <string name="settings_share_app_desc">친구와 동료에게 이 앱을 추천하세요</string>
     <string name="settings_share_app_message">PDFchemy Tools를 확인해보세요 — Android용 빠르고 100%% 오프라인 및 개인정보 보호 PDF 압축 및 편집기: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">100%% 기기 내 텍스트 인식. 검색 가능한 투명 텍스트 레이어 생성.</string>
 <string name="select_pdf_for_ocr">PDF 문서 선택</string>
 <string name="ocr_processing_generic">텍스트 분석 및 인식 중…</string>
-<string name="ocr_processing_progress">OCR 처리 중: %1$d / %2$d 페이지…</string>
 <string name="action_create_searchable_pdf">검색 가능한 PDF 생성</string>
 <string name="title_ocr_success">검색 가능 PDF 생성 완료!</string>
 <string name="desc_ocr_success">투명 텍스트 레이어가 삽입되어 검색과 텍스트 선택이 가능해졌습니다.</string>
 <string name="error_ocr_failed">OCR 인식에 실패했습니다.</string>
 <string name="history_searchable_ocr_pdf">OCR 검색 가능 PDF</string>
-<string name="menu_redact_pdf">영구 마스킹 (검은색 덧칠)</string>
 <string name="tool_redact">마스킹</string>
-<string name="title_redact_success">PDF 마스킹 완료!</string>
-<string name="desc_redact_success">지정한 영역의 데이터와 글자가 영구적으로 삭제되었습니다.</string>
-<string name="error_redact_failed">마스킹 처리에 실패했습니다.</string>
-<string name="history_redacted_pdf">마스킹된 PDF</string>
 <string name="menu_reflow_reader">리플로우 리더 및 목차</string>
 <string name="menu_reflow_reader_desc">목차 지원 모바일 맞춤형 전자책 뷰어</string>
 <string name="reflow_reader_headline">편리한 모바일 리더</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">매직 컬러</string>
 <string name="filter_bw">흑백</string>
 <string name="filter_grayscale">그레이스케일</string>
-<string name="action_save_as_pdf">%1$d개 페이지를 PDF로 저장</string>
 <string name="title_scan_success">문서 스캔 완료!</string>
 <string name="desc_scan_success">스캔한 페이지를 최적화된 PDF로 변환했습니다.</string>
 <string name="error_scan_failed">스캔 PDF 생성에 실패했습니다.</string>
-<string name="history_scanned_pdf">스캔 문서</string>
 <string name="menu_sign_pdf">PDF 서명</string>
 <string name="menu_sign_pdf_desc">계약서 및 서류에 디지털 서명 그리고 날짜 날인</string>
 <string name="sign_pdf_headline">PDF 디지털 서명</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">페이지 구성 완료!</string>
 <string name="desc_organizer_success">새로운 페이지 순서와 레이아웃이 저장되었습니다.</string>
 <string name="error_organizer_failed">페이지 구성 저장에 실패했습니다.</string>
-<string name="history_organized_pdf">구성된 PDF</string>
 <string name="menu_watermark_pdf">워터마크 추가</string>
 <string name="menu_watermark_pdf_desc">모든 페이지에 맞춤 텍스트 또는 로고 워터마크 삽입</string>
 <string name="watermark_headline">문서 워터마크 추가</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">워터마크 적용 완료!</string>
 <string name="desc_watermark_success">문서에 워터마크가 성공적으로 삽입되었습니다.</string>
 <string name="error_watermark_failed">워터마크 적용에 실패했습니다.</string>
-<string name="history_watermarked_pdf">워터마크 적용된 PDF</string>
 <string name="menu_page_number_pdf">페이지 번호 삽입</string>
 <string name="menu_page_number_pdf_desc">헤더 또는 푸터에 페이지 번호 삽입 (Page X of Y 등)</string>
 <string name="page_number_headline">페이지 번호 매기기</string>
@@ -589,7 +549,6 @@
 <string name="title_page_number_success">페이지 번호 추가 완료!</string>
 <string name="desc_page_number_success">문서에 페이지 번호가 삽입되었습니다.</string>
 <string name="error_page_number_failed">페이지 번호 추가에 실패했습니다.</string>
-<string name="history_numbered_pdf">페이지 번호 매겨진 PDF</string>
 <string name="menu_page_layout">용지 크기 변경 및 모아찍기</string>
 <string name="menu_page_layout_desc">A4/Letter 등 규격 변경 또는 한 장에 2/4/6페이지 배치</string>
 <string name="page_layout_headline">페이지 레이아웃 및 모아찍기 (N-Up)</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">레이아웃 생성 완료!</string>
 <string name="desc_layout_success">지정한 레이아웃으로 PDF가 저장되었습니다.</string>
 <string name="error_layout_failed">레이아웃 생성에 실패했습니다.</string>
-<string name="history_layout_pdf">레이아웃 PDF</string>
 <string name="menu_compare_pdfs">두 PDF 비교</string>
 <string name="menu_compare_pdfs_desc">개정본 간의 시각적 차이 및 텍스트 수정 사항 감지</string>
 <string name="compare_headline">PDF 리비전 비교기</string>
 <string name="compare_subtitle">문서의 두 버전을 선택하여 레이아웃 변경 사항과 텍스트 수정 내역을 강조 표시합니다.</string>
 <string name="select_original_pdf">원본 PDF 선택 (Doc A)</string>
 <string name="select_modified_pdf">수정본 PDF 선택 (Doc B)</string>
-<string name="doc1_selected">원본 선택됨</string>
-<string name="doc2_selected">수정본 선택됨</string>
 <string name="comparing_documents_progress">페이지 및 텍스트 비교 중…</string>
 <string name="compare_results_title">비교 결과</string>
 <string name="compare_summary_counts">%1$d개 페이지 수정됨 • %2$d개 페이지 일치</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">단락, 제목, 페이지 나누기를 Microsoft Word (.docx) 파일로 내보냅니다.</string>
 <string name="info_excel_export">표 구조와 데이터를 Microsoft Excel (.xlsx) 스프레드시트로 추출합니다.</string>
 <string name="info_pptx_export">페이지를 제목과 글머리 기호가 포함된 Microsoft PowerPoint (.pptx) 슬라이드로 변환합니다.</string>
-<string name="converting_to_office">Office 형식으로 변환 중...</string>
+<string name="converting_to_office">Office 형식으로 변환 중…</string>
 <string name="btn_export_office_file">%1$s(으)로 내보내기</string>
 <string name="title_office_export_success">내보내기 완료</string>
 <string name="desc_office_export_success">%1$d개 페이지가 선택한 Office 형식으로 성공적으로 내보내졌습니다.</string>
@@ -799,7 +755,7 @@
 <string name="label_booklet_settings">소책자 설정</string>
 <string name="opt_center_fold_guide">중앙 접지 안내선 표시</string>
 <string name="desc_center_fold_guide">접기와 재단을 돕기 위해 얇은 중앙 점선을 추가합니다</string>
-<string name="label_generating_sheet">%2$d장 중 %1$d번째 용지 생성 중...</string>
+<string name="label_generating_sheet">%2$d장 중 %1$d번째 용지 생성 중…</string>
 <string name="btn_create_booklet">소책자 PDF 생성</string>
 <string name="title_booklet_success">소책자 생성 완료</string>
 <string name="desc_booklet_success">양면 인쇄 후 반으로 접어 소책자로 읽으세요</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">포함하기 실패</string>
 <string name="menu_fast_web_view">Fast Web View 정보</string>
 <string name="menu_fast_web_view_desc">PDF 정보 검사; Fast Web View 생성은 지원되지 않습니다</string>
-<string name="linearize_headline">스트리밍 및 빠른 웹 보기</string>
 <string name="linearize_subtitle">이 버전에서는 Fast Web View PDF를 생성하거나 인증할 수 없습니다. 출력 파일이 생성되지 않습니다.</string>
 <string name="select_pdf_for_linearize">검사할 PDF 선택</string>
 <string name="label_diagnostic_status">PDF 정보</string>
 <string name="label_fast_web_view_enabled">선형화:</string>
-<string name="status_enabled">활성화됨</string>
 <string name="status_disabled">확인되지 않음</string>
-<string name="linearize_info_explanation">빠른 웹 보기는 웹 브라우저가 전체 문서 다운로드를 기다리지 않고 첫 페이지를 즉시 표시할 수 있도록 파일을 재구성합니다.</string>
 <string name="btn_optimize_fast_web_view">최적화 사용 불가</string>
-<string name="title_linearize_success">PDF Linearize 완료</string>
-<string name="desc_linearize_success">웹 스트리밍 고속 로딩을 위해 최적화되었습니다 (%1$s)</string>
-<string name="error_linearize_failed">최적화 실패</string>
 
 <string name="menu_nup_handouts">N-Up 다중 페이지 그리드</string>
 <string name="menu_nup_handouts_desc">유인물 인쇄를 위해 용지 한 장에 2, 4, 6, 9, 16페이지 인쇄</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">예비 검사 전용; 인증되지 않음</string>
 <string name="pdfa_subtitle">이 검사는 ISO 19005 준수를 인증하지 않습니다. 이 버전에서는 PDF/A 변환을 사용할 수 없습니다.</string>
 <string name="select_pdf_for_pdfa">예비 검사용 PDF 선택</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">비표준 (문제 감지됨)</string>
 <string name="menu_font_inspector">타이포그래피 및 글꼴 검사기</string>
 <string name="menu_font_inspector_desc">포함된 글꼴, 서브타입 및 인코딩 검사</string>
 <string name="font_headline">타이포그래피 및 포함된 글꼴</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">시스템 / 기본</string>
 
 <string name="error_developer_diagnostics">개발자 진단 정보</string>
-<string name="error_tap_to_view_diagnostics">기술 로그 및 추적 보기</string>
-<string name="error_tap_to_hide_diagnostics">기술 로그 숨기기</string>
 <string name="error_copy_diagnostics">진단 정보 복사</string>
 <string name="error_diagnostics_copied">기술 진단 추적 로그가 클립보드에 복사되었습니다</string>
 <string name="error_user_encrypted">이 PDF는 비밀번호로 보호되어 있거나 암호화되어 있습니다. 계속하기 전에 먼저 PDF 보안에서 잠금을 해제하세요.</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">문서 기울기 보정 완료!</string>
     <string name="deskew_success_desc">페이지 회전 및 정렬이 완료되었습니다.</string>
     <string name="deskew_auto_label">기울기 자동 감지</string>
-    <string name="deskew_manual_label">수동 미세 조정</string>
     <string name="deskew_no_tilt">문서가 이미 바르게 정렬되어 있습니다 (0.0°)</string>
     <string name="menu_table_extractor">표를 CSV로 추출</string>
     <string name="menu_table_extractor_desc">PDF에서 표 데이터와 양식을 깔끔한 CSV / Excel로 추출</string>
     <string name="table_extractor_title">PDF 표 및 스프레드시트 추출기</string>
-    <string name="table_extractor_action_export">표를 CSV로 내보내기</string>
     <string name="table_extractor_preview">감지된 표 데이터</string>
     <string name="table_extractor_no_tables">이 페이지에서 감지된 표 데이터가 없습니다.</string>
     <string name="table_extractor_success">표를 CSV로 내보냈습니다!</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">문서에서 %1$d개의 보안 위협 요소를 발견했습니다</string>
     <string name="sanitizer_action_sanitize">위협 제거 및 무독화</string>
     <string name="sanitizer_success">문서 보안 무독화 완료!</string>
-    <string name="sanitizer_success_desc">모든 활성 스크립트, 후크 및 추적 비콘이 제거되었습니다.</string>
     <string name="menu_quick_fill_sign">간편 작성 및 서명 (평면 양식)</string>
     <string name="menu_quick_fill_sign_desc">스캔된 PDF 등 원하는 위치를 탭하여 텍스트, 체크, 가위표, 서명 추가</string>
     <string name="quick_fill_title">간편 작성 및 서명</string>
     <string name="quick_fill_text_tool">텍스트</string>
-    <string name="quick_fill_check_tool">체크표시 (✓)</string>
-    <string name="quick_fill_cross_tool">가위표 (✗)</string>
-    <string name="quick_fill_date_tool">날짜</string>
     <string name="quick_fill_sign_tool">서명</string>
     <string name="quick_fill_tap_hint">문서의 아무 곳이나 탭하여 선택한 항목을 배치하세요</string>
     <string name="quick_fill_action_save">양식 저장 및 평탄화</string>
     <string name="quick_fill_success">양식 작성 및 저장 완료!</string>
-    <string name="quick_fill_success_desc">모든 입력 항목이 PDF에 영구적으로 포함되었습니다.</string>
     <string name="split_mode_all">모든 페이지 개별 추출</string>
-    <string name="split_mode_range">사용자 지정 페이지 범위 (예: 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">사용자 지정 페이지 범위 (예: 1-3, 5)</string>
     <string name="split_mode_blank">빈 페이지 기준으로 분할</string>
     <string name="split_mode_blank_desc">대량 스캔 문서에서 빈 구분 페이지를 감지하여 개별 파일로 분할합니다</string>
     <string name="split_mode_bookmarks">북마크 / 챕터별로 분할</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">%1$d개의 개요 챕터 섹션을 찾았습니다</string>
     <string name="split_no_bookmarks">이 문서에서 챕터 북마크를 찾을 수 없습니다.</string>
     <string name="tts_play">음성으로 읽기</string>
-    <string name="tts_pause">일시정지</string>
-    <string name="tts_stop">중지</string>
-    <string name="tts_speed">재생 속도: %1$.2fx</string>
     <string name="tts_prev_paragraph">이전</string>
     <string name="tts_next_paragraph">다음</string>
-    <string name="tts_not_supported">음성 변환(TTS)을 지원하지 않거나 언어 데이터가 누락되었습니다.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">대화형 양식 빌더</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">작성 가능한 PDF 저장</string>
     <string name="form_builder_fields_count">페이지 내 필드: %1$d</string>
     <string name="form_builder_success">작성 가능한 PDF 생성 완료!</string>
-    <string name="form_builder_success_desc">대화형 양식 필드가 문서에 삽입되었습니다.</string>
     <string name="form_builder_no_fields_warn">저장하기 전에 최소 하나 이상의 필드를 배치해 주세요.</string>
     <string name="form_builder_delete_field">필드 삭제</string>
     <string name="settings_vanguard">Vanguard 제로 트러스트 쉴드</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">이 문서는 암호화되어 비밀번호로 보호되어 있습니다. 문서가 잠겨 있는 동안 Vanguard 제로 트러스트 쉴드는 포함된 스크립트나 위협을 확인할 수 없습니다. 먼저 잠금을 해제해 주세요.</string>
     <string name="vanguard_action_unlock">PDF 잠금 해제</string>
     <string name="vanguard_verifying_title">Vanguard 보안 검증</string>
-    <string name="vanguard_verifying_desc">스크립트 및 보안 위협을 검사하는 중...</string>
+    <string name="vanguard_verifying_desc">스크립트 및 보안 위협을 검사하는 중…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% 오프라인 • 제로 트러스트</string>
 
     <string name="action_redo">다시 실행</string>
     <string name="action_reset">초기화</string>
     <string name="action_reverse">순서 뒤집기</string>
     <string name="action_rotate_all">모두 회전</string>
-    <string name="label_preview_unavailable">미리보기를 사용할 수 없음</string>
     <string name="dialog_unsaved_title">저장되지 않은 변경 사항</string>
     <string name="dialog_unsaved_message">저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까, 아니면 취소하시겠습니까?</string>
     <string name="dialog_unsaved_save">저장 / 내보내기</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">이 PDF는 손상되었거나 불완전하여 안전하게 읽을 수 없습니다. 복구를 실행하거나 다른 사본을 선택해 보세요.</string>
     <string name="vanguard_provider_error_title">파일에 액세스할 수 없음</string>
     <string name="vanguard_provider_error_message">선택한 파일에 액세스할 수 없습니다. 저장소 공급자를 사용할 수 없거나 권한이 취소되었을 수 있습니다.</string>
-    <string name="error_invalid_page_range">잘못된 페이지 범위입니다. 페이지 번호를 확인하고 다시 시도하세요.</string>
     <string name="consent_dialog_decline">맞춤 설정 없이 계속</string>
 
     <string name="generating_previews">미리보기 생성 중…</string>
-    <string name="label_preview_loading">로딩 중…</string>
-    <string name="premium_status_loading">스토어 확인 중…</string>
-    <string name="premium_status_unavailable">스토어를 사용할 수 없습니다. 다시 시도하려면 탭하세요.</string>
     <string name="action_retry">다시 시도</string>
     <string name="redaction_review_title">수정 사항 검토</string>
     <string name="redaction_review_message">%1$d개의 수정 사항이 영구적으로 적용됩니다. 수정된 내용은 복구할 수 없습니다.</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">RAM을 확보하려면 메모리를 많이 사용하는 백그라운드 앱을 닫고 다시 시도하세요.</string>
     <string name="alt_free_ram_btn">확인</string>
     <string name="btn_proceed_anyway">계속 진행</string>
-    <string name="msg_circuit_breaker_paused">휴대전화가 멈추지 않도록 처리를 일시 중지했습니다. 완료된 작업은 저장되었습니다.</string>
     <string name="reader_dual_page_spread">두 페이지 나란히 보기</string>
     <string name="reader_single_page">한 페이지 보기</string>
     <string name="flip_tabletop_mode">테이블탑 모드</string>
     <string name="flip_fullscreen_mode">전체 화면 모드</string>
-    <string name="flip_tabletop_mode_desc">핸즈프리 모드: 위쪽에 문서, 아래쪽에 조작 도구 표시</string>
     <string name="flip_tabletop_active_badge">플렉스 모드</string>
     <string name="scanned_pdf_title">스캔한 문서</string>
     <string name="scanned_pdf_desc">이 문서에는 선택 가능한 텍스트 레이어가 없는 스캔 이미지가 포함되어 있습니다.</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">빠른 카메라 PDF</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">사유</string>
     <string name="pki_location">위치</string>
     <string name="pki_sign_and_save">서명 및 저장</string>
-    <string name="btn_convert_to_pdfa">PDF/A-1b로 변환</string>
-    <string name="btn_converting_pdfa">PDF/A-1b로 변환 중…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b 변환 성공</string>
-    <string name="error_pdfa_conversion_failed">PDF/A 변환 실패</string>
     <string name="btn_export_embedded_fonts">포함된 글꼴 내보내기 (.zip)</string>
     <string name="btn_exporting_fonts">글꼴 내보내는 중…</string>
     <string name="title_fonts_exported_success">포함된 글꼴을 성공적으로 내보냈습니다 (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">포렌식 벡터 정밀 삭제</string>
     <string name="redact_forensic_desc">가려진 페이지를 래스터화하여 숨겨진 텍스트 바이트를 완전히 제거합니다.</string>
     <string name="redact_smart_pii_title">스마트 개인정보(PII) 가리기</string>
-    <string name="reflow_find_placeholder">문서에서 텍스트 찾기...</string>
+    <string name="reflow_find_placeholder">문서에서 텍스트 찾기…</string>
     <string name="desc_previous_match">이전 결과</string>
     <string name="desc_next_match">다음 결과</string>
     <string name="desc_play_pause">재생/일시정지</string>

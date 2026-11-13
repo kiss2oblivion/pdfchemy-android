@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">قريباً</string>
 <string name="ok">موافق</string>
@@ -9,7 +9,6 @@
 <string name="clear">مسح</string>
 <string name="clear_all">مسح الكل</string>
 <string name="save">حفظ</string>
-<string name="continue_btn">متابعة</string>
 <string name="home_subtitle">معالجة المستندات بأمان على جهازك</string>
 <string name="cat_compress">ضغط</string>
 <string name="cat_compress_desc">تقليل حجم ملفات PDF بأمان وبجودة عالية.</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">فحص</string>
 <string name="cat_check_desc">فحص المستندات قبل إرسالها.</string>
 <string name="menu_compress">ضغط PDF</string>
-<string name="menu_compress_desc">تقليل حجم الملف</string>
 <string name="menu_merge">دمج PDF</string>
 <string name="menu_merge_desc">دمج ملفات متعددة في ملف واحد</string>
 <string name="menu_split">تقسيم PDF</string>
 <string name="menu_split_desc">استخراج وتقسيم الصفحات</string>
 <string name="menu_scan">مسح إلى PDF</string>
 <string name="menu_scan_desc">تحويل الكاميرا إلى مستندات</string>
-<string name="menu_ocr">استخراج النص</string>
-<string name="menu_ocr_desc">استخراج النصوص من مستندات PDF</string>
-<string name="menu_metadata">فحص البيانات الوصفية</string>
-<string name="menu_metadata_desc">عرض الخصائص والبيانات المخفية</string>
 <string name="settings_title">الإعدادات</string>
-<string name="settings_preferences">تفضيلات التطبيق</string>
-<string name="settings_haptic">الاستجابة اللمسية</string>
-<string name="settings_haptic_desc">الاهتزاز عند التفاعل</string>
-<string name="settings_sfx">المؤثرات الصوتية</string>
-<string name="settings_sfx_desc">تشغيل صوت عند النقر على الأزرار</string>
 <string name="settings_history">تذكر الملفات الأخيرة</string>
 <string name="settings_history_desc">الاحتفاظ بسجل محلي للملفات المستخدمة مؤخراً. لا يتم رفع الملفات أبداً.</string>
 <string name="settings_language">اللغة (Language)</string>
 <string name="settings_language_desc">تغيير لغة عرض التطبيق</string>
 <string name="settings_clear_history">مسح السجل الأخير</string>
-<string name="settings_clear_history_confirm">هل أنت متأكد من رغبتك في مسح سجل الملفات الأخيرة؟</string>
-<string name="settings_history_cleared">تم مسح السجل بنجاح</string>
 <string name="compress_title">ضغط PDF</string>
 <string name="compress_single">ملف فردي</string>
 <string name="compress_batch">ضغط متعدد</string>
 <string name="compress_select_file">اختيار ملف PDF</string>
-<string name="compress_compressing">جاري ضغط PDF...</string>
 <string name="compress_target_size">حجم الملف المستهدف</string>
 <string name="compress_preset">نمط الضغط المسبق:</string>
-<string name="compress_exact_mb">حجم محدد بالميجابايت</string>
-<string name="compress_options">خيارات الضغط</string>
-<string name="compress_grayscale">تحويل لتدرج الرمادي</string>
-<string name="compress_grayscale_desc">تحويل الصور الملونة إلى الأبيض والأسود</string>
-<string name="compress_lossless">ضغط ZIP بدون فقدان</string>
-<string name="compress_lossless_desc">تخطي ضغط JPEG الفاقد للجودة</string>
-<string name="compress_strip_meta">إزالة البيانات الوصفية</string>
-<string name="compress_strip_meta_desc">حذف معلومات المؤلف والمحرر</string>
 <string name="warning_quality_title">تنبيه الجودة والسلامة القانونية</string>
 <string name="warning_quality_desc">قد يؤدي الضغط إلى تقليل الجودة. قد يؤثر ذلك على المستندات الرسمية أو السجلات الطبية أو التوقيعات الرقمية. احتفظ دائماً بالملف الأصلي.</string>
 <string name="warning_understand">أنا أفهم ذلك</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">تقسيم PDF</string>
 <string name="split_into_folder">تقسيم وحفظ في مجلد</string>
 <string name="extraction_options">خيارات الاستخراج</string>
-<string name="extract_all_pages_as_individua">استخراج كل الصفحات كملفات منفصلة</string>
-<string name="extract_custom_range">استخراج نطاق مخصص</string>
-<string name="e_g_1_3_5_7_10">مثال: 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">مثال: 1-3, 5, 7-10</string>
 <string name="extract_images">استخراج الصور</string>
 <string name="ready_to_extract_all_images_ta">جاهز لاستخراج جميع الصور. اضغط على الزر أدناه لاختيار مجلد الإخراج.</string>
 <string name="change_pdf">تغيير PDF</string>
-<string name="extracting_images">جاري استخراج الصور...</string>
+<string name="extracting_images">جاري استخراج الصور…</string>
 <string name="delete_pages">حذف الصفحات</string>
 <string name="save_document">حفظ المستند</string>
 <string name="pages_to_delete">الصفحات المراد حذفها</string>
-<string name="e_g_1_3_5_10">مثال: 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">مثال: 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">أدخل أرقام الصفحات مفصولة بفواصل أو كنطاقات.</string>
 <string name="rotate_pages">تدوير الصفحات</string>
 <string name="rotate_save">تدوير وحفظ</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">الصفحات المراد تدويرها (اختياري)</string>
 <string name="leave_blank_to_rotate_all_page">اتركه فارغاً لتدوير كل الصفحات.</string>
 <string name="text_cleaner">منظف النصوص</string>
-<string name="paste_your_text_here">الصق النص هنا...</string>
+<string name="paste_your_text_here">الصق النص هنا…</string>
 <string name="text_format_converter">محول صيغ النصوص</string>
-<string name="enter_content">أدخل المحتوى...</string>
+<string name="enter_content">أدخل المحتوى…</string>
 <string name="import_btn">استيراد</string>
-<string name="compressing_pdf">جاري ضغط PDF...</string>
 <string name="create">إنشاء</string>
 <string name="compress">ضغط</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">اختر الحجم المستهدف (MB):</string>
 <string name="exact_mb">حجم محدد بالميجابايت</string>
-<string name="compression_options">خيارات الضغط</string>
 <string name="grayscale_conversion">تحويل لتدرج الرمادي</string>
 <string name="convert_color_images_to_black">تحويل الصور الملونة إلى الأبيض والأسود</string>
 <string name="lossless_zip_compression">ضغط ZIP بدون فقدان</string>
 <string name="skip_jpeg_lossy_compression_no">تخطي ضغط JPEG</string>
 <string name="strip_author_creator_editor_ta">إزالة علامات المؤلف والمنشئ والمحرر</string>
 <string name="type_or_paste_text_here">اكتب أو الصق النص هنا</string>
-<string name="enter_the_content_of_your_pdf">أدخل محتوى مستند PDF الخاص بك...</string>
+<string name="enter_the_content_of_your_pdf">أدخل محتوى مستند PDF الخاص بك…</string>
 <string name="import_txt">استيراد .txt</string>
 <string name="save_as_pdf">حفظ كملف PDF</string>
 <string name="clear_history">مسح السجل</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">اسم الملف: %1$s</string>
 <string name="selected_batch_files">الملفات المحددة للضغط المتعدد:</string>
-<string name="analyzing_doc">جاري تحليل بنية المستند...</string>
+<string name="analyzing_doc">جاري تحليل بنية المستند…</string>
 <string name="smart_recommendation">توصية ذكية</string>
 <string name="detected_type">النوع المكتشف: %1$s</string>
 <string name="doc_stats_pages_images">الصفحات: %1$d | الصور: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ بدون إعلانات
 ✓ معالجة متعددة غير محدودة</string>
-<string name="batch_compressing">جاري ضغط %1$d من %2$d ملفات...</string>
 <string name="msg_enter_text">يرجى إدخال نص أولاً.</string>
 <string name="menu_delete_pages">حذف الصفحات</string>
 <string name="menu_delete_pages_desc">حذف صفحات معينة من ملف PDF</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">مشاركة المخرجات</string>
 <string name="desc_go_premium">الترقية لبريميوم</string>
 <string name="desc_settings">الإعدادات</string>
-<string name="desc_toggle_theme">تبديل المظهر</string>
-<string name="desc_app_logo">شعار التطبيق</string>
 <string name="scan_prefix">مسح_</string>
 <string name="default_scanned_doc_name">مستند_ممسوح</string>
 <string name="desc_back">رجوع</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">تغيير الملف</string>
 <string name="btn_select_pdf_files">اختيار ملفات PDF</string>
 <string name="btn_add_more_files">إضافة المزيد (%1$d محددة)</string>
-<string name="label_original_size_analyzing">الحجم الأصلي: %1$s (جاري التحليل...)</string>
+<string name="label_original_size_analyzing">الحجم الأصلي: %1$s (جاري التحليل…)</string>
 <string name="label_original_size_to_compressed">الحجم الأصلي: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">الهدف: %1$.1f ميغابايت</string>
 <string name="label_target_unknown">الهدف: غير معروف</string>
-<string name="label_analyzing">جاري التحليل...</string>
+<string name="label_analyzing">جاري التحليل…</string>
 <string name="label_target_mb">الهدف: %1$s ميغابايت</string>
 <string name="desc_remove_file">إزالة الملف</string>
 <string name="preset_custom">مخصص</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">الوضع الداكن</string>
 <string name="settings_rate_app">تقييم PDFchemy</string>
 <string name="settings_rate_app_desc">هل يعجبك التطبيق؟ اترك تقييماً على Google Play!</string>
-<string name="settings_rate_app_thanks">شكراً لدعمكم!</string>
     <string name="settings_share_app">مشاركة PDFchemy Tools</string>
     <string name="settings_share_app_desc">أخبر أصدقاءك وزملاءك عن هذا التطبيق</string>
     <string name="settings_share_app_message">جرّب تطبيق PDFchemy Tools — أداة سريعة وخاصة 100%% بدون إنترنت لضغط وتعديل ملفات PDF لنظام Android: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">تعرف ضوئي على النصوص على جهازك 100%%. إنشاء طبقة نصية قابلة للبحث والتحديد.</string>
 <string name="select_pdf_for_ocr">اختيار مستند PDF</string>
 <string name="ocr_processing_generic">جاري تحليل والتعرف على النصوص…</string>
-<string name="ocr_processing_progress">معالجة OCR: صفحة %1$d من %2$d…</string>
 <string name="action_create_searchable_pdf">إنشاء PDF قابل للبحث</string>
 <string name="title_ocr_success">تم إنشاء PDF قابل للبحث بنجاح!</string>
 <string name="desc_ocr_success">تمت إضافة طبقة نصية شفافة تتيح تحديد ونسخ والبحث في النصوص.</string>
 <string name="error_ocr_failed">فشل التعرف الضوئي على الحروف.</string>
 <string name="history_searchable_ocr_pdf">ملف PDF قابل للبحث</string>
-<string name="menu_redact_pdf">التنقيح الدائم (طمس البيانات)</string>
 <string name="tool_redact">طمس</string>
-<string name="title_redact_success">تم تنقيح PDF بنجاح!</string>
-<string name="desc_redact_success">تم مسح وطمس المناطق المحددة وبياناتها نهائياً.</string>
-<string name="error_redact_failed">فشل تطبيق عملية التنقيح.</string>
-<string name="history_redacted_pdf">ملف PDF منقح</string>
 <string name="menu_reflow_reader">قارئ النصوص المرن والفهرس</string>
 <string name="menu_reflow_reader_desc">وضع قراءة مريح كالكتاب الإلكتروني مع دعم جدول المحتويات</string>
 <string name="reflow_reader_headline">قارئ الجوال المريح</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">ألوان محسنة</string>
 <string name="filter_bw">أبيض وأسود</string>
 <string name="filter_grayscale">تدرج الرمادي</string>
-<string name="action_save_as_pdf">حفظ %1$d صفحات كـ PDF</string>
 <string name="title_scan_success">تم مسح المستند بنجاح!</string>
 <string name="desc_scan_success">تم تحويل الصفحات الممسوحة إلى مستند PDF محسّن.</string>
 <string name="error_scan_failed">فشل إنشاء ملف PDF الممسوح.</string>
-<string name="history_scanned_pdf">مستند ممسوح</string>
 <string name="menu_sign_pdf">توقيع PDF</string>
 <string name="menu_sign_pdf_desc">رسم وحفظ وختم التوقيعات الرقمية على العقود والاتفاقيات</string>
 <string name="sign_pdf_headline">توقيع مستندات PDF</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">تم تنظيم الصفحات بنجاح!</string>
 <string name="desc_organizer_success">تم حفظ ترتيب وتنسيق الصفحات الجديد.</string>
 <string name="error_organizer_failed">فشل تنظيم صفحات PDF.</string>
-<string name="history_organized_pdf">ملف PDF منظم</string>
 <string name="menu_watermark_pdf">إضافة علامة مائية</string>
 <string name="menu_watermark_pdf_desc">إضافة نصوص أو شعارات كعلامة مائية على جميع الصفحات</string>
 <string name="watermark_headline">إضافة علامة مائية للمستند</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">تم تطبيق العلامة المائية بنجاح!</string>
 <string name="desc_watermark_success">تم ختم العلامة المائية على المستند.</string>
 <string name="error_watermark_failed">فشل تطبيق العلامة المائية.</string>
-<string name="history_watermarked_pdf">ملف PDF بعلامة مائية</string>
 <string name="menu_page_number_pdf">إضافة أرقام الصفحات</string>
 <string name="menu_page_number_pdf_desc">إدراج ترويسة وتذييل مخصص (صفحة X من Y، 1/N)</string>
 <string name="page_number_headline">ترقيم صفحات PDF</string>
@@ -589,7 +549,6 @@
 <string name="title_page_number_success">تمت إضافة أرقام الصفحات!</string>
 <string name="desc_page_number_success">تم ختم الترقيم في مستند PDF.</string>
 <string name="error_page_number_failed">فشل ترقيم الصفحات.</string>
-<string name="history_numbered_pdf">ملف PDF مرقم</string>
 <string name="menu_page_layout">تغيير حجم الورق والطباعة المتعددة</string>
 <string name="menu_page_layout_desc">تغيير مقاسات الورق القياسية أو دمج 2 أو 4 أو 6 صفحات في ورقة واحدة</string>
 <string name="page_layout_headline">تخطيط الصفحات والطباعة المتعددة (N-Up)</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">تم إنشاء التنسيق بنجاح!</string>
 <string name="desc_layout_success">تم حفظ تخطيط مستند PDF المخصص.</string>
 <string name="error_layout_failed">فشل إنشاء تخطيط الصفحات.</string>
-<string name="history_layout_pdf">ملف PDF منسق</string>
 <string name="menu_compare_pdfs">مقارنة ملفي PDF</string>
 <string name="menu_compare_pdfs_desc">اكتشاف الفروق البصرية والتعديلات النصية بين النسخ والمراجعات</string>
 <string name="compare_headline">أداة مقارنة مراجعات PDF</string>
 <string name="compare_subtitle">اختر نسختين من المستند لإبراز الاختلافات البصرية والتعديلات النصية بوضوح.</string>
 <string name="select_original_pdf">اختيار النسخة الأصلية (مستند أ)</string>
 <string name="select_modified_pdf">اختيار النسخة المعدلة (مستند ب)</string>
-<string name="doc1_selected">تم اختيار الأصل</string>
-<string name="doc2_selected">تم اختيار المعدل</string>
 <string name="comparing_documents_progress">جاري مقارنة الصفحات والنصوص…</string>
 <string name="compare_results_title">نتائج المقارنة</string>
 <string name="compare_summary_counts">%1$d صفحات معدلة • %2$d صفحات متطابقة</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">تصدير الفقرات والعناوين وفواصل الصفحات إلى مستند Microsoft Word (.docx).</string>
 <string name="info_excel_export">استخراج الجداول والبيانات الرقمية إلى جدول بيانات Microsoft Excel (.xlsx).</string>
 <string name="info_pptx_export">تحويل الصفحات إلى شرائح عرض تقديمي في Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">جاري التحويل إلى Office...</string>
+<string name="converting_to_office">جاري التحويل إلى Office…</string>
 <string name="btn_export_office_file">تصدير بصيغة %1$s</string>
 <string name="title_office_export_success">اكتمل التصدير</string>
 <string name="desc_office_export_success">تم تصدير %1$d صفحات بنجاح إلى تنسيق Office المحدد.</string>
@@ -735,7 +691,7 @@
 <string name="btn_open_file">فتح ملف</string>
 <string name="btn_import_pdf_to_md">استخراج Markdown من PDF</string>
 <string name="btn_save_md">حفظ بصيغة .MD</string>
-<string name="hint_type_markdown">اكتب أو الصق Markdown هنا...</string>
+<string name="hint_type_markdown">اكتب أو الصق Markdown هنا…</string>
 <string name="label_doc_title">عنوان المستند</string>
 <string name="btn_export_pdf">تصدير PDF</string>
 <string name="title_pdf_to_md_success">تم استخراج Markdown</string>
@@ -799,7 +755,7 @@
 <string name="label_booklet_settings">إعدادات الكتيب</string>
 <string name="opt_center_fold_guide">رسم دليل طي المنتصف</string>
 <string name="desc_center_fold_guide">إضافة خط متقطع خفيف للمساعدة في الطي والقص</string>
-<string name="label_generating_sheet">جارٍ إنشاء الورقة %1$d من %2$d...</string>
+<string name="label_generating_sheet">جارٍ إنشاء الورقة %1$d من %2$d…</string>
 <string name="btn_create_booklet">إنشاء كتيب PDF</string>
 <string name="title_booklet_success">تم إنشاء الكتيب</string>
 <string name="desc_booklet_success">اطبع على الوجهين واطوِ من المنتصف للقراءة ككتيب</string>
@@ -873,7 +829,7 @@
 <string name="redaction_headline">استوديو الحجب الدائم</string>
 <string name="redaction_subtitle">تنقية البيانات الحساسة والأسماء وأرقام الضمان الاجتماعي وبطاقات الائتمان</string>
 <string name="select_pdf_to_redact">اختيار PDF لحجب البيانات</string>
-<string name="placeholder_search_redact">ابحث عن نص أو تعبير نمطي (regex) لحجبه...</string>
+<string name="placeholder_search_redact">ابحث عن نص أو تعبير نمطي (regex) لحجبه…</string>
 <string name="chip_preset_emails">عناوين البريد الإلكتروني</string>
 <string name="chip_preset_ssn">أرقام الضمان الاجتماعي (SSN)</string>
 <string name="chip_preset_credit_cards">بطاقات الائتمان</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">فشل التضمين</string>
 <string name="menu_fast_web_view">معلومات Fast Web View</string>
 <string name="menu_fast_web_view_desc">فحص معلومات PDF؛ إنشاء Fast Web View غير متوفر</string>
-<string name="linearize_headline">التهيئة للعرض السريع على الويب</string>
 <string name="linearize_subtitle">لا يمكن لهذا الإصدار إنشاء أو اعتماد ملفات PDF بنظام Fast Web View. لن يتم إنشاء أي ملف إخراج.</string>
 <string name="select_pdf_for_linearize">حدد ملف PDF للفحص</string>
 <string name="label_diagnostic_status">معلومات PDF</string>
 <string name="label_fast_web_view_enabled">التهيئة الخطية:</string>
-<string name="status_enabled">مفعل</string>
 <string name="status_disabled">لم يتم التحقق</string>
-<string name="linearize_info_explanation">يقوم العرض السريع على الويب بتنظيم الملف بحيث تعرض متصفحات الويب الصفحة الأولى فوراً دون انتظار تنزيل المستند بالكامل.</string>
 <string name="btn_optimize_fast_web_view">التحسين غير متوفر</string>
-<string name="title_linearize_success">تمت تهيئة PDF للعرض السريع</string>
-<string name="desc_linearize_success">تم تحسين المستند للبث الفوري عبر الويب (%1$s)</string>
-<string name="error_linearize_failed">فشل التحسين</string>
 
 <string name="menu_nup_handouts">شبكة متعددة الصفحات (N-Up)</string>
 <string name="menu_nup_handouts_desc">طباعة 2 أو 4 أو 6 أو 9 أو 16 صفحة لكل ورقة للنشرات</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">فحوصات أولية فقط؛ غير معتمد</string>
 <string name="pdfa_subtitle">هذه الفحوصات لا تعتمد الامتثال لمعيار ISO 19005. تحويل PDF/A غير متوفر في هذا الإصدار.</string>
 <string name="select_pdf_for_pdfa">حدد ملف PDF للفحوصات الأولية</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">غير متوافق (تم اكتشاف مشكلات)</string>
 <string name="menu_font_inspector">فاحص الخطوط والطباعة</string>
 <string name="menu_font_inspector_desc">فحص الخطوط المضمنة والأنواع الفرعية والترميزات</string>
 <string name="font_headline">الخطوط والطباعة المضمنة</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">نظام / أساسي</string>
 
 <string name="error_developer_diagnostics">تشخيصات المطور</string>
-<string name="error_tap_to_view_diagnostics">عرض السجل التقني / التتبع</string>
-<string name="error_tap_to_hide_diagnostics">إخفاء السجل التقني</string>
 <string name="error_copy_diagnostics">نسخ بيانات التشخيص</string>
 <string name="error_diagnostics_copied">تم نسخ سجل التشخيص التقني إلى الحافظة</string>
 <string name="error_user_encrypted">ملف PDF هذا محمي بكلمة مرور أو مشفر. يرجى إلغاء قفله في قسم أمان PDF قبل المتابعة.</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">تمت محاذاة المستند بنجاح!</string>
     <string name="deskew_success_desc">تم تدوير الصفحات ومحاذاتها بدقة.</string>
     <string name="deskew_auto_label">الكشف التلقائي عن الميل</string>
-    <string name="deskew_manual_label">تعديل يدوي</string>
     <string name="deskew_no_tilt">المستند مستقيم بالفعل (0.0°)</string>
     <string name="menu_table_extractor">استخراج الجداول إلى CSV</string>
     <string name="menu_table_extractor_desc">استخراج البيانات الجدولية والنماذج من PDF إلى ملف CSV / Excel نظيف متوافق مع RFC 4180</string>
     <string name="table_extractor_title">مستخرج الجداول والبيانات من PDF</string>
-    <string name="table_extractor_action_export">تصدير الجداول إلى CSV</string>
     <string name="table_extractor_preview">البيانات الجدولية المكتشفة</string>
     <string name="table_extractor_no_tables">لم يتم اكتشاف بيانات جدولية في هذه الصفحة.</string>
     <string name="table_extractor_success">تم تصدير الجداول إلى CSV!</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">تم العثور على %1$d ناقل تهديد في المستند</string>
     <string name="sanitizer_action_sanitize">تعقيم وإزالة التهديدات</string>
     <string name="sanitizer_success">تم تعقيم المستند بنجاح!</string>
-    <string name="sanitizer_success_desc">تمت إزالة كافة البرمجيات النصية والخطافات وإشارات التتبع النشطة.</string>
     <string name="menu_quick_fill_sign">التعبئة والتوقيع السريع (نماذج مسطحة)</string>
     <string name="menu_quick_fill_sign_desc">اضغط في أي مكان على مستندات PDF المسطحة أو الممسوحة ضوئياً لإضافة نص وعلامات صح وخطأ وتواقيع</string>
     <string name="quick_fill_title">التعبئة والتوقيع السريع</string>
     <string name="quick_fill_text_tool">نص</string>
-    <string name="quick_fill_check_tool">علامة صح (✓)</string>
-    <string name="quick_fill_cross_tool">علامة خطأ (✗)</string>
-    <string name="quick_fill_date_tool">التاريخ</string>
     <string name="quick_fill_sign_tool">توقيع</string>
     <string name="quick_fill_tap_hint">اضغط في أي مكان على المستند لوضع العنصر المحدد</string>
     <string name="quick_fill_action_save">حفظ وتسطيح النموذج</string>
     <string name="quick_fill_success">تم ملء النموذج وحفظه!</string>
-    <string name="quick_fill_success_desc">تم دمج كافة الإدخالات نهائياً داخل ملف PDF.</string>
     <string name="split_mode_all">استخراج كافة الصفحات بشكل منفصل</string>
-    <string name="split_mode_range">نطاق صفحات مخصص (مثال: 1-3، 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">نطاق صفحات مخصص (مثال: 1-3، 5)</string>
     <string name="split_mode_blank">تقسيم حسب الصفحات الفارغة</string>
     <string name="split_mode_blank_desc">يكتشف الفواصل الفارغة بين الصفحات في المسحات الكبيرة ويقسمها إلى ملفات فردية</string>
     <string name="split_mode_bookmarks">تقسيم حسب العلامات المرجعية / الفصول</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">تم العثور على %1$d قسم لفصول الفهرس</string>
     <string name="split_no_bookmarks">لم يتم العثور على علامات مرجعية للفصول في هذا المستند.</string>
     <string name="tts_play">قراءة بصوت عالٍ</string>
-    <string name="tts_pause">إيقاف مؤقت</string>
-    <string name="tts_stop">إيقاف</string>
-    <string name="tts_speed">السرعة: %1$.2fx</string>
     <string name="tts_prev_paragraph">السابق</string>
     <string name="tts_next_paragraph">التالي</string>
-    <string name="tts_not_supported">ميزة تحويل النص إلى كلام غير مدعومة أو بيانات اللغة غير متوفرة.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">منشئ النماذج التفاعلية</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">حفظ كملف PDF تفاعلي</string>
     <string name="form_builder_fields_count">الحقول في الصفحة: %1$d</string>
     <string name="form_builder_success">تم إنشاء ملف PDF القابل للتعبئة بنجاح!</string>
-    <string name="form_builder_success_desc">تم تضمين حقول النماذج التفاعلية في المستند.</string>
     <string name="form_builder_no_fields_warn">يرجى وضع حقل تفاعلي واحد على الأقل قبل الحفظ.</string>
     <string name="form_builder_delete_field">حذف الحقل</string>
     <string name="settings_vanguard">درع فانغارد لانعدام الثقة</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">هذا المستند مشفر ومحمي بكلمة مرور. لا يمكن لدرع فانغارد لانعدام الثقة التحقق من البرامج النصية المضمنة أو التهديدات الأمنية أثناء قفل المستند. يرجى إلغاء قفله أولاً.</string>
     <string name="vanguard_action_unlock">فك قفل PDF</string>
     <string name="vanguard_verifying_title">التحقق الأمني من Vanguard</string>
-    <string name="vanguard_verifying_desc">جارٍ فحص المستند بحثاً عن نصوص برمجية وتهديدات أمنية...</string>
+    <string name="vanguard_verifying_desc">جارٍ فحص المستند بحثاً عن نصوص برمجية وتهديدات أمنية…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% بدون إنترنت • بدون ثقة</string>
 
     <string name="action_redo">إعادة</string>
     <string name="action_reset">إعادة ضبط</string>
     <string name="action_reverse">عكس الترتيب</string>
     <string name="action_rotate_all">تدوير الكل</string>
-    <string name="label_preview_unavailable">المعاينة غير متوفرة</string>
     <string name="dialog_unsaved_title">تغييرات غير محفوظة</string>
     <string name="dialog_unsaved_message">لديك تغييرات غير محفوظة. هل ترغب في حفظها أو تجاهلها قبل المغادرة؟</string>
     <string name="dialog_unsaved_save">حفظ / تصدير</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">يبدو أن ملف PDF هذا تالف أو غير مكتمل ولا يمكن قراءته بأمان. حاول تشغيل أداة الإصلاح أو تحديد نسخة أخرى.</string>
     <string name="vanguard_provider_error_title">تعذر الوصول إلى الملف</string>
     <string name="vanguard_provider_error_message">تعذر الوصول إلى الملف المحدد. قد يكون موفر التخزين غير متوفر أو تم إلغاء الأذونات.</string>
-    <string name="error_invalid_page_range">نطاق الصفحات غير صالح. يرجى التحقق من أرقام الصفحات والمحاولة مرة أخرى.</string>
     <string name="consent_dialog_decline">المتابعة بدون تخصيص</string>
 
     <string name="generating_previews">جارٍ إنشاء المعاينات…</string>
-    <string name="label_preview_loading">جارٍ التحميل…</string>
-    <string name="premium_status_loading">جارٍ التحقق من المتجر…</string>
-    <string name="premium_status_unavailable">المتجر غير متوفر. انقر لإعادة المحاولة.</string>
     <string name="action_retry">إعادة المحاولة</string>
     <string name="redaction_review_title">مراجعة التنقيحات</string>
     <string name="redaction_review_message">سيتم تطبيق %1$d تنقيح(ات) بشكل دائم. لا يمكن استرداد المحتوى المنقح.</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">أغلق تطبيقات الخلفية التي تستهلك ذاكرة كبيرة لتحرير ذاكرة RAM، ثم أعد المحاولة.</string>
     <string name="alt_free_ram_btn">فهمت</string>
     <string name="btn_proceed_anyway">المتابعة على أي حال</string>
-    <string name="msg_circuit_breaker_paused">أُوقفت المعالجة مؤقتًا لمنع تجمّد الهاتف. تم حفظ العمل المكتمل.</string>
     <string name="reader_dual_page_spread">صفحتان متجاورتان</string>
     <string name="reader_single_page">صفحة واحدة</string>
     <string name="flip_tabletop_mode">وضع سطح الطاولة</string>
     <string name="flip_fullscreen_mode">وضع ملء الشاشة</string>
-    <string name="flip_tabletop_mode_desc">وضع دون استخدام اليدين: المستند في الأعلى وأدوات التحكم في الأسفل</string>
     <string name="flip_tabletop_active_badge">وضع Flex</string>
     <string name="scanned_pdf_title">مستند ممسوح ضوئيًا</string>
     <string name="scanned_pdf_desc">يحتوي هذا المستند على صور ممسوحة ضوئيًا دون طبقة نص يمكن تحديده.</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">PDF سريع بالكاميرا</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">السبب</string>
     <string name="pki_location">الموقع</string>
     <string name="pki_sign_and_save">توقيع وحفظ</string>
-    <string name="btn_convert_to_pdfa">تحويل إلى PDF/A-1b</string>
-    <string name="btn_converting_pdfa">جارٍ التحويل إلى PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">تم التحويل إلى PDF/A-1b بنجاح</string>
-    <string name="error_pdfa_conversion_failed">فشل التحويل إلى PDF/A</string>
     <string name="btn_export_embedded_fonts">تصدير الخطوط المضمنة (.zip)</string>
     <string name="btn_exporting_fonts">جارٍ تصدير الخطوط…</string>
     <string name="title_fonts_exported_success">تم تصدير الخطوط المضمنة بنجاح (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">التطهير الجنائي للمتجهات</string>
     <string name="redact_forensic_desc">يحوّل الصفحات المنقحة إلى صور لمحو بايتات النص الأساسية بالكامل.</string>
     <string name="redact_smart_pii_title">تنقيح البيانات الشخصية الذكي</string>
-    <string name="reflow_find_placeholder">ابحث عن نص في المستند...</string>
+    <string name="reflow_find_placeholder">ابحث عن نص في المستند…</string>
     <string name="desc_previous_match">المطابقة السابقة</string>
     <string name="desc_next_match">المطابقة التالية</string>
     <string name="desc_play_pause">تشغيل/إيقاف مؤقت</string>

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">Coming Soon</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">Clear</string>
 <string name="clear_all">Clear All</string>
 <string name="save">Save</string>
-<string name="continue_btn">Continue</string>
 <string name="home_subtitle">FIX DOCUMENTS LOCALLY</string>
 <string name="cat_compress">Compress</string>
 <string name="cat_compress_desc">Make PDFs smaller, safely.</string>
@@ -20,23 +19,13 @@
 <string name="cat_check">Check</string>
 <string name="cat_check_desc">Inspect before sending.</string>
 <string name="menu_compress">Compress PDF</string>
-<string name="menu_compress_desc">Shrink file size</string>
 <string name="menu_merge">Merge PDF</string>
 <string name="menu_merge_desc">Combine multiple files</string>
 <string name="menu_split">Split PDF</string>
 <string name="menu_split_desc">Extract pages</string>
 <string name="menu_scan">Scan to PDF</string>
 <string name="menu_scan_desc">Camera to document</string>
-<string name="menu_ocr">Extract Text</string>
-<string name="menu_ocr_desc">Pull text from PDF</string>
-<string name="menu_metadata">Check Metadata</string>
-<string name="menu_metadata_desc">View hidden properties</string>
 <string name="settings_title">Settings</string>
-<string name="settings_preferences">App Preferences</string>
-<string name="settings_haptic">Haptic Feedback</string>
-<string name="settings_haptic_desc">Vibrate on interactions</string>
-<string name="settings_sfx">Sound Effects</string>
-<string name="settings_sfx_desc">Play audio on button clicks</string>
 <string name="settings_history">Remember Recent Files</string>
 <string name="settings_history_desc">Keep a local history of recently used files. Files are never uploaded.</string>
     <string name="settings_remember_position">Remember Reading Position</string>
@@ -44,8 +33,6 @@
 <string name="settings_language">Language</string>
 <string name="settings_language_desc">Change app display language</string>
 <string name="settings_clear_history">Clear Recent History</string>
-<string name="settings_clear_history_confirm">Are you sure you want to clear your recent files history?</string>
-<string name="settings_history_cleared">History cleared</string>
 <string name="settings_default_pdf_app">Default PDF Viewer</string>
 <string name="settings_default_pdf_app_desc">Set PdfChemy as your default app to open PDF files</string>
 <string name="settings_default_pdf_dialog_title">Set Default PDF Viewer</string>
@@ -55,17 +42,8 @@
 <string name="compress_single">Single File</string>
 <string name="compress_batch">Batch Compression</string>
 <string name="compress_select_file">Select PDF File</string>
-<string name="compress_compressing">Compressing PDF...</string>
 <string name="compress_target_size">Target File Size</string>
 <string name="compress_preset">Compression Preset:</string>
-<string name="compress_exact_mb">Exact MB</string>
-<string name="compress_options">Compression options</string>
-<string name="compress_grayscale">Grayscale Conversion</string>
-<string name="compress_grayscale_desc">Convert color images to black &amp; white</string>
-<string name="compress_lossless">Lossless ZIP Compression</string>
-<string name="compress_lossless_desc">Skip JPEG lossy compression</string>
-<string name="compress_strip_meta">Remove Metadata</string>
-<string name="compress_strip_meta_desc">Strip author, creator &amp; editor tags</string>
 <string name="warning_quality_title">Quality &amp; Legal Warning</string>
 <string name="warning_quality_desc">Compression reduces quality. This may invalidate official documents, medical records, or digital signatures. Always keep your original file.</string>
 <string name="warning_understand">I Understand</string>
@@ -107,17 +85,15 @@
 <string name="split_pdf">Split PDF</string>
 <string name="split_into_folder">Split into Folder</string>
 <string name="extraction_options">Extraction Options</string>
-<string name="extract_all_pages_as_individua">Extract all pages as individual files</string>
-<string name="extract_custom_range">Extract custom range</string>
-<string name="e_g_1_3_5_7_10">e.g. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">e.g. 1-3, 5, 7-10</string>
 <string name="extract_images">Extract Images</string>
 <string name="ready_to_extract_all_images_ta">Ready to extract all images. Tap the button below and choose an output folder.</string>
 <string name="change_pdf">Change PDF</string>
-<string name="extracting_images">Extracting images...</string>
+<string name="extracting_images">Extracting images…</string>
 <string name="delete_pages">Delete Pages</string>
 <string name="save_document">Save Document</string>
 <string name="pages_to_delete">Pages to Delete</string>
-<string name="e_g_1_3_5_10">e.g. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">e.g. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Enter comma-separated page numbers or ranges.</string>
 <string name="rotate_pages">Rotate Pages</string>
 <string name="rotate_save">Rotate &amp; Save</string>
@@ -128,24 +104,22 @@
 <string name="pages_to_rotate_optional">Pages to Rotate (Optional)</string>
 <string name="leave_blank_to_rotate_all_page">Leave blank to rotate all pages.</string>
 <string name="text_cleaner">Text Cleaner</string>
-<string name="paste_your_text_here">Paste your text here...</string>
+<string name="paste_your_text_here">Paste your text here…</string>
 <string name="text_format_converter">Text Format Converter</string>
-<string name="enter_content">Enter content...</string>
+<string name="enter_content">Enter content…</string>
 <string name="import_btn">Import</string>
-<string name="compressing_pdf">Compressing PDF...</string>
 <string name="create">Create &amp; Convert</string>
 <string name="compress">Compress &amp; Optimize</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Select target size (MB):</string>
 <string name="exact_mb">Exact MB</string>
-<string name="compression_options">Compression options</string>
 <string name="grayscale_conversion">Grayscale Conversion</string>
 <string name="convert_color_images_to_black">Convert color images to black &amp; white</string>
 <string name="lossless_zip_compression">Lossless ZIP Compression</string>
 <string name="skip_jpeg_lossy_compression_no">Skip JPEG lossy compression (no artifacts)</string>
 <string name="strip_author_creator_editor_ta">Strip author, creator &amp; editor tags</string>
 <string name="type_or_paste_text_here">Type or paste text here</string>
-<string name="enter_the_content_of_your_pdf">Enter the content of your PDF...</string>
+<string name="enter_the_content_of_your_pdf">Enter the content of your PDF…</string>
 <string name="import_txt">Import .txt</string>
 <string name="save_as_pdf">Save as PDF</string>
 <string name="clear_history">Clear History</string>
@@ -167,7 +141,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">File Name: %1$s</string>
 <string name="selected_batch_files">Selected Batch Files:</string>
-<string name="analyzing_doc">Analyzing document structure...</string>
+<string name="analyzing_doc">Analyzing document structure…</string>
 <string name="smart_recommendation">Smart Recommendation</string>
 <string name="detected_type">Detected Type: %1$s</string>
 <string name="doc_stats_pages_images">Pages: %1$d | Images: %2$d</string>
@@ -185,7 +159,6 @@
 ✓ No Banner Ads
 ✓ No Interstitials
 ✓ Unlimited Batch Actions</string>
-<string name="batch_compressing">Compressing %1$d of %2$d files...</string>
 <string name="msg_enter_text">Please enter some text.</string>
 <string name="menu_delete_pages">Delete Pages</string>
 <string name="menu_delete_pages_desc">Remove specific pages from a PDF</string>
@@ -193,8 +166,8 @@
 <string name="menu_extract_images_desc">Extract all images embedded in a PDF</string>
 <string name="menu_rotate_pages">Rotate Pages</string>
 <string name="menu_rotate_pages_desc">Rotate specific pages or entire documents</string>
-<string name="msg_extracted_images">Extracted %1$d images successfully!</string>
-<string name="msg_failed_extract_images">Failed to extract images (%1$d errors).</string>
+<string name="msg_extracted_images" tools:ignore="PluralsCandidate">Extracted %1$d images successfully!</string>
+<string name="msg_failed_extract_images" tools:ignore="PluralsCandidate">Failed to extract images (%1$d errors).</string>
 <string name="msg_no_images_found">No images found in this PDF.</string>
 <string name="menu_inspect_metadata">Inspect &amp; Edit Metadata</string>
 <string name="menu_inspect_metadata_desc">View document stats and modify metadata fields</string>
@@ -219,7 +192,7 @@
 <string name="label_images_count">Images: %1$d</string>
 <string name="label_signatures">Signatures: %1$s</string>
 <string name="label_type">Type: %1$s</string>
-<string name="label_total_summary">Total Summary (%1$d files)</string>
+<string name="label_total_summary" tools:ignore="PluralsCandidate">Total Summary (%1$d files)</string>
 <string name="action_hide_files">Hide Individual Files</string>
 <string name="action_view_files">View Individual Files</string>
 <string name="value_yes">Yes</string>
@@ -257,14 +230,12 @@
 <string name="label_batch_compress_folder">Batch Compression Folder</string>
 <string name="action_compress_batch">Compress Batch</string>
 <string name="title_batch_compress_result">Batch Compression Finished</string>
-<string name="msg_batch_compress_success_all">Successfully compressed all %1$d files!\nTotal space saved: %2$s</string>
-<string name="msg_batch_compress_success_partial">Successfully compressed %1$d of %2$d files.\nTotal space saved: %3$s</string>
+<string name="msg_batch_compress_success_all" tools:ignore="PluralsCandidate">Successfully compressed all %1$d files!\nTotal space saved: %2$s</string>
+<string name="msg_batch_compress_success_partial" tools:ignore="PluralsCandidate">Successfully compressed %1$d of %2$d files.\nTotal space saved: %3$s</string>
 <string name="msg_batch_compress_fail">Failed to compress any files in the batch.</string>
 <string name="desc_share_output">Share Output</string>
 <string name="desc_go_premium">Go Premium</string>
 <string name="desc_settings">Settings</string>
-<string name="desc_toggle_theme">Toggle Theme</string>
-<string name="desc_app_logo">App Logo</string>
 <string name="scan_prefix">Scan_</string>
 <string name="default_scanned_doc_name">scanned_document</string>
 <string name="desc_back">Back</string>
@@ -275,12 +246,12 @@
 <string name="tab_batch_pdf_optimization">Batch PDF Optimization</string>
 <string name="btn_change_file">Change File</string>
 <string name="btn_select_pdf_files">Select PDF Files</string>
-<string name="btn_add_more_files">Add More Files (%1$d selected)</string>
-<string name="label_original_size_analyzing">Original Size: %1$s (Analyzing...)</string>
+<string name="btn_add_more_files" tools:ignore="PluralsCandidate">Add More Files (%1$d selected)</string>
+<string name="label_original_size_analyzing">Original Size: %1$s (Analyzing…)</string>
 <string name="label_original_size_to_compressed">Original Size: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">Target: %1$.1f MB</string>
 <string name="label_target_unknown">Target: Unknown</string>
-<string name="label_analyzing">Analyzing...</string>
+<string name="label_analyzing">Analyzing…</string>
 <string name="label_target_mb">Target: %1$s MB</string>
 <string name="desc_remove_file">Remove file</string>
 <string name="preset_custom">Custom</string>
@@ -316,7 +287,7 @@
 <string name="success_images_converted">Your images have been converted successfully.</string>
 <string name="history_merged_pdf">Merged PDF</string>
 <string name="success_merge_complete">Merge Complete</string>
-<string name="success_merged_docs">Successfully merged %1$d documents.</string>
+<string name="success_merged_docs" tools:ignore="PluralsCandidate">Successfully merged %1$d documents.</string>
 <string name="history_updated_metadata">Updated Metadata PDF</string>
 <string name="history_metadata">Metadata</string>
 <string name="success_metadata_updated">The document\'s metadata has been successfully updated.</string>
@@ -357,7 +328,6 @@
 <string name="theme_dark">Dark Mode</string>
 <string name="settings_rate_app">Rate PDFchemy Tools</string>
 <string name="settings_rate_app_desc">Enjoying the app? Leave us a review on Google Play!</string>
-<string name="settings_rate_app_thanks">Thank you for your support!</string>
     <string name="settings_share_app">Share PDFchemy Tools</string>
     <string name="settings_share_app_desc">Tell friends and colleagues about this app</string>
     <string name="settings_share_app_message">Check out PDFchemy Tools — a fast, 100%% offline and private PDF compressor and editor for Android: %1$s</string>
@@ -397,7 +367,7 @@
 <string name="image_select_batch">Select Images</string>
 <string name="image_select_batch_desc">Choose multiple images to compress together</string>
 <string name="image_selected_label">Selected Image</string>
-<string name="image_batch_selected_count">%1$d images selected</string>
+<string name="image_batch_selected_count" tools:ignore="PluralsCandidate">%1$d images selected</string>
 <string name="image_batch_total_size">Total size: %1$s</string>
 <string name="image_compress_options">Compression Options</string>
 <string name="image_compress_quality">Image Quality</string>
@@ -411,13 +381,13 @@
 <string name="image_strip_exif">Strip EXIF &amp; Location</string>
 <string name="image_strip_exif_desc">Removes GPS tags, camera details &amp; metadata</string>
 <string name="image_btn_compress">Compress Image</string>
-<string name="image_btn_compress_batch">Compress %1$d Images</string>
+<string name="image_btn_compress_batch" tools:ignore="PluralsCandidate">Compress %1$d Images</string>
 <string name="image_result_success">Image Compressed Successfully!</string>
 <string name="image_result_dimensions">Dimensions</string>
 <string name="label_original">Original</string>
 <string name="label_compressed">Compressed</string>
 <string name="image_batch_completed_title">Batch Compression Completed!</string>
-<string name="image_batch_completed_summary">Successfully compressed %1$d of %2$d images.\nOriginal: %3$s → Compressed: %4$s (%5$d%% saved).</string>
+<string name="image_batch_completed_summary" tools:ignore="PluralsCandidate">Successfully compressed %1$d of %2$d images.\nOriginal: %3$s → Compressed: %4$s (%5$d%% saved).</string>
 <string name="mode_quality_slider">Quality Slider (%%)</string>
 <string name="mode_target_size">Target Size (MB)</string>
 <string name="target_size_preset_title">Target Size</string>
@@ -489,7 +459,7 @@
 <string name="render_resolution_label">Render Resolution</string>
 <string name="action_choose_folder_and_export">Select Export Folder &amp; Save</string>
 <string name="title_pdf_to_images_success">Pages Exported Successfully!</string>
-<string name="desc_pdf_to_images_success">Exported %1$d page images to your selected folder.</string>
+<string name="desc_pdf_to_images_success" tools:ignore="PluralsCandidate">Exported %1$d page images to your selected folder.</string>
 <string name="menu_fill_form">Fill PDF Forms</string>
 <string name="menu_fill_form_desc">Fill interactive tax, legal, and government form fields</string>
 <string name="fill_form_headline">Interactive Form Filler</string>
@@ -509,18 +479,12 @@
 <string name="ocr_pdf_subtitle" formatted="false">100% on-device text recognition. Generate a searchable, selectable text layer.</string>
 <string name="select_pdf_for_ocr">Select PDF Document</string>
 <string name="ocr_processing_generic">Analyzing and recognizing text…</string>
-<string name="ocr_processing_progress">OCR Processing: Page %1$d of %2$d…</string>
 <string name="action_create_searchable_pdf">Generate Searchable PDF</string>
 <string name="title_ocr_success">Searchable PDF Created!</string>
 <string name="desc_ocr_success">An invisible text layer has been injected for complete searchability.</string>
 <string name="error_ocr_failed">OCR recognition failed.</string>
 <string name="history_searchable_ocr_pdf">Searchable OCR PDF</string>
-<string name="menu_redact_pdf">Permanent Redaction</string>
 <string name="tool_redact">Redact</string>
-<string name="title_redact_success">PDF Redacted Successfully!</string>
-<string name="desc_redact_success">Targeted areas have been permanently sanitized and redacted.</string>
-<string name="error_redact_failed">Failed to apply redactions.</string>
-<string name="history_redacted_pdf">Redacted PDF</string>
 <string name="menu_reflow_reader">Reflow Reader &amp; Bookmarks</string>
 <string name="menu_reflow_reader_desc">Distraction-free e-book style reading mode with Table of Contents</string>
 <string name="reflow_reader_headline">Distraction-Free Mobile Reader</string>
@@ -536,11 +500,9 @@
 <string name="filter_magic_color">Magic Color</string>
 <string name="filter_bw">B &amp; W</string>
 <string name="filter_grayscale">Grayscale</string>
-<string name="action_save_as_pdf">Save %1$d Pages as PDF</string>
 <string name="title_scan_success">Document Scanned Successfully!</string>
 <string name="desc_scan_success">Scanned pages have been converted into an optimized PDF document.</string>
 <string name="error_scan_failed">Failed to generate scanned PDF.</string>
-<string name="history_scanned_pdf">Scanned Document</string>
 <string name="menu_sign_pdf">Sign PDF</string>
 <string name="menu_sign_pdf_desc">Draw, save, and stamp digital signatures onto contracts &amp; agreements</string>
 <string name="sign_pdf_headline">Sign PDF Documents</string>
@@ -551,7 +513,7 @@
 <string name="action_clear">Clear</string>
 <string name="title_draw_signature">Draw Your Signature</string>
 <string name="action_save_signature">Save Signature</string>
-<string name="action_save_signed_pdf">Save Signed PDF (%1$d Signatures)</string>
+<string name="action_save_signed_pdf" tools:ignore="PluralsCandidate">Save Signed PDF (%1$d Signatures)</string>
 <string name="title_sign_success">Document Signed Successfully!</string>
 <string name="desc_sign_success">Your digital signature has been permanently applied to the PDF.</string>
 <string name="error_sign_failed">Failed to sign PDF.</string>
@@ -568,11 +530,10 @@
 <string name="action_duplicate_page">Duplicate</string>
 <string name="action_insert_blank_page">Insert Blank Page</string>
 <string name="action_delete_page">Delete Page</string>
-<string name="action_save_organized_pdf">Save Reorganized PDF (%1$d Pages)</string>
+<string name="action_save_organized_pdf" tools:ignore="PluralsCandidate">Save Reorganized PDF (%1$d Pages)</string>
 <string name="title_organizer_success">Pages Reorganized Successfully!</string>
 <string name="desc_organizer_success">New page sequence and layout have been saved.</string>
 <string name="error_organizer_failed">Failed to reorganize PDF pages.</string>
-<string name="history_organized_pdf">Organized PDF</string>
 <string name="menu_watermark_pdf">Watermark PDF</string>
 <string name="menu_watermark_pdf_desc">Stamp customizable text or logo watermarks across all pages</string>
 <string name="watermark_headline">Add Document Watermark</string>
@@ -587,7 +548,6 @@
 <string name="title_watermark_success">Watermark Applied Successfully!</string>
 <string name="desc_watermark_success">Watermark has been stamped onto your document.</string>
 <string name="error_watermark_failed">Failed to apply watermark.</string>
-<string name="history_watermarked_pdf">Watermarked PDF</string>
 <string name="menu_page_number_pdf">Add Page Numbers</string>
 <string name="menu_page_number_pdf_desc">Insert customizable headers &amp; footers (Page X of Y, 1/N)</string>
 <string name="page_number_headline">Number PDF Pages</string>
@@ -606,11 +566,10 @@
 <string name="title_page_number_success">Page Numbers Added!</string>
 <string name="desc_page_number_success">Page numbering has been stamped into the document.</string>
 <string name="error_page_number_failed">Failed to add page numbers.</string>
-<string name="history_numbered_pdf">Numbered PDF</string>
 <string name="menu_page_layout">Page Sizer &amp; Handouts</string>
 <string name="menu_page_layout_desc">Resize standard paper dimensions or merge 2, 4, 6 pages per sheet</string>
 <string name="page_layout_headline">Page Layout &amp; N-Up Handouts</string>
-<string name="page_layout_subtitle">Format PDFs for printing, resize paper dimensions, or create 2-in-1 / 4-in-1 handouts.</string>
+<string name="page_layout_subtitle">Format PDFs for printing, resize paper dimensions, or create 2-in-1, 4-in-1 handouts.</string>
 <string name="select_pdf_for_layout">Select PDF Document</string>
 <string name="tab_nup_handout">N-Up Handouts</string>
 <string name="tab_resize_paper">Resize Paper</string>
@@ -624,18 +583,15 @@
 <string name="title_layout_success">Layout Generated Successfully!</string>
 <string name="desc_layout_success">Your formatted PDF layout has been saved.</string>
 <string name="error_layout_failed">Failed to generate layout.</string>
-<string name="history_layout_pdf">Layout PDF</string>
 <string name="menu_compare_pdfs">Compare Two PDFs</string>
 <string name="menu_compare_pdfs_desc">Spot differences, visual changes, and edited text between revisions</string>
 <string name="compare_headline">PDF Revision Comparator</string>
 <string name="compare_subtitle">Select two versions of a document to highlight visual alterations and line edits.</string>
 <string name="select_original_pdf">Select Original PDF (Doc A)</string>
 <string name="select_modified_pdf">Select Modified PDF (Doc B)</string>
-<string name="doc1_selected">Original Selected</string>
-<string name="doc2_selected">Modified Selected</string>
 <string name="comparing_documents_progress">Comparing document pages &amp; text…</string>
 <string name="compare_results_title">Comparison Results</string>
-<string name="compare_summary_counts">%1$d Modified Pages • %2$d Identical Pages</string>
+<string name="compare_summary_counts" tools:ignore="PluralsCandidate">%1$d Modified Pages • %2$d Identical Pages</string>
 <string name="no_visual_diff_available">Pages are visually identical.</string>
 <string name="label_added_lines">Added Lines (+)</string>
 <string name="label_removed_lines">Removed Lines (-)</string>
@@ -653,10 +609,10 @@
 <string name="info_word_export">Exports document text, paragraphs, headers, and page breaks into a standard Microsoft Word (.docx) file.</string>
 <string name="info_excel_export">Extracts structured tables, numerical data, and rows into an indexed Microsoft Excel (.xlsx) spreadsheet.</string>
 <string name="info_pptx_export">Turns PDF pages into presentation slides with title headers, bullet points, and visual slide backdrops in Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Converting to Office...</string>
+<string name="converting_to_office">Converting to Office…</string>
 <string name="btn_export_office_file">Export as %1$s</string>
 <string name="title_office_export_success">Export Complete</string>
-<string name="desc_office_export_success">Successfully exported %1$d pages to your selected Office format.</string>
+<string name="desc_office_export_success" tools:ignore="PluralsCandidate">Successfully exported %1$d pages to your selected Office format.</string>
 <string name="menu_pdf_to_word">PDF to Word</string>
 <string name="menu_pdf_to_word_desc">Export PDF to editable Microsoft Word (.docx)</string>
 <string name="menu_pdf_to_excel">PDF to Excel</string>
@@ -671,10 +627,10 @@
 <string name="banner_replace_image_desc">Replace any embedded image while preserving the exact layout, dimensions, and styling.</string>
 <string name="scanning_embedded_images">Scanning for embedded images…</string>
 <string name="no_embedded_images_found">No embedded images found in this PDF.</string>
-<string name="embedded_images_count">Found %1$d Embedded Images</string>
+<string name="embedded_images_count" tools:ignore="PluralsCandidate">Found %1$d Embedded Images</string>
 <string name="page_badge_num">Page %1$d</string>
 <string name="dialog_replace_image_title">Replace Embedded Image</string>
-<string name="dialog_replace_image_desc">Replace %2$s on Page %1$d with a new image from your gallery.</string>
+<string name="dialog_replace_image_desc" tools:ignore="PluralsCandidate">Replace %2$s on Page %1$d with a new image from your gallery.</string>
 <string name="label_current_image">Current Image</string>
 <string name="label_new_image">New Image</string>
 <string name="btn_pick_photo">Choose Photo</string>
@@ -692,10 +648,10 @@
 <string name="label_match_case">Match case</string>
 <string name="action_search">Find</string>
 <string name="no_occurrences_found">No occurrences found for this query.</string>
-<string name="search_occurrences_found">Found %1$d matches across %2$d pages</string>
+<string name="search_occurrences_found" tools:ignore="PluralsCandidate">Found %1$d matches across %2$d pages</string>
 <string name="btn_replace_all_and_save">Replace All &amp; Save</string>
 <string name="title_find_replace_success">Text Replaced Successfully!</string>
-<string name="desc_find_replace_success">Replaced %1$d occurrences across the document.</string>
+<string name="desc_find_replace_success" tools:ignore="PluralsCandidate">Replaced %1$d occurrences across the document.</string>
 
     <!-- Page Cropper Strings -->
 <string name="menu_crop_pdf">Crop &amp; Trim Margins</string>
@@ -752,7 +708,7 @@
 <string name="btn_open_file">Open File</string>
 <string name="btn_import_pdf_to_md">Extract Markdown from PDF</string>
 <string name="btn_save_md">Save .MD</string>
-<string name="hint_type_markdown">Type or paste Markdown here...</string>
+<string name="hint_type_markdown">Type or paste Markdown here…</string>
 <string name="label_doc_title">Document Title</string>
 <string name="btn_export_pdf">Export PDF</string>
 <string name="title_pdf_to_md_success">Extracted Markdown</string>
@@ -810,15 +766,15 @@
 <string name="select_pdf_for_booklet">Select PDF for Booklet</string>
 <string name="label_pages_detected">Pages detected: %1$d</string>
 <string name="label_imposition_plan">Imposition Sheet Plan</string>
-<string name="desc_imposition_sheets">Arranged into %1$d physical sheets (%2$d sides)</string>
+<string name="desc_imposition_sheets" tools:ignore="PluralsCandidate">Arranged into %1$d physical sheets (%2$d sides)</string>
 <string name="sheet_front">Front</string>
 <string name="sheet_back">Back</string>
 <string name="page_blank">Blank</string>
-<string name="label_more_sheets">+ %1$d more sheets</string>
+<string name="label_more_sheets" tools:ignore="PluralsCandidate">+ %1$d more sheets</string>
 <string name="label_booklet_settings">Booklet Settings</string>
 <string name="opt_center_fold_guide">Draw Center Fold Guideline</string>
 <string name="desc_center_fold_guide">Adds a subtle dashed line to assist folding and cutting</string>
-<string name="label_generating_sheet">Generating sheet %1$d of %2$d...</string>
+<string name="label_generating_sheet">Generating sheet %1$d of %2$d…</string>
 <string name="btn_create_booklet">Generate Booklet PDF</string>
 <string name="title_booklet_success">Booklet Created</string>
 <string name="desc_booklet_success">Print double-sided and fold in half to read as booklet</string>
@@ -834,7 +790,7 @@
 <string name="label_recovered_pages">Recoverable Pages</string>
 <string name="btn_repair_and_rebuild">Repair &amp; Rebuild PDF</string>
 <string name="title_repair_success">PDF Repaired</string>
-<string name="desc_repair_success">Successfully recovered %1$d pages and rebuilt clean syntax</string>
+<string name="desc_repair_success" tools:ignore="PluralsCandidate">Successfully recovered %1$d pages and rebuilt clean syntax</string>
 <string name="error_repair_failed">Repair Failed</string>
 
 <string name="menu_grayscale_optimizer">Monochrome &amp; Grayscale</string>
@@ -892,7 +848,7 @@
 <string name="redaction_headline">Permanent Redaction Studio</string>
 <string name="redaction_subtitle">Sanitize sensitive data, names, SSNs and credit cards</string>
 <string name="select_pdf_to_redact">Select PDF to Redact</string>
-<string name="placeholder_search_redact">Search text or regex to redact...</string>
+<string name="placeholder_search_redact">Search text or regex to redact…</string>
 <string name="chip_preset_emails">Emails</string>
 <string name="chip_preset_ssn">SSNs</string>
 <string name="chip_preset_credit_cards">Credit Cards</string>
@@ -901,9 +857,9 @@
 <string name="opt_whiteout">Whiteout Box</string>
 <string name="no_redaction_targets_found">No sensitive targets found. Enter a keyword above.</string>
 <string name="label_target_coords">Page %1$d • Box: (%2$d, %3$d)</string>
-<string name="btn_apply_redactions">Apply %1$d Redactions &amp; Save</string>
+<string name="btn_apply_redactions" tools:ignore="PluralsCandidate">Apply %1$d Redactions &amp; Save</string>
 <string name="title_redaction_success">PDF Sanitized</string>
-<string name="desc_redaction_success">Successfully applied %1$d permanent redactions</string>
+<string name="desc_redaction_success" tools:ignore="PluralsCandidate">Successfully applied %1$d permanent redactions</string>
 <string name="error_redaction_failed">Redaction Failed</string>
 <string name="menu_attachment_manager">Embedded Attachments</string>
 <string name="menu_attachment_manager_desc">Inspect, extract &amp; embed files inside PDF containers</string>
@@ -920,12 +876,6 @@
 <string name="desc_embed_success">New attachment added to PDF successfully</string>
 <string name="error_embed_failed">Embedding Failed</string>
 <string name="menu_fast_web_view_desc">Inspect PDF information; Fast Web View generation is unavailable</string>
-<string name="linearize_headline">Fast Web View Streamer</string>
-<string name="status_enabled">Enabled</string>
-<string name="linearize_info_explanation">Fast Web View organizes the file so web browsers render the first page immediately without waiting for the entire document to download.</string>
-<string name="title_linearize_success">PDF Linearized</string>
-<string name="desc_linearize_success">Document optimized for instant web streaming (%1$s)</string>
-<string name="error_linearize_failed">Optimization Failed</string>
 
 <string name="menu_nup_handouts">N-Up Multi-Page Grid</string>
 <string name="menu_nup_handouts_desc">Print 2, 4, 6, 9 or 16 pages per sheet for handouts</string>
@@ -941,8 +891,6 @@
 <string name="desc_nup_success">Generated %1$d-up multi-page handout grid</string>
 <string name="error_nup_failed">Handout Generation Failed</string>
 <string name="menu_pdfa_validator_desc">Run preliminary checks; PDF/A conformance is not certified</string>
-<string name="status_archival_ready" formatted="false">Archival Ready (100% Compliant)</string>
-<string name="status_compliance_issues_found">Non-Compliant (Issues Detected)</string>
 <string name="menu_font_inspector">Typography &amp; Font Inspector</string>
 <string name="menu_font_inspector_desc">Inspect embedded fonts, subtypes, and encodings</string>
 <string name="font_headline">Typography &amp; Embedded Fonts</string>
@@ -954,8 +902,6 @@
 <string name="stat_standard_system">System / Base</string>
 
 <string name="error_developer_diagnostics">Developer Diagnostics</string>
-<string name="error_tap_to_view_diagnostics">View Technical Log / Trace</string>
-<string name="error_tap_to_hide_diagnostics">Hide Technical Log</string>
 <string name="error_copy_diagnostics">Copy Diagnostics</string>
 <string name="error_diagnostics_copied">Technical diagnostic trace copied to clipboard</string>
 <string name="error_user_encrypted">This PDF is password-protected or encrypted. Please unlock it in PDF Security before proceeding.</string>
@@ -966,7 +912,7 @@
 <string name="desc_file_inaccessible">The document could not be read or permission has expired. Please select the file again.</string>
 <string name="btn_select_file">Select File</string>
 <string name="device_guard_title">Device Capacity Safeguard</string>
-<string name="device_guard_desc">This document has %1$d pages (%2$s) and requires approximately %3$s working memory. Your device currently has %4$s safe memory available. To prevent phone lag or freezing, PDFchemy has paused this operation.</string>
+<string name="device_guard_desc" tools:ignore="PluralsCandidate">This document has %1$d pages (%2$s) and requires approximately %3$s working memory. Your device currently has %4$s safe memory available. To prevent phone lag or freezing, PDFchemy has paused this operation.</string>
 <string name="alt_split_title">Split Document First (Recommended)</string>
 <string name="alt_split_desc">Divide the document into smaller parts (e.g. 30–50 pages) so your phone can process them smoothly.</string>
 <string name="alt_split_btn">Split Document</string>
@@ -980,12 +926,10 @@
 <string name="alt_free_ram_desc">Close heavy background apps to free up device RAM, then try again.</string>
 <string name="alt_free_ram_btn">Understood</string>
 <string name="btn_proceed_anyway">Proceed Anyway</string>
-<string name="msg_circuit_breaker_paused">Processing safely paused to prevent phone freezing. Completed work saved.</string>
 <string name="reader_dual_page_spread">Two-Page Spread</string>
 <string name="reader_single_page">Single Page</string>
 <string name="flip_tabletop_mode">Tabletop Mode</string>
 <string name="flip_fullscreen_mode">Full Screen Mode</string>
-<string name="flip_tabletop_mode_desc">Hands-free mode: Document displayed on top, desk controls on bottom</string>
 <string name="flip_tabletop_active_badge">Flex Mode</string>
 
     <!-- The Lifetime Manifesto -->
@@ -1020,13 +964,11 @@
     <string name="deskew_success">Document Straightened Successfully!</string>
     <string name="deskew_success_desc">Pages have been rotated and aligned.</string>
     <string name="deskew_auto_label">Auto-Detect Tilt</string>
-    <string name="deskew_manual_label">Manual Adjustment</string>
     <string name="deskew_no_tilt">Document is already straight (0.0°)</string>
 
     <string name="menu_table_extractor">Extract Tables to CSV</string>
     <string name="menu_table_extractor_desc">Pull tabular data and forms from PDF into clean RFC 4180 CSV / Excel</string>
     <string name="table_extractor_title">PDF Table &amp; Spreadsheet Extractor</string>
-    <string name="table_extractor_action_export">Export Tables to CSV</string>
     <string name="table_extractor_preview">Detected Tabular Data</string>
     <string name="table_extractor_no_tables">No tabular data detected on this page.</string>
     <string name="table_extractor_success">Tables Exported to CSV!</string>
@@ -1052,41 +994,32 @@
     <string name="sanitizer_action_threats">Launch / Open Actions: %1$d</string>
     <string name="sanitizer_attachments">Embedded Attachments: %1$d</string>
     <string name="sanitizer_all_clean">No active executable threats detected. Document is safe.</string>
-    <string name="sanitizer_threats_detected">%1$d threat vectors found in document</string>
+    <string name="sanitizer_threats_detected" tools:ignore="PluralsCandidate">%1$d threat vectors found in document</string>
     <string name="sanitizer_action_sanitize">Sterilize &amp; Purge Threats</string>
     <string name="sanitizer_success">Document Sanitized Successfully!</string>
-    <string name="sanitizer_success_desc">All active scripts, hooks, and tracking beacons removed.</string>
 
     <string name="menu_quick_fill_sign">Quick Fill &amp; Sign (Flat Forms)</string>
     <string name="menu_quick_fill_sign_desc">Tap anywhere on flat or scanned PDFs to add text, checkmarks, crosses, and signatures</string>
     <string name="quick_fill_title">Quick Fill &amp; Sign</string>
     <string name="quick_fill_text_tool">Text</string>
-    <string name="quick_fill_check_tool">Checkmark (✓)</string>
-    <string name="quick_fill_cross_tool">Cross (✗)</string>
-    <string name="quick_fill_date_tool">Date</string>
     <string name="quick_fill_sign_tool">Sign</string>
     <string name="quick_fill_tap_hint">Tap anywhere on the document to place the selected item</string>
     <string name="quick_fill_action_save">Save &amp; Flatten Form</string>
     <string name="quick_fill_success">Form Filled &amp; Saved!</string>
-    <string name="quick_fill_success_desc">All entries have been permanently embedded into the PDF.</string>
 
     <string name="split_mode_all">Extract All Pages Separately</string>
-    <string name="split_mode_range">Custom Page Range (e.g. 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">Custom Page Range (e.g. 1-3, 5)</string>
     <string name="split_mode_blank">Split by Blank Pages</string>
     <string name="split_mode_blank_desc">Detects blank separator pages in high-volume scans and cuts them into individual files</string>
     <string name="split_mode_bookmarks">Split by Bookmarks / Chapters</string>
     <string name="split_mode_bookmarks_desc">Splits document into separate PDFs based on chapter bookmarks</string>
-    <string name="split_blank_pages_found">Found %1$d document sections separated by blank pages</string>
-    <string name="split_bookmarks_found">Found %1$d outline chapter sections</string>
+    <string name="split_blank_pages_found" tools:ignore="PluralsCandidate">Found %1$d document sections separated by blank pages</string>
+    <string name="split_bookmarks_found" tools:ignore="PluralsCandidate">Found %1$d outline chapter sections</string>
     <string name="split_no_bookmarks">No chapter bookmarks found in this document.</string>
 
     <string name="tts_play">Read Aloud</string>
-    <string name="tts_pause">Pause</string>
-    <string name="tts_stop">Stop</string>
-    <string name="tts_speed">Speed: %1$.2fx</string>
     <string name="tts_prev_paragraph">Previous</string>
     <string name="tts_next_paragraph">Next</string>
-    <string name="tts_not_supported">Text-to-speech is not supported or language data is missing.</string>
 
     <string name="menu_form_builder">Interactive Form Builder</string>
     <string name="menu_form_builder_desc">Convert flat PDFs into genuine fillable PDF forms with text fields, checkboxes, and dropdowns</string>
@@ -1102,7 +1035,6 @@
     <string name="form_builder_action_save">Save Fillable PDF</string>
     <string name="form_builder_fields_count">Fields on Page: %1$d</string>
     <string name="form_builder_success">Fillable PDF Created Successfully!</string>
-    <string name="form_builder_success_desc">Interactive form fields have been embedded into your document.</string>
     <string name="form_builder_no_fields_warn">Please place at least one interactive form field before saving.</string>
     <string name="form_builder_delete_field">Delete Field</string>
     <string name="settings_vanguard">Vanguard Zero-Trust Shield</string>
@@ -1119,18 +1051,17 @@
     <string name="vanguard_encrypted_message">This document is encrypted and password-protected. Vanguard Zero-Trust Shield cannot verify embedded scripts or security threats while the document remains locked. Please unlock it first.</string>
     <string name="vanguard_action_unlock">Unlock PDF</string>
     <string name="vanguard_verifying_title">Vanguard Security Verification</string>
-    <string name="vanguard_verifying_desc">Auditing document for scripts and security threats...</string>
+    <string name="vanguard_verifying_desc">Auditing document for scripts and security threats…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
     <string name="scanned_pdf_title">Scanned Document</string>
     <string name="scanned_pdf_desc">This document contains scanned images without a selectable text layer.</string>
-    <string name="running_ocr">Running On-Device OCR...</string>
+    <string name="running_ocr">Running On-Device OCR…</string>
     <string name="run_on_device_ocr">Extract Text with OCR</string>
 
     <string name="action_redo">Redo</string>
     <string name="action_reset">Reset</string>
     <string name="action_reverse">Reverse</string>
     <string name="action_rotate_all">Rotate All</string>
-    <string name="label_preview_unavailable">Preview unavailable</string>
     <string name="dialog_unsaved_title">Unsaved Changes</string>
     <string name="dialog_unsaved_message">You have unsaved changes. Do you want to save or discard them before leaving?</string>
     <string name="dialog_unsaved_save">Save / Export</string>
@@ -1140,18 +1071,14 @@
     <string name="vanguard_damaged_message">This PDF appears to be damaged or truncated and could not be read safely. Try running Repair or selecting another copy.</string>
     <string name="vanguard_provider_error_title">File Inaccessible</string>
     <string name="vanguard_provider_error_message">The selected file could not be accessed. The storage provider may be unavailable or permissions were revoked.</string>
-    <string name="error_invalid_page_range">Invalid page range. Please verify the page numbers and try again.</string>
     <string name="consent_dialog_decline">Continue without Personalization</string>
 
     <string name="generating_previews">Generating previews…</string>
-    <string name="label_preview_loading">Loading…</string>
-    <string name="premium_status_loading">Checking store…</string>
-    <string name="premium_status_unavailable">Store unavailable. Tap to retry.</string>
     <string name="action_retry">Retry</string>
     <string name="redaction_review_title">Review Redactions</string>
-    <string name="redaction_review_message">%1$d redaction(s) will be permanently applied. Redacted content cannot be recovered.</string>
+    <string name="redaction_review_message" tools:ignore="PluralsCandidate">%1$d redaction(s) will be permanently applied. Redacted content cannot be recovered.</string>
     <string name="redaction_review_confirm">Apply Redactions</string>
-    <string name="diagnosing_document">Diagnosing document...</string>
+    <string name="diagnosing_document">Diagnosing document…</string>
     <string name="diagnosis_failed_title">Diagnosis Failed</string>
     <string name="diagnosis_failed_desc">Could not diagnose the document.</string>
     <string name="error_signing_failed">Signing Failed</string>
@@ -1185,13 +1112,13 @@
     <string name="document_load_recovery">This file could not be opened. Check that it is still available and select it again to restore access.</string>
     <string name="document_damaged_recovery">This PDF could not be read. Try another copy or use Repair PDF.</string>
     <string name="processing_document">Processing documentâ€¦</string>
-    <string name="operation_batch_progress">Completed %1$d of %2$d files</string>
+    <string name="operation_batch_progress" tools:ignore="PluralsCandidate">Completed %1$d of %2$d files</string>
     <string name="advanced_options">Advanced options</string>
     <string name="error_operation_recovery">The operation could not finish. Check the input file and output location, then try again.</string>
     <string name="error_storage_recovery">The output could not be saved. Free some storage or choose another folder, then try again.</string>
     <string name="error_password_recovery">This PDF requires a password. Unlock it with the correct password before continuing.</string>
     <string name="redaction_preview_patterns">Find and review selected patterns</string>
-    <string name="ocr_pages_completed">Recognized %1$d of %2$d pages</string>
+    <string name="ocr_pages_completed" tools:ignore="PluralsCandidate">Recognized %1$d of %2$d pages</string>
     <string name="ocr_saving_pdf">Saving searchable PDF…</string>
     <string name="menu_more_tools">All Tools</string>
     <string name="reader_action_search">Search Document</string>
@@ -1253,10 +1180,6 @@
     <string name="pki_reason">Reason</string>
     <string name="pki_location">Location</string>
     <string name="pki_sign_and_save">Sign &amp; Save</string>
-    <string name="btn_convert_to_pdfa">Convert to PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Converting to PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b Converted Successfully</string>
-    <string name="error_pdfa_conversion_failed">PDF/A Conversion Failed</string>
     <string name="btn_export_embedded_fonts">Export Embedded Fonts (.zip)</string>
     <string name="btn_exporting_fonts">Exporting Fonts…</string>
     <string name="title_fonts_exported_success">Embedded fonts exported successfully (%1$d)</string>
@@ -1267,7 +1190,7 @@
     <string name="desc_share_text">Share Text</string>
     <string name="msg_copied_to_clipboard">Text copied to clipboard</string>
     <string name="msg_text_saved_success">Text saved successfully</string>
-    <string name="form_fields_count">%1$d Fields</string>
+    <string name="form_fields_count" tools:ignore="PluralsCandidate">%1$d Fields</string>
     <string name="action_reset_fields">Reset Fields</string>
     <string name="desc_paste">Paste</string>
     <string name="bookmarks_count">Bookmarks (%1$d)</string>
@@ -1352,7 +1275,7 @@
     <string name="redact_forensic_title">Forensic Vector Sanitization</string>
     <string name="redact_forensic_desc">Rasterizes redacted pages to obliterate underlying text bytes completely.</string>
     <string name="redact_smart_pii_title">Smart PII Redaction</string>
-    <string name="reflow_find_placeholder">Find text in document...</string>
+    <string name="reflow_find_placeholder">Find text in document…</string>
     <string name="desc_previous_match">Previous Match</string>
     <string name="desc_next_match">Next Match</string>
     <string name="desc_play_pause">Play/Pause</string>
@@ -1388,7 +1311,7 @@
     <string name="sign_tool_check">Check</string>
     <string name="sign_tool_cross">Cross</string>
     <string name="sign_tool_date">Date</string>
-    <string name="acroform_page_fields_indicator">Page %1$d of %2$d • %3$d field(s)</string>
+    <string name="acroform_page_fields_indicator" tools:ignore="PluralsCandidate">Page %1$d of %2$d • %3$d field(s)</string>
     <string name="label_sheet_side">Sheet %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Show fewer sheets</string>
     <string name="extract_text_info_body">If the document contains standard text, it will be extracted instantly. If it is a scanned document (images), we will use on-device OCR (Optical Character Recognition) to read the text. This may take a few moments.</string>
@@ -1403,7 +1326,7 @@
     <string name="pos_footer_center">F-Center</string>
     <string name="pos_footer_right">F-Right</string>
     <string name="placeholder_example_mb">e.g. 1.5</string>
-    <string name="markdown_stats_words_chars">%1$d words · %2$d chars</string>
+    <string name="markdown_stats_words_chars" tools:ignore="PluralsCandidate">%1$d words · %2$d chars</string>
     <string name="metadata_clean_document">Clean document — zero personal tracking metadata detected.</string>
     <string name="ocr_info_body">Scanned documents and pictures of text will be indexed with an invisible, high-precision text layer. You can select, copy, and search words anywhere inside the new PDF.</string>
     <string name="select_pdf_extract_images">Select a PDF to extract all embedded images.</string>

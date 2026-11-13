@@ -1,5 +1,7 @@
 package com.pdfchemy.app.logic
 import android.graphics.*
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withTranslation
 object AnnotationRenderer {
     fun render(
         mod: PageModification,
@@ -8,7 +10,7 @@ object AnnotationRenderer {
     ): Bitmap? {
         if (targetWidth <= 0 || targetHeight <= 0) return null
         com.pdfchemy.app.security.SecurityLimits.requirePixels(targetWidth, targetHeight)
-        val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(targetWidth, targetHeight)
         val canvas = Canvas(bitmap)
 
         // 1. Render Freehand Drawings & Highlighters
@@ -92,15 +94,13 @@ object AnnotationRenderer {
             val boxWidth = textWidth + (32f * scaleFactor)
             val boxHeight = 54f * scaleFactor
 
-            canvas.save()
-            canvas.translate(posX, posY)
-            canvas.rotate(stamp.rotation)
+            canvas.withTranslation(posX, posY) {
+                rotate(stamp.rotation)
 
-            val stampRect = RectF(-boxWidth / 2f, -boxHeight / 2f, boxWidth / 2f, boxHeight / 2f)
-            canvas.drawRoundRect(stampRect, 10f * scaleFactor, 10f * scaleFactor, stampBorderPaint)
-            canvas.drawText(text, 0f, (boxHeight / 4f), stampTextPaint)
-
-            canvas.restore()
+                val stampRect = RectF(-boxWidth / 2f, -boxHeight / 2f, boxWidth / 2f, boxHeight / 2f)
+                drawRoundRect(stampRect, 10f * scaleFactor, 10f * scaleFactor, stampBorderPaint)
+                drawText(text, 0f, (boxHeight / 4f), stampTextPaint)
+            }
         }
 
         // 3b. Render Vector Shapes

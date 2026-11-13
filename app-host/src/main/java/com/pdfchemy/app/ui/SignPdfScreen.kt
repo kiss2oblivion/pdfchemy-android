@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 
 import android.net.Uri
-
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -946,7 +946,7 @@ fun SignPdfScreen(
                     Button(
                         onClick = {
                             if (signaturePaths.isNotEmpty()) {
-                                val bmp = Bitmap.createBitmap(600, 300, Bitmap.Config.ARGB_8888)
+                                val bmp = createBitmap(600, 300)
                                 val canvas = android.graphics.Canvas(bmp)
                                 val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                                     color = android.graphics.Color.BLACK

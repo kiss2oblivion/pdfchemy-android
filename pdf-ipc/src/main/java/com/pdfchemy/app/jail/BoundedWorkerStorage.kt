@@ -1,6 +1,7 @@
 package com.pdfchemy.app.jail
 
 import android.content.Context
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.system.ErrnoException
@@ -72,7 +73,10 @@ class BoundedWorkerStorage(
             readOnly = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
             check(file.delete()) { "Unable to unlink worker backing file" }
             pipe = ParcelFileDescriptor.createPipe()
-            Os.fcntlInt(pipe[0].fileDescriptor, OsConstants.F_SETFL, OsConstants.O_NONBLOCK)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val flags = Os.fcntlInt(pipe[0].fileDescriptor, OsConstants.F_GETFL, 0)
+                Os.fcntlInt(pipe[0].fileDescriptor, OsConstants.F_SETFL, flags or OsConstants.O_NONBLOCK)
+            }
             val id = Os.fstat(pipe[0].fileDescriptor).st_ino
             check(id !in sinks)
             val sink = Sink(id, pipe[1], pipe[0], backing, readOnly, kind)

@@ -136,6 +136,8 @@ class AudioExportService : Service() {
             var processed = 0
             store.updateProgress(id, 0, total, 0)
             val synthParams = Bundle().apply {
+                // Explicitly opt out of cloud TTS synthesis across engines that still honor KEY_FEATURE_NETWORK_SYNTHESIS.
+                @Suppress("DEPRECATION")
                 putString(TextToSpeech.Engine.KEY_FEATURE_NETWORK_SYNTHESIS, "false")
             }
             for ((index, chunk) in chunks.withIndex()) {
@@ -148,7 +150,7 @@ class AudioExportService : Service() {
                 // onDone alone cannot release this sink; drained acknowledges the application's writer flush.
                 withContext(Dispatchers.IO) { sink.delete() }
                 projector.recordChunk(chunk.length, bytes, pcm.format)
-                val safe = withContext(Dispatchers.IO) { projector.isSafe(pcm.format, raw.parentFile!!.usableSpace) }
+                val safe = withContext(Dispatchers.IO) { projector.isSafe(pcm.format, availableStagingBytes(raw)) }
                 check(safe) { "Projected audio exceeds available storage or RIFF limits" }
                 processed += chunk.length
                 store.updateProgress(id, processed, total, projector.projectedBytes(pcm.format))
@@ -198,6 +200,10 @@ class AudioExportService : Service() {
             }
         }
     }
+
+    // App-private cache staging space check on API 24+; avoids StorageManager UUID lookups.
+    @android.annotation.SuppressLint("UsableSpace")
+    private fun availableStagingBytes(file: java.io.File): Long = file.parentFile!!.usableSpace
 
     override fun onTimeout(startId: Int, fgsType: Int) {
         abort?.timeout()

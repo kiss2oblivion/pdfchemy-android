@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.jail.ocr.OcrBackendFactory
 import com.pdfchemy.app.jail.ocr.OcrResultBounds
 import com.tom_roush.pdfbox.pdmodel.PDDocument
@@ -83,7 +84,7 @@ object PdfOcrEngineWorker {
                     val bmpWidth = (pageWidth * renderScale).toInt().coerceIn(1, 2048)
                     val bmpHeight = (pageHeight * renderScale).toInt().coerceIn(1, 2048)
 
-                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpWidth, bmpHeight); Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888) }
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpWidth, bmpHeight); createBitmap(bmpWidth, bmpHeight) }
                     val canvas = android.graphics.Canvas(bitmap)
                     canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.tom_roush.pdfbox.multipdf.PDFMergerUtility
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import org.json.JSONArray
@@ -121,7 +122,7 @@ object PdfManipulatorWorker {
             var currentGroup = mutableListOf<Int>()
             val sampleW = 72
             val sampleH = 96
-            val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); Bitmap.createBitmap(sampleW, sampleH, Bitmap.Config.ARGB_8888) }
+            val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); createBitmap(sampleW, sampleH) }
             val pixels = IntArray(sampleW * sampleH)
 
             try {
@@ -456,7 +457,7 @@ object PdfManipulatorWorker {
                     
                     val w = expectedW.toInt()
                     val h = expectedH.toInt()
-                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888) }
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); createBitmap(w, h) }
                     bitmap.eraseColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     

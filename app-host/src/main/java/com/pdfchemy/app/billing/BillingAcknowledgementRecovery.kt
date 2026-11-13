@@ -38,6 +38,8 @@ internal object BillingAcknowledgementRecovery {
         }
     }
 
+    // Synchronous commit ensures completion persists before cancelling the recovery job or returning across process death.
+    @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     @Synchronized fun complete(context: Context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(PENDING, false).commit()
@@ -45,6 +47,8 @@ internal object BillingAcknowledgementRecovery {
         if (!running) context.getSystemService(JobScheduler::class.java)?.cancel(JOB_ID)
     }
 
+    // Synchronous commit ensures pause state persists before cancelling recovery across process death.
+    @android.annotation.SuppressLint("ApplySharedPref", "UseKtx")
     @Synchronized fun pauseAutomaticRetry(context: Context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(AUTOMATIC, false).commit()

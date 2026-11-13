@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">即將推出</string>
 <string name="ok">確定</string>
@@ -9,7 +9,6 @@
 <string name="clear">清除</string>
 <string name="clear_all">全部清除</string>
 <string name="save">儲存</string>
-<string name="continue_btn">繼續</string>
 <string name="home_subtitle">在裝置上安全處理文件</string>
 <string name="cat_compress">壓縮</string>
 <string name="cat_compress_desc">安全無損地縮減PDF檔案大小。</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">檢查</string>
 <string name="cat_check_desc">傳送前全面檢查文件安全與屬性。</string>
 <string name="menu_compress">壓縮 PDF</string>
-<string name="menu_compress_desc">減小檔案大小</string>
 <string name="menu_merge">合併 PDF</string>
 <string name="menu_merge_desc">將多個檔案組合為一個</string>
 <string name="menu_split">分割 PDF</string>
 <string name="menu_split_desc">擷取與分割頁面</string>
 <string name="menu_scan">掃描為 PDF</string>
 <string name="menu_scan_desc">使用相機掃描文件</string>
-<string name="menu_ocr">擷取文字</string>
-<string name="menu_ocr_desc">從 PDF 中擷取文字</string>
-<string name="menu_metadata">檢查詮釋資料</string>
-<string name="menu_metadata_desc">檢視隱藏的檔案屬性</string>
 <string name="settings_title">設定</string>
-<string name="settings_preferences">應用程式偏好設定</string>
-<string name="settings_haptic">觸覺回饋</string>
-<string name="settings_haptic_desc">互動時震動</string>
-<string name="settings_sfx">音效</string>
-<string name="settings_sfx_desc">按鈕點擊時播放提示音</string>
 <string name="settings_history">記住最近使用的檔案</string>
 <string name="settings_history_desc">在本地保留最近處理的檔案紀錄。檔案絕不會上傳至雲端。</string>
 <string name="settings_language">語言 (Language)</string>
 <string name="settings_language_desc">變更應用程式顯示語言</string>
 <string name="settings_clear_history">清除最近紀錄</string>
-<string name="settings_clear_history_confirm">您確定要清除最近的檔案紀錄嗎？</string>
-<string name="settings_history_cleared">紀錄已清除</string>
 <string name="compress_title">壓縮 PDF</string>
 <string name="compress_single">單一檔案</string>
 <string name="compress_batch">批次壓縮</string>
 <string name="compress_select_file">選擇 PDF 檔案</string>
-<string name="compress_compressing">正在壓縮 PDF...</string>
 <string name="compress_target_size">目標檔案大小</string>
 <string name="compress_preset">壓縮預設：</string>
-<string name="compress_exact_mb">指定 MB</string>
-<string name="compress_options">壓縮選項</string>
-<string name="compress_grayscale">灰階轉換</string>
-<string name="compress_grayscale_desc">將彩色圖片轉為黑白</string>
-<string name="compress_lossless">無損 ZIP 壓縮</string>
-<string name="compress_lossless_desc">略過 JPEG 破壞性壓縮</string>
-<string name="compress_strip_meta">移除詮釋資料</string>
-<string name="compress_strip_meta_desc">清除作者與編輯器標籤</string>
 <string name="warning_quality_title">畫質與法律提示</string>
 <string name="warning_quality_desc">壓縮可能會輕微降低畫質，這可能會影響官方文件或數位簽章的有效性。請務必妥善保留原始檔案。</string>
 <string name="warning_understand">我已瞭解</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">分割 PDF</string>
 <string name="split_into_folder">分割並儲存到資料夾</string>
 <string name="extraction_options">擷取選項</string>
-<string name="extract_all_pages_as_individua">將所有頁面擷取為獨立檔案</string>
-<string name="extract_custom_range">擷取指定頁面範圍</string>
-<string name="e_g_1_3_5_7_10">例：1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">例：1-3, 5, 7-10</string>
 <string name="extract_images">擷取圖片</string>
 <string name="ready_to_extract_all_images_ta">已準備好擷取所有圖片。點擊下方按鈕並選擇儲存資料夾。</string>
 <string name="change_pdf">更換 PDF</string>
-<string name="extracting_images">正在擷取圖片...</string>
+<string name="extracting_images">正在擷取圖片…</string>
 <string name="delete_pages">刪除頁面</string>
 <string name="save_document">儲存文件</string>
 <string name="pages_to_delete">要刪除的頁碼</string>
-<string name="e_g_1_3_5_10">例：1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">例：1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">輸入以逗號分隔的頁碼或範圍。</string>
 <string name="rotate_pages">旋轉頁面</string>
 <string name="rotate_save">旋轉並儲存</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">需要旋轉的頁面 (選填)</string>
 <string name="leave_blank_to_rotate_all_page">留空則旋轉全部頁面。</string>
 <string name="text_cleaner">文字整理工具</string>
-<string name="paste_your_text_here">在此貼上文字...</string>
+<string name="paste_your_text_here">在此貼上文字…</string>
 <string name="text_format_converter">文字格式轉換器</string>
-<string name="enter_content">輸入內容...</string>
+<string name="enter_content">輸入內容…</string>
 <string name="import_btn">匯入</string>
-<string name="compressing_pdf">正在壓縮 PDF...</string>
 <string name="create">建立</string>
 <string name="compress">壓縮</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">選擇目標大小 (MB)：</string>
 <string name="exact_mb">指定 MB</string>
-<string name="compression_options">壓縮選項</string>
 <string name="grayscale_conversion">灰階轉換</string>
 <string name="convert_color_images_to_black">將彩色圖片轉為黑白</string>
 <string name="lossless_zip_compression">無損 ZIP 壓縮</string>
 <string name="skip_jpeg_lossy_compression_no">略過 JPEG 破壞性壓縮 (無損畫質)</string>
 <string name="strip_author_creator_editor_ta">清除作者、建立者與編輯器標籤</string>
 <string name="type_or_paste_text_here">在此輸入或貼上文字</string>
-<string name="enter_the_content_of_your_pdf">輸入您的 PDF 內容...</string>
+<string name="enter_the_content_of_your_pdf">輸入您的 PDF 內容…</string>
 <string name="import_txt">匯入 .txt</string>
 <string name="save_as_pdf">儲存為 PDF</string>
 <string name="clear_history">清除紀錄</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">檔案名稱：%1$s</string>
 <string name="selected_batch_files">已選批次檔案：</string>
-<string name="analyzing_doc">正在分析文件結構...</string>
+<string name="analyzing_doc">正在分析文件結構…</string>
 <string name="smart_recommendation">智慧建議</string>
 <string name="detected_type">辨識類型：%1$s</string>
 <string name="doc_stats_pages_images">頁數：%1$d | 圖片數：%2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ 無廣告干擾
 ✓ 無限制批次處理</string>
-<string name="batch_compressing">正在壓縮 %1$d / %2$d 個檔案...</string>
 <string name="msg_enter_text">請輸入一些文字。</string>
 <string name="menu_delete_pages">刪除頁面</string>
 <string name="menu_delete_pages_desc">從 PDF 中移除指定頁面</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">分享結果</string>
 <string name="desc_go_premium">升級至專業版</string>
 <string name="desc_settings">設定</string>
-<string name="desc_toggle_theme">切換主題</string>
-<string name="desc_app_logo">應用程式圖示</string>
 <string name="scan_prefix">Scan_</string>
 <string name="default_scanned_doc_name">掃描文件</string>
 <string name="desc_back">返回</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">更換檔案</string>
 <string name="btn_select_pdf_files">選擇 PDF 檔案</string>
 <string name="btn_add_more_files">新增更多檔案 (已選 %1$d 個)</string>
-<string name="label_original_size_analyzing">原始大小：%1$s (正在分析...)</string>
+<string name="label_original_size_analyzing">原始大小：%1$s (正在分析…)</string>
 <string name="label_original_size_to_compressed">原始：%1$s  →  %2$s</string>
 <string name="label_target_mb_batch">目標：%1$.1f MB</string>
 <string name="label_target_unknown">目標：未設定</string>
-<string name="label_analyzing">正在分析...</string>
+<string name="label_analyzing">正在分析…</string>
 <string name="label_target_mb">目標：%1$s MB</string>
 <string name="desc_remove_file">移除檔案</string>
 <string name="preset_custom">自訂</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">深色模式</string>
 <string name="settings_rate_app">為 PDFchemy 評分</string>
 <string name="settings_rate_app_desc">喜歡這款應用程式？在 Google Play 給我們留個好評吧！</string>
-<string name="settings_rate_app_thanks">感謝您的支持！</string>
     <string name="settings_share_app">分享 PDFchemy Tools</string>
     <string name="settings_share_app_desc">向朋友和同事推薦這款應用程式</string>
     <string name="settings_share_app_message">歡迎體驗 PDFchemy Tools — 專為 Android 設計的高速、100%% 離線且嚴格保護隱私的 PDF 壓縮與編輯工具: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">100%% 離線文字識別。為檔案嵌入隱形文字層以支援選詞和搜尋。</string>
 <string name="select_pdf_for_ocr">選擇 PDF 文件</string>
 <string name="ocr_processing_generic">正在分析並識別文字…</string>
-<string name="ocr_processing_progress">OCR 辨識中：第 %1$d / %2$d 頁…</string>
 <string name="action_create_searchable_pdf">產生可搜尋 PDF</string>
 <string name="title_ocr_success">可搜尋 PDF 產生成功！</string>
 <string name="desc_ocr_success">已注入透明文字層，您現在可以隨時搜尋和複製文字。</string>
 <string name="error_ocr_failed">OCR 文字辨識失敗。</string>
 <string name="history_searchable_ocr_pdf">OCR 可搜尋 PDF</string>
-<string name="menu_redact_pdf">永久塗黑去識別化 (Redaction)</string>
 <string name="tool_redact">塗黑</string>
-<string name="title_redact_success">PDF 塗黑處理成功！</string>
-<string name="desc_redact_success">選定區域及其底層資料已被永久抹除。</string>
-<string name="error_redact_failed">塗黑處理失敗。</string>
-<string name="history_redacted_pdf">已塗黑 PDF</string>
 <string name="menu_reflow_reader">舒適閱讀模式與目錄</string>
 <string name="menu_reflow_reader_desc">支援目錄導覽的沉浸式電子書閱讀模式</string>
 <string name="reflow_reader_headline">舒適行動閱讀器</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">魔法色彩</string>
 <string name="filter_bw">黑白增強</string>
 <string name="filter_grayscale">灰階</string>
-<string name="action_save_as_pdf">儲存 %1$d 頁為 PDF</string>
 <string name="title_scan_success">文件掃描成功！</string>
 <string name="desc_scan_success">掃描的頁面已組裝為清晰最佳化的 PDF 文件。</string>
 <string name="error_scan_failed">產生掃描 PDF 失敗。</string>
-<string name="history_scanned_pdf">掃描文件</string>
 <string name="menu_sign_pdf">簽名 PDF</string>
 <string name="menu_sign_pdf_desc">在合約與協議上手繪、儲存並加蓋電子簽章</string>
 <string name="sign_pdf_headline">簽署 PDF 文件</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">頁面整理完成！</string>
 <string name="desc_organizer_success">新的頁面順序與版面已儲存。</string>
 <string name="error_organizer_failed">整理頁面失敗。</string>
-<string name="history_organized_pdf">已整理的 PDF</string>
 <string name="menu_watermark_pdf">新增浮水印</string>
 <string name="menu_watermark_pdf_desc">在所有頁面上加蓋自訂文字或標誌浮水印</string>
 <string name="watermark_headline">為文件新增浮水印</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">浮水印新增成功！</string>
 <string name="desc_watermark_success">浮水印已成功加蓋在文件中。</string>
 <string name="error_watermark_failed">新增浮水印失敗。</string>
-<string name="history_watermarked_pdf">含浮水印的 PDF</string>
 <string name="menu_page_number_pdf">新增頁碼</string>
 <string name="menu_page_number_pdf_desc">在頁首或頁尾插入可自訂頁碼 (第 X 頁 / 共 Y 頁)</string>
 <string name="page_number_headline">PDF 頁面編號</string>
@@ -589,7 +549,6 @@
 <string name="title_page_number_success">頁碼新增成功！</string>
 <string name="desc_page_number_success">頁碼已成功打印到文件中。</string>
 <string name="error_page_number_failed">新增頁碼失敗。</string>
-<string name="history_numbered_pdf">已編頁碼的 PDF</string>
 <string name="menu_page_layout">紙張尺寸與多頁並印 (N-Up)</string>
 <string name="menu_page_layout_desc">調整標準紙張大小或在一張紙上並印 2、4、6 頁</string>
 <string name="page_layout_headline">版面配置與多頁並印 (N-Up)</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">版面產生成功！</string>
 <string name="desc_layout_success">重新排版的 PDF 已成功儲存。</string>
 <string name="error_layout_failed">產生版面失敗。</string>
-<string name="history_layout_pdf">重新排版的 PDF</string>
 <string name="menu_compare_pdfs">比對兩份 PDF</string>
 <string name="menu_compare_pdfs_desc">高亮比對修訂版本之間的視覺差異和文字增刪改動</string>
 <string name="compare_headline">PDF 版本比對器</string>
 <string name="compare_subtitle">選擇同一文件的兩個版本，高亮顯示排版差異與文字變更。</string>
 <string name="select_original_pdf">選擇原始版本 (文件 A)</string>
 <string name="select_modified_pdf">選擇修改版本 (文件 B)</string>
-<string name="doc1_selected">已選原始文件</string>
-<string name="doc2_selected">已選修改文件</string>
 <string name="comparing_documents_progress">正在比對頁面與文字內容…</string>
 <string name="compare_results_title">比對結果</string>
 <string name="compare_summary_counts">%1$d 頁存在變動 • %2$d 頁完全一致</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">將段落、標題與分頁符號匯出為標準 Microsoft Word (.docx) 文件。</string>
 <string name="info_excel_export">擷取結構化表格與數值資料至 Microsoft Excel (.xlsx) 試算表。</string>
 <string name="info_pptx_export">將頁面轉換為包含標題與項目符號的 Microsoft PowerPoint (.pptx) 簡報。</string>
-<string name="converting_to_office">正在轉換為 Office 格式...</string>
+<string name="converting_to_office">正在轉換為 Office 格式…</string>
 <string name="btn_export_office_file">匯出為 %1$s</string>
 <string name="title_office_export_success">匯出完成</string>
 <string name="desc_office_export_success">已成功將 %1$d 頁匯出為所選 Office 格式。</string>
@@ -797,7 +753,7 @@
 <string name="label_booklet_settings">小冊子設定</string>
 <string name="opt_center_fold_guide">繪製中縫對摺輔助線</string>
 <string name="desc_center_fold_guide">新增淺色中縫虛線以輔助對摺與裁切</string>
-<string name="label_generating_sheet">正在產生第 %1$d / %2$d 張紙...</string>
+<string name="label_generating_sheet">正在產生第 %1$d / %2$d 張紙…</string>
 <string name="btn_create_booklet">產生小冊子 PDF</string>
 <string name="title_booklet_success">小冊子建立成功</string>
 <string name="desc_booklet_success">雙面列印並沿中線對摺即可作為小冊子閱讀</string>
@@ -900,18 +856,12 @@
 <string name="error_embed_failed">嵌入檔案失敗</string>
 <string name="menu_fast_web_view">Fast Web View 資訊</string>
 <string name="menu_fast_web_view_desc">檢查 PDF 資訊；Fast Web View 產生功能不可用</string>
-<string name="linearize_headline">串流傳輸與快速 Web 檢視</string>
 <string name="linearize_subtitle">此版本無法產生或認證 Fast Web View PDF。不會建立任何輸出檔案。</string>
 <string name="select_pdf_for_linearize">選取要檢查的 PDF</string>
 <string name="label_diagnostic_status">PDF 資訊</string>
 <string name="label_fast_web_view_enabled">線性化：</string>
-<string name="status_enabled">已啟用</string>
 <string name="status_disabled">未驗證</string>
-<string name="linearize_info_explanation">快速 Web 檢視重新組織檔案結構，使 Web 瀏覽器無需等待整份文件下載完畢即可立即繪製第一頁。</string>
 <string name="btn_optimize_fast_web_view">最佳化不可用</string>
-<string name="title_linearize_success">PDF 線性化成功</string>
-<string name="desc_linearize_success">文件已最佳化，支援網路即時串流載入 (%1$s)</string>
-<string name="error_linearize_failed">最佳化失敗</string>
 
 <string name="menu_nup_handouts">N 合一多頁講義網格</string>
 <string name="menu_nup_handouts_desc">在單張紙上排版 2、4、6、9 或 16 頁用於講義列印</string>
@@ -931,8 +881,6 @@
 <string name="pdfa_headline">僅初步檢查；未經認證</string>
 <string name="pdfa_subtitle">這些檢查不代表認證符合 ISO 19005 標準。此版本中無法進行 PDF/A 轉換。</string>
 <string name="select_pdf_for_pdfa">選取要進行初步檢查的 PDF</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">不合規（偵測到問題）</string>
 <string name="menu_font_inspector">字型排印與檢查器</string>
 <string name="menu_font_inspector_desc">檢查內嵌字型、子集類型與編碼格式</string>
 <string name="font_headline">字型排印與內嵌字型</string>
@@ -944,8 +892,6 @@
 <string name="stat_standard_system">系統 / 標準</string>
 
 <string name="error_developer_diagnostics">開發人員診斷資訊</string>
-<string name="error_tap_to_view_diagnostics">檢視技術記錄 / 追蹤</string>
-<string name="error_tap_to_hide_diagnostics">隱藏技術記錄</string>
 <string name="error_copy_diagnostics">複製診斷資訊</string>
 <string name="error_diagnostics_copied">技術診斷追蹤記錄已複製到剪貼簿</string>
 <string name="error_user_encrypted">此 PDF 受密碼保護或已加密。請在繼續之前先在「PDF 安全」中解除鎖定。</string>
@@ -986,12 +932,10 @@
     <string name="deskew_success">文件歪斜校正成功！</string>
     <string name="deskew_success_desc">頁面已完成旋轉與對齊校正。</string>
     <string name="deskew_auto_label">自動偵測歪斜</string>
-    <string name="deskew_manual_label">手動微調</string>
     <string name="deskew_no_tilt">文件已水平，無需校正 (0.0°)</string>
     <string name="menu_table_extractor">擷取表格為 CSV</string>
     <string name="menu_table_extractor_desc">將 PDF 中的表格資料與表單擷取為規範的 CSV / Excel</string>
     <string name="table_extractor_title">PDF 表格與試算表擷取器</string>
-    <string name="table_extractor_action_export">匯出表格為 CSV</string>
     <string name="table_extractor_preview">偵測到的表格資料</string>
     <string name="table_extractor_no_tables">此頁面未偵測到表格資料。</string>
     <string name="table_extractor_success">表格已成功匯出為 CSV！</string>
@@ -1006,21 +950,16 @@
     <string name="sanitizer_threats_detected">文件中偵測到 %1$d 個威脅向量</string>
     <string name="sanitizer_action_sanitize">淨化並清除威脅</string>
     <string name="sanitizer_success">文件淨化成功！</string>
-    <string name="sanitizer_success_desc">所有活動指令碼、勾點與追蹤信標已徹底清除。</string>
     <string name="menu_quick_fill_sign">快速填寫與簽名（平面表單）</string>
     <string name="menu_quick_fill_sign_desc">在掃描或一般 PDF 上任意輕觸新增文字、勾選、叉號與簽名</string>
     <string name="quick_fill_title">快速填寫與簽名</string>
     <string name="quick_fill_text_tool">文字</string>
-    <string name="quick_fill_check_tool">勾選 (✓)</string>
-    <string name="quick_fill_cross_tool">叉號 (✗)</string>
-    <string name="quick_fill_date_tool">日期</string>
     <string name="quick_fill_sign_tool">簽名</string>
     <string name="quick_fill_tap_hint">輕觸文件任意位置以放置所選項目</string>
     <string name="quick_fill_action_save">儲存並平面化表單</string>
     <string name="quick_fill_success">表單填寫並儲存成功！</string>
-    <string name="quick_fill_success_desc">所有輸入項目已永久內嵌至 PDF 中。</string>
     <string name="split_mode_all">單獨擷取所有頁面</string>
-    <string name="split_mode_range">自訂頁面範圍（例如 1-3, 5）</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">自訂頁面範圍（例如 1-3, 5）</string>
     <string name="split_mode_blank">按空白頁分割</string>
     <string name="split_mode_blank_desc">自動偵測大量掃描件中的空白分隔頁，並將其分割為個別檔案</string>
     <string name="split_mode_bookmarks">按書籤／章節分割</string>
@@ -1029,12 +968,8 @@
     <string name="split_bookmarks_found">發現 %1$d 個大綱章節分節</string>
     <string name="split_no_bookmarks">此文件中未找到章節書籤。</string>
     <string name="tts_play">朗讀</string>
-    <string name="tts_pause">暫停</string>
-    <string name="tts_stop">停止</string>
-    <string name="tts_speed">語速：%1$.2fx</string>
     <string name="tts_prev_paragraph">上一段</string>
     <string name="tts_next_paragraph">下一段</string>
-    <string name="tts_not_supported">不支援語音朗讀（TTS）或缺少語言資料。</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">互動式表單構建器</string>
@@ -1051,7 +986,6 @@
     <string name="form_builder_action_save">儲存可填寫PDF</string>
     <string name="form_builder_fields_count">頁面欄位數: %1$d</string>
     <string name="form_builder_success">可填寫PDF建立成功！</string>
-    <string name="form_builder_success_desc">互動式表單欄位已成功嵌入文件中。</string>
     <string name="form_builder_no_fields_warn">儲存前請至少放置一個表單欄位。</string>
     <string name="form_builder_delete_field">刪除欄位</string>
     <string name="settings_vanguard">Vanguard 零信任防護盾</string>
@@ -1062,14 +996,13 @@
     <string name="vanguard_encrypted_message">此文件已加密並受密碼保護。在文件處於鎖定狀態時，Vanguard 零信任防護盾無法驗證嵌入式腳本或安全威脅。請先解除密碼鎖定。</string>
     <string name="vanguard_action_unlock">解除 PDF 密碼</string>
     <string name="vanguard_verifying_title">Vanguard 安全驗證</string>
-    <string name="vanguard_verifying_desc">正在檢查文件中的腳本與安全威脅...</string>
+    <string name="vanguard_verifying_desc">正在檢查文件中的腳本與安全威脅…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% 離線 • 零信任</string>
 
     <string name="action_redo">重做</string>
     <string name="action_reset">重設</string>
     <string name="action_reverse">反轉順序</string>
     <string name="action_rotate_all">旋轉全部</string>
-    <string name="label_preview_unavailable">預覽無法使用</string>
     <string name="dialog_unsaved_title">未儲存的變更</string>
     <string name="dialog_unsaved_message">您有未儲存的變更。離開前是否要儲存或放棄？</string>
     <string name="dialog_unsaved_save">儲存 / 匯出</string>
@@ -1079,13 +1012,9 @@
     <string name="vanguard_damaged_message">此 PDF 似乎已損毀或不完整，無法安全讀取。請嘗試執行修復或選取其他複本。</string>
     <string name="vanguard_provider_error_title">檔案無法存取</string>
     <string name="vanguard_provider_error_message">無法存取所選檔案。儲存空間提供者可能無法使用或權限已被撤銷。</string>
-    <string name="error_invalid_page_range">頁碼範圍無效。請核對頁碼後重試。</string>
     <string name="consent_dialog_decline">不進行個人化設定繼續</string>
 
     <string name="generating_previews">正在產生預覽…</string>
-    <string name="label_preview_loading">載入中…</string>
-    <string name="premium_status_loading">正在檢查商店…</string>
-    <string name="premium_status_unavailable">商店無法使用。輕點以重試。</string>
     <string name="action_retry">重試</string>
     <string name="redaction_review_title">審查塗黑</string>
     <string name="redaction_review_message">將永久套用 %1$d 處塗黑。塗黑的內容將無法復原。</string>
@@ -1115,12 +1044,10 @@
     <string name="alt_free_ram_desc">關閉佔用大量記憶體的背景應用程式以釋放 RAM，然後重試。</string>
     <string name="alt_free_ram_btn">我知道了</string>
     <string name="btn_proceed_anyway">仍要繼續</string>
-    <string name="msg_circuit_breaker_paused">為防止手機當機，處理已暫停。已完成的工作已儲存。</string>
     <string name="reader_dual_page_spread">雙頁並排</string>
     <string name="reader_single_page">單頁</string>
     <string name="flip_tabletop_mode">桌面支撐模式</string>
     <string name="flip_fullscreen_mode">全螢幕模式</string>
-    <string name="flip_tabletop_mode_desc">免手持模式：上方顯示文件，下方顯示操作控制項</string>
     <string name="flip_tabletop_active_badge">摺疊模式</string>
     <string name="scanned_pdf_title">掃描文件</string>
     <string name="scanned_pdf_desc">此文件包含掃描影像，沒有可選取的文字圖層。</string>
@@ -1146,7 +1073,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">快速相機 PDF</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1221,10 +1148,6 @@
     <string name="pki_reason">簽署事由</string>
     <string name="pki_location">地點</string>
     <string name="pki_sign_and_save">簽署並儲存</string>
-    <string name="btn_convert_to_pdfa">轉換為 PDF/A-1b</string>
-    <string name="btn_converting_pdfa">正在轉換為 PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b 轉換成功</string>
-    <string name="error_pdfa_conversion_failed">PDF/A 轉換失敗</string>
     <string name="btn_export_embedded_fonts">匯出內嵌字型 (.zip)</string>
     <string name="btn_exporting_fonts">正在匯出字型…</string>
     <string name="title_fonts_exported_success">已成功匯出內嵌字型 (%1$d)</string>
@@ -1322,7 +1245,7 @@
     <string name="redact_forensic_title">取證級向量徹底清除</string>
     <string name="redact_forensic_desc">將塗黑頁面點陣化，以徹底銷毀底層文字位元組。</string>
     <string name="redact_smart_pii_title">智慧個人敏感資訊遮蔽</string>
-    <string name="reflow_find_placeholder">在文件中尋找文字...</string>
+    <string name="reflow_find_placeholder">在文件中尋找文字…</string>
     <string name="desc_previous_match">上一個符合項目</string>
     <string name="desc_next_match">下一個符合項目</string>
     <string name="desc_play_pause">播放/暫停</string>

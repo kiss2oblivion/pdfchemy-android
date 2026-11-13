@@ -27,7 +27,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.rounded.*
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -500,7 +503,7 @@ class MainActivity : AppCompatActivity() {
                         text = { Text(stringResource(R.string.consent_dialog_body)) },
                         confirmButton = {
                             Button(onClick = {
-                                prefs.edit().putBoolean("has_consented", true).apply()
+                                prefs.edit { putBoolean("has_consented", true) }
                                 hasConsented = true
                             }) {
                                 Text(stringResource(R.string.consent_dialog_agree))
@@ -509,7 +512,7 @@ class MainActivity : AppCompatActivity() {
                         dismissButton = {
                             TextButton(onClick = {
                                 // They decline personalization/ads, but can still use the app locally
-                                prefs.edit().putBoolean("has_consented", true).apply()
+                                prefs.edit { putBoolean("has_consented", true) }
                                 hasConsented = true
                             }) {
                                 Text(stringResource(R.string.consent_dialog_decline))
@@ -526,7 +529,7 @@ class MainActivity : AppCompatActivity() {
                     OnboardingWalkthroughDialog(
                         onDismiss = {
                             hasCompletedOnboarding = true
-                            prefs.edit().putBoolean("has_completed_onboarding", true).apply()
+                            prefs.edit { putBoolean("has_completed_onboarding", true) }
                             showTourManually = false
                         }
                     )
@@ -541,7 +544,7 @@ class MainActivity : AppCompatActivity() {
                     isScreenshotRun = isScreenshotRun,
                     onChangeThemeMode = { newMode ->
                         themeMode = newMode
-                        prefs.edit().putString("theme_mode", newMode).apply()
+                        prefs.edit { putString("theme_mode", newMode) }
                     },
                     onOpenTour = {
                         showTourManually = true
@@ -1590,23 +1593,23 @@ val ScreenSaver: Saver<Screen, String> = Saver(
         when {
             str.startsWith("PdfEditor:") -> {
                 val uriStr = str.removePrefix("PdfEditor:")
-                Screen.PdfEditor(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+                Screen.PdfEditor(if (uriStr.isNotEmpty()) uriStr.toUri() else null)
             }
             str.startsWith("PdfReader:") -> {
                 val uriStr = str.removePrefix("PdfReader:")
-                Screen.PdfReader(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+                Screen.PdfReader(if (uriStr.isNotEmpty()) uriStr.toUri() else null)
             }
             str.startsWith("ReflowReader:") -> {
                 val uriStr = str.removePrefix("ReflowReader:")
-                Screen.ReflowReader(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+                Screen.ReflowReader(if (uriStr.isNotEmpty()) uriStr.toUri() else null)
             }
             str.startsWith("UnlockPdf:") -> {
                 val uriStr = str.removePrefix("UnlockPdf:")
-                Screen.UnlockPdf(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+                Screen.UnlockPdf(if (uriStr.isNotEmpty()) uriStr.toUri() else null)
             }
             str.startsWith("SplitPdf:") -> {
                 val uriStr = str.removePrefix("SplitPdf:")
-                Screen.SplitPdf(if (uriStr.isNotEmpty()) Uri.parse(uriStr) else null)
+                Screen.SplitPdf(if (uriStr.isNotEmpty()) uriStr.toUri() else null)
             }
             str.startsWith("OfficeExport:") -> {
                 val formatName = str.removePrefix("OfficeExport:")
@@ -1950,7 +1953,7 @@ fun HomeScreen(
                         CategoryCard(
                             title = stringResource(R.string.menu_read_pdf),
                             subtitle = stringResource(R.string.menu_read_pdf_desc),
-                            icon = Icons.Rounded.MenuBook,
+                            icon = Icons.AutoMirrored.Rounded.MenuBook,
                             onClick = { onNavigate(Screen.PdfEditor()) },
                             modifier = Modifier.fillMaxWidth().height(100.dp)
                         )
@@ -2304,7 +2307,7 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 ToolCard(
                     title = stringResource(R.string.menu_extract),
                     subtitle = stringResource(R.string.menu_extract_desc),
-                    icon = Icons.Rounded.TextSnippet,
+                    icon = Icons.AutoMirrored.Rounded.TextSnippet,
                     onClick = { onNavigate(Screen.ExtractText) }
                 )
             }
@@ -3648,7 +3651,7 @@ fun SettingsScreen(
         if (uri != null) {
             try {
                 context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                outputPrefs.edit().putString(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY, uri.toString()).apply()
+                outputPrefs.edit { putString(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY, uri.toString()) }
                 preferredOutput = uri.toString()
             } catch (_: Exception) { viewModel.notifyError("This folder cannot retain write access. Choose another folder.") }
         }
@@ -3668,15 +3671,8 @@ fun SettingsScreen(
                 Button(onClick = {
                     showDefaultPdfDialog = false
                     try {
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                            val intent = Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
-                            context.startActivity(intent)
-                        } else {
-                            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                            }
-                            context.startActivity(intent)
-                        }
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                        context.startActivity(intent)
                     } catch (e: Exception) {
                         try {
                             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -3789,7 +3785,7 @@ fun SettingsScreen(
             Text(stringResource(if (preferredOutput == null) R.string.settings_output_folder_ask else R.string.settings_output_folder_saved), style = MaterialTheme.typography.bodySmall)
             Row {
                 TextButton(onClick = { folderPicker.launch(null) }) { Text(stringResource(if (preferredOutput == null) R.string.action_choose_folder else R.string.action_change_folder)) }
-                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text(stringResource(R.string.action_reset)) }
+                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit { remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY) }; preferredOutput = null }) { Text(stringResource(R.string.action_reset)) }
             }
                             var themeExpanded by remember { mutableStateOf(false) }
                             val themeOptions = mapOf(
@@ -4052,7 +4048,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable {
                                     val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                        data = Uri.parse("mailto:cucosandreiioan@gmail.com")
+                                        data = "mailto:cucosandreiioan@gmail.com".toUri()
                                         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.feedback_email_subject))
                                         putExtra(Intent.EXTRA_TEXT, "Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}\nAndroid: ${android.os.Build.VERSION.RELEASE}\n\nFeedback:\n")
                                     }
@@ -4083,9 +4079,9 @@ fun SettingsScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable {
                                     val packageName = context.packageName
                                     try {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")))
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri()))
                                     } catch (e: Exception) {
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")))
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=$packageName".toUri()))
                                     }
                                 },
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -4187,10 +4183,10 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable {
                                     try {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${context.packageName}"))
+                                        val intent = Intent(Intent.ACTION_VIEW, "market://details?id=${context.packageName}".toUri())
                                         context.startActivity(intent)
                                     } catch (_: Exception) {
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kiss2oblivion/pdfchemy/releases"))
+                                        val intent = Intent(Intent.ACTION_VIEW, "https://github.com/kiss2oblivion/pdfchemy/releases".toUri())
                                         context.startActivity(intent)
                                     }
                                 },
@@ -4226,7 +4222,7 @@ fun AndroidManifestoDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     fun openBrowser(url: String) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
             context.startActivity(intent)
         } catch (_: Exception) {
             Toast.makeText(context, context.getString(R.string.error_cannot_open_browser), Toast.LENGTH_SHORT).show()
@@ -4323,7 +4319,7 @@ fun AndroidManifestoDialog(onDismiss: () -> Unit) {
                     OutlinedButton(
                         onClick = {
                             val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:cucosandreiioan@gmail.com")
+                                data = "mailto:cucosandreiioan@gmail.com".toUri()
                                 putExtra(Intent.EXTRA_SUBJECT, "PDFchemy Feedback & Feature Request")
                             }
                             try {
@@ -4568,7 +4564,7 @@ fun RecentFilesSection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    val uri = Uri.parse(item.uriString)
+                                    val uri = item.uriString.toUri()
                                     val ext = when (item.mimeType) { "application/pdf" -> "pdf"; "application/epub+zip" -> "epub"; else -> "" }
                                     if (ext == "epub" && onNavigate != null) {
                                         onNavigate(Screen.ReflowReader(uri))

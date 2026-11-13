@@ -102,3 +102,4 @@
 # PDFchemy signs with in-memory certificates and does not call these stores or
 # network PKIX validation. R8 retains provider classes through the keep rules above.
 -dontwarn javax.naming.**
+

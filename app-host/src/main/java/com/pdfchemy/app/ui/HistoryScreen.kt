@@ -1,6 +1,7 @@
 package com.pdfchemy.app.ui
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -56,7 +57,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
     }
     LaunchedEffect(items) {
         availability = withContext(Dispatchers.IO) { items.associate { item ->
-            val uri = Uri.parse(item.uriString)
+            val uri = item.uriString.toUri()
             item.uriString to runCatching {
                 if (item.isDirectory) androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)?.exists() == true
                 else context.contentResolver.openFileDescriptor(uri, "r")?.use { true } == true
@@ -99,7 +100,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                 })
                                 Row {
                                     TextButton(enabled = availability[item.uriString] == true, onClick = {
-                                        val uri = Uri.parse(item.uriString)
+                                        val uri = item.uriString.toUri()
                                         when {
                                             !item.isDirectory && item.mimeType == "application/pdf" -> onNavigate(Screen.PdfReader(uri))
                                             !item.isDirectory && item.mimeType == "application/epub+zip" -> onNavigate(Screen.ReflowReader(uri))
@@ -111,7 +112,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                         TextButton(
                                             enabled = availability[item.uriString] == true,
                                             onClick = {
-                                                val uri = Uri.parse(item.uriString)
+                                                val uri = item.uriString.toUri()
                                                 runCatching {
                                                     com.pdfchemy.app.logic.ShareUtil.shareFiles(
                                                         context,

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">जल्द आ रहा है</string>
 <string name="ok">ठीक है</string>
@@ -9,7 +9,6 @@
 <string name="clear">साफ़ करें</string>
 <string name="clear_all">सभी साफ़ करें</string>
 <string name="save">सहेजें</string>
-<string name="continue_btn">जारी रखें</string>
 <string name="home_subtitle">दस्तावेज़ों को डिवाइस पर ठीक करें</string>
 <string name="cat_compress">कंप्रेस करें</string>
 <string name="cat_compress_desc">PDF का आकार सुरक्षित रूप से घटाएं।</string>
@@ -20,45 +19,24 @@
 <string name="cat_check">जांचें</string>
 <string name="cat_check_desc">भेजने से पहले निरीक्षण करें।</string>
 <string name="menu_compress">PDF कंप्रेस करें</string>
-<string name="menu_compress_desc">फ़ाइल का आकार घटाएं</string>
 <string name="menu_merge">PDF मर्ज करें</string>
 <string name="menu_merge_desc">कई फ़ाइलें एक साथ जोड़ें</string>
 <string name="menu_split">PDF विभाजित करें</string>
 <string name="menu_split_desc">पेज निकालें</string>
 <string name="menu_scan">PDF में स्कैन करें</string>
 <string name="menu_scan_desc">कैमरे से दस्तावेज़ बनाएं</string>
-<string name="menu_ocr">टेक्स्ट निकालें</string>
-<string name="menu_ocr_desc">PDF से टेक्स्ट निकालें</string>
-<string name="menu_metadata">मेटाडेटा जांचें</string>
-<string name="menu_metadata_desc">छिपी हुई जानकारी देखें</string>
 <string name="settings_title">सेटिंग्स</string>
-<string name="settings_preferences">ऐप प्राथमिकताएं</string>
-<string name="settings_haptic">हैप्टिक फीडबैक</string>
-<string name="settings_haptic_desc">स्पर्श पर कंपन करें</string>
-<string name="settings_sfx">ध्वनि प्रभाव</string>
-<string name="settings_sfx_desc">बटन क्लिक पर ध्वनि बजाएं</string>
 <string name="settings_history">हाल की फ़ाइलें याद रखें</string>
 <string name="settings_history_desc">हाल ही में उपयोग की गई फ़ाइलों का स्थानीय इतिहास रखें। फ़ाइलें कभी अपलोड नहीं की जाती हैं।</string>
 <string name="settings_language">भाषा (Language)</string>
 <string name="settings_language_desc">ऐप की भाषा बदलें</string>
 <string name="settings_clear_history">हाल का इतिहास साफ़ करें</string>
-<string name="settings_clear_history_confirm">क्या आप वाकई अपना हालिया इतिहास साफ़ करना चाहते हैं?</string>
-<string name="settings_history_cleared">इतिहास साफ़ कर दिया गया</string>
 <string name="compress_title">PDF कंप्रेस करें</string>
 <string name="compress_single">एकल फ़ाइल</string>
 <string name="compress_batch">बैच कम्प्रेशन</string>
 <string name="compress_select_file">PDF फ़ाइल चुनें</string>
-<string name="compress_compressing">PDF कंप्रेस हो रहा है...</string>
 <string name="compress_target_size">लक्षित फ़ाइल आकार</string>
 <string name="compress_preset">कम्प्रेशन प्रीसेट:</string>
-<string name="compress_exact_mb">सटीक MB</string>
-<string name="compress_options">कम्प्रेशन विकल्प</string>
-<string name="compress_grayscale">ग्रेस्केल रूपांतरण</string>
-<string name="compress_grayscale_desc">रंगीन छवियों को ब्लैक एंड व्हाइट में बदलें</string>
-<string name="compress_lossless">दोषरहित ZIP कम्प्रेशन</string>
-<string name="compress_lossless_desc">JPEG कम्प्रेशन छोड़ें</string>
-<string name="compress_strip_meta">मेटाडेटा हटाएं</string>
-<string name="compress_strip_meta_desc">लेखक और संपादक टैग हटाएं</string>
 <string name="warning_quality_title">गुणवत्ता और कानूनी चेतावनी</string>
 <string name="warning_quality_desc">कम्प्रेशन से गुणवत्ता कम होती है। यह आधिकारिक दस्तावेजों, मेडिकल रिकॉर्ड या डिजिटल हस्ताक्षरों को प्रभावित कर सकता है। हमेशा मूल फ़ाइल सुरक्षित रखें।</string>
 <string name="warning_understand">मैं समझ गया/गई</string>
@@ -100,17 +78,15 @@
 <string name="split_pdf">PDF विभाजित करें</string>
 <string name="split_into_folder">फ़ोल्डर में विभाजित करें</string>
 <string name="extraction_options">निष्कर्षण विकल्प</string>
-<string name="extract_all_pages_as_individua">सभी पेजों को अलग-अलग फ़ाइलों के रूप में निकालें</string>
-<string name="extract_custom_range">कस्टम रेंज निकालें</string>
-<string name="e_g_1_3_5_7_10">उदा. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">उदा. 1-3, 5, 7-10</string>
 <string name="extract_images">चित्र निकालें</string>
 <string name="ready_to_extract_all_images_ta">सभी चित्र निकालने के लिए तैयार। नीचे दिए गए बटन पर टैप करें।</string>
 <string name="change_pdf">PDF बदलें</string>
-<string name="extracting_images">चित्र निकाले जा रहे हैं...</string>
+<string name="extracting_images">चित्र निकाले जा रहे हैं…</string>
 <string name="delete_pages">पेज हटाएं</string>
 <string name="save_document">दस्तावेज़ सहेजें</string>
 <string name="pages_to_delete">हटाने के लिए पेज</string>
-<string name="e_g_1_3_5_10">उदा. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">उदा. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">अल्पविराम से अलग किए गए पेज नंबर या रेंज दर्ज करें।</string>
 <string name="rotate_pages">पेज घुमाएं</string>
 <string name="rotate_save">घुमाएं और सहेजें</string>
@@ -121,24 +97,22 @@
 <string name="pages_to_rotate_optional">घुमाने के लिए पेज (वैकल्पिक)</string>
 <string name="leave_blank_to_rotate_all_page">सभी पेज घुमाने के लिए खाली छोड़ दें।</string>
 <string name="text_cleaner">टेक्स्ट क्लीनर</string>
-<string name="paste_your_text_here">अपना टेक्स्ट यहां पेस्ट करें...</string>
+<string name="paste_your_text_here">अपना टेक्स्ट यहां पेस्ट करें…</string>
 <string name="text_format_converter">टेक्स्ट फॉर्मेट कनवर्टर</string>
-<string name="enter_content">सामग्री दर्ज करें...</string>
+<string name="enter_content">सामग्री दर्ज करें…</string>
 <string name="import_btn">इंपोर्ट करें</string>
-<string name="compressing_pdf">PDF कंप्रेस हो रहा है...</string>
 <string name="create">बनाएं</string>
 <string name="compress">कंप्रेस</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">लक्षित आकार चुनें (MB):</string>
 <string name="exact_mb">सटीक MB</string>
-<string name="compression_options">कम्प्रेशन विकल्प</string>
 <string name="grayscale_conversion">ग्रेस्केल रूपांतरण</string>
 <string name="convert_color_images_to_black">रंगीन चित्रों को ब्लैक एंड व्हाइट में बदलें</string>
 <string name="lossless_zip_compression">दोषरहित ZIP कम्प्रेशन</string>
 <string name="skip_jpeg_lossy_compression_no">JPEG कम्प्रेशन छोड़ें</string>
 <string name="strip_author_creator_editor_ta">लेखक, निर्माता और संपादक टैग हटाएं</string>
 <string name="type_or_paste_text_here">यहाँ टेक्स्ट टाइप करें या पेस्ट करें</string>
-<string name="enter_the_content_of_your_pdf">अपनी PDF की सामग्री दर्ज करें...</string>
+<string name="enter_the_content_of_your_pdf">अपनी PDF की सामग्री दर्ज करें…</string>
 <string name="import_txt">.txt आयात करें</string>
 <string name="save_as_pdf">PDF के रूप में सहेजें</string>
 <string name="clear_history">इतिहास साफ़ करें</string>
@@ -160,7 +134,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">फ़ाइल का नाम: %1$s</string>
 <string name="selected_batch_files">चयनित बैच फ़ाइलें:</string>
-<string name="analyzing_doc">दस्तावेज़ संरचना का विश्लेषण किया जा रहा है...</string>
+<string name="analyzing_doc">दस्तावेज़ संरचना का विश्लेषण किया जा रहा है…</string>
 <string name="smart_recommendation">स्मार्ट अनुशंसा</string>
 <string name="detected_type">पहचाना गया प्रकार: %1$s</string>
 <string name="doc_stats_pages_images">पेज: %1$d | चित्र: %2$d</string>
@@ -177,7 +151,6 @@
 
 ✓ कोई विज्ञापन नहीं
 ✓ असीमित बैच प्रक्रियाएं</string>
-<string name="batch_compressing">%2$d में से %1$d फ़ाइलें कंप्रेस हो रही हैं...</string>
 <string name="msg_enter_text">कृपया कुछ टेक्स्ट दर्ज करें।</string>
 <string name="menu_delete_pages">पेज हटाएं</string>
 <string name="menu_delete_pages_desc">PDF से विशिष्ट पेज हटाएं</string>
@@ -257,8 +230,6 @@
 <string name="desc_share_output">आउटपुट शेयर करें</string>
 <string name="desc_go_premium">प्रीमियम लें</string>
 <string name="desc_settings">सेटिंग्स</string>
-<string name="desc_toggle_theme">थीम बदलें</string>
-<string name="desc_app_logo">ऐप लोगो</string>
 <string name="scan_prefix">स्कैन_</string>
 <string name="default_scanned_doc_name">स्कैन_दस्तावेज़</string>
 <string name="desc_back">पीछे</string>
@@ -270,11 +241,11 @@
 <string name="btn_change_file">फ़ाइल बदलें</string>
 <string name="btn_select_pdf_files">PDF फ़ाइलें चुनें</string>
 <string name="btn_add_more_files">और फ़ाइलें जोड़ें (%1$d चयनित)</string>
-<string name="label_original_size_analyzing">मूल आकार: %1$s (विश्लेषण जारी...)</string>
+<string name="label_original_size_analyzing">मूल आकार: %1$s (विश्लेषण जारी…)</string>
 <string name="label_original_size_to_compressed">मूल आकार: %1$s  →  %2$s</string>
 <string name="label_target_mb_batch">लक्ष्य: %1$.1f MB</string>
 <string name="label_target_unknown">लक्ष्य: अज्ञात</string>
-<string name="label_analyzing">विश्लेषण हो रहा है...</string>
+<string name="label_analyzing">विश्लेषण हो रहा है…</string>
 <string name="label_target_mb">लक्ष्य: %1$s MB</string>
 <string name="desc_remove_file">फ़ाइल हटाएं</string>
 <string name="preset_custom">कस्टम</string>
@@ -349,7 +320,6 @@
 <string name="theme_dark">डार्क मोड</string>
 <string name="settings_rate_app">PDFchemy Tools को रेट करें</string>
 <string name="settings_rate_app_desc">ऐप पसंद आ रहा है? Google Play पर समीक्षा छोड़ें!</string>
-<string name="settings_rate_app_thanks">आपके समर्थन के लिए धन्यवाद!</string>
     <string name="settings_share_app">PDFchemy Tools शेयर करें</string>
     <string name="settings_share_app_desc">दोस्तों और सहकर्मियों को इस ऐप के बारे में बताएं</string>
     <string name="settings_share_app_message">PDFchemy Tools देखें — Android के लिए एक तेज़, 100%% ऑफलाइन और प्राइवेट PDF कंप्रेसर और एडिटर: %1$s</string>
@@ -492,18 +462,12 @@
 <string name="ocr_pdf_subtitle">100%% ऑन-डिवाइस टेक्स्ट पहचान। खोजने योग्य टेक्स्ट लेयर बनाएं।</string>
 <string name="select_pdf_for_ocr">PDF दस्तावेज़ चुनें</string>
 <string name="ocr_processing_generic">टेक्स्ट का विश्लेषण और पहचान की जा रही है…</string>
-<string name="ocr_processing_progress">OCR प्रोसेसिंग: पेज %1$d / %2$d…</string>
 <string name="action_create_searchable_pdf">खोजने योग्य PDF बनाएं</string>
 <string name="title_ocr_success">खोजने योग्य PDF बनाई गई!</string>
 <string name="desc_ocr_success">पूरी खोज क्षमता के लिए एक अदृश्य टेक्स्ट परत जोड़ी गई है।</string>
 <string name="error_ocr_failed">OCR पहचान विफल रही।</string>
 <string name="history_searchable_ocr_pdf">खोजने योग्य OCR PDF</string>
-<string name="menu_redact_pdf">स्थायी संपादन (Redaction)</string>
 <string name="tool_redact">संपादित करें</string>
-<string name="title_redact_success">PDF सफलतापूर्वक स्थायी रूप से संशोधित की गई!</string>
-<string name="desc_redact_success">लक्षित क्षेत्रों को स्थायी रूप से साफ़ और संपादित कर दिया गया है।</string>
-<string name="error_redact_failed">संशोधन लागू करने में विफल।</string>
-<string name="history_redacted_pdf">संशोधित PDF</string>
 <string name="menu_reflow_reader">रिफ्लो रीडर और बुकमार्क</string>
 <string name="menu_reflow_reader_desc">विषय सूची के साथ विकर्षण-मुक्त ई-बुक स्टाइल रीडिंग मोड</string>
 <string name="reflow_reader_headline">विकर्षण-मुक्त मोबाइल रीडर</string>
@@ -519,11 +483,9 @@
 <string name="filter_magic_color">जादुई रंग</string>
 <string name="filter_bw">ब्लैक एंड व्हाइट</string>
 <string name="filter_grayscale">ग्रेस्केल</string>
-<string name="action_save_as_pdf">%1$d पेजों को PDF के रूप में सहेजें</string>
 <string name="title_scan_success">दस्तावेज़ सफलतापूर्वक स्कैन किया गया!</string>
 <string name="desc_scan_success">स्कैन किए गए पेजों को एक अनुकूलित PDF में बदल दिया गया है।</string>
 <string name="error_scan_failed">स्कैन की गई PDF बनाने में विफल।</string>
-<string name="history_scanned_pdf">स्कैन किया गया दस्तावेज़</string>
 <string name="menu_sign_pdf">PDF पर हस्ताक्षर करें</string>
 <string name="menu_sign_pdf_desc">अनुबंधों और समझौतों पर डिजिटल हस्ताक्षर बनाएं, सहेजें और लगाएं</string>
 <string name="sign_pdf_headline">PDF दस्तावेज़ों पर हस्ताक्षर करें</string>
@@ -555,7 +517,6 @@
 <string name="title_organizer_success">पेज सफलतापूर्वक पुनर्व्यवस्थित किए गए!</string>
 <string name="desc_organizer_success">नया पेज क्रम और लेआउट सहेज लिया गया है।</string>
 <string name="error_organizer_failed">PDF पेजों को पुनर्व्यवस्थित करने में विफल।</string>
-<string name="history_organized_pdf">व्यवस्थित PDF</string>
 <string name="menu_watermark_pdf">PDF पर वॉटरमार्क लगाएं</string>
 <string name="menu_watermark_pdf_desc">सभी पेजों पर अनुकूलन योग्य टेक्स्ट या लोगो वॉटरमार्क लगाएं</string>
 <string name="watermark_headline">दस्तावेज़ वॉटरमार्क जोड़ें</string>
@@ -570,7 +531,6 @@
 <string name="title_watermark_success">वॉटरमार्क सफलतापूर्वक लगाया गया!</string>
 <string name="desc_watermark_success">वॉटरमार्क आपके दस्तावेज़ पर लगा दिया गया है।</string>
 <string name="error_watermark_failed">वॉटरमार्क लगाने में विफल।</string>
-<string name="history_watermarked_pdf">वॉटरमार्क युक्त PDF</string>
 <string name="menu_page_number_pdf">पेज नंबर जोड़ें</string>
 <string name="menu_page_number_pdf_desc">अनुकूलन योग्य हेडर और पाद लेख डालें (Page X of Y, 1/N)</string>
 <string name="page_number_headline">PDF पेजों को क्रमांकित करें</string>
@@ -589,7 +549,6 @@
 <string name="title_page_number_success">पेज नंबर जोड़े गए!</string>
 <string name="desc_page_number_success">पेज नंबरिंग दस्तावेज़ में सहेज ली गई है।</string>
 <string name="error_page_number_failed">पेज नंबर जोड़ने में विफल।</string>
-<string name="history_numbered_pdf">क्रमांकित PDF</string>
 <string name="menu_page_layout">पेज साइज़र और हैंडआउट्स</string>
 <string name="menu_page_layout_desc">मानक कागज आकार बदलें या प्रति शीट 2, 4, 6 पेज मर्ज करें</string>
 <string name="page_layout_headline">पेज लेआउट और एन-अप हैंडआउट्स</string>
@@ -607,15 +566,12 @@
 <string name="title_layout_success">लेआउट सफलतापूर्वक बनाया गया!</string>
 <string name="desc_layout_success">आपका प्रारूपित PDF लेआउट सहेजा गया है।</string>
 <string name="error_layout_failed">लेआउट बनाने में विफल।</string>
-<string name="history_layout_pdf">लेआउट PDF</string>
 <string name="menu_compare_pdfs">दो PDF की तुलना करें</string>
 <string name="menu_compare_pdfs_desc">संशोधनों के बीच दृश्य परिवर्तन और संपादित टेक्स्ट पहचानें</string>
 <string name="compare_headline">PDF संशोधन तुलनित्र</string>
 <string name="compare_subtitle">दृश्य परिवर्तनों और टेक्स्ट परिवर्तनों को हाइलाइट करने के लिए दस्तावेज़ के दो संस्करण चुनें।</string>
 <string name="select_original_pdf">मूल PDF चुनें (Doc A)</string>
 <string name="select_modified_pdf">संशोधित PDF चुनें (Doc B)</string>
-<string name="doc1_selected">मूल चयनित</string>
-<string name="doc2_selected">संशोधित चयनित</string>
 <string name="comparing_documents_progress">दस्तावेज़ पेजों और टेक्स्ट की तुलना की जा रही है…</string>
 <string name="compare_results_title">तुलना परिणाम</string>
 <string name="compare_summary_counts">%1$d संशोधित पेज • %2$d समान पेज</string>
@@ -636,7 +592,7 @@
 <string name="info_word_export">अनुच्छेदों, शीर्षकों और पृष्ठ विरामों को मानक Microsoft Word (.docx) फ़ाइल में निर्यात करता है।</string>
 <string name="info_excel_export">संरचित तालिकाओं और डेटा को Microsoft Excel (.xlsx) स्प्रेडशीट में निकालता है।</string>
 <string name="info_pptx_export">पृष्ठों को Microsoft PowerPoint (.pptx) में प्रस्तुति स्लाइडों में बदलता है।</string>
-<string name="converting_to_office">Office में बदला जा रहा है...</string>
+<string name="converting_to_office">Office में बदला जा रहा है…</string>
 <string name="btn_export_office_file">%1$s के रूप में निर्यात करें</string>
 <string name="title_office_export_success">निर्यात पूर्ण</string>
 <string name="desc_office_export_success">चयनित Office प्रारूप में %1$d पृष्ठ सफलतापूर्वक निर्यात किए गए।</string>
@@ -735,7 +691,7 @@
 <string name="btn_open_file">फ़ाइल खोलें</string>
 <string name="btn_import_pdf_to_md">PDF से मार्कडाउन निकालें</string>
 <string name="btn_save_md">.MD सहेजें</string>
-<string name="hint_type_markdown">यहाँ मार्कडाउन टाइप करें या पेस्ट करें...</string>
+<string name="hint_type_markdown">यहाँ मार्कडाउन टाइप करें या पेस्ट करें…</string>
 <string name="label_doc_title">दस्तावेज़ शीर्षक</string>
 <string name="btn_export_pdf">PDF निर्यात करें</string>
 <string name="title_pdf_to_md_success">मार्कडाउन निकाला गया</string>
@@ -799,7 +755,7 @@
 <string name="label_booklet_settings">बुकलेट सेटिंग्स</string>
 <string name="opt_center_fold_guide">सेंटर फ़ोल्ड दिशानिर्देश रेखा बनाएं</string>
 <string name="desc_center_fold_guide">मोड़ने और काटने में सहायता के लिए एक सूक्ष्म बिंदीदार रेखा जोड़ता है</string>
-<string name="label_generating_sheet">%2$d में से %1$d शीट तैयार की जा रही है...</string>
+<string name="label_generating_sheet">%2$d में से %1$d शीट तैयार की जा रही है…</string>
 <string name="btn_create_booklet">बुकलेट PDF बनाएं</string>
 <string name="title_booklet_success">बुकलेट बनाई गई</string>
 <string name="desc_booklet_success">दोनों तरफ प्रिंट करें और बुकलेट की तरह पढ़ने के लिए बीच से मोड़ें</string>
@@ -873,7 +829,7 @@
 <string name="redaction_headline">स्थायी रेडैक्शन स्टूडियो</string>
 <string name="redaction_subtitle">संवेदनशील डेटा, नाम, एसएसएन और क्रेडिट कार्ड छुपाएं</string>
 <string name="select_pdf_to_redact">संपादित (Redact) करने के लिए PDF चुनें</string>
-<string name="placeholder_search_redact">छुपाने के लिए टेक्स्ट या रीगेक्स खोजें...</string>
+<string name="placeholder_search_redact">छुपाने के लिए टेक्स्ट या रीगेक्स खोजें…</string>
 <string name="chip_preset_emails">ईमेल</string>
 <string name="chip_preset_ssn">एसएसएन (SSN)</string>
 <string name="chip_preset_credit_cards">क्रेडिट कार्ड</string>
@@ -902,18 +858,12 @@
 <string name="error_embed_failed">एम्बेड करना विफल रहा</string>
 <string name="menu_fast_web_view">Fast Web View जानकारी</string>
 <string name="menu_fast_web_view_desc">PDF जानकारी का निरीक्षण करें; Fast Web View निर्माण अनुपलब्ध है</string>
-<string name="linearize_headline">फास्ट वेब व्यू स्ट्रीमर</string>
 <string name="linearize_subtitle">यह संस्करण Fast Web View PDF उत्पन्न या प्रमाणित नहीं कर सकता है। कोई आउटपुट फ़ाइल नहीं बनाई जाएगी।</string>
 <string name="select_pdf_for_linearize">निरीक्षण के लिए PDF चुनें</string>
 <string name="label_diagnostic_status">PDF जानकारी</string>
 <string name="label_fast_web_view_enabled">लीनियराइजेशन:</string>
-<string name="status_enabled">सक्षम</string>
 <string name="status_disabled">सत्यापित नहीं</string>
-<string name="linearize_info_explanation">फास्ट वेब व्यू फ़ाइल को इस प्रकार व्यवस्थित करता है कि पूरे दस्तावेज़ के डाउनलोड होने की प्रतीक्षा किए बिना वेब ब्राउज़र पहला पृष्ठ तुरंत प्रदर्शित कर दें।</string>
 <string name="btn_optimize_fast_web_view">अनुकूलन अनुपलब्ध</string>
-<string name="title_linearize_success">PDF लीनियराइज़ किया गया</string>
-<string name="desc_linearize_success">तत्काल वेब स्ट्रीमिंग के लिए दस्तावेज़ अनुकूलित किया गया (%1$s)</string>
-<string name="error_linearize_failed">अनुकूलन विफल रहा</string>
 
 <string name="menu_nup_handouts">N-Up बहु-पृष्ठ ग्रिड</string>
 <string name="menu_nup_handouts_desc">हैंडआउट के लिए प्रति शीट 2, 4, 6, 9 या 16 पेज प्रिंट करें</string>
@@ -933,8 +883,6 @@
 <string name="pdfa_headline">केवल प्रारंभिक जांच; प्रमाणित नहीं</string>
 <string name="pdfa_subtitle">ये जांचें ISO 19005 अनुपालन को प्रमाणित नहीं करती हैं। इस संस्करण में PDF/A रूपांतरण अनुपलब्ध है।</string>
 <string name="select_pdf_for_pdfa">प्रारंभिक जांच के लिए PDF चुनें</string>
-<string name="status_archival_ready">Archival Ready (100%% Compliant)</string>
-<string name="status_compliance_issues_found">गैर-अनुपालक (समस्याएं पाई गईं)</string>
 <string name="menu_font_inspector">टाइपोग्राफी और फ़ॉन्ट निरीक्षक</string>
 <string name="menu_font_inspector_desc">एम्बेडेड फ़ॉन्ट, उप-प्रकार और एन्कोडिंग का निरीक्षण करें</string>
 <string name="font_headline">टाइपोग्राफी और एम्बेडेड फ़ॉन्ट्स</string>
@@ -946,8 +894,6 @@
 <string name="stat_standard_system">सिस्टम / आधार</string>
 
 <string name="error_developer_diagnostics">डेवलपर डायग्नोस्टिक्स</string>
-<string name="error_tap_to_view_diagnostics">तकनीकी लॉग / ट्रेस देखें</string>
-<string name="error_tap_to_hide_diagnostics">तकनीकी लॉग छिपाएं</string>
 <string name="error_copy_diagnostics">डायग्नोस्टिक्स कॉपी करें</string>
 <string name="error_diagnostics_copied">तकनीकी डायग्नोस्टिक ट्रेस क्लिपबोर्ड पर कॉपी किया गया</string>
 <string name="error_user_encrypted">यह PDF पासवर्ड से सुरक्षित या एन्क्रिप्टेड है। आगे बढ़ने से पहले कृपया इसे PDF सुरक्षा में अनलॉक करें।</string>
@@ -988,12 +934,10 @@
     <string name="deskew_success">दस्तावेज़ सफलतापूर्वक सीधा किया गया!</string>
     <string name="deskew_success_desc">पृष्ठों को घुमाकर संरेखित कर दिया गया है।</string>
     <string name="deskew_auto_label">झुकाव स्वतः पहचानें</string>
-    <string name="deskew_manual_label">मैन्युअल समायोजन</string>
     <string name="deskew_no_tilt">दस्तावेज़ पहले से ही सीधा है (0.0°)</string>
     <string name="menu_table_extractor">सारणी CSV में निकालें</string>
     <string name="menu_table_extractor_desc">PDF से सारणीबद्ध डेटा और फ़ॉर्म को साफ़ RFC 4180 CSV / Excel में निकालें</string>
     <string name="table_extractor_title">PDF तालिका और स्प्रेडशीट एक्सट्रैक्टर</string>
-    <string name="table_extractor_action_export">तालिकाएं CSV में निर्यात करें</string>
     <string name="table_extractor_preview">पहचाना गया सारणीबद्ध डेटा</string>
     <string name="table_extractor_no_tables">इस पृष्ठ पर कोई सारणीबद्ध डेटा नहीं मिला।</string>
     <string name="table_extractor_success">तालिकाएं CSV में निर्यात की गईं!</string>
@@ -1008,21 +952,16 @@
     <string name="sanitizer_threats_detected">दस्तावेज़ में %1$d ख़तरे के वैक्टर मिले</string>
     <string name="sanitizer_action_sanitize">स्टेरिलाइज़ करें और खतरे हटाएं</string>
     <string name="sanitizer_success">दस्तावेज़ सफलतापूर्वक सैनिटाइज़ किया गया!</string>
-    <string name="sanitizer_success_desc">सभी सक्रिय स्क्रिप्ट, हुक और ट्रैकिंग बीकन हटा दिए गए हैं।</string>
     <string name="menu_quick_fill_sign">त्वरित भरें और हस्ताक्षर करें (सपाट फ़ॉर्म)</string>
     <string name="menu_quick_fill_sign_desc">टेक्स्ट, चेकमार्क, क्रॉस और हस्ताक्षर जोड़ने के लिए सपाट या स्कैन किए गए PDF पर कहीं भी टैप करें</string>
     <string name="quick_fill_title">त्वरित भरें और हस्ताक्षर करें</string>
     <string name="quick_fill_text_tool">टेक्स्ट</string>
-    <string name="quick_fill_check_tool">चेकमार्क (✓)</string>
-    <string name="quick_fill_cross_tool">क्रॉस (✗)</string>
-    <string name="quick_fill_date_tool">तारीख</string>
     <string name="quick_fill_sign_tool">हस्ताक्षर</string>
     <string name="quick_fill_tap_hint">चयनित आइटम रखने के लिए दस्तावेज़ पर कहीं भी टैप करें</string>
     <string name="quick_fill_action_save">फ़ॉर्म सहेजें और फ़्लैटन करें</string>
     <string name="quick_fill_success">फ़ॉर्म भरा गया और सहेजा गया!</string>
-    <string name="quick_fill_success_desc">सभी प्रविष्टियां स्थायी रूप से PDF में समाहित कर दी गई हैं।</string>
     <string name="split_mode_all">सभी पृष्ठों को अलग-अलग निकालें</string>
-    <string name="split_mode_range">कस्टम पेज रेंज (उदा. 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">कस्टम पेज रेंज (उदा. 1-3, 5)</string>
     <string name="split_mode_blank">खाली पृष्ठों द्वारा विभाजित करें</string>
     <string name="split_mode_blank_desc">उच्च-मात्रा वाले स्कैन में खाली विभाजक पृष्ठों की पहचान करता है और उन्हें व्यक्तिगत फ़ाइलों में विभाजित करता है</string>
     <string name="split_mode_bookmarks">बुकमार्क / अध्यायों द्वारा विभाजित करें</string>
@@ -1031,12 +970,8 @@
     <string name="split_bookmarks_found">%1$d रूपरेखा अध्याय अनुभाग मिले</string>
     <string name="split_no_bookmarks">इस दस्तावेज़ में कोई अध्याय बुकमार्क नहीं मिला।</string>
     <string name="tts_play">ज़ोर से पढ़ें</string>
-    <string name="tts_pause">रोकें</string>
-    <string name="tts_stop">बंद करें</string>
-    <string name="tts_speed">गति: %1$.2fx</string>
     <string name="tts_prev_paragraph">पिछला</string>
     <string name="tts_next_paragraph">अगला</string>
-    <string name="tts_not_supported">टेक्स्ट-टू-स्पीच समर्थित नहीं है या भाषा डेटा अनुपलब्ध है।</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">इंटरैक्टिव फॉर्म निर्माता</string>
@@ -1053,7 +988,6 @@
     <string name="form_builder_action_save">फॉर्म PDF सहेजें</string>
     <string name="form_builder_fields_count">पृष्ठ पर फ़ील्ड: %1$d</string>
     <string name="form_builder_success">भरे जाने योग्य PDF सफलतापूर्वक बनाई गई!</string>
-    <string name="form_builder_success_desc">दस्तावेज़ में इंटरैक्टिव फ़ील्ड जोड़ दिए गए हैं।</string>
     <string name="form_builder_no_fields_warn">कृपया सहेजने से पहले कम से कम एक फ़ील्ड जोड़ें।</string>
     <string name="form_builder_delete_field">फ़ील्ड हटाएं</string>
     <string name="settings_vanguard">वैनगार्ड ज़ीरो-ट्रस्ट शील्ड</string>
@@ -1064,14 +998,13 @@
     <string name="vanguard_encrypted_message">यह दस्तावेज़ एन्क्रिप्टेड और पासवर्ड से सुरक्षित है। जब तक दस्तावेज़ लॉक रहता है, वैनगार्ड ज़ीरो-ट्रस्ट शील्ड एम्बेडेड स्क्रिप्ट या सुरक्षा खतरों की पुष्टि नहीं कर सकता। कृपया पहले इसे अनलॉक करें।</string>
     <string name="vanguard_action_unlock">PDF अनलॉक करें</string>
     <string name="vanguard_verifying_title">वैनगार्ड सुरक्षा सत्यापन</string>
-    <string name="vanguard_verifying_desc">स्क्रिप्ट और सुरक्षा खतरों के लिए दस्तावेज़ की जाँच की जा रही है...</string>
+    <string name="vanguard_verifying_desc">स्क्रिप्ट और सुरक्षा खतरों के लिए दस्तावेज़ की जाँच की जा रही है…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% ऑफ़लाइन • शून्य-विश्वास</string>
 
     <string name="action_redo">फिर से करें</string>
     <string name="action_reset">रीसेट करें</string>
     <string name="action_reverse">उल्टा करें</string>
     <string name="action_rotate_all">सभी घुमाएँ</string>
-    <string name="label_preview_unavailable">पूर्वावलोकन अनुपलब्ध</string>
     <string name="dialog_unsaved_title">बिना सहेजे गए परिवर्तन</string>
     <string name="dialog_unsaved_message">आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप छोड़ने से पहले उन्हें सहेजना या छोड़ना चाहते हैं?</string>
     <string name="dialog_unsaved_save">सहेजें / निर्यात करें</string>
@@ -1081,13 +1014,9 @@
     <string name="vanguard_damaged_message">यह PDF क्षतिग्रस्त या अधूरा प्रतीत होता है और इसे सुरक्षित रूप से नहीं पढ़ा जा सका। मरम्मत चलाने का प्रयास करें या कोई अन्य प्रति चुनें।</string>
     <string name="vanguard_provider_error_title">फ़ाइल अप्राप्य</string>
     <string name="vanguard_provider_error_message">चयनित फ़ाइल तक नहीं पहुँचा जा सका। संग्रहण प्रदाता अनुपलब्ध हो सकता है या अनुमतियाँ रद्द कर दी गई हैं।</string>
-    <string name="error_invalid_page_range">अमान्य पृष्ठ सीमा। कृपया पृष्ठ संख्या सत्यापित करें और पुनः प्रयास करें।</string>
     <string name="consent_dialog_decline">निजीकरण के बिना जारी रखें</string>
 
     <string name="generating_previews">पूर्वावलोकन तैयार हो रहे हैं…</string>
-    <string name="label_preview_loading">लोड हो रहा है…</string>
-    <string name="premium_status_loading">स्टोर की जांच हो रही है…</string>
-    <string name="premium_status_unavailable">स्टोर अनुपलब्ध है। पुनः प्रयास करने के लिए टैप करें।</string>
     <string name="action_retry">पुनः प्रयास करें</string>
     <string name="redaction_review_title">संपादनों की समीक्षा करें</string>
     <string name="redaction_review_message">%1$d संपादन स्थायी रूप से लागू किए जाएंगे। संपादित सामग्री को पुनर्प्राप्त नहीं किया जा सकता है।</string>
@@ -1117,12 +1046,10 @@
     <string name="alt_free_ram_desc">RAM खाली करने के लिए बैकग्राउंड में अधिक मेमोरी इस्तेमाल करने वाले ऐप बंद करें, फिर दोबारा कोशिश करें।</string>
     <string name="alt_free_ram_btn">समझ गया</string>
     <string name="btn_proceed_anyway">फिर भी जारी रखें</string>
-    <string name="msg_circuit_breaker_paused">फ़ोन को फ़्रीज़ होने से बचाने के लिए प्रोसेसिंग रोक दी गई है। पूरा हो चुका काम सेव है।</string>
     <string name="reader_dual_page_spread">दो पेज साथ-साथ</string>
     <string name="reader_single_page">एक पेज</string>
     <string name="flip_tabletop_mode">टेबलटॉप मोड</string>
     <string name="flip_fullscreen_mode">फ़ुल स्क्रीन मोड</string>
-    <string name="flip_tabletop_mode_desc">हैंड्स-फ़्री मोड: दस्तावेज़ ऊपर, कंट्रोल नीचे</string>
     <string name="flip_tabletop_active_badge">फ़्लेक्स मोड</string>
     <string name="scanned_pdf_title">स्कैन किया गया दस्तावेज़</string>
     <string name="scanned_pdf_desc">इस दस्तावेज़ में स्कैन की गई तस्वीरें हैं और टेक्स्ट चुनने की परत नहीं है।</string>
@@ -1148,7 +1075,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">त्वरित कैमरा PDF</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1223,10 +1150,6 @@
     <string name="pki_reason">कारण</string>
     <string name="pki_location">स्थान</string>
     <string name="pki_sign_and_save">हस्ताक्षर करें और सहेजें</string>
-    <string name="btn_convert_to_pdfa">PDF/A-1b में बदलें</string>
-    <string name="btn_converting_pdfa">PDF/A-1b में बदला जा रहा है…</string>
-    <string name="title_pdfa_converted_success">PDF/A-1b में सफलतापूर्वक रूपांतरित</string>
-    <string name="error_pdfa_conversion_failed">PDF/A रूपांतरण विफल रहा</string>
     <string name="btn_export_embedded_fonts">एम्बेडेड फ़ॉन्ट्स निर्यात करें (.zip)</string>
     <string name="btn_exporting_fonts">फ़ॉन्ट्स निर्यात हो रहे हैं…</string>
     <string name="title_fonts_exported_success">एम्बेडेड फ़ॉन्ट्स सफलतापूर्वक निर्यात किए गए (%1$d)</string>
@@ -1324,7 +1247,7 @@
     <string name="redact_forensic_title">फ़ोरेंसिक वेक्टर सैनिटाइज़ेशन</string>
     <string name="redact_forensic_desc">अंतर्निहित टेक्स्ट बाइट्स को पूरी तरह मिटाने के लिए संपादित पृष्ठों को रास्टराइज़ करता है।</string>
     <string name="redact_smart_pii_title">स्मार्ट PII संपादन</string>
-    <string name="reflow_find_placeholder">दस्तावेज़ में टेक्स्ट खोजें...</string>
+    <string name="reflow_find_placeholder">दस्तावेज़ में टेक्स्ट खोजें…</string>
     <string name="desc_previous_match">पिछला मिलान</string>
     <string name="desc_next_match">अगला मिलान</string>
     <string name="desc_play_pause">चलाएं/रोकें</string>
