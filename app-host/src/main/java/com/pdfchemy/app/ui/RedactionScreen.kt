@@ -383,7 +383,7 @@ fun RedactionScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Targets Found (${foundBoxes.size})",
+                        text = stringResource(R.string.redact_targets_found, foundBoxes.size),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )

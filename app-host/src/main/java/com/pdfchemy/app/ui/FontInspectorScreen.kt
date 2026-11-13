@@ -255,7 +255,7 @@ fun FontInspectorScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = font.familyName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             Text(
-                                                text = "${font.formatType} • ${if (font.isEmbedded) "Embedded" else "System Font"} • ${font.encoding}",
+                                                text = "${font.formatType} • ${stringResource(if (font.isEmbedded) R.string.stat_embedded else R.string.font_system_font)} • ${font.encoding}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )

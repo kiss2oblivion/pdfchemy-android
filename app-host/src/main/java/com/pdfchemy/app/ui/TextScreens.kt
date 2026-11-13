@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,15 +25,36 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.pdfchemy.app.R
+import com.pdfchemy.app.logic.FileUtil
 import com.pdfchemy.app.logic.JailEngineBridge
 import com.pdfchemy.app.logic.TextPagesContract
+import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.utils.FileUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+
+internal class OversizedTextInputException : IllegalArgumentException()
+
+internal fun readBoundedUtf8Text(input: InputStream, maxBytes: Int = SecurityLimits.MAX_TEXT_BYTES): String {
+    val out = ByteArrayOutputStream()
+    val buffer = ByteArray(8192)
+    var total = 0
+    while (true) {
+        val read = input.read(buffer)
+        if (read < 0) break
+        total += read
+        if (total > maxBytes) throw OversizedTextInputException()
+        out.write(buffer, 0, read)
+    }
+    return out.toString(Charsets.UTF_8.name())
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +63,7 @@ fun TextCleanerScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var textContent by remember { mutableStateOf("") }
+    var lastSourceUri by remember { mutableStateOf<Uri?>(null) }
 
     val wordCount = if (textContent.isBlank()) 0 else textContent.trim().split("\\s+".toRegex()).size
     val charCount = textContent.length
@@ -50,27 +73,47 @@ fun TextCleanerScreen(onBack: () -> Unit) {
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
+            lastSourceUri = uri
             coroutineScope.launch(Dispatchers.IO) {
                 val contentResolver = context.contentResolver
                 val mimeType = contentResolver.getType(uri) ?: ""
                 val isPdf = mimeType.equals("application/pdf", ignoreCase = true) ||
                         FileUtils.getFileName(context, uri)?.endsWith(".pdf", ignoreCase = true) == true
+                var errorMessage: String? = null
                 val loadedText = if (isPdf) {
                     try {
                         val contract = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", uri, null)
                         contract.pages.joinToString("\n\n")
-                    } catch (e: Exception) {
-                        ""
+                    } catch (c: CancellationException) {
+                        throw c
+                    } catch (_: Exception) {
+                        errorMessage = context.getString(R.string.error_open_text_failed)
+                        null
                     }
                 } else {
                     try {
-                        contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } ?: ""
-                    } catch (e: Exception) {
-                        ""
+                        val stream = contentResolver.openInputStream(uri)
+                        if (stream == null) {
+                            errorMessage = context.getString(R.string.error_open_text_failed)
+                            null
+                        } else {
+                            stream.use { readBoundedUtf8Text(it) }
+                        }
+                    } catch (c: CancellationException) {
+                        throw c
+                    } catch (_: OversizedTextInputException) {
+                        val maxMb = (SecurityLimits.MAX_TEXT_BYTES / (1024 * 1024)).coerceAtLeast(1)
+                        errorMessage = context.getString(R.string.error_oversized_text_file, maxMb)
+                        null
+                    } catch (_: Exception) {
+                        errorMessage = context.getString(R.string.error_open_text_failed)
+                        null
                     }
                 }
                 withContext(Dispatchers.Main) {
-                    if (loadedText.isNotEmpty()) {
+                    if (errorMessage != null) {
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                    } else if (!loadedText.isNullOrEmpty()) {
                         textContent = loadedText
                     }
                 }
@@ -78,19 +121,25 @@ fun TextCleanerScreen(onBack: () -> Unit) {
         }
     }
 
-    val saveFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/plain")
-    ) { destUri ->
+    val saveFileLauncher = rememberPreferredDocumentCreator("text/plain") { destUri ->
         if (destUri != null) {
             coroutineScope.launch(Dispatchers.IO) {
                 try {
-                    context.contentResolver.openOutputStream(destUri)?.use { out ->
-                        out.write(textContent.toByteArray(Charsets.UTF_8))
+                    val out = context.contentResolver.openOutputStream(destUri)
+                        ?: throw java.io.IOException("Unable to open output stream")
+                    out.use {
+                        it.write(textContent.toByteArray(Charsets.UTF_8))
                     }
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, context.getString(R.string.msg_text_saved_success), Toast.LENGTH_SHORT).show()
                     }
-                } catch (_: Exception) {}
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (_: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, context.getString(R.string.error_save_text_failed), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
@@ -122,7 +171,12 @@ fun TextCleanerScreen(onBack: () -> Unit) {
                         Icon(Icons.Rounded.ContentPaste, contentDescription = stringResource(R.string.desc_paste))
                     }
                     if (textContent.isNotBlank()) {
-                        IconButton(onClick = { saveFileLauncher.launch("cleaned_text.txt") }) {
+                        IconButton(onClick = {
+                            val suggestedName = lastSourceUri?.let {
+                                FileUtil.generateSuggestedName(context, it, "cleaned", extension = "txt")
+                            } ?: "cleaned_text.txt"
+                            saveFileLauncher.launch(suggestedName)
+                        }) {
                             Icon(Icons.Rounded.Save, contentDescription = stringResource(R.string.desc_save_file))
                         }
                         IconButton(onClick = {

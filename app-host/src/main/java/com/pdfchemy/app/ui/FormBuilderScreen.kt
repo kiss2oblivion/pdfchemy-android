@@ -235,7 +235,7 @@ fun FormBuilderScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Total: ${placedFields.size}",
+                                    text = stringResource(R.string.label_total_count, placedFields.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary

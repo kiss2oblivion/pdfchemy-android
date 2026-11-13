@@ -392,7 +392,7 @@ fun ScanPdfScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Page ${selectedIndex + 1} of ${scannedBitmaps.size}",
+                        text = stringResource(R.string.reader_page_indicator, selectedIndex + 1, scannedBitmaps.size),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )

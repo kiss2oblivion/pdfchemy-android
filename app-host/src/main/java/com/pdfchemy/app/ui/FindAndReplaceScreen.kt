@@ -484,7 +484,7 @@ fun FindAndReplaceScreen(
                             Text(stringResource(R.string.badge_local_layout_preserving), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
                         Text(
-                            "Search for words or phrases across all pages. PDFchemy inspects matches on-device without cloud uploads or rasterizing untouched pages.",
+                            stringResource(R.string.find_replace_privacy_info),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

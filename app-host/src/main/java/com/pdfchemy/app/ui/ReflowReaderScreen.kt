@@ -105,7 +105,7 @@ fun ReflowReaderScreen(
         if (ready.uri == selectedPdfUri) {
             val paragraphs = ready.text.split(Regex("\n\n+"))
                 .map { it.replace(Regex("\n+"), " ").trim() }.filter { it.isNotBlank() }
-            reflowSections = listOf(ReflowSection(pageNumber = 1, title = "OCR Extracted", paragraphs = paragraphs))
+            reflowSections = listOf(ReflowSection(pageNumber = 1, title = context.getString(R.string.reflow_ocr_extracted), paragraphs = paragraphs))
             isScannedOnly = false
             ocr.reset()
         }
@@ -647,7 +647,7 @@ fun ReflowReaderScreen(
                     if (activeJobState!!.totalCharacters > 0) {
                         val progress = activeJobState!!.processedCharacters.toFloat() / activeJobState!!.totalCharacters
                         LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
-                        Text("${(progress * 100).toInt()}% (${activeJobState!!.projectedSizeBytes / (1024 * 1024)} MB projected)")
+                        Text(stringResource(R.string.audio_export_progress_projected, (progress * 100).toInt(), activeJobState!!.projectedSizeBytes / (1024 * 1024)))
                     } else {
                         CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
                     }
@@ -769,7 +769,7 @@ fun ReflowReaderScreen(
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
                 Text(
-                    text = "Table of Contents",
+                    text = stringResource(R.string.reader_toc_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp)
@@ -777,7 +777,7 @@ fun ReflowReaderScreen(
                 HorizontalDivider()
                 if (bookmarks.isEmpty()) {
                     Text(
-                        text = "No document outlines found in this PDF.",
+                        text = stringResource(R.string.reader_toc_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp)
@@ -1366,7 +1366,7 @@ fun ReflowReaderScreen(
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
                                             Text(
-                                                text = "PAGE ${section.pageNumber}",
+                                                text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                                 color = selectedTheme.text.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold,
@@ -1525,7 +1525,7 @@ fun ReflowReaderScreen(
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
-                                        text = "PAGE ${section.pageNumber}",
+                                        text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                         color = selectedTheme.text.copy(alpha = 0.6f),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
@@ -1574,7 +1574,7 @@ fun ReflowReaderScreen(
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
-                                        text = "PAGE ${section.pageNumber}",
+                                        text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                         color = selectedTheme.text.copy(alpha = 0.6f),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,

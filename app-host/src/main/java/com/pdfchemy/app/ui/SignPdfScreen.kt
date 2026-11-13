@@ -164,8 +164,12 @@ fun SignPdfScreen(
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
-                    viewModel.showErrorToast(context.getString(R.string.error_signing_failed),
-                        context.getString(R.string.pki_signature_failed_desc))
+                    val desc = if (error is IllegalArgumentException && error.message?.contains("32 KiB", ignoreCase = true) == true) {
+                        context.getString(R.string.pki_keystore_too_large)
+                    } else {
+                        context.getString(R.string.pki_signature_failed_desc)
+                    }
+                    viewModel.showErrorToast(context.getString(R.string.error_signing_failed), desc)
                 } finally {
                     imported?.fill(0)
                     pkiKeystorePassword = ""
@@ -462,7 +466,7 @@ fun SignPdfScreen(
                                             )
                                             if (!sig.dateStamp.isNullOrBlank()) {
                                                 Text(
-                                                    text = "Signed: ${sig.dateStamp}",
+                                                    text = stringResource(R.string.label_signed_date, sig.dateStamp),
                                                     fontSize = 9.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = Color.Black,
@@ -489,7 +493,7 @@ fun SignPdfScreen(
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Close,
-                                                    contentDescription = "Remove signature",
+                                                    contentDescription = stringResource(R.string.desc_remove_signature),
                                                     tint = MaterialTheme.colorScheme.onError,
                                                     modifier = Modifier.size(14.dp)
                                                 )
@@ -596,7 +600,7 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = { showPkiDialog = true },
-                            label = { Text("🔒 PKI Cert", fontWeight = FontWeight.Bold, color = Color(0xFF059669)) },
+                            label = { Text("🔒 ${stringResource(R.string.sign_tool_pki_cert)}", fontWeight = FontWeight.Bold, color = Color(0xFF059669)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -619,7 +623,7 @@ fun SignPdfScreen(
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("✓ Check", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
+                            label = { Text("✓ ${stringResource(R.string.sign_tool_check)}", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -642,7 +646,7 @@ fun SignPdfScreen(
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("✕ Cross", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
+                            label = { Text("✕ ${stringResource(R.string.sign_tool_cross)}", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -666,7 +670,7 @@ fun SignPdfScreen(
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("📅 Date", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
+                            label = { Text("📅 ${stringResource(R.string.sign_tool_date)}", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }

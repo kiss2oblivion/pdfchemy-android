@@ -774,7 +774,7 @@ fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Select a PDF to extract all embedded images.",
+                        stringResource(R.string.select_pdf_extract_images),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

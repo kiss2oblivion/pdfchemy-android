@@ -273,7 +273,7 @@ fun RepairPdfScreen(
                         if (!diagnostic?.issueSummary.isNullOrBlank()) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                             Text(
-                                text = "Issues: ${diagnostic?.issueSummary}",
+                                text = stringResource(R.string.repair_issues_summary, diagnostic?.issueSummary.orEmpty()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

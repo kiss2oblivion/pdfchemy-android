@@ -439,7 +439,7 @@ fun ImageCompressorScreen(
                                             value = customTargetMbText,
                                             onValueChange = { customTargetMbText = it },
                                             label = { Text(stringResource(R.string.custom_target_mb_label)) },
-                                            placeholder = { Text("e.g. 1.5") },
+                                            placeholder = { Text(stringResource(R.string.placeholder_example_mb)) },
                                             singleLine = true,
                                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                             modifier = Modifier.fillMaxWidth(),

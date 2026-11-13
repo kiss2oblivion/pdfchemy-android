@@ -637,13 +637,13 @@ fun PdfToImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             FilterChip(
                                 selected = selectedFormat == "JPEG",
                                 onClick = { selectedFormat = "JPEG" },
-                                label = { Text("JPG (Photos / Compact)") },
+                                label = { Text(stringResource(R.string.format_jpg_compact)) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = selectedFormat == "PNG",
                                 onClick = { selectedFormat = "PNG" },
-                                label = { Text("PNG (Lossless / Crisp)") },
+                                label = { Text(stringResource(R.string.format_png_lossless)) },
                                 modifier = Modifier.weight(1f)
                             )
                         }

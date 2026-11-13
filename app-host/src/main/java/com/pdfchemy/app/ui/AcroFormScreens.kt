@@ -450,7 +450,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 }
 
                                 Text(
-                                    "Page ${currentPage + 1} of $pageCount • ${pageFields.size} field(s)",
+                                    stringResource(R.string.acroform_page_fields_indicator, currentPage + 1, pageCount, pageFields.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold
                                 )

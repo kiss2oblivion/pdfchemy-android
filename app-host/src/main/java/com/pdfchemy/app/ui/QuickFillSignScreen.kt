@@ -242,12 +242,12 @@ fun QuickFillSignScreen(
         var tempText by remember { mutableStateOf(textToPlace) }
         AlertDialog(
             onDismissRequest = { showTextDialog = false },
-            title = { Text("Text to Place") },
+            title = { Text(stringResource(R.string.quick_fill_dialog_text_title)) },
             text = {
                 OutlinedTextField(
                     value = tempText,
                     onValueChange = { tempText = it },
-                    label = { Text("Enter text (Name, Answer, Address)") },
+                    label = { Text(stringResource(R.string.quick_fill_dialog_text_hint)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -270,7 +270,7 @@ fun QuickFillSignScreen(
         var signaturePoints by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
         AlertDialog(
             onDismissRequest = { showSignDialog = false },
-            title = { Text("Draw Signature") },
+            title = { Text(stringResource(R.string.quick_fill_dialog_sign_title)) },
             text = {
                 Box(
                     modifier = Modifier
@@ -324,7 +324,7 @@ fun QuickFillSignScreen(
                         showSignDialog = false
                     }
                 ) {
-                    Text("Place Signature")
+                    Text(stringResource(R.string.quick_fill_btn_place_signature))
                 }
             },
             dismissButton = {
@@ -426,7 +426,7 @@ fun QuickFillSignScreen(
                                 selectedTool = QuickFillTool.TEXT
                                 showTextDialog = true
                             },
-                            label = { Text("T Text") },
+                            label = { Text("T ${stringResource(R.string.quick_fill_text_tool)}") },
                             leadingIcon = { Icon(Icons.Rounded.TextFields, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                         FilterChip(
@@ -450,7 +450,7 @@ fun QuickFillSignScreen(
                                 selectedTool = QuickFillTool.SIGNATURE
                                 showSignDialog = true
                             },
-                            label = { Text("✍️ Sign") }
+                            label = { Text("✍️ ${stringResource(R.string.quick_fill_sign_tool)}") }
                         )
                     }
                 }
@@ -494,7 +494,7 @@ fun QuickFillSignScreen(
                         ) {
                             Image(
                                 bitmap = bmp.asImageBitmap(),
-                                contentDescription = "PDF Page",
+                                contentDescription = stringResource(R.string.reader_page_content_desc, currentPageIndex + 1),
                                 modifier = Modifier.fillMaxSize()
                             )
 
@@ -581,11 +581,11 @@ fun QuickFillSignScreen(
                             onClick = { if (currentPageIndex > 0) currentPageIndex-- },
                             enabled = currentPageIndex > 0
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Page")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_prev_page))
                         }
 
                         Text(
-                            text = "Page ${currentPageIndex + 1} of $totalPages",
+                            text = stringResource(R.string.reader_page_indicator, currentPageIndex + 1, totalPages),
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -597,7 +597,7 @@ fun QuickFillSignScreen(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },
                             enabled = currentPageIndex < totalPages - 1
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Page")
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.action_next_page))
                         }
                     }
                 }

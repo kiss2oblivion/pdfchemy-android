@@ -303,7 +303,7 @@ fun MetadataSanitizerScreen(
                                     Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color(0xFF00C853))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Clean document — zero personal tracking metadata detected.",
+                                        stringResource(R.string.metadata_clean_document),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color(0xFF00C853),
                                         fontWeight = FontWeight.SemiBold

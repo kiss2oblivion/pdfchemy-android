@@ -977,7 +977,7 @@ fun PdfEditorScreen(
                         value = customStampText,
                         onValueChange = { customStampText = it.take(80) },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("e.g. REVIEWED, COPY, CONFIDENTIAL") },
+                        placeholder = { Text(stringResource(R.string.custom_stamp_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )

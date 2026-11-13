@@ -268,7 +268,7 @@ fun MarkdownStudioScreen(
                 )
             }
             Text(
-                text = "$wordCount words · ${markdownText.length} chars",
+                text = stringResource(R.string.markdown_stats_words_chars, wordCount, markdownText.length),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)

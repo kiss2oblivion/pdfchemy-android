@@ -632,7 +632,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = "PDF", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             com.pdfchemy.app.utils.FileUtils.getFileName(context, file.uri)
@@ -643,7 +643,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 Text(
-                    text = "If the document contains standard text, it will be extracted instantly. If it is a scanned document (images), we will use on-device OCR (Optical Character Recognition) to read the text. This may take a few moments.",
+                    text = stringResource(R.string.extract_text_info_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)

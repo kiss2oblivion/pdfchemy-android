@@ -628,7 +628,7 @@ fun MainApp(
 
     val browseOutput = rememberLauncherForActivityResult(BrowseOutputContract()) { uri ->
         if (uri != null) runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
-            .onFailure { viewModel.notifyError("No app can open this file. Choose another viewer or check file access.") }
+            .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_open_item)) }
     }
     val incomingPdfUri by (incomingPdfUriState?.collectAsState() ?: remember { mutableStateOf<Uri?>(null) })
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -956,7 +956,7 @@ fun MainApp(
                 // [FEATURE: On-Device OCR] — 100% offline optical character recognition
                 Screen.OcrPdf -> OcrPdfScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Extract Text & Images] — Strips raw uncompressed text and raster bitmaps
-                Screen.ExtractText -> ExtractTextScreen(viewModel) { returnFromTool(Screen.CheckCategory) }
+                Screen.ExtractText -> ExtractTextScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 Screen.ExtractImages -> ExtractImagesScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
 
                 // =========================================================================================
@@ -3503,12 +3503,12 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Words: $wordCount",
+                    text = stringResource(R.string.label_words, wordCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Chars: $charCount",
+                    text = stringResource(R.string.label_chars, charCount),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -3786,9 +3786,9 @@ fun SettingsScreen(
                             // Theme Selector
 
             Text(stringResource(R.string.settings_output_folder), style = MaterialTheme.typography.titleMedium)
-            Text(if (preferredOutput == null) "Ask where to save each time" else "Saved folder selected. New copies keep existing files.", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(if (preferredOutput == null) R.string.settings_output_folder_ask else R.string.settings_output_folder_saved), style = MaterialTheme.typography.bodySmall)
             Row {
-                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) stringResource(R.string.action_choose_folder) else "Change folder") }
+                TextButton(onClick = { folderPicker.launch(null) }) { Text(stringResource(if (preferredOutput == null) R.string.action_choose_folder else R.string.action_change_folder)) }
                 if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text(stringResource(R.string.action_reset)) }
             }
                             var themeExpanded by remember { mutableStateOf(false) }
