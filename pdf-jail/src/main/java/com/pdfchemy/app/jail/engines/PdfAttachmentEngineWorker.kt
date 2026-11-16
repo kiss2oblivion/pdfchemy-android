@@ -19,60 +19,33 @@ object PdfAttachmentEngineWorker {
         var document: PDDocument? = null
         try {
             document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
-            val names = document.documentCatalog.names
-            val embeddedFiles = names?.embeddedFiles
-
-            val resultList = mutableListOf<JSONObject>()
-            if (embeddedFiles != null) {
-                val map = embeddedFiles.names ?: emptyMap()
-                for ((key, spec) in map) {
-                    if (spec is PDComplexFileSpecification) {
-                        val fileName = spec.filename ?: key
-                        val ef = spec.embeddedFile
-                        val size = ef?.size?.toLong() ?: 0L
-                        val mime = ef?.subtype ?: "application/octet-stream"
-                        
-                        val jo = JSONObject()
-                        jo.put("name", fileName)
-                        jo.put("sizeBytes", size)
-                        jo.put("mimeType", mime)
-                        resultList.add(jo)
-                    }
-                }
-            }
-            
-            val jsonArray = JSONArray()
-            for (item in resultList) {
-                jsonArray.put(item)
-            }
-            return jsonArray.toString()
+            return listAttachments(document)
         } finally {
             try { document?.close() } catch (_: Exception) {}
         }
     }
 
+    internal fun listAttachments(document: PDDocument): String {
+        val result = JSONArray()
+        val files = document.documentCatalog.names?.embeddedFiles?.names.orEmpty()
+        for ((key, spec) in files) {
+            val ef = spec.embeddedFile
+            result.put(JSONObject()
+                .put("attachmentId", key)
+                .put("name", spec.filename ?: key)
+                // PDF /Params/Size is optional; PDFBox uses -1 when it is unknown.
+                .put("sizeBytes", ef?.size?.toLong()?.coerceAtLeast(0L) ?: 0L)
+                .put("mimeType", ef?.subtype ?: "application/octet-stream"))
+        }
+        return result.toString()
+    }
+
     fun extractAttachment(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
         val params = JSONObject(paramsJson)
-        val attachmentName = params.getString("attachmentName")
-        
         var document: PDDocument? = null
         try {
             document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
-            val names = document.documentCatalog.names
-            val embeddedFiles = names?.embeddedFiles ?: throw IllegalStateException("No embedded files found")
-            val map = embeddedFiles.names ?: emptyMap()
-            var targetFileSpec: PDComplexFileSpecification? = null
-
-            for ((key, spec) in map) {
-                if (spec is PDComplexFileSpecification) {
-                    if (spec.filename == attachmentName || key == attachmentName) {
-                        targetFileSpec = spec
-                        break
-                    }
-                }
-            }
-
-            val ef = targetFileSpec?.embeddedFile ?: throw IllegalStateException("Attachment not found")
+            val ef = resolveAttachment(document, params).embeddedFile ?: throw IllegalStateException("Attachment not found")
 
             FileOutputStream(targetFd.fileDescriptor).use { out ->
                 ef.createInputStream().use { ins ->
@@ -83,6 +56,25 @@ object PdfAttachmentEngineWorker {
         } finally {
             try { document?.close() } catch (_: Exception) {}
         }
+    }
+
+    private fun attachmentId(params: JSONObject): String {
+        val id = params.get("attachmentId")
+        require(id is String && id.length <= 1024) { "Invalid attachment identifier" }
+        return id
+    }
+
+    internal fun resolveAttachment(document: PDDocument, params: JSONObject): PDComplexFileSpecification {
+        val id = attachmentId(params)
+        return document.documentCatalog.names?.embeddedFiles?.names?.get(id)
+            ?: throw IllegalArgumentException("Attachment not found")
+    }
+
+    internal fun removeAttachmentFromDocument(document: PDDocument, params: JSONObject) {
+        val id = attachmentId(params)
+        resolveAttachment(document, params) // Validate before changing the document.
+        val tree = requireNotNull(document.documentCatalog.names?.embeddedFiles)
+        tree.names = tree.names.orEmpty().toMutableMap().apply { remove(id) }
     }
 
     fun embedAttachment(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, extraFd: ParcelFileDescriptor, paramsJson: String): String {
@@ -139,27 +131,12 @@ object PdfAttachmentEngineWorker {
 
     fun removeAttachment(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
         val params = JSONObject(paramsJson)
-        val attachmentName = params.getString("attachmentName")
         
         var document: PDDocument? = null
         var tempFile: File? = null
         try {
             document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
-            val names = document.documentCatalog.names
-            val embeddedFiles = names?.embeddedFiles
-
-            if (embeddedFiles != null) {
-                val map = (embeddedFiles.names ?: emptyMap()).toMutableMap()
-                val keyToRemove = map.keys.firstOrNull { key ->
-                    val spec = map[key]
-                    (spec is PDComplexFileSpecification && spec.filename == attachmentName) || key == attachmentName
-                }
-
-                if (keyToRemove != null) {
-                    map.remove(keyToRemove)
-                    embeddedFiles.setNames(map)
-                }
-            }
+            removeAttachmentFromDocument(document, params)
 
             tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("rm_attach_", ".pdf")
             com.pdfchemy.app.jail.boundedFileOutput(tempFile).use { document.save(it) }

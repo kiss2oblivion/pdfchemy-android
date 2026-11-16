@@ -295,6 +295,12 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var selectedFiles by remember { mutableStateOf(listOf<PdfItem>()) }
+    val inputOwner = remember { com.pdfchemy.app.logic.StagedSelectionOwner() }
+    androidx.compose.runtime.DisposableEffect(inputOwner) { onDispose { inputOwner.close() } }
+    fun updateSelectedFiles(files: List<PdfItem>) {
+        inputOwner.retainOnly(files.map { it.uri })
+        selectedFiles = files
+    }
     var showHistorySheet by remember { mutableStateOf(false) }
     val allHistoryItems by viewModel.historyList.collectAsState()
     val historyItems = allHistoryItems.filter { !it.isDirectory && it.mimeType == "application/pdf" }
@@ -312,7 +318,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
             PdfItem(uri, name)
         }
-        selectedFiles = (selectedFiles + newItems).distinctBy { it.uri }
+        updateSelectedFiles((selectedFiles + newItems).distinctBy { it.uri })
     }
 
     val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
@@ -343,9 +349,9 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     .clickable(enabled = historyAvailability[item.uriString] == true) {
                                         val uri = Uri.parse(item.uriString)
                                         if (isSelected) {
-                                            selectedFiles = selectedFiles.filterNot { it.uri == uri }
+                                            updateSelectedFiles(selectedFiles.filterNot { it.uri == uri })
                                         } else {
-                                            selectedFiles = selectedFiles + PdfItem(uri, item.name)
+                                            updateSelectedFiles(selectedFiles + PdfItem(uri, item.name))
                                         }
                                     },
                                 colors = CardDefaults.cardColors(
@@ -466,7 +472,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                     val temp = list[currentIndex]
                                                     list[currentIndex] = list[currentIndex + 1]
                                                     list[currentIndex + 1] = temp
-                                                    selectedFiles = list
+                                                    updateSelectedFiles(list)
                                                     accumulatedY = 0f
                                                 } else if (accumulatedY < -150f && currentIndex > 0) {
                                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -474,7 +480,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                     val temp = list[currentIndex]
                                                     list[currentIndex] = list[currentIndex - 1]
                                                     list[currentIndex - 1] = temp
-                                                    selectedFiles = list
+                                                    updateSelectedFiles(list)
                                                     accumulatedY = 0f
                                                 }
                                             }
@@ -503,7 +509,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                 val temp = list[index]
                                                 list[index] = list[index - 1]
                                                 list[index - 1] = temp
-                                                selectedFiles = list
+                                                updateSelectedFiles(list)
                                             }
                                         },
                                         enabled = index > 0,
@@ -520,7 +526,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                 val temp = list[index]
                                                 list[index] = list[index + 1]
                                                 list[index + 1] = temp
-                                                selectedFiles = list
+                                                updateSelectedFiles(list)
                                             }
                                         },
                                         enabled = index < selectedFiles.size - 1,
@@ -532,7 +538,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     IconButton(
                                         onClick = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            selectedFiles = selectedFiles.filterIndexed { i, _ -> i != index }
+                                            updateSelectedFiles(selectedFiles.filterIndexed { i, _ -> i != index })
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {

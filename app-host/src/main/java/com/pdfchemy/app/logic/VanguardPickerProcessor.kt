@@ -11,7 +11,9 @@ import kotlinx.coroutines.withContext
 /**
  * Outcome of picking and staging one or more PDF documents (FOLLOW-02 / RA-03).
  */
-sealed class PickerOutcome {
+sealed class PickerOutcome : java.io.Closeable {
+    internal var owner: java.io.Closeable? = null
+    override fun close() { owner?.close(); owner = null }
     data class Selected(val stagedUris: List<Uri>) : PickerOutcome()
     data class BlockedThreat(val reasonResId: Int) : PickerOutcome()
     data class Encrypted(val stagedUri: Uri) : PickerOutcome()
@@ -97,11 +99,7 @@ object VanguardPickerProcessor {
         context: Context,
         uris: List<Uri>,
         isVanguardEnabled: Boolean,
-        stager: suspend (Uri) -> Uri = { uri ->
-            withContext(Dispatchers.IO) {
-                DocumentStager.stageDocumentCancellable(context, uri).uri
-            }
-        },
+        stager: (suspend (Uri) -> Uri)? = null,
         threatChecker: suspend (Uri) -> VanguardThreatResult = { stagedUri ->
             PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
         },
@@ -111,12 +109,17 @@ object VanguardPickerProcessor {
         if (uris.isEmpty()) return PickerOutcome.Selected(emptyList())
 
         val stagedUris = mutableListOf<Uri>()
-        var encryptedUri: Uri? = null
+        val owner = StagedSelectionOwner(releaser)
 
         return try {
             for (uri in uris) {
                 onItemScanning?.invoke(uri)
-                val staged = stager(uri)
+                val staged = if (stager != null) {
+                    stager(uri).also { owner.adopt(it, java.io.Closeable {}) }
+                } else {
+                    val snapshot = DocumentStager.stageDocumentCancellationSafe(context, uri)
+                    snapshot.document.uri.also { owner.adopt(it, snapshot.lease) }
+                }
                 stagedUris.add(staged)
 
                 if (isVanguardEnabled) {
@@ -125,28 +128,26 @@ object VanguardPickerProcessor {
                             // continue batch
                         }
                         is VanguardThreatResult.EncryptedCannotVerify -> {
-                            encryptedUri = staged
-                            // Release all staged files except the encrypted one kept for unlock navigation
-                            stagedUris.filter { it != encryptedUri }.forEach(releaser)
-                            return PickerOutcome.Encrypted(staged)
+                            owner.retainOnly(listOf(staged))
+                            return PickerOutcome.Encrypted(staged).also { it.owner = owner }
                         }
                         is VanguardThreatResult.ExecutableThreat -> {
-                            stagedUris.forEach(releaser)
+                            owner.close()
                             return PickerOutcome.BlockedThreat(resolveBlockedReasonResId(threat.report))
                         }
                         is VanguardThreatResult.ParseFailed -> {
-                            stagedUris.forEach(releaser)
+                            owner.close()
                             return PickerOutcome.Damaged
                         }
                     }
                 }
             }
-            PickerOutcome.Selected(stagedUris)
+            PickerOutcome.Selected(stagedUris).also { it.owner = owner }
         } catch (cancelled: CancellationException) {
-            stagedUris.forEach(releaser)
+            owner.close()
             throw cancelled
         } catch (_: Exception) {
-            stagedUris.forEach(releaser)
+            owner.close()
             PickerOutcome.ProviderError
         }
     }

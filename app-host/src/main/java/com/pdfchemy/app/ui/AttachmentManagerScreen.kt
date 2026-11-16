@@ -59,6 +59,7 @@ fun AttachmentManagerScreen(
                 val contract = PdfGateway.executeEngineTyped<AttachmentListContract>(context, "ATTACHMENT_LIST", uri, null, "{}")
                 attachments = contract.attachments.map {
                     PdfAttachment(
+                        attachmentId = it.attachmentId,
                         name = it.name,
                         sizeBytes = it.sizeBytes,
                         mimeType = it.mimeType
@@ -94,7 +95,7 @@ fun AttachmentManagerScreen(
         if (destUri != null && selectedPdfUri != null && targetExtractAttachment != null) {
             coroutineScope.launch {
                 try {
-                    val params = JSONObject().put("attachmentName", targetExtractAttachment!!.name)
+                    val params = JSONObject().put("attachmentId", targetExtractAttachment!!.attachmentId)
                     PdfGateway.executeEngine(context, "ATTACHMENT_EXTRACT", selectedPdfUri!!, destUri, params.toString())
                     viewModel.showSuccessToast(
                         context.getString(R.string.title_extract_success),
@@ -258,7 +259,7 @@ fun AttachmentManagerScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        itemsIndexed(attachments, key = { _, item -> "${item.name}_${item.sizeBytes}" }) { idx, item ->
+                        itemsIndexed(attachments, key = { _, item -> item.attachmentId }) { idx, item ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp),

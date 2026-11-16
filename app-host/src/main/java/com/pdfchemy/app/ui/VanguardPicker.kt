@@ -346,6 +346,10 @@ fun rememberVanguardMultiplePdfPicker(
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingOutcome by remember { mutableStateOf<PickerOutcome?>(null) }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { pendingOutcome?.close() }
+    }
 
     VanguardScanningOverlay(
         visible = isScanning,
@@ -470,7 +474,7 @@ fun rememberVanguardMultiplePdfPicker(
         AlertDialog(
             onDismissRequest = {
                 showEncryptedDialog = false
-                encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
+                pendingOutcome?.close(); pendingOutcome = null
                 encryptedPendingUri = null
             },
             icon = {
@@ -501,7 +505,8 @@ fun rememberVanguardMultiplePdfPicker(
                             showEncryptedDialog = false
                             encryptedPendingUri = null
                             if (targetUri != null) {
-                                onNavigateToUnlock(targetUri)
+                                try { onNavigateToUnlock(targetUri) }
+                                finally { pendingOutcome?.close(); pendingOutcome = null }
                             }
                         }
                     ) {
@@ -511,7 +516,7 @@ fun rememberVanguardMultiplePdfPicker(
                     Button(
                         onClick = {
                             showEncryptedDialog = false
-                            encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
+                            pendingOutcome?.close(); pendingOutcome = null
                             encryptedPendingUri = null
                         }
                     ) {
@@ -524,7 +529,7 @@ fun rememberVanguardMultiplePdfPicker(
                     TextButton(
                         onClick = {
                             showEncryptedDialog = false
-                            encryptedPendingUri?.let(com.pdfchemy.app.utils.DocumentStager::release)
+                            pendingOutcome?.close(); pendingOutcome = null
                             encryptedPendingUri = null
                         }
                     ) {
@@ -554,13 +559,15 @@ fun rememberVanguardMultiplePdfPicker(
                     )
                     when (outcome) {
                         is PickerOutcome.Selected -> {
-                            onPdfsSelected(outcome.stagedUris)
+                            outcome.use { onPdfsSelected(it.stagedUris) }
                         }
                         is PickerOutcome.BlockedThreat -> {
                             blockedReasonResId = outcome.reasonResId
                             showBlockedDialog = true
                         }
                         is PickerOutcome.Encrypted -> {
+                            pendingOutcome?.close()
+                            pendingOutcome = outcome
                             encryptedPendingUri = outcome.stagedUri
                             showEncryptedDialog = true
                         }

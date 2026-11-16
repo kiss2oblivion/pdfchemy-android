@@ -381,11 +381,13 @@ object WorkerResponseValidator {
         for (i in 0 until arr.length()) {
             val obj = arr.getJSONObject(i)
             list.add(AttachmentItemContract(
+                attachmentId = obj.requireString("attachmentId", maxLength = 1024),
                 name = obj.requireString("name", maxLength = 256),
                 sizeBytes = obj.requireLong("sizeBytes", min = 0, max = SecurityLimits.MAX_OUTPUT_BYTES),
                 mimeType = obj.requireString("mimeType", maxLength = 128)
             ))
         }
+        require(list.map { it.attachmentId }.toSet().size == list.size) { "Duplicate attachment identifiers" }
         return AttachmentListContract(attachments = list)
     }
 

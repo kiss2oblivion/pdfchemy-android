@@ -168,6 +168,7 @@ data class BookmarkReadContract(
  * Attachment item for ATTACHMENT_LIST.
  */
 data class AttachmentItemContract(
+    val attachmentId: String,
     val name: String,
     val sizeBytes: Long,
     val mimeType: String

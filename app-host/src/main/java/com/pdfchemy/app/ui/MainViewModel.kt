@@ -429,6 +429,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         exitReader()
+        batchInputOwner.close()
         setContinuityUri(null)
         val context = getApplication<Application>()
         val records = activeOperations.values.toList()
@@ -910,19 +911,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val batchInputOwner = com.pdfchemy.app.logic.StagedSelectionOwner()
     private val _selectedFiles = MutableStateFlow<List<SelectedFile>>(emptyList())
     val selectedFiles: StateFlow<List<SelectedFile>> = _selectedFiles.asStateFlow()
 
     fun clearSelectedFiles() {
         _selectedFiles.value = emptyList()
+        batchInputOwner.close()
     }
 
     fun removeSelectedFile(uri: Uri) {
         _selectedFiles.value = _selectedFiles.value.filter { it.uri != uri }
+        batchInputOwner.retainOnly(_selectedFiles.value.map { it.uri })
     }
 
     fun onFilesSelected(context: Context, uris: List<Uri>) {
         if (uris.isEmpty()) return
+        batchInputOwner.retainOnly(batchInputOwner.uris + uris)
         if (_selectedFiles.value.isEmpty()) {
             batchAnalysisTicket = latestAnalysis.begin()
             fileAnalysisJob?.cancel()
@@ -994,9 +999,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun compressBatch(context: Context, destTreeUri: Uri) {
         tryAdmitOperation {
             _uiState.value = UiState.Processing()
+            val files = _selectedFiles.value
+            val operationInputs = com.pdfchemy.app.logic.StagedSelectionOwner().apply {
+                retainOnly(files.map { it.uri })
+            }
             activeJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                val files = _selectedFiles.value
                 if (files.isEmpty()) {
                     _uiState.value = UiState.Error(context.getString(R.string.msg_no_files_batch))
                     return@launch
@@ -1082,7 +1090,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (error: Exception) {
                 _uiState.value = UiState.Error(error.message ?: context.getString(R.string.msg_batch_compress_fail))
             }
-        }
+        }.also { job -> job.invokeOnCompletion { operationInputs.close() } }
         }
     }
 
@@ -1105,7 +1113,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _warning.value = null
             _pdfAnalysis.value = null
             _isAnalyzing.value = false
-            _selectedFiles.value = emptyList()
+            clearSelectedFiles()
         }
     }
 
@@ -1178,6 +1186,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             addPendingOutputUri(destUri)
             _uiState.value = UiState.Processing()
+            val operationInputs = com.pdfchemy.app.logic.StagedSelectionOwner().apply { retainOnly(sourceUris) }
             activeJob = viewModelScope.launch {
                 try {
                     PdfManipulator.mergePdfs(context, sourceUris, destUri)
@@ -1188,7 +1197,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (e is kotlinx.coroutines.CancellationException) throw e
                     _uiState.value = UiState.Error(e.message ?: "Failed to merge PDFs.")
                 }
-            }
+            }.also { job -> job.invokeOnCompletion { operationInputs.close() } }
         }
     }
 

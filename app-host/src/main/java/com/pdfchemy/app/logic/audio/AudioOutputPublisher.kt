@@ -20,9 +20,9 @@ object AudioOutputPublisher {
             wav,
             listOf(destination),
             { context.contentResolver.openOutputStream(destination, "wt") },
-            { deletePartial(context, destination, isFreshCopy) }
+            { deletePartial(context, destination, isFreshCopy) },
+            { OutputPolicy.markPublished(destination) }
         )
-        OutputPolicy.markPublished(destination)
     }
 
     fun deletePartial(
@@ -34,12 +34,11 @@ object AudioOutputPublisher {
             // Existing or unknown destinations must not be deleted during pre-publication failure cleanup
             return
         }
-        if (com.pdfchemy.app.security.PublicationCoordinator.hasActiveWriter(destination)) {
-            // Uninterruptible writer still active: do not delete destination while writer is writing
-            return
+        // Atomically claim only a still-unpublished fresh output. A cached provenance
+        // flag cannot authorize deletion after publication or during another writer.
+        com.pdfchemy.app.security.FreshOutputRegistry.deleteIfFresh(destination) {
+            DocumentFile.fromSingleUri(context, destination)?.delete() == true
         }
-        OutputPolicy.unregisterFreshCopy(destination)
-        runCatching { DocumentFile.fromSingleUri(context, destination)?.delete() }
     }
 
     // Small separate abstraction: HostOutputTransaction is a PDF-worker FD/JSON validator
@@ -56,7 +55,8 @@ object AudioOutputPublisher {
         wav: File,
         targets: List<Uri>,
         open: () -> OutputStream?,
-        deletePartial: () -> Unit
+        deletePartial: () -> Unit,
+        onPublished: () -> Unit = {}
     ) = kotlinx.coroutines.coroutineScope {
         val handle = com.pdfchemy.app.security.PublicationCoordinator.acquire(targets, wav.length())
         var completedNormally = false
@@ -89,9 +89,10 @@ object AudioOutputPublisher {
                     }
                 }
             }
+            // No suspension between successful stream close and retiring freshness.
+            onPublished()
             completedNormally = true
         } catch (error: Throwable) {
-            runCatching { deletePartial() }
             // Aborting a blocked provider write can surface as IOException.
             // Preserve cancellation while retaining genuine active-copy errors.
             if (error is java.io.IOException) currentCoroutineContext().ensureActive()
@@ -99,6 +100,7 @@ object AudioOutputPublisher {
         } finally {
             watcher.cancel()
             handle.close()
+            if (!completedNormally) runCatching { deletePartial() }
         }
     }
 }
