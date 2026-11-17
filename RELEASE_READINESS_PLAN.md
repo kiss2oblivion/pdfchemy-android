@@ -1,29 +1,25 @@
-# PDFchemy 2.1.0 release readiness
+# PDFchemy 2.1.0 release candidate
 
-Target: version name 2.1.0. User reports Play currently lists 2.0.3; its numeric version code remains to be verified. Start from main c405a6d53672c6d2c35c30b88b4e8f450072e513 in an isolated worktree.
+Code commit: ba65832b56d8443b37d51423330567eff2b63bac. Package/version: com.pdfchemy.app, 2.1.0 (14), SDK 24..36. The owner reports the current public version is 2.0.3; its numeric Play version code has not been supplied.
 
-- [x] RA-01 (local API 24 and API 36: 4/4 each passed; full CI remains below): Localize result-action test selectors; preserve large-font, long-result and stale-ad callback assertions; verify on native Android.
-- [x] RA-02 (15 worker regression tests and 11 native checks on each of API 24 and API 36 pass; full API matrix remains below): Replace destructive whole-page Find & Replace rasterization with content editing that preserves unaffected vectors/text, annotations and page geometry; preserve exact Unicode replacement searchability and remove replaced source text. Cover cropped/rotated pages, split operators, forms, annotations and multilingual output with actual saved PDFs.
-- [ ] Re-run final local gate after RA-04. Previous candidate: 924 host/IPC/worker unit tests, architecture, explicit lint for host and three libraries, debug/test and signed release builds, and artifact contracts pass. Host lint retains three non-fatal inherited warnings; library lint reports no issues.
-- [ ] Run same-source full native CI on API 24/30/34/36, including the dependent release job.
-- [ ] Rebuild and verify final signed artifacts after RA-04. Previous APK/AAB and mapping built from bd2c2771; signer, version/package, embedded bundletool validation, ZIP and 64-bit ELF 16-KiB alignment, artifact hygiene and source-bound hashes verified under .release-ready/artifacts/. Play registration remains a separate unchecked gate.
-- [ ] Exercise signed public processing journeys and forensic output checks; preserve original document bytes.
-- [ ] Complete available emulator lifecycle, low-memory, accessibility/font-scale and provider-failure checks.
-- [ ] Owner follow-up: user explicitly plans phone testing after deployment. Physical ARM64/16-KiB execution is not claimed; a connected phone is not required for the current source/emulator work.
-- [ ] Verify real Play Billing/restore/acknowledgement and UMP consent/revoke/privacy options and protected-screen/Premium exclusions with the actual candidate.
-- [ ] Verify Play upload certificate registration, highest used numeric version code, and Data Safety/declarations.
-- [ ] Produce an exact-source final receipt and release verdict. Unverified gates stay open; no store publication is implied by local verification.
+- [x] RA-01: Localized result-action regression selectors. Large-font, long-result and stale-ad callback assertions pass on native Android.
+- [x] RA-02: Find & Replace edits glyph content and affected Form invocations, preserves unrelated text/vectors, page boxes, rotation and annotations, and keeps exact Unicode searchability. Hidden OCR replacements remain visible above scan images. Fifteen worker fidelity regressions and the four added native fidelity cases pass, including multilingual and independent API 36 PDFium search checks.
+- [x] RA-03: Cancellation and deferred onCleared regressions wait for actual provider return and cleanup completion. Explicit barriers verify provenance remains claimed while deletion is in progress. All 25 destination-integrity checks pass; production cleanup code is unchanged.
+- [x] RA-04: Replacement colors use literal wire keys, avoiding R8-renamed kotlin.Triple fields. The old payload fails the field-renaming regression; the fixed payload and actual signed Find -> Replace -> Save workflow pass.
+- [x] Local verification: 925 unit tests, architecture/security audits, explicit host/library lint, debug/test APK builds, signed release APK/AAB and release artifact contracts. Zero test failures/errors/skips and zero lint errors. Host lint retains three inherited warnings (one PluralsCandidate and two UnusedResources); library lint reports no issues.
+- [x] Exact-code [CI 44098971190](https://github.com/kiss2oblivion/pdfchemy-android/actions/runs/44098971190): all nine jobs pass. Native matrix total: 2247 passing executions, zero failures/errors/skips (api24: 561, api30: 562, api34: 562, api36: 562).
+- [x] Signed artifacts: recorded project certificate f7b12a179e08ebc24b0bc2afae5438e90834ec92896f67d9da8294aea653b41b; minified production package/version; embedded bundletool validation; APK ZIP and 64-bit ELF 16-KiB alignment; fixture/test-asset hygiene and minified Gson/text/YAML contracts.
+- [x] Signed public workflows: Find & Replace, merge, split, OCR, EPUB, CBZ, protect, unlock, wrong-password rejection, sanitizer purge and sanitizer keep. Independent saved-output parsing/rendering and source/old-target hash checks pass. All four image-only OCR pages gain searchable text. Wrong-password rejection publishes no output.
+- [x] Forensic output checks: replaced word absent from extracted text and decoded streams; pixels outside the edit unchanged; sanitizer purge removes attachment bytes from raw output and every decoded stream; explicitly disabled attachment purge preserves the original attachment bytes. Sanitized page geometry and text remain intact.
+- [x] Signed configuration restoration: category and Office screens survive real Activity recreation. Native result checks also cover doubled font scale. Crashes, disconnected attempts and driver navigation failures were excluded from passing receipts.
+- [x] Separate release package: D:/PDFchemy-Releases/2.1.0-ba65832b-20261117, with APK, AAB, matching R8 mapping, SHA256SUMS and verification receipts. Original source checkouts and their staged/untracked work remain preserved.
 
-Evidence and temporary tooling: .release-ready/ on D:. Original worktrees and evidence remain untouched.
+Deployment follow-ups owned by the release owner:
 
-RA-02 changes: edit encoded glyph operators and clone only affected Form invocations; retain surrounding text, vectors, boxes, rotation and annotations. Preserve exact replacement Unicode with embedded text or native shaping plus a Unicode search layer. Hidden OCR replacements are drawn above scan images. Search failures produce a localized error, and stale search responses are ignored. The localized notice distinguishes editing from secure redaction and warns about digital signatures.
+- [ ] Confirm Play accepts numeric version code 14 and the upload certificate is registered.
+- [ ] Complete real Play Billing/purchase/restore/acknowledgement and UMP consent/revoke/privacy-option acceptance, plus store declarations review.
+- [ ] Test on the owner's phone after deployment, as explicitly requested. Physical ARM64/16-KiB execution is not claimed; a connected phone is not required for this completed code/emulator preparation.
 
-Focused evidence: .release-ready/ra02-unit-ocr.log, .release-ready/ra02-api24-with-ocr/. The complete final test APK passes 11/11 on both API 24 and API 36; the API 36 retry supersedes its earlier disconnected attempt. Old-engine regression evidence is retained separately under .release-ready/baseline/.
+No Play upload or store publication was performed. The documentation closeout contains no production-code changes relative to the verified code commit above.
 
-- [x] RA-03: Make the cancellation regression wait for provider deletion and teardown completion, rather than treating callback entry as completed cleanup. The focused destination-integrity suite passes, including an explicit barrier proving provenance remains claimed while the provider delete call is still open. Production code is unchanged.
-
-CI 44093554160 on bd2c2771 passed architecture, secrets and dependency checks, but exposed the RA-03 test timing race in the host unit job. It is not a green release receipt; a new complete CI run must pass with the corrected regression. Signed public merge completed via the actual picker/SAF save path with original and previous destination bytes preserved. The initial public split attempt lost the shared ADB connection and is not a pass; subsequent public checks use a private ADB server.
-
-The follow-up CI 44096328311 exposed the same callback-entry race in deferred onCleared cleanup. Both cancellation paths now explicitly hold the provider open, assert retained provenance, release the provider, and wait for cleanup completion. All 25 destination-integrity tests pass. The superseded run was cancelled after its host unit failure; it is not release approval.
-
-- [ ] RA-04 signed verification: Find & Replace RGB channels now use literal JSON keys rather than reflected kotlin.Triple fields. The old signed APK failed the public replacement route; its mapping renamed first/second/third to c/d/q while the worker required the original names. The new wire regression fails against the old payload and passes with the explicit map; all 26 focused wire/cleanup checks pass. Rebuild the signed candidate and repeat public search/replace/save plus independent output validation.
+Evidence: .release-ready/final-local-gate.log, .release-ready/ci-44098971190/, .release-ready/artifacts/, .release-ready/final-signed-runtime.json, and the package verification/ directory. The two replaced CI attempts and the old signed failure baseline remain separate evidence.
