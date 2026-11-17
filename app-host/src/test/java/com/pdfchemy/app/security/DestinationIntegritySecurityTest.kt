@@ -139,10 +139,14 @@ class DestinationIntegritySecurityTest {
         val deleted = CompletableDeferred<Unit>()
         val writerFinished = CompletableDeferred<Unit>()
         val allowFinish = CompletableDeferred<Unit>()
+        val allowDeleteReturn = java.util.concurrent.CountDownLatch(1)
 
         every { documentFile.delete() } answers {
             assertTrue("Deletion must not race with active writer!", writerFinished.isCompleted)
             deleted.complete(Unit)
+            // A delete callback can wake the test before the provider has returned.
+            // Keep the provider open so the provenance transition is exercised explicitly.
+            check(allowDeleteReturn.await(5, java.util.concurrent.TimeUnit.SECONDS))
             true
         }
 
@@ -168,9 +172,17 @@ class DestinationIntegritySecurityTest {
         assertFalse(deleted.isCompleted)
 
         allowFinish.complete(Unit)
-        withTimeout(5_000) { deleted.await() }
-
-        // Provenance must be unregistered after deletion
+        try {
+            withTimeout(5_000) { deleted.await() }
+            assertTrue("Provenance must remain claimed until provider deletion returns",
+                OutputPolicy.isFreshCopy(freshDestination))
+        } finally {
+            allowDeleteReturn.countDown()
+        }
+        // Wait for completed cleanup, not the callback's earlier entry notification.
+        withTimeout(5_000) {
+            while (viewModel.isProcessingActive()) delay(1)
+        }
         assertFalse(OutputPolicy.isFreshCopy(freshDestination))
     }
 
