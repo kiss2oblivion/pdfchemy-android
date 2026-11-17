@@ -27,6 +27,6 @@ data class StampConfig(
     val fontSize: Float = 10f,
     val marginPt: Float = 30f,
     val startFromPage: Int = 1,
-    val batesConfig: BatesConfig = BatesConfig()
+    val batesConfig: BatesConfig = BatesConfig(),
+    val sourceDisplayName: String = ""
 )
-

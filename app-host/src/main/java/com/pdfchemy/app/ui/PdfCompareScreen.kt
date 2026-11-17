@@ -352,7 +352,7 @@ fun PdfCompareScreen(
                         onClick = { if (currentPageIndex > 0) currentPageIndex-- },
                         enabled = currentPageIndex > 0
                     ) {
-                        Icon(Icons.Rounded.ChevronLeft, contentDescription = null)
+                        Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(R.string.action_prev_page))
                     }
 
                     Text(
@@ -373,7 +373,7 @@ fun PdfCompareScreen(
                         onClick = { if (currentPageIndex < summary.pageDiffs.size - 1) currentPageIndex++ },
                         enabled = currentPageIndex < summary.pageDiffs.size - 1
                     ) {
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.action_next_page))
                     }
                 }
             }

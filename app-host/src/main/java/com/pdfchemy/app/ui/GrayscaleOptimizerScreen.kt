@@ -294,7 +294,7 @@ fun GrayscaleOptimizerScreen(
                                 onClick = { if (previewPageIndex > 0) previewPageIndex-- },
                                 enabled = previewPageIndex > 0
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_prev_page))
                             }
                             Text(
                                 stringResource(R.string.label_preview_page, previewPageIndex + 1, totalPages),
@@ -306,7 +306,7 @@ fun GrayscaleOptimizerScreen(
                                 onClick = { if (previewPageIndex < totalPages - 1) previewPageIndex++ },
                                 enabled = previewPageIndex < totalPages - 1
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.action_next_page))
                             }
                         }
 

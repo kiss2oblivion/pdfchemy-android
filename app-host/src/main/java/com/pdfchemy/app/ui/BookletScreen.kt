@@ -224,14 +224,14 @@ fun BookletScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Sheet ${side.sheetNumber} ($sideName)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.label_sheet_side, side.sheetNumber, sideName), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                     Text("[$leftStr | $rightStr]", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 }
                             }
                         }
                         if (bookletPlan.size > 6) {
                             Text(
-                                text = if (showAllSheets) "Show fewer sheets ▲" else stringResource(R.string.label_more_sheets, bookletPlan.size - 6) + " ▼",
+                                text = if (showAllSheets) "${stringResource(R.string.label_show_fewer_sheets)} ▲" else stringResource(R.string.label_more_sheets, bookletPlan.size - 6) + " ▼",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary,

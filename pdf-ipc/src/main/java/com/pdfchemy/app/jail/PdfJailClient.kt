@@ -131,31 +131,42 @@ object PdfJailClient {
         context: Context,
         source: StagedPdf
     ): String {
-        val bound = CompletableDeferred<IPdfJailService>()
+        val appContext = context.applicationContext ?: context
+        val bound = CompletableDeferred<IBinder>()
+        val response = CompletableDeferred<String>()
         var isBound = false
         val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                bound.complete(IPdfJailService.Stub.asInterface(service))
+                if (service == null) bound.completeExceptionally(IllegalStateException("Null worker binding"))
+                else bound.complete(service)
             }
-            override fun onServiceDisconnected(name: ComponentName?) {}
+            override fun onServiceDisconnected(name: ComponentName?) {
+                val error = IllegalStateException("Isolated worker disconnected")
+                bound.completeExceptionally(error)
+                response.completeExceptionally(error)
+            }
+            override fun onNullBinding(name: ComponentName?) {
+                bound.completeExceptionally(IllegalStateException("Null worker binding"))
+            }
+            override fun onBindingDied(name: ComponentName?) { onServiceDisconnected(name) }
         }
         val scratch = OperationScratchBroker(context)
         var sourceFd: ParcelFileDescriptor? = null
         var operationToken = 0L
         var jail: IPdfJailService? = null
         var binder: IBinder? = null
-        val response = CompletableDeferred<String>()
         val death = IBinder.DeathRecipient {
             response.completeExceptionally(IllegalStateException("Isolated worker died"))
         }
 
         return try {
-            val intent = Intent().apply { setClassName(context, "com.pdfchemy.app.jail.PdfJailService") }
-            isBound = context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            val intent = Intent().apply { setClassName(appContext, "com.pdfchemy.app.jail.PdfJailService") }
+            isBound = appContext.bindService(intent, connection, Context.BIND_AUTO_CREATE)
             check(isBound) { "Could not bind to PdfJailService" }
 
-            jail = withTimeout(15_000) { bound.await() }
-            binder = jail.asBinder()
+            binder = withTimeout(15_000) { bound.await() }
+            jail = IPdfJailService.Stub.asInterface(binder)
+                ?: throw IllegalStateException("Invalid PdfJailService binder")
 
             val token = jail.beginOperation(scratch)
             if (token == 0L) {
@@ -195,7 +206,7 @@ object PdfJailClient {
             runCatching { binder?.unlinkToDeath(death, 0) }
             scratch.close()
             runCatching { sourceFd?.close() }
-            if (isBound) runCatching { context.unbindService(connection) }
+            if (isBound) runCatching { appContext.unbindService(connection) }
         }
     }
 }

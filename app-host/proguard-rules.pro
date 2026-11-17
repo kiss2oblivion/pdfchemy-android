@@ -14,7 +14,7 @@
 -keepattributes *Annotation*,EnclosingMethod,Signature,InnerClasses
 
 # Gson 2.10.1 does not supply the full-mode TypeToken rules. Both editor
-# entrypoints recover Map<Integer, PageModification> from anonymous subclasses.
+# entrypoints recover Map<Integer, PageModification> from a shared anonymous subclass.
 # https://google.github.io/gson/Troubleshooting.html#illegalstateexception-typetoken-must-be-created-with-a-type-argument
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken

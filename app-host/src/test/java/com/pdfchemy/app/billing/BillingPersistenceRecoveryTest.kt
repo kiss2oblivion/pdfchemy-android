@@ -2,6 +2,7 @@ package com.pdfchemy.app.billing
 
 import com.android.billingclient.api.BillingClient
 import io.mockk.verify
+import kotlinx.coroutines.async
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -95,5 +96,34 @@ class BillingPersistenceRecoveryTest {
             assertFalse(manager.billingUi.value.entitlementStorageFailed)
             assertTrue(errors.isEmpty())
         }
+    }
+
+    @Test fun transientReadFailureDoesNotPoisonCachedEntitlement() = with(session) {
+        BillingManager.resetCacheForTesting()
+        var failRead = true
+        io.mockk.every { EntitlementStores.open(any()) } returns object : EntitlementStore {
+            override fun read(): Boolean = runCatching { readOrThrow() }.getOrDefault(false)
+            override fun readOrThrow(): Boolean {
+                if (failRead) throw IOException("temporary keystore failure")
+                return true
+            }
+            override fun write(entitled: Boolean): Boolean = true
+        }
+        assertFalse(BillingManager.isUserEntitled(app))
+        failRead = false
+        assertTrue("Subsequent check must reread healthy storage instead of caching false", BillingManager.isUserEntitled(app))
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun livePurchaseUpdateWakesSuspendedDeliveryReconciliation() = with(session) {
+        connect()
+        val pendingQueryCount = inventories.size
+        val deferred = scope.async { manager.reconcileDelivery() }
+        runCurrent()
+        assertEquals(pendingQueryCount + 1, inventories.size)
+        manager.onPurchasesUpdated(result(BillingClient.BillingResponseCode.USER_CANCELED), null)
+        runCurrent()
+        assertTrue("onPurchasesUpdated must wake suspended recovery waiters", deferred.isCompleted)
+        assertEquals(AcknowledgementOutcome.RETRYABLE, deferred.getCompleted())
     }
 }

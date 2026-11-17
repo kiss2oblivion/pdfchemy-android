@@ -77,7 +77,7 @@ class HostOutputTransaction(
             } else when (char) {
                 '"' -> quoted = true
                 '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$char'")
-                '{', '[' -> { depth++; require(depth <= SecurityLimits.MAX_REQUEST_DEPTH) { "Result nesting quota exceeded" } }
+                '{', '[' -> { depth++; require(depth <= SecurityLimits.MAX_RESPONSE_DEPTH) { "Result nesting quota exceeded" } }
                 '}', ']' -> { depth--; require(depth >= 0) { "Invalid worker result" } }
             }
         }

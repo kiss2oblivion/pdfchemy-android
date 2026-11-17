@@ -3,11 +3,12 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.toColorInt
 
 import com.pdfchemy.app.utils.AppLogger
 import kotlinx.coroutines.ensureActive
@@ -133,11 +134,11 @@ object SignatureEngine {
     }
 
     fun createMarkBitmap(symbol: String, colorHex: String, size: Int = 120): Bitmap {
-        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bmp = createBitmap(size, size)
         val canvas = Canvas(bmp)
         val paint = Paint().apply {
             isAntiAlias = true
-            color = Color.parseColor(colorHex)
+            color = colorHex.toColorInt()
             textSize = size * 0.75f
             textAlign = Paint.Align.CENTER
             typeface = Typeface.DEFAULT_BOLD
@@ -154,9 +155,9 @@ object SignatureEngine {
         width: Int = 360,
         height: Int = 120
     ): Bitmap {
-        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bmp = createBitmap(width, height)
         val canvas = Canvas(bmp)
-        val colorInt = Color.parseColor(colorHex)
+        val colorInt = colorHex.toColorInt()
 
         val borderPaint = Paint().apply {
             isAntiAlias = true

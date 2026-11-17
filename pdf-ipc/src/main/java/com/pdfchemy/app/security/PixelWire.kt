@@ -1,6 +1,7 @@
 package com.pdfchemy.app.security
 
 import android.graphics.Bitmap
+import androidx.core.graphics.createBitmap
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.InputStream
@@ -25,7 +26,7 @@ object PixelWire {
         val width = stream.readInt(); val height = stream.readInt()
         if (width == 0 && height == 0) return null
         SecurityLimits.requirePixels(width, height)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         try {
             val row = IntArray(width)
             for (y in 0 until height) {

@@ -394,9 +394,9 @@ fun PageCropperScreen(
                 ) {
                     Text(stringResource(R.string.label_margins_colon), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     listOf(
-                        "Minimal (2%)" to 0.02f,
-                        "Standard (5%)" to 0.05f,
-                        "Wide (10%)" to 0.10f
+                        stringResource(R.string.crop_preset_minimal) to 0.02f,
+                        stringResource(R.string.crop_preset_standard) to 0.05f,
+                        stringResource(R.string.crop_preset_wide) to 0.10f
                     ).forEach { (label, margin) ->
                         AssistChip(
                             onClick = {

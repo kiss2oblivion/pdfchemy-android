@@ -21,21 +21,21 @@ class PdfGatewayErrorClassificationTest {
         val failEx = PdfGateway.WorkerFailure(400, "Jail 400: Malformed input")
 
         // 1. Admission BUSY exception
-        assertTrue(busyEx is IllegalStateException)
+        assertTrue(IllegalStateException::class.java.isInstance(busyEx))
         assertTrue(busyEx.message.orEmpty().contains("BUSY"))
 
         // 2. Worker death / disconnection must NOT be disguised as BUSY
-        assertTrue(diedEx is IllegalStateException)
+        assertTrue(IllegalStateException::class.java.isInstance(diedEx))
         assertFalse("Worker death must not be labeled BUSY", diedEx.message.orEmpty().contains("BUSY"))
         assertTrue(diedEx.message.orEmpty().contains("disconnected"))
 
         // 3. Binding failures must NOT be disguised as BUSY
-        assertTrue(bindingEx is IllegalStateException)
+        assertTrue(IllegalStateException::class.java.isInstance(bindingEx))
         assertFalse("Binding failure must not be labeled BUSY", bindingEx.message.orEmpty().contains("BUSY"))
         assertTrue(bindingEx.message.orEmpty().contains("Failed to bind"))
 
         // 4. Timeout must NOT be disguised as BUSY
-        assertTrue(timeoutEx is IllegalStateException)
+        assertTrue(IllegalStateException::class.java.isInstance(timeoutEx))
         assertFalse("Timeout must not be labeled BUSY", timeoutEx.message.orEmpty().contains("BUSY"))
         assertTrue(timeoutEx.message.orEmpty().contains("timed out"))
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Third-party BouncyCastle PKIX test/cert-path dependency ships an internal X509TrustManager helper; keep check enabled for all app code. -->
+    <issue id="TrustAllX509TrustManager">
+        <ignore regexp=".*bcpkix-jdk18on.*" />
+    </issue>
+
+    <!-- Local SDK installs android-35 and android-36 (no android-37 platform installed), and dependencies such as jsoup:1.23.2 / billing-ktx:8.0.0 / compose-bom:2024.02.01 are intentionally pinned & tested. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="OldTargetApi" severity="ignore" />
+</lint>

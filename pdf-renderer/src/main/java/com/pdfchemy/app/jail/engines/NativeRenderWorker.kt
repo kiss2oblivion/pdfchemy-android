@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.os.Process
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.security.*
 import java.io.FileOutputStream
 
@@ -27,7 +28,7 @@ class NativeRenderWorker : java.io.Closeable {
         renderer.openPage(index).use { page ->
             val requestedScale = minOf(2.0, maxWidth.coerceIn(1, SecurityLimits.MAX_RENDER_DIMENSION).toDouble() / page.width)
             val (w, h) = SecurityLimits.safeRenderSize(page.width.toDouble(), page.height.toDouble(), requestedScale)
-            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val bitmap = createBitmap(w, h)
             try {
                 Canvas(bitmap).drawColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)

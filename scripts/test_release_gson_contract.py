@@ -1,6 +1,7 @@
 import unittest
 
-from check_release_gson_contract import (parse_class_dump, validate_text_contract,
+from check_release_gson_contract import (parse_class_dump, validate_contract, validate_text_contract,
+                                       TOKEN, PREFIX, SCHEMA, COLLECTIONS,
                                        TEXT_OPTIONS, TEXT_OPTION_FIELDS, TEXT_ENUMS,
                                        validate_yaml_contract, YAML_TYPE)
 
@@ -133,6 +134,41 @@ class YamlPackageContractTest(unittest.TestCase):
     def test_missing_yaml_constructor_type_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "TypeDescription missing/renamed"):
             validate_yaml_contract({})
+
+
+class GsonWireContractTest(unittest.TestCase):
+    def preserved(self):
+        classes = {
+            TOKEN: {"superclass": "Ljava/lang/Object;", "signature": "<T:Ljava/lang/Object;>Ljava/lang/Object;", "fields": set(), "field_signatures": {}},
+            "Lcom/pdfchemy/app/jail/PdfJailService$Companion$pageModificationsType$1;": {
+                "superclass": TOKEN,
+                "signature": f"{TOKEN[:-1]}<Ljava/util/Map<Ljava/lang/Integer;+{PREFIX}PageModification;>;>;",
+                "fields": set(),
+                "field_signatures": {},
+            },
+        }
+        for model, fields in SCHEMA.items():
+            classes[PREFIX + model + ";"] = {
+                "superclass": "Ljava/lang/Object;",
+                "signature": None,
+                "fields": set(fields.split()),
+                "field_signatures": {},
+            }
+        for (model, field), element in COLLECTIONS.items():
+            classes[PREFIX + model + ";"]["field_signatures"][field] = f"Ljava/util/List<{PREFIX}{element};>;"
+        return classes
+
+    def test_single_shared_type_token_and_wire_schema_pass(self):
+        report = validate_contract(self.preserved())
+        self.assertEqual("PASS", report["status"])
+        self.assertEqual(1, len(report["editor_type_tokens"]))
+        self.assertEqual(len(SCHEMA), report["preserved_wire_models"])
+
+    def test_missing_type_token_subclass_is_rejected(self):
+        classes = self.preserved()
+        del classes["Lcom/pdfchemy/app/jail/PdfJailService$Companion$pageModificationsType$1;"]
+        with self.assertRaisesRegex(RuntimeError, "Editor export TypeToken subclass"):
+            validate_contract(classes)
 
 
 if __name__ == "__main__":

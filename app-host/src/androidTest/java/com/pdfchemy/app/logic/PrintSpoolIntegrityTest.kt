@@ -78,6 +78,7 @@ class PrintSpoolIntegrityTest {
         start(a,d,s,r); assertTrue(remote("awaitOpen",token).getBoolean("opened"))
         main { repeat(16) { s.cancel() } }; assertEquals("cancelled",r.await()); assertEquals(1,r.calls.get())
     }
+    @androidx.test.filters.SdkSuppress(minSdkVersion = android.os.Build.VERSION_CODES.R)
     @Test fun cancellationClosesTheWriterBeforeNotifyingTheSpooler() = fixture("bytes",1024*1024) { a,_,s,r,_,token ->
         val pipe=ParcelFileDescriptor.createPipe()
         try {

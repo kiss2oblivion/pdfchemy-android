@@ -3,6 +3,7 @@ package com.pdfchemy.app.logic
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.core.graphics.scale
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
@@ -24,7 +25,7 @@ object PdfDeskewEngine {
         val scale = targetWidth.toFloat() / bitmap.width.toFloat()
         val targetHeight = (bitmap.height * scale).toInt().coerceAtLeast(1)
 
-        val scaled = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        val scaled = bitmap.scale(targetWidth, targetHeight)
         val w = scaled.width
         val h = scaled.height
 

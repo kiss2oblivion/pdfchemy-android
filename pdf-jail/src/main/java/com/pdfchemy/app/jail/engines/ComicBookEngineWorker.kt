@@ -86,7 +86,7 @@ object ComicBookEngineWorker {
         var tempFile: File? = null
         var zip: ZipFile? = null
         var document: PDDocument? = null
-        
+
         try {
             tempFile = com.pdfchemy.app.jail.JailScratch.createTempFile("cbz_worker_", ".cbz", context.cacheDir)
             openInput(sourceFd).use { input ->
@@ -106,9 +106,9 @@ object ComicBookEngineWorker {
 
             zip = ZipFile(tempFile)
             document = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
-            
+
             val validExtensions = setOf(".jpg", ".jpeg", ".png", ".webp")
-            
+
             // Limit the enumeration count
             val imageEntries = zip.entries().asSequence()
                 .take(JailQuotas.MAX_ARCHIVE_FILE_COUNT)
@@ -120,7 +120,7 @@ object ComicBookEngineWorker {
             if (imageEntries.isEmpty()) {
                 throw IllegalArgumentException("No valid images found in CBZ.")
             }
-            
+
             var aggregateUncompressedBytes = 0L
 
             for (entry in imageEntries) {
@@ -129,7 +129,7 @@ object ComicBookEngineWorker {
                 zip.getInputStream(entry).use { inputStream ->
                     val options = BitmapFactory.Options()
                     options.inJustDecodeBounds = true
-                    
+
                     // We must buffer the stream because decoding bounds consumes it if not mark-supported
                     val tempImgFile = com.pdfchemy.app.jail.JailScratch.createTempFile("cbz_img_", ".tmp", context.cacheDir)
                     try {
@@ -146,13 +146,13 @@ object ComicBookEngineWorker {
                                 output.write(buffer, 0, read)
                             }
                         }
-                        
+
                         com.pdfchemy.app.jail.CapabilityIo.fd(tempImgFile).use { android.system.Os.lseek(it.fileDescriptor, 0, android.system.OsConstants.SEEK_SET); BitmapFactory.decodeFileDescriptor(it.fileDescriptor, null, options) }
-                        
+
                         if (options.outWidth > 8192 || options.outHeight > 8192) {
                             throw SecurityException("Image dimensions (${options.outWidth}x${options.outHeight}) exceed safe maximums in CBZ.")
                         }
-                        
+
                         // Parse actual image
                         val bitmap = com.pdfchemy.app.jail.CapabilityIo.fd(tempImgFile).use(SafeImageDecoder::decode)
                         try {
@@ -161,10 +161,10 @@ object ComicBookEngineWorker {
                             } else {
                                 LosslessFactory.createFromImage(document, bitmap)
                             }
-                            
+
                             val page = PDPage(PDRectangle(pdImage.width.toFloat(), pdImage.height.toFloat()))
                             document.addPage(page)
-                            
+
                             PDPageContentStream(document, page).use { cs ->
                                 cs.drawImage(pdImage, 0f, 0f, pdImage.width.toFloat(), pdImage.height.toFloat())
                             }
@@ -201,18 +201,18 @@ object ComicBookEngineWorker {
             }
             offset
         }
-        requireSupportedArchive(header,count)
+        requireSupportedArchive(header, count)
     }
 
     internal fun requireSupportedArchive(header: ByteArray, count: Int = header.size) {
         require(count in 0..header.size)
-        val rarPrefix=byteArrayOf(0x52,0x61,0x72,0x21,0x1a,0x07)
-        val rar4=count>=7 && header.copyOfRange(0,6).contentEquals(rarPrefix) && header[6]==0.toByte()
-        val rar5=count>=8 && header.copyOfRange(0,6).contentEquals(rarPrefix) && header[6]==1.toByte() && header[7]==0.toByte()
+        val rarPrefix = byteArrayOf(0x52, 0x61, 0x72, 0x21, 0x1a, 0x07)
+        val rar4 = count >= 7 && header.copyOfRange(0, 6).contentEquals(rarPrefix) && header[6] == 0.toByte()
+        val rar5 = count >= 8 && header.copyOfRange(0, 6).contentEquals(rarPrefix) && header[6] == 1.toByte() && header[7] == 0.toByte()
         if (rar4 || rar5) {
             throw IllegalArgumentException("RAR-compressed archives (.cbr) are unsupported; convert to ZIP (.cbz).")
         }
-        if (count>=6 && header.copyOfRange(0,6).contentEquals(byteArrayOf(0x37,0x7a,0xbc.toByte(),0xaf.toByte(),0x27,0x1c))) {
+        if (count >= 6 && header.copyOfRange(0, 6).contentEquals(byteArrayOf(0x37, 0x7a, 0xbc.toByte(), 0xaf.toByte(), 0x27, 0x1c))) {
             throw IllegalArgumentException("7-Zip archives (.cb7) are unsupported; convert to ZIP (.cbz).")
         }
     }

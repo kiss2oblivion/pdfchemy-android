@@ -159,17 +159,17 @@ object AcroFormEngineWorker {
                         val ph = pageBox.height.coerceAtLeast(1f)
                         val rect = widget.rectangle
                         if (rect != null && rect.width > 0 && rect.height > 0) {
-                            val left = ((rect.lowerLeftX-pageBox.lowerLeftX)/pw).coerceIn(0f,1f)
-                            val top = ((pageBox.upperRightY-rect.upperRightY)/ph).coerceIn(0f,1f)
-                            val right = ((rect.upperRightX-pageBox.lowerLeftX)/pw).coerceIn(left,1f)
-                            val bottom = ((pageBox.upperRightY-rect.lowerLeftY)/ph).coerceIn(top,1f)
-                            val width = right-left
-                            val height = bottom-top
-                            when (((p?.rotation ?: 0)%360+360)%360) {
-                                90 -> { xRatio=1f-bottom; yRatio=left; wRatio=height; hRatio=width }
-                                180 -> { xRatio=1f-right; yRatio=1f-bottom; wRatio=width; hRatio=height }
-                                270 -> { xRatio=top; yRatio=1f-right; wRatio=height; hRatio=width }
-                                else -> { xRatio=left; yRatio=top; wRatio=width; hRatio=height }
+                            val left = ((rect.lowerLeftX - pageBox.lowerLeftX) / pw).coerceIn(0f, 1f)
+                            val top = ((pageBox.upperRightY - rect.upperRightY) / ph).coerceIn(0f, 1f)
+                            val right = ((rect.upperRightX - pageBox.lowerLeftX) / pw).coerceIn(left, 1f)
+                            val bottom = ((pageBox.upperRightY - rect.lowerLeftY) / ph).coerceIn(top, 1f)
+                            val width = right - left
+                            val height = bottom - top
+                            when (((p?.rotation ?: 0) % 360 + 360) % 360) {
+                                90 -> { xRatio = 1f - bottom; yRatio = left; wRatio = height; hRatio = width }
+                                180 -> { xRatio = 1f - right; yRatio = 1f - bottom; wRatio = width; hRatio = height }
+                                270 -> { xRatio = top; yRatio = 1f - right; wRatio = height; hRatio = width }
+                                else -> { xRatio = left; yRatio = top; wRatio = width; hRatio = height }
                             }
                         }
                     }
@@ -417,4 +417,3 @@ object AcroFormEngineWorker {
         }
     }
 }
-

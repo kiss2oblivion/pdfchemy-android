@@ -124,7 +124,7 @@ fun AttachmentManagerScreen(
                 try {
                     val result = PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.StandardOutputContract>(
                         context, "ATTACHMENT_REMOVE", request.first, destUri,
-                        JSONObject().put("attachmentName", request.second).toString()
+                        JSONObject().put("attachmentId", request.second).toString()
                     )
                     check(result.success) { "Attachment removal failed" }
                     viewModel.notifySuccess(context.getString(R.string.title_remove_attachment_success),
@@ -366,7 +366,7 @@ fun AttachmentManagerScreen(
                         showRemoveConfirmDialog = false
                         val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
                         val attachSafe = targetRemoveAttachment!!.name.replace(Regex("[^a-zA-Z0-9_.-]"), "_")
-                        pendingRemoval = selectedPdfUri?.let { it to targetRemoveAttachment!!.name }
+                        pendingRemoval = selectedPdfUri?.let { it to targetRemoveAttachment!!.attachmentId }
                         removeAttachmentSaveLauncher.launch("${base}_without_${attachSafe}.pdf")
                     }
                 ) {

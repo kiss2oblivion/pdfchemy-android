@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -979,7 +980,7 @@ fun PdfEditorScreen(
                         value = customStampText,
                         onValueChange = { customStampText = it.take(80) },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("e.g. REVIEWED, COPY, CONFIDENTIAL") },
+                        placeholder = { Text(stringResource(R.string.custom_stamp_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )

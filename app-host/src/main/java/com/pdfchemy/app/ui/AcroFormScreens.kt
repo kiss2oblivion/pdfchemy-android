@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -70,7 +71,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var pageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isLoadingPage by remember { mutableStateOf(false) }
     val fieldRequests = remember { com.pdfchemy.app.logic.LatestRequest() }
-    var pendingFill by remember { mutableStateOf<Triple<Uri,Map<String,String>,Boolean>?>(null) }
+    var pendingFill by remember { mutableStateOf<Triple<Uri, Map<String, String>, Boolean>?>(null) }
     DisposableEffect(Unit) { onDispose { fieldRequests.invalidate() } }
 
     LaunchedEffect(selectedPdfUri, currentPage, fillMode) {
@@ -96,16 +97,25 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         pageCount = 1
         scope.launch {
             try {
-                val count = PdfEditor.getPageCount(context,uri).coerceAtLeast(1)
-                val fields = AcroFormEngine.extractFields(context,uri)
+                val count = PdfEditor.getPageCount(context, uri).coerceAtLeast(1)
+                val fields = AcroFormEngine.extractFields(context, uri)
                 if (fieldRequests.isCurrent(ticket)) {
                     pageCount = count
                     formFields = fields
-                    fields.forEach { field -> fieldValues[field.fullyQualifiedName] = field.value }
+                    fields.forEach { field ->
+                        fieldValues[field.fullyQualifiedName] = field.value
+                    }
                 }
-            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
-            } catch (error: Exception) {
-                if (fieldRequests.isCurrent(ticket)) android.widget.Toast.makeText(context,"Unable to load form fields",android.widget.Toast.LENGTH_LONG).show()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (fieldRequests.isCurrent(ticket)) {
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.error_acroform_load_failed),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
             } finally {
                 if (fieldRequests.isCurrent(ticket)) isLoadingFields = false
             }
@@ -127,11 +137,21 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         val request = pendingFill
         pendingFill = null
         if (destination != null && request != null) {
-            viewModel.fillAndSaveForm(context,request.first,destination,request.second,request.third) { success ->
-                if (success) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            viewModel.fillAndSaveForm(
+                context = context,
+                sourceUri = request.first,
+                destUri = destination,
+                fieldValues = request.second,
+                flatten = request.third
+            ) { success ->
+                if (success) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
             }
-        } else if (destination != null) scope.launch(Dispatchers.IO) {
-            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context,destination)
+        } else if (destination != null) {
+            scope.launch(Dispatchers.IO) {
+                com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination)
+            }
         }
     }
 
@@ -226,14 +246,14 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             )
                             if (selectedPdfUri != null) {
                                 Text(
-                                    text = if (isLoadingFields) "Scanning form fields…" else "${formFields.size} form fields detected",
+                                    text = if (isLoadingFields) stringResource(R.string.acroform_scanning_fields) else stringResource(R.string.acroform_fields_detected_count, formFields.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                         Button(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) {
-                            Text(if (selectedPdfUri == null) "Select" else "Change")
+                            Text(stringResource(if (selectedPdfUri == null) R.string.action_select else R.string.action_change))
                         }
                     }
                 }
@@ -351,7 +371,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                                         onClick = { expanded = true },
                                                         modifier = Modifier.fillMaxWidth()
                                                     ) {
-                                                        Text(if (currentVal.isBlank()) "Choose option…" else currentVal)
+                                                        Text(if (currentVal.isBlank()) stringResource(R.string.acroform_choose_option) else currentVal)
                                                         Spacer(modifier = Modifier.weight(1f))
                                                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                                                     }
@@ -456,11 +476,11 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     onClick = { if (currentPage > 0) currentPage-- },
                                     enabled = currentPage > 0
                                 ) {
-                                    Icon(Icons.Rounded.ChevronLeft, contentDescription = null)
+                                    Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(R.string.action_prev_page))
                                 }
 
                                 Text(
-                                    "Page ${currentPage + 1} of $pageCount • ${pageFields.size} field(s)",
+                                    stringResource(R.string.acroform_page_fields_indicator, currentPage + 1, pageCount, pageFields.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -469,7 +489,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     onClick = { if (currentPage < pageCount - 1) currentPage++ },
                                     enabled = currentPage < pageCount - 1
                                 ) {
-                                    Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+                                    Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.action_next_page))
                                 }
                             }
                         }
@@ -496,7 +516,7 @@ fun FillFormScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         onClick = {
                             val originalName = FileUtils.getFileName(context, selectedPdfUri!!) ?: "Form.pdf"
                             val defaultName = "Filled_${originalName}"
-                            pendingFill = Triple(selectedPdfUri!!,fieldValues.toMap(),flattenForm)
+                            pendingFill = Triple(selectedPdfUri!!, fieldValues.toMap(), flattenForm)
                             saveDocLauncher.launch(defaultName)
                         },
                         modifier = Modifier

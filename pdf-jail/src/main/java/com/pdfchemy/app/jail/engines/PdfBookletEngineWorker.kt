@@ -21,6 +21,9 @@ object PdfBookletEngineWorker {
         val paperHeightPts = params.optDouble("paperHeightPts", 842.0).toFloat()
         val paperWidthPts = params.optDouble("paperWidthPts", 595.0).toFloat()
         val drawFoldGuide = params.optBoolean("drawFoldGuide", true)
+        require(paperHeightPts.isFinite() && paperHeightPts > 40f && paperWidthPts.isFinite() && paperWidthPts > 40f) {
+            "Invalid booklet paper dimensions"
+        }
 
         var srcDoc: PDDocument? = null
         var outDoc: PDDocument? = null
@@ -121,19 +124,40 @@ object PdfBookletEngineWorker {
     ) {
         val srcPage = srcDoc.getPage(pageIndex)
         val srcBox = srcPage.cropBox ?: srcPage.mediaBox
-        val srcW = srcBox.width
-        val srcH = srcBox.height
+        val llx = srcBox.lowerLeftX
+        val lly = srcBox.lowerLeftY
+        val bw = srcBox.width
+        val bh = srcBox.height
+        if (!bw.isFinite() || !bh.isFinite() || bw <= 0f || bh <= 0f) return
+        val rotation = ((srcPage.rotation % 360) + 360) % 360
+        val visW = if (rotation == 90 || rotation == 270) bh else bw
+        val visH = if (rotation == 90 || rotation == 270) bw else bh
 
         val formXObject = layerUtil.importPageAsForm(srcDoc, pageIndex)
-        val scale = min(availWidth / srcW, availHeight / srcH)
-        val drawW = srcW * scale
-        val drawH = srcH * scale
+        val scale = min(availWidth / visW, availHeight / visH)
+        val drawW = visW * scale
+        val drawH = visH * scale
         val drawX = targetX + ((availWidth - drawW) / 2f)
         val drawY = targetY + ((availHeight - drawH) / 2f)
 
         cs.saveGraphicsState()
         val matrix = Matrix.getTranslateInstance(drawX, drawY)
         matrix.scale(scale, scale)
+        when (rotation) {
+            90 -> {
+                matrix.translate(0f, bw)
+                matrix.rotate(Math.toRadians(-90.0))
+            }
+            180 -> {
+                matrix.translate(bw, bh)
+                matrix.rotate(Math.toRadians(180.0))
+            }
+            270 -> {
+                matrix.translate(bh, 0f)
+                matrix.rotate(Math.toRadians(90.0))
+            }
+        }
+        matrix.translate(-llx, -lly)
         cs.transform(matrix)
         cs.drawForm(formXObject)
         cs.restoreGraphicsState()

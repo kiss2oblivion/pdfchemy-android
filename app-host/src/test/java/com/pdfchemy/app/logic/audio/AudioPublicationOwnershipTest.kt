@@ -56,6 +56,7 @@ class AudioPublicationOwnershipTest {
     }
     @Before fun setup() {
         PublicationCoordinator.resetForTesting()
+        AudioRegularFileMetadata.install()
         output = File.createTempFile("audio_destination", ".wav", context.cacheDir)
         wav = File.createTempFile("audio_source", ".wav", context.cacheDir).apply { writeBytes(ByteArray(65539) { (it % 251).toByte() }) }
         destination = Uri.parse("content://audio-ownership.test/document/${UUID.randomUUID()}")
@@ -64,6 +65,7 @@ class AudioPublicationOwnershipTest {
         ShadowContentResolver.registerProviderInternal(destination.authority!!, provider)
     }
     @After fun cleanup() {
+        AudioRegularFileMetadata.clear()
         PublicationCoordinator.resetForTesting()
         if (OutputPolicy.isFreshCopy(destination)) OutputPolicy.unregisterFreshCopy(destination)
         output.delete(); wav.delete()
@@ -72,14 +74,15 @@ class AudioPublicationOwnershipTest {
         OutputPolicy.registerFreshCopy(destination)
         val id = UUID.randomUUID()
         AudioExportDependencies.registerDestination(id, destination)
+        val cachedFresh = AudioExportDependencies.isFreshDestination(id)
         val published = CompletableDeferred<Unit>()
         val job = launch(Dispatchers.IO) {
             try {
-                AudioOutputPublisher.publish(context, wav, destination, AudioExportDependencies.isFreshDestination(id))
+                AudioExportDependencies.publishDestination(context, id, wav) {}
                 published.complete(Unit)
                 awaitCancellation() // Service has not yet recorded COMPLETED.
             } finally {
-                AudioOutputPublisher.deletePartial(context, destination, AudioExportDependencies.isFreshDestination(id))
+                AudioOutputPublisher.deletePartial(context, destination, cachedFresh)
             }
         }
         try {
@@ -89,7 +92,7 @@ class AudioPublicationOwnershipTest {
             assertArrayEquals(wav.readBytes(), output.readBytes())
             assertFalse(OutputPolicy.isFreshCopy(destination))
             assertEquals(0, provider.deleteCalls)
-        } finally { job.cancelAndJoin(); AudioExportDependencies.forgetDestination(id) }
+        } finally { job.cancelAndJoin(); AudioExportDependencies.forgetDestination(context, id) }
     }
     @Test fun unknownDestinationCannotBeDeletedEvenWithStaleFreshFlag() {
         AudioOutputPublisher.deletePartial(context, destination, true)

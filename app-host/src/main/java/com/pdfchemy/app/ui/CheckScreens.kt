@@ -180,14 +180,14 @@ fun CheckCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
-    androidx.activity.compose.BackHandler { 
+    androidx.activity.compose.BackHandler {
         viewModel.resetMetadata()
-        onBack() 
+        onBack()
     }
     val context = LocalContext.current
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
     var sourceUri by remember { mutableStateOf<Uri?>(continuityUri) }
-    
+
     val currentMetadata by viewModel.currentMetadata.collectAsState()
     val analysis by viewModel.pdfAnalysis.collectAsState()
     val isAnalyzing by viewModel.isAnalyzing.collectAsState()
@@ -224,7 +224,11 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberPreferredDocumentCreator
+            val src = sourceUri
+            if (src == null) {
+                com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                return@rememberPreferredDocumentCreator
+            }
             val newMetadata = PdfMetadata(title, author, subject, keywords, creator, producer)
             viewModel.updateMetadata(context, src, destUri, newMetadata)
         }
@@ -237,9 +241,9 @@ fun InspectMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 title = { Text(stringResource(R.string.inspect_edit_metadata)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
-                    IconButton(onClick = { 
+                    IconButton(onClick = {
                         viewModel.resetMetadata()
-                        onBack() 
+                        onBack()
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
                     }
@@ -400,7 +404,6 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var fileName by remember {
         mutableStateOf(continuityUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) } ?: "")
     }
-    var showOverwriteConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(continuityUri) {
         if (continuityUri != null && sourceUri == null) {
@@ -416,36 +419,13 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     val createDocLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         if (destUri != null) {
-            val src = sourceUri ?: return@rememberPreferredDocumentCreator
+            val src = sourceUri
+            if (src == null) {
+                com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                return@rememberPreferredDocumentCreator
+            }
             viewModel.clearMetadata(context, src, destUri)
         }
-    }
-
-    if (showOverwriteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showOverwriteConfirmDialog = false },
-            title = { Text(stringResource(R.string.overwrite_original)) },
-            text = { Text(stringResource(R.string.select_a_pdf_to_strip_all_meta)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showOverwriteConfirmDialog = false
-                        sourceUri?.let { viewModel.clearMetadataOverwrite(context, it) }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.overwrite_original))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showOverwriteConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
     }
 
     Scaffold(
@@ -495,7 +475,7 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         Text(fileName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                 }
-                
+
                 Button(
                     onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
                     modifier = Modifier.fillMaxWidth(),
@@ -508,48 +488,24 @@ fun StripMetadataScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
                 Spacer(Modifier.weight(1f))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Button(
+                    onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "stripped")) } },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    Button(
-                        onClick = { showOverwriteConfirmDialog = true },
-                        modifier = Modifier
-                            .weight(1f)
-                            .defaultMinSize(minHeight = 52.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.overwrite_original),
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                    Button(
-                        onClick = { sourceUri?.let { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, it, "stripped")) } },
-                        modifier = Modifier
-                            .weight(1f)
-                            .defaultMinSize(minHeight = 52.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.save_as_new),
-                            textAlign = TextAlign.Center,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.save_as_new),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }
@@ -566,15 +522,18 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             continuityUri?.let { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, it) }
         )
     }
-    
+
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         selectedFile = androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri)
     }
 
     val saveFileLauncher = rememberPreferredDocumentCreator("text/plain") { uri ->
         uri?.let { destUri ->
-            selectedFile?.uri?.let { sourceUri ->
-                viewModel.extractTextFromPdf(context, sourceUri, destUri)
+            val srcUri = selectedFile?.uri
+            if (srcUri == null) {
+                com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+            } else {
+                viewModel.extractTextFromPdf(context, srcUri, destUri)
                 onBack()
             }
         }
@@ -594,7 +553,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         floatingActionButton = {
             if (selectedFile != null) {
                 ExtendedFloatingActionButton(
-                    onClick = { 
+                    onClick = {
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
                         saveFileLauncher.launch(
                             com.pdfchemy.app.logic.FileUtil.generateSuggestedName(
@@ -632,7 +591,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = "PDF", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Rounded.FactCheck, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             com.pdfchemy.app.utils.FileUtils.getFileName(context, file.uri)
@@ -643,7 +602,7 @@ fun ExtractTextScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 Text(
-                    text = "If the document contains standard text, it will be extracted instantly. If it is a scanned document (images), we will use on-device OCR (Optical Character Recognition) to read the text. This may take a few moments.",
+                    text = stringResource(R.string.extract_text_info_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp)

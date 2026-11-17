@@ -14,8 +14,12 @@ object ShareUtil {
             uris.map { uri ->
                 DocumentActions.getShareableContentUri(context, uri)
             }
-        } catch (e: RetainedShareQuotaException) {
-            android.widget.Toast.makeText(context, e.message ?: "Share storage limit reached", android.widget.Toast.LENGTH_LONG).show()
+        } catch (_: RetainedShareQuotaException) {
+            android.widget.Toast.makeText(
+                context,
+                context.getString(com.pdfchemy.app.R.string.error_share_storage_full),
+                android.widget.Toast.LENGTH_LONG
+            ).show()
             return
         }
         launchShareIntent(context, shareUris, title)

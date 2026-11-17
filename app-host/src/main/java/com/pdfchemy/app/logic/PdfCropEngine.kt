@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
+import androidx.core.graphics.get
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,7 @@ object PdfCropEngine {
 
         for (y in 0 until height step stepY) {
             for (x in 0 until width step stepX) {
-                val pixel = bitmap.getPixel(x, y)
+                val pixel = bitmap[x, y]
                 val r = Color.red(pixel)
                 val g = Color.green(pixel)
                 val b = Color.blue(pixel)
@@ -109,4 +110,3 @@ object PdfCropEngine {
         }
     }
 }
-

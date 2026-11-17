@@ -87,6 +87,7 @@ class AudioServiceLifecycleTest {
     @Implements(TextToSpeech::class)
     class PcmTtsShadow : ShadowTextToSpeech() {
         var lastSynthesisParameters: Bundle? = null
+
         @Implementation
         fun getVoice(): Voice? = currentVoice
 
@@ -129,13 +130,14 @@ class AudioServiceLifecycleTest {
             assertEquals(store.getJob(id)!!.error?.stackTraceToString(), AudioExportState.COMPLETED, store.getJob(id)!!.state)
             assertEquals(uri.toString(), store.getJob(id)!!.outputUri)
             val synthParameters = org.robolectric.shadow.api.Shadow.extract<PcmTtsShadow>(
-                ShadowTextToSpeech.getLastTextToSpeechInstance()).lastSynthesisParameters
+                ShadowTextToSpeech.getLastTextToSpeechInstance()
+            ).lastSynthesisParameters
             assertNotNull(synthParameters)
-            assertFalse("Offline synthesis must not request the legacy network feature",synthParameters!!.containsKey("networkTts"))
+            assertFalse("Offline synthesis must not request the legacy network feature", synthParameters!!.containsKey("networkTts"))
             assertEquals(48L, destination.length())
             assertArrayEquals(byteArrayOf(1, 2, 3, 4), destination.readBytes().copyOfRange(44, 48))
         } finally {
-            controller.destroy(); staging.clearJobStaging(id); destination.delete()
+            controller.destroy(); service.exportJobForTesting?.join(); staging.clearJobStaging(id); destination.delete()
             AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
             Dispatchers.resetMain()
         }
@@ -172,6 +174,63 @@ class AudioServiceLifecycleTest {
         } finally {
             controller.destroy(); staging.clearJobStaging(id)
             AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test fun `service instance can run a second export after prior completion`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val controller = Robolectric.buildService(AudioExportService::class.java).create()
+        val service = controller.get()
+        val firstId = UUID.randomUUID()
+        val secondId = UUID.randomUUID()
+        val store = AudioExportDependencies.jobStore
+        val staging = AudioExportDependencies.stagingManager
+        val firstFile = File(service.cacheDir, "exports/reuse-1-$firstId.wav").apply { parentFile!!.mkdirs() }
+        val secondFile = File(service.cacheDir, "exports/reuse-2-$secondId.wav").apply { parentFile!!.mkdirs() }
+        try {
+            ShadowTextToSpeech.addVoice(Voice("offline-test", Locale.getDefault(), Voice.QUALITY_NORMAL, Voice.LATENCY_NORMAL, false, emptySet()))
+
+            val firstUri = Uri.parse("content://audio.reuse.first/output.wav")
+            val firstProvider = OutputProvider(firstFile)
+            firstProvider.attachInfo(service, ProviderInfo().apply { authority = "audio.reuse.first" })
+            ShadowContentResolver.registerProviderInternal("audio.reuse.first", firstProvider)
+            store.createJob(firstId); staging.stageText(firstId, "First pass text")
+            OutputPolicy.registerFreshCopy(firstUri); AudioExportDependencies.registerDestination(firstId, firstUri)
+            service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, firstId.toString()), 0, 1)
+            runCurrent()
+            shadowOf(ShadowTextToSpeech.getLastTextToSpeechInstance()).onInitListener.onInit(TextToSpeech.SUCCESS)
+            repeat(500) {
+                runCurrent()
+                if (service.exportJobForTesting?.isCompleted == true) return@repeat
+                Thread.sleep(10)
+            }
+            runCurrent()
+            assertEquals(AudioExportState.COMPLETED, store.getJob(firstId)!!.state)
+            assertTrue("First export pipeline must finish before reuse", service.exportJobForTesting?.isCompleted == true)
+
+            val secondUri = Uri.parse("content://audio.reuse.second/output.wav")
+            val secondProvider = OutputProvider(secondFile)
+            secondProvider.attachInfo(service, ProviderInfo().apply { authority = "audio.reuse.second" })
+            ShadowContentResolver.registerProviderInternal("audio.reuse.second", secondProvider)
+            store.createJob(secondId); staging.stageText(secondId, "Second pass text")
+            OutputPolicy.registerFreshCopy(secondUri); AudioExportDependencies.registerDestination(secondId, secondUri)
+            service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, secondId.toString()), 0, 2)
+            runCurrent()
+            shadowOf(ShadowTextToSpeech.getLastTextToSpeechInstance()).onInitListener.onInit(TextToSpeech.SUCCESS)
+            repeat(500) {
+                runCurrent()
+                if (store.getJob(secondId)!!.state !in AudioExportJobStore.terminalStates) Thread.sleep(10)
+            }
+            runCurrent()
+            assertEquals(store.getJob(secondId)!!.error?.stackTraceToString(), AudioExportState.COMPLETED, store.getJob(secondId)!!.state)
+            assertEquals(48L, secondFile.length())
+        } finally {
+            controller.destroy()
+            listOf(firstId, secondId).forEach { id ->
+                staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
+            }
+            firstFile.delete(); secondFile.delete()
             Dispatchers.resetMain()
         }
     }

@@ -18,14 +18,20 @@ object PdfImageReplacerEngine {
             return file.inputStream().buffered().use { stream -> entries.map { it.copy(thumbnailBitmap = PixelWire.read(stream)) } }
         } finally { file.delete() }
     }
-    suspend fun replaceEmbeddedImage(context: Context, sourcePdfUri: Uri, destPdfUri: Uri, pageIndex: Int, resourceName: String, replacementBitmap: Bitmap, isLossless: Boolean = true): Result<Boolean> = runCatching {
-        SecurityLimits.requirePixels(replacementBitmap.width, replacementBitmap.height)
+    suspend fun replaceEmbeddedImage(context: Context, sourcePdfUri: Uri, destPdfUri: Uri, pageIndex: Int, resourceName: String, replacementBitmap: Bitmap, isLossless: Boolean = true): Result<Boolean> {
         val file = File.createTempFile("replacement_", ".argb", context.cacheDir)
-        try {
+        return try {
+            SecurityLimits.requirePixels(replacementBitmap.width, replacementBitmap.height)
             file.outputStream().use { PixelWire.write(replacementBitmap, it) }
             JailEngineBridge.call(context, "IMAGE_REPLACE", sourcePdfUri, destPdfUri, mapOf("pageIndex" to pageIndex, "resourceName" to resourceName, "isLossless" to isLossless), Uri.fromFile(file))
             HistoryRepository(context).addHistoryItem(destPdfUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destPdfUri) ?: "image_swapped.pdf", "Image Replaced PDF")
-            true
-        } finally { file.delete() }
+            Result.success(true)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        } finally {
+            file.delete()
+        }
     }
 }

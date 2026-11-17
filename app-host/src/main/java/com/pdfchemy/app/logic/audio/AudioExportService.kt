@@ -30,11 +30,13 @@ class AudioExportService : Service() {
     private var tts: TextToSpeech? = null
     private var writer: PcmWriter? = null
     private var abort: AudioExportAbort? = null
+    @Volatile private var destroyed = false
 
     @androidx.annotation.VisibleForTesting
     internal var afterPublicationForTesting: (suspend () -> Unit)? = null
     @androidx.annotation.VisibleForTesting
-    internal val exportJobForTesting: Job? get() = pipeline
+    internal var exportJobForTesting: Job? = null
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -99,7 +101,7 @@ class AudioExportService : Service() {
             stopTts = { tts?.stop() },
             cancelPipeline = { pipeline?.cancel() }
         )
-        pipeline = scope.launch { export(id) }
+        pipeline = scope.launch { export(id) }.also { exportJobForTesting = it }
         return START_NOT_STICKY
     }
 
@@ -146,7 +148,7 @@ class AudioExportService : Service() {
                 // onDone alone cannot release this sink; drained acknowledges the application's writer flush.
                 withContext(Dispatchers.IO) { sink.delete() }
                 projector.recordChunk(chunk.length, bytes, pcm.format)
-                val safe = withContext(Dispatchers.IO) { projector.isSafe(pcm.format, raw.parentFile!!.usableSpace) }
+                val safe = withContext(Dispatchers.IO) { projector.isSafe(pcm.format, availableStagingBytes(raw)) }
                 check(safe) { "Projected audio exceeds available storage or RIFF limits" }
                 processed += chunk.length
                 store.updateProgress(id, processed, total, projector.projectedBytes(pcm.format))
@@ -190,12 +192,24 @@ class AudioExportService : Service() {
                 if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
             }
             withContext(NonCancellable + Dispatchers.Main) {
-                writer = null; activeId = null
-                stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
-                scope.cancel()
+                writer = null
+                abort = null
+                if (activeId == id) activeId = null
+                pipeline = null
+                if (activeId == null) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+                if (destroyed) {
+                    scope.cancel()
+                }
             }
         }
     }
+
+    // App-private cache staging space check on API 24+; avoids StorageManager UUID lookups.
+    @android.annotation.SuppressLint("UsableSpace")
+    private fun availableStagingBytes(file: java.io.File): Long = file.parentFile!!.usableSpace
 
     override fun onTimeout(startId: Int, fgsType: Int) {
         abort?.timeout()
@@ -204,6 +218,7 @@ class AudioExportService : Service() {
     }
 
     override fun onDestroy() {
+        destroyed = true
         abort?.interrupted()
         tts?.stop()
         if (pipeline == null) scope.cancel()

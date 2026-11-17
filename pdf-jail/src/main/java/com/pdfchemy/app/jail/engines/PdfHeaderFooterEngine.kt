@@ -43,21 +43,29 @@ object PdfHeaderFooterEngine {
                 return@withContext Result.failure(IllegalStateException("PDF contains no pages"))
             }
 
-            val fileName = FileUtils.getFileName(context, sourcePdfUri) ?: "Document"
+            val fileName = config.sourceDisplayName.ifBlank {
+                FileUtils.getFileName(context, sourcePdfUri) ?: "Document"
+            }
             val title = document.documentInformation?.title ?: fileName
             val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
             val font = PDType1Font.HELVETICA
-            val fontSize = config.fontSize
+            val fontSize = config.fontSize.takeIf { it.isFinite() && it > 0f } ?: 10f
+            val marginPt = config.marginPt.takeIf { it.isFinite() && it >= 0f } ?: 30f
 
             for (i in 0 until totalPages) {
                 val pageNum = i + 1
                 if (pageNum < config.startFromPage) continue
 
                 val page = document.getPage(i)
-                val mediaBox = page.mediaBox
-                val pageWidth = mediaBox.width
-                val pageHeight = mediaBox.height
+                val box = page.cropBox ?: page.mediaBox
+                val llx = box.lowerLeftX
+                val lly = box.lowerLeftY
+                val bw = box.width
+                val bh = box.height
+                val rotation = ((page.rotation % 360) + 360) % 360
+                val visWidth = if (rotation == 90 || rotation == 270) bh else bw
+                val visHeight = if (rotation == 90 || rotation == 270) bw else bh
 
                 // Expand macros
                 var text = if (config.batesConfig.enabled) {
@@ -78,33 +86,40 @@ object PdfHeaderFooterEngine {
 
                 val textWidth = (font.getStringWidth(text) / 1000f) * fontSize
 
-                // Calculate X and Y based on position
-                val (x, y) = when (config.position) {
+                // Calculate visual X and Y within the visible page rectangle
+                val (vx, vy) = when (config.position) {
                     HeaderFooterPosition.HEADER_LEFT -> {
-                        config.marginPt to (pageHeight - config.marginPt)
+                        marginPt to (visHeight - marginPt)
                     }
                     HeaderFooterPosition.HEADER_CENTER -> {
-                        ((pageWidth - textWidth) / 2f) to (pageHeight - config.marginPt)
+                        ((visWidth - textWidth) / 2f) to (visHeight - marginPt)
                     }
                     HeaderFooterPosition.HEADER_RIGHT -> {
-                        (pageWidth - config.marginPt - textWidth) to (pageHeight - config.marginPt)
+                        (visWidth - marginPt - textWidth) to (visHeight - marginPt)
                     }
                     HeaderFooterPosition.FOOTER_LEFT -> {
-                        config.marginPt to config.marginPt
+                        marginPt to marginPt
                     }
                     HeaderFooterPosition.FOOTER_CENTER -> {
-                        ((pageWidth - textWidth) / 2f) to config.marginPt
+                        ((visWidth - textWidth) / 2f) to marginPt
                     }
                     HeaderFooterPosition.FOOTER_RIGHT -> {
-                        (pageWidth - config.marginPt - textWidth) to config.marginPt
+                        (visWidth - marginPt - textWidth) to marginPt
                     }
+                }
+
+                val textMatrix = when (rotation) {
+                    90 -> com.tom_roush.pdfbox.util.Matrix.getRotateInstance(Math.toRadians(90.0), llx + bw - vy, lly + vx)
+                    180 -> com.tom_roush.pdfbox.util.Matrix.getRotateInstance(Math.toRadians(180.0), llx + bw - vx, lly + bh - vy)
+                    270 -> com.tom_roush.pdfbox.util.Matrix.getRotateInstance(Math.toRadians(270.0), llx + vy, lly + bh - vx)
+                    else -> com.tom_roush.pdfbox.util.Matrix.getTranslateInstance(llx + vx, lly + vy)
                 }
 
                 PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true).use { cs ->
                     cs.beginText()
                     cs.setFont(font, fontSize)
                     cs.setNonStrokingColor(70f / 255f, 75f / 255f, 85f / 255f)
-                    cs.newLineAtOffset(x, y)
+                    cs.setTextMatrix(textMatrix)
                     cs.showText(text)
                     cs.endText()
                 }

@@ -556,6 +556,10 @@ class WorkerResponseValidatorTest {
             val invalidDeepOutline = "{\"sections\":[],\"bookmarks\":[$deep],\"isScannedOnly\":false,\"totalPages\":1}"
             temp.writeText(invalidDeepOutline)
             assertRejected { WorkerResponseValidator.parseOutlineFile(temp) }
+
+            // Unquoted single-quote / slash tokens must be rejected by parseOutlineJson
+            assertRejected { WorkerResponseValidator.parseOutlineJson("{'sections':[],'bookmarks':[],'isScannedOnly':false,'totalPages':1}") }
+            assertRejected { WorkerResponseValidator.parseOutlineJson("""{"sections":[]/*comment*/,"bookmarks":[],"isScannedOnly":false,"totalPages":1}""") }
         } finally {
             temp.delete()
         }

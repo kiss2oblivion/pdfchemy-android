@@ -54,6 +54,13 @@ fun EbookConverterScreen(
     val effectiveInitialUri = initialUri ?: continuityUri
     var selectedMode by remember { mutableStateOf(EbookMode.PDF_TO_EPUB) }
     var selectedSourceUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
+    var activeArchiveLease by remember { mutableStateOf<com.pdfchemy.app.utils.DocumentStager.StagedLease?>(null) }
+    DisposableEffect(Unit) {
+        onDispose {
+            activeArchiveLease?.discard()
+            activeArchiveLease = null
+        }
+    }
     var bookTitle by remember {
         mutableStateOf(
             effectiveInitialUri?.let { FileUtils.getFileName(context, it)?.substringBeforeLast(".") } ?: ""
@@ -65,6 +72,8 @@ fun EbookConverterScreen(
     var progressTotal by remember { mutableIntStateOf(0) }
 
     val pdfInputPicker = rememberVanguardPdfPicker { uri ->
+        activeArchiveLease?.discard()
+        activeArchiveLease = null
         selectedSourceUri = uri
         val baseName = FileUtils.getFileName(context, uri)?.substringBeforeLast(".") ?: "My Book"
         bookTitle = baseName
@@ -73,21 +82,35 @@ fun EbookConverterScreen(
     var requestedArchiveMode by remember { mutableStateOf(EbookMode.EPUB_TO_PDF) }
     val archivePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) coroutineScope.launch {
+            var newLease: com.pdfchemy.app.utils.DocumentStager.StagedLease? = null
             try {
                 val mode = requestedArchiveMode
-                val staged = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                newLease = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     val name = FileUtils.getFileName(context, uri).orEmpty()
                     val mime = FileUtils.getMimeType(context, uri, name)
                     val expected = if (mode == EbookMode.EPUB_TO_PDF) "epub" else "cbz"
                     require(name.endsWith(".$expected", ignoreCase = true) || mime == if (expected == "epub") "application/epub+zip" else "application/vnd.comicbook+zip") { "Select the matching archive format" }
-                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellable(context, uri).uri
+                    com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellableWithLease(context, uri)
                 }
+                val stagedUri = newLease.document.uri
                 if (selectedMode == mode) {
-                    selectedSourceUri = staged
-                    bookTitle = FileUtils.getFileName(context, staged)?.substringBeforeLast(".") ?: "My Book"
+                    val previousLease = activeArchiveLease
+                    activeArchiveLease = newLease
+                    newLease = null
+                    selectedSourceUri = stagedUri
+                    bookTitle = FileUtils.getFileName(context, stagedUri)?.substringBeforeLast(".") ?: "My Book"
+                    previousLease?.discard()
+                } else {
+                    newLease.discard()
+                    newLease = null
                 }
-            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-            catch (_: Exception) { viewModel.notifyError("Cannot open this archive. Select an EPUB or CBZ matching the selected conversion and check file access.") }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                newLease?.discard()
+                throw cancelled
+            } catch (_: Exception) {
+                newLease?.discard()
+                viewModel.notifyError(context.getString(R.string.error_open_archive_failed))
+            }
         }
     }
     val filePickerLauncher: (Array<String>) -> Unit = { types ->

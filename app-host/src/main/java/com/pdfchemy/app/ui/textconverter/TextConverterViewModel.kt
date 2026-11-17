@@ -91,9 +91,9 @@ class TextConverterViewModel : ViewModel() {
                 currentCoroutineContext().ensureActive()
                 if (!imports.isCurrent(ticket)) return@launch
                 _inputText.value = text
-                
-                // Auto-detect format based on extension
-                val path = uri.path?.lowercase() ?: ""
+
+                // Auto-detect format based on SAF display name or URI path
+                val path = (com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: uri.path)?.lowercase() ?: ""
                 when {
                     path.endsWith(".md") -> setInputFormat(TextFormatConverter.Format.MD)
                     path.endsWith(".html") || path.endsWith(".htm") -> setInputFormat(TextFormatConverter.Format.HTML)
@@ -104,12 +104,12 @@ class TextConverterViewModel : ViewModel() {
                     path.endsWith(".xml") -> setInputFormat(TextFormatConverter.Format.XML)
                     else -> setInputFormat(TextFormatConverter.Format.TXT)
                 }
-                
+
                 _uiState.value = UiState.Idle
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
-                if (imports.isCurrent(ticket)) _uiState.value = UiState.Error("Failed to read file: ${e.message}")
+                if (imports.isCurrent(ticket)) _uiState.value = UiState.Error(context.getString(R.string.error_open_text_failed))
             } finally {
                 if (imports.isCurrent(ticket) && _uiState.value is UiState.Processing) _uiState.value = UiState.Idle
             }

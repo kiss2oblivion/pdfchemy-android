@@ -88,7 +88,8 @@ fun HeaderFooterScreen(
                         suffix = batesSuffix,
                         startNumber = batesStartNumber,
                         digits = batesDigits
-                    )
+                    ),
+                    sourceDisplayName = FileUtils.getFileName(context, selectedPdfUri!!) ?: ""
                 )
 
                 val result = PdfHeaderFooterEngine.applyHeaderFooter(
@@ -250,7 +251,7 @@ fun HeaderFooterScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Preview (Page 1): $previewText",
+                                text = stringResource(R.string.label_preview_page_one, previewText),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -298,7 +299,7 @@ fun HeaderFooterScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Preview (Page 1): $batesPreview",
+                                text = stringResource(R.string.label_preview_page_one, batesPreview),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -318,19 +319,19 @@ fun HeaderFooterScreen(
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.HEADER_LEFT,
                             onClick = { selectedPosition = HeaderFooterPosition.HEADER_LEFT },
-                            label = { Text("H-Left") },
+                            label = { Text(stringResource(R.string.pos_header_left)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.HEADER_CENTER,
                             onClick = { selectedPosition = HeaderFooterPosition.HEADER_CENTER },
-                            label = { Text("H-Center") },
+                            label = { Text(stringResource(R.string.pos_header_center)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.HEADER_RIGHT,
                             onClick = { selectedPosition = HeaderFooterPosition.HEADER_RIGHT },
-                            label = { Text("H-Right") },
+                            label = { Text(stringResource(R.string.pos_header_right)) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -338,19 +339,19 @@ fun HeaderFooterScreen(
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.FOOTER_LEFT,
                             onClick = { selectedPosition = HeaderFooterPosition.FOOTER_LEFT },
-                            label = { Text("F-Left") },
+                            label = { Text(stringResource(R.string.pos_footer_left)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.FOOTER_CENTER,
                             onClick = { selectedPosition = HeaderFooterPosition.FOOTER_CENTER },
-                            label = { Text("F-Center") },
+                            label = { Text(stringResource(R.string.pos_footer_center)) },
                             modifier = Modifier.weight(1f)
                         )
                         FilterChip(
                             selected = selectedPosition == HeaderFooterPosition.FOOTER_RIGHT,
                             onClick = { selectedPosition = HeaderFooterPosition.FOOTER_RIGHT },
-                            label = { Text("F-Right") },
+                            label = { Text(stringResource(R.string.pos_footer_right)) },
                             modifier = Modifier.weight(1f)
                         )
                     }

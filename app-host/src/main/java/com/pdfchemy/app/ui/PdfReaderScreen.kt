@@ -144,7 +144,7 @@ private fun PdfReaderDocument(
     SecureScreenContent()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    
+
     var selectedPdfUri by remember(initialUri) { mutableStateOf<Uri?>(initialUri) }
     var activeSessionLease by remember { mutableStateOf<java.io.Closeable?>(null) }
     val stagingTransferOwner = remember {
@@ -155,7 +155,7 @@ private fun PdfReaderDocument(
     var documentId by remember { mutableStateOf("") }
     var totalPages by remember { mutableIntStateOf(0) }
     var fileName by remember { mutableStateOf("") }
-    
+
     // Zoom, Pan, and Bounded Bitmap Cache state
     var scale by remember { mutableFloatStateOf(1f) }
     var offsetX by remember { mutableFloatStateOf(0f) }
@@ -188,7 +188,7 @@ private fun PdfReaderDocument(
             context.unregisterComponentCallbacks(callbacks)
         }
     }
-    
+
     // Saveable Tap-to-Reveal & Overlay Controls state
     var showControls by rememberSaveable { mutableStateOf(true) }
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
@@ -240,7 +240,7 @@ private fun PdfReaderDocument(
     val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
     var isHorizontalMode by remember { mutableStateOf(false) }
     var isInvertColors by remember { mutableStateOf(systemInDark) }
-    
+
     // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
     var showVanguardBlockedDialog by remember { mutableStateOf(false) }
@@ -262,7 +262,7 @@ private fun PdfReaderDocument(
         viewModel.setContinuityUri(selectedPdfUri)
         onNavigateToTool(ReaderCommandCentreCatalog.resolveScreen(action, selectedPdfUri))
     }
-    
+
     BackHandler {
         val (action, nextState) = currentControlsState().resolveBackAction(ReaderZoomCalculator.isZoomed(scale))
         applyControlsState(nextState)
@@ -278,7 +278,7 @@ private fun PdfReaderDocument(
             ReaderBackAction.EXIT_READER -> onBack()
         }
     }
-    
+
     val isRememberPositionEnabled by viewModel.isRememberPositionEnabled.collectAsState()
 
     DisposableEffect(initialUri) {
@@ -368,7 +368,7 @@ private fun PdfReaderDocument(
             }
         }
     }
-    
+
     // Keep the session position even when persistent reading history is disabled.
     LaunchedEffect(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset,
         isRememberPositionEnabled, totalPages, isDocumentLoading, isRestoringPosition, documentId) {
@@ -661,13 +661,13 @@ private fun PdfReaderDocument(
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
             TopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = fileName, 
+                        text = fileName,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -747,7 +747,7 @@ private fun PdfReaderDocument(
                                     fileName.ifBlank { context.getString(R.string.share) }
                                 )
                             }.onFailure {
-                                viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                                viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
                             }
                         },
                         enabled = actionsEnabled
@@ -814,7 +814,7 @@ private fun PdfReaderDocument(
                                         onError = {
                                             searchFailed = true
                                             hasExecutedSearch = false
-                                            viewModel.notifyError("Search failed. Check document access and retry.")
+                                            viewModel.notifyError(context.getString(R.string.error_search_failed_retry))
                                         }
                                     )
                                 })
@@ -905,7 +905,7 @@ private fun PdfReaderDocument(
                             )
                             .padding(bottom = if (barLayout.compactLandscape) 2.dp else 4.dp)
                     )
-                    
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -914,26 +914,26 @@ private fun PdfReaderDocument(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         ContinuityToolButton(
-                            icon = Icons.Rounded.Compress, 
-                            label = stringResource(R.string.menu_compress), 
+                            icon = Icons.Rounded.Compress,
+                            label = stringResource(R.string.menu_compress),
                             enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.COMPRESS) }
                         )
                         ContinuityToolButton(
-                            icon = Icons.Rounded.DocumentScanner, 
-                            label = stringResource(R.string.menu_ocr_pdf), 
+                            icon = Icons.Rounded.DocumentScanner,
+                            label = stringResource(R.string.menu_ocr_pdf),
                             enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.OCR_SEARCHABLE) }
                         )
                         ContinuityToolButton(
-                            icon = Icons.Rounded.Draw, 
-                            label = stringResource(R.string.menu_sign_pdf), 
+                            icon = Icons.Rounded.Draw,
+                            label = stringResource(R.string.menu_sign_pdf),
                             enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.SIGN_PDF) }
                         )
                         ContinuityToolButton(
-                            icon = Icons.Rounded.Security, 
-                            label = stringResource(R.string.menu_protect_pdf), 
+                            icon = Icons.Rounded.Security,
+                            label = stringResource(R.string.menu_protect_pdf),
                             enabled = actionsEnabled,
                             onClick = { launchCommandAction(ReaderCommandAction.PROTECT_ENCRYPT) }
                         )

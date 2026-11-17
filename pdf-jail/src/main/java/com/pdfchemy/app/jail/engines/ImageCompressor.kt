@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
+import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import com.pdfchemy.app.jail.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -228,7 +229,7 @@ object ImageCompressor {
                     targetH = maxDimension
                     targetW = (maxDimension * ratio).toInt().coerceAtLeast(1)
                 }
-                val scaled = Bitmap.createScaledBitmap(bitmap, targetW, targetH, true)
+                val scaled = bitmap.scale(targetW, targetH)
                 if (scaled != bitmap) {
                     bitmap.recycle()
                     bitmap = scaled
@@ -349,7 +350,7 @@ object ImageCompressor {
                     val ratio = currentBitmap.width.toFloat() / currentBitmap.height.toFloat()
                     val targetW = if (currentBitmap.width >= currentBitmap.height) targetDim else (targetDim * ratio).toInt()
                     val targetH = if (currentBitmap.height > currentBitmap.width) targetDim else (targetDim / ratio).toInt()
-                    val scaled = Bitmap.createScaledBitmap(currentBitmap, targetW.coerceAtLeast(1), targetH.coerceAtLeast(1), true)
+                    val scaled = currentBitmap.scale(targetW.coerceAtLeast(1), targetH.coerceAtLeast(1))
                     if (scaled != currentBitmap) {
                         currentBitmap.recycle()
                         currentBitmap = scaled

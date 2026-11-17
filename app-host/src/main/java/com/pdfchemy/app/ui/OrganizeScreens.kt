@@ -1,6 +1,7 @@
 package com.pdfchemy.app.ui
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
@@ -308,7 +309,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     LaunchedEffect(historyItems) {
         historyAvailability = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             historyItems.associate { item -> item.uriString to runCatching {
-                context.contentResolver.openFileDescriptor(Uri.parse(item.uriString), "r")?.use { true } == true
+                context.contentResolver.openFileDescriptor(item.uriString.toUri(), "r")?.use { true } == true
             }.getOrDefault(false) }
         }
     }
@@ -347,7 +348,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clickable(enabled = historyAvailability[item.uriString] == true) {
-                                        val uri = Uri.parse(item.uriString)
+                                        val uri = item.uriString.toUri()
                                         if (isSelected) {
                                             updateSelectedFiles(selectedFiles.filterNot { it.uri == uri })
                                         } else {
@@ -365,7 +366,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                     Icon(Icons.Rounded.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                     Spacer(modifier = Modifier.width(16.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(if (historyAvailability[item.uriString] == false) item.name + " (unavailable)" else item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(if (historyAvailability[item.uriString] == false) stringResource(R.string.label_unavailable_suffix, item.name) else item.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(item.action, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                     if (isSelected) {
@@ -780,7 +781,7 @@ fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Select a PDF to extract all embedded images.",
+                        stringResource(R.string.select_pdf_extract_images),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

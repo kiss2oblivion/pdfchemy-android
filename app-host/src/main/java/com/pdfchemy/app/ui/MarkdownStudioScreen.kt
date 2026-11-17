@@ -86,7 +86,7 @@ fun MarkdownStudioScreen(
             coroutineScope.launch(Dispatchers.IO) {
                 try {
                     val stream = context.contentResolver.openInputStream(uri)
-                        ?: throw java.io.IOException("Unable to open selected file")
+                        ?: throw java.io.IOException(context.getString(R.string.error_open_file_failed))
                     val text = stream.use {
                         com.pdfchemy.app.logic.MarkdownAdmission.readBoundedText(it)
                     }
@@ -100,8 +100,11 @@ fun MarkdownStudioScreen(
                     AppLogger.e("Failed to open markdown file", e)
                     withContext(Dispatchers.Main) {
                         val message = when (e) {
-                            is SecurityException -> e.message ?: "File exceeds maximum permitted size"
-                            else -> "Failed to open document: ${e.localizedMessage ?: "Unknown error"}"
+                            is SecurityException -> e.message ?: context.getString(R.string.error_md_oversized)
+                            else -> context.getString(
+                                R.string.error_md_open_failed,
+                                e.localizedMessage ?: context.getString(R.string.msg_error_unknown)
+                            )
                         }
                         viewModel.showErrorToast(
                             context.getString(R.string.error),
@@ -268,7 +271,7 @@ fun MarkdownStudioScreen(
                 )
             }
             Text(
-                text = "$wordCount words · ${markdownText.length} chars",
+                text = stringResource(R.string.markdown_stats_words_chars, wordCount, markdownText.length),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
@@ -287,17 +290,17 @@ fun MarkdownStudioScreen(
                 ToolbarButton(text = "# H1") { insertText("# Heading 1") }
                 ToolbarButton(text = "## H2") { insertText("## Heading 2") }
                 ToolbarButton(text = "### H3") { insertText("### Heading 3") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatBold) { insertText("**Bold text**") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatItalic) { insertText("*Italic text*") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatQuote) { insertText("> Quote text") }
-                ToolbarIconButton(icon = Icons.Rounded.Code) { insertText("```\n// Code snippet\n```") }
-                ToolbarIconButton(icon = Icons.AutoMirrored.Rounded.FormatListBulleted) { insertText("- List item") }
-                ToolbarIconButton(icon = Icons.Rounded.FormatListNumbered) { insertText("1. Numbered item") }
-                ToolbarIconButton(icon = Icons.Rounded.Checklist) { insertText("- [ ] Task item") }
-                ToolbarIconButton(icon = Icons.Rounded.TableChart) {
+                ToolbarIconButton(icon = Icons.Rounded.FormatBold, contentDescription = stringResource(R.string.desc_format_bold)) { insertText("**Bold text**") }
+                ToolbarIconButton(icon = Icons.Rounded.FormatItalic, contentDescription = stringResource(R.string.desc_format_italic)) { insertText("*Italic text*") }
+                ToolbarIconButton(icon = Icons.Rounded.FormatQuote, contentDescription = stringResource(R.string.desc_format_quote)) { insertText("> Quote text") }
+                ToolbarIconButton(icon = Icons.Rounded.Code, contentDescription = stringResource(R.string.desc_format_code)) { insertText("```\n// Code snippet\n```") }
+                ToolbarIconButton(icon = Icons.AutoMirrored.Rounded.FormatListBulleted, contentDescription = stringResource(R.string.desc_format_bullet_list)) { insertText("- List item") }
+                ToolbarIconButton(icon = Icons.Rounded.FormatListNumbered, contentDescription = stringResource(R.string.desc_format_numbered_list)) { insertText("1. Numbered item") }
+                ToolbarIconButton(icon = Icons.Rounded.Checklist, contentDescription = stringResource(R.string.desc_format_checklist)) { insertText("- [ ] Task item") }
+                ToolbarIconButton(icon = Icons.Rounded.TableChart, contentDescription = stringResource(R.string.desc_format_table)) {
                     insertText("| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |")
                 }
-                ToolbarIconButton(icon = Icons.Rounded.HorizontalRule) { insertText("\n---\n") }
+                ToolbarIconButton(icon = Icons.Rounded.HorizontalRule, contentDescription = stringResource(R.string.desc_format_horizontal_rule)) { insertText("\n---\n") }
             }
 
             // Content Area
@@ -414,20 +417,24 @@ fun MarkdownStudioScreen(
 private fun ToolbarButton(text: String, onClick: () -> Unit) {
     FilledTonalButton(
         onClick = onClick,
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-        modifier = Modifier.height(34.dp)
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
     ) {
         Text(text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 
 @Composable
-private fun ToolbarIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+private fun ToolbarIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(34.dp)
+        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = contentDescription, modifier = Modifier.size(18.dp))
     }
 }
 

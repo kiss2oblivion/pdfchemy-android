@@ -3,6 +3,7 @@ package com.pdfchemy.app.utils
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.content.edit
 import com.pdfchemy.app.jail.StagedPdf
 import java.io.File
 import java.io.InputStream
@@ -206,30 +207,30 @@ object DocumentIdentity {
         }
 
         // 6. Atomic migration: copy to V2 keys, record exclusive binding, and retire legacy keys
-        val editor = prefs.edit()
-        if (prefs.contains(legacyPageKey)) {
-            editor.putInt("page_$v2DocId", prefs.getInt(legacyPageKey, 0))
-            editor.remove(legacyPageKey)
-        }
-        if (prefs.contains(legacyOffsetKey)) {
-            editor.putInt("offset_$v2DocId", prefs.getInt(legacyOffsetKey, 0))
-            editor.remove(legacyOffsetKey)
-        }
-        if (prefs.contains(legacyBookmarksKey)) {
-            val bookmarks = prefs.getStringSet(legacyBookmarksKey, null)
-            if (bookmarks != null) {
-                editor.putStringSet("bookmarks_$v2DocId", bookmarks)
+        prefs.edit {
+            if (prefs.contains(legacyPageKey)) {
+                putInt("page_$v2DocId", prefs.getInt(legacyPageKey, 0))
+                remove(legacyPageKey)
             }
-            editor.remove(legacyBookmarksKey)
-        }
-        if (prefs.contains(legacyEditorPageKey)) {
-            editor.putInt("editor_page_$v2DocId", prefs.getInt(legacyEditorPageKey, 0))
-            editor.remove(legacyEditorPageKey)
-        }
+            if (prefs.contains(legacyOffsetKey)) {
+                putInt("offset_$v2DocId", prefs.getInt(legacyOffsetKey, 0))
+                remove(legacyOffsetKey)
+            }
+            if (prefs.contains(legacyBookmarksKey)) {
+                val bookmarks = prefs.getStringSet(legacyBookmarksKey, null)
+                if (bookmarks != null) {
+                    putStringSet("bookmarks_$v2DocId", bookmarks)
+                }
+                remove(legacyBookmarksKey)
+            }
+            if (prefs.contains(legacyEditorPageKey)) {
+                putInt("editor_page_$v2DocId", prefs.getInt(legacyEditorPageKey, 0))
+                remove(legacyEditorPageKey)
+            }
 
-        // Record binding to this specific contentSha256
-        editor.putString(legacyBindingKey, contentSha256)
-        editor.apply()
+            // Record binding to this specific contentSha256
+            putString(legacyBindingKey, contentSha256)
+        }
 
         return v2DocId
     }
@@ -240,13 +241,13 @@ object DocumentIdentity {
      */
     fun markLegacyAmbiguous(context: Context, legacyId: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putBoolean("$KEY_LEGACY_AMBIGUOUS_PREFIX$legacyId", true)
-            .remove("page_$legacyId")
-            .remove("offset_$legacyId")
-            .remove("bookmarks_$legacyId")
-            .remove("editor_page_$legacyId")
-            .apply()
+        prefs.edit {
+            putBoolean("$KEY_LEGACY_AMBIGUOUS_PREFIX$legacyId", true)
+            remove("page_$legacyId")
+            remove("offset_$legacyId")
+            remove("bookmarks_$legacyId")
+            remove("editor_page_$legacyId")
+        }
     }
 
     /**
@@ -265,9 +266,9 @@ object DocumentIdentity {
      */
     fun saveBookmarks(context: Context, docId: String, bookmarks: Set<Int>) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putStringSet("bookmarks_$docId", bookmarks.map { it.toString() }.toSet())
-            .apply()
+        prefs.edit {
+            putStringSet("bookmarks_$docId", bookmarks.map { it.toString() }.toSet())
+        }
     }
 
     /**
@@ -285,10 +286,10 @@ object DocumentIdentity {
      */
     fun saveReaderPosition(context: Context, docId: String, page: Int, offset: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putInt("page_$docId", page)
-            .putInt("offset_$docId", offset)
-            .apply()
+        prefs.edit {
+            putInt("page_$docId", page)
+            putInt("offset_$docId", offset)
+        }
     }
 
     /**
@@ -304,16 +305,18 @@ object DocumentIdentity {
      */
     fun saveEditorPage(context: Context, docId: String, page: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putInt("editor_page_$docId", page)
-            .apply()
+        prefs.edit {
+            putInt("editor_page_$docId", page)
+        }
     }
 
     /**
      * Clears all reader preferences for testing.
      */
+    // Test-only synchronous reset ensures clean state before the next test assertion starts.
+    @android.annotation.SuppressLint("ApplySharedPref")
     fun clearPreferencesForTesting(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().commit()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
     }
 
     fun getSavedReaderPosition(

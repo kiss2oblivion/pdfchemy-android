@@ -20,6 +20,7 @@ import javax.crypto.spec.GCMParameterSpec
 
 internal interface EntitlementStore {
     fun read(): Boolean
+    fun readOrThrow(): Boolean = read()
     fun write(entitled: Boolean): Boolean
 }
 
@@ -45,21 +46,27 @@ internal class PlatformEntitlementStore(
         private val lock = Any()
     }
 
-    override fun read(): Boolean = synchronized(lock) {
+    override fun read(): Boolean = try {
+        readOrThrow()
+    } catch (_: Exception) {
+        false
+    }
+
+    override fun readOrThrow(): Boolean = synchronized(lock) {
         if (prefs.contains(RECORD)) {
             // An invalid current record must never resurrect an old true entitlement.
-            return@synchronized runCatching {
-                val record = prefs.getString(RECORD, null) ?: error("Missing record")
-                require(record.length <= 256)
-                cipher.decrypt(record)
-            }.getOrDefault(false)
+            val record = prefs.getString(RECORD, null) ?: error("Missing record")
+            require(record.length <= 256)
+            return@synchronized cipher.decrypt(record)
         }
-        val legacy = runCatching { readLegacy() }.getOrNull() ?: return@synchronized false
+        val legacy = readLegacy() ?: return@synchronized false
         // Never delete the old record/keysets. A failed migration can retry after recovery.
         write(legacy)
         legacy
     }
 
+    // Synchronously returns Editor.commit()'s Boolean result to fail closed on disk write errors; KTX edit returns Unit.
+    @android.annotation.SuppressLint("UseKtx")
     override fun write(entitled: Boolean): Boolean = synchronized(lock) {
         runCatching {
             val encrypted = cipher.encrypt(entitled)

@@ -163,7 +163,7 @@ class PdfJailService : Service() {
             scratchBinder: IBinder?,
             callback: IPdfJailStringCallback?
         ) {
-            if (callback == null) { sourceFd?.close(); return }
+            if (callback == null) { gate.poison(operationId); sourceFd?.close(); return }
             submit(operationId, listOfNotNull(sourceFd), emptyList(), listOf(expectedSha256), listOf(expectedSize), "{}", callback, scratchBinder) {
                 PdfServiceEngineWorker.analyze(sourceFd)
             }
@@ -344,7 +344,9 @@ class PdfJailService : Service() {
                     android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
                     val read = ByteArray(7)
                     check(android.system.Os.read(fd.fileDescriptor, read, 0, 7) == 7 && String(read) == "scratch")
-                    check(android.system.Os.fcntlInt(fd.fileDescriptor, android.system.OsConstants.F_GETFL, 0) and android.system.OsConstants.O_ACCMODE == android.system.OsConstants.O_RDONLY)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                        check((android.system.Os.fcntlInt(fd.fileDescriptor, android.system.OsConstants.F_GETFL, 0) and android.system.OsConstants.O_ACCMODE) == android.system.OsConstants.O_RDONLY)
+                    }
                     var rejected = false
                     try { android.system.Os.write(fd.fileDescriptor, byteArrayOf(1), 0, 1) }
                     catch (_: android.system.ErrnoException) { rejected = true }

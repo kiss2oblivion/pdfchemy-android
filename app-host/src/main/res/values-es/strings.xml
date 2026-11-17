@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 <string name="app_name">PDFchemy Tools</string>
 <string name="coming_soon">Próximamente</string>
 <string name="ok">OK</string>
@@ -9,7 +9,6 @@
 <string name="clear">Limpiar</string>
 <string name="clear_all">Limpiar Todo</string>
 <string name="save">Guardar</string>
-<string name="continue_btn">Continuar</string>
 <string name="home_subtitle">ARREGLA DOCUMENTOS LOCALMENTE</string>
 <string name="cat_compress">Comprimir</string>
 <string name="cat_compress_desc">Reduce PDFs de forma segura.</string>
@@ -20,19 +19,13 @@
 <string name="cat_check">Revisar</string>
 <string name="cat_check_desc">Inspecciona antes de enviar.</string>
 <string name="menu_compress">Comprimir PDF</string>
-<string name="menu_compress_desc">Reducir tamaño del archivo</string>
 <string name="menu_merge">Unir PDF</string>
 <string name="menu_merge_desc">Combinar varios archivos</string>
 <string name="menu_split">Dividir PDF</string>
 <string name="menu_split_desc">Extraer páginas</string>
 <string name="menu_scan">Escanear a PDF</string>
 <string name="menu_scan_desc">Cámara a documento</string>
-<string name="menu_ocr">Extraer Texto</string>
-<string name="menu_ocr_desc">Sacar texto de PDF</string>
-<string name="menu_metadata">Revisar Metadatos</string>
-<string name="menu_metadata_desc">Ver propiedades ocultas</string>
 <string name="settings_title">Ajustes</string>
-<string name="settings_preferences">Preferencias de la App</string>
 <string name="settings_privacy_policy">Política de Privacidad</string>
 <string name="settings_privacy_policy_desc">Lea nuestras políticas de privacidad y datos</string>
 <string name="consent_dialog_title">Bienvenido a PDFchemy</string>
@@ -42,32 +35,17 @@
 <string name="refund_policy_body">Si no ha solicitado un reembolso dentro de los 14 días posteriores a la compra, no se emitirá ningún reembolso.</string>
 <string name="settings_refund_policy">Política de reembolso</string>
 <string name="settings_refund_policy_desc">Vea nuestra política de reembolso para compras premium</string>
-<string name="settings_haptic">Vibración</string>
-<string name="settings_haptic_desc">Vibrar en interacciones</string>
-<string name="settings_sfx">Efectos de Sonido</string>
-<string name="settings_sfx_desc">Audio al tocar botones</string>
 <string name="settings_history">Recordar Archivos Recientes</string>
 <string name="settings_history_desc">Guarda el historial local. Los archivos nunca se suben.</string>
 <string name="settings_language">Idioma</string>
 <string name="settings_language_desc">Cambiar el idioma de la app</string>
 <string name="settings_clear_history">Limpiar Historial</string>
-<string name="settings_clear_history_confirm">¿Estás seguro de que deseas borrar el historial?</string>
-<string name="settings_history_cleared">Historial borrado</string>
 <string name="compress_title">Comprimir PDF</string>
 <string name="compress_single">Archivo Único</string>
 <string name="compress_batch">Compresión por Lotes</string>
 <string name="compress_select_file">Seleccionar Archivo PDF</string>
-<string name="compress_compressing">Comprimiendo PDF...</string>
 <string name="compress_target_size">Tamaño Objetivo</string>
 <string name="compress_preset">Ajuste de Compresión:</string>
-<string name="compress_exact_mb">MB Exactos</string>
-<string name="compress_options">Opciones de Compresión</string>
-<string name="compress_grayscale">Conversión a Escala de Grises</string>
-<string name="compress_grayscale_desc">Convertir imágenes a blanco y negro</string>
-<string name="compress_lossless">Compresión ZIP Sin Pérdida</string>
-<string name="compress_lossless_desc">Omitir compresión JPEG</string>
-<string name="compress_strip_meta">Quitar Metadatos</string>
-<string name="compress_strip_meta_desc">Quitar etiquetas de autor, creador y editor</string>
 <string name="warning_quality_title">Aviso Legal y de Calidad</string>
 <string name="warning_quality_desc">La compresión reduce la calidad. Esto puede invalidar documentos oficiales, registros médicos o firmas digitales. Mantén siempre el archivo original.</string>
 <string name="warning_understand">Entiendo</string>
@@ -109,17 +87,15 @@
 <string name="split_pdf">Dividir PDF</string>
 <string name="split_into_folder">Dividir en Carpeta</string>
 <string name="extraction_options">Opciones de Extracción</string>
-<string name="extract_all_pages_as_individua">Extraer páginas individuales</string>
-<string name="extract_custom_range">Extraer rango personalizado</string>
-<string name="e_g_1_3_5_7_10">ej. 1-3, 5, 7-10</string>
+<string name="e_g_1_3_5_7_10" tools:ignore="TypographyDashes">ej. 1-3, 5, 7-10</string>
 <string name="extract_images">Extraer Imágenes</string>
 <string name="ready_to_extract_all_images_ta">Listo para extraer. Toca el botón abajo y elige una carpeta.</string>
 <string name="change_pdf">Cambiar PDF</string>
-<string name="extracting_images">Extrayendo imágenes...</string>
+<string name="extracting_images">Extrayendo imágenes…</string>
 <string name="delete_pages">Eliminar Páginas</string>
 <string name="save_document">Guardar Documento</string>
 <string name="pages_to_delete">Páginas a Eliminar</string>
-<string name="e_g_1_3_5_10">ej. 1, 3, 5-10</string>
+<string name="e_g_1_3_5_10" tools:ignore="TypographyDashes">ej. 1, 3, 5-10</string>
 <string name="enter_comma_separated_page_num">Introduce páginas separadas por comas.</string>
 <string name="rotate_pages">Rotar Páginas</string>
 <string name="rotate_save">Rotar y Guardar</string>
@@ -130,24 +106,22 @@
 <string name="pages_to_rotate_optional">Páginas a Rotar (Opcional)</string>
 <string name="leave_blank_to_rotate_all_page">Dejar en blanco para rotar todas.</string>
 <string name="text_cleaner">Limpiador de Texto</string>
-<string name="paste_your_text_here">Pega tu texto aquí...</string>
+<string name="paste_your_text_here">Pega tu texto aquí…</string>
 <string name="text_format_converter">Conversor de Formato</string>
-<string name="enter_content">Introduce contenido...</string>
+<string name="enter_content">Introduce contenido…</string>
 <string name="import_btn">Importar</string>
-<string name="compressing_pdf">Comprimiendo PDF...</string>
 <string name="create">Crear</string>
 <string name="compress">Comprimir</string>
 <string name="empty_str">  →  </string>
 <string name="select_target_size_mb">Seleccionar tamaño (MB):</string>
 <string name="exact_mb">MB Exactos</string>
-<string name="compression_options">Opciones de compresión</string>
 <string name="grayscale_conversion">Escala de Grises</string>
 <string name="convert_color_images_to_black">Convertir a blanco y negro</string>
 <string name="lossless_zip_compression">Compresión ZIP Sin Pérdida</string>
 <string name="skip_jpeg_lossy_compression_no">Omitir compresión JPEG</string>
 <string name="strip_author_creator_editor_ta">Quitar etiquetas de autor y editor</string>
 <string name="type_or_paste_text_here">Escribe o pega texto aquí</string>
-<string name="enter_the_content_of_your_pdf">Introduce el contenido del PDF...</string>
+<string name="enter_the_content_of_your_pdf">Introduce el contenido del PDF…</string>
 <string name="import_txt">Importar .txt</string>
 <string name="save_as_pdf">Guardar como PDF</string>
 <string name="clear_history">Limpiar Historial</string>
@@ -168,7 +142,7 @@
 <string name="title_tools">PDFchemy Tools</string>
 <string name="file_name_label">Nombre de Archivo: %1$s</string>
 <string name="selected_batch_files">Archivos Seleccionados:</string>
-<string name="analyzing_doc">Analizando estructura...</string>
+<string name="analyzing_doc">Analizando estructura…</string>
 <string name="smart_recommendation">Recomendación Inteligente</string>
 <string name="detected_type">Tipo detectado: %1$s</string>
 <string name="doc_stats_pages_images">Páginas: %1$d | Imágenes: %2$d</string>
@@ -186,7 +160,6 @@
 ✓ Sin Anuncios
 ✓ Sin Intersticiales
 ✓ Acciones por Lotes Ilimitadas</string>
-<string name="batch_compressing">Comprimiendo %1$d de %2$d archivos...</string>
 <string name="msg_enter_text">Por favor, introduce texto.</string>
 <string name="menu_delete_pages">Eliminar páginas</string>
 <string name="menu_delete_pages_desc">Elimina páginas específicas de un PDF</string>
@@ -264,8 +237,6 @@
 <string name="desc_share_output">Compartir salida</string>
 <string name="desc_go_premium">Ir Premium</string>
 <string name="desc_settings">Ajustes</string>
-<string name="desc_toggle_theme">Alternar tema</string>
-<string name="desc_app_logo">Logotipo de la aplicación</string>
 <string name="scan_prefix">Escanear_</string>
 <string name="default_scanned_doc_name">documento_escaneado</string>
 <string name="desc_back">Atrás</string>
@@ -277,11 +248,11 @@
 <string name="btn_change_file">Cambiar archivo</string>
 <string name="btn_select_pdf_files">Seleccionar archivos PDF</string>
 <string name="btn_add_more_files">Agregar más archivos (%1$d seleccionado)</string>
-<string name="label_original_size_analyzing">Tamaño original: %1$s (Analizando...)</string>
+<string name="label_original_size_analyzing">Tamaño original: %1$s (Analizando…)</string>
 <string name="label_original_size_to_compressed">Tamaño original: %1$s → %2$s</string>
 <string name="label_target_mb_batch">Objetivo: %1$.1f MB</string>
 <string name="label_target_unknown">Objetivo: Desconocido</string>
-<string name="label_analyzing">Analizando...</string>
+<string name="label_analyzing">Analizando…</string>
 <string name="label_target_mb">Objetivo: %1$s MB</string>
 <string name="desc_remove_file">Eliminar archivo</string>
 <string name="preset_custom">Costumbre</string>
@@ -339,7 +310,7 @@
 <string name="history_extracted_text">Texto extraído</string>
 <string name="history_pdf_to_text">PDF a texto</string>
 <string name="history_converted_text">texto_convertido</string>
-    
+
 <string name="settings_about_legal">Acerca de y legal</string>
 <string name="settings_theme">Tema de la app</string>
 <string name="settings_theme_desc">Elija entre tema Claro, Oscuro o Predeterminado del sistema</string>
@@ -348,34 +319,33 @@
 <string name="theme_dark">Modo oscuro</string>
 <string name="settings_rate_app">Calificar PDFchemy Tools</string>
 <string name="settings_rate_app_desc">¿Disfrutas de la app? ¡Déjanos una reseña en Google Play!</string>
-<string name="settings_rate_app_thanks">¡Gracias por su apoyo!</string>
     <string name="settings_share_app">Compartir PDFchemy Tools</string>
     <string name="settings_share_app_desc">Recomienda esta aplicación a amigos y colegas</string>
     <string name="settings_share_app_message">Echa un vistazo a PDFchemy Tools: un compresor y editor de PDF rápido, 100%% offline y privado para Android: %1$s</string>
-    
+
 <string name="settings_app_tour">Guía de la app</string>
 <string name="settings_app_tour_desc">Revise el recorrido rápido de las funciones clave</string>
 <string name="settings_feedback">Enviar comentarios y soporte</string>
 <string name="settings_feedback_desc">Reportar errores, solicitar funciones o hacer preguntas</string>
 <string name="feedback_email_subject">Comentarios y soporte de PDFchemy Tools</string>
-    
+
     <!-- Onboarding Walkthrough Strings -->
 <string name="onboarding_skip">Saltar</string>
 <string name="onboarding_next">Siguiente</string>
 <string name="onboarding_get_started">Comenzar</string>
-    
+
 <string name="onboarding_slide1_title">Compresión inteligente de PDF</string>
 <string name="onboarding_slide1_desc">Reduzca archivos PDF grandes para límites de correo y subida manteniendo una legibilidad y formato nítidos.</string>
-    
+
 <string name="onboarding_slide2_title">Escanear y crear</string>
 <string name="onboarding_slide2_desc">Convierta fotos de la cámara e imágenes de la galería en PDF limpios, o transforme texto plano con un solo toque.</string>
-    
+
 <string name="onboarding_slide3_title">Organizar y combinar</string>
 <string name="onboarding_slide3_desc">Combine múltiples documentos arrastrando y soltando, extraiga páginas o divida archivos PDF fácilmente.</string>
-    
+
 <string name="onboarding_slide4_title">100%% privado y sin conexión</string>
 <string name="onboarding_slide4_desc">Sus documentos permanecen en su dispositivo. Cero subidas a la nube, sin cuentas obligatorias: total privacidad.</string>
-    
+
     <!-- Image Compressor Strings -->
 <string name="menu_compress_image">Comprimir imágenes</string>
 <string name="menu_compress_image_desc">Reducir JPG, PNG, WebP</string>
@@ -500,18 +470,12 @@
 <string name="ocr_pdf_subtitle">Reconocimiento de texto 100%% en el dispositivo. Genera una capa de texto seleccionable.</string>
 <string name="select_pdf_for_ocr">Seleccionar Documento PDF</string>
 <string name="ocr_processing_generic">Analizando y reconociendo texto…</string>
-<string name="ocr_processing_progress">Procesando OCR: Página %1$d de %2$d…</string>
 <string name="action_create_searchable_pdf">Generar PDF Buscable</string>
 <string name="title_ocr_success">¡PDF Buscable Creado!</string>
 <string name="desc_ocr_success">Se ha insertado una capa de texto invisible para búsqueda completa.</string>
 <string name="error_ocr_failed">Error en el reconocimiento OCR.</string>
 <string name="history_searchable_ocr_pdf">PDF OCR Buscable</string>
-<string name="menu_redact_pdf">Censura Permanente</string>
 <string name="tool_redact">Censurar</string>
-<string name="title_redact_success">¡PDF Censurado con Éxito!</string>
-<string name="desc_redact_success">Las zonas seleccionadas han sido permanentemente censuradas y destruidas.</string>
-<string name="error_redact_failed">Error al aplicar la censura.</string>
-<string name="history_redacted_pdf">PDF Censurado</string>
 <string name="menu_reflow_reader">Lector Adaptable y Marcadores</string>
 <string name="menu_reflow_reader_desc">Modo de lectura estilo e-book sin distracciones con índice</string>
 <string name="reflow_reader_headline">Lector Móvil sin Distracciones</string>
@@ -527,11 +491,9 @@
 <string name="filter_magic_color">Color Mágico</string>
 <string name="filter_bw">Blanco y Negro</string>
 <string name="filter_grayscale">Escala de Grises</string>
-<string name="action_save_as_pdf">Guardar %1$d Páginas como PDF</string>
 <string name="title_scan_success">¡Documento Escaneado con Éxito!</string>
 <string name="desc_scan_success">Las páginas escaneadas se han convertido en un documento PDF optimizado.</string>
 <string name="error_scan_failed">Error al generar el PDF escaneado.</string>
-<string name="history_scanned_pdf">Documento Escaneado</string>
 <string name="menu_sign_pdf">Firmar PDF</string>
 <string name="menu_sign_pdf_desc">Dibuja, guarda y estampa firmas digitales en contratos y acuerdos</string>
 <string name="sign_pdf_headline">Firmar Documentos PDF</string>
@@ -563,7 +525,6 @@
 <string name="title_organizer_success">¡Páginas Reorganizadas con Éxito!</string>
 <string name="desc_organizer_success">El nuevo orden y diseño de páginas se ha guardado.</string>
 <string name="error_organizer_failed">Error al reorganizar las páginas del PDF.</string>
-<string name="history_organized_pdf">PDF Organizado</string>
 <string name="menu_watermark_pdf">Añadir Marca de Agua</string>
 <string name="menu_watermark_pdf_desc">Estampa marcas de agua personalizadas de texto o logotipo en todas las páginas</string>
 <string name="watermark_headline">Añadir Marca de Agua</string>
@@ -578,7 +539,6 @@
 <string name="title_watermark_success">¡Marca de Agua Aplicada con Éxito!</string>
 <string name="desc_watermark_success">La marca de agua ha sido estampada en tu documento.</string>
 <string name="error_watermark_failed">Error al aplicar la marca de agua.</string>
-<string name="history_watermarked_pdf">PDF con Marca de Agua</string>
 <string name="menu_page_number_pdf">Añadir Números de Página</string>
 <string name="menu_page_number_pdf_desc">Inserta encabezados y pies de página personalizados (Página X de Y, 1/N)</string>
 <string name="page_number_headline">Numerar Páginas del PDF</string>
@@ -597,11 +557,10 @@
 <string name="title_page_number_success">¡Números de Página Añadidos!</string>
 <string name="desc_page_number_success">La numeración de páginas ha sido estampada en el documento.</string>
 <string name="error_page_number_failed">Error al añadir los números de página.</string>
-<string name="history_numbered_pdf">PDF Numerado</string>
 <string name="menu_page_layout">Tamaño y Folletos N-Up</string>
 <string name="menu_page_layout_desc">Cambia el tamaño del papel o combina 2, 4, 6 páginas por hoja</string>
 <string name="page_layout_headline">Diseño de Página y Folletos</string>
-<string name="page_layout_subtitle">Formatea PDFs para imprimir, cambia dimensiones de papel o crea folletos 2 en 1 / 4 en 1.</string>
+<string name="page_layout_subtitle">Formatea PDFs para imprimir, cambia dimensiones de papel o crea folletos 2 en 1, 4 en 1.</string>
 <string name="select_pdf_for_layout">Seleccionar Documento PDF</string>
 <string name="tab_nup_handout">Folletos Multipágina</string>
 <string name="tab_resize_paper">Cambiar Tamaño</string>
@@ -615,15 +574,12 @@
 <string name="title_layout_success">¡Diseño Generado con Éxito!</string>
 <string name="desc_layout_success">Tu diseño de PDF formateado se ha guardado.</string>
 <string name="error_layout_failed">Error al generar el diseño.</string>
-<string name="history_layout_pdf">PDF con Diseño</string>
 <string name="menu_compare_pdfs">Comparar Dos PDFs</string>
 <string name="menu_compare_pdfs_desc">Detecta diferencias visuales y cambios de texto entre revisiones</string>
 <string name="compare_headline">Comparador de Revisiones PDF</string>
 <string name="compare_subtitle">Selecciona dos versiones de un documento para resaltar alteraciones visuales y cambios en el texto.</string>
 <string name="select_original_pdf">Seleccionar PDF Original (Doc A)</string>
 <string name="select_modified_pdf">Seleccionar PDF Modificado (Doc B)</string>
-<string name="doc1_selected">Original Seleccionado</string>
-<string name="doc2_selected">Modificado Seleccionado</string>
 <string name="comparing_documents_progress">Comparando páginas y texto del documento…</string>
 <string name="compare_results_title">Resultados de Comparación</string>
 <string name="compare_summary_counts">%1$d Páginas Modificadas • %2$d Páginas Idénticas</string>
@@ -644,7 +600,7 @@
 <string name="info_word_export">Exporta párrafos, encabezados y saltos de página a un archivo estándar de Microsoft Word (.docx).</string>
 <string name="info_excel_export">Extrae tablas, datos numéricos y filas estructuradas en una hoja de cálculo de Microsoft Excel (.xlsx).</string>
 <string name="info_pptx_export">Transforma páginas en diapositivas de presentación con títulos y viñetas en Microsoft PowerPoint (.pptx).</string>
-<string name="converting_to_office">Convirtiendo a Office...</string>
+<string name="converting_to_office">Convirtiendo a Office…</string>
 <string name="btn_export_office_file">Exportar como %1$s</string>
 <string name="title_office_export_success">Exportación completada</string>
 <string name="desc_office_export_success">Se exportaron con éxito %1$d páginas al formato de Office seleccionado.</string>
@@ -743,7 +699,7 @@
 <string name="btn_open_file">Abrir archivo</string>
 <string name="btn_import_pdf_to_md">Extraer Markdown de PDF</string>
 <string name="btn_save_md">Guardar .MD</string>
-<string name="hint_type_markdown">Escribe o pega Markdown aquí...</string>
+<string name="hint_type_markdown">Escribe o pega Markdown aquí…</string>
 <string name="label_doc_title">Título del documento</string>
 <string name="btn_export_pdf">Exportar PDF</string>
 <string name="title_pdf_to_md_success">Markdown extraído</string>
@@ -807,7 +763,7 @@
 <string name="label_booklet_settings">Ajustes de folleto</string>
 <string name="opt_center_fold_guide">Dibujar guía de plegado central</string>
 <string name="desc_center_fold_guide">Añade una línea discontinua sutil para ayudar al plegado</string>
-<string name="label_generating_sheet">Generando pliego %1$d de %2$d...</string>
+<string name="label_generating_sheet">Generando pliego %1$d de %2$d…</string>
 <string name="btn_create_booklet">Generar PDF de folleto</string>
 <string name="title_booklet_success">Folleto creado</string>
 <string name="desc_booklet_success">Imprime a doble cara y pliega por la mitad para leer como folleto</string>
@@ -881,7 +837,7 @@
 <string name="redaction_headline">Estudio de redacción permanente</string>
 <string name="redaction_subtitle">Censura datos confidenciales, nombres y números</string>
 <string name="select_pdf_to_redact">Seleccionar PDF para censurar</string>
-<string name="placeholder_search_redact">Buscar texto o regex a censurar...</string>
+<string name="placeholder_search_redact">Buscar texto o regex a censurar…</string>
 <string name="chip_preset_emails">Correos</string>
 <string name="chip_preset_ssn">Números de seguro</string>
 <string name="chip_preset_credit_cards">Tarjetas de crédito</string>
@@ -910,18 +866,12 @@
 <string name="error_embed_failed">Error al adjuntar</string>
 <string name="menu_fast_web_view">Información de Fast Web View</string>
 <string name="menu_fast_web_view_desc">Inspeccionar información de PDF; generación de Fast Web View no disponible</string>
-<string name="linearize_headline">Optimizador de streaming web</string>
 <string name="linearize_subtitle">Esta versión no puede generar ni certificar archivos PDF Fast Web View. No se creará ningún archivo de salida.</string>
 <string name="select_pdf_for_linearize">Seleccionar un PDF para inspeccionar</string>
 <string name="label_diagnostic_status">Información de PDF</string>
 <string name="label_fast_web_view_enabled">Linealización:</string>
-<string name="status_enabled">Activado</string>
 <string name="status_disabled">No verificado</string>
-<string name="linearize_info_explanation">La vista web rápida organiza el PDF para que los navegadores muestren la primera página de inmediato sin esperar la descarga completa.</string>
 <string name="btn_optimize_fast_web_view">Optimización no disponible</string>
-<string name="title_linearize_success">PDF linealizado</string>
-<string name="desc_linearize_success">Documento optimizado para streaming (%1$s)</string>
-<string name="error_linearize_failed">Error de optimización</string>
 
 <string name="menu_nup_handouts">Cuadrícula N-Up (Folletos)</string>
 <string name="menu_nup_handouts_desc">Imprime 2, 4, 6, 9 o 16 páginas por hoja para resúmenes</string>
@@ -941,8 +891,6 @@
 <string name="pdfa_headline">Solo comprobaciones preliminares; no certificado</string>
 <string name="pdfa_subtitle">Estas comprobaciones no certifican la conformidad con ISO 19005. La conversión a PDF/A no está disponible en esta versión.</string>
 <string name="select_pdf_for_pdfa">Seleccionar PDF para comprobaciones preliminares</string>
-<string name="status_archival_ready">Listo para archivar (100%% conforme)</string>
-<string name="status_compliance_issues_found">No conforme (Se detectaron problemas)</string>
 <string name="menu_font_inspector">Inspector de fuentes</string>
 <string name="menu_font_inspector_desc">Inspecciona fuentes incrustadas, subtipos y codificación</string>
 <string name="font_headline">Tipografía y fuentes incrustadas</string>
@@ -954,8 +902,6 @@
 <string name="stat_standard_system">Sistema / Base</string>
 
 <string name="error_developer_diagnostics">Diagnóstico de desarrollador</string>
-<string name="error_tap_to_view_diagnostics">Ver registro técnico / traza</string>
-<string name="error_tap_to_hide_diagnostics">Ocultar registro técnico</string>
 <string name="error_copy_diagnostics">Copiar diagnóstico</string>
 <string name="error_diagnostics_copied">Traza de diagnóstico copiada al portapapeles</string>
 <string name="error_user_encrypted">Este PDF está protegido por contraseña o cifrado. Desbloquéelo en Seguridad PDF antes de continuar.</string>
@@ -996,12 +942,10 @@
     <string name="deskew_success">¡Documento enderezado con éxito!</string>
     <string name="deskew_success_desc">Las páginas se han rotado y alineado.</string>
     <string name="deskew_auto_label">Autodetectar inclinación</string>
-    <string name="deskew_manual_label">Ajuste manual</string>
     <string name="deskew_no_tilt">El documento ya está recto (0.0°)</string>
     <string name="menu_table_extractor">Extraer tablas a CSV</string>
     <string name="menu_table_extractor_desc">Extrae tablas y datos de PDF a CSV / Excel limpio RFC 4180</string>
     <string name="table_extractor_title">Extractor de Tablas y Hojas de Cálculo</string>
-    <string name="table_extractor_action_export">Exportar tablas a CSV</string>
     <string name="table_extractor_preview">Datos tabulares detectados</string>
     <string name="table_extractor_no_tables">No se detectaron datos tabulares en esta página.</string>
     <string name="table_extractor_success">¡Tablas exportadas a CSV!</string>
@@ -1016,21 +960,16 @@
     <string name="sanitizer_threats_detected">%1$d vectores de amenaza encontrados en el documento</string>
     <string name="sanitizer_action_sanitize">Esterilizar y Eliminar Amenazas</string>
     <string name="sanitizer_success">¡Documento desinfectado con éxito!</string>
-    <string name="sanitizer_success_desc">Se eliminaron todos los scripts activos, enlaces y balizas de rastreo.</string>
     <string name="menu_quick_fill_sign">Llenado Rápido y Firma</string>
     <string name="menu_quick_fill_sign_desc">Toca en cualquier parte de PDFs planos o escaneados para añadir texto, marcas, cruces y firmas</string>
     <string name="quick_fill_title">Llenado Rápido y Firma</string>
     <string name="quick_fill_text_tool">Texto</string>
-    <string name="quick_fill_check_tool">Marca (✓)</string>
-    <string name="quick_fill_cross_tool">Cruz (✗)</string>
-    <string name="quick_fill_date_tool">Fecha</string>
     <string name="quick_fill_sign_tool">Firma</string>
     <string name="quick_fill_tap_hint">Toca en cualquier parte del documento para colocar el elemento</string>
     <string name="quick_fill_action_save">Guardar y Aplanar Formulario</string>
     <string name="quick_fill_success">¡Formulario llenado y guardado!</string>
-    <string name="quick_fill_success_desc">Todas las entradas se han incrustado permanentemente en el PDF.</string>
     <string name="split_mode_all">Extraer todas las páginas por separado</string>
-    <string name="split_mode_range">Rango de páginas personalizado (ej. 1-3, 5)</string>
+    <string name="split_mode_range" tools:ignore="TypographyDashes">Rango de páginas personalizado (ej. 1-3, 5)</string>
     <string name="split_mode_blank">Dividir por páginas en blanco</string>
     <string name="split_mode_blank_desc">Detecta páginas separadoras en blanco en escaneos y divide en archivos individuales</string>
     <string name="split_mode_bookmarks">Dividir por marcadores / capítulos</string>
@@ -1039,12 +978,8 @@
     <string name="split_bookmarks_found">Se encontraron %1$d secciones de capítulos</string>
     <string name="split_no_bookmarks">No se encontraron marcadores de capítulos en este documento.</string>
     <string name="tts_play">Leer en voz alta</string>
-    <string name="tts_pause">Pausar</string>
-    <string name="tts_stop">Detener</string>
-    <string name="tts_speed">Velocidad: %1$.2fx</string>
     <string name="tts_prev_paragraph">Anterior</string>
     <string name="tts_next_paragraph">Siguiente</string>
-    <string name="tts_not_supported">La síntesis de voz no es compatible o faltan datos de idioma.</string>
 
     <!-- Form Builder / AcroForm Authoring -->
     <string name="menu_form_builder">Creador de Formularios Interactivos</string>
@@ -1061,7 +996,6 @@
     <string name="form_builder_action_save">Guardar PDF Rellenable</string>
     <string name="form_builder_fields_count">Campos en la página: %1$d</string>
     <string name="form_builder_success">¡PDF Rellenable creado con éxito!</string>
-    <string name="form_builder_success_desc">Los campos interactivos se han incrustado en el documento.</string>
     <string name="form_builder_no_fields_warn">Por favor, coloca al menos un campo interactivo antes de guardar.</string>
     <string name="form_builder_delete_field">Eliminar Campo</string>
     <string name="settings_vanguard">Escudo Vanguard Zero-Trust</string>
@@ -1072,14 +1006,13 @@
     <string name="vanguard_encrypted_message">Este documento está cifrado y protegido con contraseña. El escudo Vanguard Zero-Trust no puede verificar scripts incrustados ni amenazas de seguridad mientras el documento permanezca bloqueado. Desbloquéelo primero.</string>
     <string name="vanguard_action_unlock">Desbloquear PDF</string>
     <string name="vanguard_verifying_title">Verificación de Seguridad Vanguard</string>
-    <string name="vanguard_verifying_desc">Comprobando si hay scripts y amenazas de seguridad...</string>
+    <string name="vanguard_verifying_desc">Comprobando si hay scripts y amenazas de seguridad…</string>
     <string name="vanguard_zero_trust_badge" formatted="false">100% Offline • Zero-Trust</string>
 
     <string name="action_redo">Rehacer</string>
     <string name="action_reset">Restablecer</string>
     <string name="action_reverse">Invertir</string>
     <string name="action_rotate_all">Girar todo</string>
-    <string name="label_preview_unavailable">Vista previa no disponible</string>
     <string name="dialog_unsaved_title">Cambios sin guardar</string>
     <string name="dialog_unsaved_message">Tiene cambios sin guardar. ¿Desea guardarlos o descartarlos antes de salir?</string>
     <string name="dialog_unsaved_save">Guardar / Exportar</string>
@@ -1089,13 +1022,9 @@
     <string name="vanguard_damaged_message">Este PDF parece estar dañado o incompleto y no se pudo leer de forma segura. Intente ejecutar Reparar o seleccione otra copia.</string>
     <string name="vanguard_provider_error_title">Archivo inaccesible</string>
     <string name="vanguard_provider_error_message">No se pudo acceder al archivo seleccionado. Es posible que el proveedor de almacenamiento no esté disponible o que se hayan revocado los permisos.</string>
-    <string name="error_invalid_page_range">Rango de páginas no válido. Verifique los números de página e intente nuevamente.</string>
     <string name="consent_dialog_decline">Continuar sin personalización</string>
 
     <string name="generating_previews">Generando vistas previas…</string>
-    <string name="label_preview_loading">Cargando…</string>
-    <string name="premium_status_loading">Verificando tienda…</string>
-    <string name="premium_status_unavailable">Tienda no disponible. Toca para reintentar.</string>
     <string name="action_retry">Reintentar</string>
     <string name="redaction_review_title">Revisar censuras</string>
     <string name="redaction_review_message">Se aplicarán permanentemente %1$d censura(s). El contenido censurado no se puede recuperar.</string>
@@ -1126,12 +1055,10 @@
     <string name="alt_free_ram_desc">Cierra las aplicaciones en segundo plano que consumen mucha memoria para liberar RAM y vuelve a intentarlo.</string>
     <string name="alt_free_ram_btn">Entendido</string>
     <string name="btn_proceed_anyway">Continuar de todos modos</string>
-    <string name="msg_circuit_breaker_paused">Se ha pausado el procesamiento para evitar que el teléfono se bloquee. El trabajo completado se ha guardado.</string>
     <string name="reader_dual_page_spread">Doble página</string>
     <string name="reader_single_page">Una página</string>
     <string name="flip_tabletop_mode">Modo de sobremesa</string>
     <string name="flip_fullscreen_mode">Modo de pantalla completa</string>
-    <string name="flip_tabletop_mode_desc">Modo manos libres: documento arriba y controles abajo</string>
     <string name="flip_tabletop_active_badge">Modo Flex</string>
     <string name="scanned_pdf_title">Documento escaneado</string>
     <string name="scanned_pdf_desc">Este documento contiene imágenes escaneadas sin una capa de texto seleccionable.</string>
@@ -1157,7 +1084,7 @@
     <string name="redaction_searching">Searching this document…</string>
     <string name="redaction_search_failed">Search could not complete. Check the query and tap Search to retry.</string>
     <string name="native_reader_description">Read original PDF pages with zoom, search and page navigation.</string>
-    <string name="quick_camera_pdf">Quick camera PDF</string>
+    <string name="quick_camera_pdf">PDF rápido con cámara</string>
     <string name="select_pages_visually">Select pages visually</string>
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
@@ -1232,10 +1159,6 @@
     <string name="pki_reason">Motivo</string>
     <string name="pki_location">Ubicación</string>
     <string name="pki_sign_and_save">Firmar y guardar</string>
-    <string name="btn_convert_to_pdfa">Convertir a PDF/A-1b</string>
-    <string name="btn_converting_pdfa">Convirtiendo a PDF/A-1b…</string>
-    <string name="title_pdfa_converted_success">Conversión a PDF/A-1b completada con éxito</string>
-    <string name="error_pdfa_conversion_failed">Error en la conversión a PDF/A</string>
     <string name="btn_export_embedded_fonts">Exportar fuentes incrustadas (.zip)</string>
     <string name="btn_exporting_fonts">Exportando fuentes…</string>
     <string name="title_fonts_exported_success">Fuentes incrustadas exportadas con éxito (%1$d)</string>
@@ -1333,7 +1256,7 @@
     <string name="redact_forensic_title">Saneamiento forense de vectores</string>
     <string name="redact_forensic_desc">Rasteriza las páginas redactadas para eliminar por completo los bytes de texto subyacentes.</string>
     <string name="redact_smart_pii_title">Redacción inteligente de datos PII</string>
-    <string name="reflow_find_placeholder">Buscar texto en el documento...</string>
+    <string name="reflow_find_placeholder">Buscar texto en el documento…</string>
     <string name="desc_previous_match">Coincidencia anterior</string>
     <string name="desc_next_match">Siguiente coincidencia</string>
     <string name="desc_play_pause">Reproducir/Pausar</string>
@@ -1356,4 +1279,131 @@
     <string name="page_select_odd">Impares</string>
     <string name="page_select_even">Pares</string>
     <string name="desc_swap_formats">Intercambiar formatos</string>
+    <string name="error_oversized_text_file">El archivo supera el tamaño máximo de texto permitido (%1$d MB).</string>
+    <string name="error_open_text_failed">No se pudo leer el archivo seleccionado.</string>
+    <string name="error_save_text_failed">No se pudo guardar el archivo de texto.</string>
+    <string name="settings_output_folder_ask">Preguntar dónde guardar cada vez</string>
+    <string name="settings_output_folder_saved">Carpeta guardada seleccionada. Las copias nuevas conservan los archivos existentes.</string>
+    <string name="action_change_folder">Cambiar carpeta</string>
+    <string name="pki_keystore_too_large">El almacén de claves importado supera el límite de 32 KB.</string>
+    <string name="desc_remove_signature">Eliminar firma</string>
+    <string name="label_signed_date">Firmado: %1$s</string>
+    <string name="sign_tool_pki_cert">Cert. PKI</string>
+    <string name="sign_tool_check">Marca</string>
+    <string name="sign_tool_cross">Cruz</string>
+    <string name="sign_tool_date">Fecha</string>
+    <string name="acroform_page_fields_indicator">Página %1$d de %2$d • %3$d campo(s)</string>
+    <string name="label_sheet_side">Hoja %1$d (%2$s)</string>
+    <string name="label_show_fewer_sheets">Mostrar menos hojas</string>
+    <string name="extract_text_info_body">Si el documento contiene texto estándar, se extraerá al instante. Si es un documento escaneado (imágenes), usaremos OCR en el dispositivo (reconocimiento óptico de caracteres) para leer el texto. Esto puede tardar unos momentos.</string>
+    <string name="find_replace_privacy_info">Busca palabras o frases en todas las páginas. PDFchemy inspecciona las coincidencias en el dispositivo sin subir a la nube ni rasterizar las páginas sin cambios.</string>
+    <string name="font_system_font">Fuente del sistema</string>
+    <string name="label_total_count">Total: %1$d</string>
+    <string name="label_preview_page_one">Vista previa (Página 1): %1$s</string>
+    <string name="pos_header_left">C-Izq.</string>
+    <string name="pos_header_center">C-Centro</string>
+    <string name="pos_header_right">C-Der.</string>
+    <string name="pos_footer_left">P-Izq.</string>
+    <string name="pos_footer_center">P-Centro</string>
+    <string name="pos_footer_right">P-Der.</string>
+    <string name="placeholder_example_mb">p. ej. 1.5</string>
+    <string name="markdown_stats_words_chars">%1$d palabras · %2$d caracteres</string>
+    <string name="metadata_clean_document">Documento limpio — no se detectaron metadatos de seguimiento personal.</string>
+    <string name="ocr_info_body">Los documentos escaneados e imágenes con texto se indexarán con una capa de texto invisible de alta precisión. Podrás seleccionar, copiar y buscar palabras en cualquier parte del nuevo PDF.</string>
+    <string name="select_pdf_extract_images">Selecciona un PDF para extraer todas las imágenes incrustadas.</string>
+    <string name="custom_stamp_placeholder">p. ej. REVISADO, COPIA, CONFIDENCIAL</string>
+    <string name="quick_fill_dialog_text_title">Texto para insertar</string>
+    <string name="quick_fill_dialog_text_hint">Introduce texto (Nombre, Respuesta, Dirección)</string>
+    <string name="quick_fill_dialog_sign_title">Dibujar firma</string>
+    <string name="quick_fill_btn_place_signature">Colocar firma</string>
+    <string name="redact_targets_found">Objetivos encontrados (%1$d)</string>
+    <string name="reflow_ocr_extracted">Extraído por OCR</string>
+    <string name="audio_export_progress_projected">%1$d%% (%2$d MB estimados)</string>
+    <string name="reader_toc_empty">No se encontraron esquemas de documento en este PDF.</string>
+    <string name="repair_issues_summary">Problemas: %1$s</string>
+    <string name="format_jpg_compact">JPG (Fotos / Compacto)</string>
+    <string name="format_png_lossless">PNG (Sin pérdida / Nítido)</string>
+    <string name="error_acroform_load_failed">No se pudieron cargar los campos del formulario.</string>
+    <string name="desc_show_password">Mostrar contraseña</string>
+    <string name="desc_hide_password">Ocultar contraseña</string>
+    <string name="action_select">Seleccionar</string>
+    <string name="action_change">Cambiar</string>
+    <string name="desc_undo_placement">Deshacer ubicación</string>
+    <string name="desc_redo_placement">Rehacer ubicación</string>
+    <string name="desc_format_bold">Negrita</string>
+    <string name="desc_format_italic">Cursiva</string>
+    <string name="desc_format_quote">Cita</string>
+    <string name="desc_format_code">Bloque de código</string>
+    <string name="desc_format_bullet_list">Lista con viñetas</string>
+    <string name="desc_format_numbered_list">Lista numerada</string>
+    <string name="desc_format_checklist">Lista de verificación</string>
+    <string name="desc_format_table">Insertar tabla</string>
+    <string name="desc_format_horizontal_rule">Línea horizontal</string>
+    <string name="error_no_app_can_open_file">Ninguna aplicación puede abrir este archivo. Comprueba el acceso o usa Compartir.</string>
+    <string name="error_folder_no_write_access">Esta carpeta no puede conservar el acceso de escritura. Elige otra carpeta.</string>
+    <string name="error_search_failed_retry">La búsqueda falló. Comprueba el acceso al documento y reintenta.</string>
+    <string name="error_open_archive_failed">No se puede abrir este archivo. Selecciona un EPUB o CBZ acorde a la conversión y comprueba el acceso.</string>
+    <string name="error_share_storage_full">El almacenamiento compartido está lleno (64 copias / 250 MiB). Gestiona las copias en Ajustes. Se conservaron las existentes.</string>
+    <string name="error_destination_same_as_source">El destino no puede ser el mismo documento que el origen</string>
+    <string name="error_no_blank_dividers">No se detectaron páginas separadoras en blanco.</string>
+    <string name="error_md_oversized">El archivo supera el tamaño máximo permitido</string>
+    <string name="error_md_open_failed">Error al abrir el documento: %1$s</string>
+    <string name="error_open_file_failed">No se puede abrir el archivo seleccionado</string>
+    <string name="sign_default_reason">Firmado con PDFchemy</string>
+    <string name="sign_default_location">Dispositivo local</string>
+    <string name="sign_stamp_conform">COPIA CONFORME</string>
+    <string name="sign_stamp_approved">APROBADO</string>
+    <string name="sign_stamp_confidential">CONFIDENCIAL</string>
+    <string name="sign_stamp_paid">PAGADO</string>
+    <string name="sign_stamp_draft">BORRADOR</string>
+    <string name="acroform_scanning_fields">Escaneando campos del formulario…</string>
+    <string name="acroform_fields_detected_count">%1$d campos de formulario detectados</string>
+    <string name="acroform_choose_option">Elige una opción…</string>
+    <string name="label_unavailable_suffix">%1$s (no disponible)</string>
+    <string name="crop_preset_minimal">Mínimo (2%)</string>
+    <string name="crop_preset_standard">Estándar (5%)</string>
+    <string name="crop_preset_wide">Amplio (10%)</string>
+    <string name="error_create_pdf">No se pudo crear el PDF.</string>
+    <string name="error_create_pdf_images">No se pudo crear el PDF desde imágenes.</string>
+    <string name="error_merge_failed">No se pudieron combinar los PDF.</string>
+    <string name="error_update_metadata_failed">Error al actualizar los metadatos.</string>
+    <string name="error_remove_metadata_failed">Error al eliminar los metadatos.</string>
+    <string name="error_split_pdf_failed">Error al dividir el PDF.</string>
+    <string name="error_split_blank_failed">Error al dividir el PDF por páginas en blanco.</string>
+    <string name="error_split_bookmarks_failed">Error al dividir el PDF por marcadores.</string>
+    <string name="error_delete_pages_failed">No se pudieron eliminar las páginas.</string>
+    <string name="error_image_compression_failed">Falló la compresión de imagen</string>
+    <string name="error_target_compression_failed">Falló la compresión al tamaño objetivo</string>
+    <string name="error_operation_in_progress">Operación en curso</string>
+    <string name="error_compression_failed_short">Falló la compresión</string>
+    <string name="billing_connecting">Conectando con Google Play…</string>
+    <string name="billing_storage_read_failed">No se pudo leer el estado de compra guardado. Conéctate a Google Play y restaura tus compras.</string>
+    <string name="billing_storage_write_failed_premium">Premium está activo, pero no se pudo guardar el acceso sin conexión. Reintenta guardar el estado.</string>
+    <string name="billing_storage_write_failed_other">Cambió el estado de compra, pero no se pudo actualizar la caché sin conexión. Reintenta.</string>
+    <string name="billing_play_no_response">Google Play no respondió. Comprueba tu conexión y reintenta.</string>
+    <string name="billing_play_unavailable_retry">La facturación de Google Play no está disponible. Comprueba tu conexión y reintenta.</string>
+    <string name="billing_play_disconnected">Se desconectó Google Play. Reintenta cuando tengas conexión.</string>
+    <string name="billing_loading_details">Cargando detalles de compra…</string>
+    <string name="billing_details_no_response">Google Play no devolvió los detalles de compra. Reintenta cuando haya conexión.</string>
+    <string name="billing_one_time_purchase">Compra única a través de Google Play.</string>
+    <string name="billing_price_unavailable">El precio no está disponible en Google Play. Reintenta cuando tengas conexión.</string>
+    <string name="billing_details_unavailable">Detalles de compra no disponibles. Comprueba Google Play y reintenta.</string>
+    <string name="billing_connecting_tap_retry">Google Play se está conectando. Pulsa reintentar si no se conecta.</string>
+    <string name="billing_checking_purchases">Comprobando compras anteriores…</string>
+    <string name="billing_purchases_no_response">Google Play no devolvió tus compras. Comprueba tu conexión y reintenta.</string>
+    <string name="billing_restore_success">Licencia Premium restaurada correctamente.</string>
+    <string name="billing_payment_pending">El pago está pendiente. Premium se desbloqueará cuando Google Play lo confirme.</string>
+    <string name="billing_no_previous_purchases">No se encontraron compras anteriores para esta cuenta de Google.</string>
+    <string name="billing_network_error_retry">Error de red al conectar con Google Play. Comprueba tu conexión y reintenta.</string>
+    <string name="billing_unavailable_device">La facturación de Google Play no está disponible en este dispositivo.</string>
+    <string name="billing_restore_failed">No se pudieron restaurar las compras. Comprueba Google Play y reintenta.</string>
+    <string name="billing_purchase_confirming">Compra recibida. Google Play está confirmando tu licencia.</string>
+    <string name="billing_purchase_cancelled">Compra cancelada. Puedes seguir usando PDFchemy.</string>
+    <string name="billing_network_error_purchase">Error de red al comunicarse con Google Play. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="billing_purchase_failed">No se pudo completar la compra. Comprueba Google Play e inténtalo de nuevo.</string>
+    <string name="billing_premium_already_active">Premium ya está activo.</string>
+    <string name="billing_purchase_not_ready">La compra no está lista. Comprueba Google Play y reintenta.</string>
+    <string name="billing_opening_play">Abriendo Google Play…</string>
+    <string name="billing_checkout_network_error">Error de red al abrir el pago. Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="billing_checkout_failed">Google Play no pudo abrir el proceso de pago. Comprueba tu conexión e inténtalo de nuevo.</string>
 </resources>

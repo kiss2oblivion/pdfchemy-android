@@ -42,6 +42,8 @@ class TextConverterImportOwnershipTest {
     @Before fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { context.contentResolver } returns resolver
+        every { context.getString(any()) } returns "Failed to open text document"
+        every { context.getString(any(), *anyVararg()) } returns "Failed to open text document"
         vm = TextConverterViewModel()
     }
     @After fun cleanup() {

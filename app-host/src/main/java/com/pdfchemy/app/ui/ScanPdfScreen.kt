@@ -7,6 +7,7 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +45,8 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.pdfchemy.app.R
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -94,8 +97,13 @@ fun ScanPdfScreen(
             val pageUris = scanResult?.pages?.mapNotNull { it.imageUri } ?: emptyList()
 
             if (pageUris.isNotEmpty()) {
+                if (pageUris.size > com.pdfchemy.app.security.SecurityLimits.MAX_BATCH_FDS) {
+                    viewModel.notifyError(context.getString(R.string.error_scan_failed))
+                    return@rememberLauncherForActivityResult
+                }
                 coroutineScope.launch(Dispatchers.IO) {
                     val bmps = pageUris.mapNotNull { uri ->
+                        currentCoroutineContext().ensureActive()
                         decodeBoundedBitmap(context, uri)
                     }
                     withContext(Dispatchers.Main) {
@@ -108,16 +116,31 @@ fun ScanPdfScreen(
                     }
                 }
             } else if (pdfUri != null) {
-                // If GMS directly provided PDF
+                // If GMS directly provided PDF, persist into protected app files/scans with size cap.
                 coroutineScope.launch {
-                    val exports = File(context.cacheDir, "exports").apply { mkdirs() }
-                    val destFile = File(exports, "scan_${System.currentTimeMillis()}.pdf")
+                    val scansDir = File(context.filesDir, "scans").apply { mkdirs() }
+                    val destFile = File(scansDir, "scan_${System.currentTimeMillis()}.pdf")
                     try {
-                        withContext(Dispatchers.IO) {
+                        val copiedBytes = withContext(Dispatchers.IO) {
                             requireNotNull(context.contentResolver.openInputStream(pdfUri)) { "Cannot read scanned PDF" }.use { input ->
-                                destFile.outputStream().use { output -> input.copyTo(output) }
+                                com.pdfchemy.app.security.BoundedOutputStream(
+                                    destFile.outputStream(),
+                                    com.pdfchemy.app.security.SecurityLimits.MAX_PDF_FILESIZE
+                                ).use { output ->
+                                    val buffer = ByteArray(64 * 1024)
+                                    var total = 0L
+                                    while (true) {
+                                        currentCoroutineContext().ensureActive()
+                                        val count = input.read(buffer)
+                                        if (count < 0) break
+                                        output.write(buffer, 0, count)
+                                        total += count
+                                    }
+                                    total
+                                }
                             }
                         }
+                        require(copiedBytes > 0L) { "Scanned PDF is empty" }
                         val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", destFile)
                         if (pendingNavigation != null) {
                             viewModel.setContinuityUri(uri)
@@ -143,8 +166,13 @@ fun ScanPdfScreen(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris ->
         if (uris.isNotEmpty()) {
+            if (uris.size > com.pdfchemy.app.security.SecurityLimits.MAX_BATCH_FDS) {
+                viewModel.notifyError(context.getString(R.string.error_scan_failed))
+                return@rememberLauncherForActivityResult
+            }
             coroutineScope.launch(Dispatchers.IO) {
                 val bmps = uris.mapNotNull { uri ->
+                    currentCoroutineContext().ensureActive()
                     decodeBoundedBitmap(context, uri)
                 }
                 withContext(Dispatchers.Main) {
@@ -161,12 +189,21 @@ fun ScanPdfScreen(
 
     // Export PDF Launcher
     val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
+        if (destUri != null && scannedBitmaps.isEmpty()) {
+            coroutineScope.launch(Dispatchers.IO) {
+                com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+            }
+            return@rememberPreferredDocumentCreator
+        }
         if (destUri != null && scannedBitmaps.isNotEmpty()) {
             isProcessing = true
             coroutineScope.launch(Dispatchers.IO) {
                 val images = mutableListOf<java.io.File>()
+                var published = false
                 try {
+                    require(scannedBitmaps.size <= com.pdfchemy.app.security.SecurityLimits.MAX_BATCH_FDS) { "Too many scanned pages" }
                     for (rawBmp in scannedBitmaps) {
+                        currentCoroutineContext().ensureActive()
                         val filteredBmp = applyScanFilter(rawBmp, currentFilter)
                         try {
                             val image = java.io.File.createTempFile("scan_", ".png", context.cacheDir)
@@ -180,6 +217,8 @@ fun ScanPdfScreen(
                     }
 
                     com.pdfchemy.app.logic.PdfGateway.executeEngineBatch(context, "IMAGES_TO_PDF", images.map(android.net.Uri::fromFile), listOf(destUri), "{}")
+                    com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
+                    published = true
 
                     withContext(Dispatchers.Main) {
                         isProcessing = false
@@ -195,7 +234,15 @@ fun ScanPdfScreen(
                             onBack()
                         }
                     }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        if (!published) com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
+                    throw cancelled
                 } catch (e: Exception) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                        if (!published) com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+                    }
                     withContext(Dispatchers.Main) {
                         isProcessing = false
                         viewModel.notifyError(context.getString(R.string.error_scan_failed))
@@ -392,7 +439,7 @@ fun ScanPdfScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Page ${selectedIndex + 1} of ${scannedBitmaps.size}",
+                        text = stringResource(R.string.reader_page_indicator, selectedIndex + 1, scannedBitmaps.size),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -501,9 +548,9 @@ fun ScanPdfScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
-                        onClick = { 
+                        onClick = {
                             pendingNavigation = Screen.PdfReader()
-                            savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                            savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf")
                         },
                         modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -518,15 +565,15 @@ fun ScanPdfScreen(
                             Text(text = stringResource(R.string.action_save_open_reader), fontWeight = FontWeight.Bold)
                         }
                     }
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { 
+                            onClick = {
                                 pendingNavigation = Screen.OcrPdf
-                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf")
                             },
                             modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                             shape = RoundedCornerShape(12.dp),
@@ -536,11 +583,11 @@ fun ScanPdfScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(text = stringResource(R.string.action_save_ocr), fontSize = 13.sp)
                         }
-                        
+
                         OutlinedButton(
-                            onClick = { 
+                            onClick = {
                                 pendingNavigation = Screen.CompressPdf
-                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf") 
+                                savePdfLauncher.launch("scanned_document_${System.currentTimeMillis()}.pdf")
                             },
                             modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp),
                             shape = RoundedCornerShape(12.dp),
@@ -561,7 +608,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
     return when (filter) {
         ScanFilterMode.ORIGINAL -> src
         ScanFilterMode.GRAYSCALE -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix().apply { setSaturation(0f) }
@@ -570,7 +617,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
             bmp
         }
         ScanFilterMode.MAGIC_COLOR -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix(
@@ -586,7 +633,7 @@ fun applyScanFilter(src: Bitmap, filter: ScanFilterMode): Bitmap {
             bmp
         }
         ScanFilterMode.BLACK_AND_WHITE -> {
-            val bmp = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val bmp = createBitmap(src.width, src.height)
             val canvas = android.graphics.Canvas(bmp)
             val paint = Paint()
             val cm = ColorMatrix(

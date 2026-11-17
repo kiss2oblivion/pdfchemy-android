@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.tom_roush.pdfbox.multipdf.PDFMergerUtility
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import org.json.JSONArray
@@ -19,9 +20,9 @@ object PdfManipulatorWorker {
             return JSONObject().put("success", false).put("error", "No target file descriptor provided").toString()
         }
 
+        val inputStreams = mutableListOf<java.io.InputStream>()
         try {
             val merger = PDFMergerUtility()
-            val inputStreams = mutableListOf<java.io.InputStream>()
 
             for (fd in sourceFds) {
                 val stream = FileInputStream(fd.fileDescriptor)
@@ -34,11 +35,11 @@ object PdfManipulatorWorker {
                 merger.mergeDocuments(com.pdfchemy.app.jail.JailMemory.settings())
             }
 
-            inputStreams.forEach { try { it.close() } catch (e: Exception) {} }
-
             return JSONObject().put("success", true).toString()
         } catch (e: Exception) {
             return JSONObject().put("success", false).put("error", e.message).toString()
+        } finally {
+            inputStreams.forEach { runCatching { it.close() } }
         }
     }
 
@@ -52,10 +53,10 @@ object PdfManipulatorWorker {
             val params = JSONObject(paramsJson)
             val pagesToKeepStr = params.optString("pagesToKeep", "")
             val multiGroupsStr = params.optString("multiGroups", "")
-            
+
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
-                
+
                 if (multiGroupsStr.isNotBlank()) {
                     // It's a multi-group split (like bookmarks or blank pages)
                     val groupsArray = JSONArray(multiGroupsStr)
@@ -108,20 +109,20 @@ object PdfManipulatorWorker {
 
     fun planSplitByBlankPages(context: Context, sourceFd: ParcelFileDescriptor?, paramsJson: String): String {
         if (sourceFd == null) return JSONObject().put("success", false).put("error", "No source fd").toString()
-        
+
         var renderer: PdfRenderer? = null
         try {
             val params = JSONObject(paramsJson)
             val whiteThreshold = params.optDouble("whiteThreshold", 0.999).toFloat()
-            
+
             renderer = PdfRenderer(sourceFd)
             val totalPages = renderer.pageCount
-            
+
             val splitGroups = mutableListOf<MutableList<Int>>()
             var currentGroup = mutableListOf<Int>()
             val sampleW = 72
             val sampleH = 96
-            val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); Bitmap.createBitmap(sampleW, sampleH, Bitmap.Config.ARGB_8888) }
+            val sampleBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(sampleW, sampleH); createBitmap(sampleW, sampleH) }
             val pixels = IntArray(sampleW * sampleH)
 
             try {
@@ -180,7 +181,7 @@ object PdfManipulatorWorker {
             } finally {
                 sampleBmp.recycle()
             }
-            
+
             if (splitGroups.size > com.pdfchemy.app.jail.engines.JailQuotas.MAX_OUTPUT_FILES) {
                 return JSONObject().put("success", false).put("error", "Too many groups planned").toString()
             }
@@ -280,13 +281,13 @@ object PdfManipulatorWorker {
         try {
             val params = JSONObject(paramsJson)
             val pagesToDelete = params.optString("pagesToDelete", "").split(",").mapNotNull { it.toIntOrNull() }
-            
+
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
                 val totalPages = document!!.numberOfPages
-                
+
                 val pagesToKeep = (1..totalPages).filter { it !in pagesToDelete }
-                
+
                 PDDocument(com.pdfchemy.app.jail.JailMemory.settings()).use { newDoc ->
                     for (p in pagesToKeep) {
                         newDoc.importPage(document!!.getPage(p - 1))
@@ -314,7 +315,7 @@ object PdfManipulatorWorker {
 
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
-                
+
                 for (i in 0 until document!!.numberOfPages) {
                     if (pagesToRotate.isEmpty() || (i + 1) in pagesToRotate) {
                         val page = document!!.getPage(i)
@@ -347,10 +348,10 @@ object PdfManipulatorWorker {
             if (ownerPassword.isEmpty() || ownerPassword == userPassword) {
                 ownerPassword = java.util.UUID.randomUUID().toString() + java.util.UUID.randomUUID().toString()
             }
-            
+
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
-                
+
                 val accessPermission = com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission()
                 accessPermission.setCanPrint(params.optBoolean("canPrint", true))
                 accessPermission.setCanPrintFaithful(if (params.has("canPrintFaithful")) params.optBoolean("canPrintFaithful", true) else params.optBoolean("canPrintDegraded", true))
@@ -364,9 +365,9 @@ object PdfManipulatorWorker {
                 val spp = com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy(ownerPassword, userPassword, accessPermission)
                 spp.encryptionKeyLength = 256 // Enforce 256-bit AES
                 spp.permissions = accessPermission
-                
+
                 document!!.protect(spp)
-                
+
                 FileOutputStream(targetFd.fileDescriptor).use { out ->
                     document!!.save(out)
                 }
@@ -385,11 +386,11 @@ object PdfManipulatorWorker {
         try {
             val params = JSONObject(paramsJson)
             val password = params.optString("password", "")
-            
+
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, password, com.pdfchemy.app.jail.JailMemory.settings())
                 document!!.isAllSecurityToBeRemoved = true
-                
+
                 FileOutputStream(targetFd.fileDescriptor).use { out ->
                     document!!.save(out)
                 }
@@ -432,12 +433,12 @@ object PdfManipulatorWorker {
 
             renderer = PdfRenderer(sourceFd)
             val totalPages = renderer.pageCount
-            
+
             // Require exact targetFds count matching
             if (targetFds.size != totalPages) {
                 return JSONObject().put("success", false).put("error", "Target FDs do not match page count").toString()
             }
-            
+
             val count = targetFds.size
             for (i in 0 until count) {
                 var page: PdfRenderer.Page? = null
@@ -446,20 +447,20 @@ object PdfManipulatorWorker {
                     page = renderer.openPage(i)
                     val expectedW = (page.width * scale).toLong()
                     val expectedH = (page.height * scale).toLong()
-                    
+
                     if (expectedW > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_DIMENSION || expectedH > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_DIMENSION) {
                         return JSONObject().put("success", false).put("error", "Page dimensions exceed maximum allowed").toString()
                     }
                     if (expectedW * expectedH > com.pdfchemy.app.jail.engines.JailQuotas.MAX_RENDER_PIXELS) {
                         return JSONObject().put("success", false).put("error", "Page pixel count exceeds maximum allowed").toString()
                     }
-                    
+
                     val w = expectedW.toInt()
                     val h = expectedH.toInt()
-                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888) }
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); createBitmap(w, h) }
                     bitmap.eraseColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    
+
                     FileOutputStream(targetFds[i].fileDescriptor).use { out ->
                         bitmap.compress(format, quality, out)
                     }

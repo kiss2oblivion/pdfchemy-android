@@ -56,6 +56,9 @@ object OutputPolicy {
         }
     }
 
+    fun deleteIfFresh(document: DocumentFile): Boolean =
+        FreshOutputRegistry.deleteIfFresh(document.uri) { document.delete() }
+
     /** Operation completion helper: retires freshness on success, cleans up incomplete output on failure only if fresh. */
     fun finalizeOutput(context: Context, destination: OutputDestination, success: Boolean): Boolean =
         finalizeOutput(context, destination.uri, success, destination.isFreshCopy)

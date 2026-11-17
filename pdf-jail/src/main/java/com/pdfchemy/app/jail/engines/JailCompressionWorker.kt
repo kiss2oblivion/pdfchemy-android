@@ -2,6 +2,8 @@ package com.pdfchemy.app.jail.engines
 
 import android.graphics.*
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.pdfchemy.app.jail.*
 import com.pdfchemy.app.security.SecurityLimits
 import com.tom_roush.pdfbox.cos.COSBase
@@ -57,12 +59,12 @@ object JailCompressionWorker {
                                             val ratio = maxDimension.toFloat() / maxOf(bitmap.width, bitmap.height).toFloat()
                                             val targetW = (bitmap.width * ratio).toInt().coerceAtLeast(1)
                                             val targetH = (bitmap.height * ratio).toInt().coerceAtLeast(1)
-                                            Bitmap.createScaledBitmap(bitmap, targetW, targetH, true).also {
+                                            bitmap.scale(targetW, targetH).also {
                                                 if (it !== bitmap) scaled = it
                                             }
                                         } else bitmap
                                         val image = if (useGrayscale) {
-                                            Bitmap.createBitmap(sourceBitmap.width, sourceBitmap.height, Bitmap.Config.ARGB_8888).also {
+                                            createBitmap(sourceBitmap.width, sourceBitmap.height).also {
                                                 filtered = it
                                                 Canvas(it).drawBitmap(sourceBitmap, 0f, 0f, Paint().apply {
                                                     colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })

@@ -2,6 +2,8 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
+import com.pdfchemy.app.security.SourcePreservationPolicy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,19 +43,33 @@ class PdfMetadataManager {
         destUri: Uri,
         newMetadata: PdfMetadata
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        val newInfo = DocumentMetadataInfo(
-            title = newMetadata.title,
-            author = newMetadata.author,
-            subject = newMetadata.subject,
-            keywords = newMetadata.keywords,
-            creator = newMetadata.creator,
-            producer = newMetadata.producer
-        )
-        val res = PdfMetadataEngine.writeOrSanitizeMetadata(context, sourceUri, destUri, newInfo, false)
-        if (res.isSuccess) {
-            Result.success(Unit)
-        } else {
-            Result.failure(res.exceptionOrNull() ?: Exception("Unknown error writing metadata"))
+        try {
+            SourcePreservationPolicy.requireSeparateDestination(context, sourceUri, destUri)
+            val newInfo = DocumentMetadataInfo(
+                title = newMetadata.title,
+                author = newMetadata.author,
+                subject = newMetadata.subject,
+                keywords = newMetadata.keywords,
+                creator = newMetadata.creator,
+                producer = newMetadata.producer
+            )
+            val res = PdfMetadataEngine.writeOrSanitizeMetadata(
+                context = context,
+                sourcePdfUri = sourceUri,
+                destPdfUri = destUri,
+                newMetadata = newInfo,
+                wipeAllMetadata = false,
+                recordHistory = false
+            )
+            if (res.isSuccess) {
+                Result.success(Unit)
+            } else {
+                Result.failure(res.exceptionOrNull() ?: Exception("Unknown error writing metadata"))
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
         }
     }
 
@@ -62,36 +78,25 @@ class PdfMetadataManager {
         sourceUri: Uri,
         destUri: Uri
     ): Result<Unit> = withContext(Dispatchers.IO) {
-        val res = PdfMetadataEngine.writeOrSanitizeMetadata(context, sourceUri, destUri, null, true)
-        if (res.isSuccess) {
-            Result.success(Unit)
-        } else {
-            Result.failure(res.exceptionOrNull() ?: Exception("Unknown error clearing metadata"))
-        }
-    }
-
-    suspend fun clearMetadataOverwrite(
-        context: Context,
-        sourceUri: Uri
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        val tempDest = java.io.File.createTempFile("temp_stripped", ".pdf", context.cacheDir)
         try {
-            val destUri = Uri.fromFile(tempDest)
-            val res = PdfMetadataEngine.writeOrSanitizeMetadata(context, sourceUri, destUri, null, true)
+            SourcePreservationPolicy.requireSeparateDestination(context, sourceUri, destUri)
+            val res = PdfMetadataEngine.writeOrSanitizeMetadata(
+                context = context,
+                sourcePdfUri = sourceUri,
+                destPdfUri = destUri,
+                newMetadata = null,
+                wipeAllMetadata = true,
+                recordHistory = false
+            )
             if (res.isSuccess) {
-                requireNotNull(context.contentResolver.openOutputStream(sourceUri, "wt")) { "Cannot open metadata destination" }.use { outputStream ->
-                    tempDest.inputStream().use { it.copyTo(outputStream) }
-                }
                 Result.success(Unit)
             } else {
-                Result.failure(res.exceptionOrNull() ?: Exception("Unknown error clearing metadata overwrite"))
+                Result.failure(res.exceptionOrNull() ?: Exception("Unknown error clearing metadata"))
             }
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
             Result.failure(error)
-        } finally {
-            tempDest.delete()
         }
     }
 }

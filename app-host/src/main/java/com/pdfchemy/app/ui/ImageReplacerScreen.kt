@@ -94,7 +94,9 @@ fun ImageReplacerScreen(
 
     // Save updated PDF launcher
     val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null && selectedTargetImage != null && replacementBitmap != null) {
+        if (destUri != null && (selectedPdfUri == null || selectedTargetImage == null || replacementBitmap == null)) {
+            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+        } else if (destUri != null && selectedPdfUri != null && selectedTargetImage != null && replacementBitmap != null) {
             viewModel.replaceEmbeddedImage(
                 context = context,
                 sourcePdfUri = selectedPdfUri!!,

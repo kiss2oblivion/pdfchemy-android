@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -68,7 +68,9 @@ fun FindAndReplaceScreen(
     }
 
     val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null && findQuery.isNotBlank()) {
+        if (destUri != null && (selectedPdfUri == null || findQuery.isBlank())) {
+            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+        } else if (destUri != null && selectedPdfUri != null && findQuery.isNotBlank()) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             viewModel.replaceTextOccurrences(
                 context = context,
@@ -400,7 +402,7 @@ fun FindAndReplaceScreen(
                             .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(summary.occurrences, key = { "${it.pageIndex}_${it.snippet.hashCode()}" }, contentType = { "occurrence" }) { item ->
+                        itemsIndexed(summary.occurrences, key = { index, item -> "${index}_${item.pageIndex}_${item.snippet.hashCode()}" }, contentType = { _, _ -> "occurrence" }) { _, item ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
@@ -484,7 +486,7 @@ fun FindAndReplaceScreen(
                             Text(stringResource(R.string.badge_local_layout_preserving), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
                         Text(
-                            "Search for words or phrases across all pages. PDFchemy inspects matches on-device without cloud uploads or rasterizing untouched pages.",
+                            stringResource(R.string.find_replace_privacy_info),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

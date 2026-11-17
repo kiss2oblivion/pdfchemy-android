@@ -12,7 +12,7 @@ import com.pdfchemy.app.billing.BillingUiState
 @Composable
 internal fun PremiumBillingRecoveryNotice(state: BillingUiState, onRetry: () -> Unit) {
     if (!state.entitlementStorageFailed) return
-    Text(state.message)
+    Text(state.message.ifBlank { stringResource(R.string.billing_connecting) })
     if (state.loading) CircularProgressIndicator()
     if (state.canRetry) TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
 }

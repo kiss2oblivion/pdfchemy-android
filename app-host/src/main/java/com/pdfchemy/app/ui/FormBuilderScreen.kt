@@ -235,7 +235,7 @@ fun FormBuilderScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Total: ${placedFields.size}",
+                                    text = stringResource(R.string.label_total_count, placedFields.size),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -390,7 +390,7 @@ fun FormBuilderScreen(
                             onClick = { if (currentPageIndex > 0) currentPageIndex-- },
                             enabled = currentPageIndex > 0
                         ) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.action_prev_page))
                         }
                         Text(
                             text = "${currentPageIndex + 1} / ${totalPages.coerceAtLeast(1)}",
@@ -405,7 +405,7 @@ fun FormBuilderScreen(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },
                             enabled = currentPageIndex < totalPages - 1
                         ) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = stringResource(R.string.action_next_page))
                         }
                     }
                 }

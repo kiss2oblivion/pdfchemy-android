@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.google.gson.Gson
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.cos.COSName
@@ -106,7 +107,7 @@ object PdfFlattenEngineWorker {
                                     val scale = minOf(2f, maxDim.toFloat() / maxOf(renderPage.width, renderPage.height).coerceAtLeast(1))
                                     val targetW = (renderPage.width * scale).toInt().coerceAtLeast(1)
                                     val targetH = (renderPage.height * scale).toInt().coerceAtLeast(1)
-                                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH); Bitmap.createBitmap(targetW, targetH, Bitmap.Config.RGB_565) }
+                                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH); createBitmap(targetW, targetH, Bitmap.Config.RGB_565) }
                                     val canvas = android.graphics.Canvas(bmp)
                                     canvas.drawColor(android.graphics.Color.WHITE)
 

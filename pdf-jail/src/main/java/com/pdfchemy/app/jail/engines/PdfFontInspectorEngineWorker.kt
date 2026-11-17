@@ -91,11 +91,11 @@ object PdfFontInspectorEngineWorker {
                     val isSubset = rawName.length > 7 && rawName.getOrNull(6) == '+'
                     val cleanName = if (isSubset) rawName.substring(7) else rawName
                     val ext = streamPair.second
-                    val safeBaseName = cleanName.replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_','.').take(96).ifEmpty { "font" }
+                    val safeBaseName = cleanName.replace(Regex("[^a-zA-Z0-9._-]"), "_").trim('_', '.').take(96).ifEmpty { "font" }
 
                     val bytes = streamPair.first.createInputStream().use(::readBoundedFont)
 
-                    if (bytes != null && bytes.isNotEmpty()) {
+                    if (bytes.isNotEmpty()) {
                         val alreadyStored = fontBytesMap.values.any { it.contentEquals(bytes) }
                         if (!alreadyStored) {
                             var targetName = "$safeBaseName$ext"
@@ -105,7 +105,9 @@ object PdfFontInspectorEngineWorker {
                                 counter++
                             }
                             require(fontBytesMap.size < 256) { "Too many embedded fonts" }
-                            require(fontBytesMap.values.sumOf { it.size.toLong() } + bytes.size <= 128L * 1024 * 1024) { "Embedded font aggregate exceeds 128 MiB" }
+                            require(fontBytesMap.values.sumOf { it.size.toLong() } + bytes.size <= 128L * 1024 * 1024) {
+                                "Embedded font aggregate exceeds 128 MiB"
+                            }
                             fontBytesMap[targetName] = bytes
                         }
                     }
@@ -138,7 +140,6 @@ object PdfFontInspectorEngineWorker {
         }
     }
 
-
     private fun readBoundedFont(input: java.io.InputStream): ByteArray {
         val out = java.io.ByteArrayOutputStream()
         val buffer = ByteArray(32 * 1024)
@@ -147,7 +148,7 @@ object PdfFontInspectorEngineWorker {
             if (count < 0) break
             if (count == 0) continue
             require(out.size().toLong() + count <= 32L * 1024 * 1024) { "Embedded font exceeds 32 MiB" }
-            out.write(buffer,0,count)
+            out.write(buffer, 0, count)
         }
         return out.toByteArray()
     }

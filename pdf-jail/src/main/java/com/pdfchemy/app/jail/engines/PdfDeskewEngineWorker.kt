@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
@@ -59,7 +61,7 @@ object PdfDeskewEngineWorker {
                 var bmp: Bitmap? = null
                 val angle = try {
                     page = renderer.openPage(i)
-                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(250, (250f * page.height / page.width).toInt().coerceAtLeast(1)); Bitmap.createBitmap(250, (250f * page.height / page.width).toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888) }
+                    bmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(250, (250f * page.height / page.width).toInt().coerceAtLeast(1)); createBitmap(250, (250f * page.height / page.width).toInt().coerceAtLeast(1)) }
                     bmp.eraseColor(Color.WHITE)
                     page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     detectSkewAngle(bmp)
@@ -108,7 +110,7 @@ object PdfDeskewEngineWorker {
         val scale = targetWidth.toFloat() / bitmap.width.toFloat()
         val targetHeight = (bitmap.height * scale).toInt().coerceAtLeast(1)
 
-        val scaled = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        val scaled = bitmap.scale(targetWidth, targetHeight)
         val w = scaled.width
         val h = scaled.height
 

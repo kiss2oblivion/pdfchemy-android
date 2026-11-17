@@ -176,7 +176,6 @@ object WorkerResponseValidator {
         }
     }
 
-
     private fun parseFontExport(root: Any?, targetCount: Int): StandardOutputContract {
         require(targetCount == 1) { "Font export requires one archive output" }
         val obj = requireObject(root)
@@ -500,10 +499,12 @@ object WorkerResponseValidator {
                         opts.add(s)
                     }
                 }
-                if (f.has("pageIndex")) f.requireInt("pageIndex", min=0, max=SecurityLimits.MAX_PAGE_COUNT-1)
-                for (key in listOf("xRatio","yRatio","widthRatio","heightRatio")) {
+                if (f.has("pageIndex")) {
+                    f.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT - 1)
+                }
+                for (key in listOf("xRatio", "yRatio", "widthRatio", "heightRatio")) {
                     if (f.has(key)) {
-                        val ratio=f.getDouble(key)
+                        val ratio = f.getDouble(key)
                         require(ratio.isFinite() && ratio in 0.0..1.0) { "Invalid form field geometry" }
                     }
                 }
@@ -854,6 +855,7 @@ object WorkerResponseValidator {
                 if (escaped) escaped = false else if (char == '\\') escaped = true else if (char == '"') quoted = false
             } else when (char) {
                 '"' -> quoted = true
+                '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$char'")
                 '{', '[' -> {
                     depth++
                     require(depth <= SecurityLimits.MAX_RESPONSE_DEPTH) { "Outline JSON nesting exceeds limit" }

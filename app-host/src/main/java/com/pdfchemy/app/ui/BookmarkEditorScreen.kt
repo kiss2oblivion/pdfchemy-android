@@ -365,7 +365,7 @@ fun BookmarkEditorScreen(
                                             )
                                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                                                 Text(
-                                                    "Page ${item.pageIndex + 1}",
+                                                    stringResource(R.string.visual_page_number, item.pageIndex + 1),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )

@@ -34,7 +34,7 @@ class ReflowOfflineSpeechTest {
     private val model = MainViewModel(app).also { store.put("offline-speech", it) }
     private val control = Uri.parse("content://com.pdfchemy.app.test.speech")
     private var source: File? = null
-    private val engines = mutableListOf<TextToSpeech>()
+    private val engines = java.util.concurrent.CopyOnWriteArrayList<TextToSpeech>()
     private fun status() = app.contentResolver.call(control, "state", null, null)!!
 
     @After fun cleanup() {
@@ -76,7 +76,7 @@ class ReflowOfflineSpeechTest {
         compose.waitUntil(60000) {
             compose.onAllNodesWithText("Synthetic offline speech phrase.", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithContentDescription("Read Aloud").performClick()
+        compose.onNodeWithContentDescription(app.getString(R.string.tts_play)).performClick()
     }
 
     @Test fun networkOnlyEngineReceivesNoDocumentText() {
@@ -105,11 +105,15 @@ class ReflowOfflineSpeechTest {
             putBoolean("networkOnly", false)
             putString("locale", Locale.getDefault().toLanguageTag())
         })
+        // Staging the original URI can already replace the initial speech session.
+        // Retry must create exactly one further engine for the currently loaded document.
+        val enginesBeforeRetry = compose.runOnIdle { engines.size }
         compose.onNodeWithText(app.getString(R.string.retry)).performClick()
-        compose.waitUntil(15000) { engines.size == 2 && status().getInt("queries") > 0 }
+        compose.waitForIdle()
+        compose.waitUntil(15000) { engines.size == enginesBeforeRetry + 1 && status().getInt("queries") > 0 }
         compose.waitForIdle()
         assertTrue("Retry must not submit a document automatically", status().getStringArrayList("texts")!!.isEmpty())
-        compose.onNodeWithContentDescription("Play/Pause").performClick()
+        compose.onNodeWithContentDescription(app.getString(R.string.desc_play_pause)).performClick()
         compose.waitUntil(15000) { status().getStringArrayList("texts")!!.isNotEmpty() }
         assertTrue(status().getStringArrayList("voices")!!.all { it == "offline" })
     }

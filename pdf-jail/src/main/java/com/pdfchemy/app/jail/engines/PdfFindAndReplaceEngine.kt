@@ -5,6 +5,7 @@ import com.pdfchemy.app.logic.*
 import android.content.Context
 import android.graphics.RectF
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
@@ -199,7 +200,7 @@ object PdfFindAndReplaceEngine {
                         val targetH = (origH * scale).toInt().coerceAtLeast(1)
 
                         com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH)
-                        baseBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH); android.graphics.Bitmap.createBitmap(targetW, targetH, android.graphics.Bitmap.Config.ARGB_8888) }
+                        baseBmp = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(targetW, targetH); createBitmap(targetW, targetH) }
                         val canvas = android.graphics.Canvas(baseBmp)
                         canvas.drawColor(android.graphics.Color.WHITE)
                         renderPage.render(baseBmp, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_PRINT)

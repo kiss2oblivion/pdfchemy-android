@@ -353,8 +353,10 @@ fun rememberVanguardPdfPicker(
  * animated scanning feedback overlay, and fail-closed security dialogs.
  */
 @Composable
+// Unlock navigation takes ownership of the closeable outcome. The destination must close it
+// after retaining the input in its own model or when the navigation is abandoned.
 fun rememberVanguardMultiplePdfPicker(
-    onNavigateToUnlock: ((Uri) -> Unit)? = null,
+    onNavigateToUnlock: ((PickerOutcome.Encrypted) -> Unit)? = null,
     onNavigateToRepair: ((Uri) -> Unit)? = null,
     onPdfsSelected: (List<Uri>) -> Unit
 ): VanguardPickerLauncher {
@@ -384,7 +386,7 @@ fun rememberVanguardMultiplePdfPicker(
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
-    var pendingOutcome by remember { mutableStateOf<PickerOutcome?>(null) }
+    var pendingOutcome by remember { mutableStateOf<PickerOutcome.Encrypted?>(null) }
     androidx.compose.runtime.DisposableEffect(Unit) {
         onDispose { pendingOutcome?.close() }
     }
@@ -576,8 +578,12 @@ fun rememberVanguardMultiplePdfPicker(
                             showEncryptedDialog = false
                             encryptedPendingUri = null
                             if (targetUri != null) {
-                                try { onNavigateToUnlock(targetUri) }
-                                finally { pendingOutcome?.close(); pendingOutcome = null }
+                                val handoff = pendingOutcome
+                                pendingOutcome = null
+                                if (handoff != null) {
+                                    try { onNavigateToUnlock(handoff) }
+                                    catch (error: Throwable) { handoff.close(); throw error }
+                                }
                             }
                         }
                     ) {

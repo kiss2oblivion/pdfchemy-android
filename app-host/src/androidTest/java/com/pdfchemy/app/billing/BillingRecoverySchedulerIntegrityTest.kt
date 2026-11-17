@@ -28,7 +28,15 @@ class BillingRecoverySchedulerIntegrityTest {
         assertEquals("android.permission.BIND_JOB_SERVICE", info.permission)
         BillingAcknowledgementRecovery.markPending(context)
         val job = requireNotNull(scheduler.getPendingJob(BillingAcknowledgementRecovery.JOB_ID))
-        assertEquals(JobInfo.NETWORK_TYPE_ANY, job.networkType)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            val required = requireNotNull(job.requiredNetwork)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                assertTrue(required.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            assertEquals(JobInfo.NETWORK_TYPE_ANY, job.networkType)
+        }
         assertEquals(JobInfo.BACKOFF_POLICY_EXPONENTIAL, job.backoffPolicy)
         assertTrue(job.minLatencyMillis >= 60_000L)
         assertTrue(job.extras.isEmpty)

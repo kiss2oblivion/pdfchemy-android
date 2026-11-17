@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.pdfchemy.app.jail.AppLogger
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.cos.COSName
@@ -42,35 +44,36 @@ object PdfImageReplacerEngine {
                 val xObjectNames = resources.xObjectNames ?: return
 
                 for (cosName in xObjectNames) {
+                    if (imageList.size >= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) break
                     try {
                         val xObject = resources.getXObject(cosName)
                         if (xObject is PDImageXObject) {
+                            com.pdfchemy.app.security.SecurityLimits.requireImageDecodePixels(xObject.width, xObject.height)
                             val fullResourceName = if (pathPrefix.isEmpty()) cosName.name else "$pathPrefix/${cosName.name}"
                             val width = xObject.width
                             val height = xObject.height
                             val suffix = xObject.suffix ?: "png"
 
                             // Extract a scaled down thumbnail for memory safety
+                            var fullImage: Bitmap? = null
                             var thumb: Bitmap? = null
                             try {
-                                val fullImage = SafePdfImage.decode(xObject)
+                                fullImage = SafePdfImage.decode(xObject)
                                 val scale = calculateThumbnailScale(width, height, maxDim = 300)
                                 thumb = if (scale < 1.0f) {
-                                    val scaled = Bitmap.createScaledBitmap(
-                                        fullImage,
+                                    fullImage.scale(
                                         (width * scale).toInt().coerceAtLeast(1),
-                                        (height * scale).toInt().coerceAtLeast(1),
-                                        true
+                                        (height * scale).toInt().coerceAtLeast(1)
                                     )
-                                    if (scaled !== fullImage) {
-                                        fullImage.recycle()
-                                    }
-                                    scaled
                                 } else {
                                     fullImage
                                 }
                             } catch (e: Throwable) {
                                 AppLogger.w("PdfImageReplacerEngine: Failed to extract thumbnail for $cosName: ${e.message}")
+                            } finally {
+                                if (fullImage != null && fullImage !== thumb && !fullImage.isRecycled) {
+                                    fullImage.recycle()
+                                }
                             }
 
                             imageList.add(
@@ -95,6 +98,7 @@ object PdfImageReplacerEngine {
             }
 
             for (pageIndex in 0 until document.numberOfPages) {
+                if (imageList.size >= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES) break
                 val page = document.getPage(pageIndex)
                 collectImages(pageIndex, page.resources, "", 0)
             }
@@ -195,7 +199,7 @@ object PdfImageReplacerEngine {
 
             if (kotlin.math.abs(origAR - repAR) > 0.01f && origW in 1..4096 && origH in 1..4096) {
                 com.pdfchemy.app.security.SecurityLimits.requirePixels(origW, origH)
-                val canvasBmp = Bitmap.createBitmap(origW, origH, Bitmap.Config.ARGB_8888)
+                val canvasBmp = createBitmap(origW, origH)
                 val canvas = android.graphics.Canvas(canvasBmp)
                 val scale = minOf(origW.toFloat() / replacementBitmap.width, origH.toFloat() / replacementBitmap.height)
                 val dw = replacementBitmap.width * scale

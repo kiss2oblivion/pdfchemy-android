@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.jail.ocr.OcrBackendFactory
 import com.pdfchemy.app.jail.ocr.OcrResultBounds
 import com.tom_roush.pdfbox.pdmodel.PDDocument
@@ -50,7 +51,7 @@ object PdfOcrEngineWorker {
 
             for (i in 0 until pageCount) {
                 val page = renderer.openPage(i)
-                
+
                 var bitmap: Bitmap? = null
                 var contentStream: PDPageContentStream? = null
                 try {
@@ -83,7 +84,7 @@ object PdfOcrEngineWorker {
                     val bmpWidth = (pageWidth * renderScale).toInt().coerceIn(1, 2048)
                     val bmpHeight = (pageHeight * renderScale).toInt().coerceIn(1, 2048)
 
-                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpWidth, bmpHeight); Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888) }
+                    bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(bmpWidth, bmpHeight); createBitmap(bmpWidth, bmpHeight) }
                     val canvas = android.graphics.Canvas(bitmap)
                     canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
@@ -130,13 +131,20 @@ object PdfOcrEngineWorker {
                                     val fontSize = elementHeight.coerceIn(4f, 72f)
                                     val font = PDType1Font.HELVETICA
 
+                                    var inTextObject = false
                                     try {
+                                        inTextObject = true
                                         contentStream.beginText()
                                         contentStream.setFont(font, fontSize)
                                         contentStream.newLineAtOffset(x, y)
                                         contentStream.showText(text)
                                         contentStream.endText()
+                                        inTextObject = false
                                     } catch (e: Exception) {
+                                        if (inTextObject) {
+                                            runCatching { contentStream.endText() }
+                                            inTextObject = false
+                                        }
                                         // PDType1Font.HELVETICA uses WinAnsiEncoding and throws on Romanian or extended Unicode diacritics.
                                         // Decompose diacritics to basic Latin so searchability is preserved instead of silently dropping the word.
                                         try {
@@ -146,13 +154,20 @@ object PdfOcrEngineWorker {
                                                 .replace('\u021B', 't').replace('\u021A', 'T')
                                                 .filter { it.code in 32..126 || it.code in 160..255 }
                                             if (normalized.isNotBlank()) {
+                                                inTextObject = true
                                                 contentStream.beginText()
                                                 contentStream.setFont(font, fontSize)
                                                 contentStream.newLineAtOffset(x, y)
                                                 contentStream.showText(normalized)
                                                 contentStream.endText()
+                                                inTextObject = false
                                             }
-                                        } catch (_: Exception) {}
+                                        } catch (_: Exception) {
+                                            if (inTextObject) {
+                                                runCatching { contentStream.endText() }
+                                                inTextObject = false
+                                            }
+                                        }
                                     }
                                 }
                             }

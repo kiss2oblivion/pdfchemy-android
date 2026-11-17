@@ -64,7 +64,7 @@ fun RedactionScreen(
     var isBlackout by remember { mutableStateOf(true) }
     var forensicSanitize by remember { mutableStateOf(true) }
     var overlayText by remember { mutableStateOf("[REDACTED]") }
-    
+
     var smartPatterns by remember { mutableStateOf(setOf<RedactPattern>()) }
 
     var foundBoxes by remember { mutableStateOf<List<RedactionBox>>(emptyList()) }
@@ -383,7 +383,7 @@ fun RedactionScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Targets Found (${foundBoxes.size})",
+                        text = stringResource(R.string.redact_targets_found, foundBoxes.size),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )

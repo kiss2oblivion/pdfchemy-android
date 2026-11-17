@@ -101,6 +101,14 @@ android {
             excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/DEPENDENCIES"
             excludes += "/META-INF/LICENSE-W3C-TEST"
+            // AGP merges /META-INF/services/** by default before checking excludes, which passes
+            // Woodstox's non-ServiceLoader schema-suffix files into R8 and triggers missing-class warnings.
+            merges.remove("/META-INF/services/**")
+            merges += "/META-INF/services/{android,androidx,com,io,java,javax,kotlin,kotlinx,net,org.apache,org.bouncycastle,org.junit,org.slf4j,org.w3c,org.xml}.*"
+            merges += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.dtd"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.relaxng"
+            excludes += "/META-INF/services/org.codehaus.stax2.validation.XMLValidationSchemaFactory.w3c"
         }
     }
 
@@ -153,8 +161,6 @@ dependencies {
 
     // ML Kit Document Scanner
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
-    // ML Kit Text Recognition
-    implementation("com.google.mlkit:text-recognition:16.0.1")
 
     // 5. Google Play Billing Library
     implementation("com.android.billingclient:billing-ktx:8.0.0")
@@ -163,8 +169,6 @@ dependencies {
     // Only the read-only legacy entitlement migration uses Tink; new records use Android Keystore.
     implementation("com.google.crypto.tink:tink-android:1.24.0")
 
-    // Text Conversion Libraries
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.11")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     testImplementation("junit:junit:4.13.2")
@@ -199,7 +203,7 @@ tasks.register("securityAudit") {
         srcDir.walk().filter { it.extension == "kt" || it.extension == "java" }.forEach { file ->
             scanned++
             val content = file.readText()
-            if (content.contains("com.tom_roush.pdfbox") || 
+            if (content.contains("com.tom_roush.pdfbox") ||
                 content.contains("android.graphics.pdf.PdfRenderer") ||
                 content.contains("android.graphics.BitmapFactory")) {
                 forbiddenFiles.add(file.name)

@@ -6,6 +6,8 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.activity.compose.BackHandler
@@ -15,7 +17,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -32,6 +36,7 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -107,7 +112,7 @@ fun ReflowReaderScreen(
         if (ready.uri == selectedPdfUri) {
             val paragraphs = ready.text.split(Regex("\n\n+"))
                 .map { it.replace(Regex("\n+"), " ").trim() }.filter { it.isNotBlank() }
-            reflowSections = listOf(ReflowSection(pageNumber = 1, title = "OCR Extracted", paragraphs = paragraphs))
+            reflowSections = listOf(ReflowSection(pageNumber = 1, title = context.getString(R.string.reflow_ocr_extracted), paragraphs = paragraphs))
             isScannedOnly = false
             ocr.reset()
         }
@@ -395,10 +400,10 @@ fun ReflowReaderScreen(
         androidx.compose.runtime.snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (isRememberPositionEnabled && reflowSections.isNotEmpty() && !isScannedOnly && hasReadableContent) {
-                    prefs.edit()
-                        .putInt("reader_scroll_index_$uriHash", index)
-                        .putInt("reader_scroll_offset_$uriHash", offset)
-                        .apply()
+                    prefs.edit {
+                        putInt("reader_scroll_index_$uriHash", index)
+                        putInt("reader_scroll_offset_$uriHash", offset)
+                    }
                 }
             }
     }
@@ -629,6 +634,7 @@ fun ReflowReaderScreen(
     }
     var pendingAudioText by remember { mutableStateOf<String?>(null) }
     var audioStartError by remember { mutableStateOf<String?>(null) }
+    var activeExportFormat by rememberSaveable { mutableStateOf(com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.WAV) }
     val activeExportJobId = activeExportJobKey?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
     val audioLifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
     val activeJobState by produceState<com.pdfchemy.app.logic.audio.AudioExportJob?>(initialValue = null, activeExportJobId) {
@@ -649,15 +655,15 @@ fun ReflowReaderScreen(
                     if (activeJobState!!.totalCharacters > 0) {
                         val progress = activeJobState!!.processedCharacters.toFloat() / activeJobState!!.totalCharacters
                         LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
-                        Text("${(progress * 100).toInt()}% (${activeJobState!!.projectedSizeBytes / (1024 * 1024)} MB projected)")
+                        Text(stringResource(R.string.audio_export_progress_projected, (progress * 100).toInt(), activeJobState!!.projectedSizeBytes / (1024 * 1024)))
                     } else {
                         CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { 
-                    com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING) 
+                TextButton(onClick = {
+                    com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING)
                 }) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -680,12 +686,18 @@ fun ReflowReaderScreen(
                     TextButton(onClick = { activeExportJobKey = null; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
                 }
                 activeJobState?.outputUri?.let { saved ->
-                    val output = Uri.parse(saved)
+                    val output = saved.toUri()
                     Row {
                         TextButton(onClick = {
                             runCatching {
+                                val mimeType = context.contentResolver.getType(output)?.takeIf { it.startsWith("audio/") }
+                                    ?: when {
+                                        output.toString().endsWith(".m4a", ignoreCase = true) -> "audio/mp4"
+                                        activeExportFormat == com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.M4A -> "audio/mp4"
+                                        else -> "audio/wav"
+                                    }
                                 context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW)
-                                    .setDataAndType(output, "audio/wav")
+                                    .setDataAndType(output, mimeType)
                                     .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))
                             }.onFailure { android.widget.Toast.makeText(context, it.message, android.widget.Toast.LENGTH_LONG).show() }
                         }) { Text(stringResource(R.string.btn_open_file)) }
@@ -727,6 +739,7 @@ fun ReflowReaderScreen(
                     val intent = android.content.Intent(context, com.pdfchemy.app.logic.audio.AudioExportService::class.java)
                         .putExtra(com.pdfchemy.app.logic.audio.AudioExportService.EXTRA_JOB_ID, jobId.toString())
                     androidx.core.content.ContextCompat.startForegroundService(context, intent)
+                    activeExportFormat = outputFormat
                     activeExportJobKey = jobId.toString()
                 } catch (error: Exception) {
                     jobs.updateState(jobId, com.pdfchemy.app.logic.audio.AudioExportState.FAILED, error)
@@ -771,7 +784,7 @@ fun ReflowReaderScreen(
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
                 Text(
-                    text = "Table of Contents",
+                    text = stringResource(R.string.reader_toc_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp)
@@ -779,7 +792,7 @@ fun ReflowReaderScreen(
                 HorizontalDivider()
                 if (bookmarks.isEmpty()) {
                     Text(
-                        text = "No document outlines found in this PDF.",
+                        text = stringResource(R.string.reader_toc_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp)
@@ -888,7 +901,7 @@ fun ReflowReaderScreen(
                                                 text = {
                                                     Text(
                                                         stringResource(
-                                                            R.string.visual_page_number,
+                                                            R.string.reader_page_indicator,
                                                             (listState.firstVisibleItemIndex + 1).coerceIn(1, reflowSections.size),
                                                             reflowSections.size
                                                         )
@@ -913,7 +926,7 @@ fun ReflowReaderScreen(
                                                         context.getString(R.string.desc_share_output)
                                                     )
                                                 }.onFailure {
-                                                    viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                                                    viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
                                                 }
                                             },
                                             leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) }
@@ -1145,11 +1158,14 @@ fun ReflowReaderScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .navigationBarsPadding()
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -1167,26 +1183,26 @@ fun ReflowReaderScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     IconButton(
                                         onClick = { fontSizeSp = (fontSizeSp - 2).coerceAtLeast(12f) },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
                                         Text("A-", color = selectedTheme.text, fontWeight = FontWeight.Bold)
                                     }
                                     Text("${fontSizeSp.toInt()}sp", color = selectedTheme.text, style = MaterialTheme.typography.bodySmall)
                                     IconButton(
                                         onClick = { fontSizeSp = (fontSizeSp + 2).coerceAtMost(32f) },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
                                         Text("A+", color = selectedTheme.text, fontWeight = FontWeight.Bold)
                                     }
                                     IconButton(
                                         onClick = { useSerifFont = !useSerifFont },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", color = selectedTheme.text, style = MaterialTheme.typography.labelSmall)
                                     }
                                     IconButton(
                                         onClick = { isBionicReading = !isBionicReading },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
                                         Text(
                                             "Bio",
@@ -1197,7 +1213,7 @@ fun ReflowReaderScreen(
                                     }
                                     IconButton(
                                         onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     ) {
                                         Text(
                                             "Dys",
@@ -1368,7 +1384,7 @@ fun ReflowReaderScreen(
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
                                             Text(
-                                                text = "PAGE ${section.pageNumber}",
+                                                text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                                 color = selectedTheme.text.copy(alpha = 0.6f),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold,
@@ -1527,7 +1543,7 @@ fun ReflowReaderScreen(
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
-                                        text = "PAGE ${section.pageNumber}",
+                                        text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                         color = selectedTheme.text.copy(alpha = 0.6f),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
@@ -1576,7 +1592,7 @@ fun ReflowReaderScreen(
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
-                                        text = "PAGE ${section.pageNumber}",
+                                        text = stringResource(R.string.visual_page_number, section.pageNumber).uppercase(java.util.Locale.getDefault()),
                                         color = selectedTheme.text.copy(alpha = 0.6f),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,

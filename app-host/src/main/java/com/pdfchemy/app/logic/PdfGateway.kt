@@ -91,14 +91,17 @@ object PdfGateway {
                     throw WorkerBindingException("Failed to bind worker service: $className")
                 }
                 connections.add(connection)
-                return awaitWorkerDeadline(30_000L,"Service binding timed out after 30s: $className") { channel.receive() }
+                return awaitWorkerDeadline(30_000L, "Service binding timed out after 30s: $className") { channel.receive() }
             }
 
             val comicExport = operation == "COMIC_BOOK" &&
                 org.json.JSONObject(paramsJson).optString("action", "pdf2cbz") == "pdf2cbz"
+            var rendererConnection: ServiceConnection? = null
             val renderer = if (operation == "REDACT" || operation == "OFFICE_PPT" || comicExport) {
                 rendererAccess = com.pdfchemy.app.sandbox.NativeRendererAccess.acquire()
-                bind("com.pdfchemy.app.sandbox.PdfNativeRendererService")
+                bind("com.pdfchemy.app.sandbox.PdfNativeRendererService").also {
+                    rendererConnection = connections.lastOrNull()
+                }
             } else {
                 null
             }
@@ -130,16 +133,23 @@ object PdfGateway {
             }
 
             val rawResult = try {
-                awaitWorkerDeadline(SecurityLimits.WORKER_DEADLINE_MS + 5000,
-                    "Worker response timed out after ${SecurityLimits.WORKER_DEADLINE_MS + 5000}ms: $operation") {
+                awaitWorkerDeadline(
+                    SecurityLimits.WORKER_DEADLINE_MS + 5000,
+                    "Worker response timed out after ${SecurityLimits.WORKER_DEADLINE_MS + 5000}ms: $operation"
+                ) {
                     try { invoke(jail!!, operationToken, staged, inputs, outputs, renderer, scratch, callback) }
                     finally { outputTransaction.releaseWorkerDescriptors() }
                     response.await()
                 }
             } finally { runCatching { binder.unlinkToDeath(death, 0) } }
 
-            // Worker rendering is finished; SAF publication must not occupy the renderer.
+            // Worker rendering is finished; unbind renderer before releasing its access permit.
+            rendererConnection?.let { conn ->
+                connections.remove(conn)
+                runCatching { context.unbindService(conn) }
+            }
             rendererAccess?.close()
+            rendererAccess = null
 
             scratch.verifyBudget()
 
@@ -169,11 +179,11 @@ object PdfGateway {
             }
             throw error
         } finally {
+            connections.forEach { runCatching { context.unbindService(it) } }
             rendererAccess?.close()
             outputTransaction.close()
             scratch.close()
             descriptors.forEach { runCatching { it.close() } }
-            connections.forEach { runCatching { context.unbindService(it) } }
             staged.zip(sources).filter { (snapshot, original) -> snapshot.uri != original }.forEach { DocumentStager.release(it.first) }
             inputLeases.forEach { it.close() }
         }

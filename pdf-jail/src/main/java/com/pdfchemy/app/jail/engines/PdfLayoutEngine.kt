@@ -20,40 +20,39 @@ import kotlinx.coroutines.withContext
 
 object PdfLayoutEngine {
 
-    private data class PageForm(val form: PDFormXObject, val width: Float, val height: Float)
+    internal data class PageForm(val form: PDFormXObject, val width: Float, val height: Float)
 
     // A page form contains page content, not annotation appearances or interactive widgets.
     // Reject these documents before creating output rather than silently discarding visible data.
-    private fun requireStaticPages(document: PDDocument) {
+    internal fun requireStaticPages(document: PDDocument) {
         require(document.documentCatalog.acroForm == null && document.pages.all { it.annotations.isEmpty() }) {
             "Flatten forms and annotations before changing page layout"
         }
     }
 
-    private fun importVisiblePage(layers: LayerUtility, document: PDDocument, index: Int): PageForm {
+    internal fun importVisiblePage(layers: LayerUtility, document: PDDocument, index: Int): PageForm {
         val page = document.getPage(index)
         val box = page.cropBox
         val x = box.lowerLeftX.toDouble()
         val y = box.lowerLeftY.toDouble()
         val right = box.upperRightX.toDouble()
         val top = box.upperRightY.toDouble()
-        require(listOf(x,y,right,top).all { it.isFinite() } && right > x && top > y) { "Invalid crop box" }
+        require(listOf(x, y, right, top).all { it.isFinite() } && right > x && top > y) { "Invalid crop box" }
         val rotation = ((page.rotation % 360) + 360) % 360
         val transform = when (rotation) {
-            0 -> AffineTransform(1.0,0.0,0.0,1.0,-x,-y)
-            90 -> AffineTransform(0.0,-1.0,1.0,0.0,-y,right)
-            180 -> AffineTransform(-1.0,0.0,0.0,-1.0,right,top)
-            270 -> AffineTransform(0.0,1.0,-1.0,0.0,top,-x)
+            0 -> AffineTransform(1.0, 0.0, 0.0, 1.0, -x, -y)
+            90 -> AffineTransform(0.0, -1.0, 1.0, 0.0, -y, right)
+            180 -> AffineTransform(-1.0, 0.0, 0.0, -1.0, right, top)
+            270 -> AffineTransform(0.0, 1.0, -1.0, 0.0, top, -x)
             else -> throw IllegalArgumentException("Invalid page rotation")
         }
-        val form = layers.importPageAsForm(document,index)
+        val form = layers.importPageAsForm(document, index)
         form.bBox = box
         // Replace LayerUtility's page-as-form matrix: fit the visible, rotated crop exactly once.
         form.setMatrix(transform)
         val sideways = rotation == 90 || rotation == 270
         return PageForm(form, if (sideways) box.height else box.width, if (sideways) box.width else box.height)
     }
-
 
     suspend fun resizePages(
         context: Context,
@@ -80,7 +79,7 @@ object PdfLayoutEngine {
 
                 for (i in 0 until totalPages) {
                     kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                    val imported = importVisiblePage(layerUtil,srcDoc!!,i)
+                    val imported = importVisiblePage(layerUtil, srcDoc!!, i)
                     val origW = imported.width
                     val origH = imported.height
 
@@ -143,6 +142,7 @@ object PdfLayoutEngine {
             val totalSrcPages = srcDoc.numberOfPages
             require(totalSrcPages in 1..com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) { "Invalid page count" }
 
+            requireStaticPages(srcDoc)
             outDoc = PDDocument(com.pdfchemy.app.jail.JailMemory.settings())
             val layerUtil = LayerUtility(outDoc)
             val sheetRect = PDRectangle(targetSize.widthPts, targetSize.heightPts)
@@ -173,7 +173,7 @@ object PdfLayoutEngine {
                         val y = targetSize.heightPts - marginY - ((row + 1) * cellH)
 
                         kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                        val imported = importVisiblePage(layerUtil,srcDoc,currentSrcPage)
+                        val imported = importVisiblePage(layerUtil, srcDoc, currentSrcPage)
                         val form = imported.form
                         val origW = imported.width
                         val origH = imported.height

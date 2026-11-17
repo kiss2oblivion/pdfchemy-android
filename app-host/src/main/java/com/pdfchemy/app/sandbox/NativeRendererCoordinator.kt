@@ -28,15 +28,21 @@ object NativeRendererCoordinator {
         }
     }
     private suspend fun <T> withRenderer(context: Context, block: (IPdfNativeRendererService) -> T): T = withContext(Dispatchers.IO) {
+        val appContext = context.applicationContext ?: context
         val channel = Channel<IPdfNativeRendererService>(1)
         val connection = object : ServiceConnection {
-            override fun onServiceConnected(name: ComponentName?, service: IBinder?) { channel.trySend(IPdfNativeRendererService.Stub.asInterface(service)) }
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                val iface = IPdfNativeRendererService.Stub.asInterface(service)
+                if (iface != null) channel.trySend(iface)
+                else channel.close(IllegalStateException("Null renderer binder"))
+            }
             override fun onServiceDisconnected(name: ComponentName?) { channel.close(IllegalStateException("Renderer died")) }
             override fun onNullBinding(name: ComponentName?) { channel.close(IllegalStateException("Null renderer")) }
+            override fun onBindingDied(name: ComponentName?) { channel.close(IllegalStateException("Renderer binding died")) }
         }
-        check(context.bindService(Intent().setClassName(context, "com.pdfchemy.app.sandbox.PdfNativeRendererService"), connection, Context.BIND_AUTO_CREATE))
+        check(appContext.bindService(Intent().setClassName(appContext, "com.pdfchemy.app.sandbox.PdfNativeRendererService"), connection, Context.BIND_AUTO_CREATE))
         try { block(withTimeout(10_000) { channel.receive() }) }
-        finally { context.unbindService(connection) }
+        finally { runCatching { appContext.unbindService(connection) } }
     }
     suspend fun renderUriToBitmap(
         context: Context,

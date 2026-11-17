@@ -21,7 +21,7 @@ object SignatureEngineWorker {
         try {
             val params = JSONObject(paramsJson)
             val signaturesArr = params.optJSONArray("signatures") ?: org.json.JSONArray()
-            
+
             doc = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
             val totalPages = doc.numberOfPages
 
@@ -30,10 +30,18 @@ object SignatureEngineWorker {
             for (i in 0 until signaturesArr.length()) {
                 val sigObj = signaturesArr.getJSONObject(i)
                 val pageIdx = sigObj.getInt("pageIndex")
-                val xRatio = sigObj.getDouble("xRatio").toFloat()
-                val yRatio = sigObj.getDouble("yRatio").toFloat()
-                val widthRatio = sigObj.getDouble("widthRatio").toFloat()
-                val heightRatio = sigObj.getDouble("heightRatio").toFloat()
+                val rawXRatio = sigObj.getDouble("xRatio").toFloat()
+                val rawYRatio = sigObj.getDouble("yRatio").toFloat()
+                val rawWidthRatio = sigObj.getDouble("widthRatio").toFloat()
+                val rawHeightRatio = sigObj.getDouble("heightRatio").toFloat()
+                require(
+                    rawXRatio.isFinite() && rawYRatio.isFinite() &&
+                        rawWidthRatio.isFinite() && rawHeightRatio.isFinite()
+                ) { "Signature placement coordinates must be finite" }
+                val widthRatio = rawWidthRatio.coerceIn(0f, 1f)
+                val heightRatio = rawHeightRatio.coerceIn(0f, 1f)
+                val xRatio = rawXRatio.coerceIn(0f, 1f)
+                val yRatio = rawYRatio.coerceIn(0f, 1f)
                 val dateStamp = sigObj.optString("dateStamp", "")
                 val imageSize = images.readInt()
                 require(imageSize in 1..com.pdfchemy.app.security.SecurityLimits.MAX_SIGNATURE_BYTES)
@@ -118,7 +126,7 @@ object SignatureEngineWorker {
             val cacheDir = File(requireNotNull(System.getProperty("java.io.tmpdir")) { "Temporary storage unavailable" })
             sourceFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_in", ".pdf", cacheDir)
             destFile = com.pdfchemy.app.jail.JailScratch.createTempFile("temp_sign_out", ".pdf", cacheDir)
-            
+
             FileInputStream(sourceFd.fileDescriptor).use { ins ->
                 com.pdfchemy.app.jail.boundedFileOutput(sourceFile).use { fos ->
                     ins.copyTo(fos)

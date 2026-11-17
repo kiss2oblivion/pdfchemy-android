@@ -21,12 +21,16 @@ object PdfFindAndReplaceEngine {
         matchCase: Boolean = false,
         maskColorRgb: Triple<Float, Float, Float> = Triple(1f, 1f, 1f),
         textColorRgb: Triple<Float, Float, Float> = Triple(0f, 0f, 0f)
-    ): Result<Int> = runCatching {
+    ): Result<Int> = try {
         val contract = JailEngineBridge.callTyped<ReplaceAllContract>(
             context, "REPLACE_ALL", sourcePdfUri, destPdfUri,
             mapOf("findText" to findText, "replaceText" to replaceText, "matchCase" to matchCase, "maskColorRgb" to maskColorRgb, "textColorRgb" to textColorRgb)
         )
         HistoryRepository(context).addHistoryItem(destPdfUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destPdfUri) ?: "replaced.pdf", "Find & Replace PDF")
-        contract.replacementsCount
+        Result.success(contract.replacementsCount)
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        throw cancelled
+    } catch (error: Exception) {
+        Result.failure(error)
     }
 }

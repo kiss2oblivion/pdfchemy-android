@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 
 import android.net.Uri
-
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -113,8 +113,8 @@ fun SignPdfScreen(
     // PKI State
     var showPkiDialog by remember { mutableStateOf(false) }
     var pkiSignerName by remember { mutableStateOf("") }
-    var pkiReason by remember { mutableStateOf("Signed by PDFchemy") }
-    var pkiLocation by remember { mutableStateOf("Local Device") }
+    var pkiReason by remember { mutableStateOf(context.getString(R.string.sign_default_reason)) }
+    var pkiLocation by remember { mutableStateOf(context.getString(R.string.sign_default_location)) }
     var pkiKeystoreUri by remember { mutableStateOf<Uri?>(null) }
     var pkiKeystoreFileName by remember { mutableStateOf<String?>(null) }
     var pkiKeystorePassword by remember { mutableStateOf("") }
@@ -128,7 +128,7 @@ fun SignPdfScreen(
         }
     }
 
-    
+
     val pkiSignLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
         val source = selectedPdfUri
         if (destUri != null && source != null && !isSaving) {
@@ -164,8 +164,12 @@ fun SignPdfScreen(
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
-                    viewModel.showErrorToast(context.getString(R.string.error_signing_failed),
-                        context.getString(R.string.pki_signature_failed_desc))
+                    val desc = if (error is IllegalArgumentException && error.message?.contains("32 KiB", ignoreCase = true) == true) {
+                        context.getString(R.string.pki_keystore_too_large)
+                    } else {
+                        context.getString(R.string.pki_signature_failed_desc)
+                    }
+                    viewModel.showErrorToast(context.getString(R.string.error_signing_failed), desc)
                 } finally {
                     imported?.fill(0)
                     pkiKeystorePassword = ""
@@ -264,8 +268,8 @@ fun SignPdfScreen(
                     }
                 },
                 actions = {
-                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Undo, "Undo placement") }
-                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Redo, "Redo placement") }
+                    IconButton(enabled = placementHistory.canUndo && !draggingPlacement, onClick = { placementHistory.undo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Undo, stringResource(R.string.desc_undo_placement)) }
+                    IconButton(enabled = placementHistory.canRedo && !draggingPlacement, onClick = { placementHistory.redo()?.let { placedSignatures = it } }) { Icon(Icons.AutoMirrored.Rounded.Redo, stringResource(R.string.desc_redo_placement)) }
                     IconButton(onClick = { forceTabletopMode = !forceTabletopMode }) {
                         Icon(
                             imageVector = if (isTabletopMode) Icons.Rounded.LaptopMac else Icons.Rounded.PhoneAndroid,
@@ -393,13 +397,22 @@ fun SignPdfScreen(
                             // Render Placed Signatures on Current Page
                             val pageSignatures = placedSignatures.filter { it.pageIndex == currentPageIndex }
                             for (sig in pageSignatures) {
-                            var sigBmp by remember(sig) { mutableStateOf<Bitmap?>(null) }
-                            val context = LocalContext.current
-                            LaunchedEffect(sig) {
-                                sigBmp = com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, sig.bitmapBytes)
-                            }
-                            val currentSigBmp = sigBmp
-                            if (currentSigBmp != null && pagePixelSize.width > 0 && pagePixelSize.height > 0) {
+                                key(sig.id) {
+                                    var sigBmp by remember(sig.id, sig.bitmapBytes) { mutableStateOf<Bitmap?>(null) }
+                                    val context = LocalContext.current
+                                    LaunchedEffect(sig.id, sig.bitmapBytes) {
+                                        val decoded = com.pdfchemy.app.logic.IsolatedImageDecoder.decode(context, sig.bitmapBytes)
+                                        sigBmp?.takeIf { !it.isRecycled && it !== decoded }?.recycle()
+                                        sigBmp = decoded
+                                    }
+                                    DisposableEffect(sig.id) {
+                                        onDispose {
+                                            sigBmp?.takeIf { !it.isRecycled }?.recycle()
+                                            sigBmp = null
+                                        }
+                                    }
+                                    val currentSigBmp = sigBmp
+                                    if (currentSigBmp != null && !currentSigBmp.isRecycled && pagePixelSize.width > 0 && pagePixelSize.height > 0) {
                                     val isSelected = sig.id == selectedSignatureId
 
                                     val sigW = (sig.widthRatio * pagePixelSize.width).coerceAtLeast(40f)
@@ -462,7 +475,7 @@ fun SignPdfScreen(
                                             )
                                             if (!sig.dateStamp.isNullOrBlank()) {
                                                 Text(
-                                                    text = "Signed: ${sig.dateStamp}",
+                                                    text = stringResource(R.string.label_signed_date, sig.dateStamp),
                                                     fontSize = 9.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = Color.Black,
@@ -489,13 +502,14 @@ fun SignPdfScreen(
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Close,
-                                                    contentDescription = "Remove signature",
+                                                    contentDescription = stringResource(R.string.desc_remove_signature),
                                                     tint = MaterialTheme.colorScheme.onError,
                                                     modifier = Modifier.size(14.dp)
                                                 )
                                             }
                                         }
                                     }
+                                }
                                 }
                             }
                         }
@@ -544,7 +558,7 @@ fun SignPdfScreen(
                         },
                         enabled = currentPageIndex > 0
                     ) {
-                        Icon(Icons.Rounded.ChevronLeft, contentDescription = null)
+                        Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(R.string.action_prev_page))
                     }
 
                     var showPageJumpDialog by remember { mutableStateOf(false) }
@@ -581,11 +595,23 @@ fun SignPdfScreen(
                         },
                         enabled = currentPageIndex < totalPages - 1
                     ) {
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = null)
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.action_next_page))
                     }
                 }
 
                 // Quick Tools & Business Stamps Tray
+                val encodeAndRecycleStamp = remember<(Bitmap) -> ByteArray> {
+                    { bmp ->
+                        try {
+                            ByteArrayOutputStream().use { stream ->
+                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                stream.toByteArray()
+                            }
+                        } finally {
+                            if (!bmp.isRecycled) bmp.recycle()
+                        }
+                    }
+                }
                 Text(stringResource(R.string.label_quick_tools_stamps), style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.Start))
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -596,7 +622,7 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = { showPkiDialog = true },
-                            label = { Text("🔒 PKI Cert", fontWeight = FontWeight.Bold, color = Color(0xFF059669)) },
+                            label = { Text("🔒 ${stringResource(R.string.sign_tool_pki_cert)}", fontWeight = FontWeight.Bold, color = Color(0xFF059669)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -605,21 +631,18 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createMarkBitmap("✓", "#16A34A")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.45f,
                                     yRatio = 0.45f,
                                     widthRatio = 0.08f,
                                     heightRatio = 0.05f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createMarkBitmap("✓", "#16A34A"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("✓ Check", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
+                            label = { Text("✓ ${stringResource(R.string.sign_tool_check)}", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -628,21 +651,18 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createMarkBitmap("✕", "#DC2626")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.45f,
                                     yRatio = 0.45f,
                                     widthRatio = 0.08f,
                                     heightRatio = 0.05f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createMarkBitmap("✕", "#DC2626"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("✕ Cross", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
+                            label = { Text("✕ ${stringResource(R.string.sign_tool_cross)}", fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -652,21 +672,18 @@ fun SignPdfScreen(
                             selected = false,
                             onClick = {
                                 val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                                val bmp = SignatureEngine.createBusinessStampBitmap(dateStr, "DATE VERIFIED", "#1E3A8A", width = 280, height = 90)
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.28f,
                                     heightRatio = 0.08f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(dateStr, "DATE VERIFIED", "#1E3A8A", width = 280, height = 90))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("📅 Date", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
+                            label = { Text("📅 ${stringResource(R.string.sign_tool_date)}", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -675,21 +692,19 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createBusinessStampBitmap("CONFORM CU ORIGINALUL", "ORIGINAL VERIFIED", "#1E3A8A")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                val stampText = context.getString(R.string.sign_stamp_conform)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.35f,
                                     heightRatio = 0.10f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(stampText, "ORIGINAL VERIFIED", "#1E3A8A"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("CONFORM CU ORIGINALUL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
+                            label = { Text(stringResource(R.string.sign_stamp_conform), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -698,21 +713,19 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createBusinessStampBitmap("APPROVED", "OFFICIAL APPROVAL", "#16A34A")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                val stampText = context.getString(R.string.sign_stamp_approved)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.30f,
                                     heightRatio = 0.09f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(stampText, "OFFICIAL APPROVAL", "#16A34A"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("APPROVED", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
+                            label = { Text(stringResource(R.string.sign_stamp_approved), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -721,21 +734,19 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createBusinessStampBitmap("CONFIDENTIAL", "INTERNAL USE ONLY", "#DC2626")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                val stampText = context.getString(R.string.sign_stamp_confidential)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.32f,
                                     heightRatio = 0.09f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(stampText, "INTERNAL USE ONLY", "#DC2626"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("CONFIDENTIAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
+                            label = { Text(stringResource(R.string.sign_stamp_confidential), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -744,21 +755,19 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createBusinessStampBitmap("PAID", "PAYMENT SETTLED", "#7C3AED")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                val stampText = context.getString(R.string.sign_stamp_paid)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.26f,
                                     heightRatio = 0.08f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(stampText, "PAYMENT SETTLED", "#7C3AED"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("PAID", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED)) },
+                            label = { Text(stringResource(R.string.sign_stamp_paid), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF7C3AED)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -767,21 +776,19 @@ fun SignPdfScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val bmp = SignatureEngine.createBusinessStampBitmap("DRAFT", "SUBJECT TO REVISION", "#D97706")
-                                val stream = ByteArrayOutputStream()
-                                bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                                val stampText = context.getString(R.string.sign_stamp_draft)
                                 val newSig = PlacedSignature(
                                     pageIndex = currentPageIndex,
                                     xRatio = 0.35f,
                                     yRatio = 0.70f,
                                     widthRatio = 0.26f,
                                     heightRatio = 0.08f,
-                                    bitmapBytes = stream.toByteArray()
+                                    bitmapBytes = encodeAndRecycleStamp(SignatureEngine.createBusinessStampBitmap(stampText, "SUBJECT TO REVISION", "#D97706"))
                                 )
                                 updatePlacements(placedSignatures + newSig)
                                 selectedSignatureId = newSig.id
                             },
-                            label = { Text("DRAFT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD97706)) },
+                            label = { Text(stringResource(R.string.sign_stamp_draft), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD97706)) },
                             shape = RoundedCornerShape(8.dp)
                         )
                     }
@@ -942,7 +949,7 @@ fun SignPdfScreen(
                     Button(
                         onClick = {
                             if (signaturePaths.isNotEmpty()) {
-                                val bmp = Bitmap.createBitmap(600, 300, Bitmap.Config.ARGB_8888)
+                                val bmp = createBitmap(600, 300)
                                 val canvas = android.graphics.Canvas(bmp)
                                 val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                                     color = android.graphics.Color.BLACK

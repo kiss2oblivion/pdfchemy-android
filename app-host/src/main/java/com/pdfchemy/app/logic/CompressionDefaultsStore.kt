@@ -1,6 +1,7 @@
 package com.pdfchemy.app.logic
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 enum class CompressionChoice { QUALITY, GRAYSCALE, LOSSLESS, STRIP_METADATA }
 data class CompressionDefaults(val quality: Float = 0.5f, val grayscale: Boolean = false,
@@ -20,15 +21,17 @@ class CompressionDefaultsStore(private val prefs: SharedPreferences) {
             boolean(CompressionChoice.GRAYSCALE), boolean(CompressionChoice.LOSSLESS), boolean(CompressionChoice.STRIP_METADATA))
     }
     fun save(value: CompressionDefaults) {
-        prefs.edit().putFloat(key(CompressionChoice.QUALITY), value.quality.coerceIn(0.25f, 1f))
-            .putBoolean(key(CompressionChoice.GRAYSCALE), value.grayscale)
-            .putBoolean(key(CompressionChoice.LOSSLESS), value.lossless)
-            .putBoolean(key(CompressionChoice.STRIP_METADATA), value.stripMetadata).apply()
+        prefs.edit {
+            putFloat(key(CompressionChoice.QUALITY), value.quality.coerceIn(0.25f, 1f))
+            putBoolean(key(CompressionChoice.GRAYSCALE), value.grayscale)
+            putBoolean(key(CompressionChoice.LOSSLESS), value.lossless)
+            putBoolean(key(CompressionChoice.STRIP_METADATA), value.stripMetadata)
+        }
     }
     fun reset() {
-        val editor = prefs.edit()
-        CompressionChoice.entries.forEach { editor.remove(key(it)) }
-        editor.apply()
+        prefs.edit {
+            CompressionChoice.entries.forEach { remove(key(it)) }
+        }
         touched.clear()
     }
 }

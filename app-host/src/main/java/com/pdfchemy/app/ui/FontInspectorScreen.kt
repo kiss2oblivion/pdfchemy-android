@@ -2,8 +2,6 @@ package com.pdfchemy.app.ui
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -44,7 +42,7 @@ fun FontInspectorScreen(
     var fontList by remember { mutableStateOf<List<PdfFontInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
-    var exportSource by remember { mutableStateOf<Uri?>(null) }
+    var exportSource by remember { mutableStateOf<Pair<Uri, Int>?>(null) }
 
     fun refreshFonts() {
         val uri = selectedPdfUri ?: return
@@ -69,21 +67,30 @@ fun FontInspectorScreen(
     }
 
     val saveZipLauncher = rememberPreferredDocumentDestinationCreator("application/zip") { destination ->
-        val source = exportSource
+        val snapshot = exportSource
         exportSource = null
         if (destination != null) {
             isExporting = true
             coroutineScope.launch {
                 try {
-                    requireNotNull(source) { "No source selected for export" }
-                    PdfFontInspectorEngine.extractEmbeddedFonts(context,source,destination.uri).getOrThrow()
-                    android.widget.Toast.makeText(context,"Embedded fonts exported",android.widget.Toast.LENGTH_SHORT).show()
-                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
-                } catch (error: Exception) {
-                    android.widget.Toast.makeText(context,context.getString(R.string.error_fonts_export_failed),android.widget.Toast.LENGTH_LONG).show()
+                    val (source, count) = requireNotNull(snapshot) { "No source selected for export" }
+                    PdfFontInspectorEngine.extractEmbeddedFonts(context, source, destination.uri).getOrThrow()
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.title_fonts_exported_success, count),
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.error_fonts_export_failed),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
                 } finally {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context,destination.uri)
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination.uri)
                     }
                     isExporting = false
                 }
@@ -261,7 +268,7 @@ fun FontInspectorScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = font.familyName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             Text(
-                                                text = "${font.formatType} • ${if (font.isEmbedded) "Embedded" else "System Font"} • ${font.encoding}",
+                                                text = "${font.formatType} • ${stringResource(if (font.isEmbedded) R.string.stat_embedded else R.string.font_system_font)} • ${font.encoding}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -284,7 +291,7 @@ fun FontInspectorScreen(
                 Button(
                     onClick = {
                         val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                        exportSource = selectedPdfUri
+                        exportSource = selectedPdfUri?.let { it to embeddedCount }
                         saveZipLauncher.launch("${base}_embedded_fonts.zip")
                     },
                     modifier = Modifier

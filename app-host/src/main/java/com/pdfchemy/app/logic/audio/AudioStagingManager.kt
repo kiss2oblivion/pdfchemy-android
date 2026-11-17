@@ -7,6 +7,8 @@ import java.util.UUID
 class AudioStagingManager(private val cacheDir: File) {
     constructor(context: Context) : this(context.applicationContext.cacheDir)
 
+    private val stagingLock = Any()
+
     private fun getBaseDir(): File {
         val dir = File(cacheDir, "audio-export")
         if (!dir.exists()) {
@@ -43,20 +45,30 @@ class AudioStagingManager(private val cacheDir: File) {
         return File(getJobDir(jobId), "source_text.txt")
     }
 
+    private fun deleteDirectoryContentsSafely(target: File) {
+        if (!target.exists()) return
+        if (target.isDirectory) {
+            target.listFiles()?.forEach { child -> deleteDirectoryContentsSafely(child) }
+        }
+        target.delete()
+    }
+
     fun clearJobStaging(jobId: UUID) {
-        val dir = File(getBaseDir(), jobId.toString())
-        if (dir.exists()) {
-            dir.deleteRecursively()
+        synchronized(stagingLock) {
+            val dir = File(getBaseDir(), jobId.toString())
+            deleteDirectoryContentsSafely(dir)
         }
     }
 
     fun sweepStaleJobs(activeJobIds: Set<UUID>) {
-        val baseDir = getBaseDir()
-        val activeIdsStr = activeJobIds.map { it.toString() }.toSet()
-        
-        baseDir.listFiles()?.forEach { file ->
-            if (file.isDirectory && !activeIdsStr.contains(file.name)) {
-                file.deleteRecursively()
+        synchronized(stagingLock) {
+            val baseDir = getBaseDir()
+            val activeIdsStr = activeJobIds.map { it.toString() }.toSet()
+
+            baseDir.listFiles()?.forEach { file ->
+                if (file.isDirectory && !activeIdsStr.contains(file.name)) {
+                    deleteDirectoryContentsSafely(file)
+                }
             }
         }
     }

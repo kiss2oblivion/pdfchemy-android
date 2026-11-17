@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.pdfchemy.app.security.*
@@ -56,7 +57,7 @@ object PdfTextExtractorWorker {
                 require(renderer.pageCount <= SecurityLimits.MAX_OUTPUT_FILES)
                 for (index in 0 until renderer.pageCount) renderer.openPage(index).use { page ->
                     val (w, h) = SecurityLimits.safeRenderSize(page.width.toDouble(), page.height.toDouble())
-                    val bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888) }
+                    val bitmap = run { com.pdfchemy.app.security.SecurityLimits.requirePixels(w, h); createBitmap(w, h) }
                     try {
                         android.graphics.Canvas(bitmap).drawColor(android.graphics.Color.WHITE)
                         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)

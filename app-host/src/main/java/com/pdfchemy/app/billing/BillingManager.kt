@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal enum class AcknowledgementOutcome { ACKNOWLEDGED, RETRYABLE, RECONCILE }
 
 data class BillingUiState(val canPurchase: Boolean = false, val loading: Boolean = true,
-    val message: String = "Connecting to Google Play…", val canRetry: Boolean = false,
+    val message: String = "", val canRetry: Boolean = false,
     val entitlementStorageFailed: Boolean = false)
 
 class BillingManager(
@@ -44,7 +44,7 @@ class BillingManager(
     private val entitlementStore: EntitlementStore by lazy { EntitlementStores.open(context) }
     private val persistence = EntitlementPersistenceCoordinator(entitlementStore, this.coroutineScope, storageDispatcher)
     private lateinit var billingClient: BillingClient
-    
+
     private val _isPremium = MutableStateFlow(false)
     private val pendingPremium = MutableStateFlow(false)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
@@ -53,7 +53,7 @@ class BillingManager(
     val premiumPrice: StateFlow<String> = _premiumPrice.asStateFlow()
 
     private var premiumProductDetails: ProductDetails? = null
-    private val _billingUi = MutableStateFlow(BillingUiState())
+    private val _billingUi = MutableStateFlow(BillingUiState(message = context.getString(com.pdfchemy.app.R.string.billing_connecting)))
     val billingUi: StateFlow<BillingUiState> = combine(_billingUi, persistence.state, _isPremium, pendingPremium) { ui, storage, premium, pending ->
         val current = ui.copy(canPurchase = ui.canPurchase && !premium && !pending)
         if (!storage.failed) current else current.copy(
@@ -62,9 +62,9 @@ class BillingManager(
             canPurchase = false,
             canRetry = !storage.saving,
             message = when {
-                storage.readFailed -> "Saved purchase status could not be read. Connect to Google Play and restore purchases."
-                premium -> "Premium is active, but offline access could not be saved. Retry saving purchase status."
-                else -> "Purchase status changed, but the offline cache could not be updated. Retry saving purchase status."
+                storage.readFailed -> context.getString(com.pdfchemy.app.R.string.billing_storage_read_failed)
+                premium -> context.getString(com.pdfchemy.app.R.string.billing_storage_write_failed_premium)
+                else -> context.getString(com.pdfchemy.app.R.string.billing_storage_write_failed_other)
             }
         )
     }.stateIn(this.coroutineScope, SharingStarted.Eagerly, _billingUi.value)
@@ -122,8 +122,10 @@ class BillingManager(
         connectionTimeout?.cancel()
         detailsTimeout?.cancel()
         inventoryTimeout?.cancel()
-        recoveryWaiters.toList().forEach { it.complete(AcknowledgementOutcome.RETRYABLE) }
-        recoveryWaiters.clear()
+        val waitersToWake = synchronized(recoveryWaiters) {
+            recoveryWaiters.toList().also { recoveryWaiters.clear() }
+        }
+        waitersToWake.forEach { it.complete(AcknowledgementOutcome.RETRYABLE) }
         synchronized(sessionLock) { sessions.removeAll { it.get() == null || it.get() === this } }
         managerJob.cancel()
         // Closing a disconnected Play service must not prevent owner cleanup.
@@ -144,7 +146,8 @@ class BillingManager(
     }
 
     private fun finishRecoveryWaiters(outcome: AcknowledgementOutcome) {
-        recoveryWaiters.toList().forEach { it.complete(outcome) }
+        val waiters = synchronized(recoveryWaiters) { recoveryWaiters.toList() }
+        waiters.forEach { it.complete(outcome) }
     }
 
     fun retry() {
@@ -184,7 +187,7 @@ class BillingManager(
         fun isUserEntitled(context: Context): Boolean {
             cachedEntitled?.let { return it }
             return try {
-                val entitled = EntitlementStores.open(context).read()
+                val entitled = EntitlementStores.open(context).readOrThrow()
                 cachedEntitled = entitled
                 entitled
             } catch (_: Exception) {
@@ -202,15 +205,19 @@ class BillingManager(
             EntitlementPersistenceCoordinator.resetForTesting()
         }
     }
-    
+
     init {
         // Fallback to secure cached value immediately for offline support
-        val initialEntitled = cachedEntitled ?: try { entitlementStore.read() } catch (_: Exception) {
+        val (initialEntitled, cacheHealthy) = cachedEntitled?.let { it to true } ?: try {
+            entitlementStore.readOrThrow() to true
+        } catch (_: Exception) {
             persistence.readFailed()
-            false
+            false to false
         }
         _isPremium.value = initialEntitled
-        updateCachedEntitlement(initialEntitled)
+        if (cacheHealthy) {
+            updateCachedEntitlement(initialEntitled)
+        }
         // Main/UI and JobService construction are serialized on Android Main. Retire a
         // temporary recovery session before another owner creates a BillingClient.
         synchronized(sessionLock) {
@@ -239,13 +246,13 @@ class BillingManager(
         if (closed || connecting) return
         connecting = true
         val ticket = connectionRequests.begin()
-        _billingUi.value = BillingUiState()
+        _billingUi.value = BillingUiState(message = context.getString(com.pdfchemy.app.R.string.billing_connecting))
         connectionTimeout?.cancel()
         connectionTimeout = coroutineScope.launch {
             delay(15_000)
             if (connectionRequests.isCurrent(ticket) && connecting) {
                 connecting = false
-                _billingUi.value = BillingUiState(loading = false, message = "Google Play did not respond. Check your connection and retry.", canRetry = true)
+                _billingUi.value = BillingUiState(loading = false, message = context.getString(com.pdfchemy.app.R.string.billing_play_no_response), canRetry = true)
                 finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
         }
@@ -259,7 +266,7 @@ class BillingManager(
                     queryPurchases()
                     if (!recoveryOnly) queryProductDetails()
                 } else {
-                    _billingUi.value = BillingUiState(loading = false, message = "Google Play billing is unavailable. Check your connection and retry.", canRetry = true)
+                    _billingUi.value = BillingUiState(loading = false, message = context.getString(com.pdfchemy.app.R.string.billing_play_unavailable_retry), canRetry = true)
                     finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
                 }
             }
@@ -277,7 +284,7 @@ class BillingManager(
                 restoreActive = false
                 inventoryInFlight = null
                 refreshAfterInventory = false
-                _billingUi.value = available("Google Play disconnected. Retry when your connection is available.")
+                _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_play_disconnected))
                 finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
                 // Retry connection after a brief delay
                 coroutineScope.launch {
@@ -296,12 +303,12 @@ class BillingManager(
         premiumProductDetails = null
         _premiumPrice.value = ""
         if (!restorePending && !restoreActive && restoreMessage == null)
-            _billingUi.value = BillingUiState(message = "Loading purchase details…")
+            _billingUi.value = BillingUiState(message = context.getString(com.pdfchemy.app.R.string.billing_loading_details))
         detailsTimeout?.cancel()
         detailsTimeout = coroutineScope.launch {
             delay(15_000)
             if (detailRequests.isCurrent(ticket) && premiumProductDetails == null)
-                publishDetailsStatus("Google Play did not return purchase details. Retry when your connection is available.")
+                publishDetailsStatus(context.getString(com.pdfchemy.app.R.string.billing_details_no_response))
         }
         val queryProductDetailsParams =
             QueryProductDetailsParams.newBuilder()
@@ -326,16 +333,16 @@ class BillingManager(
                 if (!formattedPrice.isNullOrBlank()) {
                     premiumProductDetails = details
                     _premiumPrice.value = formattedPrice
-                    publishDetailsStatus("One-time purchase through Google Play.")
+                    publishDetailsStatus(context.getString(com.pdfchemy.app.R.string.billing_one_time_purchase))
                 } else {
                     premiumProductDetails = null
                     _premiumPrice.value = ""
-                    publishDetailsStatus("Purchase price is unavailable from Google Play. Retry when your connection is available.")
+                    publishDetailsStatus(context.getString(com.pdfchemy.app.R.string.billing_price_unavailable))
                 }
             } else {
                 premiumProductDetails = null
                 _premiumPrice.value = ""
-                publishDetailsStatus("Purchase details are unavailable. Check Google Play and retry.")
+                publishDetailsStatus(context.getString(com.pdfchemy.app.R.string.billing_details_unavailable))
             }
         }
     }
@@ -348,13 +355,13 @@ class BillingManager(
         if (!billingClient.isReady) {
             _billingUi.value = BillingUiState(
                 loading = false,
-                message = "Google Play is connecting. Tap retry if it does not connect.",
+                message = context.getString(com.pdfchemy.app.R.string.billing_connecting_tap_retry),
                 canRetry = true
             )
             connectToPlayBilling()
             return
         }
-        _billingUi.value = BillingUiState(loading = true, message = "Checking previous purchases…")
+        _billingUi.value = BillingUiState(loading = true, message = context.getString(com.pdfchemy.app.R.string.billing_checking_purchases))
         queryPurchases(isUserInitiated = true)
     }
 
@@ -368,7 +375,7 @@ class BillingManager(
         if (manualRestore) {
             restorePending = false
             restoreActive = true
-            _billingUi.value = BillingUiState(message = "Checking previous purchases…")
+            _billingUi.value = BillingUiState(message = context.getString(com.pdfchemy.app.R.string.billing_checking_purchases))
         }
         inventoryTimeout?.cancel()
         inventoryTimeout = coroutineScope.launch {
@@ -379,7 +386,7 @@ class BillingManager(
             restoreActive = false
             if (manualRestore) {
                 retryRestore = true
-                restoreMessage = "Google Play did not return your purchases. Check your connection and retry."
+                restoreMessage = context.getString(com.pdfchemy.app.R.string.billing_purchases_no_response)
                 _billingUi.value = available(restoreMessage!!).copy(canRetry = true)
             }
             finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
@@ -388,12 +395,12 @@ class BillingManager(
                 refreshOnForeground()
             }
         }
-        
+
         // Query for existing in-app purchases (non-consumables)
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
-            
+
         billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
             if (!purchaseRequests.isCurrent(ticket)) {
                 com.pdfchemy.app.utils.AppLogger.d("Ignoring stale onQueryPurchasesResponse for ticket $ticket")
@@ -409,10 +416,10 @@ class BillingManager(
                         val premium = purchasesList.filter { it.products.contains(PREMIUM_PRODUCT_ID) }
                         restoreMessage = when {
                             premium.any { it.purchaseState == Purchase.PurchaseState.PURCHASED } ->
-                                "Premium entitlement restored successfully."
+                                context.getString(com.pdfchemy.app.R.string.billing_restore_success)
                             premium.any { it.purchaseState == Purchase.PurchaseState.PENDING } ->
-                                "Payment is pending. Premium unlocks when Google Play confirms it."
-                            else -> "No previous purchases found for this Google account."
+                                context.getString(com.pdfchemy.app.R.string.billing_payment_pending)
+                            else -> context.getString(com.pdfchemy.app.R.string.billing_no_previous_purchases)
                         }
                         _billingUi.value = available(restoreMessage!!)
                     }
@@ -426,12 +433,12 @@ class BillingManager(
                         BillingClient.BillingResponseCode.NETWORK_ERROR,
                         BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                         BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
-                            "Network error connecting to Google Play. Check connection and retry."
+                            context.getString(com.pdfchemy.app.R.string.billing_network_error_retry)
                         BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
                         BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED ->
-                            "Google Play billing is unavailable on this device."
+                            context.getString(com.pdfchemy.app.R.string.billing_unavailable_device)
                         else ->
-                            "Could not restore purchases. Check Google Play and retry."
+                            context.getString(com.pdfchemy.app.R.string.billing_restore_failed)
                     }
                     restoreMessage = msg
                     _billingUi.value = available(msg).copy(canRetry = true)
@@ -467,25 +474,31 @@ class BillingManager(
             BillingClient.BillingResponseCode.OK -> {
                 if (purchases != null) {
                     _billingUi.value = if (purchases.any { it.purchaseState == Purchase.PurchaseState.PENDING })
-                        BillingUiState(loading = false, message = "Payment is pending. Premium unlocks when Google Play confirms it.")
-                    else available("Purchase received. Google Play is confirming your entitlement.")
+                        BillingUiState(loading = false, message = context.getString(com.pdfchemy.app.R.string.billing_payment_pending))
+                    else available(context.getString(com.pdfchemy.app.R.string.billing_purchase_confirming))
                     processPurchases(purchases, isFullInventory = false, requestTicket = null)
+                } else {
+                    finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
                 }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
-                _billingUi.value = available("Purchase cancelled. You can continue using PDFchemy.")
+                _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_purchase_cancelled))
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
             BillingClient.BillingResponseCode.NETWORK_ERROR,
             BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
             BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> {
-                _billingUi.value = available("Network error communicating with Google Play. Check your connection and try again.")
+                _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_network_error_purchase))
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
             BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
             BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> {
-                _billingUi.value = available("Google Play billing is unavailable on this device.")
+                _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_unavailable_device))
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
             else -> {
-                _billingUi.value = available("Purchase could not complete. Check Google Play and try again.")
+                _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_purchase_failed))
+                finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
             }
         }
     }
@@ -493,7 +506,9 @@ class BillingManager(
     internal suspend fun reconcileDelivery(): AcknowledgementOutcome {
         if (closed) return AcknowledgementOutcome.RETRYABLE
         val waiter = CompletableDeferred<AcknowledgementOutcome>()
-        recoveryWaiters.add(waiter)
+        synchronized(recoveryWaiters) {
+            recoveryWaiters.add(waiter)
+        }
         try {
             when {
                 connecting -> Unit // Setup will query the inventory.
@@ -502,7 +517,9 @@ class BillingManager(
             }
             return waiter.await()
         } finally {
-            recoveryWaiters.remove(waiter)
+            synchronized(recoveryWaiters) {
+                recoveryWaiters.remove(waiter)
+            }
         }
     }
 
@@ -563,9 +580,23 @@ class BillingManager(
                     AcknowledgementOutcome.RECONCILE -> BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
                     AcknowledgementOutcome.RETRYABLE -> Unit
                 }
-                recoveryWaiters.toList().forEach { it.complete(outcome) }
-            } else if (outcome == AcknowledgementOutcome.RECONCILE) {
-                BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
+                finishRecoveryWaiters(outcome)
+            } else if (!isFullInventory && hasPremiumInBatch) {
+                when (outcome) {
+                    AcknowledgementOutcome.ACKNOWLEDGED -> BillingAcknowledgementRecovery.complete(context)
+                    AcknowledgementOutcome.RECONCILE -> BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
+                    AcknowledgementOutcome.RETRYABLE -> Unit
+                }
+                if (inventoryInFlight == null) {
+                    finishRecoveryWaiters(outcome)
+                }
+            } else {
+                if (outcome == AcknowledgementOutcome.RECONCILE) {
+                    BillingAcknowledgementRecovery.pauseAutomaticRetry(context)
+                }
+                if (!isFullInventory && inventoryInFlight == null) {
+                    finishRecoveryWaiters(AcknowledgementOutcome.RETRYABLE)
+                }
             }
         }
     }
@@ -639,14 +670,14 @@ class BillingManager(
         if (closed) return
         if (_isPremium.value || pendingPremium.value) {
             _billingUi.value = available(
-                if (_isPremium.value) "Premium is already active."
-                else "Payment is pending. Premium unlocks when Google Play confirms it."
+                if (_isPremium.value) context.getString(com.pdfchemy.app.R.string.billing_premium_already_active)
+                else context.getString(com.pdfchemy.app.R.string.billing_payment_pending)
             )
             return
         }
         val productDetails = premiumProductDetails
         if (productDetails == null || !billingClient.isReady || !_billingUi.value.canPurchase || _premiumPrice.value.isBlank()) {
-            _billingUi.value = available("Purchase is not ready. Check Google Play and retry.")
+            _billingUi.value = available(context.getString(com.pdfchemy.app.R.string.billing_purchase_not_ready))
             return
         }
 
@@ -660,7 +691,7 @@ class BillingManager(
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
 
-        _billingUi.value = BillingUiState(loading = true, message = "Opening Google Play…")
+        _billingUi.value = BillingUiState(loading = true, message = context.getString(com.pdfchemy.app.R.string.billing_opening_play))
         val result = billingClient.launchBillingFlow(activity, billingFlowParams)
         if (result.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
             restorePurchases()
@@ -669,13 +700,13 @@ class BillingManager(
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
             val msg = when (result.responseCode) {
                 BillingClient.BillingResponseCode.USER_CANCELED ->
-                    "Purchase cancelled. You can continue using PDFchemy."
+                    context.getString(com.pdfchemy.app.R.string.billing_purchase_cancelled)
                 BillingClient.BillingResponseCode.NETWORK_ERROR,
                 BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                 BillingClient.BillingResponseCode.SERVICE_DISCONNECTED ->
-                    "Network error opening checkout. Check your connection and try again."
+                    context.getString(com.pdfchemy.app.R.string.billing_checkout_network_error)
                 else ->
-                    "Google Play could not open checkout. Check your connection and try again."
+                    context.getString(com.pdfchemy.app.R.string.billing_checkout_failed)
             }
             _billingUi.value = available(msg)
         }

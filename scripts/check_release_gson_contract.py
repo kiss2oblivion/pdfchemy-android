@@ -123,7 +123,7 @@ def validate_contract(classes):
                 re.escape(PREFIX + "PageModification;>;>;"))
     tokens = [name for name, row in classes.items()
               if row["superclass"] == TOKEN and re.fullmatch(expected, row["signature"] or "")]
-    require(len(tokens) >= 2, "Both editor export TypeToken subclasses must retain Map<Integer, PageModification> signatures")
+    require(len(tokens) >= 1, "Editor export TypeToken subclass must retain Map<Integer, PageModification> signature")
     for model, fields in SCHEMA.items():
         name = PREFIX + model + ";"
         require(name in classes, "Gson wire model missing from minified DEX: " + model)

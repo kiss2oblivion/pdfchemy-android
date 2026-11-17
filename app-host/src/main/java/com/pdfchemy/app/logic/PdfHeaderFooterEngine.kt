@@ -12,7 +12,15 @@ import java.io.File
 
 object PdfHeaderFooterEngine {
     suspend fun applyHeaderFooter(context: Context, sourcePdfUri: Uri, destPdfUri: Uri, config: StampConfig): Result<Boolean> = runCatching {
-        JailEngineBridge.call(context, "HEADER_FOOTER", sourcePdfUri, destPdfUri, config)
+        val resolvedConfig = if (config.sourceDisplayName.isNotBlank()) {
+            config
+        } else {
+            config.copy(
+                sourceDisplayName = com.pdfchemy.app.utils.FileUtils.getFileName(context, sourcePdfUri)
+                    ?: "Document"
+            )
+        }
+        JailEngineBridge.call(context, "HEADER_FOOTER", sourcePdfUri, destPdfUri, resolvedConfig)
         HistoryRepository(context).addHistoryItem(destPdfUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destPdfUri) ?: "stamped.pdf", "Header/Footer PDF")
         true
     }

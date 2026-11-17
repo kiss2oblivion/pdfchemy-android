@@ -89,4 +89,18 @@ class EntitlementStoreTest {
         assertEquals(true, LegacyEntitlementReader(app, name).read())
         assertEquals(before, legacy.all)
     }
+
+    @Test fun readOrThrowPropagatesCipherFailureWhileReadFailsClosed() {
+        val prefs = prefs()
+        prefs.edit().putString(PlatformEntitlementStore.RECORD, "opaque-true").commit()
+        val cipher = TestCipher().apply { unavailable = true }
+        val store = PlatformEntitlementStore(prefs, cipher) { null }
+        assertFalse(store.read())
+        try {
+            store.readOrThrow()
+            fail("Expected readOrThrow() to propagate unavailable cipher state")
+        } catch (_: IllegalStateException) {
+            // Expected
+        }
+    }
 }

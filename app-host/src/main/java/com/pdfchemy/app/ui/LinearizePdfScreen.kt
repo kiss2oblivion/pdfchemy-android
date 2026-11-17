@@ -43,15 +43,26 @@ fun LinearizePdfScreen(
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
     var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var status by remember { mutableStateOf<LinearizeStatus?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     var isChecking by remember { mutableStateOf(false) }
+    var checkGeneration by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(selectedPdfUri) {
+    LaunchedEffect(selectedPdfUri, checkGeneration) {
         val uri = selectedPdfUri
+        status = null
+        errorMessage = null
         if (uri != null) {
-            status = null
             isChecking = true
             try {
-                status = PdfLinearizeEngine.checkLinearized(context, uri).getOrNull()
+                PdfLinearizeEngine.checkLinearized(context, uri)
+                    .onSuccess {
+                        status = it
+                        errorMessage = null
+                    }
+                    .onFailure {
+                        status = null
+                        errorMessage = it.message ?: context.getString(R.string.msg_error_unknown)
+                    }
             } finally {
                 isChecking = false
             }
@@ -190,6 +201,25 @@ fun LinearizePdfScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+            } else if (errorMessage != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = errorMessage!!,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        OutlinedButton(onClick = { checkGeneration++ }) {
+                            Icon(Icons.Rounded.Refresh, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.retry))
+                        }
                     }
                 }
             }

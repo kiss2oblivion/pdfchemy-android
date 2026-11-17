@@ -35,13 +35,13 @@ class PdfMetadataManagerTest {
         tempPdfFile = File(context.cacheDir, "test_metadata.pdf")
         val document = PDDocument()
         document.addPage(PDPage())
-        
+
         val info = PDDocumentInformation()
         info.title = "Test Title"
         info.author = "Test Author"
         info.creator = "ShrinkPDF"
         document.documentInformation = info
-        
+
         document.save(tempPdfFile)
         document.close()
     }
@@ -57,7 +57,7 @@ class PdfMetadataManagerTest {
     fun getMetadata_returnsCorrectData() = runTest {
         val uri = Uri.fromFile(tempPdfFile)
         val result = metadataManager.getMetadata(context, uri)
-        
+
         assertTrue(result.isSuccess)
         val metadata = result.getOrThrow()
         assertEquals("Test Title", metadata.title)
@@ -85,10 +85,10 @@ class PdfMetadataManagerTest {
         val info = resultDoc.documentInformation
         assertEquals("New Title", info.title)
         assertEquals("New Subject", info.subject)
-        
+
         // Given the logic, blanks overwrite with null
-        assertNull(info.author) 
-        
+        assertNull(info.author)
+
         resultDoc.close()
         destFile.delete()
     }
@@ -107,24 +107,25 @@ class PdfMetadataManagerTest {
         assertNull(info.title)
         assertNull(info.author)
         assertNull(info.creator)
-        
+
         resultDoc.close()
         destFile.delete()
     }
 
     @Test
-    fun clearMetadataOverwrite_removesFieldsInPlace() = runTest {
+    fun clearMetadata_rejectsSameSourceAndDestination_preservingOriginal() = runTest {
         val uri = Uri.fromFile(tempPdfFile)
-        
-        val result = metadataManager.clearMetadataOverwrite(context, uri)
-        assertTrue(result.isSuccess)
 
-        val resultDoc = PDDocument.load(tempPdfFile)
-        val info = resultDoc.documentInformation
-        assertNull(info.title)
-        assertNull(info.author)
-        assertNull(info.creator)
-        
-        resultDoc.close()
+        val result = metadataManager.clearMetadata(context, uri, uri)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is SecurityException)
+
+        val originalDoc = PDDocument.load(tempPdfFile)
+        val info = originalDoc.documentInformation
+        assertEquals("Test Title", info.title)
+        assertEquals("Test Author", info.author)
+        assertEquals("ShrinkPDF", info.creator)
+
+        originalDoc.close()
     }
 }

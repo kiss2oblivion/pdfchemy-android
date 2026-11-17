@@ -169,7 +169,7 @@ class HostOutputCommitSecurityTest {
 
     @Test fun failedMalformedAndWrongCountResultsAreRejectedBeforeCommit() = runBlocking {
         val invalid = listOf("{\"success\":false}", "{\"success\":\"true\"}", "{\"isSuccess\":false}",
-            "{\"error\":\"failure\"}", "false", "null", "{} trailing", "[".repeat(33) + "0" + "]".repeat(33),
+            "{\"error\":\"failure\"}", "false", "null", "{} trailing", "[".repeat(9) + "0" + "]".repeat(9),
             "{\"success\":true,\"renderedCount\":2}")
         for (response in invalid) {
             val target = fixture()

@@ -1,14 +1,12 @@
 package com.pdfchemy.app.logic
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
 
 import org.json.JSONObject
 
 data class WatermarkOptions(
     val text: String? = null,
-    val imageBitmap: Bitmap? = null,
     val rotationDegrees: Float = 45f,
     val opacity: Float = 0.3f,
     val fontSize: Float = 40f,

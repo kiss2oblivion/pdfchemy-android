@@ -192,7 +192,7 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             }
                         }
                         Button(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) {
-                            Text(if (selectedPdfUri == null) "Select" else "Change")
+                            Text(stringResource(if (selectedPdfUri == null) R.string.action_select else R.string.action_change))
                         }
                     }
                 }
@@ -212,7 +212,7 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
                                     if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = null
+                                    contentDescription = stringResource(if (isPasswordVisible) R.string.desc_hide_password else R.string.desc_show_password)
                                 )
                             }
                         }
@@ -232,7 +232,7 @@ fun ProtectPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
                                     if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = null
+                                    contentDescription = stringResource(if (isPasswordVisible) R.string.desc_hide_password else R.string.desc_show_password)
                                 )
                             }
                         }
@@ -422,7 +422,7 @@ fun UnlockPdfScreen(
                             }
                         }
                         Button(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) {
-                            Text(if (selectedPdfUri == null) "Select" else "Change")
+                            Text(stringResource(if (selectedPdfUri == null) R.string.action_select else R.string.action_change))
                         }
                     }
                 }
@@ -441,7 +441,7 @@ fun UnlockPdfScreen(
                             IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Icon(
                                     if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = null
+                                    contentDescription = stringResource(if (isPasswordVisible) R.string.desc_hide_password else R.string.desc_show_password)
                                 )
                             }
                         }
@@ -620,7 +620,7 @@ fun PdfToImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             }
                         }
                         Button(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf")) }) {
-                            Text(if (selectedPdfUri == null) "Select" else "Change")
+                            Text(stringResource(if (selectedPdfUri == null) R.string.action_select else R.string.action_change))
                         }
                     }
                 }
@@ -637,13 +637,13 @@ fun PdfToImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             FilterChip(
                                 selected = selectedFormat == "JPEG",
                                 onClick = { selectedFormat = "JPEG" },
-                                label = { Text("JPG (Photos / Compact)") },
+                                label = { Text(stringResource(R.string.format_jpg_compact)) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = selectedFormat == "PNG",
                                 onClick = { selectedFormat = "PNG" },
-                                label = { Text("PNG (Lossless / Crisp)") },
+                                label = { Text(stringResource(R.string.format_png_lossless)) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -871,4 +871,3 @@ fun VanguardScanningOverlay(
         }
     }
 }
-
