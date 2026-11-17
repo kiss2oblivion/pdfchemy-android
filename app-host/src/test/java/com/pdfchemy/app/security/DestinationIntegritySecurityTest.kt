@@ -258,10 +258,12 @@ class DestinationIntegritySecurityTest {
         val deleted = CompletableDeferred<Unit>()
         val writerFinished = CompletableDeferred<Unit>()
         val allowFinish = CompletableDeferred<Unit>()
+        val allowDeleteReturn = java.util.concurrent.CountDownLatch(1)
 
         every { documentFile.delete() } answers {
             assertTrue("Deletion must not occur before writer has confirmed termination!", writerFinished.isCompleted)
             deleted.complete(Unit)
+            check(allowDeleteReturn.await(5, java.util.concurrent.TimeUnit.SECONDS))
             true
         }
 
@@ -297,7 +299,16 @@ class DestinationIntegritySecurityTest {
         allowFinish.complete(Unit)
 
         // Deletion must now occur via deferred completion
-        withTimeout(5_000) { deleted.await() }
+        try {
+            withTimeout(5_000) { deleted.await() }
+            assertTrue("Provenance must remain claimed until deferred provider deletion returns",
+                OutputPolicy.isFreshCopy(freshDestination))
+        } finally {
+            allowDeleteReturn.countDown()
+        }
+        withTimeout(5_000) {
+            while (OutputPolicy.isFreshCopy(freshDestination)) delay(1)
+        }
         assertFalse(OutputPolicy.isFreshCopy(freshDestination))
     }
 
