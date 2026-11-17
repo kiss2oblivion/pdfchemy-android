@@ -20,7 +20,7 @@ object PdfImageExtractorEngine {
                     val resources = page.resources ?: continue
                     for (name in resources.xObjectNames) {
                         val image = resources.getXObject(name) as? PDImageXObject ?: continue
-                        com.pdfchemy.app.security.SecurityLimits.requirePixels(image.width, image.height)
+                        com.pdfchemy.app.security.SecurityLimits.requireImageDecodePixels(image.width, image.height)
                         check(++count <= com.pdfchemy.app.security.SecurityLimits.MAX_OUTPUT_FILES)
                         val bitmap = SafePdfImage.decode(image)
                         try {
@@ -39,34 +39,38 @@ object PdfImageExtractorEngine {
     suspend fun extractImagesToZip(sourceFd: ParcelFileDescriptor, destFd: ParcelFileDescriptor): String = withContext(Dispatchers.IO) {
         var extractedCount = 0
         FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
-            val document = PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings())
-            FileOutputStream(destFd.fileDescriptor).use { destStream ->
-                val zos = ZipOutputStream(destStream)
-                for (pageIndex in 0 until document.numberOfPages) {
-                    val page = document.getPage(pageIndex)
-                    val resources = page.resources
-                    if (resources != null) {
-                        val xObjectNames = resources.xObjectNames
-                        for (xObjectName in xObjectNames) {
-                            val xObject = resources.getXObject(xObjectName)
-                            if (xObject is PDImageXObject) {
-                                try {
-                                    val bitmap = SafePdfImage.decode(xObject)
-                                    val entryName = "extracted_image_${System.currentTimeMillis()}_${extractedCount}.jpg"
-                                    zos.putNextEntry(ZipEntry(entryName))
-                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, zos)
-                                    zos.closeEntry()
-                                    extractedCount++
-                                } catch (e: Exception) {
-                                    // Ignore individual image errors
+            PDDocument.load(inputStream, com.pdfchemy.app.jail.JailMemory.settings()).use { document ->
+                FileOutputStream(destFd.fileDescriptor).use { destStream ->
+                    val zos = ZipOutputStream(destStream)
+                    for (pageIndex in 0 until document.numberOfPages) {
+                        val page = document.getPage(pageIndex)
+                        val resources = page.resources
+                        if (resources != null) {
+                            val xObjectNames = resources.xObjectNames
+                            for (xObjectName in xObjectNames) {
+                                val xObject = resources.getXObject(xObjectName)
+                                if (xObject is PDImageXObject) {
+                                    try {
+                                        val bitmap = SafePdfImage.decode(xObject)
+                                        try {
+                                            val entryName = "extracted_image_${System.currentTimeMillis()}_${extractedCount}.jpg"
+                                            zos.putNextEntry(ZipEntry(entryName))
+                                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, zos)
+                                            zos.closeEntry()
+                                            extractedCount++
+                                        } finally {
+                                            bitmap.recycle()
+                                        }
+                                    } catch (e: Exception) {
+                                        // Ignore individual image errors
+                                    }
                                 }
                             }
                         }
                     }
+                    zos.finish()
                 }
-                zos.finish()
             }
-            document.close()
         }
         "{\"extractedCount\": $extractedCount}"
     }

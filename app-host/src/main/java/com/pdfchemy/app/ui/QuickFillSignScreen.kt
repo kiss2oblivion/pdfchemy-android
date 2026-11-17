@@ -256,11 +256,11 @@ fun QuickFillSignScreen(
                     textToPlace = tempText
                     showTextDialog = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showTextDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showTextDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -328,7 +328,7 @@ fun QuickFillSignScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSignDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showSignDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -549,7 +549,7 @@ fun QuickFillSignScreen(
                                                 color = Color(annot.textColor)
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Icon(Icons.Rounded.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp), tint = Color.Red)
+                                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.desc_delete), modifier = Modifier.size(12.dp), tint = Color.Red)
                                         }
                                     }
                                 }
@@ -559,6 +559,18 @@ fun QuickFillSignScreen(
                 }
 
                 // Page Navigation Bar
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && totalPages > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = totalPages,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 if (totalPages > 1) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
@@ -572,7 +584,14 @@ fun QuickFillSignScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Page")
                         }
 
-                        Text("Page ${currentPageIndex + 1} of $totalPages", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Page ${currentPageIndex + 1} of $totalPages",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { showPageJumpDialog = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
 
                         IconButton(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },

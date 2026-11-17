@@ -17,7 +17,8 @@ import java.io.IOException
 class HostOutputTransaction(
     private val context: Context,
     targets: List<Uri>,
-    storage: BoundedWorkerStorage? = null
+    storage: BoundedWorkerStorage? = null,
+    previousPublicationOwner: Any? = null
 ) : Closeable {
     private val ownsStorage = storage == null
     private val storage = storage ?: BoundedWorkerStorage(context)
@@ -41,7 +42,11 @@ class HostOutputTransaction(
     init {
         require(targets.size <= minOf(SecurityLimits.MAX_BATCH_FDS, SecurityLimits.MAX_OUTPUT_FILES))
         require(targets.distinct().size == targets.size) { "Duplicate output destinations" }
-        com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
+        if (previousPublicationOwner == null) {
+            com.pdfchemy.app.security.FreshOutputRegistry.claimKnown(targets, publicationOwner)
+        } else {
+            com.pdfchemy.app.security.FreshOutputRegistry.transferKnown(targets, previousPublicationOwner, publicationOwner)
+        }
         try { repeat(targets.size) { producers.add(this.storage.create(BoundedWorkerStorage.Kind.OUTPUT)) } }
         catch (error: Throwable) { close(); throw error }
     }
@@ -71,6 +76,7 @@ class HostOutputTransaction(
                 if (escaped) escaped = false else if (char == '\\') escaped = true else if (char == '"') quoted = false
             } else when (char) {
                 '"' -> quoted = true
+                '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$char'")
                 '{', '[' -> { depth++; require(depth <= SecurityLimits.MAX_REQUEST_DEPTH) { "Result nesting quota exceeded" } }
                 '}', ']' -> { depth--; require(depth >= 0) { "Invalid worker result" } }
             }
@@ -184,6 +190,8 @@ class HostOutputTransaction(
                 }
                 handle.registerStream(stream).use {
                     stream.use { output ->
+                        currentCoroutineContext().ensureActive()
+                        val writer = CancellableProviderWriter.create(output)
                         var offset = 0L
                         while (offset < sizes[index]) {
                             currentCoroutineContext().ensureActive()
@@ -191,7 +199,7 @@ class HostOutputTransaction(
                                 minOf(buffer.size.toLong(), sizes[index] - offset).toInt(), offset)
                             if (count <= 0) throw IOException("Incomplete commit snapshot")
                             require(committed <= SecurityLimits.MAX_OUTPUT_BYTES - count) { "Commit quota exceeded" }
-                            output.write(buffer, 0, count)
+                            writer.write(buffer, count)
                             offset += count; committed += count
                         }
                     }
@@ -200,6 +208,11 @@ class HostOutputTransaction(
             completedNormally = true
             published = true
             com.pdfchemy.app.security.FreshOutputRegistry.published(targets, publicationOwner)
+        } catch (error: Exception) {
+            // Cancellation may close a provider stream between any readiness
+            // check and descriptor access, including the initial pipe probe.
+            currentCoroutineContext().ensureActive()
+            throw error
         } finally {
             watcher.cancel()
             handle.close()

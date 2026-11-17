@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.util.Matrix as PdfMatrix
 import org.json.JSONObject
 import java.io.File
@@ -193,16 +194,24 @@ object PdfDeskewEngineWorker {
         val sin = sin(rad).toFloat()
 
         val box = page.cropBox
-        val cx = box.lowerLeftX + box.width / 2f
-        val cy = box.lowerLeftY + box.height / 2f
+        val w = box.width
+        val h = box.height
+        require(w.isFinite() && h.isFinite() && w > 0f && h > 0f) { "Invalid crop dimensions" }
+        val cx = box.lowerLeftX + w / 2f
+        val cy = box.lowerLeftY + h / 2f
+        val rotatedWidth = abs(w * cos) + abs(h * sin)
+        val rotatedHeight = abs(w * sin) + abs(h * cos)
+        val scale = minOf(w / rotatedWidth, h / rotatedHeight)
 
         PDPageContentStream(doc, page, PDPageContentStream.AppendMode.PREPEND, false, false).use { cs ->
             cs.saveGraphicsState()
             val translateToCenter = PdfMatrix.getTranslateInstance(cx, cy)
+            val scaleMatrix = PdfMatrix(scale, 0f, 0f, scale, 0f, 0f)
             val rotateMatrix = PdfMatrix(cos, sin, -sin, cos, 0f, 0f)
             val translateBack = PdfMatrix.getTranslateInstance(-cx, -cy)
 
             cs.transform(translateToCenter)
+            cs.transform(scaleMatrix)
             cs.transform(rotateMatrix)
             cs.transform(translateBack)
         }

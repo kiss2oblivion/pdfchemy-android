@@ -60,8 +60,12 @@ object DocumentStager {
 
         if (sourceUri.scheme == "file") {
             val path = sourceUri.path
-            if (path != null && isPrivateAppPath(context, File(path), includeCacheAndFiles = false)) {
-                throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+            if (path != null) {
+                val file = File(path)
+                val canonical = runCatching { file.canonicalFile }.getOrNull()
+                if (canonical == null || isPrivateAppPath(context, canonical, includeCacheAndFiles = false)) {
+                    throw SecurityException("DocumentStager refused to stage private application path: $sourceUri")
+                }
             }
         }
 
@@ -290,7 +294,7 @@ object DocumentStager {
             var size = 0L
             val digest = MessageDigest.getInstance("SHA-256")
             file.outputStream().use { output ->
-                val buffer = ByteArray(8192)
+                val buffer = ByteArray(64 * 1024)
                 while (true) {
                     checkCancellation()
                     if (Thread.currentThread().isInterrupted) throw java.io.InterruptedIOException("Staging cancelled")
@@ -644,6 +648,8 @@ object DocumentStager {
         if (uri.scheme == "file") uri.path?.let { staged[it]?.let(::release) }
     }
     fun displayName(uri: Uri): String? = uri.path?.let(displayNames::get)
+    // Context overload preserves ephemeral metadata and lease-aware cleanup.
+    fun displayName(context: Context, uri: Uri): String? = displayName(uri)
     fun originalSourceFor(uri: Uri): Uri? {
         if (uri.scheme == "file") {
             val path = uri.path ?: return null

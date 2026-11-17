@@ -60,7 +60,7 @@ object ToolRegistry {
         ToolEntry(R.string.menu_delete_pages, R.string.menu_delete_pages_desc, Icons.Rounded.Delete, Screen.DeletePages, listOf("remove pages", "delete pages")),
         ToolEntry(R.string.menu_rotate_pages, R.string.menu_rotate_pages_desc, Icons.AutoMirrored.Rounded.RotateRight, Screen.RotatePdf, listOf("turn pages", "orientation", "rotate pages")),
         ToolEntry(R.string.menu_reflow_reader, R.string.menu_reflow_reader_desc, Icons.AutoMirrored.Rounded.MenuBook, Screen.ReflowReader(), listOf("reflow", "text to speech", "tts", "audio export", "wav", "listen", "read aloud")),
-        ToolEntry(R.string.menu_page_organizer, R.string.menu_page_organizer_desc, Icons.Rounded.ViewModule, Screen.PageOrganizer, listOf("reorder", "move pages", "page thumbnails", "insert blank page")),
+        ToolEntry(R.string.menu_page_organizer, R.string.menu_page_organizer_desc, Icons.Rounded.ViewModule, Screen.PageOrganizer(), listOf("reorder", "move pages", "page thumbnails", "insert blank page")),
         ToolEntry(R.string.menu_watermark_pdf, R.string.menu_watermark_pdf_desc, Icons.AutoMirrored.Rounded.BrandingWatermark, Screen.Watermark, listOf("watermark", "add logo")),
         ToolEntry(R.string.menu_page_number_pdf, R.string.menu_page_number_pdf_desc, Icons.Rounded.Numbers, Screen.PageNumber, listOf("page numbers", "pagination")),
         ToolEntry(R.string.menu_page_layout, R.string.menu_page_layout_desc, Icons.Rounded.Dashboard, Screen.PageLayout, listOf("resize paper", "page size", "a4", "letter")),
@@ -124,17 +124,21 @@ fun ToolSearchBar(
 
     val context = androidx.compose.ui.platform.LocalContext.current
     // Read localized resources on composition so locale changes refresh matching.
-    val filteredTools = ToolRegistry.search(query) { context.getString(it) }
+    val filteredTools = if (query.isBlank()) ToolRegistry.allTools else ToolRegistry.search(query) { context.getString(it) }
 
     // Material's compact SearchBar input has a fixed height. Use a wrapping
     // field at enlarged fonts so its query and placeholder remain readable.
     if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.2f) {
+        androidx.activity.compose.BackHandler(enabled = active) {
+            active = false
+            query = ""
+        }
         Column(modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             OutlinedTextField(value = query, onValueChange = { query = it; active = true },
                 label = { Text(stringResource(R.string.tool_search_hint)) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
-                    if (query.isNotEmpty()) IconButton(onClick = { query = ""; active = false }) {
+                    if (query.isNotEmpty() || active) IconButton(onClick = { query = ""; active = false }) {
                         Icon(Icons.Default.Close, stringResource(R.string.clear))
                     }
                 }, modifier = Modifier.fillMaxWidth(), maxLines = 3)

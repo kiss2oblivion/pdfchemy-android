@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 object PdfGateway {
     class WorkerAdmissionBusyException(message: String = "Jail 429: BUSY") : IllegalStateException(message)
@@ -25,6 +25,13 @@ object PdfGateway {
     class WorkerBindingException(message: String) : IllegalStateException(message)
     class WorkerTimeoutException(message: String) : IllegalStateException(message)
     class WorkerFailure(val errorCode: Int, message: String) : IllegalStateException(message)
+
+    /** Convert only this boundary's own timeout; caller and nested cancellation keep their identity. */
+    internal suspend fun <T : Any> awaitWorkerDeadline(
+        timeoutMillis: Long,
+        message: String,
+        block: suspend () -> T
+    ): T = withTimeoutOrNull(timeoutMillis) { block() } ?: throw WorkerTimeoutException(message)
 
     private suspend fun request(
         context: Context,
@@ -57,7 +64,11 @@ object PdfGateway {
                 inputLeases.add(stagedLease.lease)
             }
             require(staged.sumOf { it.size } <= SecurityLimits.MAX_BATCH_INPUT_BYTES)
-            val inputs = staged.map { context.contentResolver.openFileDescriptor(it.uri, "r")!!.also(descriptors::add) }
+            val inputs = staged.map {
+                (context.contentResolver.openFileDescriptor(it.uri, "r")
+                    ?: throw java.io.FileNotFoundException("Cannot open descriptor for staged document: ${it.uri}"))
+                    .also(descriptors::add)
+            }
             val outputs = outputTransaction.workerDescriptors
 
             suspend fun bind(className: String): IBinder {
@@ -80,11 +91,7 @@ object PdfGateway {
                     throw WorkerBindingException("Failed to bind worker service: $className")
                 }
                 connections.add(connection)
-                return try {
-                    withTimeout(30_000L) { channel.receive() }
-                } catch (t: kotlinx.coroutines.TimeoutCancellationException) {
-                    throw WorkerTimeoutException("Service binding timed out after 30s: $className")
-                }
+                return awaitWorkerDeadline(30_000L,"Service binding timed out after 30s: $className") { channel.receive() }
             }
 
             val comicExport = operation == "COMIC_BOOK" &&
@@ -123,7 +130,8 @@ object PdfGateway {
             }
 
             val rawResult = try {
-                withTimeout(SecurityLimits.WORKER_DEADLINE_MS + 5000) {
+                awaitWorkerDeadline(SecurityLimits.WORKER_DEADLINE_MS + 5000,
+                    "Worker response timed out after ${SecurityLimits.WORKER_DEADLINE_MS + 5000}ms: $operation") {
                     try { invoke(jail!!, operationToken, staged, inputs, outputs, renderer, scratch, callback) }
                     finally { outputTransaction.releaseWorkerDescriptors() }
                     response.await()

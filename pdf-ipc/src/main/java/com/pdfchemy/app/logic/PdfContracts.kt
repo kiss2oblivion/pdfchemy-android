@@ -42,7 +42,12 @@ data class FormFieldInfo(
     val value: String,
     val possibleOptions: List<String> = emptyList(),
     val isReadOnly: Boolean = false,
-    val isRequired: Boolean = false
+    val isRequired: Boolean = false,
+    val pageIndex: Int = 0,
+    val xRatio: Float = 0f,
+    val yRatio: Float = 0f,
+    val widthRatio: Float = 0f,
+    val heightRatio: Float = 0f
 )
 
 data class InteractiveFieldSpec(

@@ -50,7 +50,8 @@ class AnnotationExportParityTest {
                 val mod = PageModification(0, rotationDegrees=90,
                     drawings=listOf(DrawingPath(points=listOf(DrawingPoint(.1f,.2f),DrawingPoint(.3f,.2f)),color=Color.RED,strokeWidth=20f)),
                     textAnnotations=listOf(TextAnnotation(text="TEXT", xRatio=.2f,yRatio=.4f,fontSize=28f,textColor=Color.BLUE)),
-                    stamps=listOf(StampAnnotation(type=StampType.APPROVED,xRatio=.7f,yRatio=.7f,scale=2f,rotation=0f)),
+                    stamps=listOf(StampAnnotation(type=StampType.APPROVED,xRatio=.7f,yRatio=.7f,scale=2f,rotation=0f,customText="REVIEWED")),
+                    shapes=listOf(ShapeAnnotation(type=ShapeType.RECTANGLE,startXRatio=.6f,startYRatio=.15f,endXRatio=.9f,endYRatio=.3f,strokeColor=Color.RED,strokeWidth=20f)),
                     redactions=if (redact) listOf(RedactionBox(0,RectF(.45f,.45f,.55f,.55f),overlayLabel="HIDDEN")) else emptyList())
                 val base = PdfEditor.renderPageBitmap(context,Uri.fromFile(source),0,600)!!; held += base
                 val overlay = AnnotationRenderer.render(mod,base.width,base.height)!!; held += overlay
@@ -75,5 +76,25 @@ class AnnotationExportParityTest {
                 }
             } finally { held.distinct().forEach { it.recycle() }; source.delete(); output.delete() }
         }
+    }
+
+    @Test(timeout=60000) fun shapeOnlyExportUsesTheSameCoordinatesAsPreview() = runBlocking<Unit> {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val source = File.createTempFile("shape_source_", ".pdf", context.cacheDir)
+        val output = File.createTempFile("shape_export_", ".pdf", context.cacheDir)
+        val held = mutableListOf<Bitmap>()
+        try {
+            source.writeBytes(fixture(0))
+            val mod = PageModification(0, shapes = listOf(ShapeAnnotation(
+                type = ShapeType.ARROW, startXRatio = .15f, startYRatio = .8f,
+                endXRatio = .8f, endYRatio = .2f, strokeColor = Color.RED, strokeWidth = 20f)))
+            val preview = AnnotationRenderer.render(mod,600,900)!!; held += preview
+            assertTrue(PdfEditor.exportModifiedPdf(context,Uri.fromFile(source),Uri.fromFile(output),mapOf(0 to mod)).getOrThrow())
+            val actual = PdfEditor.renderPageBitmap(context,Uri.fromFile(output),0,600)!!; held += actual
+            val expectedCentre = centroid(preview,0)
+            val actualCentre = centroid(actual,0)
+            assertEquals(expectedCentre.first,actualCentre.first,.025)
+            assertEquals(expectedCentre.second,actualCentre.second,.025)
+        } finally { held.distinct().forEach { it.recycle() }; source.delete(); output.delete() }
     }
 }

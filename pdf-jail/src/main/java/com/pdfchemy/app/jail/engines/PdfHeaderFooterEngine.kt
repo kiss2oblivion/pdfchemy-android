@@ -73,7 +73,7 @@ object PdfHeaderFooterEngine {
                         .replace("{title}", title)
                 }
 
-                text = text.filter { it.code in 32..126 } // ASCII safe
+                text = sanitizeForType1(text)
                 if (text.isBlank()) continue
 
                 val textWidth = (font.getStringWidth(text) / 1000f) * fontSize
@@ -134,5 +134,26 @@ object PdfHeaderFooterEngine {
             try { inputStream?.close() } catch (_: Exception) {}
             tempFile?.delete()
         }
+    }
+
+    private fun sanitizeForType1(input: String): String {
+        if (input.isEmpty()) return ""
+        val commonPunctuation = input
+            .replace('\u201C', '"')
+            .replace('\u201D', '"')
+            .replace('\u2018', '\'')
+            .replace('\u2019', '\'')
+            .replace('\u2014', '-')
+            .replace('\u2013', '-')
+            .replace('\u201E', '"')
+            .replace("\u2026", "...")
+            .replace('ș', 's').replace('Ș', 'S')
+            .replace('ț', 't').replace('Ț', 'T')
+            .replace('ł', 'l').replace('Ł', 'L')
+            .replace('đ', 'd').replace('Đ', 'D')
+
+        val normalized = java.text.Normalizer.normalize(commonPunctuation, java.text.Normalizer.Form.NFD)
+        val stripped = normalized.replace("\\p{M}".toRegex(), "")
+        return stripped.filter { it.code in 32..126 || it.code in 160..255 }
     }
 }

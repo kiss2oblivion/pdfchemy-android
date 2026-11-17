@@ -48,7 +48,9 @@ fun DocumentSanitizerScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var auditReport by remember { mutableStateOf<SanitizerAuditReport?>(null) }
     var isAuditing by remember { mutableStateOf(false) }
     var isSanitizing by remember { mutableStateOf(false) }
@@ -80,9 +82,9 @@ fun DocumentSanitizerScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        if (initialPdfUri != null) {
-            runAudit(initialPdfUri)
+    LaunchedEffect(effectiveInitialPdfUri) {
+        if (effectiveInitialPdfUri != null) {
+            runAudit(effectiveInitialPdfUri)
         }
     }
 
@@ -146,6 +148,27 @@ fun DocumentSanitizerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    val report = auditReport
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val summary = buildString {
+                                    appendLine("Status: ${if (report.isClean) "Clean" else "${report.threatsFound} threats detected"}")
+                                    appendLine("JavaScript Triggers: ${report.jsCount}")
+                                    appendLine("Launch Actions: ${report.launchActionsCount}")
+                                    appendLine("Other Actions: ${report.otherActionsCount}")
+                                    append("Attachments: ${report.attachmentCount}")
+                                }
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Sanitizer Audit Report", summary))
+                                Toast.makeText(context, context.getString(R.string.msg_audit_report_copied), Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_audit_report))
+                        }
                     }
                 }
             )
@@ -246,7 +269,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge JavaScript Payload Triggers", modifier = Modifier.weight(1f).padding(end = 12.dp))
+                            Text(stringResource(R.string.sanitizer_purge_js), modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeJs, onCheckedChange = { purgeJs = it })
                         }
                         Row(
@@ -254,7 +277,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Launch & URL Actions", modifier = Modifier.weight(1f).padding(end = 12.dp))
+                            Text(stringResource(R.string.sanitizer_purge_actions), modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeActions, onCheckedChange = { purgeActions = it })
                         }
                         Row(
@@ -262,7 +285,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Hidden Embedded Files", modifier = Modifier.weight(1f).padding(end = 12.dp))
+                            Text(stringResource(R.string.sanitizer_purge_embedded), modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeAttachments, onCheckedChange = { purgeAttachments = it })
                         }
                         Row(
@@ -270,7 +293,7 @@ fun DocumentSanitizerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Purge Tracking Metadata & IDs", modifier = Modifier.weight(1f).padding(end = 12.dp))
+                            Text(stringResource(R.string.sanitizer_purge_metadata), modifier = Modifier.weight(1f).padding(end = 12.dp))
                             Switch(checked = purgeMetadata, onCheckedChange = { purgeMetadata = it })
                         }
                     }

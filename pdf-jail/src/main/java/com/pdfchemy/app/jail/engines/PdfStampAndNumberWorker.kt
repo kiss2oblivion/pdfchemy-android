@@ -15,8 +15,8 @@ object PdfStampAndNumberWorker {
         val params = JSONObject(paramsJson)
         val text = params.optString("text", "")
         val rotationDegrees = params.optDouble("rotationDegrees", 45.0).toFloat()
-        val opacity = params.optDouble("opacity", 0.3).toFloat()
-        val fontSize = params.optDouble("fontSize", 40.0).toFloat()
+        val opacity = params.optDouble("opacity", 0.3).toFloat().coerceIn(0.01f, 1.0f)
+        val fontSize = params.optDouble("fontSize", 40.0).toFloat().coerceIn(8f, 200f)
         val isTiled = params.optBoolean("isTiled", false)
 
         var doc: PDDocument? = null
@@ -44,11 +44,11 @@ object PdfStampAndNumberWorker {
                             val textHeight = font.fontDescriptor.fontBoundingBox.height / 1000f * fontSize
 
                             if (isTiled) {
-                                val xStep = textWidth * 1.5f
-                                val yStep = textHeight * 3.0f
+                                val xStep = (textWidth * 1.5f).toInt().coerceAtLeast(36)
+                                val yStep = (textHeight * 3.0f).toInt().coerceAtLeast(36)
 
-                                for (y in 0..pageHeight.toInt() step yStep.toInt()) {
-                                    for (x in 0..pageWidth.toInt() step xStep.toInt()) {
+                                for (y in 0..pageHeight.toInt() step yStep) {
+                                    for (x in 0..pageWidth.toInt() step xStep) {
                                         cs.saveGraphicsState()
                                         val rad = Math.toRadians(rotationDegrees.toDouble())
                                         val matrix = Matrix.getRotateInstance(rad, x.toFloat(), y.toFloat())
@@ -102,8 +102,27 @@ object PdfStampAndNumberWorker {
         val position = params.optString("position", "BOTTOM_CENTER")
         val format = params.optString("format", "PAGE_X_OF_Y")
         val skipFirstPage = params.optBoolean("skipFirstPage", false)
+        val startNumber = params.optInt("startNumber", 1)
+        val prefix = params.optString("prefix", "")
+        val suffix = params.optString("suffix", "")
         val fontSize = params.optDouble("fontSize", 10.0).toFloat()
         val marginPts = params.optDouble("marginPts", 36.0).toFloat()
+
+        fun toRoman(number: Int, uppercase: Boolean): String {
+            if (number <= 0) return number.toString()
+            val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+            val romanLiterals = arrayOf("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
+            val sb = StringBuilder()
+            var num = number
+            for (idx in values.indices) {
+                while (num >= values[idx]) {
+                    num -= values[idx]
+                    sb.append(romanLiterals[idx])
+                }
+            }
+            val res = sb.toString()
+            return if (uppercase) res else res.lowercase()
+        }
 
         var doc: PDDocument? = null
         try {
@@ -122,11 +141,15 @@ object PdfStampAndNumberWorker {
                     val pageWidth = mediaBox.width
                     val pageHeight = mediaBox.height
 
+                    val effectiveIndex = startNumber + i
                     val pageNumberText = when (format) {
-                        "SIMPLE" -> "${i + 1}"
-                        "PAGE_X_OF_Y" -> "Page ${i + 1} of $totalPages"
-                        "SLASH" -> "${i + 1} / $totalPages"
-                        else -> "Page ${i + 1} of $totalPages"
+                        "SIMPLE" -> "$effectiveIndex"
+                        "PAGE_X_OF_Y" -> "Page $effectiveIndex of $totalPages"
+                        "SLASH" -> "$effectiveIndex / $totalPages"
+                        "ROMAN_LOWER" -> toRoman(effectiveIndex, false)
+                        "ROMAN_UPPER" -> toRoman(effectiveIndex, true)
+                        "CUSTOM" -> "$prefix$effectiveIndex$suffix"
+                        else -> "Page $effectiveIndex of $totalPages"
                     }
 
                     val textWidth = (font.getStringWidth(pageNumberText) / 1000f) * fontSize
@@ -169,7 +192,7 @@ object PdfStampAndNumberWorker {
         val prefix = params.optString("prefix", "")
         val suffix = params.optString("suffix", "")
         val startNumber = params.optInt("startNumber", 1)
-        val digits = params.optInt("digits", 6)
+        val digits = params.optInt("digits", 6).coerceIn(1, 16)
         val position = params.optString("position", "BOTTOM_RIGHT")
         val fontSize = params.optDouble("fontSize", 10.0).toFloat()
         val marginPts = params.optDouble("marginPts", 36.0).toFloat()

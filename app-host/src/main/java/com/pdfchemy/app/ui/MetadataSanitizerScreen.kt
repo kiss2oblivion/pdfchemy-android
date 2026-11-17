@@ -48,7 +48,9 @@ fun MetadataSanitizerScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     var metadataInfo by remember { mutableStateOf<DocumentMetadataInfo?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -86,8 +88,8 @@ fun MetadataSanitizerScreen(
         }
     }
 
-    LaunchedEffect(initialPdfUri) {
-        initialPdfUri?.let {
+    LaunchedEffect(effectiveInitialPdfUri) {
+        effectiveInitialPdfUri?.let {
             selectedPdfUri = it
             loadMetadata(it)
         }
@@ -140,6 +142,32 @@ fun MetadataSanitizerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    if (metadataInfo != null) {
+                        IconButton(
+                            onClick = {
+                                val info = metadataInfo ?: return@IconButton
+                                val summaryText = buildString {
+                                    appendLine("PDF Metadata Summary")
+                                    appendLine("Title: ${info.title}")
+                                    appendLine("Author: ${info.author}")
+                                    appendLine("Subject: ${info.subject}")
+                                    appendLine("Keywords: ${info.keywords}")
+                                    appendLine("Creator: ${info.creator}")
+                                    appendLine("Producer: ${info.producer}")
+                                    appendLine("Created: ${info.creationDate}")
+                                    appendLine("Modified: ${info.modificationDate}")
+                                    appendLine("XMP Metadata: ${info.hasXmpMetadata}")
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF Metadata", summaryText))
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_metadata_summary_copied), android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_metadata_summary))
+                        }
                     }
                 }
             )
@@ -371,7 +399,7 @@ fun MetadataSanitizerScreen(
                                         producer = ""
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     },
-                                    label = { Text("Anonymize", fontSize = 11.sp) },
+                                    label = { Text(stringResource(R.string.action_anonymize), fontSize = 11.sp) },
                                     leadingIcon = { Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(14.dp)) }
                                 )
                                 AssistChip(
@@ -384,7 +412,7 @@ fun MetadataSanitizerScreen(
                                         producer = ""
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     },
-                                    label = { Text("Clear All", fontSize = 11.sp) },
+                                    label = { Text(stringResource(R.string.clear_all), fontSize = 11.sp) },
                                     leadingIcon = { Icon(Icons.Rounded.DeleteOutline, contentDescription = null, modifier = Modifier.size(14.dp)) }
                                 )
                                 AssistChip(
@@ -399,7 +427,7 @@ fun MetadataSanitizerScreen(
                                         }
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     },
-                                    label = { Text("Reset", fontSize = 11.sp) },
+                                    label = { Text(stringResource(R.string.action_reset), fontSize = 11.sp) },
                                     leadingIcon = { Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(14.dp)) }
                                 )
                             }

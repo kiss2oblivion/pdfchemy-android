@@ -72,7 +72,7 @@ object PdfManipulator {
                 )
                 destUris.toList()
             } catch (e: Exception) {
-                createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
+                createdOutputs.forEach { runCatching { OutputPolicy.deleteIfFresh(context, it.uri) } }
                 com.pdfchemy.app.utils.AppLogger.e("Failed to split PDF via Gateway", e)
                 throw e
             }
@@ -117,15 +117,10 @@ object PdfManipulator {
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
-                try {
-                    PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
-                } catch (e: Exception) {
-                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
-                    throw e
-                }
+                PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
+            createdOutputs.forEach { runCatching { OutputPolicy.deleteIfFresh(context, it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by blank pages via Gateway", e)
             throw e
         }
@@ -166,15 +161,10 @@ object PdfManipulator {
                 val splitParamsJson = org.json.JSONObject().apply {
                     put("multiGroups", groupsArray.toString())
                 }.toString()
-                try {
-                    PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
-                } catch (e: Exception) {
-                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
-                    throw e
-                }
+                PdfGateway.executeEngineBatch(context, "SPLIT", listOf(sourceUri), outputUris, splitParamsJson)
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
+            createdOutputs.forEach { runCatching { OutputPolicy.deleteIfFresh(context, it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Error splitting by bookmarks via Gateway", e)
             throw e
         }
@@ -309,15 +299,10 @@ object PdfManipulator {
                     put("scale", scale.toDouble())
                 }.toString()
 
-                try {
-                    PdfGateway.executeEngineBatch(context, "PDF_TO_IMAGES", listOf(sourceUri), outputUris, paramsJson)
-                } catch (e: Exception) {
-                    createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
-                    throw e
-                }
+                PdfGateway.executeEngineBatch(context, "PDF_TO_IMAGES", listOf(sourceUri), outputUris, paramsJson)
             }
         } catch (e: Exception) {
-            createdOutputs.forEach { runCatching { if (it.delete()) OutputPolicy.unregisterFreshCopy(it.uri) } }
+            createdOutputs.forEach { runCatching { OutputPolicy.deleteIfFresh(context, it.uri) } }
             com.pdfchemy.app.utils.AppLogger.e("Failed to convert PDF to images via Gateway", e)
             throw e
         }

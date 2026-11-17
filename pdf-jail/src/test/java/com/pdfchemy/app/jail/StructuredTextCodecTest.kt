@@ -92,4 +92,12 @@ class StructuredTextCodecTest {
         for (input in listOf("<!DOCTYPE root><root>PUBLIC</root>", "<!DOCTYPE root [<!ENTITY x SYSTEM 'file:///private/payload'>]><root>&x;</root>"))
             assertTrue(TextFormatConverter.convert(input, Format.XML, Format.JSON).isFailure)
     }
+    @Test fun csvExportNeutralizesSpreadsheetFormulaTriggers() = runBlocking<Unit> {
+        val input = "[{\"formula\":\"=1+1\",\"cmd\":\"@SUM(A1)\",\"num\":-42,\"text\":\"Normal\"}]"
+        val csv = convert(input, Format.JSON, Format.CSV)
+        assertTrue(csv.contains("'=1+1"))
+        assertTrue(csv.contains("'@SUM(A1)"))
+        assertTrue(csv.contains("-42"))
+        assertTrue(csv.contains("Normal"))
+    }
 }

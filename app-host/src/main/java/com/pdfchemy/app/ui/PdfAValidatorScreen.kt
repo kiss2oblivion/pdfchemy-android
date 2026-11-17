@@ -2,8 +2,6 @@ package com.pdfchemy.app.ui
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +26,6 @@ import com.pdfchemy.app.logic.CheckSeverity
 import com.pdfchemy.app.logic.PdfAReport
 import com.pdfchemy.app.logic.PdfArchiveValidatorEngine
 import com.pdfchemy.app.utils.FileUtils
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +38,8 @@ fun PdfAValidatorScreen(
     val context = LocalContext.current
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var report by remember { mutableStateOf<PdfAReport?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 
@@ -72,9 +70,27 @@ fun PdfAValidatorScreen(
                     }
                 },
                 actions = {
+                    if (report != null) {
+                        IconButton(
+                            onClick = {
+                                val r = report ?: return@IconButton
+                                val reportText = buildString {
+                                    appendLine("PDF/A Compliance Report: ${r.certificationStatus} (${r.checks.count { it.isPassed }}/${r.checks.size} passed)")
+                                    r.checks.forEach { c ->
+                                        appendLine("[${if (c.isPassed) "PASS" else "FAIL"}] ${c.rule}: ${c.details}")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PDF/A Report", reportText))
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_pdfa_report_copied), android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_pdfa_report))
+                        }
+                    }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { auditGeneration++ }) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Re-scan")
+                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.desc_rescan))
                         }
                     }
                 }

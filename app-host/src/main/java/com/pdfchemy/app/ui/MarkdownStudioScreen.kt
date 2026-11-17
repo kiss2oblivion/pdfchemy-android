@@ -122,7 +122,7 @@ fun MarkdownStudioScreen(
             if (result.isSuccess) {
                 markdownText = result.getOrThrow()
                 documentTitle = FileUtils.getFileName(context, uri)?.removeSuffix(".pdf") ?: "Extracted Doc"
-                viewModel.showSuccessToast(
+                viewModel.notifySuccess(
                     context.getString(R.string.title_pdf_to_md_success),
                     context.getString(R.string.desc_pdf_to_md_success)
                 )
@@ -166,6 +166,34 @@ fun MarkdownStudioScreen(
         }
     }
 
+    var showClearConfirmDialog by remember { mutableStateOf(false) }
+    val wordCount = remember(markdownText) {
+        if (markdownText.isBlank()) 0 else markdownText.trim().split(Regex("\\s+")).size
+    }
+
+    if (showClearConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmDialog = false },
+            title = { Text(stringResource(R.string.dialog_clear_markdown_title)) },
+            text = { Text(stringResource(R.string.dialog_clear_markdown_desc)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        markdownText = ""
+                        showClearConfirmDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.action_clear), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -176,6 +204,18 @@ fun MarkdownStudioScreen(
                     }
                 },
                 actions = {
+                    if (markdownText.isNotBlank()) {
+                        IconButton(onClick = {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                            clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Markdown", markdownText))
+                            android.widget.Toast.makeText(context, context.getString(R.string.msg_markdown_copied), android.widget.Toast.LENGTH_SHORT).show()
+                        }) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_markdown))
+                        }
+                        IconButton(onClick = { showClearConfirmDialog = true }) {
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.action_clear), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
                     IconButton(onClick = { openFileLauncher.launch(arrayOf("text/*", "application/octet-stream")) }) {
                         Icon(Icons.Rounded.FolderOpen, contentDescription = stringResource(R.string.btn_open_file))
                     }
@@ -202,7 +242,8 @@ fun MarkdownStudioScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 FilterChip(
                     selected = viewMode == MarkdownViewMode.EDITOR,
@@ -226,6 +267,12 @@ fun MarkdownStudioScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
+            Text(
+                text = "$wordCount words · ${markdownText.length} chars",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+            )
 
             // Quick Formatting Toolbar
             Row(

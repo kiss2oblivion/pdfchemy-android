@@ -78,6 +78,12 @@ class EditorSession(
         pushAction(pageIndex, currentModifications + (pageIndex to updated))
     }
 
+    fun addShape(pageIndex: Int, shape: ShapeAnnotation) {
+        val current = getModification(pageIndex)
+        val updated = current.copy(shapes = current.shapes + shape)
+        pushAction(pageIndex, currentModifications + (pageIndex to updated))
+    }
+
     fun addRedaction(pageIndex: Int, redaction: RedactionBox) {
         val current = getModification(pageIndex)
         val updated = current.copy(redactions = current.redactions + redaction)

@@ -178,7 +178,7 @@ fun OrganizeCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     title = stringResource(R.string.menu_page_organizer),
                     subtitle = stringResource(R.string.menu_page_organizer_desc),
                     icon = Icons.Rounded.ViewModule,
-                    onClick = { onNavigate(Screen.PageOrganizer) }
+                    onClick = { onNavigate(Screen.PageOrganizer()) }
                 )
             }
 
@@ -389,13 +389,20 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.desc_back)) }
+                },
+                actions = {
+                    if (selectedFiles.isNotEmpty()) {
+                        IconButton(onClick = { selectedFiles = emptyList() }) {
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.clear_all), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 }
             )
         },
         floatingActionButton = {
             if (selectedFiles.size >= 2) {
                 ExtendedFloatingActionButton(
-                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "merged")) },
+                    onClick = { createDocLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedFiles.firstOrNull()?.uri, "merged")) },
                     icon = { Icon(Icons.Rounded.Merge, stringResource(R.string.desc_merge)) },
                     text = { Text(stringResource(R.string.merge)) }
                 )
@@ -420,9 +427,9 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     Text(stringResource(R.string.select_pdfs))
                 }
                 FilledTonalButton(
-                    onClick = { 
+                    onClick = {
                         viewModel.refreshHistory()
-                        showHistorySheet = true 
+                        showHistorySheet = true
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -454,9 +461,9 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 .shadow(elevation, RoundedCornerShape(12.dp))
                                 .pointerInput(item) {
                                     detectDragGesturesAfterLongPress(
-                                        onDragStart = { 
+                                        onDragStart = {
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            isDragging = true 
+                                            isDragging = true
                                             accumulatedY = 0f
                                         },
                                         onDragEnd = { isDragging = false },
@@ -542,7 +549,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = "Remove file", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_remove_file), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
@@ -556,7 +563,7 @@ fun MergePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: () -> Unit) {
+fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onNavigate: (Screen) -> Unit = {}, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
@@ -566,6 +573,13 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
     }
     var extractMode by remember { mutableStateOf(0) } // 0 = All, 1 = Custom Range
     var customRange by remember { mutableStateOf("") }
+
+    LaunchedEffect(initialUri) {
+        if (initialUri != null) {
+            val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, initialUri) ?: "Document.pdf"
+            selectedFile = PdfItem(initialUri, name)
+        }
+    }
 
     val filePickerLauncher = rememberVanguardPdfPicker { uri ->
         val name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri) ?: "Document.pdf"
@@ -635,6 +649,15 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
                     }
                 }
 
+                OutlinedButton(
+                    onClick = { onNavigate(Screen.PageOrganizer(file.uri)) },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Icon(Icons.Rounded.ViewModule, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.menu_page_organizer))
+                }
+
                 Text(stringResource(R.string.extraction_options), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -678,9 +701,12 @@ fun SplitPdfScreen(viewModel: MainViewModel, initialUri: Uri? = null, onBack: ()
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedPdfName by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
+    var selectedPdfName by remember {
+        mutableStateOf<String?>(continuityUri?.let { com.pdfchemy.app.utils.FileUtils.getFileName(context, it) })
+    }
     val uiState by viewModel.uiState.collectAsState()
 
     val directoryPickerLauncher = rememberLauncherForActivityResult(
@@ -811,7 +837,7 @@ fun ExtractImagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+fun DeletePagesScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
@@ -851,8 +877,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ExtendedFloatingActionButton(
                     onClick = {
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
-                        val originalName = com.pdfchemy.app.utils.FileUtils.getFileName(context, file.uri) ?: context.getString(R.string.default_document_name)
-                        val suggestedName = "${originalName.substringBeforeLast(".")}_deleted.pdf"
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, file.uri, "deleted")
                         createDocumentLauncher.launch(suggestedName)
                     },
                     icon = { Icon(Icons.Rounded.Delete, stringResource(R.string.desc_delete)) },
@@ -865,7 +890,8 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
@@ -889,6 +915,15 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 }
 
                 VisualPageSelector(file.uri, pagesToDelete) { pagesToDelete = it }
+                OutlinedButton(
+                    onClick = { onNavigate(Screen.PageOrganizer(file.uri)) },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Icon(Icons.Rounded.ViewModule, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.menu_page_organizer))
+                }
+
                 Text(stringResource(R.string.pages_to_delete), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
 
                 OutlinedTextField(
@@ -905,7 +940,7 @@ fun DeletePagesScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+fun RotatePdfScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit = {}, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler { onBack() }
     val context = LocalContext.current
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
@@ -945,9 +980,10 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         floatingActionButton = {
             if (selectedFile != null) {
                 ExtendedFloatingActionButton(
-                    onClick = { 
+                    onClick = {
                         val file = selectedFile ?: return@ExtendedFloatingActionButton
-                        saveFileLauncher.launch("rotated_${file.name}") 
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, file.uri, "rotated")
+                        saveFileLauncher.launch(suggestedName)
                     },
                     icon = { Icon(Icons.AutoMirrored.Rounded.RotateRight, contentDescription = stringResource(R.string.desc_save)) },
                     text = { Text(stringResource(R.string.rotate_save)) },
@@ -985,8 +1021,17 @@ fun RotatePdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     }
                 }
 
+                OutlinedButton(
+                    onClick = { onNavigate(Screen.PageOrganizer(file.uri)) },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Icon(Icons.Rounded.ViewModule, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.menu_page_organizer))
+                }
+
                 Text(stringResource(R.string.rotation_angle), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

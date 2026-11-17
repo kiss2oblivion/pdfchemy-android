@@ -6,11 +6,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PhotoCamera
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
 
 import java.io.File
@@ -30,6 +32,7 @@ import androidx.core.content.FileProvider
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.pdfchemy.app.R
+import com.pdfchemy.app.utils.FileUtils
 
 fun createTempImageUri(context: android.content.Context): Uri {
     val tempFile = File(context.cacheDir, "scans/scan_${System.currentTimeMillis()}.jpg")
@@ -81,7 +84,14 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    if (selectedImages.isNotEmpty()) {
+                        IconButton(onClick = { selectedImages = emptyList() }) {
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.desc_clear_all_images), tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             )
@@ -90,7 +100,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             if (selectedImages.isNotEmpty()) {
                 ExtendedFloatingActionButton(
                     onClick = { createPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, null, "images")) },
-                    icon = { Icon(Icons.Rounded.PictureAsPdf, contentDescription = "Convert") },
+                    icon = { Icon(Icons.Rounded.PictureAsPdf, contentDescription = stringResource(R.string.action_convert)) },
                     text = { Text(stringResource(R.string.convert_to_pdf)) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -122,7 +132,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         .defaultMinSize(minHeight = 48.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = "Gallery", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.AddPhotoAlternate, contentDescription = stringResource(R.string.action_gallery), modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.gallery),
@@ -147,7 +157,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     ),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
-                    Icon(Icons.Rounded.PhotoCamera, contentDescription = "Take Photo", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.PhotoCamera, contentDescription = stringResource(R.string.action_take_photo), modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.camera),
@@ -167,7 +177,7 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(selectedImages, key = { it.toString() }, contentType = { "imageItem" }) { uri ->
+                    itemsIndexed(selectedImages, key = { _, uri -> uri.toString() }, contentType = { _, _ -> "imageItem" }) { index, uri ->
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                             modifier = Modifier.fillMaxWidth()
@@ -178,24 +188,62 @@ fun ImagesToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             ) {
                                 IsolatedImage(
                                     model = uri,
-                                    contentDescription = "Selected Image",
+                                    contentDescription = stringResource(R.string.desc_selected_image),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .size(64.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(Color.Black.copy(alpha = 0.1f))
                                 )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = uri.lastPathSegment ?: "Image",
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1
-                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.reader_page_content_desc, index + 1),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = FileUtils.getFileName(context, uri) ?: uri.lastPathSegment ?: "Image",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        if (index > 0) {
+                                            val list = selectedImages.toMutableList()
+                                            val temp = list[index]
+                                            list[index] = list[index - 1]
+                                            list[index - 1] = temp
+                                            selectedImages = list
+                                        }
+                                    },
+                                    enabled = index > 0,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Text("▲", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (index > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                                }
+                                IconButton(
+                                    onClick = {
+                                        if (index < selectedImages.size - 1) {
+                                            val list = selectedImages.toMutableList()
+                                            val temp = list[index]
+                                            list[index] = list[index + 1]
+                                            list[index + 1] = temp
+                                            selectedImages = list
+                                        }
+                                    },
+                                    enabled = index < selectedImages.size - 1,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Text("▼", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (index < selectedImages.size - 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                                }
                                 IconButton(onClick = {
                                     selectedImages = selectedImages.filter { it != uri }
                                 }) {
-                                    Icon(Icons.Rounded.Close, contentDescription = "Remove Image", tint = MaterialTheme.colorScheme.error)
+                                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.desc_remove_image), tint = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }

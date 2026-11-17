@@ -20,10 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.BookmarkItem
 import com.pdfchemy.app.logic.PdfBookmarkEngine
@@ -44,7 +47,8 @@ fun BookmarkEditorScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var bookmarks by remember { mutableStateOf<List<BookmarkItem>>(emptyList()) }
     var totalPages by remember { mutableIntStateOf(1) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -52,7 +56,7 @@ fun BookmarkEditorScreen(
     // Dialog state
     var showAddDialog by remember { mutableStateOf(false) }
     var newBookmarkTitle by remember { mutableStateOf("") }
-    var newBookmarkPage by remember { mutableIntStateOf(1) }
+    var newBookmarkPageInput by remember { mutableStateOf("1") }
     var editingIndex by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(selectedPdfUri) {
@@ -109,6 +113,8 @@ fun BookmarkEditorScreen(
     }
 
     if (showAddDialog) {
+        val parsedPage = newBookmarkPageInput.trim().toIntOrNull()
+        val isPageValid = parsedPage != null && parsedPage in 1..totalPages
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
             title = {
@@ -127,21 +133,29 @@ fun BookmarkEditorScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
-                        value = newBookmarkPage.toString(),
-                        onValueChange = { newBookmarkPage = it.toIntOrNull()?.coerceIn(1, totalPages) ?: 1 },
+                        value = newBookmarkPageInput,
+                        onValueChange = { input ->
+                            newBookmarkPageInput = input.filter { it.isDigit() }
+                        },
                         label = { Text(stringResource(R.string.label_target_page, totalPages)) },
                         singleLine = true,
+                        isError = newBookmarkPageInput.isNotEmpty() && !isPageValid,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
                 Button(
+                    enabled = newBookmarkTitle.isNotBlank() && isPageValid,
                     onClick = {
-                        if (newBookmarkTitle.isNotBlank()) {
+                        if (newBookmarkTitle.isNotBlank() && isPageValid) {
+                            val currentLevel = editingIndex?.let { bookmarks.getOrNull(it)?.level } ?: 0
+                            val targetPage = parsedPage.coerceIn(1, totalPages)
                             val newItem = BookmarkItem(
                                 title = newBookmarkTitle.trim(),
-                                pageIndex = (newBookmarkPage - 1).coerceAtLeast(0)
+                                pageIndex = (targetPage - 1).coerceAtLeast(0),
+                                level = currentLevel
                             )
                             val mutable = bookmarks.toMutableList()
                             if (editingIndex != null) {
@@ -180,7 +194,7 @@ fun BookmarkEditorScreen(
                             onClick = {
                                 editingIndex = null
                                 newBookmarkTitle = ""
-                                newBookmarkPage = 1
+                                newBookmarkPageInput = "1"
                                 showAddDialog = true
                             }
                         ) {
@@ -264,6 +278,30 @@ fun BookmarkEditorScreen(
             }
 
             // Bookmarks list
+            if (bookmarks.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.bookmarks_count, bookmarks.size),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (bookmarks.size > 1) {
+                            AssistChip(
+                                onClick = { bookmarks = bookmarks.sortedBy { it.pageIndex } },
+                                label = { Text(stringResource(R.string.action_sort_by_page), fontSize = 11.sp) }
+                            )
+                        }
+                        TextButton(onClick = { bookmarks = emptyList() }) {
+                            Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 if (bookmarks.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -279,42 +317,174 @@ fun BookmarkEditorScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        itemsIndexed(bookmarks, key = { idx, item -> "${item.title}_${item.pageIndex}_$idx" }) { idx, item ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        itemsIndexed(bookmarks, key = { idx, item -> "${item.id}_$idx" }) { idx, item ->
+                            val indentPadding = (item.level * 16).dp
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = indentPadding),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (item.level == 0) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f)
+                                        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                                    )
                                 ) {
-                                    Icon(Icons.Rounded.BookmarkBorder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(text = item.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text("Target: Page ${item.pageIndex + 1}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            editingIndex = idx
-                                            newBookmarkTitle = item.title
-                                            newBookmarkPage = item.pageIndex + 1
-                                            showAddDialog = true
-                                        }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(Icons.Rounded.Edit, contentDescription = "Edit", modifier = Modifier.size(20.dp))
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            val mutable = bookmarks.toMutableList()
-                                            mutable.removeAt(idx)
-                                            bookmarks = mutable
+                                        if (item.level > 0) {
+                                            Text(
+                                                text = "↳ ",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        } else {
+                                            Icon(
+                                                Icons.Rounded.BookmarkBorder,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
                                         }
-                                    ) {
-                                        Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = item.title,
+                                                fontWeight = if (item.level == 0) FontWeight.Bold else FontWeight.Medium,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    "Page ${item.pageIndex + 1}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                if (item.level > 0) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(4.dp),
+                                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                                                    ) {
+                                                        Text(
+                                                            text = "L${item.level}",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Hierarchy buttons: Outdent & Indent
+                                        IconButton(
+                                            onClick = {
+                                                val mutable = bookmarks.toMutableList()
+                                                mutable[idx] = item.copy(level = (item.level - 1).coerceAtLeast(0))
+                                                bookmarks = mutable
+                                            },
+                                            enabled = item.level > 0,
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.ChevronLeft,
+                                                contentDescription = stringResource(R.string.btn_outdent_bookmark),
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (item.level > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                val mutable = bookmarks.toMutableList()
+                                                mutable[idx] = item.copy(level = (item.level + 1).coerceAtMost(5))
+                                                bookmarks = mutable
+                                            },
+                                            enabled = item.level < 5,
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.ChevronRight,
+                                                contentDescription = stringResource(R.string.btn_indent_bookmark),
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (item.level < 5) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                            )
+                                        }
+
+                                        // Move Up & Move Down
+                                        IconButton(
+                                            onClick = {
+                                                if (idx > 0) {
+                                                    val mutable = bookmarks.toMutableList()
+                                                    val temp = mutable[idx]
+                                                    mutable[idx] = mutable[idx - 1]
+                                                    mutable[idx - 1] = temp
+                                                    bookmarks = mutable
+                                                }
+                                            },
+                                            enabled = idx > 0,
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.KeyboardArrowUp,
+                                                contentDescription = stringResource(R.string.desc_move_up),
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (idx > 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                if (idx < bookmarks.size - 1) {
+                                                    val mutable = bookmarks.toMutableList()
+                                                    val temp = mutable[idx]
+                                                    mutable[idx] = mutable[idx + 1]
+                                                    mutable[idx + 1] = temp
+                                                    bookmarks = mutable
+                                                }
+                                            },
+                                            enabled = idx < bookmarks.size - 1,
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Rounded.KeyboardArrowDown,
+                                                contentDescription = stringResource(R.string.desc_move_down),
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (idx < bookmarks.size - 1) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                                            )
+                                        }
+
+                                        // Edit
+                                        IconButton(
+                                            onClick = {
+                                                editingIndex = idx
+                                                newBookmarkTitle = item.title
+                                                newBookmarkPageInput = (item.pageIndex + 1).toString()
+                                                showAddDialog = true
+                                            },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.desc_edit), modifier = Modifier.size(18.dp))
+                                        }
+
+                                        // Delete
+                                        IconButton(
+                                            onClick = {
+                                                val mutable = bookmarks.toMutableList()
+                                                mutable.removeAt(idx)
+                                                bookmarks = mutable
+                                            },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_delete), tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                                        }
                                     }
                                 }
                             }

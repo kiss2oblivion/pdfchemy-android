@@ -42,14 +42,40 @@ object PdfToEpubEngine {
                 return@withContext Result.failure(IllegalStateException("PDF contains no pages"))
             }
 
+            val outlineTitles = mutableMapOf<Int, String>()
+            val outline = document.documentCatalog.documentOutline
+            if (outline != null) {
+                fun collectTitles(node: com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode) {
+                    var current = node.firstChild
+                    while (current != null) {
+                        val title = current.title
+                        val page = when (val dest = current.destination) {
+                            is com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination -> dest.retrievePageNumber()
+                            else -> -1
+                        }
+                        if (page >= 0 && !title.isNullOrBlank()) {
+                            outlineTitles.putIfAbsent(page, title.trim())
+                        }
+                        if (current.hasChildren()) collectTitles(current)
+                        current = current.nextSibling
+                    }
+                }
+                collectTitles(outline)
+            }
+
+            val detectedLang = document.documentCatalog.language?.takeIf { it.isNotBlank() } ?: java.util.Locale.getDefault().language
             val pageTexts = PdfTextExtractorWorker.extractAllPagesText(document)
             val chapters = if (pageTexts.isNotEmpty()) {
                 pageTexts.mapIndexed { index, text ->
                     val trimmed = text.trim()
-                    if (trimmed.isNotBlank()) trimmed else "Page ${index + 1}"
+                    if (trimmed.isNotBlank()) trimmed else outlineTitles[index] ?: "Page ${index + 1}"
                 }
             } else {
-                (1..pageCount).map { "Page $it" }
+                (0 until pageCount).map { outlineTitles[it] ?: "Page ${it + 1}" }
+            }
+
+            val chapterTitles = (0 until pageCount).map { index ->
+                outlineTitles[index] ?: "Page ${index + 1}"
             }
 
             document.close()
@@ -115,15 +141,16 @@ p { margin-bottom: 1.2em; text-align: justify; }
                         .filter { it.isNotBlank() }
                         .joinToString("\n") { "<p>${escapeHtml(it.trim())}</p>" }
 
+                    val chapTitle = chapterTitles.getOrElse(idx) { "Page $chapNum" }
                     val xhtml = """<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="${escapeHtml(detectedLang)}">
 <head>
-  <title>Chapter $chapNum</title>
+  <title>${escapeHtml(chapTitle)}</title>
   <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
 </head>
 <body>
-  <h2>Page $chapNum</h2>
+  <h2>${escapeHtml(chapTitle)}</h2>
   $paragraphsHtml
 </body>
 </html>"""
@@ -134,12 +161,13 @@ p { margin-bottom: 1.2em; text-align: justify; }
 
                 // 5. OEBPS/nav.xhtml (EPUB 3 Navigation)
                 val navLi = chapterFiles.mapIndexed { idx, fn ->
-                    """<li><a href="$fn">Page ${idx + 1}</a></li>"""
+                    val chapTitle = chapterTitles.getOrElse(idx) { "Page ${idx + 1}" }
+                    """<li><a href="$fn">${escapeHtml(chapTitle)}</a></li>"""
                 }.joinToString("\n")
 
                 val navXhtml = """<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="${escapeHtml(detectedLang)}">
 <head><title>Table of Contents</title><link rel="stylesheet" type="text/css" href="stylesheet.css"/></head>
 <body>
   <nav epub:type="toc" id="toc">
@@ -156,8 +184,9 @@ p { margin-bottom: 1.2em; text-align: justify; }
 
                 // 5b. OEBPS/toc.ncx (EPUB 2 backward compatibility)
                 val ncxNavPoints = chapterFiles.mapIndexed { idx, fn ->
+                    val chapTitle = chapterTitles.getOrElse(idx) { "Page ${idx + 1}" }
                     """    <navPoint id="np_${idx + 1}" playOrder="${idx + 1}">
-      <navLabel><text>Page ${idx + 1}</text></navLabel>
+      <navLabel><text>${escapeHtml(chapTitle)}</text></navLabel>
       <content src="$fn"/>
     </navPoint>"""
                 }.joinToString("\n")
@@ -195,7 +224,7 @@ $ncxNavPoints
     <dc:identifier id="BookId">$bookId</dc:identifier>
     <dc:title>${escapeHtml(bookTitle)}</dc:title>
     <dc:creator>${escapeHtml(authorName)}</dc:creator>
-    <dc:language>en</dc:language>
+    <dc:language>${escapeHtml(detectedLang)}</dc:language>
     <meta property="dcterms:modified">2026-08-25T12:00:00Z</meta>
   </metadata>
   <manifest>
@@ -425,14 +454,40 @@ $ncxNavPoints
     }
 
     private fun sanitizeText(text: String): String {
-        return text.replace("“", "\"")
+        if (text.isEmpty()) return ""
+        val replaced = text.replace("“", "\"")
             .replace("”", "\"")
             .replace("‘", "'")
             .replace("’", "'")
             .replace("—", "--")
             .replace("–", "-")
             .replace("…", "...")
-            .filter { it.code in 32..126 || it.code in 160..255 }
+        return buildString(replaced.length) {
+            for (ch in replaced) {
+                when {
+                    ch.code in 32..126 || ch.code in 160..255 -> append(ch)
+                    ch == 'ș' -> append('s')
+                    ch == 'Ș' -> append('S')
+                    ch == 'ț' -> append('t')
+                    ch == 'Ț' -> append('T')
+                    ch == 'ş' -> append('s')
+                    ch == 'Ş' -> append('S')
+                    ch == 'ţ' -> append('t')
+                    ch == 'Ţ' -> append('T')
+                    ch == 'ł' -> append('l')
+                    ch == 'Ł' -> append('L')
+                    ch == 'đ' -> append('d')
+                    ch == 'Đ' -> append('D')
+                    ch.code > 255 -> {
+                        val decomposed = java.text.Normalizer.normalize(ch.toString(), java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{M}+"), "")
+                        for (dc in decomposed) {
+                            if (dc.code in 32..126 || dc.code in 160..255) append(dc)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun wordWrap(text: String, font: com.tom_roush.pdfbox.pdmodel.font.PDFont, fontSize: Float, maxWidth: Float): List<String> {

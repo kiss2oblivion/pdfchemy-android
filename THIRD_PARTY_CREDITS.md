@@ -79,12 +79,12 @@ Below is the exhaustive, complete record of every open-source library, engine, m
 
 ### [Tesseract4Android](https://github.com/adaptech-cz/Tesseract4Android) & [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
 * **Authors:** Robert Pösel, Adaptech s.r.o., Ray Smith, Google Inc. & Tesseract OCR Contributors
-* **Version:** `4.9.0` (packaging Tesseract `5.5.1` and Leptonica `1.84.1`)
+* **Version:** `4.9.0` custom rebuild: Tesseract `5.5.4`, Leptonica `1.87.0`, libpng `1.6.59`, IJG libjpeg `9f`
 * **Upstream Provenance:** Git tag `4.9.0`, commit `15c534717b1cb58261b58d4e4c1200c7f81f668c`
 * **License:** [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 * **Usage in PDFchemy (Android):**
-  * Production optical character recognition engine executed inside the isolated worker process (`pdf-jail`). Built reproducibly with an audited minimal source patch (`patches/tesseract4android-4.9.0-inmemory.patch`) adding in-memory model initialization directly to `TessBaseAPI` via JNI `nativeInitMemory`, invoking upstream `TessBaseAPI::Init(const char *data, int data_size, ...)` from a trusted, privately held byte buffer.
-  * Vendored as `pdf-jail/libs/tesseract4android-4.9.0-inmemory.aar` with build-time cryptographic policy enforcement: the Gradle task `verifyTesseractAarHash` cryptographically validates the AAR SHA-256 (`d8e6197e73ee8cb7f98079d1ae85e6b6dbff826f2011af84e2b493549bcf62fa`) before compilation, guaranteeing 100% offline, local-first OCR with zero filesystem requirements (`filesDir`/`cacheDir`/`fopen`) under the Android isolated UID and zero build-time supply chain dependencies.
+  * OCR runs inside the isolated worker (`pdf-jail`). The tracked source recipe and in-memory initialization patch retain the byte-buffer model contract; source revisions, build provenance and artifact hashes are in [native/](native/README.md).
+  * Vendored as `pdf-jail/libs/tesseract4android-4.9.0-inmemory.aar`, SHA-256 `ef7a618021f07d98bbebdc99884ffd7c0458e4b89b277f34227c26ab2b00909e`. Gradle verifies its pin before compilation. Native inventory and advisory checks run separately in CI. Component license texts are in [native/licenses](native/licenses); this software is based in part on the work of the Independent JPEG Group.
 
 ### [Tesseract OCR English Trained Data Model (`eng.traineddata`)](https://github.com/tesseract-ocr/tessdata)
 * **Authors:** Ray Smith & The Tesseract OCR Open Source Community

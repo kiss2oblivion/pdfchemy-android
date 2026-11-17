@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "source_manifest_sha256": "d1dff5d74c0de3586d43b888ae2cbe325655dd5db013ddd15846972dbe12c1b8",
+  "binary": {
+    "artifact": "tesseract4android-4.9.0-inmemory.aar",
+    "sha256": "ef7a618021f07d98bbebdc99884ffd7c0458e4b89b277f34227c26ab2b00909e",
+    "libraries": [
+      {
+        "path": "jni/arm64-v8a/libjpeg.so",
+        "sha256": "9c351d50313867f05fe6469cdb566344df6d13ea31f969479f592338535869ac",
+        "size": 251704,
+        "elf_class": 2,
+        "machine": 183,
+        "load_alignments": [
+          16384,
+          16384
+        ]
+      },
+      {
+        "path": "jni/arm64-v8a/libleptonica.so",
+        "sha256": "c512524b9b0500d29af16bc275a6eaae3d16256fd819b55bb6c44376268537dc",
+        "size": 2854528,
+        "elf_class": 2,
+        "machine": 183,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "memory_stream_symbols": true
+      },
+      {
+        "path": "jni/arm64-v8a/libpngx.so",
+        "sha256": "6a0bb460473f75250db7e2fc77ebfd1d974d1f64679594309307c478cc4fe9a6",
+        "size": 224400,
+        "elf_class": 2,
+        "machine": 183,
+        "load_alignments": [
+          16384,
+          16384
+        ],
+        "observed_versions": [
+          "1.6.59"
+        ]
+      },
+      {
+        "path": "jni/arm64-v8a/libtesseract.so",
+        "sha256": "d0cc422fbe6ce0d01754a44195479b19a9e47f3154cb81def2599b998f720f2a",
+        "size": 4057120,
+        "elf_class": 2,
+        "machine": 183,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "observed_versions": [
+          "5.5.4"
+        ]
+      },
+      {
+        "path": "jni/armeabi-v7a/libjpeg.so",
+        "sha256": "0d72f320ea5b2b20a0f40a241522b160316db1b07645c509c696959f0fd75f94",
+        "size": 186328,
+        "elf_class": 1,
+        "machine": 40,
+        "load_alignments": [
+          4096,
+          4096
+        ]
+      },
+      {
+        "path": "jni/armeabi-v7a/libleptonica.so",
+        "sha256": "8a1f2bf153833005a1a26e93312e7b827a05c3de11a7363685df9253dc170461",
+        "size": 2137220,
+        "elf_class": 1,
+        "machine": 40,
+        "load_alignments": [
+          4096,
+          4096,
+          4096
+        ],
+        "memory_stream_symbols": true
+      },
+      {
+        "path": "jni/armeabi-v7a/libpngx.so",
+        "sha256": "6287a2b89db60e860ef05819bb9d30a8497c142f699f9ce9c688cac233a086ed",
+        "size": 164752,
+        "elf_class": 1,
+        "machine": 40,
+        "load_alignments": [
+          4096,
+          4096
+        ],
+        "observed_versions": [
+          "1.6.59"
+        ]
+      },
+      {
+        "path": "jni/armeabi-v7a/libtesseract.so",
+        "sha256": "159f2c1b5a8b0764482aeed16032f13722045a9bf1d199303d3757ab3a8f0ce4",
+        "size": 2917424,
+        "elf_class": 1,
+        "machine": 40,
+        "load_alignments": [
+          4096,
+          4096,
+          4096
+        ],
+        "observed_versions": [
+          "5.5.4"
+        ]
+      },
+      {
+        "path": "jni/x86/libjpeg.so",
+        "sha256": "644f632b39708896c715b1fcf4e859197ce0445db98acefacf2b083e243896c6",
+        "size": 274884,
+        "elf_class": 1,
+        "machine": 3,
+        "load_alignments": [
+          4096,
+          4096
+        ]
+      },
+      {
+        "path": "jni/x86/libleptonica.so",
+        "sha256": "a2bb5059f04b3d5765a54a2fdc196e7ed87b5b35c3662f5ce9fe4ffba9227697",
+        "size": 2869844,
+        "elf_class": 1,
+        "machine": 3,
+        "load_alignments": [
+          4096,
+          4096,
+          4096
+        ],
+        "memory_stream_symbols": true
+      },
+      {
+        "path": "jni/x86/libpngx.so",
+        "sha256": "311b5929d9a13cd2d46bb4546b793298118cae38512cf63ca5ca09b1a1a6fbf7",
+        "size": 233120,
+        "elf_class": 1,
+        "machine": 3,
+        "load_alignments": [
+          4096,
+          4096
+        ],
+        "observed_versions": [
+          "1.6.59"
+        ]
+      },
+      {
+        "path": "jni/x86/libtesseract.so",
+        "sha256": "0c1b6bc89285450230a404a20e1ba3fd30c80bc4b02f69cf559d7889c79a470b",
+        "size": 4034340,
+        "elf_class": 1,
+        "machine": 3,
+        "load_alignments": [
+          4096,
+          4096,
+          4096
+        ],
+        "observed_versions": [
+          "5.5.4"
+        ]
+      },
+      {
+        "path": "jni/x86_64/libjpeg.so",
+        "sha256": "238b08e08bb8c725aa60a99f3b5ee02b97efd8e50feba60fd7d3bf2c4a7682d9",
+        "size": 282440,
+        "elf_class": 2,
+        "machine": 62,
+        "load_alignments": [
+          16384,
+          16384
+        ]
+      },
+      {
+        "path": "jni/x86_64/libleptonica.so",
+        "sha256": "b298da7c4b4bd655b1f2ec142cdd0c2144d2402f0288196bb6d6eeba87a2243a",
+        "size": 2980760,
+        "elf_class": 2,
+        "machine": 62,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "memory_stream_symbols": true
+      },
+      {
+        "path": "jni/x86_64/libpngx.so",
+        "sha256": "6a50a0bdb8eb7197820b06fd11fc5624957f78383b668947d4513913e7da630c",
+        "size": 235568,
+        "elf_class": 2,
+        "machine": 62,
+        "load_alignments": [
+          16384,
+          16384
+        ],
+        "observed_versions": [
+          "1.6.59"
+        ]
+      },
+      {
+        "path": "jni/x86_64/libtesseract.so",
+        "sha256": "2b32aa414ef7ccbcc115286fe7c414837ca3402547c81f70db7e18a50213a959",
+        "size": 4187592,
+        "elf_class": 2,
+        "machine": 62,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "observed_versions": [
+          "5.5.4"
+        ]
+      }
+    ],
+    "min_sdk": 24,
+    "classes_jar_sha256": "ddeda80b41308ec74739bd00a4b7131a474e128c03dd05dc76c12c634e68c5e6"
+  },
+  "build": {
+    "sources": {
+      "tesseract4android": {
+        "url": "https://github.com/adaptech-cz/Tesseract4Android.git",
+        "revision": "15c534717b1cb58261b58d4e4c1200c7f81f668c",
+        "version": "4.9.0"
+      },
+      "tesseract": {
+        "url": "https://github.com/tesseract-ocr/tesseract.git",
+        "revision": "7e548e6eff172f38f97664afe7f7ce40db36c8d6",
+        "version": "5.5.4"
+      },
+      "leptonica": {
+        "url": "https://github.com/DanBloomberg/leptonica.git",
+        "revision": "13275a278eb55b5746e33f95fbf5a2c8f604b3ab",
+        "version": "1.87.0"
+      },
+      "libpng": {
+        "url": "https://github.com/pnggroup/libpng.git",
+        "revision": "cd952f49f95bb27154ae77dbb103032d95f6e580",
+        "version": "1.6.59"
+      }
+    },
+    "toolchain": {
+      "ndk": "28.2.13676358",
+      "cmake": "3.22.1",
+      "agp": "9.2.1",
+      "gradle": "9.4.1",
+      "java": 21,
+      "min_sdk": 24
+    },
+    "patch_sha256": "370ee725f739c72b4dbdf2b074ce473929a35bb072514a664b949ff94af174f2",
+    "recipe_sha256": "ef7223e06a445712e825172915aa101b8c3802bc557724e8619d696a0d8dc5d9",
+    "changed_file_sha256": {
+      "build.gradle": "e59be556e501a4cf6b5441ff572b298c5c5bc79201ba97bcdbf1579d6a923b64",
+      "gradle/wrapper/gradle-wrapper.properties": "9571fc51472d4add1368e1db753bd21addde3507c0a53226bdfbd09ca7032ae8",
+      "tesseract4android/build.gradle": "3fee335680877e507d47d0e70ffdef5f284dd2b6c093a715f428087cf996e391",
+      "tesseract4android/src/main/cpp/leptonica/CMakeLists.txt": "f8a6438fbe84feb231c26544b49701bcb1a4f00ddbb014b4398a3041172e4eb0",
+      "tesseract4android/src/main/cpp/libpng/CMakeLists.txt": "c5bbae0e24744e60821e1b642d54217f7f6097b2842c036be464573c590d0d47",
+      "tesseract4android/src/main/cpp/tesseract/CMakeLists.txt": "a05f1decc1b4c0c9192fa511e9ce040d2bf75a2903e13e22d7bf4b829f7879a7",
+      "tesseract4android/src/main/cpp/tesseract/tessbaseapi.cpp": "3203fccbbdb05c8b6ffabf3a9d208ef2332008deb70b2b3262e2445458c05a8e",
+      "tesseract4android/src/main/java/com/googlecode/tesseract/android/TessBaseAPI.java": "a19fd793d5e6e42342cedf1b59eacfd25bc3985ff306a96f0707b087cf1c3794",
+      "tesseract4android/src/main/cpp/CMakeLists.txt": "7189f3215f0015029baf2afbc8092f4b4f08258e39745fc0a6c481bd9986bbe2"
+    },
+    "cpu_features_sha256": {
+      "cpu-features.c": "1b8a88eb7d3a5437d17e12475539398d3e1c5eef13d85941679841254af0a8f5",
+      "cpu-features.h": "f4989fabece7ea538e3c1272dca47f8a9a4423a87c79a1344a2611e884cb7319"
+    },
+    "initial_recipe_sha256": "de5ee2ddb18da11cc99cc32f634168619bed8032648dd9bca9ee7071975f871b",
+    "prebuild_adjustment": "Match application minSdk 24 to enable Leptonica fmemopen after direct native JPEG compatibility failure on the API21 candidate"
+  }
+}

@@ -42,6 +42,11 @@ object AcroFormEngineWorker {
                         obj.put("possibleOptions", opts)
                         obj.put("isReadOnly", f.isReadOnly)
                         obj.put("isRequired", f.isRequired)
+                        obj.put("pageIndex", f.pageIndex)
+                        obj.put("xRatio", f.xRatio.toDouble())
+                        obj.put("yRatio", f.yRatio.toDouble())
+                        obj.put("widthRatio", f.widthRatio.toDouble())
+                        obj.put("heightRatio", f.heightRatio.toDouble())
                         arr.put(obj)
                     }
                     JSONObject().put("success", true).put("fields", arr).toString()
@@ -127,6 +132,48 @@ object AcroFormEngineWorker {
                         field.optionsDisplayValues.ifEmpty { field.options }
                     } else emptyList()
 
+                    val widget = field.widgets.firstOrNull()
+                    var pageIdx = 0
+                    var xRatio = 0.05f
+                    var yRatio = 0.05f
+                    var wRatio = 0.4f
+                    var hRatio = 0.04f
+
+                    if (widget != null) {
+                        var p = widget.page
+                        if (p == null) {
+                            for ((idx, page) in doc!!.pages.withIndex()) {
+                                if (page.annotations.any { it.cosObject == widget.cosObject }) {
+                                    p = page
+                                    pageIdx = idx
+                                    break
+                                }
+                            }
+                        } else {
+                            val foundIdx = doc!!.pages.indexOf(p)
+                            if (foundIdx >= 0) pageIdx = foundIdx
+                        }
+
+                        val pageBox = p?.cropBox ?: p?.mediaBox ?: PDRectangle.A4
+                        val pw = pageBox.width.coerceAtLeast(1f)
+                        val ph = pageBox.height.coerceAtLeast(1f)
+                        val rect = widget.rectangle
+                        if (rect != null && rect.width > 0 && rect.height > 0) {
+                            val left = ((rect.lowerLeftX-pageBox.lowerLeftX)/pw).coerceIn(0f,1f)
+                            val top = ((pageBox.upperRightY-rect.upperRightY)/ph).coerceIn(0f,1f)
+                            val right = ((rect.upperRightX-pageBox.lowerLeftX)/pw).coerceIn(left,1f)
+                            val bottom = ((pageBox.upperRightY-rect.lowerLeftY)/ph).coerceIn(top,1f)
+                            val width = right-left
+                            val height = bottom-top
+                            when (((p?.rotation ?: 0)%360+360)%360) {
+                                90 -> { xRatio=1f-bottom; yRatio=left; wRatio=height; hRatio=width }
+                                180 -> { xRatio=1f-right; yRatio=1f-bottom; wRatio=width; hRatio=height }
+                                270 -> { xRatio=top; yRatio=1f-right; wRatio=height; hRatio=width }
+                                else -> { xRatio=left; yRatio=top; wRatio=width; hRatio=height }
+                            }
+                        }
+                    }
+
                     result.add(
                         FormFieldInfo(
                             name = field.partialName ?: "",
@@ -135,7 +182,12 @@ object AcroFormEngineWorker {
                             value = field.valueAsString ?: "",
                             possibleOptions = options,
                             isReadOnly = field.isReadOnly,
-                            isRequired = field.isRequired
+                            isRequired = field.isRequired,
+                            pageIndex = pageIdx,
+                            xRatio = xRatio,
+                            yRatio = yRatio,
+                            widthRatio = wRatio,
+                            heightRatio = hRatio
                         )
                     )
                 }
@@ -174,7 +226,7 @@ object AcroFormEngineWorker {
                                     field.unCheck()
                                 }
                             } else {
-                                field.setValue(value)
+                                setFieldValueSafely(field, value)
                             }
                         } catch (e: Exception) {
                             com.pdfchemy.app.jail.AppLogger.w("Could not set field ${fqn} to ${value}: ${e.message}")
@@ -241,7 +293,7 @@ object AcroFormEngineWorker {
 
                     val rect = when (rot) {
                         90 -> {
-                            val x = cropBox.lowerLeftX + pw - (spec.yRatio.coerceIn(0f, 1f) + spec.heightRatio.coerceIn(0.01f, 1f)) * pw
+                            val x = cropBox.lowerLeftX + spec.yRatio.coerceIn(0f, 1f) * pw
                             val y = cropBox.lowerLeftY + spec.xRatio.coerceIn(0f, 1f) * ph
                             val w = spec.heightRatio.coerceIn(0.01f, 1f) * pw
                             val h = spec.widthRatio.coerceIn(0.01f, 1f) * ph
@@ -255,7 +307,7 @@ object AcroFormEngineWorker {
                             PDRectangle(x, y, w, h)
                         }
                         270 -> {
-                            val x = cropBox.lowerLeftX + spec.yRatio.coerceIn(0f, 1f) * pw
+                            val x = cropBox.lowerLeftX + pw - (spec.yRatio.coerceIn(0f, 1f) + spec.heightRatio.coerceIn(0.01f, 1f)) * pw
                             val y = cropBox.lowerLeftY + ph - (spec.xRatio.coerceIn(0f, 1f) + spec.widthRatio.coerceIn(0.01f, 1f)) * ph
                             val w = spec.heightRatio.coerceIn(0.01f, 1f) * pw
                             val h = spec.widthRatio.coerceIn(0.01f, 1f) * ph
@@ -303,11 +355,24 @@ object AcroFormEngineWorker {
                             widget.isPrinted = true
                             page.annotations.add(widget)
                             if (spec.defaultValue.isNotBlank()) {
-                                combo.setValue(spec.defaultValue)
+                                setFieldValueSafely(combo, spec.defaultValue)
                             } else if (spec.options.isNotEmpty()) {
-                                combo.setValue(spec.options.first())
+                                setFieldValueSafely(combo, spec.options.first())
                             }
                             acroForm.fields.add(combo)
+                        }
+                        FormFieldType.RADIO -> throw UnsupportedOperationException("Radio group creation requires supported widget appearances")
+                        FormFieldType.SIGNATURE -> {
+                            val sig = PDSignatureField(acroForm)
+                            sig.partialName = spec.name
+                            val widget = sig.widgets.firstOrNull() ?: PDAnnotationWidget().also {
+                                sig.widgets = listOf(it)
+                            }
+                            widget.rectangle = rect
+                            widget.page = page
+                            widget.isPrinted = true
+                            page.annotations.add(widget)
+                            acroForm.fields.add(sig)
                         }
                         else -> {
                             val tf = PDTextField(acroForm)
@@ -321,7 +386,7 @@ object AcroFormEngineWorker {
                             widget.isPrinted = true
                             page.annotations.add(widget)
                             if (spec.defaultValue.isNotBlank()) {
-                                tf.setValue(spec.defaultValue)
+                                setFieldValueSafely(tf, spec.defaultValue)
                             }
                             acroForm.fields.add(tf)
                         }
@@ -341,6 +406,14 @@ object AcroFormEngineWorker {
             false
         } finally {
             doc?.close()
+        }
+    }
+
+    internal fun setFieldValueSafely(field: PDField, value: String) {
+        try {
+            field.setValue(value)
+        } catch (_: IllegalArgumentException) {
+            field.setValue(SignatureEngineWorker.sanitizeForWinAnsi(value))
         }
     }
 }

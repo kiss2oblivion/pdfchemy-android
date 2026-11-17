@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Bahasa ini memerlukan suara offline yang terpasang. Pasang atau pilih suara di setelan ucapan, lalu coba lagi. Teks dokumen tidak dikirim ke suara jaringan.</string>
+</resources>

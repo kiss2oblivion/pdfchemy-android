@@ -6,8 +6,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -19,6 +21,8 @@ public class OutputCommitProvider extends ContentProvider {
         byte[] bytes = "existing destination".getBytes(java.nio.charset.StandardCharsets.UTF_8);
         int opens;
         boolean block;
+        boolean blockRead;
+        boolean digestOnly;
         String failure;
         boolean allowDelete, deleted;
         boolean blockDelete;
@@ -27,6 +31,9 @@ public class OutputCommitProvider extends ContentProvider {
         final CountDownLatch release = new CountDownLatch(1);
         final CountDownLatch written = new CountDownLatch(1);
         final CountDownLatch opened = new CountDownLatch(1);
+        final CountDownLatch reading = new CountDownLatch(1);
+        final CountDownLatch readRelease = new CountDownLatch(1);
+        volatile ParcelFileDescriptor.AutoCloseInputStream pipeReader;
     }
     private final Map<String, State> states = new HashMap<>();
     @Override public boolean onCreate() { return true; }
@@ -35,6 +42,8 @@ public class OutputCommitProvider extends ContentProvider {
         synchronized (states) {
             if ("configure".equals(method)) {
                 State fresh = new State(); fresh.block = extras != null && extras.getBoolean("block");
+                fresh.blockRead = extras != null && extras.getBoolean("blockRead");
+                fresh.digestOnly = extras != null && extras.getBoolean("digestOnly");
                 fresh.failure = extras == null ? null : extras.getString("failure");
                 fresh.allowDelete = extras != null && extras.getBoolean("allowDelete");
                 fresh.blockDelete = extras != null && extras.getBoolean("blockDelete");
@@ -44,16 +53,34 @@ public class OutputCommitProvider extends ContentProvider {
         }
         if (state == null) throw new IllegalStateException("Missing fixture");
         if ("release".equals(method)) state.release.countDown();
+        if ("releaseRead".equals(method)) state.readRelease.countDown();
         if ("publicationFinished".equals(method)) state.opened.countDown();
         if ("releaseDelete".equals(method)) state.deleteRelease.countDown();
         if ("allowDelete".equals(method)) state.allowDelete = true;
         try {
             if ("awaitDelete".equals(method) && !state.deleteEntered.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No provider deletion");
             if ("awaitOpen".equals(method) && !state.opened.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output open");
+            if ("awaitRead".equals(method) && !state.reading.await(30, TimeUnit.SECONDS)) throw new IllegalStateException("No output reader");
+            if ("awaitPipeBuffered".equals(method)) {
+                if (!state.blockRead || !state.reading.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("No stalled reader");
+                long deadline = SystemClock.elapsedRealtime() + 5000;
+                while (state.pipeReader.available() == 0) {
+                    if (SystemClock.elapsedRealtime() >= deadline) throw new IllegalStateException("No pipe data");
+                    Thread.sleep(10);
+                }
+            }
             if ("awaitWritten".equals(method) && !state.written.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("No output close");
         } catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
+        catch (IOException error) { throw new IllegalStateException(error); }
         Bundle result = new Bundle();
-        synchronized (state) { result.putInt("opens", state.opens); result.putByteArray("bytes", state.bytes); }
+        synchronized (state) {
+            result.putInt("opens", state.opens);
+            if (state.digestOnly) {
+                result.putInt("byteCount", state.bytes.length);
+                try { result.putByteArray("sha256", java.security.MessageDigest.getInstance("SHA-256").digest(state.bytes)); }
+                catch (java.security.NoSuchAlgorithmException error) { throw new AssertionError(error); }
+            } else result.putByteArray("bytes", state.bytes);
+        }
         result.putBoolean("written", state.written.getCount() == 0);
         result.putBoolean("deleted", state.deleted);
         return result;
@@ -74,6 +101,9 @@ public class OutputCommitProvider extends ContentProvider {
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
             new Thread(() -> {
                 try (ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(pipe[0])) {
+                    state.pipeReader = input;
+                    state.reading.countDown();
+                    if (state.blockRead && !state.readRelease.await(15, TimeUnit.SECONDS)) throw new IllegalStateException("Read fixture timed out");
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     byte[] buffer = new byte[8192]; int count;
                     while ((count = input.read(buffer)) != -1) {

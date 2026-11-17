@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">An installed offline voice is required for this language. Install or select one in speech settings, then retry. Document text is not sent to a network voice.</string>
+</resources>

@@ -75,12 +75,15 @@ object SignatureEngineWorker {
                             cs.drawImage(pdImage, stampX, stampY, stampW, stampH)
 
                             if (dateStamp.isNotBlank()) {
-                                cs.beginText()
-                                cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
-                                cs.setNonStrokingColor(0f, 0f, 0f)
-                                cs.newLineAtOffset(stampX, stampY - 12f)
-                                cs.showText("Signed: $dateStamp")
-                                cs.endText()
+                                val safeDateStamp = sanitizeForWinAnsi("Signed: $dateStamp")
+                                if (safeDateStamp.isNotBlank()) {
+                                    cs.beginText()
+                                    cs.setFont(PDType1Font.HELVETICA_BOLD, 9f)
+                                    cs.setNonStrokingColor(0f, 0f, 0f)
+                                    cs.newLineAtOffset(stampX, stampY - 12f)
+                                    cs.showText(safeDateStamp)
+                                    cs.endText()
+                                }
                             }
 
                             cs.restoreGraphicsState()
@@ -122,13 +125,28 @@ object SignatureEngineWorker {
                 }
             }
 
-            val subjectStr = signerName
-            val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(subjectStr)
+            val p12Base64 = params.optString("p12Base64", "")
+            val password = params.optString("password", "")
+
+            val credentials = if (params.has("p12Base64")) {
+                require(p12Base64.isNotBlank() && p12Base64.length <= 43692) { "Invalid imported keystore size" }
+                val p12Bytes = android.util.Base64.decode(p12Base64, android.util.Base64.DEFAULT)
+                val passwordChars = password.toCharArray()
+                try {
+                    AndroidPdfCryptoSigner.loadPkcs12Credentials(p12Bytes, passwordChars)
+                } finally {
+                    p12Bytes.fill(0)
+                    passwordChars.fill(0.toChar())
+                }
+            } else {
+                val keyPairInfo = AndroidPdfCryptoSigner.generateSelfSignedCertificate(signerName)
+                AndroidPdfCryptoSigner.SignerCredentials(keyPairInfo.keyPair.private, keyPairInfo.certificate)
+            }
 
             AndroidPdfCryptoSigner.signPdf(
                 sourceFile = sourceFile,
                 destFile = destFile,
-                keyPairInfo = keyPairInfo,
+                credentials = credentials,
                 reason = reason,
                 location = location
             )
@@ -145,5 +163,13 @@ object SignatureEngineWorker {
             sourceFile?.delete()
             destFile?.delete()
         }
+    }
+
+    internal fun sanitizeForWinAnsi(text: String): String {
+        val decomposed = java.text.Normalizer.normalize(
+            text.replace('ł', 'l').replace('Ł', 'L').replace('đ', 'd').replace('Đ', 'D'),
+            java.text.Normalizer.Form.NFD
+        ).replace(Regex("\\p{Mn}+"), "")
+        return decomposed.filter { it.code in 32..126 || it.code in 160..255 }
     }
 }

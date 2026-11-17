@@ -17,6 +17,8 @@ object ComicBookEngine {
             val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "COMIC_BOOK", sourcePdfUri, destCbzUri, params.toString())
             if (!contract.success) return@withContext Result.failure(Exception("Comic book conversion failed"))
             Result.success(Unit)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("ComicBookEngine", e)
             Result.failure(e)
@@ -31,6 +33,8 @@ object ComicBookEngine {
             val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "COMIC_BOOK", sourceCbzUri, destPdfUri, params.toString())
             if (!contract.success) return@withContext Result.failure(Exception("Comic book conversion failed"))
             Result.success(Unit)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("ComicBookEngine", e)
             Result.failure(e)

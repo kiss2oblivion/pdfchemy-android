@@ -385,7 +385,66 @@ fun ScanPdfScreen(
                     }
                 }
 
-                // Page Thumbnails Row
+                // Page Management & Thumbnails Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Page ${selectedIndex + 1} of ${scannedBitmaps.size}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (scannedBitmaps.size > 1) {
+                            IconButton(
+                                onClick = {
+                                    if (selectedIndex > 0) {
+                                        val list = scannedBitmaps.toMutableList()
+                                        val tmp = list[selectedIndex]
+                                        list[selectedIndex] = list[selectedIndex - 1]
+                                        list[selectedIndex - 1] = tmp
+                                        scannedBitmaps = list
+                                        selectedIndex -= 1
+                                    }
+                                },
+                                enabled = selectedIndex > 0,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Rounded.ChevronLeft, contentDescription = stringResource(R.string.desc_move_page_left))
+                            }
+                            IconButton(
+                                onClick = {
+                                    if (selectedIndex < scannedBitmaps.size - 1) {
+                                        val list = scannedBitmaps.toMutableList()
+                                        val tmp = list[selectedIndex]
+                                        list[selectedIndex] = list[selectedIndex + 1]
+                                        list[selectedIndex + 1] = tmp
+                                        scannedBitmaps = list
+                                        selectedIndex += 1
+                                    }
+                                },
+                                enabled = selectedIndex < scannedBitmaps.size - 1,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Rounded.ChevronRight, contentDescription = stringResource(R.string.desc_move_page_right))
+                            }
+                        }
+                        IconButton(
+                            onClick = {
+                                val removed = scannedBitmaps.getOrNull(selectedIndex)
+                                val remaining = scannedBitmaps.filterIndexed { i, _ -> i != selectedIndex }
+                                scannedBitmaps = remaining
+                                selectedIndex = selectedIndex.coerceIn(0, (remaining.size - 1).coerceAtLeast(0))
+                                if (removed != null && !removed.isRecycled) removed.recycle()
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.desc_delete_scanned_page), tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -456,7 +515,7 @@ fun ScanPdfScreen(
                         } else {
                             Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Save & Open in Reader", fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(R.string.action_save_open_reader), fontWeight = FontWeight.Bold)
                         }
                     }
                     
@@ -475,7 +534,7 @@ fun ScanPdfScreen(
                         ) {
                             Icon(Icons.Rounded.DocumentScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Save & OCR", fontSize = 13.sp)
+                            Text(text = stringResource(R.string.action_save_ocr), fontSize = 13.sp)
                         }
                         
                         OutlinedButton(
@@ -489,7 +548,7 @@ fun ScanPdfScreen(
                         ) {
                             Icon(Icons.Rounded.Compress, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Save & Compress", fontSize = 13.sp)
+                            Text(text = stringResource(R.string.action_save_compress), fontSize = 13.sp)
                         }
                     }
                 }

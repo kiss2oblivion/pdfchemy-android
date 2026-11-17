@@ -10,6 +10,7 @@ import android.graphics.Typeface
 import android.net.Uri
 
 import com.pdfchemy.app.utils.AppLogger
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -202,19 +203,53 @@ object SignatureEngine {
         return bmp
     }
 
+
+    internal const val MAX_IMPORTED_KEYSTORE_BYTES = 32 * 1024
+
+    /** Read encrypted keystore bytes without allowing provider metadata to authorize allocation. */
+    internal suspend fun readImportedKeystore(input: java.io.InputStream): ByteArray {
+        val result = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        try {
+            while (true) {
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                val count = input.read(buffer, 0,
+                    minOf(buffer.size, MAX_IMPORTED_KEYSTORE_BYTES + 1 - result.size()))
+                if (count < 0) break
+                if (count == 0) { kotlinx.coroutines.yield(); continue }
+                require(result.size() + count <= MAX_IMPORTED_KEYSTORE_BYTES) {
+                    "Imported keystore exceeds 32 KiB"
+                }
+                result.write(buffer, 0, count)
+            }
+            require(result.size() > 0) { "Imported keystore is empty" }
+            return result.toByteArray()
+        } finally {
+            buffer.fill(0)
+        }
+    }
+
     suspend fun applyDigitalSignature(
         context: Context,
         sourceUri: Uri,
         destUri: Uri,
         signerName: String,
         reason: String,
-        location: String
+        location: String,
+        p12Base64: String? = null,
+        password: String? = null
     ): Boolean = withContext(Dispatchers.IO) {
         try {
+            require(p12Base64 == null || p12Base64.isNotBlank()) { "Imported keystore is empty" }
+            require(password == null || p12Base64 != null) { "Password requires an imported keystore" }
             val params = JSONObject().apply {
                 put("signerName", signerName)
                 put("reason", reason)
                 put("location", location)
+                if (!p12Base64.isNullOrBlank()) {
+                    put("p12Base64", p12Base64)
+                    put("password", password ?: "")
+                }
             }
 
             val contract = PdfGateway.executeEngineTyped<StandardOutputContract>(
@@ -225,6 +260,8 @@ object SignatureEngine {
                 params.toString()
             )
             contract.success
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("Failed to apply digital signature: ${e.message}", e)
             false

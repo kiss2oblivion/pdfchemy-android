@@ -43,7 +43,8 @@ fun NUpScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var selectedLayout by remember { mutableStateOf(NUpLayout.FOUR_UP) }
     var selectedOrder by remember { mutableStateOf(NUpOrder.HORIZONTAL) }
     var drawBorders by remember { mutableStateOf(true) }
@@ -81,7 +82,7 @@ fun NUpScreen(
                 isProcessing = false
 
                 if (result.isSuccess) {
-                    viewModel.showSuccessToast(
+                    viewModel.notifySuccess(
                         context.getString(R.string.title_nup_success),
                         context.getString(R.string.desc_nup_success, selectedLayout.pagesPerSheet)
                     , destUri)
@@ -243,6 +244,20 @@ fun NUpScreen(
             // Options: Borders and Paper Size
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(stringResource(R.string.label_target_paper_size), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        TargetPaperSize.values().forEach { size ->
+                            FilterChip(
+                                selected = selectedPaperSize == size,
+                                onClick = { selectedPaperSize = size },
+                                label = { Text(size.displayName) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -271,8 +286,7 @@ fun NUpScreen(
             // Generate Button
             Button(
                 onClick = {
-                    val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                    saveFileLauncher.launch("${base}_${selectedLayout.pagesPerSheet}up_handout.pdf")
+                    saveFileLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "${selectedLayout.pagesPerSheet}up_handout"))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

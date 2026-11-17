@@ -13,6 +13,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.pdfchemy.app.utils.FileUtils
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.platform.LocalDensity
@@ -112,28 +115,61 @@ fun SignPdfScreen(
     var pkiSignerName by remember { mutableStateOf("") }
     var pkiReason by remember { mutableStateOf("Signed by PDFchemy") }
     var pkiLocation by remember { mutableStateOf("Local Device") }
+    var pkiKeystoreUri by remember { mutableStateOf<Uri?>(null) }
+    var pkiKeystoreFileName by remember { mutableStateOf<String?>(null) }
+    var pkiKeystorePassword by remember { mutableStateOf("") }
+
+    val p12PickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            pkiKeystoreUri = uri
+            pkiKeystoreFileName = FileUtils.getFileName(context, uri) ?: "keystore.p12"
+        }
+    }
+
     
     val pkiSignLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null) {
+        val source = selectedPdfUri
+        if (destUri != null && source != null && !isSaving) {
+            val keyUri = pkiKeystoreUri
+            val password = pkiKeystorePassword
+            val name = pkiSignerName
+            val reason = pkiReason
+            val location = pkiLocation
             isSaving = true
             coroutineScope.launch {
-                val success = SignatureEngine.applyDigitalSignature(
-                    context = context,
-                    sourceUri = selectedPdfUri!!,
-                    destUri = destUri,
-                    signerName = pkiSignerName,
-                    reason = pkiReason,
-                    location = pkiLocation
-                )
-                isSaving = false
-                if (success) {
-                    showPkiDialog = false
-                    onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_signing_failed),
-                        context.getString(R.string.pki_signature_failed_desc)
+                var imported: ByteArray? = null
+                try {
+                    imported = if (keyUri != null) withContext(Dispatchers.IO) {
+                        val input = requireNotNull(context.contentResolver.openInputStream(keyUri)) {
+                            "Unable to open imported keystore"
+                        }
+                        input.use { SignatureEngine.readImportedKeystore(it) }
+                    } else null
+                    val encoded = imported?.let {
+                        android.util.Base64.encodeToString(it, android.util.Base64.NO_WRAP)
+                    }
+                    val success = SignatureEngine.applyDigitalSignature(
+                        context, source, destUri, name, reason, location,
+                        p12Base64 = encoded, password = if (keyUri != null) password else null
                     )
+                    if (success) {
+                        showPkiDialog = false
+                        onBack()
+                    } else {
+                        viewModel.showErrorToast(context.getString(R.string.error_signing_failed),
+                            context.getString(R.string.pki_signature_failed_desc))
+                    }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    viewModel.showErrorToast(context.getString(R.string.error_signing_failed),
+                        context.getString(R.string.pki_signature_failed_desc))
+                } finally {
+                    imported?.fill(0)
+                    pkiKeystorePassword = ""
+                    isSaving = false
                 }
             }
         }
@@ -511,7 +547,30 @@ fun SignPdfScreen(
                         Icon(Icons.Rounded.ChevronLeft, contentDescription = null)
                     }
 
-                    Text("${currentPageIndex + 1} / $totalPages", fontWeight = FontWeight.Bold)
+                    var showPageJumpDialog by remember { mutableStateOf(false) }
+                    if (showPageJumpDialog && totalPages > 1) {
+                        PageJumpDialog(
+                            currentPageZeroBased = currentPageIndex,
+                            totalPages = totalPages,
+                            onDismiss = { showPageJumpDialog = false },
+                            onJumpToPage = { targetZeroBased ->
+                                val target = targetZeroBased.coerceIn(0, totalPages - 1)
+                                if (target != currentPageIndex) {
+                                    currentPageIndex = target
+                                    renderPage(selectedPdfUri!!, currentPageIndex)
+                                }
+                                showPageJumpDialog = false
+                            }
+                        )
+                    }
+                    Text(
+                        text = "${currentPageIndex + 1} / $totalPages",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
 
                     IconButton(
                         onClick = {
@@ -778,7 +837,10 @@ fun SignPdfScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("signed_document_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),
@@ -912,28 +974,88 @@ fun SignPdfScreen(
     if (showPkiDialog) {
         AlertDialog(
             onDismissRequest = { showPkiDialog = false },
-            title = { Text("Apply PKI Digital Signature") },
+            title = { Text(stringResource(R.string.pki_dialog_title), fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Applies a self-signed digital certificate cryptographically verifying document integrity.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.pki_dialog_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Keystore selector
+                    if (pkiKeystoreUri == null) {
+                        OutlinedButton(
+                            onClick = { p12PickerLauncher.launch(arrayOf("application/x-pkcs12", "*/*")) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Rounded.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.pki_keystore_load))
+                        }
+                        Text(
+                            stringResource(R.string.pki_ephemeral_notice),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    } else {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Rounded.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.pki_keystore_loaded, pkiKeystoreFileName ?: "keystore.p12"),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = {
+                                    pkiKeystoreUri = null
+                                    pkiKeystoreFileName = null
+                                    pkiKeystorePassword = ""
+                                }) {
+                                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.pki_keystore_remove))
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = pkiKeystorePassword,
+                            onValueChange = { pkiKeystorePassword = it.take(1024) },
+                            label = { Text(stringResource(R.string.pki_keystore_password)) },
+                            singleLine = true,
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     OutlinedTextField(
                         value = pkiSignerName,
                         onValueChange = { pkiSignerName = it },
-                        label = { Text("Signer Name") },
+                        label = { Text(stringResource(R.string.pki_signer_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = pkiReason,
                         onValueChange = { pkiReason = it },
-                        label = { Text("Reason") },
+                        label = { Text(stringResource(R.string.pki_reason)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = pkiLocation,
                         onValueChange = { pkiLocation = it },
-                        label = { Text("Location") },
+                        label = { Text(stringResource(R.string.pki_location)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -941,19 +1063,22 @@ fun SignPdfScreen(
             },
             confirmButton = {
                 Button(
-                    onClick = { pkiSignLauncher.launch("signed_document_pki_${System.currentTimeMillis()}.pdf") },
-                    enabled = pkiSignerName.isNotBlank() && !isSaving
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "signed_pki")
+                        pkiSignLauncher.launch(suggestedName)
+                    },
+                    enabled = (pkiKeystoreUri != null || pkiSignerName.isNotBlank()) && !isSaving
                 ) {
                     if (isSaving) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onPrimary)
                     } else {
-                        Text("Sign & Save")
+                        Text(stringResource(R.string.pki_sign_and_save))
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPkiDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(android.R.string.cancel))
                 }
             }
         )

@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">Dla tego języka wymagany jest zainstalowany głos offline. Zainstaluj lub wybierz głos w ustawieniach mowy, a potem spróbuj ponownie. Tekst dokumentu nie jest wysyłany do głosu sieciowego.</string>
+</resources>

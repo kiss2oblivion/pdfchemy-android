@@ -21,6 +21,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -193,6 +194,7 @@ private fun PdfReaderDocument(
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
     var showTocSheet by rememberSaveable { mutableStateOf(false) }
     var showCommandCentreSheet by rememberSaveable { mutableStateOf(false) }
+    var showPageJumpDialog by rememberSaveable { mutableStateOf(false) }
 
     fun applyControlsState(next: ReaderControlsUiState) {
         showControls = next.showControls
@@ -233,6 +235,11 @@ private fun PdfReaderDocument(
             searchCoordinator.dispose()
         }
     }
+
+    // Display Preferences
+    val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+    var isHorizontalMode by remember { mutableStateOf(false) }
+    var isInvertColors by remember { mutableStateOf(systemInDark) }
     
     // Vanguard & Document Access state
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -487,7 +494,7 @@ private fun PdfReaderDocument(
                             }
                         )
                     }
-                    .pointerInput(Unit) {
+                    .pointerInput(isHorizontalMode) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
                             do {
@@ -513,9 +520,12 @@ private fun PdfReaderDocument(
                                     scale = result.scale
                                     offsetX = result.offsetX
                                     offsetY = result.offsetY
-                                    if (result.verticalScrollDelta != 0f) {
+                                    val scrollDelta = if (isHorizontalMode) {
+                                        if (!ReaderZoomCalculator.isZoomed(result.scale)) -panChange.x else 0f
+                                    } else result.verticalScrollDelta
+                                    if (scrollDelta != 0f) {
                                         coroutineScope.launch {
-                                            listState.scrollBy(result.verticalScrollDelta)
+                                            listState.scrollBy(scrollDelta)
                                         }
                                     }
                                     event.changes.forEach { change ->
@@ -529,7 +539,8 @@ private fun PdfReaderDocument(
                         }
                     }
             ) {
-                LazyColumn(
+                ReaderPageList(
+                    horizontal = isHorizontalMode,
                     state = listState,
                     userScrollEnabled = ReaderZoomCalculator.isNativeScrollEnabled(scale, activePointerCount),
                     contentPadding = PaddingValues(
@@ -555,7 +566,9 @@ private fun PdfReaderDocument(
                             pageIndex = index,
                             fitPage = fitPage,
                             bitmapCache = bitmapCache,
-                            renderGate = renderGate
+                            renderGate = renderGate,
+                            invertColors = isInvertColors,
+                            modifier = if (isHorizontalMode) Modifier.fillParentMaxWidth() else Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -698,6 +711,20 @@ private fun PdfReaderDocument(
                             Icon(Icons.Rounded.Menu, contentDescription = stringResource(R.string.reader_toc_title))
                         }
                     }
+                    var overflowExpanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { overflowExpanded = true }) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.desc_more_options))
+                    }
+                    DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (isHorizontalMode) R.string.reader_vertical_scroll else R.string.reader_horizontal_scroll)) },
+                            onClick = { isHorizontalMode = !isHorizontalMode; overflowExpanded = false }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (isInvertColors) R.string.reader_normal_colors else R.string.reader_invert_colors)) },
+                            onClick = { isInvertColors = !isInvertColors; overflowExpanded = false }
+                        )
+                    }
                     IconButton(
                         onClick = { launchCommandAction(ReaderCommandAction.REFLOW_READER) },
                         enabled = actionsEnabled
@@ -709,6 +736,23 @@ private fun PdfReaderDocument(
                         enabled = actionsEnabled
                     ) {
                         Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.menu_edit_pdf))
+                    }
+                    IconButton(
+                        onClick = {
+                            val targetUri = selectedPdfUri ?: initialUri
+                            runCatching {
+                                com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                    context,
+                                    listOf(targetUri),
+                                    fileName.ifBlank { context.getString(R.string.share) }
+                                )
+                            }.onFailure {
+                                viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                            }
+                        },
+                        enabled = actionsEnabled
+                    ) {
+                        Icon(Icons.Rounded.Share, contentDescription = stringResource(R.string.share))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -851,7 +895,15 @@ private fun PdfReaderDocument(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = if (barLayout.compactLandscape) 4.dp else 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = actionsEnabled && totalPages > 1) {
+                                showPageJumpDialog = true
+                            }
+                            .padding(
+                                horizontal = 10.dp,
+                                vertical = if (barLayout.compactLandscape) 2.dp else 4.dp
+                            )
+                            .padding(bottom = if (barLayout.compactLandscape) 2.dp else 4.dp)
                     )
                     
                     Row(
@@ -994,7 +1046,116 @@ private fun PdfReaderDocument(
                 }
             }
         }
+
+        if (showPageJumpDialog && totalPages > 1) {
+            PageJumpDialog(
+                currentPageZeroBased = listState.firstVisibleItemIndex,
+                totalPages = totalPages,
+                onDismiss = { showPageJumpDialog = false },
+                onJumpToPage = { targetZeroBased ->
+                    showPageJumpDialog = false
+                    coroutineScope.launch {
+                        listState.scrollToItem(targetZeroBased.coerceIn(0, totalPages - 1))
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+internal fun PageJumpDialog(
+    currentPageZeroBased: Int,
+    totalPages: Int,
+    onDismiss: () -> Unit,
+    onJumpToPage: (Int) -> Unit
+) {
+    var pageInput by remember(currentPageZeroBased, totalPages) {
+        mutableStateOf((currentPageZeroBased + 1).coerceIn(1, totalPages).toString())
+    }
+    val parsedPage = pageInput.trim().toIntOrNull()
+    val isValid = parsedPage != null && parsedPage in 1..totalPages
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "${stringResource(R.string.visual_page_number, (currentPageZeroBased + 1).coerceIn(1, totalPages))} (1–$totalPages)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = pageInput,
+                    onValueChange = { next ->
+                        if (next.length <= 6 && next.all { it.isDigit() }) {
+                            pageInput = next
+                        }
+                    },
+                    label = { Text("1 – $totalPages") },
+                    singleLine = true,
+                    isError = pageInput.isNotBlank() && !isValid,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Go
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onGo = {
+                            if (isValid) {
+                                onJumpToPage(parsedPage - 1)
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { onJumpToPage(0) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("1")
+                    }
+                    if (totalPages >= 4) {
+                        val midPage = (totalPages + 1) / 2
+                        OutlinedButton(
+                            onClick = { onJumpToPage(midPage - 1) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("$midPage")
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { onJumpToPage(totalPages - 1) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("$totalPages")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (isValid) {
+                        onJumpToPage(parsedPage - 1)
+                    }
+                },
+                enabled = isValid
+            ) {
+                Text(stringResource(R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 private fun readerCommandPresentation(
@@ -1063,7 +1224,9 @@ fun PdfReaderPageItem(
     pageIndex: Int,
     fitPage: Boolean = false,
     bitmapCache: BoundedPageBitmapCache,
-    renderGate: ReaderRenderGate
+    renderGate: ReaderRenderGate,
+    invertColors: Boolean = false,
+    modifier: Modifier = Modifier.fillMaxWidth()
 ) {
     val targetWidth = remember(context, fitPage) {
         val baseWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(360)
@@ -1128,8 +1291,7 @@ fun PdfReaderPageItem(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .then(if (fitPage) Modifier.heightIn(max = maxPageHeightDp) else Modifier.wrapContentHeight())
             .shadow(4.dp, RoundedCornerShape(4.dp))
             .background(Color.White)
@@ -1138,9 +1300,20 @@ fun PdfReaderPageItem(
     ) {
         val activeBitmap = bitmap?.takeIf { !it.isRecycled }
         if (activeBitmap != null) {
+            val colorFilter = if (invertColors) {
+                androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+                    androidx.compose.ui.graphics.ColorMatrix(floatArrayOf(
+                        -1f, 0f, 0f, 0f, 255f,
+                        0f, -1f, 0f, 0f, 255f,
+                        0f, 0f, -1f, 0f, 255f,
+                        0f, 0f, 0f, 1f, 0f
+                    ))
+                )
+            } else null
             Image(
                 bitmap = activeBitmap.asImageBitmap(),
                 contentDescription = stringResource(R.string.reader_page_content_desc, pageIndex + 1),
+                colorFilter = colorFilter,
                 contentScale = if (fitPage) ContentScale.Fit else ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1177,5 +1350,36 @@ fun PdfReaderPageItem(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun ReaderPageList(
+    horizontal: Boolean,
+    state: androidx.compose.foundation.lazy.LazyListState,
+    userScrollEnabled: Boolean,
+    contentPadding: PaddingValues,
+    verticalArrangement: Arrangement.Vertical,
+    modifier: Modifier,
+    content: androidx.compose.foundation.lazy.LazyListScope.() -> Unit
+) {
+    if (horizontal) {
+        LazyRow(
+            state = state,
+            userScrollEnabled = userScrollEnabled,
+            contentPadding = contentPadding,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = modifier,
+            content = content
+        )
+    } else {
+        LazyColumn(
+            state = state,
+            userScrollEnabled = userScrollEnabled,
+            contentPadding = contentPadding,
+            verticalArrangement = verticalArrangement,
+            modifier = modifier,
+            content = content
+        )
     }
 }

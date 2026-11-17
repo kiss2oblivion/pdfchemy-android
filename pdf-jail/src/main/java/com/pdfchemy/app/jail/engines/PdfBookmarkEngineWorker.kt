@@ -2,9 +2,12 @@ package com.pdfchemy.app.jail.engines
 
 import android.os.ParcelFileDescriptor
 import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionGoTo
+import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitWidthDestination
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
+import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode
 import org.json.JSONArray
 import org.json.JSONObject
 import com.pdfchemy.app.jail.capabilityInput as FileInputStream
@@ -19,34 +22,51 @@ object PdfBookmarkEngineWorker {
             val outline = document.documentCatalog.documentOutline
             val arr = JSONArray()
             if (outline != null) {
-                var current = outline.firstChild
-                while (current != null) {
-                    if (arr.length() >= JailQuotas.MAX_BOOKMARKS) {
-                        break // Enforce item limit
-                    }
-                    val title = current.title ?: "Untitled Bookmark"
-                    var pageIndex = 0
-                    try {
-                        val dest = current.destination
-                        if (dest is com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination) {
-                            val destPage = dest.page
-                            if (destPage != null) {
-                                pageIndex = document.pages.indexOf(destPage).coerceAtLeast(0)
-                            }
-                        }
-                    } catch (_: Exception) {}
-
-                    val obj = JSONObject()
-                    obj.put("title", title)
-                    obj.put("pageIndex", pageIndex)
-                    arr.put(obj)
-                    
-                    current = current.nextSibling
-                }
+                collectOutlineItems(outline, document, arr, 0)
             }
             return arr.toString()
         } finally {
             try { document?.close() } catch(_: Exception){}
+        }
+    }
+
+    private fun collectOutlineItems(node: PDOutlineNode, document: PDDocument, arr: JSONArray, level: Int) {
+        var current = node.firstChild
+        while (current != null) {
+            if (arr.length() >= JailQuotas.MAX_BOOKMARKS) {
+                break
+            }
+            val title = current.title ?: "Untitled Bookmark"
+            var pageIndex = 0
+            try {
+                val dest = current.destination
+                if (dest is PDPageDestination) {
+                    val destPage = dest.page
+                    if (destPage != null) {
+                        pageIndex = document.pages.indexOf(destPage).coerceAtLeast(0)
+                    }
+                } else if (current.action is PDActionGoTo) {
+                    val goto = current.action as PDActionGoTo
+                    val dest2 = goto.destination
+                    if (dest2 is PDPageDestination) {
+                        val destPage = dest2.page
+                        if (destPage != null) {
+                            pageIndex = document.pages.indexOf(destPage).coerceAtLeast(0)
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+
+            val obj = JSONObject()
+            obj.put("title", title)
+            obj.put("pageIndex", pageIndex)
+            obj.put("level", level)
+            arr.put(obj)
+
+            if (current.hasChildren()) {
+                collectOutlineItems(current, document, arr, level + 1)
+            }
+            current = current.nextSibling
         }
     }
 
@@ -66,8 +86,12 @@ object PdfBookmarkEngineWorker {
                 val outline = PDDocumentOutline()
                 document.documentCatalog.documentOutline = outline
 
+                // Node stack tracks (level, PDOutlineNode) for hierarchical nesting
+                val nodeStack = mutableListOf<Pair<Int, PDOutlineNode>>(-1 to outline)
+
                 for (i in 0 until arr.length()) {
                     val item = arr.getJSONObject(i)
+                    val level = item.optInt("level", 0).coerceAtLeast(0)
                     val safePageIdx = item.getInt("pageIndex").coerceIn(0, totalPages - 1)
                     val page = document.getPage(safePageIdx)
 
@@ -79,7 +103,14 @@ object PdfBookmarkEngineWorker {
                         }
                         destination = dest
                     }
-                    outline.addLast(outlineItem)
+
+                    while (nodeStack.isNotEmpty() && nodeStack.last().first >= level) {
+                        nodeStack.removeAt(nodeStack.lastIndex)
+                    }
+
+                    val parent = nodeStack.lastOrNull()?.second ?: outline
+                    parent.addLast(outlineItem)
+                    nodeStack.add(level to outlineItem)
                 }
                 outline.openNode()
             }

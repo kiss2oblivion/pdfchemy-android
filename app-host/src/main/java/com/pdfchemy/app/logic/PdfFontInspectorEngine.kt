@@ -34,8 +34,22 @@ object PdfFontInspectorEngine {
                 )
             }
             Result.success(result)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfFontInspectorEngine: Error inspecting fonts", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun extractEmbeddedFonts(context: Context, sourcePdfUri: Uri, destZipUri: Uri): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            PdfGateway.executeEngine(context, "FONT_EXTRACT", sourcePdfUri, destZipUri, "{}")
+            Result.success(true)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            AppLogger.e("PdfFontInspectorEngine: Error extracting fonts", e)
             Result.failure(e)
         }
     }

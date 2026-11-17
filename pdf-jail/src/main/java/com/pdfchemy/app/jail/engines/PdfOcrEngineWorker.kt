@@ -136,7 +136,24 @@ object PdfOcrEngineWorker {
                                         contentStream.newLineAtOffset(x, y)
                                         contentStream.showText(text)
                                         contentStream.endText()
-                                    } catch (e: Exception) {}
+                                    } catch (e: Exception) {
+                                        // PDType1Font.HELVETICA uses WinAnsiEncoding and throws on Romanian or extended Unicode diacritics.
+                                        // Decompose diacritics to basic Latin so searchability is preserved instead of silently dropping the word.
+                                        try {
+                                            val normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
+                                                .replace("\\p{M}".toRegex(), "")
+                                                .replace('\u0219', 's').replace('\u0218', 'S')
+                                                .replace('\u021B', 't').replace('\u021A', 'T')
+                                                .filter { it.code in 32..126 || it.code in 160..255 }
+                                            if (normalized.isNotBlank()) {
+                                                contentStream.beginText()
+                                                contentStream.setFont(font, fontSize)
+                                                contentStream.newLineAtOffset(x, y)
+                                                contentStream.showText(normalized)
+                                                contentStream.endText()
+                                            }
+                                        } catch (_: Exception) {}
+                                    }
                                 }
                             }
                         }

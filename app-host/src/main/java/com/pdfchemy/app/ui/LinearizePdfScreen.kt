@@ -40,7 +40,8 @@ fun LinearizePdfScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var status by remember { mutableStateOf<LinearizeStatus?>(null) }
     var isChecking by remember { mutableStateOf(false) }
 
@@ -165,12 +166,12 @@ fun LinearizePdfScreen(
                         }
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Size:", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.linearize_label_size), style = MaterialTheme.typography.bodyMedium)
                             Text(FileUtils.formatFileSize(status!!.fileSizeOriginal), fontWeight = FontWeight.Bold)
                         }
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Pages:", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.linearize_label_pages), style = MaterialTheme.typography.bodyMedium)
                             Text("${status!!.pageCount}", fontWeight = FontWeight.Bold)
                         }
                     }

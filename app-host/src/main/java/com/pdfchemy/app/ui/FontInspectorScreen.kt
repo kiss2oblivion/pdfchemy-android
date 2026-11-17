@@ -39,9 +39,12 @@ fun FontInspectorScreen(
     val coroutineScope = rememberCoroutineScope()
     BackHandler { onBack() }
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
     var fontList by remember { mutableStateOf<List<PdfFontInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isExporting by remember { mutableStateOf(false) }
+    var exportSource by remember { mutableStateOf<Uri?>(null) }
 
     fun refreshFonts() {
         val uri = selectedPdfUri ?: return
@@ -65,6 +68,29 @@ fun FontInspectorScreen(
         selectedPdfUri = uri
     }
 
+    val saveZipLauncher = rememberPreferredDocumentDestinationCreator("application/zip") { destination ->
+        val source = exportSource
+        exportSource = null
+        if (destination != null) {
+            isExporting = true
+            coroutineScope.launch {
+                try {
+                    requireNotNull(source) { "No source selected for export" }
+                    PdfFontInspectorEngine.extractEmbeddedFonts(context,source,destination.uri).getOrThrow()
+                    android.widget.Toast.makeText(context,"Embedded fonts exported",android.widget.Toast.LENGTH_SHORT).show()
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+                } catch (error: Exception) {
+                    android.widget.Toast.makeText(context,context.getString(R.string.error_fonts_export_failed),android.widget.Toast.LENGTH_LONG).show()
+                } finally {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context,destination.uri)
+                    }
+                    isExporting = false
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -75,9 +101,26 @@ fun FontInspectorScreen(
                     }
                 },
                 actions = {
+                    if (fontList.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                val reportText = buildString {
+                                    appendLine("PDF Font Inspection Report (${fontList.size} fonts)")
+                                    fontList.forEach { f ->
+                                        appendLine("- ${f.familyName}: ${f.formatType} | ${if (f.isEmbedded) "Embedded" else "System"} | ${f.encoding} (${f.pageCountUsed}p)")
+                                    }
+                                }.trim()
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Font Report", reportText))
+                                android.widget.Toast.makeText(context, context.getString(R.string.msg_font_report_copied), android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_font_report))
+                        }
+                    }
                     if (selectedPdfUri != null) {
                         IconButton(onClick = { refreshFonts() }) {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Refresh")
+                            Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.desc_refresh))
                         }
                     }
                 }
@@ -231,6 +274,36 @@ fun FontInspectorScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Export Embedded Fonts Action Button
+            val embeddedCount = fontList.count { it.isEmbedded }
+            if (embeddedCount > 0) {
+                Button(
+                    onClick = {
+                        val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
+                        exportSource = selectedPdfUri
+                        saveZipLauncher.launch("${base}_embedded_fonts.zip")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp),
+                    enabled = !isLoading && !isExporting && exportSource == null
+                ) {
+                    if (isExporting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(stringResource(R.string.btn_exporting_fonts))
+                    } else {
+                        Icon(Icons.Rounded.Download, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.btn_export_embedded_fonts))
                     }
                 }
             }

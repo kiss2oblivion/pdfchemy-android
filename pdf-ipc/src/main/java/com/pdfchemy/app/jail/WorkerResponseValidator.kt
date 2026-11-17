@@ -25,7 +25,7 @@ object WorkerResponseValidator {
         "COMPRESS", "ANALYZE_PDF", "OFFICE_WORD", "OFFICE_EXCEL", "OFFICE_PPT",
         "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
         "BOOKMARK_WRITE", "TEXT_EXTRACT", "IMAGE_EXTRACT_FRAMED", "IMAGE_EXTRACT",
-        "ARCHIVE_CONVERT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
+        "ARCHIVE_CONVERT", "FONT_EXTRACT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
         "CROP", "FLATTEN_APPLY", "REDACT",
         "ATTACHMENT_EXTRACT", "ATTACHMENT_REMOVE", "ATTACHMENT_EMBED", "BOOKLET_GENERATE",
         "TABLE_EXTRACT", "WATERMARK", "PAGE_NUMBERS", "BATES_STAMP",
@@ -46,7 +46,7 @@ object WorkerResponseValidator {
     }
 
     private const val MAX_FILE_RESULT_BYTES = 2 * 1024 * 1024L // 2 MiB for result files
-    private const val MAX_TOTAL_NODES = 5000
+    private const val MAX_TOTAL_NODES = 50_000
     private const val MAX_STRING_LENGTH = 1024
     private const val MAX_LONG_STRING_LENGTH = 1_000_000
 
@@ -67,6 +67,7 @@ object WorkerResponseValidator {
                 if (escaped) escaped = false else if (char == '\\') escaped = true else if (char == '"') quoted = false
             } else when (char) {
                 '"' -> quoted = true
+                '\'', '/' -> throw IllegalArgumentException("Invalid JSON token outside string: '$char'")
                 '{', '[' -> {
                     depth++
                     require(depth <= SecurityLimits.MAX_RESPONSE_DEPTH) { "Result nesting quota exceeded" }
@@ -153,6 +154,7 @@ object WorkerResponseValidator {
             "ANALYZE_PDF" -> parsePdfAnalysis(root)
             "OFFICE_WORD", "OFFICE_EXCEL", "OFFICE_PPT" -> parseOfficeExport(root)
             "TABLE_EXTRACT" -> parseTableExtract(root, targetCount)
+            "FONT_EXTRACT" -> parseFontExport(root, targetCount)
 
             // Standard output / status operations
             "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
@@ -172,6 +174,24 @@ object WorkerResponseValidator {
 
             else -> throw SecurityException("Unknown or unsupported worker operation: $operation")
         }
+    }
+
+
+    private fun parseFontExport(root: Any?, targetCount: Int): StandardOutputContract {
+        require(targetCount == 1) { "Font export requires one archive output" }
+        val obj = requireObject(root)
+        val count = obj.requireInt("extractedCount", min = 1, max = 256)
+        val files = obj.getJSONArray("fontFiles")
+        require(files.length() == count) { "Font export count mismatch" }
+        val seen = HashSet<String>()
+        for (index in 0 until files.length()) {
+            val name = files.get(index)
+            require(name is String && Regex("[A-Za-z0-9_.-]{1,100}[.](ttf|otf|pfb)").matches(name)) {
+                "Invalid exported font filename"
+            }
+            require(seen.add(name)) { "Duplicate exported font filename" }
+        }
+        return parseStandardOutput(root, targetCount)
     }
 
     // --- Operation Parsers ---
@@ -369,7 +389,8 @@ object WorkerResponseValidator {
             val obj = arr.getJSONObject(i)
             bookmarks.add(BookmarkItemContract(
                 title = obj.requireString("title", maxLength = 256),
-                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
+                pageIndex = obj.requireInt("pageIndex", min = 0, max = SecurityLimits.MAX_PAGE_COUNT),
+                level = obj.optInt("level", 0).coerceIn(0, 10)
             ))
         }
         return BookmarkReadContract(bookmarks = bookmarks)
@@ -479,6 +500,13 @@ object WorkerResponseValidator {
                         opts.add(s)
                     }
                 }
+                if (f.has("pageIndex")) f.requireInt("pageIndex", min=0, max=SecurityLimits.MAX_PAGE_COUNT-1)
+                for (key in listOf("xRatio","yRatio","widthRatio","heightRatio")) {
+                    if (f.has(key)) {
+                        val ratio=f.getDouble(key)
+                        require(ratio.isFinite() && ratio in 0.0..1.0) { "Invalid form field geometry" }
+                    }
+                }
                 fields.add(FormFieldInfo(
                     name = f.requireString("name", maxLength = 256),
                     fullyQualifiedName = f.requireString("fullyQualifiedName", maxLength = 512),
@@ -486,7 +514,12 @@ object WorkerResponseValidator {
                     value = f.requireString("value", maxLength = 4096),
                     possibleOptions = opts,
                     isReadOnly = f.optBoolean("isReadOnly", false),
-                    isRequired = f.optBoolean("isRequired", false)
+                    isRequired = f.optBoolean("isRequired", false),
+                    pageIndex = f.optInt("pageIndex", 0),
+                    xRatio = f.optDouble("xRatio", 0.0).toFloat(),
+                    yRatio = f.optDouble("yRatio", 0.0).toFloat(),
+                    widthRatio = f.optDouble("widthRatio", 0.0).toFloat(),
+                    heightRatio = f.optDouble("heightRatio", 0.0).toFloat()
                 ))
             }
             return AcroFormFieldsContract(fields = fields)

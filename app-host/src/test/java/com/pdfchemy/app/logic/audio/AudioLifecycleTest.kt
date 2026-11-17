@@ -133,4 +133,25 @@ class AudioLifecycleTest {
             assertArrayEquals("Cancellation must preserve the input bytes", sourceBytes, wav.readBytes())
         } finally { wav.delete() }
     }
+
+    @Test fun `cancelled open returning null or failing remains cancellation`() = runTest {
+        val wav = File.createTempFile("audio-cancel-open", ".wav").apply { writeBytes(ByteArray(32)) }
+        try {
+            for (returnNull in listOf(true, false)) {
+                var cleanups = 0
+                val error = runCatching {
+                    coroutineScope {
+                        val opening = currentCoroutineContext()
+                        AudioOutputPublisher.copy(wav, {
+                            opening.cancel()
+                            if (returnNull) null else throw IllegalStateException("Provider returned after cancellation")
+                        }, { cleanups++ })
+                    }
+                }.exceptionOrNull()
+                assertTrue("Canceled open must preserve cancellation: $error", error is CancellationException)
+                assertEquals(1, cleanups)
+                assertEquals(32L, wav.length())
+            }
+        } finally { wav.delete() }
+    }
 }

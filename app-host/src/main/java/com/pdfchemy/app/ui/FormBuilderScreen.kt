@@ -21,6 +21,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -59,7 +60,9 @@ import kotlinx.coroutines.withContext
 enum class FormBuilderToolType {
     TEXT,
     CHECKBOX,
-    DROPDOWN
+    DROPDOWN,
+    RADIO,
+    SIGNATURE
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -227,12 +230,28 @@ fun FormBuilderScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Text(
-                                text = "Total: ${placedFields.size}",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Total: ${placedFields.size}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                if (placedFields.isNotEmpty()) {
+                                    TextButton(
+                                        onClick = {
+                                            placedFields.clear()
+                                            editingField = null
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
@@ -240,7 +259,8 @@ fun FormBuilderScreen(
                                 if (placedFields.isEmpty()) {
                                     Toast.makeText(context, context.getString(R.string.form_builder_no_fields_warn), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    saveFileLauncher.launch("fillable_form.pdf")
+                                    val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "fillable")
+                                    saveFileLauncher.launch(suggestedName)
                                 }
                             },
                             modifier = Modifier
@@ -343,6 +363,18 @@ fun FormBuilderScreen(
                     .padding(paddingValues)
             ) {
                 // Page Navigator Bar
+                var showPageJumpDialog by remember { mutableStateOf(false) }
+                if (showPageJumpDialog && totalPages > 1) {
+                    PageJumpDialog(
+                        currentPageZeroBased = currentPageIndex,
+                        totalPages = totalPages,
+                        onDismiss = { showPageJumpDialog = false },
+                        onJumpToPage = { targetZeroBased ->
+                            currentPageIndex = targetZeroBased.coerceIn(0, totalPages - 1)
+                            showPageJumpDialog = false
+                        }
+                    )
+                }
                 Surface(
                     tonalElevation = 2.dp,
                     color = MaterialTheme.colorScheme.surface
@@ -363,7 +395,11 @@ fun FormBuilderScreen(
                         Text(
                             text = "${currentPageIndex + 1} / ${totalPages.coerceAtLeast(1)}",
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(enabled = totalPages > 1) { showPageJumpDialog = true }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                         IconButton(
                             onClick = { if (currentPageIndex < totalPages - 1) currentPageIndex++ },
@@ -378,29 +414,33 @@ fun FormBuilderScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.TEXT,
                         onClick = { selectedTool = FormBuilderToolType.TEXT },
                         label = { Text(stringResource(R.string.form_builder_tool_text)) },
-                        leadingIcon = { Icon(Icons.Rounded.TextFields, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1f)
+                        leadingIcon = { Icon(Icons.Rounded.TextFields, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.CHECKBOX,
                         onClick = { selectedTool = FormBuilderToolType.CHECKBOX },
                         label = { Text(stringResource(R.string.form_builder_tool_checkbox)) },
-                        leadingIcon = { Icon(Icons.Rounded.CheckBox, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1f)
+                        leadingIcon = { Icon(Icons.Rounded.CheckBox, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                     FilterChip(
                         selected = selectedTool == FormBuilderToolType.DROPDOWN,
                         onClick = { selectedTool = FormBuilderToolType.DROPDOWN },
                         label = { Text(stringResource(R.string.form_builder_tool_dropdown)) },
-                        leadingIcon = { Icon(Icons.Rounded.ArrowDropDownCircle, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1.1f)
+                        leadingIcon = { Icon(Icons.Rounded.ArrowDropDownCircle, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                    FilterChip(
+                        selected = selectedTool == FormBuilderToolType.SIGNATURE,
+                        onClick = { selectedTool = FormBuilderToolType.SIGNATURE },
+                        label = { Text(stringResource(R.string.form_builder_tool_signature)) },
+                        leadingIcon = { Icon(Icons.Rounded.Draw, contentDescription = null, modifier = Modifier.size(18.dp)) }
                     )
                 }
 
@@ -459,6 +499,8 @@ fun FormBuilderScreen(
                                                         FormBuilderToolType.TEXT -> "text_$fieldNum"
                                                         FormBuilderToolType.CHECKBOX -> "check_$fieldNum"
                                                         FormBuilderToolType.DROPDOWN -> "choice_$fieldNum"
+                                                        FormBuilderToolType.RADIO -> "radio_$fieldNum"
+                                                        FormBuilderToolType.SIGNATURE -> "signature_$fieldNum"
                                                     }
                                                     fieldNameInput = defaultName
                                                     defaultValueInput = ""
@@ -545,6 +587,18 @@ fun FormBuilderScreen(
                                                         tint = Color(0xFFE65100),
                                                         modifier = Modifier.size(14.dp)
                                                     )
+                                                    FormFieldType.RADIO -> Icon(
+                                                        Icons.Rounded.RadioButtonChecked,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFF7B1FA2),
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    FormFieldType.SIGNATURE -> Icon(
+                                                        Icons.Rounded.Draw,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFC2185B),
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
                                                     else -> {}
                                                 }
                                                 Text(
@@ -576,6 +630,8 @@ fun FormBuilderScreen(
                         FormBuilderToolType.TEXT -> stringResource(R.string.form_builder_tool_text)
                         FormBuilderToolType.CHECKBOX -> stringResource(R.string.form_builder_tool_checkbox)
                         FormBuilderToolType.DROPDOWN -> stringResource(R.string.form_builder_tool_dropdown)
+                        FormBuilderToolType.RADIO -> stringResource(R.string.form_builder_tool_radio)
+                        FormBuilderToolType.SIGNATURE -> stringResource(R.string.form_builder_tool_signature)
                     }
                 )
             },
@@ -621,6 +677,8 @@ fun FormBuilderScreen(
                             FormBuilderToolType.TEXT -> Pair(0.35f, 0.045f)
                             FormBuilderToolType.CHECKBOX -> Pair(0.06f, 0.038f)
                             FormBuilderToolType.DROPDOWN -> Pair(0.35f, 0.045f)
+                            FormBuilderToolType.RADIO -> Pair(0.06f, 0.038f)
+                            FormBuilderToolType.SIGNATURE -> Pair(0.35f, 0.08f)
                         }
                         val options = if (selectedTool == FormBuilderToolType.DROPDOWN) {
                             dropdownOptionsInput.split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -634,6 +692,8 @@ fun FormBuilderScreen(
                                     FormBuilderToolType.TEXT -> FormFieldType.TEXT
                                     FormBuilderToolType.CHECKBOX -> FormFieldType.CHECKBOX
                                     FormBuilderToolType.DROPDOWN -> FormFieldType.CHOICE
+                                    FormBuilderToolType.RADIO -> FormFieldType.RADIO
+                                    FormBuilderToolType.SIGNATURE -> FormFieldType.SIGNATURE
                                 },
                                 xRatio = xRatio.coerceIn(0f, 1f - wRatio),
                                 yRatio = yRatio.coerceIn(0f, 1f - hRatio),

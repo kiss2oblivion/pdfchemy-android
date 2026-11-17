@@ -14,6 +14,9 @@ enum class AudioExportState {
     FAILED
 }
 
+/** Immutable evidence of a completed output, independent of later job cancellation or failure. */
+data class AudioPublicationReceipt(val outputUri: String)
+
 data class AudioExportJob(
     val jobId: UUID,
     val state: AudioExportState,
@@ -21,5 +24,7 @@ data class AudioExportJob(
     val processedCharacters: Int = 0,
     val projectedSizeBytes: Long = 0L,
     val error: Throwable? = null,
-    val outputUri: String? = null
-)
+    val publication: AudioPublicationReceipt? = null
+) {
+    val outputUri: String? get() = publication?.outputUri
+}

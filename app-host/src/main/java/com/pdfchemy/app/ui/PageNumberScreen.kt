@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -61,6 +62,7 @@ fun PageNumberScreen(
     var selectedFormat by remember { mutableStateOf(NumberFormat.PAGE_X_OF_Y) }
     var selectedPosition by remember { mutableStateOf(NumberPosition.BOTTOM_CENTER) }
     var skipFirstPage by remember { mutableStateOf(false) }
+    var startNumber by remember { mutableIntStateOf(1) }
     var isProcessing by remember { mutableStateOf(false) }
 
     val currentPreviewBitmap by rememberUpdatedState(previewBitmap)
@@ -114,7 +116,8 @@ fun PageNumberScreen(
                 val options = PageNumberOptions(
                     position = selectedPosition,
                     format = selectedFormat,
-                    skipFirstPage = skipFirstPage
+                    skipFirstPage = skipFirstPage,
+                    startNumber = startNumber
                 )
                 val success = PdfStampAndNumberEngine.addPageNumbers(context, selectedPdfUri!!, destUri, options)
                 withContext(Dispatchers.Main) {
@@ -239,9 +242,12 @@ fun PageNumberScreen(
                         }
 
                         val sampleNumberText = when (selectedFormat) {
-                            NumberFormat.PAGE_X_OF_Y -> "Page 1 of $totalPages"
-                            NumberFormat.SLASH -> "1 / $totalPages"
-                            NumberFormat.SIMPLE -> "1"
+                            NumberFormat.PAGE_X_OF_Y -> "Page $startNumber of $totalPages"
+                            NumberFormat.SLASH -> "$startNumber / $totalPages"
+                            NumberFormat.SIMPLE -> "$startNumber"
+                            NumberFormat.ROMAN_LOWER -> "i"
+                            NumberFormat.ROMAN_UPPER -> "I"
+                            NumberFormat.CUSTOM -> "$startNumber"
                         }
 
                         Box(
@@ -272,13 +278,17 @@ fun PageNumberScreen(
                 // Number Format Choice
                 Text(stringResource(R.string.label_number_format), fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
                         NumberFormat.PAGE_X_OF_Y to "Page 1 of $totalPages",
                         NumberFormat.SLASH to "1 / $totalPages",
-                        NumberFormat.SIMPLE to "1"
+                        NumberFormat.SIMPLE to "1",
+                        NumberFormat.ROMAN_LOWER to "i, ii, iii",
+                        NumberFormat.ROMAN_UPPER to "I, II, III"
                     ).forEach { (fmt, label) ->
                         FilterChip(
                             selected = selectedFormat == fmt,
@@ -288,6 +298,42 @@ fun PageNumberScreen(
                             },
                             label = { Text(label, fontSize = 12.sp) }
                         )
+                    }
+                }
+
+                // Starting Page Number
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.label_bates_start_num), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = { if (startNumber > 1) startNumber-- },
+                            enabled = startNumber > 1,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.desc_decrement), modifier = Modifier.size(18.dp))
+                        }
+                        Text(
+                            text = "$startNumber",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.widthIn(min = 28.dp),
+                            textAlign = TextAlign.Center
+                        )
+                        FilledTonalIconButton(
+                            onClick = { startNumber++ },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.desc_increment), modifier = Modifier.size(18.dp))
+                        }
                     }
                 }
 
@@ -382,7 +428,10 @@ fun PageNumberScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("numbered_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "numbered")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),

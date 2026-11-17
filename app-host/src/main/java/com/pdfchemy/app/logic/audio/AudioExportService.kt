@@ -11,7 +11,8 @@ import androidx.core.app.NotificationCompat
 import com.pdfchemy.app.R
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import java.util.Locale
+import com.pdfchemy.app.logic.OfflineSpeechPolicy
+import com.pdfchemy.app.logic.OfflineSpeechUnavailableException
 import java.util.UUID
 
 class AudioExportService : Service() {
@@ -29,6 +30,11 @@ class AudioExportService : Service() {
     private var tts: TextToSpeech? = null
     private var writer: PcmWriter? = null
     private var abort: AudioExportAbort? = null
+
+    @androidx.annotation.VisibleForTesting
+    internal var afterPublicationForTesting: (suspend () -> Unit)? = null
+    @androidx.annotation.VisibleForTesting
+    internal val exportJobForTesting: Job? get() = pipeline
 
     override fun onCreate() {
         super.onCreate()
@@ -73,24 +79,14 @@ class AudioExportService : Service() {
         if (activeId != null) {
             if (id != activeId && store.updateState(id, AudioExportState.FAILED, IllegalStateException("Another audio export is running"))) {
                 scope.launch(NonCancellable + Dispatchers.IO) {
-                    val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
-                    val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
-                    if (dest != null) {
-                        runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
-                    }
-                    staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
+                    staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(this@AudioExportService, id)
                 }
             }
             return START_NOT_STICKY
         }
         if (!store.updateState(id, AudioExportState.INITIALIZING)) {
-            scope.launch(Dispatchers.IO) {
-                val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
-                val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
-                if (dest != null) {
-                    runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
-                }
-                staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(id)
+            scope.launch(NonCancellable + Dispatchers.IO) {
+                staging.clearJobStaging(id); AudioExportDependencies.forgetDestination(this@AudioExportService, id)
                 if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
                 withContext(Dispatchers.Main) { stopSelf() }
             }
@@ -114,15 +110,14 @@ class AudioExportService : Service() {
         }
         try {
             val destination = AudioExportDependencies.destination(id)
+            if (AudioExportDependencies.outputFormat(id) == AudioExportDependencies.OutputFormat.M4A) {
+                check(withContext(Dispatchers.IO) { AacM4aWriter.isCodecAvailable() }) { "AAC encoder unavailable; choose WAV export" }
+            }
             val initialized = CompletableDeferred<Int>()
             tts = TextToSpeech(this) { initialized.complete(it) }
-            check(withTimeout(30_000) { initialized.await() } == TextToSpeech.SUCCESS) { "TTS initialization failed" }
+            if (withTimeoutOrNull(30_000) { initialized.await() } != TextToSpeech.SUCCESS) throw OfflineSpeechUnavailableException()
             val engine = requireNotNull(tts)
-            val offline = engine.voices.orEmpty().filter { !it.isNetworkConnectionRequired }
-            val voice = offline.firstOrNull { it.locale == Locale.getDefault() }
-                ?: offline.firstOrNull { it.locale.language == Locale.getDefault().language }
-                ?: throw IllegalStateException("No installed offline voice for the current language")
-            check(engine.setVoice(voice) == TextToSpeech.SUCCESS) { "Unable to select offline voice" }
+            val voice = OfflineSpeechPolicy.configure(engine) ?: throw OfflineSpeechUnavailableException()
             check(store.updateState(id, AudioExportState.SYNTHESIZING))
             val chunks = withContext(Dispatchers.IO) {
                 val text = staging.getTextArtifactFile(id).readText(Charsets.UTF_8)
@@ -140,11 +135,13 @@ class AudioExportService : Service() {
             check(engine.setOnUtteranceProgressListener(TtsPcmAssembler(pcm)) == TextToSpeech.SUCCESS)
             var processed = 0
             store.updateProgress(id, 0, total, 0)
+            val synthParams = Bundle()
             for ((index, chunk) in chunks.withIndex()) {
                 currentCoroutineContext().ensureActive()
+                if (!OfflineSpeechPolicy.matches(engine.voice, voice)) throw OfflineSpeechUnavailableException()
                 val (utterance, drained) = pcm.beginChunk(index)
                 val sink = staging.getTempChunkFile(id, index)
-                check(engine.synthesizeToFile(chunk, Bundle(), sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }
+                check(engine.synthesizeToFile(chunk, synthParams, sink, utterance) == TextToSpeech.SUCCESS) { "TTS rejected synthesis request" }
                 val bytes = withTimeout(120_000) { drained.await() }
                 // onDone alone cannot release this sink; drained acknowledges the application's writer flush.
                 withContext(Dispatchers.IO) { sink.delete() }
@@ -156,10 +153,23 @@ class AudioExportService : Service() {
             }
             withContext(Dispatchers.IO) { pcm.closeAndJoin() }
             check(store.updateState(id, AudioExportState.ASSEMBLING))
-            withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+            val isM4a = AudioExportDependencies.outputFormat(id) == AudioExportDependencies.OutputFormat.M4A
+
+            val finalFile = if (isM4a) {
+                val m4a = staging.getFinalM4aFile(id)
+                withContext(Dispatchers.IO) { AacM4aWriter.assemble(raw, m4a, pcm.format) }
+                m4a
+            } else {
+                withContext(Dispatchers.IO) { WavWriter.assemble(raw, wav, pcm.format) }
+                wav
+            }
             check(store.updateState(id, AudioExportState.PUBLISHING))
-            val isFresh = AudioExportDependencies.isFreshDestination(id)
-            withContext(Dispatchers.IO) { AudioOutputPublisher.publish(this@AudioExportService, wav, destination, isFresh) }
+            withContext(Dispatchers.IO) {
+                AudioExportDependencies.publishDestination(this@AudioExportService, id, finalFile) { published ->
+                    check(store.recordPublication(id, published.toString())) { "Unable to retain published audio result" }
+                }
+                afterPublicationForTesting?.invoke()
+            }
             currentCoroutineContext().ensureActive()
             check(store.updateState(id, AudioExportState.COMPLETED, outputUri = destination.toString()))
         } catch (error: CancellationException) {
@@ -175,15 +185,8 @@ class AudioExportService : Service() {
             tts?.stop(); tts?.shutdown(); tts = null
             withContext(NonCancellable + Dispatchers.IO) {
                 runCatching { writer?.closeAndJoin() }
-                if (store.getJob(id)?.state != AudioExportState.COMPLETED) {
-                    val dest = runCatching { AudioExportDependencies.destination(id) }.getOrNull()
-                    val isFresh = dest?.let { AudioExportDependencies.isFreshDestination(id) } ?: false
-                    if (dest != null) {
-                        runCatching { AudioOutputPublisher.deletePartial(this@AudioExportService, dest, isFresh) }
-                    }
-                }
                 staging.clearJobStaging(id)
-                AudioExportDependencies.forgetDestination(id)
+                AudioExportDependencies.forgetDestination(this@AudioExportService, id)
                 if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
             }
             withContext(NonCancellable + Dispatchers.Main) {

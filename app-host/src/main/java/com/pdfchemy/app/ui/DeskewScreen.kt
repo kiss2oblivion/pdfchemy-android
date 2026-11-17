@@ -65,7 +65,9 @@ fun DeskewScreen(
     val previewOwner = remember(scope, previewLoader) { DeskewPreviewOwner(scope, previewLoader) }
     val preview by previewOwner.state.collectAsState()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialPdfUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialPdfUri = initialPdfUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialPdfUri) }
     val detectedAngle = preview.angle
     val isAnalyzing = preview.loading
     var isProcessing by remember { mutableStateOf(false) }
@@ -78,9 +80,9 @@ fun DeskewScreen(
         previewOwner.analyze(uri)
     }
 
-    LaunchedEffect(initialPdfUri, previewOwner) {
-        if (initialPdfUri != null) {
-            analyzeDocument(initialPdfUri)
+    LaunchedEffect(effectiveInitialPdfUri, previewOwner) {
+        if (effectiveInitialPdfUri != null) {
+            analyzeDocument(effectiveInitialPdfUri)
         } else {
             selectedPdfUri = null
             straightenedCount = -1
@@ -118,7 +120,7 @@ fun DeskewScreen(
                     throw cancelled
                 } catch (e: Exception) {
                     AppLogger.e("Deskew processing failed", e)
-                    Toast.makeText(context, "Error straightening document", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.error_straightening_doc), Toast.LENGTH_SHORT).show()
                 } finally {
                     withContext(NonCancellable + Dispatchers.IO) {
                         createdUri?.let { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, it) }
@@ -187,7 +189,7 @@ fun DeskewScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else if (selectedPdfUri != null) {
-                if (preview.failed) Text("Unable to analyze this document", color = MaterialTheme.colorScheme.error)
+                if (preview.failed) Text(stringResource(R.string.error_unable_analyze_doc), color = MaterialTheme.colorScheme.error)
                 // Detected Tilt Badge
                 if (previewBitmap != null) Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -240,7 +242,7 @@ fun DeskewScreen(
                     ) {
                         Image(
                             bitmap = bmp.asImageBitmap(),
-                            contentDescription = "Page Preview",
+                            contentDescription = stringResource(R.string.desc_page_preview),
                             modifier = Modifier.padding(8.dp).semantics {
                                 stateDescription = String.format(java.util.Locale.getDefault(), "%.1f°", detectedAngle)
                             }
@@ -290,7 +292,7 @@ fun DeskewScreen(
                     }
                     Text(stringResource(R.string.deskew_action_straighten))
                 }
-                Text("A new copy is saved in the folder you choose.", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.msg_new_copy_chosen_folder), style = MaterialTheme.typography.bodySmall)
             }
         }
     }

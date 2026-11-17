@@ -2,8 +2,10 @@ package com.pdfchemy.app.logic.audio
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
+import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.jail.CancellableProviderWriter
 import com.pdfchemy.app.logic.OutputPolicy
+import com.pdfchemy.app.security.FreshOutputRegistry
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.OutputStream
@@ -14,31 +16,61 @@ object AudioOutputPublisher {
         context: Context,
         wav: File,
         destination: Uri,
-        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
+        isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination),
+        onPublished: (Uri) -> Unit = {}
     ) {
+        require(destination.scheme == "content") { "Audio destination must be a content URI" }
+        if (!isFreshCopy) throw UnsupportedOperationException("Audio export requires a newly created output copy")
+        val owner = Any()
+        FreshOutputRegistry.claimKnown(listOf(destination), owner)
+        try {
+            publishClaimed(context, wav, destination, owner, onPublished)
+        } finally {
+            withContext(NonCancellable + Dispatchers.IO) {
+                FreshOutputRegistry.abandon(context, listOf(destination), owner)
+            }
+        }
+    }
+
+    internal suspend fun publishClaimed(
+        context: Context,
+        wav: File,
+        destination: Uri,
+        owner: Any,
+        onPublished: (Uri) -> Unit
+    ) {
+        require(destination.scheme == "content") { "Audio destination must be a content URI" }
+        FreshOutputRegistry.requireSafeSafTargets(listOf(destination), owner)
         copy(
             wav,
             listOf(destination),
-            { context.contentResolver.openOutputStream(destination, "wt") },
-            { deletePartial(context, destination, isFreshCopy) },
-            { OutputPolicy.markPublished(destination) }
+            { openWholeFile(context, destination) },
+            {}, // The owner abandons only after copy releases its writer lease.
+            {
+                FreshOutputRegistry.published(listOf(destination), owner)
+                onPublished(destination)
+            }
         )
     }
+
+    /** Whole-file access rejects bounded asset slices before raw FD pipe writes. */
+    internal fun openWholeFile(context: Context, destination: Uri): OutputStream? =
+        context.contentResolver.openFileDescriptor(destination, "wt")?.let {
+            try { ParcelFileDescriptor.AutoCloseOutputStream(it) }
+            catch (error: Throwable) { runCatching { it.close() }; throw error }
+        }
 
     fun deletePartial(
         context: Context,
         destination: Uri,
         isFreshCopy: Boolean = OutputPolicy.isFreshCopy(destination)
     ) {
-        if (!isFreshCopy) {
-            // Existing or unknown destinations must not be deleted during pre-publication failure cleanup
+        if (!isFreshCopy || !OutputPolicy.isFreshCopy(destination)) {
+            // Existing, unknown, or already-published destinations must not be deleted during pre-publication failure cleanup
             return
         }
-        // Atomically claim only a still-unpublished fresh output. A cached provenance
-        // flag cannot authorize deletion after publication or during another writer.
-        com.pdfchemy.app.security.FreshOutputRegistry.deleteIfFresh(destination) {
-            DocumentFile.fromSingleUri(context, destination)?.delete() == true
-        }
+        // A historical Boolean cannot authorize deletion after publication, claim or failed cleanup.
+        OutputPolicy.deleteIfFresh(context, destination)
     }
 
     // Small separate abstraction: HostOutputTransaction is a PDF-worker FD/JSON validator
@@ -77,25 +109,25 @@ object AudioOutputPublisher {
             val stream = requireNotNull(open()) { "Unable to open audio destination" }
             handle.registerStream(stream).use {
                 stream.use { output ->
+                    val writer = CancellableProviderWriter.create(output)
                     wav.inputStream().use { input ->
                         val buffer = ByteArray(64 * 1024)
                         while (true) {
                             currentCoroutineContext().ensureActive()
                             val count = input.read(buffer)
                             if (count < 0) break
-                            output.write(buffer, 0, count)
+                            writer.write(buffer, count)
                         }
                         currentCoroutineContext().ensureActive()
                     }
                 }
             }
-            // No suspension between successful stream close and retiring freshness.
+            // Successful stream close commits publication before cancellation can interrupt result delivery.
             onPublished()
             completedNormally = true
         } catch (error: Throwable) {
-            // Aborting a blocked provider write can surface as IOException.
-            // Preserve cancellation while retaining genuine active-copy errors.
-            if (error is java.io.IOException) currentCoroutineContext().ensureActive()
+            // Provider cancellation may surface as null/open/close errors as well as IOException.
+            if (error is Exception) currentCoroutineContext().ensureActive()
             throw error
         } finally {
             watcher.cancel()

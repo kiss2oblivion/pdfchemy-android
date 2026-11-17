@@ -31,4 +31,12 @@ class ReaderDefaultsStoreTest {
         ReaderDefaultsStore(prefs).save(ReaderDefaults("DARK", 100f, false))
         assertEquals(ReaderDefaults("DARK", 32f, false), ReaderDefaultsStore(prefs).load())
     }
+    @Test fun warmthAndReadingAssistanceSurviveRecreationAndReset() {
+        val saved = ReaderDefaults("WARMTH", 20f, true, true, true)
+        ReaderDefaultsStore(prefs).save(saved)
+        val reopened = ReaderDefaultsStore(prefs)
+        assertEquals(saved, reopened.load())
+        reopened.reset()
+        assertEquals(ReaderDefaults(), reopened.load())
+    }
 }

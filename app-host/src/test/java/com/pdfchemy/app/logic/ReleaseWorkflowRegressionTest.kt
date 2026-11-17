@@ -85,6 +85,8 @@ class ReleaseWorkflowRegressionTest {
         val first = mockk<DocumentFile>(relaxed = true)
         every { first.uri } returns Uri.parse("content://fixture/first.pdf")
         every { first.delete() } returns true
+        mockkStatic(DocumentFile::class)
+        every { DocumentFile.fromSingleUri(context, first.uri) } returns first
         every { directory.exists() } returns true
         every { directory.isDirectory } returns true
         every { directory.canWrite() } returns true

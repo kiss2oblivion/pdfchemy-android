@@ -54,7 +54,8 @@ fun PageLayoutScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(continuityUri) }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var totalPages by remember { mutableIntStateOf(1) }
 
@@ -91,6 +92,12 @@ fun PageLayoutScreen(
             } finally {
                 try { pfd?.close() } catch (_: Throwable) {}
             }
+        }
+    }
+
+    LaunchedEffect(continuityUri) {
+        if (continuityUri != null && selectedPdfUri == continuityUri && previewBitmap == null) {
+            loadPreview(continuityUri!!)
         }
     }
 
@@ -284,7 +291,10 @@ fun PageLayoutScreen(
 
                 // Save Action Button
                 Button(
-                    onClick = { savePdfLauncher.launch("layout_${System.currentTimeMillis()}.pdf") },
+                    onClick = {
+                        val suggestedName = com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, selectedPdfUri, "layout")
+                        savePdfLauncher.launch(suggestedName)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 52.dp),

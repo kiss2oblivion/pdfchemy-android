@@ -1,4 +1,8 @@
 package com.pdfchemy.app
+
+import androidx.compose.material.icons.automirrored.rounded.TextSnippet
+
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import com.pdfchemy.app.ui.rememberPreferredDocumentCreator
 import com.pdfchemy.app.ui.HistoryScreen
 import com.pdfchemy.app.ui.BrowseOutputContract
@@ -54,7 +58,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.res.stringResource
 import com.pdfchemy.app.R
 import java.io.File
-import android.util.Log
 import com.google.android.ump.ConsentDebugSettings
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
@@ -361,13 +364,13 @@ class MainActivity : AppCompatActivity() {
                     this
                 ) { loadAndShowError ->
                     if (loadAndShowError != null) {
-                        Log.w("UMP", "${loadAndShowError.errorCode}: ${loadAndShowError.message}")
+                        AppLogger.w("UMP: ${loadAndShowError.errorCode}: ${loadAndShowError.message}")
                     }
                     initializeMobileAdsIfPermitted()
                 }
             },
             { requestConsentError ->
-                Log.w("UMP", "${requestConsentError.errorCode}: ${requestConsentError.message}")
+                AppLogger.w("UMP: ${requestConsentError.errorCode}: ${requestConsentError.message}")
                 initializeMobileAdsIfPermitted()
             }
         )
@@ -409,10 +412,6 @@ class MainActivity : AppCompatActivity() {
                 incomingPdfUriState.value = null
             }
         }
-    }
-
-    private fun extractPdfUri(intent: Intent?): Uri? {
-        return if (intent != null) com.pdfchemy.app.security.ExternalUriAdmission.extractCandidateUri(intent) else null
     }
 
     private fun cleanupOrphanedCacheFiles(context: Context) {
@@ -482,8 +481,22 @@ class MainActivity : AppCompatActivity() {
             var hasConsented by remember { mutableStateOf(hasConsentedInitial) }
             var hasCompletedOnboarding by remember { mutableStateOf(hasCompletedOnboardingInitial) }
             var showTourManually by remember { mutableStateOf(false) }
-            
-            ShrinkPdfTheme(useDarkTheme = useDark) {
+
+            val systemHaptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+            val customHaptic = remember(systemHaptic) {
+                object : androidx.compose.ui.hapticfeedback.HapticFeedback {
+                    override fun performHapticFeedback(hapticFeedbackType: androidx.compose.ui.hapticfeedback.HapticFeedbackType) {
+                        if (prefs.getBoolean("haptic", true)) {
+                            systemHaptic.performHapticFeedback(hapticFeedbackType)
+                        }
+                    }
+                }
+            }
+
+            CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalHapticFeedback provides customHaptic
+            ) {
+                ShrinkPdfTheme(useDarkTheme = useDark) {
                 if (!hasConsented) {
                     AlertDialog(
                         onDismissRequest = { /* Must explicitly decide to continue */ },
@@ -537,7 +550,8 @@ class MainActivity : AppCompatActivity() {
                     onOpenTour = {
                         showTourManually = true
                     }
-                )
+                    )
+                }
             }
         }
     }
@@ -806,7 +820,7 @@ fun MainApp(
                         currentScreen = Screen.SplitPdf(initialUri = sourceUri)
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.PAGE_RANGE -> {
-                        currentScreen = Screen.PageOrganizer
+                        currentScreen = Screen.PageOrganizer()
                     }
                     com.pdfchemy.app.logic.DeviceGuard.AlternativeAction.LIGHTWEIGHT_MODE -> {
                         viewModel.setUseGrayscale(true)
@@ -907,13 +921,10 @@ fun MainApp(
                 // [FEATURE: Merge PDFs] — Multi-document combiner with drag-and-drop reordering
                 Screen.MergePdf -> MergePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Split PDFs (Range / All)] — Split into individual pages or arbitrary page ranges
-                is Screen.SplitPdf -> SplitPdfScreen(viewModel, initialUri = targetScreen.initialUri) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Page Organizer] — Visual thumbnail grid: reorder, delete, duplicate, rotate
-                Screen.PageOrganizer -> PageOrganizerScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Delete Pages] — Visual single-page or multi-page removal
-                Screen.DeletePages -> DeletePagesScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
-                // [FEATURE: Rotate Pages] — Lossless 90°, 180°, 270° orientation correction
-                Screen.RotatePdf -> RotatePdfScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
+                is Screen.SplitPdf -> SplitPdfScreen(viewModel, initialUri = targetScreen.initialUri, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
+                is Screen.PageOrganizer -> PageOrganizerScreen(viewModel, initialUri = targetScreen.initialPdfUri) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.DeletePages -> DeletePagesScreen(viewModel, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
+                Screen.RotatePdf -> RotatePdfScreen(viewModel, onNavigate = { currentScreen = it }) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Auto-Deskew & Straighten] — Hough transform scan tilt auto-correction
                 Screen.Deskew -> DeskewScreen(viewModel) { returnFromTool(Screen.OrganizeCategory) }
                 // [FEATURE: Page Cropper & Margin Trimmer] — CropBox adjustment to remove scanner borders
@@ -985,7 +996,10 @@ fun MainApp(
                 // [FEATURE: Quick Fill & Sign] — Flat PDF tap-to-place annotations (Text, ✓, ✗, Date, Signatures)
                 Screen.QuickFillSign -> QuickFillSignScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Interactive Form Builder] — Converts flat PDFs into genuine fillable forms (PDAcroForm)
-                Screen.FormBuilder -> FormBuilderScreen { returnFromTool(Screen.CreateCategory) }
+                Screen.FormBuilder -> {
+                    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+                    FormBuilderScreen(initialPdfUri = continuityUri) { returnFromTool(Screen.CreateCategory) }
+                }
                 // [FEATURE: AcroForm Interactive Filler] — Inspects and fills standard interactive PDF forms
                 Screen.FillForm -> FillFormScreen(viewModel) { returnFromTool(Screen.CreateCategory) }
                 // [FEATURE: Visual Signer] — Draw smoothed vector signatures and place on page
@@ -1129,10 +1143,29 @@ fun MainApp(
                                         }
                                     }
                                 }
-                                OutlinedButton(onClick = { browseOutput.launch(state.outputUris.first()) }, modifier = Modifier.fillMaxWidth()) { Text("Browse files") }
+                                val firstOutput = state.outputUris.first()
+                                val firstOutputMime = com.pdfchemy.app.utils.FileUtils.getMimeType(context, firstOutput)
+                                if (firstOutputMime == "application/pdf" || firstOutputMime == "application/epub+zip") {
+                                    OutlinedButton(
+                                        onClick = {
+                                            resetAndShowAd()
+                                            currentScreen = if (firstOutputMime == "application/epub+zip") {
+                                                Screen.ReflowReader(firstOutput)
+                                            } else {
+                                                Screen.PdfReader(firstOutput)
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(stringResource(R.string.select_pdf_for_reading))
+                                    }
+                                }
+                                OutlinedButton(onClick = { browseOutput.launch(firstOutput) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_browse_files)) }
                                 OutlinedButton(
                                     onClick = { 
-                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, state.outputUris.first()) }
+                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, firstOutput) }
                                             .onFailure { viewModel.notifyError("No app can open this file. Check file access or use Share.") }
                                     },
                                     modifier = Modifier.fillMaxWidth()
@@ -1145,7 +1178,7 @@ fun MainApp(
                             OutlinedButton(
                                 onClick = resetAndShowAd,
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Another Operation") }
+                            ) { Text(stringResource(R.string.ok)) }
                             Button(
                                 onClick = { 
                                     resetAndShowAd()
@@ -1154,7 +1187,7 @@ fun MainApp(
                                     currentScreen = Screen.Home
                                 },
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("Home") }
+                            ) { Text(stringResource(R.string.menu_home)) }
                         }
                     },
                     confirmButton = {}
@@ -1384,7 +1417,7 @@ sealed class Screen {
     // [FEATURE: Split PDFs] — Range or single page split
     data class SplitPdf(val initialUri: Uri? = null) : Screen()
     // [FEATURE: Page Organizer] — Visual thumbnail grid
-    object PageOrganizer : Screen()
+    data class PageOrganizer(val initialPdfUri: Uri? = null) : Screen()
     // [FEATURE: Delete Pages] — Visual page deletion
     object DeletePages : Screen()
     // [FEATURE: Rotate Pages] — Orientation correction
@@ -1514,7 +1547,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             Screen.LinearizePdf -> "LinearizePdf"
             Screen.FlattenPdf -> "FlattenPdf"
             Screen.MergePdf -> "MergePdf"
-            Screen.PageOrganizer -> "PageOrganizer"
+            is Screen.PageOrganizer -> "PageOrganizer"
             Screen.DeletePages -> "DeletePages"
             Screen.RotatePdf -> "RotatePdf"
             Screen.Deskew -> "Deskew"
@@ -1616,7 +1649,7 @@ val ScreenSaver: Saver<Screen, String> = Saver(
             str == "OcrPdf" -> Screen.OcrPdf
             str == "ScanPdf" -> Screen.ScanPdf
             str == "SignPdf" -> Screen.SignPdf
-            str == "PageOrganizer" -> Screen.PageOrganizer
+            str == "PageOrganizer" -> Screen.PageOrganizer()
             str == "Watermark" -> Screen.Watermark
             str == "PageNumber" -> Screen.PageNumber
             str == "PageLayout" -> Screen.PageLayout
@@ -1886,13 +1919,6 @@ fun HomeScreen(
                         )
                     }
                     
-                    val homeReaderPicker = rememberVanguardPdfPicker(
-                        onNavigateToUnlock = { unlockUri -> onNavigate(Screen.UnlockPdf(unlockUri)) },
-                        onPdfSelected = { pickedUri ->
-                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
-                        }
-                    )
-
                     com.pdfchemy.app.ui.ToolSearchBar(
                         modifier = Modifier.padding(bottom = 12.dp),
                         onToolSelected = onNavigate
@@ -1900,7 +1926,13 @@ fun HomeScreen(
 
                     val readerPicker = com.pdfchemy.app.ui.rememberVanguardPdfPicker(
                         onNavigateToUnlock = { onNavigate(Screen.UnlockPdf(it)) },
-                        onPdfSelected = { onNavigate(Screen.PdfReader(it)) }
+                        onNavigateToRepair = { damagedUri ->
+                            viewModel.setContinuityUri(damagedUri)
+                            onNavigate(Screen.RepairPdf)
+                        },
+                        onPdfSelected = { pickedUri ->
+                            onNavigate(com.pdfchemy.app.logic.ReaderNavigationCoordinator.resolveDocumentEntryScreen(pickedUri))
+                        }
                     )
                     OutlinedButton(
                         onClick = { readerPicker.launch() },
@@ -1918,6 +1950,15 @@ fun HomeScreen(
                             translationY = cardsOffsetY.value  // slide up from below
                         }
                     ) {
+                        // [UX-02] Primary reading entry in dashboard
+                        CategoryCard(
+                            title = stringResource(R.string.menu_read_pdf),
+                            subtitle = stringResource(R.string.menu_read_pdf_desc),
+                            icon = Icons.AutoMirrored.Rounded.MenuBook,
+                            onClick = { onNavigate(Screen.PdfEditor()) },
+                            modifier = Modifier.fillMaxWidth().height(100.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().heightIn(min = categoryHeight),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -2261,6 +2302,14 @@ fun CreateCategoryScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                     subtitle = stringResource(R.string.menu_extract_images_desc),
                     icon = Icons.Rounded.Image,
                     onClick = { onNavigate(Screen.ExtractImages) }
+                )
+            }
+            item {
+                ToolCard(
+                    title = stringResource(R.string.menu_extract),
+                    subtitle = stringResource(R.string.menu_extract_desc),
+                    icon = Icons.AutoMirrored.Rounded.TextSnippet,
+                    onClick = { onNavigate(Screen.ExtractText) }
                 )
             }
             item {
@@ -3395,8 +3444,50 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
     BackHandler { onBack() }
 
-    Scaffold(containerColor = Color.Transparent, 
-        topBar = { PremiumTopAppBar(stringResource(R.string.history_text_to_pdf), onBack) }
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    val wordCount = remember(inputText) {
+        if (inputText.isBlank()) 0 else inputText.trim().split(Regex("\\s+")).size
+    }
+    val charCount = inputText.length
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.history_text_to_pdf)) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.desc_back))
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val pasted = clipboardManager.getText()?.text
+                            if (!pasted.isNullOrEmpty()) {
+                                viewModel.setInputText(if (inputText.isEmpty()) pasted else "$inputText\n$pasted")
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ContentPaste, contentDescription = stringResource(R.string.desc_paste))
+                    }
+                    if (inputText.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(inputText))
+                                Toast.makeText(context, context.getString(R.string.msg_copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.desc_copy_clipboard))
+                        }
+                        IconButton(onClick = { viewModel.setInputText("") }) {
+                            Icon(Icons.Rounded.DeleteSweep, contentDescription = stringResource(R.string.clear))
+                        }
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
             Card(
@@ -3409,6 +3500,21 @@ fun TextToPdfScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     label = { Text(stringResource(R.string.type_or_paste_text_here)) },
                     modifier = Modifier.fillMaxSize().padding(8.dp),
                     placeholder = { Text(stringResource(R.string.enter_the_content_of_your_pdf)) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Words: $wordCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Chars: $charCount",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -3683,11 +3789,11 @@ fun SettingsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             // Theme Selector
 
-            Text("Output folder", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_output_folder), style = MaterialTheme.typography.titleMedium)
             Text(if (preferredOutput == null) "Ask where to save each time" else "Saved folder selected. New copies keep existing files.", style = MaterialTheme.typography.bodySmall)
             Row {
-                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) "Choose folder" else "Change folder") }
-                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text("Reset") }
+                TextButton(onClick = { folderPicker.launch(null) }) { Text(if (preferredOutput == null) stringResource(R.string.action_choose_folder) else "Change folder") }
+                if (preferredOutput != null) TextButton(onClick = { outputPrefs.edit().remove(com.pdfchemy.app.logic.OutputPolicy.DIRECTORY_KEY).apply(); preferredOutput = null }) { Text(stringResource(R.string.action_reset)) }
             }
                             var themeExpanded by remember { mutableStateOf(false) }
                             val themeOptions = mapOf(
@@ -3957,7 +4063,7 @@ fun SettingsScreen(
                                     try {
                                         context.startActivity(Intent.createChooser(emailIntent, context.getString(R.string.settings_feedback)))
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.error_no_email_app), Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -4127,7 +4233,7 @@ fun AndroidManifestoDialog(onDismiss: () -> Unit) {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             context.startActivity(intent)
         } catch (_: Exception) {
-            Toast.makeText(context, "Cannot open browser", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.error_cannot_open_browser), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -4299,6 +4405,7 @@ fun RecentFilesSection(
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var showFileInaccessibleDialog by remember { mutableStateOf(false) }
     var showDamagedPdfDialog by remember { mutableStateOf(false) }
+    var vanguardPendingDamagedUri by remember { mutableStateOf<Uri?>(null) }
     var vanguardPendingEncryptedUri by remember { mutableStateOf<Uri?>(null) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var vanguardScanningFileName by remember { mutableStateOf<String?>(null) }
@@ -4320,19 +4427,27 @@ fun RecentFilesSection(
 
     if (showDamagedPdfDialog) {
         AlertDialog(
-            onDismissRequest = { showDamagedPdfDialog = false },
+            onDismissRequest = {
+                showDamagedPdfDialog = false
+                vanguardPendingDamagedUri = null
+            },
             title = { Text(stringResource(R.string.vanguard_damaged_title)) },
             text = { Text(stringResource(R.string.vanguard_damaged_message)) },
             confirmButton = {
                 Button(onClick = {
                     showDamagedPdfDialog = false
+                    vanguardPendingDamagedUri?.let { viewModel.setContinuityUri(it) }
+                    vanguardPendingDamagedUri = null
                     onNavigate?.invoke(Screen.RepairPdf)
                 }) {
                     Text(stringResource(R.string.menu_repair_pdf))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDamagedPdfDialog = false }) {
+                TextButton(onClick = {
+                    showDamagedPdfDialog = false
+                    vanguardPendingDamagedUri = null
+                }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -4437,7 +4552,7 @@ fun RecentFilesSection(
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        TextButton(onClick = { onNavigate?.invoke(Screen.History) }) { Text("View all history") }
+        TextButton(onClick = { onNavigate?.invoke(Screen.History) }) { Text(stringResource(R.string.action_view_all_history)) }
     }
     if (history.isNotEmpty()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -4471,6 +4586,7 @@ fun RecentFilesSection(
                                                     viewModel.removeHistoryItem(item.uriString)
                                                     showFileInaccessibleDialog = true
                                                 } else {
+                                                    vanguardPendingDamagedUri = uri
                                                     showDamagedPdfDialog = true
                                                 }
                                             }) {
@@ -4494,6 +4610,7 @@ fun RecentFilesSection(
                                                             }
                                                             is com.pdfchemy.app.logic.VanguardThreatResult.ParseFailed -> {
                                                                 com.pdfchemy.app.utils.DocumentStager.release(stagedUri)
+                                                                vanguardPendingDamagedUri = uri
                                                                 showDamagedPdfDialog = true
                                                             }
                                                         }
@@ -4527,7 +4644,7 @@ fun RecentFilesSection(
                                                     onNavigate(Screen.PdfReader(initialPdfUri = uri))
                                                 } else {
                                                     AppLogger.e("Cannot open file from recent activity: ${item.name}", e2)
-                                                    Toast.makeText(context, "No app available to open ${item.name}", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, context.getString(R.string.error_no_app_open_file, item.name), Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                         }
@@ -4608,7 +4725,7 @@ fun PremiumUpgradeScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             ) {
                 Icon(
                 imageVector = Icons.Rounded.WorkspacePremium,
-                contentDescription = "Premium",
+                contentDescription = stringResource(R.string.desc_premium),
                 modifier = Modifier.size(120.dp),
                 tint = Color(0xFFFFD700)
             )

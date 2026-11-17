@@ -85,7 +85,7 @@ object ReaderCommandCentreCatalog {
             ReaderCommandAction.SIGN_PDF -> Screen.SignPdf
             ReaderCommandAction.PROTECT_ENCRYPT -> Screen.ProtectPdf
             ReaderCommandAction.SPLIT -> Screen.SplitPdf(activeDocumentUri)
-            ReaderCommandAction.PAGE_ORGANIZER -> Screen.PageOrganizer
+            ReaderCommandAction.PAGE_ORGANIZER -> Screen.PageOrganizer(activeDocumentUri)
             ReaderCommandAction.ROTATE_PAGES -> Screen.RotatePdf
             ReaderCommandAction.DELETE_PAGES -> Screen.DeletePages
             ReaderCommandAction.FILL_FORM -> Screen.FillForm

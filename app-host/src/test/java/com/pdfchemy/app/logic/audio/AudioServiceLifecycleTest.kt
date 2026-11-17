@@ -2,6 +2,7 @@ package com.pdfchemy.app.logic.audio
 
 import android.content.Intent
 import android.net.Uri
+import com.pdfchemy.app.logic.OutputPolicy
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.os.Bundle
@@ -32,6 +33,20 @@ import java.util.UUID
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], shadows = [AudioServiceLifecycleTest.PcmTtsShadow::class])
 class AudioServiceLifecycleTest {
+    @org.junit.Before fun configureRegularFileMetadata() = AudioRegularFileMetadata.install()
+    @org.junit.After fun clearRegularFileMetadata() = AudioRegularFileMetadata.clear()
+
+    @Test fun `service fixture descriptors retain their regular file type`() {
+        val file = File.createTempFile("audio_regular_", ".wav")
+        try {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE).use { descriptor ->
+                val mode = android.system.Os.fstat(descriptor.fileDescriptor).st_mode
+                assertTrue(android.system.OsConstants.S_ISREG(mode))
+                assertFalse(android.system.OsConstants.S_ISFIFO(mode))
+            }
+        } finally { file.delete() }
+    }
+
     private class OutputProvider(private val output: File) : ContentProvider() {
         override fun onCreate() = true
         override fun getType(uri: Uri) = "audio/wav"
@@ -51,7 +66,9 @@ class AudioServiceLifecycleTest {
         val store = AudioExportDependencies.jobStore; val staging = AudioExportDependencies.stagingManager
         try {
             store.createJob(id); staging.stageText(id, "Offline voice regression")
-            AudioExportDependencies.registerDestination(id, Uri.parse("content://missing.test/$id"))
+            val uri = Uri.parse("content://missing.test/$id")
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
             ShadowTextToSpeech.addVoice(Voice("network-test", Locale.getDefault(), Voice.QUALITY_NORMAL, Voice.LATENCY_NORMAL, true, emptySet()))
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
             runCurrent()
@@ -63,14 +80,19 @@ class AudioServiceLifecycleTest {
             repeat(100) { runCurrent(); if (source.exists()) Thread.sleep(10) }
         } finally {
             controller.destroy(); staging.clearJobStaging(id)
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id); Dispatchers.resetMain()
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id); Dispatchers.resetMain()
         }
     }
 
     @Implements(TextToSpeech::class)
     class PcmTtsShadow : ShadowTextToSpeech() {
+        var lastSynthesisParameters: Bundle? = null
+        @Implementation
+        fun getVoice(): Voice? = currentVoice
+
         @Implementation
         override fun synthesizeToFile(text: CharSequence, params: Bundle, file: File, utteranceId: String): Int {
+            lastSynthesisParameters = Bundle(params)
             // Deliberately NOT a WAV. The application's authoritative data must come from callbacks.
             file.writeText("arbitrary engine container; do not concatenate")
             utteranceProgressListener.onBeginSynthesis(utteranceId, 22050, 2, 1)
@@ -93,6 +115,7 @@ class AudioServiceLifecycleTest {
             val provider = OutputProvider(destination)
             provider.attachInfo(service, ProviderInfo().apply { authority = "audio.unit.test" })
             ShadowContentResolver.registerProviderInternal("audio.unit.test", provider)
+            OutputPolicy.registerFreshCopy(uri)
             AudioExportDependencies.registerDestination(id, uri)
             ShadowTextToSpeech.addVoice(Voice("offline-test", Locale.getDefault(), Voice.QUALITY_NORMAL, Voice.LATENCY_NORMAL, false, emptySet()))
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
@@ -103,13 +126,17 @@ class AudioServiceLifecycleTest {
                 if (store.getJob(id)!!.state !in AudioExportJobStore.terminalStates) Thread.sleep(10)
             }
             runCurrent()
-            assertEquals(store.getJob(id)!!.error?.toString(), AudioExportState.COMPLETED, store.getJob(id)!!.state)
+            assertEquals(store.getJob(id)!!.error?.stackTraceToString(), AudioExportState.COMPLETED, store.getJob(id)!!.state)
             assertEquals(uri.toString(), store.getJob(id)!!.outputUri)
+            val synthParameters = org.robolectric.shadow.api.Shadow.extract<PcmTtsShadow>(
+                ShadowTextToSpeech.getLastTextToSpeechInstance()).lastSynthesisParameters
+            assertNotNull(synthParameters)
+            assertFalse("Offline synthesis must not request the legacy network feature",synthParameters!!.containsKey("networkTts"))
             assertEquals(48L, destination.length())
             assertArrayEquals(byteArrayOf(1, 2, 3, 4), destination.readBytes().copyOfRange(44, 48))
         } finally {
             controller.destroy(); staging.clearJobStaging(id); destination.delete()
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id)
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
             Dispatchers.resetMain()
         }
     }
@@ -123,7 +150,9 @@ class AudioServiceLifecycleTest {
         val staging = AudioExportDependencies.stagingManager
         try {
             store.createJob(id)
-            AudioExportDependencies.registerDestination(id, Uri.parse("content://missing.test/$id"))
+            val uri = Uri.parse("content://missing.test/$id")
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
             staging.stageText(id, "Timeout regression text")
             service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
             runCurrent() // Pipeline is awaiting the TTS initialization callback.
@@ -142,7 +171,7 @@ class AudioServiceLifecycleTest {
             assertFalse(java.io.File(service.cacheDir, "audio-export/$id").exists())
         } finally {
             controller.destroy(); staging.clearJobStaging(id)
-            AudioExportDependencies.forgetDestination(id); store.removeJob(id)
+            AudioExportDependencies.forgetDestination(service, id); store.removeJob(id)
             Dispatchers.resetMain()
         }
     }

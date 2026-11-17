@@ -7,6 +7,11 @@ package com.pdfchemy.app.logic
 
 import android.content.Context
 import android.net.Uri
+import android.os.ParcelFileDescriptor
+import com.pdfchemy.app.jail.HostOutputTransaction
+import com.pdfchemy.app.security.FreshOutputRegistry
+import com.pdfchemy.app.security.SecurityLimits
+import com.pdfchemy.app.security.BoundedOutputStream
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.DocumentStager
 import kotlinx.coroutines.Dispatchers
@@ -28,8 +33,14 @@ object PdfCompressor {
         var stagedPdf: com.pdfchemy.app.jail.StagedPdf? = null
         var inputLease: java.io.Closeable? = null
         val temporaryFiles = mutableListOf<java.io.File>()
+        val targets = listOf(destUri)
+        val publicationOwner = Any()
+        var claimedOutput = false
         try {
             com.pdfchemy.app.security.SourcePreservationPolicy.requireSeparateDestination(context, sourceUri, destUri)
+            FreshOutputRegistry.claimKnown(targets, publicationOwner)
+            claimedOutput = true
+            FreshOutputRegistry.requireSafeSafTargets(targets, publicationOwner)
             val stagedLease = DocumentStager.stageDocumentCancellableWithLease(context, sourceUri)
             stagedPdf = stagedLease.document
             inputLease = stagedLease.lease
@@ -74,10 +85,14 @@ object PdfCompressor {
                 }
             }
 
-            try {
-                val contentResolver = context.contentResolver
-                val success = bestTempFile.inputStream().use { input ->
-                    contentResolver.openOutputStream(destUri, "wt")?.use { output ->
+            // Claim before processing, but start the bounded collector's deadline only
+            // when the selected compression pass is ready for final publication.
+            HostOutputTransaction(context, targets, previousPublicationOwner = publicationOwner).use { transaction ->
+                bestTempFile.inputStream().use { input ->
+                    BoundedOutputStream(
+                        ParcelFileDescriptor.AutoCloseOutputStream(transaction.workerDescriptors.single().dup()),
+                        SecurityLimits.MAX_OUTPUT_BYTES
+                    ).use { output ->
                         val buffer = ByteArray(64 * 1024)
                         while (true) {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -85,24 +100,19 @@ object PdfCompressor {
                             if (count < 0) break
                             output.write(buffer, 0, count)
                         }
-                        true
-                    } ?: false
+                    }
                 }
-
-                if (success) {
-                    Result.success(bestReport.copy(targetMissed = targetMb != null && bestTempFile.length() > (targetMb * 1024 * 1024).toLong()))
-                } else {
-                    Result.failure(Exception("Failed to copy final compressed output to destination"))
-                }
-            } finally {
-                bestTempFile.delete()
+                transaction.validateAndSnapshot("{\"success\":true}")
+                transaction.commit()
             }
+            Result.success(bestReport.copy(targetMissed = targetMb != null && bestTempFile.length() > (targetMb * 1024 * 1024).toLong()))
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfCompressor: Compression failed", e)
             Result.failure(e)
         } finally {
+            if (claimedOutput) FreshOutputRegistry.abandon(context, targets, publicationOwner)
             temporaryFiles.forEach { it.delete() }
             stagedPdf?.takeIf { it.uri != sourceUri }?.let(DocumentStager::release)
             inputLease?.close()
@@ -137,6 +147,8 @@ private suspend fun compressSinglePass(
             )
 
             Result.success(report)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfCompressor: Jail execution failed", e)
             Result.failure(e)

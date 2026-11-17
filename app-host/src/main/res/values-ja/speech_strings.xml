@@ -1,0 +1,3 @@
+<resources>
+    <string name="tts_offline_unavailable">この言語にはインストール済みのオフライン音声が必要です。音声設定でインストールまたは選択してから、再試行してください。文書のテキストはネットワーク音声に送信されません。</string>
+</resources>

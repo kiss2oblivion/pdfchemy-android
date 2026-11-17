@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-11-10",
+  "sources": {
+    "tesseract4android": {"url": "https://github.com/adaptech-cz/Tesseract4Android.git", "revision": "15c534717b1cb58261b58d4e4c1200c7f81f668c", "version": "4.9.0"},
+    "tesseract": {"url": "https://github.com/tesseract-ocr/tesseract.git", "revision": "7e548e6eff172f38f97664afe7f7ce40db36c8d6", "version": "5.5.4"},
+    "leptonica": {"url": "https://github.com/DanBloomberg/leptonica.git", "revision": "13275a278eb55b5746e33f95fbf5a2c8f604b3ab", "version": "1.87.0"},
+    "libpng": {"url": "https://github.com/pnggroup/libpng.git", "revision": "cd952f49f95bb27154ae77dbb103032d95f6e580", "version": "1.6.59"}
+  },
+  "toolchain": {"ndk": "28.2.13676358", "cmake": "3.22.1", "agp": "9.2.1", "gradle": "9.4.1", "java": 21, "min_sdk": 24},
+  "abis": ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"],
+  "patch": "patches/tesseract4android-4.9.0-inmemory.patch",
+  "retained_vendored_component": {"name": "IJG libjpeg", "version": "9f", "source": "tesseract4android/tesseract4android/src/main/cpp/libjpeg/src", "upstream": "https://ijg.org/", "latest_upstream_reviewed": "10", "status": "Retained during this security rebuild; major-version compatibility update is tracked separately"},
+  "retained_ndk_component": {"name": "android cpufeatures", "source": "NDK 28.2.13676358 sources/android/cpufeatures", "status": "NDK headers explicitly mark this utility as legacy support; migrate to google/cpu_features in a separately verified compatibility batch", "migration_upstream": "https://github.com/google/cpu_features"}
+}

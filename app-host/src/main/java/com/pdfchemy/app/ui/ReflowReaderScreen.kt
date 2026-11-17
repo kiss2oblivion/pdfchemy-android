@@ -1,4 +1,6 @@
 package com.pdfchemy.app.ui
+
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 
 import android.content.Context
@@ -6,7 +8,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import java.util.Locale
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,12 +53,15 @@ import com.pdfchemy.app.logic.PdfOutlineReader
 import com.pdfchemy.app.logic.ReflowSection
 import com.pdfchemy.app.logic.ReflowOcrCoordinator
 import com.pdfchemy.app.logic.ReflowOcrState
+import com.pdfchemy.app.logic.OfflineReadAloudSession
+import com.pdfchemy.app.logic.OfflineSpeechUnavailableException
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
     LIGHT(Color(0xFFFFFFFF), Color(0xFF1E293B), "Light"),
+    WARMTH(Color(0xFFFFF8E7), Color(0xFF3E2723), "Warmth"),
     SEPIA(Color(0xFFFBF0D9), Color(0xFF5F4B32), "Sepia"),
     DARK(Color(0xFF1E293B), Color(0xFFF1F5F9), "Dark"),
     OLED(Color(0xFF000000), Color(0xFFE2E8F0), "OLED")
@@ -68,6 +72,7 @@ enum class ReaderTheme(val bg: Color, val text: Color, val label: String) {
 fun ReflowReaderScreen(
     initialUri: Uri? = null,
     viewModel: com.pdfchemy.app.ui.MainViewModel,
+    speechFactory: (Context, TextToSpeech.OnInitListener) -> TextToSpeech = { ctx, listener -> TextToSpeech(ctx, listener) },
     onBack: () -> Unit
 ) {
     SecureScreenContent()
@@ -77,7 +82,10 @@ fun ReflowReaderScreen(
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri) }
+    val continuityUri by viewModel.continuityDocumentUri.collectAsState()
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
+    var showPageJumpDialog by remember { mutableStateOf(false) }
     var uriHash by remember { mutableStateOf("default") }
     var reflowSections by remember { mutableStateOf<List<ReflowSection>>(emptyList()) }
     var bookmarks by remember { mutableStateOf<List<OutlineBookmark>>(emptyList()) }
@@ -286,14 +294,14 @@ fun ReflowReaderScreen(
         }
     }
 
-    LaunchedEffect(initialUri) {
+    LaunchedEffect(effectiveInitialUri) {
         guardDocumentLoad(onFailure = {
             showVanguardBlockedDialog = true
             isVanguardScanning = false
             isLoading = false
         }) {
-            if (initialUri != null) {
-                val originalUri = initialUri
+            if (effectiveInitialUri != null) {
+                val originalUri = effectiveInitialUri
                 val stagedLease = com.pdfchemy.app.utils.DocumentStager.stageDocumentCancellationSafe(
                     context = context,
                     sourceUri = originalUri,
@@ -306,6 +314,7 @@ fun ReflowReaderScreen(
                 val oldUri = currentStagedUri
                 activeSessionLease = newLease
                 currentStagedUri = initialUri
+                selectedPdfUri = initialUri
                 oldLease?.close()
                 if (oldUri != null && oldUri != initialUri && viewModel.continuityDocumentUri.value != oldUri) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.pdfchemy.app.utils.DocumentStager.release(oldUri) }
@@ -364,8 +373,10 @@ fun ReflowReaderScreen(
     var selectedTheme by remember { mutableStateOf(ReaderTheme.valueOf(defaults.theme)) }
     var fontSizeSp by remember { mutableStateOf(defaults.fontSize) }
     var useSerifFont by remember { mutableStateOf(defaults.serif) }
-    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont) {
-        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont))
+    var isBionicReading by remember { mutableStateOf(defaults.bionic) }
+    var isDyslexiaSpacing by remember { mutableStateOf(defaults.dyslexia) }
+    LaunchedEffect(selectedTheme, fontSizeSp, useSerifFont, isBionicReading, isDyslexiaSpacing) {
+        defaultsStore.save(ReaderDefaults(selectedTheme.name, fontSizeSp, useSerifFont, isBionicReading, isDyslexiaSpacing))
     }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
@@ -397,10 +408,17 @@ fun ReflowReaderScreen(
     var currentMatchIndex by remember { mutableIntStateOf(0) }
 
     var isTtsBarVisible by remember { mutableStateOf(false) }
-    var isTtsPlaying by remember { mutableStateOf(false) }
     var ttsRate by remember { mutableFloatStateOf(1.0f) }
-    var currentSpeakingIndex by remember { mutableIntStateOf(0) }
-    var ttsEngine by remember { mutableStateOf<TextToSpeech?>(null) }
+    var speechSession by remember { mutableStateOf<OfflineReadAloudSession?>(null) }
+    var speechConstructionFailed by remember { mutableStateOf(false) }
+    var speechRetry by remember { mutableIntStateOf(0) }
+    var showSpeechRecovery by remember { mutableStateOf(false) }
+    val currentSpeechFactory by rememberUpdatedState(speechFactory)
+    val speechState = speechSession?.state?.collectAsState()?.value ?: OfflineReadAloudSession.State(
+        availability = if (speechConstructionFailed) OfflineReadAloudSession.Availability.UNAVAILABLE
+            else OfflineReadAloudSession.Availability.INITIALIZING)
+    val isTtsPlaying = speechState.playing
+    val currentSpeakingIndex = speechState.paragraphIndex
 
     val allParagraphs = remember(reflowSections) {
         reflowSections.flatMap { it.paragraphs }
@@ -416,60 +434,102 @@ fun ReflowReaderScreen(
         }
         map
     }
+    val currentParagraphToSection by rememberUpdatedState(paragraphToSection)
 
     fun speakParagraph(index: Int) {
-        if (index in allParagraphs.indices && ttsEngine != null) {
-            currentSpeakingIndex = index
-            val text = allParagraphs[index]
-            val params = android.os.Bundle()
-            params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "para_$index")
-            ttsEngine?.setSpeechRate(ttsRate)
-            ttsEngine?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "para_$index")
-            isTtsPlaying = true
+        if (speechState.availability == OfflineReadAloudSession.Availability.UNAVAILABLE) showSpeechRecovery = true
+        else speechSession?.play(index)
+    }
+
+    DisposableEffect(context, initialUri, selectedPdfUri, speechRetry) {
+        speechConstructionFailed = false
+        var owner: OfflineReadAloudSession? = null
+        var pendingStatus: Int? = null
+        val engine = runCatching {
+            currentSpeechFactory(context, TextToSpeech.OnInitListener { status ->
+                scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                    val session = owner
+                    if (session == null) pendingStatus = status else session.initialize(status)
+                }
+            })
+        }.getOrNull()
+        if (engine == null) {
+            speechSession = null
+            speechConstructionFailed = true
+            onDispose { }
         } else {
-            isTtsPlaying = false
+            val session = OfflineReadAloudSession(engine)
+            owner = session
+            session.replaceParagraphs(allParagraphs, initialUri to selectedPdfUri)
+            session.setRate(ttsRate)
+            speechSession = session
+            val listenerAccepted = runCatching {
+                engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                            if (session.onStart(utteranceId)) {
+                                val section = currentParagraphToSection[session.state.value.paragraphIndex]
+                                if (section != null && !listState.isScrollInProgress) listState.animateScrollToItem(section)
+                            }
+                        }
+                    }
+                    override fun onDone(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onDone(utteranceId) }
+                    }
+                    @Deprecated("Required callback for older TTS engines")
+                    override fun onError(utteranceId: String?) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onError(utteranceId) }
+                    }
+                    override fun onError(utteranceId: String?, errorCode: Int) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) { session.onError(utteranceId) }
+                    }
+                }) == TextToSpeech.SUCCESS
+            }.getOrDefault(false)
+            if (!listenerAccepted) session.initialize(TextToSpeech.ERROR)
+            else pendingStatus?.let { session.initialize(it) }
+            val deadline = scope.launch {
+                kotlinx.coroutines.delay(OfflineReadAloudSession.INITIALIZATION_TIMEOUT_MILLIS)
+                session.initializationTimedOut()
+            }
+            onDispose {
+                deadline.cancel()
+                session.close()
+            }
         }
     }
 
-    // Initialize TTS
-    DisposableEffect(context) {
-        val tts = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                ttsEngine?.language = Locale.getDefault()
-            }
+    LaunchedEffect(speechSession, allParagraphs, initialUri, selectedPdfUri) {
+        speechSession?.replaceParagraphs(allParagraphs, initialUri to selectedPdfUri)
+    }
+    val readerLifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(readerLifecycle, speechSession) {
+        val session = speechSession
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) session?.stop()
         }
-        tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                    isTtsPlaying = true
-                    val sIdx = paragraphToSection[currentSpeakingIndex]
-                    if (sIdx != null && !listState.isScrollInProgress) {
-                        listState.animateScrollToItem(sIdx)
-                    }
-                }
-            }
-            override fun onDone(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                    if (currentSpeakingIndex + 1 < allParagraphs.size) {
-                        currentSpeakingIndex++
-                        val nextText = allParagraphs[currentSpeakingIndex]
-                        tts.speak(nextText, TextToSpeech.QUEUE_FLUSH, null, "P_$currentSpeakingIndex")
-                    } else {
-                        isTtsPlaying = false
-                    }
-                }
-            }
-            override fun onError(utteranceId: String?) {
-                scope.launch(kotlinx.coroutines.Dispatchers.Main) { isTtsPlaying = false }
-            }
-        })
-        ttsEngine = tts
+        readerLifecycle.addObserver(observer)
+        onDispose { readerLifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(speechState.availability, isTtsBarVisible) {
+        if (isTtsBarVisible && speechState.availability == OfflineReadAloudSession.Availability.UNAVAILABLE) showSpeechRecovery = true
+    }
 
-        onDispose {
-            tts.stop()
-            tts.shutdown()
-            ttsEngine = null
-        }
+    fun openSpeechSettings() {
+        runCatching { context.startActivity(android.content.Intent("com.android.settings.TTS_SETTINGS")) }
+            .onFailure { runCatching { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_SETTINGS)) } }
+    }
+    if (showSpeechRecovery) {
+        AlertDialog(
+            onDismissRequest = { showSpeechRecovery = false },
+            title = { Text(stringResource(R.string.tts_play)) },
+            text = { Text(stringResource(R.string.tts_offline_unavailable)) },
+            confirmButton = {
+                TextButton(onClick = { showSpeechRecovery = false; speechRetry++ }) { Text(stringResource(R.string.retry)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSpeechRecovery = false; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
+            }
+        )
     }
 
     var showReadingControls by remember { mutableStateOf(true) }
@@ -599,19 +659,26 @@ fun ReflowReaderScreen(
                 TextButton(onClick = { 
                     com.pdfchemy.app.logic.audio.AudioExportDependencies.jobStore.updateState(activeExportJobId!!, com.pdfchemy.app.logic.audio.AudioExportState.CANCELLING) 
                 }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
-    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED || activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) {
+    } else if (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.FAILED ||
+        activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED ||
+        (activeJobState?.state == com.pdfchemy.app.logic.audio.AudioExportState.CANCELLED && activeJobState?.outputUri != null)) {
         AlertDialog(
             onDismissRequest = { activeExportJobKey = null },
-            title = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
-            text = { Text(if (activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved) else "Error: ${activeJobState!!.error?.message}") },
+            title = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_complete) else stringResource(R.string.audio_export_failed)) },
+            text = { Text(if (activeJobState!!.outputUri != null || activeJobState!!.state == com.pdfchemy.app.logic.audio.AudioExportState.COMPLETED) stringResource(R.string.audio_export_saved)
+                else if (activeJobState!!.error is OfflineSpeechUnavailableException) stringResource(R.string.tts_offline_unavailable)
+                else "Error: ${activeJobState!!.error?.message}") },
             confirmButton = {
-                TextButton(onClick = { activeExportJobKey = null }) { Text("OK") }
+                TextButton(onClick = { activeExportJobKey = null }) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
+                if (activeJobState?.outputUri == null && activeJobState?.error is OfflineSpeechUnavailableException) {
+                    TextButton(onClick = { activeExportJobKey = null; openSpeechSettings() }) { Text(stringResource(R.string.settings_title)) }
+                }
                 activeJobState?.outputUri?.let { saved ->
                     val output = Uri.parse(saved)
                     Row {
@@ -641,9 +708,7 @@ fun ReflowReaderScreen(
         )
     }
 
-    val audioExportLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { dest ->
-        val uri = dest?.uri
-        val isFresh = dest?.isFreshCopy ?: (uri?.let { com.pdfchemy.app.logic.OutputPolicy.isFreshCopy(it) } ?: false)
+    val onAudioExportDestinationSelected: (Uri?, Boolean, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat) -> Unit = { uri, isFresh, outputFormat ->
         val text = pendingAudioText
         pendingAudioText = null
         if (uri != null) {
@@ -655,7 +720,7 @@ fun ReflowReaderScreen(
                     withContext(kotlinx.coroutines.Dispatchers.IO) {
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         jobs.createJob(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.registerDestination(jobId, uri, isFresh, outputFormat)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.stageText(jobId, text)
                     }
                     check(audioLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) { "Return to the Reader and retry export" }
@@ -669,13 +734,35 @@ fun ReflowReaderScreen(
                         com.pdfchemy.app.logic.audio.AudioOutputPublisher.deletePartial(context, uri, isFresh)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.initialize(context)
                         com.pdfchemy.app.logic.audio.AudioExportDependencies.stagingManager.clearJobStaging(jobId)
-                        com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(jobId)
+                        com.pdfchemy.app.logic.audio.AudioExportDependencies.forgetDestination(context, jobId)
                     }
                     if (error is kotlinx.coroutines.CancellationException) throw error
                     audioStartError = error.message ?: "Unable to start audio export"
                 }
             }
         }
+    }
+
+    val audioExportM4aLauncher = rememberPreferredDocumentDestinationCreator("audio/mp4") { destination ->
+        onAudioExportDestinationSelected(destination?.uri, destination?.isFreshCopy ?: false, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.M4A)
+    }
+
+    val audioExportWavLauncher = rememberPreferredDocumentDestinationCreator("audio/wav") { destination ->
+        onAudioExportDestinationSelected(destination?.uri, destination?.isFreshCopy ?: false, com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.WAV)
+    }
+
+    if (showPageJumpDialog && reflowSections.size > 1) {
+        PageJumpDialog(
+            currentPageZeroBased = listState.firstVisibleItemIndex.coerceIn(0, reflowSections.size - 1),
+            totalPages = reflowSections.size,
+            onDismiss = { showPageJumpDialog = false },
+            onJumpToPage = { targetZeroBased ->
+                showPageJumpDialog = false
+                scope.launch {
+                    listState.animateScrollToItem(targetZeroBased.coerceIn(0, reflowSections.size - 1))
+                }
+            }
+        )
     }
 
     ModalNavigationDrawer(
@@ -748,7 +835,7 @@ fun ReflowReaderScreen(
                             IconButton(onClick = { showReadingControls = false }) { Icon(Icons.Rounded.Fullscreen, "Hide reading controls") }
                             if (bookmarks.isNotEmpty()) {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = "Table of Contents", tint = selectedTheme.text)
+                                    Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = stringResource(R.string.reader_toc_title), tint = selectedTheme.text)
                                 }
                             }
                             if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
@@ -757,13 +844,12 @@ fun ReflowReaderScreen(
                                     if (isTtsBarVisible && !isTtsPlaying) {
                                         speakParagraph(currentSpeakingIndex)
                                     } else if (!isTtsBarVisible) {
-                                        ttsEngine?.stop()
-                                        isTtsPlaying = false
+                                        speechSession?.stop()
                                     }
                                 }) {
                                     Icon(
                                         if (isTtsPlaying) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeMute,
-                                        contentDescription = "Read Aloud",
+                                        contentDescription = stringResource(R.string.tts_play),
                                         tint = if (isTtsBarVisible) MaterialTheme.colorScheme.primary else selectedTheme.text
                                     )
                                 }
@@ -773,7 +859,7 @@ fun ReflowReaderScreen(
                                 }) {
                                     Icon(
                                         Icons.Rounded.Search,
-                                        contentDescription = "Search Text",
+                                        contentDescription = stringResource(R.string.reader_action_search),
                                         tint = if (isSearchActive) MaterialTheme.colorScheme.primary else selectedTheme.text
                                     )
                                 }
@@ -786,17 +872,52 @@ fun ReflowReaderScreen(
                                 )
                             }
                             IconButton(onClick = { pdfPickerLauncher.launch(arrayOf("application/pdf", "application/epub+zip", "application/zip", "application/octet-stream")) }) {
-                                Icon(Icons.Rounded.FolderOpen, contentDescription = "Open Document", tint = selectedTheme.text)
+                                Icon(Icons.Rounded.FolderOpen, contentDescription = stringResource(R.string.desc_open_file), tint = selectedTheme.text)
                             }
                             if (selectedPdfUri != null && reflowSections.isNotEmpty()) {
                                 Box {
                                     IconButton(onClick = { showOverflowMenu = true }) {
-                                        Icon(Icons.Rounded.MoreVert, contentDescription = "More Options", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.desc_more_options), tint = selectedTheme.text)
                                     }
                                     DropdownMenu(
                                         expanded = showOverflowMenu,
                                         onDismissRequest = { showOverflowMenu = false }
                                     ) {
+                                        if (reflowSections.size > 1) {
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Text(
+                                                        stringResource(
+                                                            R.string.visual_page_number,
+                                                            (listState.firstVisibleItemIndex + 1).coerceIn(1, reflowSections.size),
+                                                            reflowSections.size
+                                                        )
+                                                    )
+                                                },
+                                                onClick = {
+                                                    showOverflowMenu = false
+                                                    showPageJumpDialog = true
+                                                },
+                                                leadingIcon = { Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null) }
+                                            )
+                                        }
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.share)) },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val shareTarget = selectedPdfUri ?: return@DropdownMenuItem
+                                                runCatching {
+                                                    com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                                        context,
+                                                        listOf(shareTarget),
+                                                        context.getString(R.string.desc_share_output)
+                                                    )
+                                                }.onFailure {
+                                                    viewModel.notifyError("No sharing app is available. Open or browse the saved files instead.")
+                                                }
+                                            },
+                                            leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) }
+                                        )
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.reader_reset_defaults)) },
                                             onClick = {
@@ -804,16 +925,38 @@ fun ReflowReaderScreen(
                                                 selectedTheme = ReaderTheme.LIGHT
                                                 fontSizeSp = 16f
                                                 useSerifFont = false
+                                                isBionicReading = false
+                                                isDyslexiaSpacing = false
                                                 showOverflowMenu = false
                                             }
                                         )
                                         DropdownMenuItem(
-                                            text = { Text("Export to Audio (WAV)") },
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_m4a_title))
+                                                    Text(stringResource(R.string.audio_export_m4a_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
+                                            onClick = {
+                                                showOverflowMenu = false
+                                                val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audiobook.m4a") ?: "audiobook.m4a"
+                                                pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
+                                                audioExportM4aLauncher.launch(suggestedName)
+                                            },
+                                            leadingIcon = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, contentDescription = null) }
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(stringResource(R.string.audio_export_wav_title))
+                                                    Text(stringResource(R.string.audio_export_wav_subtitle), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            },
                                             onClick = {
                                                 showOverflowMenu = false
                                                 val suggestedName = FileUtils.getFileName(context, selectedPdfUri!!)?.substringBeforeLast(".")?.plus("_audio.wav") ?: "audio_export.wav"
                                                 pendingAudioText = reflowSections.flatMap { it.paragraphs }.joinToString("\n\n")
-                                                audioExportLauncher.launch(suggestedName)
+                                                audioExportWavLauncher.launch(suggestedName)
                                             },
                                             leadingIcon = { Icon(Icons.Rounded.GraphicEq, contentDescription = null) }
                                         )
@@ -855,14 +998,14 @@ fun ReflowReaderScreen(
                                             }
                                         }
                                     },
-                                    placeholder = { Text("Find text in document...", fontSize = 13.sp) },
+                                    placeholder = { Text(stringResource(R.string.reflow_find_placeholder), fontSize = 13.sp) },
                                     singleLine = true,
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(10.dp),
                                     trailingIcon = {
                                         if (searchQuery.isNotEmpty()) {
                                             IconButton(onClick = { searchQuery = "" }) {
-                                                Icon(Icons.Rounded.Close, contentDescription = "Clear", modifier = Modifier.size(18.dp))
+                                                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.clear), modifier = Modifier.size(18.dp))
                                             }
                                         }
                                     },
@@ -885,7 +1028,7 @@ fun ReflowReaderScreen(
                                         enabled = searchMatches.isNotEmpty(),
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.ExpandLess, contentDescription = "Previous Match", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.ExpandLess, contentDescription = stringResource(R.string.desc_previous_match), tint = selectedTheme.text)
                                     }
 
                                     IconButton(
@@ -893,7 +1036,7 @@ fun ReflowReaderScreen(
                                         enabled = searchMatches.isNotEmpty(),
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.ExpandMore, contentDescription = "Next Match", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.desc_next_match), tint = selectedTheme.text)
                                     }
                                 }
                             }
@@ -922,6 +1065,9 @@ fun ReflowReaderScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
+                                    if (speechState.availability == OfflineReadAloudSession.Availability.INITIALIZING) {
+                                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                                    }
                                     IconButton(
                                         onClick = {
                                             if (currentSpeakingIndex > 0) {
@@ -931,14 +1077,13 @@ fun ReflowReaderScreen(
                                         enabled = currentSpeakingIndex > 0,
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous Paragraph", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.SkipPrevious, contentDescription = stringResource(R.string.tts_prev_paragraph), tint = selectedTheme.text)
                                     }
 
                                     IconButton(
                                         onClick = {
                                             if (isTtsPlaying) {
-                                                ttsEngine?.stop()
-                                                isTtsPlaying = false
+                                                speechSession?.stop()
                                             } else {
                                                 speakParagraph(currentSpeakingIndex)
                                             }
@@ -947,7 +1092,7 @@ fun ReflowReaderScreen(
                                     ) {
                                         Icon(
                                             if (isTtsPlaying) Icons.Rounded.PauseCircle else Icons.Rounded.PlayCircle,
-                                            contentDescription = "Play/Pause",
+                                            contentDescription = stringResource(R.string.desc_play_pause),
                                             tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(32.dp)
                                         )
@@ -962,7 +1107,7 @@ fun ReflowReaderScreen(
                                         enabled = currentSpeakingIndex + 1 < allParagraphs.size,
                                         modifier = Modifier.size(36.dp)
                                     ) {
-                                        Icon(Icons.Rounded.SkipNext, contentDescription = "Next Paragraph", tint = selectedTheme.text)
+                                        Icon(Icons.Rounded.SkipNext, contentDescription = stringResource(R.string.tts_next_paragraph), tint = selectedTheme.text)
                                     }
                                 }
 
@@ -980,7 +1125,7 @@ fun ReflowReaderScreen(
                                         1.5f -> 2.0f
                                         else -> 0.75f
                                     }
-                                    ttsEngine?.setSpeechRate(ttsRate)
+                                    speechSession?.setRate(ttsRate)
                                 }) {
                                     Text("${ttsRate}x", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 }
@@ -1038,6 +1183,28 @@ fun ReflowReaderScreen(
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", color = selectedTheme.text, style = MaterialTheme.typography.labelSmall)
+                                    }
+                                    IconButton(
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Bio",
+                                            color = if (isBionicReading) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isBionicReading) FontWeight.ExtraBold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text(
+                                            "Dys",
+                                            color = if (isDyslexiaSpacing) MaterialTheme.colorScheme.primary else selectedTheme.text.copy(alpha = 0.5f),
+                                            fontWeight = if (isDyslexiaSpacing) FontWeight.Bold else FontWeight.Normal,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
                                     }
                                 }
                             }
@@ -1220,7 +1387,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                                     textColor = selectedTheme.text,
                                                     fontSizeSp = fontSizeSp,
-                                                    useSerifFont = useSerifFont
+                                                    useSerifFont = useSerifFont,
+                                                    isBionicReading = isBionicReading,
+                                                    isDyslexiaSpacing = isDyslexiaSpacing
                                                 )
                                             }
                                         }
@@ -1318,6 +1487,18 @@ fun ReflowReaderScreen(
                                     ) {
                                         Text(if (useSerifFont) "Serif" else "Sans", style = MaterialTheme.typography.labelMedium)
                                     }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isBionicReading,
+                                        onClick = { isBionicReading = !isBionicReading },
+                                        label = { Text(stringResource(R.string.reflow_bionic_mode)) }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    FilterChip(
+                                        selected = isDyslexiaSpacing,
+                                        onClick = { isDyslexiaSpacing = !isDyslexiaSpacing },
+                                        label = { Text(stringResource(R.string.reflow_dyslexia_mode)) }
+                                    )
                                 }
                             }
                         }
@@ -1365,7 +1546,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1412,7 +1595,9 @@ fun ReflowReaderScreen(
                                                     activeMatchStart = activeOccurrence?.takeIf { it.section == reflowSections.indexOf(section) && it.paragraph == paragraphIndex }?.start,
                                             textColor = selectedTheme.text,
                                             fontSizeSp = fontSizeSp,
-                                            useSerifFont = useSerifFont
+                                            useSerifFont = useSerifFont,
+                                            isBionicReading = isBionicReading,
+                                            isDyslexiaSpacing = isDyslexiaSpacing
                                         )
                                     }
                                 }
@@ -1426,6 +1611,7 @@ fun ReflowReaderScreen(
     }
 }
 
+
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun HighlightedParagraph(
@@ -1434,61 +1620,64 @@ private fun HighlightedParagraph(
     textColor: Color,
     fontSizeSp: Float,
     useSerifFont: Boolean,
-    activeMatchStart: Int? = null
+    activeMatchStart: Int? = null,
+    isBionicReading: Boolean = false,
+    isDyslexiaSpacing: Boolean = false
 ) {
     val requester = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
     var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
     LaunchedEffect(activeMatchStart, layout) {
         val result = layout
-        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+        if (activeMatchStart != null && result != null && activeMatchStart in text.indices) {
+            requester.bringIntoView(result.getBoundingBox(activeMatchStart))
+        }
     }
-    val trimmed = searchQuery.trim()
-    if (trimmed.length < 2 || !text.contains(trimmed, ignoreCase = true)) {
-        Text(
-            text = text,
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
-    } else {
-        val annotated = remember(text, trimmed, activeMatchStart) {
-            buildAnnotatedString {
-                var startIndex = 0
-                
-                while (startIndex < text.length) {
-                    val matchIdx = text.indexOf(trimmed, startIndex, ignoreCase = true)
-                    if (matchIdx == -1) {
-                        append(text.substring(startIndex))
-                        break
-                    }
-                    if (matchIdx > startIndex) {
-                        append(text.substring(startIndex, matchIdx))
-                    }
-                    val matchEnd = matchIdx + trimmed.length
-                    pushStyle(
-                        SpanStyle(
-                            background = if (matchIdx == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
-                            color = Color(0xFF1E293B),
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                    append(text.substring(matchIdx, matchEnd))
-                    pop()
-                    startIndex = matchEnd
-                }
+    val annotated = remember(text, searchQuery, activeMatchStart, isBionicReading) {
+        readableParagraph(text, searchQuery, activeMatchStart, isBionicReading)
+    }
+    Text(
+        text = annotated,
+        modifier = Modifier.bringIntoViewRequester(requester),
+        onTextLayout = { layout = it },
+        color = textColor,
+        fontSize = fontSizeSp.sp,
+        lineHeight = (fontSizeSp * if (isDyslexiaSpacing) 1.85f else 1.55f).sp,
+        letterSpacing = if (isDyslexiaSpacing) 0.06.sp else 0.sp,
+        fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
+        textAlign = TextAlign.Start
+    )
+}
+
+internal fun readableParagraph(
+    text: String,
+    searchQuery: String,
+    activeMatchStart: Int?,
+    isBionicReading: Boolean
+): androidx.compose.ui.text.AnnotatedString = buildAnnotatedString {
+    append(text)
+    if (isBionicReading) {
+        for (word in Regex("\\S+").findAll(text)) {
+            val count = word.value.codePointCount(0, word.value.length)
+            if (count > 1) {
+                val boldCount = kotlin.math.ceil(count * 0.45).toInt().coerceIn(1, count)
+                val end = word.range.first + word.value.offsetByCodePoints(0, boldCount)
+                addStyle(SpanStyle(fontWeight = FontWeight.ExtraBold), word.range.first, end)
             }
         }
-        Text(
-            text = annotated,
-            modifier = Modifier.bringIntoViewRequester(requester),
-            onTextLayout = { layout = it },
-            color = textColor,
-            fontSize = fontSizeSp.sp,
-            lineHeight = (fontSizeSp * 1.55f).sp,
-            fontFamily = if (useSerifFont) FontFamily.Serif else FontFamily.SansSerif,
-            textAlign = TextAlign.Start
-        )
+    }
+    val query = searchQuery.trim()
+    if (query.length >= 2) {
+        var start = 0
+        while (start < text.length) {
+            val index = text.indexOf(query, start, ignoreCase = true)
+            if (index < 0) break
+            val end = index + query.length
+            addStyle(SpanStyle(
+                background = if (index == activeMatchStart) Color(0xFFFF9800) else Color(0xFFFFD54F),
+                color = Color(0xFF1E293B),
+                fontWeight = FontWeight.Bold
+            ), index, end)
+            start = end
+        }
     }
 }

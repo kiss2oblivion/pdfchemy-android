@@ -24,6 +24,13 @@ object FreshOutputRegistry {
         targets.filter { it in fresh }.forEach { fresh[it] = owner }
     }
 
+    /** Transfer an operation's claim to its final publisher without an unowned interval. */
+    @Synchronized internal fun transferKnown(targets: List<Uri>, owner: Any, publisher: Any) {
+        requireSafeSafTargets(targets, owner)
+        check(targets.none { fresh[it] != null && fresh[it] !== owner }) { "Output capability already in use" }
+        targets.filter { it in fresh }.forEach { fresh[it] = publisher }
+    }
+
     @Synchronized fun published(targets: List<Uri>, owner: Any) {
         targets.filter { fresh[it] === owner }.forEach { fresh.remove(it) }
     }
