@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">الورقة %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">إظهار أوراق أقل</string>
     <string name="extract_text_info_body">إذا كان المستند يحتوي على نص قياسي، فسيتم استخراجه فورًا. وإذا كان مستندًا ممسوحًا ضوئيًا (صورًا)، فسنستخدم ميزة التعرف الضوئي على الحروف (OCR) على الجهاز لقراءة النص. قد يستغرق ذلك بضع لحظات.</string>
-    <string name="find_replace_privacy_info">ابحث عن كلمات أو عبارات عبر جميع الصفحات. يفحص PDFchemy التطابقات على الجهاز دون رفع إلى السحابة أو تحويل الصفحات غير المعدلة إلى صور.</string>
+    <string name="find_replace_privacy_info">يعدّل نص الصفحة المطابق مع الحفاظ على المحتوى الآخر والتعليقات وأبعاد الصفحة. يُلائم النص البديل المساحة الأصلية. للإزالة الآمنة، استخدم %1$s. يؤدي التحرير إلى إبطال التوقيعات الرقمية الحالية.</string>
     <string name="font_system_font">خط النظام</string>
     <string name="label_total_count">الإجمالي: %1$d</string>
     <string name="label_preview_page_one">معاينة (الصفحة 1): %1$s</string>

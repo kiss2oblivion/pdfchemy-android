@@ -1285,7 +1285,7 @@
     <string name="label_sheet_side">第 %1$d 張 (%2$s)</string>
     <string name="label_show_fewer_sheets">收合部分頁面</string>
     <string name="extract_text_info_body">如果文件包含標準文字，將會立即擷取。如果是掃描文件（影像），我們會使用裝置端 OCR（光學字元辨識）讀取文字。這可能需要片刻時間。</string>
-    <string name="find_replace_privacy_info">在所有頁面中搜尋詞句。PDFchemy 僅在裝置本機檢查相符項目，不上傳雲端，也不會點陣化未修改頁面。</string>
+    <string name="find_replace_privacy_info">編輯符合的頁面文字，同時保留其他內容、註解及頁面尺寸。替換文字會調整為適合原有區域。若要安全移除內容，請使用%1$s。編輯會使現有數位簽章失效。</string>
     <string name="font_system_font">系統字型</string>
     <string name="label_total_count">總計：%1$d</string>
     <string name="label_preview_page_one">預覽（第 1 頁）：%1$s</string>

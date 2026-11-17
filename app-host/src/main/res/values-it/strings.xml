@@ -1293,7 +1293,7 @@
     <string name="label_sheet_side">Foglio %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Mostra meno fogli</string>
     <string name="extract_text_info_body">Se il documento contiene testo standard, verrà estratto all\'istante. Se è un documento scansionato (immagini), verrà usato l\'OCR sul dispositivo (riconoscimento ottico dei caratteri) per leggere il testo. L\'operazione potrebbe richiedere qualche istante.</string>
-    <string name="find_replace_privacy_info">Cerca parole o frasi in tutte le pagine. PDFchemy esamina le corrispondenze sul dispositivo senza caricamenti sul cloud o rasterizzazione delle pagine intatte.</string>
+    <string name="find_replace_privacy_info">Modifica il testo corrispondente preservando gli altri contenuti, le annotazioni e le dimensioni delle pagine. Il nuovo testo si adatta all’area originale. Per una rimozione sicura, usa %1$s. Le modifiche invalidano le firme digitali esistenti.</string>
     <string name="font_system_font">Carattere di sistema</string>
     <string name="label_total_count">Totale: %1$d</string>
     <string name="label_preview_page_one">Anteprima (Pagina 1): %1$s</string>

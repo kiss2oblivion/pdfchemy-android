@@ -1298,7 +1298,7 @@
     <string name="label_sheet_side">Bogen %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Weniger Bögen anzeigen</string>
     <string name="extract_text_info_body">Enthält das Dokument regulären Text, wird dieser sofort extrahiert. Bei gescannten Dokumenten (Bildern) wird die geräteinterne OCR (optische Zeichenerkennung) verwendet. Dies kann einen Moment dauern.</string>
-    <string name="find_replace_privacy_info">Suchen Sie auf allen Seiten nach Wörtern oder Phrasen. PDFchemy prüft Treffer lokal ohne Cloud-Uploads oder Rasterisierung unberührter Seiten.</string>
+    <string name="find_replace_privacy_info">Bearbeitet passenden Seitentext und erhält andere Inhalte, Anmerkungen und Seitenmaße. Der Ersatztext wird an den ursprünglichen Bereich angepasst. Für sicheres Entfernen verwenden Sie %1$s. Die Bearbeitung macht vorhandene digitale Signaturen ungültig.</string>
     <string name="font_system_font">Systemschrift</string>
     <string name="label_total_count">Gesamt: %1$d</string>
     <string name="label_preview_page_one">Vorschau (Seite 1): %1$s</string>

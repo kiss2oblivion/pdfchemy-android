@@ -88,18 +88,27 @@ fun FindAndReplaceScreen(
     }
 
     fun performSearch() {
-        if (selectedPdfUri != null && findQuery.isNotBlank()) {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            scope.launch {
-                isSearching = true
-                searchSummary = PdfFindAndReplaceEngine.findOccurrences(
-                    context = context,
-                    pdfUri = selectedPdfUri!!,
-                    query = findQuery,
-                    matchCase = matchCase
-                )
+        val source = selectedPdfUri ?: return
+        val query = findQuery
+        val caseSensitive = matchCase
+        if (query.isBlank() || isSearching) return
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        scope.launch {
+            isSearching = true
+            try {
+                val result = PdfFindAndReplaceEngine.findOccurrences(context, source, query, caseSensitive)
+                if (selectedPdfUri == source && findQuery == query && matchCase == caseSensitive) {
+                    searchSummary = result
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (selectedPdfUri == source && findQuery == query) {
+                    viewModel.notifyError(context.getString(R.string.error_search_failed_retry))
+                }
+            } finally {
                 isSearching = false
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             }
         }
     }
@@ -486,7 +495,7 @@ fun FindAndReplaceScreen(
                             Text(stringResource(R.string.badge_local_layout_preserving), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
                         Text(
-                            stringResource(R.string.find_replace_privacy_info),
+                            stringResource(R.string.find_replace_privacy_info, stringResource(R.string.menu_redaction_studio)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

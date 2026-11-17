@@ -1296,7 +1296,7 @@
     <string name="label_sheet_side">Hoja %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Mostrar menos hojas</string>
     <string name="extract_text_info_body">Si el documento contiene texto estándar, se extraerá al instante. Si es un documento escaneado (imágenes), usaremos OCR en el dispositivo (reconocimiento óptico de caracteres) para leer el texto. Esto puede tardar unos momentos.</string>
-    <string name="find_replace_privacy_info">Busca palabras o frases en todas las páginas. PDFchemy inspecciona las coincidencias en el dispositivo sin subir a la nube ni rasterizar las páginas sin cambios.</string>
+    <string name="find_replace_privacy_info">Edita el texto coincidente y conserva el resto del contenido, las anotaciones y las dimensiones de página. El texto nuevo se ajusta al área original. Para eliminar contenido de forma segura, usa %1$s. La edición invalida las firmas digitales existentes.</string>
     <string name="font_system_font">Fuente del sistema</string>
     <string name="label_total_count">Total: %1$d</string>
     <string name="label_preview_page_one">Vista previa (Página 1): %1$s</string>

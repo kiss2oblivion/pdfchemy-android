@@ -1315,7 +1315,7 @@
     <string name="label_sheet_side">Sheet %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Show fewer sheets</string>
     <string name="extract_text_info_body">If the document contains standard text, it will be extracted instantly. If it is a scanned document (images), we will use on-device OCR (Optical Character Recognition) to read the text. This may take a few moments.</string>
-    <string name="find_replace_privacy_info">Search for words or phrases across all pages. PDFchemy inspects matches on-device without cloud uploads or rasterizing untouched pages.</string>
+    <string name="find_replace_privacy_info">Edits matching page text while preserving other content, annotations and page dimensions. Replacement text fits the original area. Use %1$s for secure removal. Editing invalidates existing digital signatures.</string>
     <string name="font_system_font">System Font</string>
     <string name="label_total_count">Total: %1$d</string>
     <string name="label_preview_page_one">Preview (Page 1): %1$s</string>

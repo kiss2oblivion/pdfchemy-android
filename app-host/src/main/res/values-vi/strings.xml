@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">Tờ %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Hiện ít tờ hơn</string>
     <string name="extract_text_info_body">Nếu tài liệu chứa văn bản chuẩn, văn bản sẽ được trích xuất ngay lập tức. Nếu là tài liệu được quét (hình ảnh), chúng tôi sẽ sử dụng OCR trên thiết bị để đọc văn bản. Quá trình này có thể mất vài giây.</string>
-    <string name="find_replace_privacy_info">Tìm kiếm từ hoặc cụm từ trên mọi trang. PDFchemy kiểm tra kết quả khớp ngay trên thiết bị, không tải lên đám mây hay làm mờ các trang không chỉnh sửa.</string>
+    <string name="find_replace_privacy_info">Chỉnh sửa văn bản phù hợp trên trang, giữ nguyên nội dung khác, chú thích và kích thước trang. Văn bản mới được điều chỉnh vừa vùng ban đầu. Dùng %1$s để xóa an toàn. Việc chỉnh sửa làm mất hiệu lực chữ ký số hiện có.</string>
     <string name="font_system_font">Phông hệ thống</string>
     <string name="label_total_count">Tổng: %1$d</string>
     <string name="label_preview_page_one">Xem trước (Trang 1): %1$s</string>

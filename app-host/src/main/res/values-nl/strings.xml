@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">Vel %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Minder vellen tonen</string>
     <string name="extract_text_info_body">Als het document standaardtekst bevat, wordt deze direct geëxtraheerd. Bij een gescand document (afbeeldingen) gebruiken we OCR op het apparaat om de tekst te lezen. Dit kan even duren.</string>
-    <string name="find_replace_privacy_info">Zoek naar woorden of zinnen op alle pagina\'s. PDFchemy controleert resultaten op het apparaat zonder clouduploads of rasteren van ongewijzigde pagina\'s.</string>
+    <string name="find_replace_privacy_info">Bewerkt overeenkomende paginatekst en behoudt andere inhoud, annotaties en pagina-afmetingen. Vervangende tekst wordt in het oorspronkelijke gebied gepast. Gebruik %1$s voor veilige verwijdering. Bewerken maakt bestaande digitale handtekeningen ongeldig.</string>
     <string name="font_system_font">Systeemlettertype</string>
     <string name="label_total_count">Totaal: %1$d</string>
     <string name="label_preview_page_one">Voorbeeld (Pagina 1): %1$s</string>

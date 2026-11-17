@@ -1295,7 +1295,7 @@
     <string name="label_sheet_side">Feuille %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Afficher moins de feuilles</string>
     <string name="extract_text_info_body">Si le document contient du texte standard, il sera extrait instantanément. S\'il s\'agit d\'un document numérisé (images), nous utiliserons l\'OCR sur l\'appareil (reconnaissance optique de caractères) pour lire le texte. Cela peut prendre quelques instants.</string>
-    <string name="find_replace_privacy_info">Recherchez des mots ou des phrases sur toutes les pages. PDFchemy analyse les correspondances sur l\'appareil sans envoi dans le cloud ni pixellisation des pages intactes.</string>
+    <string name="find_replace_privacy_info">Modifie le texte correspondant des pages en conservant les autres contenus, annotations et dimensions. Le texte de remplacement est adapté à la zone d’origine. Pour une suppression sécurisée, utilisez %1$s. La modification invalide les signatures numériques existantes.</string>
     <string name="font_system_font">Police système</string>
     <string name="label_total_count">Total : %1$d</string>
     <string name="label_preview_page_one">Aperçu (Page 1) : %1$s</string>

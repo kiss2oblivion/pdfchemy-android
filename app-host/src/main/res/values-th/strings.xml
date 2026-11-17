@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">แผ่นที่ %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">แสดงแผ่นน้อยลง</string>
     <string name="extract_text_info_body">หากเอกสารมีข้อความมาตรฐาน ระบบจะดึงข้อมูลทันที หากเป็นเอกสารที่สแกน (รูปภาพ) ระบบจะใช้ OCR บนอุปกรณ์เพื่ออ่านข้อความ ซึ่งอาจใช้เวลาสักครู่</string>
-    <string name="find_replace_privacy_info">ค้นหาคำหรือวลีในทุกหน้า PDFchemy ตรวจสอบผลลัพธ์บนอุปกรณ์โดยไม่อัปโหลดขึ้นคลาวด์และไม่แปลงหน้าที่ไม่ได้แก้ไขเป็นภาพ</string>
+    <string name="find_replace_privacy_info">แก้ไขข้อความที่ตรงกันบนหน้า โดยคงเนื้อหาอื่น คำอธิบายประกอบ และขนาดหน้าไว้ ข้อความใหม่จะปรับให้พอดีกับพื้นที่เดิม ใช้ %1$s เพื่อลบอย่างปลอดภัย การแก้ไขทำให้ลายเซ็นดิจิทัลเดิมใช้ไม่ได้</string>
     <string name="font_system_font">ฟอนต์ระบบ</string>
     <string name="label_total_count">รวม: %1$d</string>
     <string name="label_preview_page_one">ตัวอย่าง (หน้า 1): %1$s</string>

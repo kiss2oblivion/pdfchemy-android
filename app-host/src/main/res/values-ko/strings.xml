@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">용지 %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">적게 보기</string>
     <string name="extract_text_info_body">문서에 일반 텍스트가 포함된 경우 즉시 추출됩니다. 스캔된 문서(이미지)인 경우 기기 내 OCR(광학 문자 인식)을 사용하여 텍스트를 읽습니다. 잠시 시간이 걸릴 수 있습니다.</string>
-    <string name="find_replace_privacy_info">모든 페이지에서 단어나 문구를 검색합니다. PDFchemy는 클라우드 업로드나 변경되지 않은 페이지의 래스터화 없이 기기에서 일치 항목을 검사합니다.</string>
+    <string name="find_replace_privacy_info">일치하는 페이지 텍스트를 편집하고 다른 콘텐츠, 주석 및 페이지 크기를 유지합니다. 새 텍스트는 원래 영역에 맞게 조정됩니다. 안전하게 제거하려면 %1$s 기능을 사용하세요. 편집하면 기존 디지털 서명이 무효화됩니다.</string>
     <string name="font_system_font">시스템 글꼴</string>
     <string name="label_total_count">총계: %1$d</string>
     <string name="label_preview_page_one">미리보기 (1페이지): %1$s</string>

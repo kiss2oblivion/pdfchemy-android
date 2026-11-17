@@ -1298,7 +1298,7 @@
     <string name="label_sheet_side">Foaia %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Afișează mai puține foi</string>
     <string name="extract_text_info_body">Dacă documentul conține text standard, acesta va fi extras instantaneu. Dacă este un document scanat (imagini), vom folosi OCR pe dispozitiv (recunoaștere optică a caracterelor) pentru a citi textul. Aceasta poate dura câteva momente.</string>
-    <string name="find_replace_privacy_info">Caută cuvinte sau expresii pe toate paginile. PDFchemy verifică potrivirile pe dispozitiv, fără încărcări în cloud sau rasterizarea paginilor neatinse.</string>
+    <string name="find_replace_privacy_info">Editează textul găsit în pagini și păstrează restul conținutului, adnotările și dimensiunile paginilor. Textul nou este adaptat la zona originală. Pentru eliminare sigură, folosește %1$s. Editarea invalidează semnăturile digitale existente.</string>
     <string name="font_system_font">Font de sistem</string>
     <string name="label_total_count">Total: %1$d</string>
     <string name="label_preview_page_one">Previzualizare (Pagina 1): %1$s</string>

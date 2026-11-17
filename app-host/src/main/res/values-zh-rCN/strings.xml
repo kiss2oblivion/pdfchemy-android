@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">第 %1$d 张 (%2$s)</string>
     <string name="label_show_fewer_sheets">收起部分页面</string>
     <string name="extract_text_info_body">如果文档包含标准文本，将会立即提取。如果是扫描文档（图像），我们将使用设备端 OCR（光学字符识别）读取文本。这可能需要片刻时间。</string>
-    <string name="find_replace_privacy_info">在所有页面中搜索词句。PDFchemy 仅在设备本地检查匹配项，不上传云端，也不会栅格化未修改页面。</string>
+    <string name="find_replace_privacy_info">编辑匹配的页面文字，同时保留其他内容、批注和页面尺寸。替换文字会调整为适合原有区域。要安全移除内容，请使用%1$s。编辑会使现有数字签名失效。</string>
     <string name="font_system_font">系统字体</string>
     <string name="label_total_count">总计：%1$d</string>
     <string name="label_preview_page_one">预览（第 1 页）：%1$s</string>

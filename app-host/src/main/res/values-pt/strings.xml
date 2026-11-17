@@ -1292,7 +1292,7 @@
     <string name="label_sheet_side">Folha %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Mostrar menos folhas</string>
     <string name="extract_text_info_body">Se o documento contiver texto padrão, será extraído instantaneamente. Se for um documento digitalizado (imagens), utilizaremos OCR no dispositivo para ler o texto. Isto pode demorar alguns instantes.</string>
-    <string name="find_replace_privacy_info">Procure palavras ou frases em todas as páginas. O PDFchemy verifica correspondências no dispositivo sem envios para a nuvem nem rasterização das páginas intactas.</string>
+    <string name="find_replace_privacy_info">Edita o texto correspondente e preserva os restantes conteúdos, anotações e dimensões das páginas. O novo texto é ajustado à área original. Para remover conteúdo de forma segura, utilize %1$s. A edição invalida as assinaturas digitais existentes.</string>
     <string name="font_system_font">Tipo de letra do sistema</string>
     <string name="label_total_count">Total: %1$d</string>
     <string name="label_preview_page_one">Pré-visualização (Página 1): %1$s</string>

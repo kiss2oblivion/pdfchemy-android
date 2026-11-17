@@ -1297,7 +1297,7 @@
     <string name="label_sheet_side">Lembar %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Tampilkan lebih sedikit lembar</string>
     <string name="extract_text_info_body">Jika dokumen berisi teks standar, teks akan diekstrak secara instan. Jika berupa dokumen pindaian (gambar), OCR pada perangkat (Pengenalan Karakter Optik) akan digunakan untuk membaca teks. Ini mungkin memerlukan beberapa saat.</string>
-    <string name="find_replace_privacy_info">Cari kata atau frasa di semua halaman. PDFchemy memeriksa kecocokan di perangkat tanpa unggahan cloud atau meraster halaman yang tidak diubah.</string>
+    <string name="find_replace_privacy_info">Mengedit teks halaman yang cocok sambil mempertahankan konten lain, anotasi, dan ukuran halaman. Teks pengganti disesuaikan dengan area semula. Gunakan %1$s untuk penghapusan aman. Pengeditan membatalkan tanda tangan digital yang ada.</string>
     <string name="font_system_font">Font Sistem</string>
     <string name="label_total_count">Total: %1$d</string>
     <string name="label_preview_page_one">Pratinjau (Halaman 1): %1$s</string>

@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">シート %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">表示を減らす</string>
     <string name="extract_text_info_body">文書に標準テキストが含まれている場合は即座に抽出されます。スキャン文書（画像）の場合は、端末上の OCR（光学文字認識）を使用してテキストを読み取ります。少し時間がかかる場合があります。</string>
-    <string name="find_replace_privacy_info">全ページから単語やフレーズを検索します。PDFchemy はクラウドにアップロードしたり未変更ページをラスタライズしたりせず、端末内で一致を検査します。</string>
+    <string name="find_replace_privacy_info">一致するページ内テキストを編集し、他の内容、注釈、ページサイズを維持します。置換テキストは元の領域に収まるよう調整されます。安全に削除するには%1$sを使用してください。編集すると既存のデジタル署名は無効になります。</string>
     <string name="font_system_font">システムフォント</string>
     <string name="label_total_count">合計: %1$d</string>
     <string name="label_preview_page_one">プレビュー (1ページ目): %1$s</string>

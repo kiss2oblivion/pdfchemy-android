@@ -1287,7 +1287,7 @@
     <string name="label_sheet_side">Arkusz %1$d (%2$s)</string>
     <string name="label_show_fewer_sheets">Pokaż mniej arkuszy</string>
     <string name="extract_text_info_body">Jeśli dokument zawiera standardowy tekst, zostanie on wyodrębniony natychmiast. W przypadku dokumentu zeskanowanego (obrazów) tekst zostanie odczytany lokalnie za pomocą OCR. Może to zająć chwilę.</string>
-    <string name="find_replace_privacy_info">Szukaj słów lub fraz na wszystkich stronach. PDFchemy sprawdza dopasowania na urządzeniu bez wysyłania do chmury i bez rasteryzacji nietkniętych stron.</string>
+    <string name="find_replace_privacy_info">Edytuje pasujący tekst stron, zachowując pozostałą treść, adnotacje i wymiary stron. Nowy tekst dopasowuje się do oryginalnego obszaru. Do bezpiecznego usuwania użyj %1$s. Edycja unieważnia istniejące podpisy cyfrowe.</string>
     <string name="font_system_font">Czcionka systemowa</string>
     <string name="label_total_count">Łącznie: %1$d</string>
     <string name="label_preview_page_one">Podgląd (Strona 1): %1$s</string>
