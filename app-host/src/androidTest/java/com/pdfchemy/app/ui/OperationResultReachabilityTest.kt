@@ -86,11 +86,11 @@ class OperationResultReachabilityTest {
             ))
         }
         compose.onNode(isDialog()).assertExists()
-        listOf("Browse files", app.getString(R.string.btn_open_file), app.getString(R.string.share),
-            "Another Operation", "Home").forEach { label ->
+        listOf(app.getString(R.string.btn_browse_files), app.getString(R.string.btn_open_file), app.getString(R.string.share),
+            app.getString(R.string.ok), app.getString(R.string.menu_home)).forEach { label ->
             resultAction(label).performScrollTo().assertIsDisplayed()
         }
-        resultAction("Home").performClick()
+        resultAction(app.getString(R.string.menu_home)).performClick()
         compose.onNode(isDialog()).assertDoesNotExist()
         compose.runOnIdle {
             assertEquals(MainViewModel.UiState.Idle, model.uiState.value)
@@ -107,7 +107,7 @@ class OperationResultReachabilityTest {
                 "Extraction Result", List(40) { "Completed page ${it + 1}: saved output." }.joinToString("\n"), outputs
             ))
         }
-        resultAction("Another Operation").performScrollTo().assertIsDisplayed().performClick()
+        resultAction(app.getString(R.string.ok)).performScrollTo().assertIsDisplayed().performClick()
         compose.onNode(isDialog()).assertDoesNotExist()
         compose.runOnIdle {
             assertEquals(MainViewModel.UiState.Idle, model.uiState.value)
@@ -125,7 +125,7 @@ class OperationResultReachabilityTest {
                 MainViewModel.UiState.Warning("Partial export", "Saved usable output", listOf(uri))
             else MainViewModel.UiState.Success("Completed export", "Saved output", listOf(uri)))
         }
-        val action = if (warning) app.getString(R.string.ok) else "Another Operation"
+        val action = app.getString(R.string.ok)
         val control = resultAction(action)
         if (!warning) control.performScrollTo()
         control.assertIsDisplayed().performClick()
