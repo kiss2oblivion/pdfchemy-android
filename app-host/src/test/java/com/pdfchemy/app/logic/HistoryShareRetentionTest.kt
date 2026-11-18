@@ -67,6 +67,7 @@ class HistoryShareRetentionTest {
     @Test fun clearingRecentHistoryPreservesCompletedRecipientCopy() = runBlocking {
         val (copy, bytes) = completedCopy()
         model.recordReaderHistory(Uri.fromFile(copy), "Reader document")
+        finishHistoryWork()
         assertTrue(model.historyList.value.isNotEmpty())
 
         model.clearHistory()

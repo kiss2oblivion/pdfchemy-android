@@ -221,7 +221,7 @@ internal fun DocumentSanitizerContent(
             }
 
             selectedPdfUri?.let { uri ->
-                val fileName = FileUtils.getFileName(context, uri) ?: "Document.pdf"
+                val fileName = rememberDocumentMetadata(uri).name ?: "Document.pdf"
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)

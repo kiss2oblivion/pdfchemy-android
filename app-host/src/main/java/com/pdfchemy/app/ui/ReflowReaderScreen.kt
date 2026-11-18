@@ -690,7 +690,7 @@ fun ReflowReaderScreen(
                     Row {
                         TextButton(onClick = {
                             runCatching {
-                                val mimeType = context.contentResolver.getType(output)?.takeIf { it.startsWith("audio/") }
+                                val mimeType = com.pdfchemy.app.utils.FileUtils.getMimeType(context, output).takeIf { it.startsWith("audio/") }
                                     ?: when {
                                         output.toString().endsWith(".m4a", ignoreCase = true) -> "audio/mp4"
                                         activeExportFormat == com.pdfchemy.app.logic.audio.AudioExportDependencies.OutputFormat.M4A -> "audio/mp4"
@@ -702,8 +702,11 @@ fun ReflowReaderScreen(
                             }.onFailure { android.widget.Toast.makeText(context, it.message, android.widget.Toast.LENGTH_LONG).show() }
                         }) { Text(stringResource(R.string.btn_open_file)) }
                         TextButton(onClick = {
-                            runCatching { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, listOf(output), context.getString(R.string.share)) }
-                                .onFailure { android.widget.Toast.makeText(context, it.message, android.widget.Toast.LENGTH_LONG).show() }
+                            scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                                try { com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(context, listOf(output), context.getString(R.string.share)) }
+                                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                catch (e: Exception) { android.widget.Toast.makeText(context, e.message, android.widget.Toast.LENGTH_LONG).show() }
+                            }
                         }) { Text(stringResource(R.string.share)) }
                     }
                 }
@@ -919,14 +922,14 @@ fun ReflowReaderScreen(
                                             onClick = {
                                                 showOverflowMenu = false
                                                 val shareTarget = selectedPdfUri ?: return@DropdownMenuItem
-                                                runCatching {
-                                                    com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                                scope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) { try {
+                                                    com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(
                                                         context,
                                                         listOf(shareTarget),
                                                         context.getString(R.string.desc_share_output)
                                                     )
-                                                }.onFailure {
-                                                    viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
+                                                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                                catch (_: Exception) { viewModel.notifyError(context.getString(R.string.error_no_sharing_app)) }
                                                 }
                                             },
                                             leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) }

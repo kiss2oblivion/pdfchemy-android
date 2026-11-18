@@ -24,7 +24,7 @@ class HistoryRepository(private val context: Context) {
 
     private val settingsPrefs: SharedPreferences = context.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
 
-    fun getHistory(): List<HistoryItem> {
+    @Synchronized fun getHistory(): List<HistoryItem> {
         if (!settingsPrefs.getBoolean("history_enabled", false)) {
             clearHistory()
             return emptyList()
@@ -41,7 +41,7 @@ class HistoryRepository(private val context: Context) {
                         name = obj.getString("name"),
                         action = obj.getString("action"),
                         timestamp = obj.getLong("timestamp"),
-                        mimeType = obj.optString("mime", "").ifBlank { com.pdfchemy.app.utils.FileUtils.getMimeType(context, obj.getString("uri").toUri(), obj.getString("name")) },
+                        mimeType = obj.optString("mime", "").ifBlank { com.pdfchemy.app.utils.FileUtils.getMimeType(context, obj.getString("uri").toUri(), obj.getString("name"), allowProviderQuery = false) },
                         isDirectory = obj.optBoolean("directory", android.provider.DocumentsContract.isTreeUri(obj.getString("uri").toUri()))
                     )
                 )
@@ -52,39 +52,32 @@ class HistoryRepository(private val context: Context) {
         return list.sortedByDescending { it.timestamp }
     }
 
-    fun addHistoryItem(uri: Uri, name: String, action: String) {
-        val isHistoryEnabled = settingsPrefs.getBoolean("history_enabled", false)
-        if (!isHistoryEnabled) return
-
-        val currentList = getHistory().toMutableList()
-        val uriStr = uri.toString()
-
-        // Remove existing item if it has the same URI
-        currentList.removeAll { it.uriString == uriStr }
-
-        currentList.add(
-            HistoryItem(
-                uriString = uriStr,
-                name = com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)?.takeIf { it.isNotBlank() } ?: name,
-                action = action,
-                timestamp = System.currentTimeMillis(),
-                mimeType = com.pdfchemy.app.utils.FileUtils.getMimeType(context, uri),
-                isDirectory = android.provider.DocumentsContract.isTreeUri(uri)
-            )
-        )
-
-        // Keep only the most recent 20 items
-        val limitedList = currentList.sortedByDescending { it.timestamp }.take(20)
-        persistList(limitedList)
+    /** Provider metadata is resolved before acquiring the persistence monitor. Call off Main for enrichment. */
+    fun addHistoryItem(uri: Uri, name: String, action: String, canRecord: () -> Boolean = { true }) {
+        if (!settingsPrefs.getBoolean("history_enabled", false)) return
+        val provider = com.pdfchemy.app.utils.ProviderMetadata.read(context, uri)
+        val fallbackName = if (uri.scheme == "file") com.pdfchemy.app.utils.FileUtils.getFileName(context, uri)
+            else uri.lastPathSegment?.substringAfterLast(':')?.substringAfterLast('/')?.substringAfterLast('\\')
+        val actualName = provider.name?.takeIf { it.isNotBlank() }
+            ?: fallbackName?.takeIf { it.isNotBlank() && (uri.scheme == "file" || '.' in it) } ?: name
+        val item = HistoryItem(uri.toString(), actualName, action, System.currentTimeMillis(),
+            com.pdfchemy.app.utils.FileUtils.getMimeType(context, uri, actualName, allowProviderQuery = false),
+            android.provider.DocumentsContract.isTreeUri(uri))
+        synchronized(this) {
+            // Removal, clearing, disabling history or ending the owner must defeat a late metadata response.
+            if (!settingsPrefs.getBoolean("history_enabled", false) || !canRecord()) return
+            val current = getHistory().filterNot { it.uriString == item.uriString }
+            persistList((listOf(item) + current).sortedByDescending { it.timestamp }.take(20))
+        }
     }
 
-    fun removeHistoryItem(uriString: String) {
+    @Synchronized fun removeHistoryItem(uriString: String) {
         if (uriString.isBlank()) return
         val remaining = getHistory().filterNot { it.uriString == uriString }
         persistList(remaining)
     }
 
-    fun clearHistory() {
+    @Synchronized fun clearHistory() {
         prefs.edit { remove(KEY_HISTORY) }
     }
 

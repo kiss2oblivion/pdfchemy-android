@@ -104,7 +104,7 @@ object VanguardPickerProcessor {
             PdfSanitizerEngine.checkVanguardThreat(context, stagedUri)
         },
         releaser: (Uri) -> Unit = { DocumentStager.release(it) },
-        onItemScanning: ((Uri) -> Unit)? = null
+        onItemScanning: (suspend (Uri) -> Unit)? = null
     ): PickerOutcome {
         if (uris.isEmpty()) return PickerOutcome.Selected(emptyList())
 

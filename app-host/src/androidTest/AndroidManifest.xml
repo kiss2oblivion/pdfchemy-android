@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <provider android:name="com.pdfchemy.app.ui.MetadataFixtureProvider"
+            android:authorities="com.pdfchemy.app.test.metadata"
+            android:process=":metadataFixture" android:exported="true" />
         <service
             android:name="com.pdfchemy.app.security.SpeechFixtureService"
             android:process=":speechFixture"

@@ -1,5 +1,6 @@
 package com.pdfchemy.app.logic
 
+import kotlinx.coroutines.flow.first
 import android.app.Application
 import android.content.Context
 import android.net.Uri
@@ -107,7 +108,7 @@ class ReaderHistoryAndPositionTest {
     }
 
     @Test
-    fun ephemeralStagedSnapshotPathsAreNotPersistedInLongTermHistory() {
+    fun ephemeralStagedSnapshotPathsAreNotPersistedInLongTermHistory() = kotlinx.coroutines.runBlocking<Unit> {
         val app = ApplicationProvider.getApplicationContext<Application>()
         app.getSharedPreferences("shrinkpdf_settings", Context.MODE_PRIVATE)
             .edit()
@@ -124,6 +125,7 @@ class ReaderHistoryAndPositionTest {
 
         val persistentContentUri = Uri.parse("content://com.android.providers.downloads.documents/document/42")
         viewModel.recordReaderHistory(persistentContentUri, "Manual.pdf")
+        kotlinx.coroutines.withTimeout(5_000) { viewModel.historyList.first { it.isNotEmpty() } }
         assertFalse(viewModel.historyList.value.isEmpty())
         assertEquals(persistentContentUri.toString(), viewModel.historyList.value.first().uriString)
     }

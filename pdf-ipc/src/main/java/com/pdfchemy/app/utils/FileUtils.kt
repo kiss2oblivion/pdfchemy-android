@@ -9,20 +9,7 @@ object FileUtils {
     fun getFileName(context: Context, uri: Uri): String? {
         if (uri.scheme == "file") DocumentStager.displayName(context, uri)?.takeIf { it.isNotBlank() }?.let { return it }
         var result: String? = null
-        if (uri.scheme == "content") {
-            try {
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                        if (index != -1) {
-                            result = cursor.getString(index)
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-                // Ignore SecurityException / permission denial and fall back to path parsing
-            }
-        }
+        if (uri.scheme == "content") result = ProviderMetadata.read(context, uri).name
         if (result == null) {
             val segment = uri.lastPathSegment
             if (!segment.isNullOrBlank()) {
@@ -45,20 +32,7 @@ object FileUtils {
     }
 
     fun getFileSize(context: Context, uri: Uri): Long {
-        if (uri.scheme == "content") {
-            try {
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        val index = cursor.getColumnIndex(OpenableColumns.SIZE)
-                        if (index != -1) {
-                            return cursor.getLong(index)
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-                // Ignore SecurityException / permission denial
-            }
-        }
+        if (uri.scheme == "content") return ProviderMetadata.read(context, uri).size
         if (uri.scheme == "file") {
             val path = uri.path
             if (path != null) {
@@ -76,12 +50,13 @@ object FileUtils {
         return String.format(Locale.US, "%.1f %s", value, units[digitGroups])
     }
 
-    fun getMimeType(context: Context, uri: Uri, fileName: String? = null): String {
-        val resolverType = try { context.contentResolver.getType(uri) } catch (_: Exception) { null }
+    fun getMimeType(context: Context, uri: Uri, fileName: String? = null, allowProviderQuery: Boolean = true): String {
+        val resolverType = if (allowProviderQuery) ProviderMetadata.read(context, uri).mime else ProviderMetadata.cached(uri)?.mime
         if (!resolverType.isNullOrBlank() && resolverType != "application/octet-stream") {
             return resolverType
         }
-        val name = fileName ?: getFileName(context, uri) ?: uri.lastPathSegment ?: ""
+        val name = fileName ?: (if (allowProviderQuery) getFileName(context, uri)
+            else ProviderMetadata.cached(uri)?.name ?: DocumentStager.displayName(uri)) ?: uri.lastPathSegment ?: ""
         val ext = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
         return when (ext) {
             "epub" -> "application/epub+zip"

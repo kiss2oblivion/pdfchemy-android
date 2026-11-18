@@ -469,17 +469,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _historyList = MutableStateFlow(historyRepository.getHistory())
     val historyList: StateFlow<List<com.pdfchemy.app.logic.HistoryItem>> = _historyList.asStateFlow()
 
-    fun removeHistory(uriString: String) {
-        viewModelScope.launch(Dispatchers.IO) { historyRepository.remove(uriString); refreshHistory() }
+    private val historyEpoch = java.util.concurrent.atomic.AtomicLong()
+    private fun invalidateHistory() = synchronized(historyEpoch) { historyEpoch.incrementAndGet() }
+    private fun publishHistory(ticket: Long) {
+        val items = historyRepository.getHistory()
+        synchronized(historyEpoch) { if (historyEpoch.get() == ticket) _historyList.value = items }
     }
-    fun refreshHistory() {
+    private fun recordHistoryAsync(uri: Uri, name: String, action: String) {
+        val ticket = historyEpoch.get()
         viewModelScope.launch(Dispatchers.IO) {
-            val items = historyRepository.getHistory()
-            _historyList.value = items
+            val owner = kotlinx.coroutines.currentCoroutineContext()
+            kotlinx.coroutines.runInterruptible {
+                historyRepository.addHistoryItem(uri, name, action) {
+                    owner[kotlinx.coroutines.Job]?.isActive == true && historyEpoch.get() == ticket
+                }
+            }
+            publishHistory(ticket)
         }
     }
 
+    fun removeHistory(uriString: String) {
+        invalidateHistory()
+        viewModelScope.launch(Dispatchers.IO) { historyRepository.remove(uriString); refreshHistory() }
+    }
+    fun refreshHistory() {
+        val ticket = historyEpoch.get()
+        viewModelScope.launch(Dispatchers.IO) { publishHistory(ticket) }
+    }
+
     fun removeHistoryItem(uriString: String) {
+        invalidateHistory()
         if (uriString.isBlank()) return
         historyRepository.removeHistoryItem(uriString)
         _historyList.value = historyRepository.getHistory()
@@ -490,8 +509,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Avoid recording transient staged snapshot paths into long-term history if the URI is inside cacheDir/staged_documents
         val path = uri.path ?: ""
         if (uri.scheme == "file" && path.contains("staged_documents")) return
-        historyRepository.addHistoryItem(uri, name, actionLabel)
-        _historyList.value = historyRepository.getHistory()
+        recordHistoryAsync(uri, name, actionLabel)
     }
     private val _isHapticEnabled = MutableStateFlow(prefs.getBoolean("haptic", true))
     val isHapticEnabled: StateFlow<Boolean> = _isHapticEnabled.asStateFlow()
@@ -529,6 +547,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearHistory() {
+        invalidateHistory()
         historyRepository.clearHistory()
         refreshHistory()
     }
@@ -831,7 +850,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _uiState.value = UiState.Success(context.getString(R.string.title_compress_result), reductionDetails, listOf(destUri))
                 }
-                historyRepository.addHistoryItem(destUri, context.getString(R.string.label_compressed_pdf), context.getString(R.string.action_compress))
+                recordHistoryAsync(destUri, context.getString(R.string.label_compressed_pdf), context.getString(R.string.action_compress))
                 refreshHistory()
 
             }.onFailure { error ->
@@ -869,7 +888,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val result = TextToPdfConverter.convert(context, _inputText.value, destUri)
 
                 result.onSuccess {
-                    historyRepository.addHistoryItem(destUri, context.getString(R.string.history_text_to_pdf), context.getString(R.string.history_convert))
+                    recordHistoryAsync(destUri, context.getString(R.string.history_text_to_pdf), context.getString(R.string.history_convert))
                     refreshHistory()
                     _uiState.value = UiState.Success(context.getString(R.string.success_pdf_created), context.getString(R.string.success_doc_saved), listOf(destUri))
                 }.onFailure { error ->
@@ -1053,7 +1072,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 if (successCount == total) {
-                    historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
+                    recordHistoryAsync(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
                     refreshHistory()
                     val totalSavedBytes = sizeSavedMap.values.sum()
                     val totalSavedStr = formatSize(totalSavedBytes)
@@ -1063,7 +1082,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         outputUris
                     )
                 } else if (successCount > 0) {
-                    historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
+                    recordHistoryAsync(destTreeUri, context.getString(R.string.label_batch_compress_folder), context.getString(R.string.action_compress_batch))
                     refreshHistory()
                     val totalSavedBytes = sizeSavedMap.values.sum()
                     val totalSavedStr = formatSize(totalSavedBytes)
@@ -1180,7 +1199,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             activeJob = viewModelScope.launch {
                 try {
                     PdfManipulator.mergePdfs(context, sourceUris, destUri)
-                    historyRepository.addHistoryItem(destUri, context.getString(R.string.history_merged_pdf), context.getString(R.string.desc_merge))
+                    recordHistoryAsync(destUri, context.getString(R.string.history_merged_pdf), context.getString(R.string.desc_merge))
                     refreshHistory()
                     _uiState.value = UiState.Success(context.getString(R.string.success_merge_complete), context.getString(R.string.success_merged_docs, sourceUris.size), listOf(destUri))
                 } catch (e: Exception) {
@@ -1229,7 +1248,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val result = metadataManager.updateMetadata(context, sourceUri, destUri, newMetadata)
                     if (result.isSuccess) {
                         markOutputPublished(destUri)
-                        historyRepository.addHistoryItem(destUri, context.getString(R.string.history_updated_metadata), context.getString(R.string.history_metadata))
+                        recordHistoryAsync(destUri, context.getString(R.string.history_updated_metadata), context.getString(R.string.history_metadata))
                         refreshHistory()
                         _uiState.value = UiState.Success(context.getString(R.string.success_metadata_updated), context.getString(R.string.success_metadata_updated), listOf(destUri))
                     } else {
@@ -1260,7 +1279,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val result = metadataManager.clearMetadata(context, sourceUri, destUri)
                     if (result.isSuccess) {
                         markOutputPublished(destUri)
-                        historyRepository.addHistoryItem(destUri, context.getString(R.string.history_cleared_metadata), context.getString(R.string.history_metadata))
+                        recordHistoryAsync(destUri, context.getString(R.string.history_cleared_metadata), context.getString(R.string.history_metadata))
                         refreshHistory()
                         _uiState.value = UiState.Success(context.getString(R.string.success_metadata_removed), context.getString(R.string.success_metadata_stripped), listOf(destUri))
                     } else {
@@ -1294,7 +1313,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val baseName = com.pdfchemy.app.utils.FileUtils.getFileName(context, sourceUri)?.substringBeforeLast(".") ?: "split_doc"
 
                 val results = PdfManipulator.splitPdf(context, sourceUri, directory, baseName, pageRange)
-                historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
+                recordHistoryAsync(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.success_split_success), results, destTreeUri)
             } catch (e: Exception) {
@@ -1324,7 +1343,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.Error(context.getString(R.string.error_no_blank_dividers))
                     return@launch
                 }
-                historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
+                recordHistoryAsync(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_blank_pages_found, results.size), results, destTreeUri)
             } catch (e: Exception) {
@@ -1354,7 +1373,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = UiState.Error(context.getString(R.string.split_no_bookmarks))
                     return@launch
                 }
-                historyRepository.addHistoryItem(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
+                recordHistoryAsync(destTreeUri, context.getString(R.string.history_split_pdf_folder), context.getString(R.string.desc_split))
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_split_complete), context.getString(R.string.split_bookmarks_found, results.size), results, destTreeUri)
             } catch (e: Exception) {
@@ -1376,7 +1395,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             activeJob = viewModelScope.launch {
             try {
                 PdfManipulator.deletePages(context, sourceUri, destUri, pageRange)
-                historyRepository.addHistoryItem(destUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: context.getString(R.string.history_unknown), context.getString(R.string.history_organize))
+                recordHistoryAsync(destUri, com.pdfchemy.app.utils.FileUtils.getFileName(context, destUri) ?: context.getString(R.string.history_unknown), context.getString(R.string.history_organize))
                 refreshHistory()
                 _uiState.value = UiState.Success(context.getString(R.string.success_pages_deleted), context.getString(R.string.success_pages_removed), listOf(destUri))
             } catch (e: Exception) {
@@ -1451,7 +1470,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (extractedCount > 0) {
                         recordCompletedOpportunity("extract_images", createdOutputs.map { it.uri })
                     }
-                    historyRepository.addHistoryItem(outputDirectory.uri, context.getString(R.string.history_extracted_images_folder), context.getString(R.string.history_extract_images))
+                    recordHistoryAsync(outputDirectory.uri, context.getString(R.string.history_extracted_images_folder), context.getString(R.string.history_extract_images))
                     refreshHistory()
                     onComplete(extractedCount, errorCount)
                     _uiState.value = UiState.Idle
@@ -1489,7 +1508,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 try {
                     PdfManipulator.rotatePdf(context, sourceUri, destUri, degrees, pageRange)
                     withContext(Dispatchers.Main) {
-                        historyRepository.addHistoryItem(destUri, context.getString(R.string.history_rotated_pdf), context.getString(R.string.history_rotate_pdf))
+                        recordHistoryAsync(destUri, context.getString(R.string.history_rotated_pdf), context.getString(R.string.history_rotate_pdf))
                         refreshHistory()
                         _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_doc_saved), listOf(destUri))
                     }
@@ -1517,7 +1536,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     withContext(Dispatchers.Main) {
                         if (success) {
                             markOutputPublished(destUri)
-                            historyRepository.addHistoryItem(destUri, context.getString(R.string.history_extracted_text), context.getString(R.string.history_pdf_to_text))
+                            recordHistoryAsync(destUri, context.getString(R.string.history_extracted_text), context.getString(R.string.history_pdf_to_text))
                             refreshHistory()
                             _uiState.value = UiState.Success(context.getString(R.string.success_title), context.getString(R.string.success_doc_saved), listOf(destUri))
                         } else {
@@ -1571,7 +1590,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         recordCompletedOpportunity("compress_image", listOf(destUri))
                         markOutputPublished(destUri)
                         com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             context.getString(R.string.history_compressed_image),
                             context.getString(R.string.menu_compress_image)
@@ -1634,7 +1653,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         recordCompletedOpportunity("compress_image", listOf(destUri))
                         markOutputPublished(destUri)
                         com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             context.getString(R.string.history_compressed_image),
                             context.getString(R.string.menu_compress_image)
@@ -1768,7 +1787,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.Main) {
                     if (outputUris.isNotEmpty()) {
                         recordCompletedOpportunity("compress_images_batch", ArrayList(outputUris))
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             outputDirectory.uri,
                             context.getString(R.string.history_compressed_images_folder),
                             context.getString(R.string.menu_compress_image)
@@ -1812,7 +1831,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     recordCompletedOpportunity("export_edited_pdf", listOf(destUri))
                     markOutputPublished(destUri)
                     com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
-                    historyRepository.addHistoryItem(
+                    recordHistoryAsync(
                         destUri,
                         context.getString(R.string.history_edited_pdf),
                         context.getString(R.string.menu_edit_pdf)
@@ -1854,7 +1873,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     ownerPassword = ownerPassword
                 )
                 withContext(Dispatchers.Main) {
-                    historyRepository.addHistoryItem(
+                    recordHistoryAsync(
                         destUri,
                         context.getString(R.string.history_protected_pdf),
                         context.getString(R.string.menu_protect_pdf)
@@ -1900,7 +1919,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     password = password
                 )
                 withContext(Dispatchers.Main) {
-                    historyRepository.addHistoryItem(
+                    recordHistoryAsync(
                         destUri,
                         context.getString(R.string.history_unlocked_pdf),
                         context.getString(R.string.menu_unlock_pdf)
@@ -1952,7 +1971,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (uris.isNotEmpty()) {
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             outputDirectory.uri,
                             context.getString(R.string.history_pdf_to_images_folder),
                             context.getString(R.string.menu_pdf_to_images)
@@ -2002,7 +2021,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             context.getString(R.string.history_filled_form),
                             context.getString(R.string.menu_fill_form)
@@ -2065,7 +2084,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             context.getString(R.string.history_searchable_ocr_pdf),
                             context.getString(R.string.menu_ocr_pdf)
@@ -2195,7 +2214,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             context.getString(R.string.history_signed_pdf),
                             context.getString(R.string.menu_sign_pdf)
@@ -2243,7 +2262,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             withContext(Dispatchers.Main) {
                 result.onSuccess { report ->
-                    historyRepository.addHistoryItem(
+                    recordHistoryAsync(
                         destUri,
                         report.format.displayName,
                         context.getString(R.string.desc_office_export_success, report.pageCount)
@@ -2292,7 +2311,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.Main) {
                     if (result.isSuccess) {
                         markOutputPublished(destUri)
-                        historyRepository.addHistoryItem(
+                        recordHistoryAsync(
                             destUri,
                             documentTitle.ifBlank { "Document.pdf" },
                             context.getString(R.string.menu_markdown_studio)
@@ -2344,7 +2363,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     ?: context.getString(R.string.menu_markdown_studio)
                 withContext(Dispatchers.Main) {
                     markOutputPublished(destUri)
-                    historyRepository.addHistoryItem(
+                    recordHistoryAsync(
                         destUri,
                         fileName,
                         context.getString(R.string.menu_markdown_studio)
@@ -2504,7 +2523,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun notifySuccess(title: String, message: String, outputUri: Uri? = null) {
         if (outputUri != null) {
-            historyRepository.addHistoryItem(outputUri, title, message)
+            recordHistoryAsync(outputUri, title, message)
         }
         refreshHistory()
         if (outputUri != null) {
@@ -2520,7 +2539,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun showSuccessToast(title: String, message: String, outputUri: Uri? = null) {
         outputUri?.let {
-            historyRepository.addHistoryItem(it, title, message)
+            recordHistoryAsync(it, title, message)
             refreshHistory()
             markOutputPublished(it)
             com.pdfchemy.app.logic.OutputPolicy.markPublished(it)

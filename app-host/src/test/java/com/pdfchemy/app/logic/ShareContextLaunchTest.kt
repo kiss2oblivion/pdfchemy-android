@@ -1,5 +1,7 @@
 package com.pdfchemy.app.logic
 
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
 import android.app.Activity
 import android.app.Application
 import android.content.Context
@@ -64,4 +66,43 @@ class ShareContextLaunchTest {
     @Test fun externalViewLaunchesFromApplicationAndWrappedActivityContexts() = verifyContexts(Intent.ACTION_VIEW) {
         DocumentActions.view(it, Uri.parse("content://fixture/audio.wav"))
     }
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun asyncOpaqueIdViewAndShareRetainProviderMime() = kotlinx.coroutines.runBlocking<Unit> {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val mainProviderCall = java.util.concurrent.atomic.AtomicBoolean()
+        val provider = object : android.content.ContentProvider() {
+            override fun onCreate() = true
+            override fun getType(uri: Uri): String {
+                if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) mainProviderCall.set(true)
+                return "audio/wav"
+            }
+            override fun query(u: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?) =
+                if (u.lastPathSegment == "mime-only") throw UnsupportedOperationException("MIME-only stream")
+                else android.database.MatrixCursor(arrayOf("_display_name", "_size")).apply { addRow(arrayOf<Any>("recording.wav", 42L)) }
+            override fun insert(u: Uri, v: android.content.ContentValues?): Uri? = null
+            override fun delete(u: Uri, s: String?, a: Array<out String>?) = 0
+            override fun update(u: Uri, v: android.content.ContentValues?, s: String?, a: Array<out String>?) = 0
+        }
+        provider.attachInfo(app, android.content.pm.ProviderInfo().apply { authority = "opaque" })
+        org.robolectric.shadows.ShadowContentResolver.registerProviderInternal("opaque", provider)
+        val uri = Uri.parse("content://opaque/document/123")
+        // Robolectric's main dispatcher is explicitly replaced so suspending action entry points can finish.
+        kotlinx.coroutines.Dispatchers.setMain(kotlinx.coroutines.Dispatchers.Unconfined)
+        try {
+            DocumentActions.viewAsync(app, uri)
+            assertEquals("audio/wav", shadowOf(app).nextStartedActivity.type)
+            com.pdfchemy.app.utils.ProviderMetadata.clear()
+            ShareUtil.shareFilesAsync(app, listOf(uri))
+            val chooser = shadowOf(app).nextStartedActivity
+            @Suppress("DEPRECATION") val payload = chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
+            assertEquals("audio/wav", payload.type)
+            DocumentActions.viewAsync(app, Uri.parse("content://opaque/document/mime-only"))
+            assertEquals("MIME-only provider must retain its type", "audio/wav", shadowOf(app).nextStartedActivity.type)
+            assertEquals("No implicit provider MIME IPC on Main", false, mainProviderCall.get())
+        } finally {
+            com.pdfchemy.app.utils.ProviderMetadata.clear()
+            kotlinx.coroutines.Dispatchers.resetMain()
+        }
+    }
+
 }

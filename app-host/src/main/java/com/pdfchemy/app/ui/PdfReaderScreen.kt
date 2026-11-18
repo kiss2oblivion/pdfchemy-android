@@ -740,14 +740,12 @@ private fun PdfReaderDocument(
                     IconButton(
                         onClick = {
                             val targetUri = selectedPdfUri ?: initialUri
-                            runCatching {
-                                com.pdfchemy.app.logic.ShareUtil.shareFiles(
-                                    context,
-                                    listOf(targetUri),
-                                    fileName.ifBlank { context.getString(R.string.share) }
-                                )
-                            }.onFailure {
-                                viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
+                            coroutineScope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                                try {
+                                    com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(context, listOf(targetUri),
+                                        fileName.ifBlank { context.getString(R.string.share) })
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                catch (_: Exception) { viewModel.notifyError(context.getString(R.string.error_no_sharing_app)) }
                             }
                         },
                         enabled = actionsEnabled

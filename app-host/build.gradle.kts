@@ -115,6 +115,8 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            // ArchUnit imports the host/IPC graph alongside Robolectric; 512 MiB exhausts this suite.
+            all { it.maxHeapSize = "1g" }
         }
     }
 }

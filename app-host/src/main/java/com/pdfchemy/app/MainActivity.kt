@@ -610,6 +610,15 @@ fun MainApp(
     showInterstitial: (android.app.Activity, Boolean, Boolean, () -> Unit) -> Unit = AdManager::showInterstitialIfReady
 ) {
     val context = LocalContext.current
+    val documentActionScope = rememberCoroutineScope()
+    fun documentAction(error: Int, action: suspend () -> Unit) {
+        documentActionScope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            try { action() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { viewModel.notifyError(context.getString(error)) }
+        }
+    }
+
     val screenSaver = remember(viewModel) { readerAwareScreenSaver(viewModel) }
     var currentScreen by rememberSaveable(stateSaver = screenSaver) { mutableStateOf<Screen>(Screen.Home) }
     var readerReturnUri by rememberSaveable { mutableStateOf<String?>(null) }
@@ -634,8 +643,7 @@ fun MainApp(
     val uiState by viewModel.uiState.collectAsState()
 
     val browseOutput = rememberLauncherForActivityResult(BrowseOutputContract()) { uri ->
-        if (uri != null) runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
-            .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_open_item)) }
+        if (uri != null) documentAction(R.string.error_no_app_open_item) { com.pdfchemy.app.logic.DocumentActions.viewAsync(context, uri) }
     }
     val incomingPdfUri by (incomingPdfUriState?.collectAsState() ?: remember { mutableStateOf<Uri?>(null) })
     val isVanguardEnabled by viewModel.isVanguardEnabled.collectAsState()
@@ -1140,14 +1148,14 @@ fun MainApp(
                                 androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 200.dp)) {
                                     items(state.outputUris.size) { index ->
                                         val output = state.outputUris[index]
-                                        TextButton(onClick = { runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, output) }
-                                            .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_can_open_file)) } }) {
-                                            Text((com.pdfchemy.app.utils.FileUtils.getFileName(context, output) ?: "Output ${index + 1}") + "\n" + com.pdfchemy.app.utils.FileUtils.getMimeType(context, output))
+                                        TextButton(onClick = { documentAction(R.string.error_no_app_can_open_file) { com.pdfchemy.app.logic.DocumentActions.viewAsync(context, output) } }) {
+                                            val metadata = com.pdfchemy.app.ui.rememberDocumentMetadata(output)
+                                            Text((metadata.name ?: "Output ${index + 1}") + "\n" + metadata.mime)
                                         }
                                     }
                                 }
                                 val firstOutput = state.outputUris.first()
-                                val firstOutputMime = com.pdfchemy.app.utils.FileUtils.getMimeType(context, firstOutput)
+                                val firstOutputMime = com.pdfchemy.app.ui.rememberDocumentMetadata(firstOutput).mime
                                 if (firstOutputMime == "application/pdf" || firstOutputMime == "application/epub+zip") {
                                     OutlinedButton(
                                         onClick = {
@@ -1168,13 +1176,12 @@ fun MainApp(
                                 OutlinedButton(onClick = { browseOutput.launch(firstOutput) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_browse_files)) }
                                 OutlinedButton(
                                     onClick = {
-                                        runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, firstOutput) }
-                                            .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_can_open_file)) }
+                                        documentAction(R.string.error_no_app_can_open_file) { com.pdfchemy.app.logic.DocumentActions.viewAsync(context, firstOutput) }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.btn_open_file)) }
                                 OutlinedButton(
-                                    onClick = { runCatching { com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output)) }.onFailure { viewModel.notifyError(context.getString(R.string.error_no_sharing_app)) } },
+                                    onClick = { documentAction(R.string.error_no_sharing_app) { com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(context, state.outputUris, context.getString(R.string.desc_share_output)) } },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.share)) }
                             }
@@ -1219,7 +1226,7 @@ fun MainApp(
                     dismissButton = {
                         if (state.outputUris.isNotEmpty()) {
                             TextButton(onClick = {
-                                com.pdfchemy.app.logic.ShareUtil.shareFiles(context, state.outputUris, context.getString(R.string.desc_share_output))
+                                documentAction(R.string.error_no_sharing_app) { com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(context, state.outputUris, context.getString(R.string.desc_share_output)) }
                             }) {
                                 Text(stringResource(R.string.share))
                             }

@@ -21,6 +21,12 @@ import com.pdfchemy.app.security.SecurityLimits
 import com.pdfchemy.app.utils.ResourceTransferOwner
 
 object DocumentActions {
+    suspend fun viewAsync(context: Context, uri: Uri, displayName: String? = null) {
+        val output = getShareableContentUriAsync(context, uri, displayName)
+        com.pdfchemy.app.utils.ProviderMetadata.load(context, output)
+        withContext(Dispatchers.Main.immediate) { view(context, output, displayName) }
+    }
+
     fun view(context: Context, uri: Uri, displayName: String? = null) {
         val output = getShareableContentUri(context, uri, displayName)
         val mimeType = com.pdfchemy.app.utils.FileUtils.getMimeType(context, output)
@@ -32,7 +38,7 @@ object DocumentActions {
         }
         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
             setDataAndType(output, mimeType)
-            clipData = android.content.ClipData.newUri(context.contentResolver, "Document", output)
+            clipData = android.content.ClipData.newRawUri("Document", output)
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             if (!context.hasActivityContext()) {
                 addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -46,6 +52,7 @@ object DocumentActions {
 
     suspend fun shareAsync(context: Context, uri: Uri, displayName: String? = null) {
         val shareUri = getShareableContentUriAsync(context, uri, displayName)
+        com.pdfchemy.app.utils.ProviderMetadata.load(context, shareUri)
         withContext(Dispatchers.Main) {
             ShareUtil.launchShareIntent(context, listOf(shareUri), title = displayName ?: "Share PDF")
         }

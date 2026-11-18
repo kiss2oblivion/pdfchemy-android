@@ -22,8 +22,10 @@ class OutputWorkflowTest {
         val context = mockk<Context>()
         val resolver = mockk<ContentResolver>()
         every { context.getSharedPreferences(any(), any()) } answers { application.getSharedPreferences(firstArg(), secondArg()) }
+        com.pdfchemy.app.utils.ProviderMetadata.clear()
+        every { context.applicationContext } returns context
         every { context.contentResolver } returns resolver
-        every { resolver.query(any(), any(), any(), any(), any()) } answers {
+        every { resolver.query(any(), any(), any(), any(), any(), any<android.os.CancellationSignal>()) } answers {
             val uri = firstArg<Uri>()
             MatrixCursor(arrayOf("_display_name", "_size")).apply { addRow(arrayOf<Any?>(if (uri.lastPathSegment == "csv") "table.csv" else "My taxes 2026.pdf", 100)) }
         }
@@ -31,18 +33,22 @@ class OutputWorkflowTest {
         return context
     }
 
-    @Test fun providerDisplayNameWinsOverOpaqueUriId() {
-        assertEquals("My taxes 2026_compressed.pdf", FileUtil.generateSuggestedName(context(), Uri.parse("content://files/392"), "compressed"))
+    @Test fun providerDisplayNameWinsOverOpaqueUriId() = kotlinx.coroutines.runBlocking<Unit> {
+        val context = context(); val uri = Uri.parse("content://files/392")
+        com.pdfchemy.app.utils.ProviderMetadata.load(context, uri)
+        assertEquals("My taxes 2026_compressed.pdf", FileUtil.generateSuggestedName(context, uri, "compressed"))
     }
     @Test fun collisionPolicyKeepsBothFilesAndPreservesExtension() {
         assertEquals("Report (3).pdf", OutputPolicy.uniqueName("Report.pdf", listOf("report.pdf", "Report (2).pdf")))
         assertEquals("a_b.pdf", OutputPolicy.safeName("folder/a:b.pdf"))
     }
-    @Test fun historyUsesActualIdentityAndRemovesOnlyRequestedEntry() {
+    @Test fun historyUsesActualIdentityAndRemovesOnlyRequestedEntry() = kotlinx.coroutines.runBlocking<Unit> {
         val repo = HistoryRepository(context())
         val pdf = Uri.parse("content://files/pdf"); val csv = Uri.parse("content://files/csv")
-        repo.addHistoryItem(pdf, "Generic result title", "Compress")
-        repo.addHistoryItem(csv, "Generic result title", "Extract")
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            repo.addHistoryItem(pdf, "Generic result title", "Compress")
+            repo.addHistoryItem(csv, "Generic result title", "Extract")
+        }
         val items = repo.getHistory()
         assertEquals("My taxes 2026.pdf", items.single { it.uriString == pdf.toString() }.name)
         assertEquals("application/pdf", items.single { it.uriString == pdf.toString() }.mimeType)

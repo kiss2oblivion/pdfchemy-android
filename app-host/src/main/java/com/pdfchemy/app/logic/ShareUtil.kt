@@ -7,6 +7,20 @@ import android.content.ClipData
 import com.pdfchemy.app.utils.FileUtils
 
 object ShareUtil {
+    suspend fun shareFilesAsync(context: Context, uris: List<Uri>, title: String = "Share PDF") {
+        if (uris.isEmpty()) return
+        val outputs = try { uris.map { DocumentActions.getShareableContentUriAsync(context, it) } }
+        catch (_: RetainedShareQuotaException) {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                android.widget.Toast.makeText(context, context.getString(com.pdfchemy.app.R.string.error_share_storage_full),
+                    android.widget.Toast.LENGTH_LONG).show()
+            }
+            return
+        }
+        outputs.forEach { com.pdfchemy.app.utils.ProviderMetadata.load(context, it) }
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) { launchShareIntent(context, outputs, title) }
+    }
+
     fun shareFiles(context: Context, uris: List<Uri>, title: String = "Share PDF") {
         if (uris.isEmpty()) return
 
@@ -44,7 +58,7 @@ object ShareUtil {
             }
         }
 
-        intent.clipData = ClipData.newUri(context.contentResolver, title, shareUris.first()).apply {
+        intent.clipData = ClipData.newRawUri(title, shareUris.first()).apply {
             shareUris.drop(1).forEach { addItem(ClipData.Item(it)) }
         }
         val chooser = Intent.createChooser(intent, title).apply {
@@ -59,7 +73,7 @@ object ShareUtil {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = mimeType
             putExtra(Intent.EXTRA_STREAM, uri)
-            clipData = ClipData.newUri(context.contentResolver, title, uri)
+            clipData = ClipData.newRawUri(title, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         val chooser = Intent.createChooser(intent, title).apply {

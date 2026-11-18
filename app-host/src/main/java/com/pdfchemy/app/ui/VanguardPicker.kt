@@ -309,6 +309,8 @@ fun rememberVanguardPdfPicker(
             scope.launch {
                 if (isVanguardEnabled) {
                     isScanning = true
+                    scanningFileName = null
+                    com.pdfchemy.app.utils.ProviderMetadata.load(context, originalUri)
                     scanningFileName = FileUtils.getFileName(context, originalUri)
                 }
                 try {
@@ -632,6 +634,8 @@ fun rememberVanguardMultiplePdfPicker(
                             currentItemUri = itemUri
                             if (isVanguardEnabled) {
                                 isScanning = true
+                                scanningFileName = null
+                                com.pdfchemy.app.utils.ProviderMetadata.load(context, itemUri)
                                 scanningFileName = FileUtils.getFileName(context, itemUri)
                             }
                         }

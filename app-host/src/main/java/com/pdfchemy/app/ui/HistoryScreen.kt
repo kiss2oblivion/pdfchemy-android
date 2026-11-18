@@ -1,5 +1,6 @@
 package com.pdfchemy.app.ui
 
+import kotlinx.coroutines.launch
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.activity.compose.BackHandler
@@ -27,6 +28,15 @@ import kotlinx.coroutines.withContext
 fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     BackHandler { onBack() }
     val context = LocalContext.current
+    val actionScope = rememberCoroutineScope()
+    fun documentAction(error: Int, action: suspend () -> Unit) {
+        actionScope.launch(kotlinx.coroutines.Dispatchers.Main.immediate) {
+            try { action() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { viewModel.notifyError(context.getString(error)) }
+        }
+    }
+
     val enabled by viewModel.isHistoryEnabled.collectAsState()
     val items by viewModel.historyList.collectAsState()
     var availability by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
@@ -104,8 +114,7 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                         when {
                                             !item.isDirectory && item.mimeType == "application/pdf" -> onNavigate(Screen.PdfReader(uri))
                                             !item.isDirectory && item.mimeType == "application/epub+zip" -> onNavigate(Screen.ReflowReader(uri))
-                                            else -> runCatching { com.pdfchemy.app.logic.DocumentActions.view(context, uri) }
-                                                .onFailure { viewModel.notifyError(context.getString(R.string.error_no_app_open_item)) }
+                                            else -> documentAction(R.string.error_no_app_open_item) { com.pdfchemy.app.logic.DocumentActions.viewAsync(context, uri) }
                                         }
                                     }) { Text(stringResource(R.string.action_open)) }
                                     if (!item.isDirectory) {
@@ -113,14 +122,12 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                             enabled = availability[item.uriString] == true,
                                             onClick = {
                                                 val uri = item.uriString.toUri()
-                                                runCatching {
-                                                    com.pdfchemy.app.logic.ShareUtil.shareFiles(
+                                                documentAction(R.string.error_no_sharing_app) {
+                                                    com.pdfchemy.app.logic.ShareUtil.shareFilesAsync(
                                                         context,
                                                         listOf(uri),
                                                         context.getString(R.string.desc_share_output)
                                                     )
-                                                }.onFailure {
-                                                    viewModel.notifyError(context.getString(R.string.error_no_sharing_app))
                                                 }
                                             }
                                         ) {
