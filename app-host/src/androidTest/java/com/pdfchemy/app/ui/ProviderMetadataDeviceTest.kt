@@ -28,7 +28,7 @@ class ProviderMetadataDeviceTest {
     @get:Rule val compose = createComposeRule()
     private val context get() = ApplicationProvider.getApplicationContext<Context>()
     private fun uri(path: String) = Uri.parse("content://com.pdfchemy.app.test.metadata/$path")
-    @Before fun warmProvider() { context.contentResolver.call(uri("control"), "active", null, null); ProviderMetadata.clear() }
+    @Before fun warmProvider() { context.contentResolver.call(uri("control"), "reset", null, null); ProviderMetadata.clear() }
     private suspend fun awaitActive(count: Int) = withTimeout(3000) {
         while ((context.contentResolver.call(uri("control"), "active", null, null)?.getInt("active") ?: 0) < count) delay(10)
     }
@@ -131,6 +131,14 @@ class ProviderMetadataDeviceTest {
             settings.edit().putBoolean("history_enabled", oldEnabled).commit()
             saved.edit().apply { if (oldHistory == null) remove("recent_files") else putString("recent_files", oldHistory) }.commit()
         }
+    }
+
+    @Test fun newOperationRefreshesRenamedDocumentAtSameUri() = runBlocking<Unit> {
+        val source = uri("normal/rename")
+        assertEquals("provider-rename.pdf", ProviderMetadata.load(context, source).name)
+        context.contentResolver.call(uri("control"), "rename", "Quarterly Report.pdf", null)
+        assertEquals("Quarterly Report.pdf", ProviderMetadata.load(context, source).name)
+        compose.runOnUiThread { assertEquals("Quarterly Report.pdf", FileUtils.getFileName(context, source)) }
     }
 
 }

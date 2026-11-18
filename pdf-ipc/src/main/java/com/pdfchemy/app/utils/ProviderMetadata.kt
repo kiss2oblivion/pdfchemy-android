@@ -58,8 +58,10 @@ object ProviderMetadata {
 
     /** Legacy background callers receive the same bounded behavior as coroutine callers. */
     fun read(context: Context, uri: Uri): Value {
-        cached(uri)?.let { return it }
-        if (uri.scheme != "content" || Looper.myLooper() == Looper.getMainLooper()) return Value()
+        if (uri.scheme != "content" || Looper.myLooper() == Looper.getMainLooper()) return cached(uri) ?: Value()
+        // Main uses the display cache; a new background operation must revalidate provider identity.
+        // Providers can rename documents or reuse the same URI for a later document.
+        synchronized(lock) { cache.remove(uri.toString()) }
         val resolver = try { (runCatching { context.applicationContext }.getOrNull() ?: context).contentResolver }
             catch (_: Exception) { return Value() }
         val key = uri.toString()
