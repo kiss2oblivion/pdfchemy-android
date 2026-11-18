@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +36,7 @@ import com.pdfchemy.app.logic.SanitizerResult
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,27 @@ fun DocumentSanitizerScreen(
     viewModel: MainViewModel,
     initialPdfUri: Uri? = null,
     onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    DocumentSanitizerContent(viewModel, initialPdfUri, onBack,
+        audit = { com.pdfchemy.app.logic.PdfSanitizerEngine.auditDocumentThreats(context, it) },
+        sanitize = { request, destination ->
+            com.pdfchemy.app.logic.PdfSanitizerEngine.sanitizeDocument(context, request.source, destination,
+                request.purgeJs, request.purgeActions, request.purgeMetadata, request.purgeAttachments)
+        })
+}
+
+internal data class SanitizerRequest(val source: Uri, val generation: Long,
+    val purgeJs: Boolean, val purgeActions: Boolean, val purgeMetadata: Boolean, val purgeAttachments: Boolean)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DocumentSanitizerContent(
+    viewModel: MainViewModel,
+    initialPdfUri: Uri?,
+    onBack: () -> Unit,
+    audit: suspend (Uri) -> SanitizerAuditReport,
+    sanitize: suspend (SanitizerRequest, Uri) -> SanitizerResult
 ) {
     SecureScreenContent()
     BackHandler { onBack() }
@@ -62,78 +85,83 @@ fun DocumentSanitizerScreen(
     var purgeMetadata by remember { mutableStateOf(true) }
     var purgeAttachments by remember { mutableStateOf(true) }
 
+    val requests = remember { com.pdfchemy.app.logic.LatestRequest() }
+    val workerAccess = remember { kotlinx.coroutines.sync.Mutex() }
+    var generation by remember { mutableStateOf(0L) }
+    var auditJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var sanitizeJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var pendingSave by remember { mutableStateOf<SanitizerRequest?>(null) }
+
     fun runAudit(uri: Uri) {
+        val ticket = requests.begin()
+        generation = ticket
+        auditJob?.cancel()
+        sanitizeJob?.cancel()
+        pendingSave = null
         selectedPdfUri = uri
         isAuditing = true
+        isSanitizing = false
         auditReport = null
         sanitizeResult = null
         sanitizeFailed = false
-        scope.launch {
+        auditJob = scope.launch(Dispatchers.Main.immediate) {
             try {
-                val report = com.pdfchemy.app.logic.PdfSanitizerEngine.auditDocumentThreats(context, uri)
-                auditReport = report
+                // A cancelled intermediate selection cannot bypass an older operation's cleanup.
+                val report = workerAccess.withLock { audit(uri) }
+                if (requests.isCurrent(ticket)) auditReport = report
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
                 AppLogger.e("Audit failed", e)
+                if (requests.isCurrent(ticket)) auditReport = SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true)
             } finally {
-                isAuditing = false
+                if (requests.isCurrent(ticket)) isAuditing = false
             }
         }
     }
 
+    DisposableEffect(requests) {
+        onDispose { requests.invalidate(); auditJob?.cancel(); sanitizeJob?.cancel() }
+    }
     LaunchedEffect(effectiveInitialPdfUri) {
-        if (effectiveInitialPdfUri != null) {
-            runAudit(effectiveInitialPdfUri)
-        }
+        effectiveInitialPdfUri?.let(::runAudit)
     }
 
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
-            runAudit(uri)
-        }
+    val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(::runAudit)
     }
 
-    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        val srcUri = selectedPdfUri
-        if (destUri != null && srcUri != null) {
-            isSanitizing = true
-            sanitizeResult = null
-            sanitizeFailed = false
-            scope.launch {
-                try {
-                    val result = com.pdfchemy.app.logic.PdfSanitizerEngine.sanitizeDocument(
-                        context, srcUri, destUri,
-                        purgeJs = purgeJs,
-                        purgeActions = purgeActions,
-                        purgeMetadata = purgeMetadata,
-                        purgeAttachments = purgeAttachments
-                    )
-                    if (result.isSuccess) {
-                        com.pdfchemy.app.logic.OutputPolicy.markPublished(destUri)
-                        sanitizeResult = result
-                        Toast.makeText(context, context.getString(R.string.sanitizer_success), Toast.LENGTH_SHORT).show()
-                    } else {
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
+    val saveFileLauncher = rememberPreferredDocumentCreator("application/pdf") { destination ->
+        val request = pendingSave
+        pendingSave = null
+        if (destination != null) {
+            if (request == null || !requests.isCurrent(request.generation) || selectedPdfUri != request.source) {
+                scope.launch(Dispatchers.IO) { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination) }
+            } else {
+                isSanitizing = true
+                sanitizeResult = null
+                sanitizeFailed = false
+                sanitizeJob = scope.launch(Dispatchers.Main.immediate) {
+                    try {
+                        val result = workerAccess.withLock { sanitize(request, destination) }
+                        if (result.isSuccess) com.pdfchemy.app.logic.OutputPolicy.markPublished(destination)
+                        if (requests.isCurrent(request.generation)) {
+                            if (result.isSuccess) {
+                                sanitizeResult = result
+                                Toast.makeText(context, context.getString(R.string.sanitizer_success), Toast.LENGTH_SHORT).show()
+                            } else sanitizeFailed = true
                         }
-                        sanitizeFailed = true
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (e: Exception) {
+                        AppLogger.e("Sanitizing failed", e)
+                        if (requests.isCurrent(request.generation)) sanitizeFailed = true
+                    } finally {
+                        withContext(NonCancellable + Dispatchers.IO) {
+                            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination)
+                        }
+                        if (requests.isCurrent(request.generation)) isSanitizing = false
                     }
-                } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
-                    }
-                    throw cancelled
-                } catch (e: Exception) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
-                        com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destUri)
-                    }
-                    AppLogger.e("Sanitizing failed", e)
-                    sanitizeFailed = true
-                } finally {
-                    isSanitizing = false
                 }
             }
         }
@@ -184,6 +212,7 @@ fun DocumentSanitizerScreen(
         ) {
             Button(
                 onClick = { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                enabled = !isSanitizing && pendingSave == null,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Rounded.Security, contentDescription = null)
@@ -210,7 +239,7 @@ fun DocumentSanitizerScreen(
 
             if (isAuditing) {
                 Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(modifier = Modifier.testTag("sanitizer-audit-progress"))
                 }
             } else if (auditReport != null) {
                 val report = auditReport!!
@@ -270,7 +299,7 @@ fun DocumentSanitizerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(stringResource(R.string.sanitizer_purge_js), modifier = Modifier.weight(1f).padding(end = 12.dp))
-                            Switch(checked = purgeJs, onCheckedChange = { purgeJs = it })
+                            Switch(checked = purgeJs, onCheckedChange = { purgeJs = it }, enabled = !isSanitizing && pendingSave == null)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -278,7 +307,7 @@ fun DocumentSanitizerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(stringResource(R.string.sanitizer_purge_actions), modifier = Modifier.weight(1f).padding(end = 12.dp))
-                            Switch(checked = purgeActions, onCheckedChange = { purgeActions = it })
+                            Switch(checked = purgeActions, onCheckedChange = { purgeActions = it }, enabled = !isSanitizing && pendingSave == null)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -286,7 +315,7 @@ fun DocumentSanitizerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(stringResource(R.string.sanitizer_purge_embedded), modifier = Modifier.weight(1f).padding(end = 12.dp))
-                            Switch(checked = purgeAttachments, onCheckedChange = { purgeAttachments = it })
+                            Switch(checked = purgeAttachments, onCheckedChange = { purgeAttachments = it }, enabled = !isSanitizing && pendingSave == null)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -294,7 +323,7 @@ fun DocumentSanitizerScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(stringResource(R.string.sanitizer_purge_metadata), modifier = Modifier.weight(1f).padding(end = 12.dp))
-                            Switch(checked = purgeMetadata, onCheckedChange = { purgeMetadata = it })
+                            Switch(checked = purgeMetadata, onCheckedChange = { purgeMetadata = it }, enabled = !isSanitizing && pendingSave == null)
                         }
                     }
                 }
@@ -328,10 +357,12 @@ fun DocumentSanitizerScreen(
 
                 Button(
                     onClick = {
-                        val suggestedName = FileUtil.generateSuggestedName(context, selectedPdfUri, "sanitized")
+                        val source = selectedPdfUri ?: return@Button
+                        pendingSave = SanitizerRequest(source, generation, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
+                        val suggestedName = FileUtil.generateSuggestedName(context, source, "sanitized")
                         saveFileLauncher.launch(suggestedName)
                     },
-                    enabled = !isSanitizing,
+                    enabled = !isSanitizing && pendingSave == null,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
