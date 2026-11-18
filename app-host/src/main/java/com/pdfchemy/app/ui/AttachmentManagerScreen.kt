@@ -32,6 +32,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
+
+private data class AttachmentAction(val source: Uri, val generation: Long,
+    val attachmentId: String? = null, val extra: Uri? = null)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,134 +51,131 @@ fun AttachmentManagerScreen(
     BackHandler { onBack() }
 
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
     var attachments by remember { mutableStateOf<List<PdfAttachment>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
 
-    var targetExtractAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
     var targetRemoveAttachment by remember { mutableStateOf<PdfAttachment?>(null) }
     var showRemoveConfirmDialog by remember { mutableStateOf(false) }
     var fileToEmbedUri by remember { mutableStateOf<Uri?>(null) }
 
-    fun refreshAttachments() {
-        val uri = selectedPdfUri ?: return
-        coroutineScope.launch {
+    val inspections = remember { com.pdfchemy.app.logic.LatestRequest() }
+    val workerAccess = remember { kotlinx.coroutines.sync.Mutex() }
+    var inspectionVersion by remember { mutableStateOf(0L) }
+    var loadFailed by remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
+    var pendingExtraction by remember { mutableStateOf<AttachmentAction?>(null) }
+    var pendingRemoval by remember { mutableStateOf<AttachmentAction?>(null) }
+    var pendingEmbedding by remember { mutableStateOf<AttachmentAction?>(null) }
+    var embeddingSource by remember { mutableStateOf<AttachmentAction?>(null) }
+
+    fun current(request: AttachmentAction?): Boolean = request != null &&
+        selectedPdfUri == request.source && inspections.isCurrent(request.generation)
+    fun selectDocument(uri: Uri) {
+        inspectionVersion = inspections.begin()
+        selectedPdfUri = uri
+        attachments = emptyList()
+        targetRemoveAttachment = null; showRemoveConfirmDialog = false
+        fileToEmbedUri = null; embeddingSource = null
+        pendingExtraction = null; pendingRemoval = null; pendingEmbedding = null
+        loadFailed = false; isLoading = true
+    }
+    fun refreshAttachments() { selectedPdfUri?.let(::selectDocument) }
+    LaunchedEffect(effectiveInitialUri) {
+        effectiveInitialUri?.takeIf { it != selectedPdfUri }?.let(::selectDocument)
+    }
+    LaunchedEffect(selectedPdfUri, inspectionVersion) {
+        val uri = selectedPdfUri ?: return@LaunchedEffect
+        val ticket = inspectionVersion
+        withContext(Dispatchers.Main.immediate) {
             isLoading = true
             try {
-                val contract = PdfGateway.executeEngineTyped<AttachmentListContract>(context, "ATTACHMENT_LIST", uri, null, "{}")
-                attachments = contract.attachments.map {
-                    PdfAttachment(
-                        attachmentId = it.attachmentId,
-                        name = it.name,
-                        sizeBytes = it.sizeBytes,
-                        mimeType = it.mimeType
-                    )
+                val contract = workerAccess.withLock {
+                    PdfGateway.executeEngineTyped<AttachmentListContract>(context, "ATTACHMENT_LIST", uri, null, "{}")
                 }
-            } catch (e: Exception) {
-                // handle error
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) attachments = contract.attachments.map {
+                    PdfAttachment(attachmentId = it.attachmentId, name = it.name, sizeBytes = it.sizeBytes, mimeType = it.mimeType)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) loadFailed = true
             } finally {
-                isLoading = false
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) isLoading = false
             }
         }
     }
-
-    LaunchedEffect(selectedPdfUri) {
-        if (selectedPdfUri != null) {
-            refreshAttachments()
+    DisposableEffect(inspections) { onDispose { inspections.invalidate() } }
+    val filePickerLauncher = rememberVanguardPdfPicker { uri -> selectDocument(uri) }
+    fun executeOutput(destination: Uri?, request: AttachmentAction?, operation: String,
+                      successTitle: Int, successDescription: Int, errorTitle: Int, selectOutput: Boolean = false) {
+        if (destination == null) return
+        if (!current(request)) {
+            coroutineScope.launch(Dispatchers.IO) { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination) }
+            return
+        }
+        val snapshot = requireNotNull(request)
+        isProcessing = true
+        coroutineScope.launch(Dispatchers.Main.immediate) {
+            try {
+                workerAccess.withLock {
+                    val params = JSONObject()
+                    if (operation == "ATTACHMENT_EMBED") {
+                        val extra = requireNotNull(snapshot.extra)
+                        withContext(Dispatchers.IO) {
+                            params.put("fileName", FileUtils.getFileName(context, extra)).put("fileSize", FileUtils.getFileSize(context, extra))
+                        }
+                        PdfGateway.executeEngineExtra(context, operation, snapshot.source, destination, extra, params.toString())
+                    } else {
+                        params.put("attachmentId", requireNotNull(snapshot.attachmentId))
+                        PdfGateway.executeEngine(context, operation, snapshot.source, destination, params.toString())
+                    }
+                }
+                if (current(snapshot)) {
+                    viewModel.notifySuccess(context.getString(successTitle), context.getString(successDescription), destination)
+                    if (selectOutput) selectDocument(destination)
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                if (current(snapshot)) viewModel.showErrorToast(context.getString(errorTitle), error.localizedMessage ?: "")
+            } finally {
+                withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                    com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination)
+                }
+                isProcessing = false
+            }
         }
     }
-
-    val filePickerLauncher = rememberVanguardPdfPicker { uri ->
-        selectedPdfUri = uri
-    }
-
-    val pickEmbedFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) {
+    val pickEmbedFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val request = embeddingSource
+        embeddingSource = null
+        if (uri != null && current(request)) {
+            pendingEmbedding = requireNotNull(request).copy(extra = uri)
             fileToEmbedUri = uri
         }
     }
-
-    val extractSaveLauncher = rememberPreferredDocumentCreator("*/*") { destUri ->
-        if (destUri != null && selectedPdfUri != null && targetExtractAttachment != null) {
-            coroutineScope.launch {
-                try {
-                    val params = JSONObject().put("attachmentId", targetExtractAttachment!!.attachmentId)
-                    PdfGateway.executeEngine(context, "ATTACHMENT_EXTRACT", selectedPdfUri!!, destUri, params.toString())
-                    viewModel.notifySuccess(
-                        context.getString(R.string.title_extract_success),
-                        context.getString(R.string.desc_extract_success)
-                    , destUri)
-                } catch (e: Exception) {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_extract_failed),
-                        e.localizedMessage ?: ""
-                    )
-                }
-            }
-        }
+    val extractSaveLauncher = rememberPreferredDocumentCreator("*/*") { destination ->
+        val request = pendingExtraction; pendingExtraction = null
+        executeOutput(destination, request, "ATTACHMENT_EXTRACT", R.string.title_extract_success,
+            R.string.desc_extract_success, R.string.error_extract_failed)
     }
-
-
-    var pendingRemoval by remember { mutableStateOf<Pair<Uri, String>?>(null) }
-    val removeAttachmentSaveLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        val request = pendingRemoval
-        pendingRemoval = null
-        if (destUri != null && request != null) {
-            coroutineScope.launch {
-                try {
-                    val result = PdfGateway.executeEngineTyped<com.pdfchemy.app.logic.StandardOutputContract>(
-                        context, "ATTACHMENT_REMOVE", request.first, destUri,
-                        JSONObject().put("attachmentId", request.second).toString()
-                    )
-                    check(result.success) { "Attachment removal failed" }
-                    viewModel.notifySuccess(context.getString(R.string.title_remove_attachment_success),
-                        context.getString(R.string.desc_remove_attachment_success), destUri)
-                    selectedPdfUri = destUri
-                } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    viewModel.showErrorToast(context.getString(R.string.error_remove_attachment_failed),
-                        error.localizedMessage ?: "")
-                }
-            }
-        }
+    val removeAttachmentSaveLauncher = rememberPreferredDocumentCreator("application/pdf") { destination ->
+        val request = pendingRemoval; pendingRemoval = null
+        executeOutput(destination, request, "ATTACHMENT_REMOVE", R.string.title_remove_attachment_success,
+            R.string.desc_remove_attachment_success, R.string.error_remove_attachment_failed, selectOutput = true)
     }
-
-    val saveAttachedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null && fileToEmbedUri != null) {
-            coroutineScope.launch {
-                try {
-                    val params = JSONObject().put("fileName", FileUtils.getFileName(context, fileToEmbedUri!!)).put("fileSize", FileUtils.getFileSize(context, fileToEmbedUri!!))
-                    PdfGateway.executeEngineExtra(context, "ATTACHMENT_EMBED", selectedPdfUri!!, destUri, fileToEmbedUri!!, params.toString())
-                    viewModel.notifySuccess(
-                        context.getString(R.string.title_embed_success),
-                        context.getString(R.string.desc_embed_success),
-                        destUri
-                    )
-                    selectedPdfUri = destUri
-                } catch (e: Exception) {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_embed_failed),
-                        e.localizedMessage ?: ""
-                    )
-                } finally {
-                    fileToEmbedUri = null
-                }
-            }
-        } else {
-            fileToEmbedUri = null
-        }
+    val saveAttachedPdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destination ->
+        val request = pendingEmbedding; pendingEmbedding = null; fileToEmbedUri = null
+        executeOutput(destination, request, "ATTACHMENT_EMBED", R.string.title_embed_success,
+            R.string.desc_embed_success, R.string.error_embed_failed, selectOutput = true)
     }
-
     LaunchedEffect(fileToEmbedUri) {
-        val fileUri = fileToEmbedUri
-        val pdfUri = selectedPdfUri
-        if (fileUri != null && pdfUri != null) {
-            saveAttachedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, pdfUri, "with_attachment"))
+        val request = pendingEmbedding
+        if (fileToEmbedUri != null && current(request)) {
+            saveAttachedPdfLauncher.launch(com.pdfchemy.app.logic.FileUtil.generateSuggestedName(context, requireNotNull(request).source, "with_attachment"))
         }
     }
+    val hasPending = pendingExtraction != null || pendingRemoval != null || pendingEmbedding != null || embeddingSource != null
 
     Scaffold(
         topBar = {
@@ -235,7 +238,7 @@ fun AttachmentManagerScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                    .clickable(enabled = !isProcessing && !hasPending) { filePickerLauncher.launch(arrayOf("application/pdf")) },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -270,6 +273,8 @@ fun AttachmentManagerScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
+                } else if (loadFailed) {
+                    Text(stringResource(R.string.error_open_file_failed), color = MaterialTheme.colorScheme.error)
                 } else if (attachments.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
@@ -301,20 +306,22 @@ fun AttachmentManagerScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(text = item.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(
-                                            text = "${FileUtils.formatFileSize(item.sizeBytes)} • ${item.mimeType}",
+                                            text = "${FileUtils.formatFileSize(item.sizeBytes)} Ã¢â‚¬Â¢ ${item.mimeType}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                     IconButton(
+                                        enabled = !isProcessing && !hasPending,
                                         onClick = {
-                                            targetExtractAttachment = item
+                                            pendingExtraction = selectedPdfUri?.let { AttachmentAction(it, inspectionVersion, item.attachmentId) }
                                             extractSaveLauncher.launch(item.name)
                                         }
                                     ) {
                                         Icon(Icons.Rounded.FileDownload, contentDescription = stringResource(R.string.desc_extract), tint = MaterialTheme.colorScheme.primary)
                                     }
                                     IconButton(
+                                        enabled = !isProcessing && !hasPending,
                                         onClick = {
                                             targetRemoveAttachment = item
                                             showRemoveConfirmDialog = true
@@ -335,12 +342,15 @@ fun AttachmentManagerScreen(
 
             // Embed New Attachment Button
             Button(
-                onClick = { pickEmbedFileLauncher.launch(arrayOf("*/*")) },
+                onClick = {
+                    embeddingSource = selectedPdfUri?.let { AttachmentAction(it, inspectionVersion) }
+                    pickEmbedFileLauncher.launch(arrayOf("*/*"))
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 52.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                enabled = selectedPdfUri != null
+                enabled = selectedPdfUri != null && !isLoading && !loadFailed && !isProcessing && !hasPending
             ) {
                 Icon(Icons.Rounded.AttachFile, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
@@ -366,7 +376,7 @@ fun AttachmentManagerScreen(
                         showRemoveConfirmDialog = false
                         val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
                         val attachSafe = targetRemoveAttachment!!.name.replace(Regex("[^a-zA-Z0-9_.-]"), "_")
-                        pendingRemoval = selectedPdfUri?.let { it to targetRemoveAttachment!!.attachmentId }
+                        pendingRemoval = selectedPdfUri?.let { AttachmentAction(it, inspectionVersion, targetRemoveAttachment!!.attachmentId) }
                         removeAttachmentSaveLauncher.launch("${base}_without_${attachSafe}.pdf")
                     }
                 ) {

@@ -35,6 +35,12 @@ import com.pdfchemy.app.logic.PdfMetadataEngine
 import com.pdfchemy.app.utils.AppLogger
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
+
+private data class MetadataSaveRequest(val source: Uri, val generation: Long,
+    val wipe: Boolean, val metadata: DocumentMetadataInfo?)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,71 +71,77 @@ fun MetadataSanitizerScreen(
 
     var isWipeAction by remember { mutableStateOf(true) }
 
+    val inspections = remember { com.pdfchemy.app.logic.LatestRequest() }
+    val workerAccess = remember { kotlinx.coroutines.sync.Mutex() }
+    var inspectionVersion by remember { mutableStateOf(0L) }
+    var loadFailed by remember { mutableStateOf(false) }
+    var pendingSave by remember { mutableStateOf<MetadataSaveRequest?>(null) }
+
     fun loadMetadata(uri: Uri) {
-        coroutineScope.launch {
+        inspectionVersion = inspections.begin()
+        selectedPdfUri = uri
+        metadataInfo = null
+        title = ""; author = ""; subject = ""; keywords = ""; creator = ""; producer = ""
+        pendingSave = null
+        loadFailed = false
+        isLoading = true
+    }
+    LaunchedEffect(effectiveInitialPdfUri) {
+        effectiveInitialPdfUri?.takeIf { it != selectedPdfUri }?.let(::loadMetadata)
+    }
+    LaunchedEffect(selectedPdfUri, inspectionVersion) {
+        val uri = selectedPdfUri ?: return@LaunchedEffect
+        val ticket = inspectionVersion
+        withContext(Dispatchers.Main.immediate) {
             isLoading = true
-            val result = PdfMetadataEngine.readMetadata(context, uri)
-            isLoading = false
-            if (result.isSuccess) {
-                val info = result.getOrThrow()
-                metadataInfo = info
-                title = info.title
-                author = info.author
-                subject = info.subject
-                keywords = info.keywords
-                creator = info.creator
-                producer = info.producer
-            } else {
-                viewModel.showErrorToast(
-                    context.getString(R.string.error_read_metadata_failed),
-                    result.exceptionOrNull()?.localizedMessage ?: ""
-                )
+            try {
+                val info = workerAccess.withLock { PdfMetadataEngine.readMetadata(context, uri).getOrThrow() }
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) {
+                    metadataInfo = info
+                    title = info.title; author = info.author; subject = info.subject
+                    keywords = info.keywords; creator = info.creator; producer = info.producer
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) loadFailed = true
+            } finally {
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) isLoading = false
             }
         }
     }
+    DisposableEffect(inspections) { onDispose { inspections.invalidate() } }
+    val pdfPickerLauncher = rememberVanguardPdfPicker { uri -> loadMetadata(uri) }
 
-    LaunchedEffect(effectiveInitialPdfUri) {
-        effectiveInitialPdfUri?.let {
-            selectedPdfUri = it
-            loadMetadata(it)
-        }
-    }
-
-    val pdfPickerLauncher = rememberVanguardPdfPicker { uri ->
-        selectedPdfUri = uri
-        loadMetadata(uri)
-    }
-
-    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destUri ->
-        if (destUri != null && selectedPdfUri != null) {
-            coroutineScope.launch {
+    val savePdfLauncher = rememberPreferredDocumentCreator("application/pdf") { destination ->
+        val request = pendingSave
+        pendingSave = null
+        if (destination != null) {
+            if (request == null || !inspections.isCurrent(request.generation) || selectedPdfUri != request.source) {
+                coroutineScope.launch(Dispatchers.IO) { com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination) }
+            } else {
                 isProcessing = true
-                val newInfo = if (isWipeAction) null else DocumentMetadataInfo(
-                    title = title,
-                    author = author,
-                    subject = subject,
-                    keywords = keywords,
-                    creator = creator,
-                    producer = producer
-                )
-                val result = PdfMetadataEngine.writeOrSanitizeMetadata(
-                    context = context,
-                    sourcePdfUri = selectedPdfUri!!,
-                    destPdfUri = destUri,
-                    newMetadata = newInfo,
-                    wipeAllMetadata = isWipeAction
-                )
-                isProcessing = false
-                if (result.isSuccess) {
-                    val titleRes = if (isWipeAction) R.string.title_sanitize_success else R.string.title_update_metadata_success
-                    val descRes = if (isWipeAction) R.string.desc_sanitize_success else R.string.desc_update_metadata_success
-                    viewModel.showSuccessToast(context.getString(titleRes), context.getString(descRes), destUri)
-                    onBack()
-                } else {
-                    viewModel.showErrorToast(
-                        context.getString(R.string.error_sanitize_failed),
-                        result.exceptionOrNull()?.localizedMessage ?: ""
-                    )
+                coroutineScope.launch(Dispatchers.Main.immediate) {
+                    try {
+                        workerAccess.withLock {
+                            PdfMetadataEngine.writeOrSanitizeMetadata(context, request.source, destination,
+                                request.metadata, request.wipe).getOrThrow()
+                        }
+                        if (inspections.isCurrent(request.generation)) {
+                            val titleRes = if (request.wipe) R.string.title_sanitize_success else R.string.title_update_metadata_success
+                            val descRes = if (request.wipe) R.string.desc_sanitize_success else R.string.desc_update_metadata_success
+                            viewModel.showSuccessToast(context.getString(titleRes), context.getString(descRes), destination)
+                            onBack()
+                        }
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (error: Exception) {
+                        if (inspections.isCurrent(request.generation)) viewModel.showErrorToast(
+                            context.getString(R.string.error_sanitize_failed), error.localizedMessage ?: "")
+                    } finally {
+                        withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                            com.pdfchemy.app.logic.OutputPolicy.deleteIfFresh(context, destination)
+                        }
+                        isProcessing = false
+                    }
                 }
             }
         }
@@ -216,7 +228,7 @@ fun MetadataSanitizerScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { pdfPickerLauncher.launch(arrayOf("application/pdf")) },
+                    .clickable(enabled = !isProcessing && pendingSave == null) { pdfPickerLauncher.launch(arrayOf("application/pdf")) },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -259,6 +271,8 @@ fun MetadataSanitizerScreen(
                 Box(modifier = Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
+            } else if (loadFailed) {
+                Text(stringResource(R.string.error_read_metadata_failed), color = MaterialTheme.colorScheme.error)
             } else if (metadataInfo != null) {
                 // Metadata Overview Card
                 Card(
@@ -340,6 +354,7 @@ fun MetadataSanitizerScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
+                        enabled = !isProcessing && pendingSave == null,
                         selected = isWipeAction,
                         onClick = {
                             isWipeAction = true
@@ -350,6 +365,7 @@ fun MetadataSanitizerScreen(
                         modifier = Modifier.weight(1f)
                     )
                     FilterChip(
+                        enabled = !isProcessing && pendingSave == null,
                         selected = !isWipeAction,
                         onClick = {
                             isWipeAction = false
@@ -436,35 +452,40 @@ fun MetadataSanitizerScreen(
                                 onValueChange = { title = it },
                                 label = { Text(stringResource(R.string.meta_title)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                enabled = !isProcessing && pendingSave == null
                             )
                             OutlinedTextField(
                                 value = author,
                                 onValueChange = { author = it },
                                 label = { Text(stringResource(R.string.meta_author)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                enabled = !isProcessing && pendingSave == null
                             )
                             OutlinedTextField(
                                 value = subject,
                                 onValueChange = { subject = it },
                                 label = { Text(stringResource(R.string.meta_subject)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                enabled = !isProcessing && pendingSave == null
                             )
                             OutlinedTextField(
                                 value = keywords,
                                 onValueChange = { keywords = it },
                                 label = { Text(stringResource(R.string.meta_keywords)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                enabled = !isProcessing && pendingSave == null
                             )
                             OutlinedTextField(
                                 value = creator,
                                 onValueChange = { creator = it },
                                 label = { Text(stringResource(R.string.meta_creator)) },
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                singleLine = true,
+                                enabled = !isProcessing && pendingSave == null
                             )
                         }
                     }
@@ -473,7 +494,10 @@ fun MetadataSanitizerScreen(
                 // Action Save Button
                 Button(
                     onClick = {
-                        val baseName = selectedPdfUri?.let { FileUtils.getFileName(context, it) } ?: "document.pdf"
+                        val source = selectedPdfUri ?: return@Button
+                        pendingSave = MetadataSaveRequest(source, inspectionVersion, isWipeAction,
+                            if (isWipeAction) null else DocumentMetadataInfo(title, author, subject, keywords, creator, producer))
+                        val baseName = FileUtils.getFileName(context, source) ?: "document.pdf"
                         val suggestedName = if (isWipeAction) "sanitized_$baseName" else "updated_meta_$baseName"
                         savePdfLauncher.launch(suggestedName)
                     },
@@ -492,7 +516,7 @@ fun MetadataSanitizerScreen(
                             contentColor = MaterialTheme.colorScheme.onSecondary
                         )
                     },
-                    enabled = !isProcessing
+                    enabled = !isProcessing && pendingSave == null
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)

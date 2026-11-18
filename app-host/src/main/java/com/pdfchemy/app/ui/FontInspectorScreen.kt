@@ -25,6 +25,11 @@ import com.pdfchemy.app.logic.PdfFontInfo
 import com.pdfchemy.app.logic.PdfFontInspectorEngine
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
+
+private data class FontExportRequest(val source: Uri, val count: Int, val generation: Long)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,52 +43,69 @@ fun FontInspectorScreen(
     BackHandler { onBack() }
 
     val continuityUri by viewModel.continuityDocumentUri.collectAsState()
-    var selectedPdfUri by remember { mutableStateOf<Uri?>(initialUri ?: continuityUri) }
+    val effectiveInitialUri = initialUri ?: continuityUri
+    var selectedPdfUri by remember { mutableStateOf<Uri?>(effectiveInitialUri) }
     var fontList by remember { mutableStateOf<List<PdfFontInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var isExporting by remember { mutableStateOf(false) }
-    var exportSource by remember { mutableStateOf<Pair<Uri, Int>?>(null) }
+    var exportSource by remember { mutableStateOf<FontExportRequest?>(null) }
 
-    fun refreshFonts() {
-        val uri = selectedPdfUri ?: return
-        coroutineScope.launch {
+    val inspections = remember { com.pdfchemy.app.logic.LatestRequest() }
+    val workerAccess = remember { kotlinx.coroutines.sync.Mutex() }
+    var inspectionVersion by remember { mutableStateOf(0L) }
+    var loadFailed by remember { mutableStateOf(false) }
+
+    fun selectDocument(uri: Uri) {
+        inspectionVersion = inspections.begin()
+        selectedPdfUri = uri
+        fontList = emptyList()
+        exportSource = null
+        loadFailed = false
+        isLoading = true
+    }
+    fun refreshFonts() { selectedPdfUri?.let(::selectDocument) }
+    LaunchedEffect(effectiveInitialUri) {
+        effectiveInitialUri?.takeIf { it != selectedPdfUri }?.let(::selectDocument)
+    }
+    LaunchedEffect(selectedPdfUri, inspectionVersion) {
+        val uri = selectedPdfUri ?: return@LaunchedEffect
+        val ticket = inspectionVersion
+        withContext(Dispatchers.Main.immediate) {
             isLoading = true
-            val result = PdfFontInspectorEngine.inspectFonts(context, uri)
-            isLoading = false
-            if (result.isSuccess) {
-                fontList = result.getOrThrow()
+            try {
+                val result = workerAccess.withLock { PdfFontInspectorEngine.inspectFonts(context, uri).getOrThrow() }
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) fontList = result
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) loadFailed = true
+            } finally {
+                if (inspections.isCurrent(ticket) && selectedPdfUri == uri) isLoading = false
             }
         }
     }
-
-    LaunchedEffect(selectedPdfUri) {
-        if (selectedPdfUri != null) {
-            refreshFonts()
-        }
-    }
-
-    val filePickerLauncher = rememberVanguardPdfPicker { uri ->
-        selectedPdfUri = uri
-    }
+    DisposableEffect(inspections) { onDispose { inspections.invalidate() } }
+    val filePickerLauncher = rememberVanguardPdfPicker { uri -> selectDocument(uri) }
 
     val saveZipLauncher = rememberPreferredDocumentDestinationCreator("application/zip") { destination ->
         val snapshot = exportSource
         exportSource = null
         if (destination != null) {
             isExporting = true
-            coroutineScope.launch {
+            coroutineScope.launch(Dispatchers.Main.immediate) {
                 try {
-                    val (source, count) = requireNotNull(snapshot) { "No source selected for export" }
-                    PdfFontInspectorEngine.extractEmbeddedFonts(context, source, destination.uri).getOrThrow()
+                    val request = requireNotNull(snapshot) { "No source selected for export" }
+                    if (!inspections.isCurrent(request.generation) || selectedPdfUri != request.source) return@launch
+                    workerAccess.withLock { PdfFontInspectorEngine.extractEmbeddedFonts(context, request.source, destination.uri).getOrThrow() }
+                    if (!inspections.isCurrent(request.generation)) return@launch
                     android.widget.Toast.makeText(
                         context,
-                        context.getString(R.string.title_fonts_exported_success, count),
+                        context.getString(R.string.title_fonts_exported_success, request.count),
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
-                    android.widget.Toast.makeText(
+                    if (snapshot != null && inspections.isCurrent(snapshot.generation)) android.widget.Toast.makeText(
                         context,
                         context.getString(R.string.error_fonts_export_failed),
                         android.widget.Toast.LENGTH_LONG
@@ -126,7 +148,7 @@ fun FontInspectorScreen(
                         }
                     }
                     if (selectedPdfUri != null) {
-                        IconButton(onClick = { refreshFonts() }) {
+                        IconButton(enabled = !isExporting && exportSource == null, onClick = { refreshFonts() }) {
                             Icon(Icons.Rounded.Refresh, contentDescription = stringResource(R.string.desc_refresh))
                         }
                     }
@@ -176,7 +198,7 @@ fun FontInspectorScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { filePickerLauncher.launch(arrayOf("application/pdf")) },
+                    .clickable(enabled = !isExporting && exportSource == null) { filePickerLauncher.launch(arrayOf("application/pdf")) },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -211,6 +233,8 @@ fun FontInspectorScreen(
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
+                } else if (loadFailed) {
+                    Text(stringResource(R.string.error_open_file_failed), color = MaterialTheme.colorScheme.error)
                 } else if (fontList.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
@@ -268,7 +292,7 @@ fun FontInspectorScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(text = font.familyName, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                             Text(
-                                                text = "${font.formatType} • ${stringResource(if (font.isEmbedded) R.string.stat_embedded else R.string.font_system_font)} • ${font.encoding}",
+                                                text = "${font.formatType} â€¢ ${stringResource(if (font.isEmbedded) R.string.stat_embedded else R.string.font_system_font)} â€¢ ${font.encoding}",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -291,7 +315,7 @@ fun FontInspectorScreen(
                 Button(
                     onClick = {
                         val base = selectedPdfUri?.let { FileUtils.getFileName(context, it)?.removeSuffix(".pdf") } ?: "document"
-                        exportSource = selectedPdfUri?.let { it to embeddedCount }
+                        exportSource = selectedPdfUri?.let { FontExportRequest(it, embeddedCount, inspectionVersion) }
                         saveZipLauncher.launch("${base}_embedded_fonts.zip")
                     },
                     modifier = Modifier
