@@ -84,4 +84,37 @@ class SanitizerScopeSecurityTest {
             assertEquals("Logical attachment count should be exactly 1 despite nested dictionaries", 1, audit.attachmentCount)
         } finally { source.delete() }
     }
+    @Test fun metadataPurgeRemovesPagePayloadAndAliasesButKeepOptionPreservesThem() = runBlocking<Unit> {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        PDFBoxResourceLoader.init(context)
+        val source = File.createTempFile("metadata_source_", ".pdf", context.cacheDir)
+        val purged = File.createTempFile("metadata_purged_", ".pdf", context.cacheDir)
+        val kept = File.createTempFile("metadata_kept_", ".pdf", context.cacheDir)
+        val marker = "PRIVATE_PAGE_XMP_883729"
+        try {
+            PDDocument().use { document ->
+                val page = PDPage().also(document::addPage)
+                val metadata = com.tom_roush.pdfbox.pdmodel.common.PDMetadata(document).apply { importXMPMetadata(marker.toByteArray()) }
+                page.metadata = metadata
+                document.documentCatalog.cosObject.setItem(com.tom_roush.pdfbox.cos.COSName.getPDFName("AlternatePayload"), metadata)
+                document.save(source)
+            }
+            assertTrue(PdfSanitizerEngine.auditDocumentThreats(context, Uri.fromFile(source)).hasMetadata)
+            assertTrue(PdfSanitizerEngine.sanitizeDocument(context, Uri.fromFile(source), Uri.fromFile(kept), purgeMetadata = false).isSuccess)
+            PDDocument.load(kept).use { document ->
+                assertEquals(marker, document.getPage(0).metadata.createInputStream().use { String(it.readBytes()) })
+            }
+            val result = PdfSanitizerEngine.sanitizeDocument(context, Uri.fromFile(source), Uri.fromFile(purged))
+            assertTrue(result.isSuccess)
+            assertTrue(result.metadataRemoved)
+            assertFalse(PdfSanitizerEngine.auditDocumentThreats(context, Uri.fromFile(purged)).hasMetadata)
+            PDDocument.load(purged).use { document ->
+                assertNull(document.getPage(0).metadata)
+                assertNull(document.documentCatalog.cosObject.getItem(com.tom_roush.pdfbox.cos.COSName.getPDFName("AlternatePayload")))
+                for (obj in document.document.objects) (obj.`object` as? com.tom_roush.pdfbox.cos.COSStream)?.let {
+                    assertFalse(it.createInputStream().use { input -> String(input.readBytes()) }.contains(marker))
+                }
+            }
+        } finally { source.delete(); purged.delete(); kept.delete() }
+    }
 }

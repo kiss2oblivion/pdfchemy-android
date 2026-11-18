@@ -13,8 +13,7 @@ object PdfSanitizerEngineWorker {
     fun audit(sourceFd: ParcelFileDescriptor): String = try {
         FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, "", com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
             val f = ActiveContentScrubber.inspect(document)
-            val info = document.documentInformation
-            val metadata = info != null && (!info.author.isNullOrBlank() || !info.title.isNullOrBlank() || !info.creator.isNullOrBlank())
+            val metadata = PdfPrivacyCleanup.hasMetadata(document)
             val executableThreats = f.javascript + f.launches + f.actions + f.untrustedUris
             JSONObject().put("threatsFound", executableThreats).put("isClean", executableThreats == 0)
                 .put("jsCount", f.javascript).put("launchActionsCount", f.launches).put("otherActionsCount", f.actions).put("untrustedUriCount", f.untrustedUris).put("attachmentCount", f.attachments).put("uriCount", f.uris)
@@ -46,13 +45,13 @@ object PdfSanitizerEngineWorker {
         try {
             val removed = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
                 val findings = ActiveContentScrubber.inspect(document, true, purgeJs, purgeActions, purgeAttachments)
-                if (purgeMetadata) { document.documentInformation = com.tom_roush.pdfbox.pdmodel.PDDocumentInformation(); document.documentCatalog.metadata = null }
+                if (purgeMetadata) PdfPrivacyCleanup.removeMetadata(document)
                 boundedFileOutput(scratch).use { document.save(it) }
                 findings.selected(purgeJs, purgeActions, purgeAttachments)
             }
             com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
                 require(ActiveContentScrubber.inspect(document).selected(purgeJs, purgeActions, purgeAttachments).total == 0) { "Prohibited carriers survived sanitization" }
-                if (purgeMetadata) require(document.documentInformation.cosObject.size() == 0 && document.documentCatalog.metadata == null) { "Metadata survived sanitization" }
+                if (purgeMetadata) require(!PdfPrivacyCleanup.hasMetadata(document)) { "Metadata survived sanitization" }
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
