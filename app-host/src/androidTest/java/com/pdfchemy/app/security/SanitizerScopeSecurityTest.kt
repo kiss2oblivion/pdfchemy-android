@@ -117,4 +117,41 @@ class SanitizerScopeSecurityTest {
             }
         } finally { source.delete(); purged.delete(); kept.delete() }
     }
+    @Test fun attachmentPurgeRemovesAlternatePayloadButKeepOptionPreservesIt() = runBlocking<Unit> {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        PDFBoxResourceLoader.init(context)
+        val source = File.createTempFile("alias_source_", ".pdf", context.cacheDir)
+        val purged = File.createTempFile("alias_purged_", ".pdf", context.cacheDir)
+        val kept = File.createTempFile("alias_kept_", ".pdf", context.cacheDir)
+        val marker = "PRIVATE_ALIASED_ATTACHMENT_773289"
+        val aliasKey = com.tom_roush.pdfbox.cos.COSName.getPDFName("AlternatePayload")
+        try {
+            PDDocument().use { document ->
+                document.addPage(PDPage())
+                document.documentInformation.author = "KEEP_AUTHOR"
+                val payload = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile(document, marker.byteInputStream())
+                val spec = com.tom_roush.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification().apply { file = "private.txt"; embeddedFile = payload }
+                document.documentCatalog.names = PDDocumentNameDictionary(document.documentCatalog).apply {
+                    embeddedFiles = PDEmbeddedFilesNameTreeNode().apply { names = mapOf("private" to spec) }
+                }
+                document.documentCatalog.cosObject.setItem(aliasKey, payload)
+                document.save(source)
+            }
+            assertTrue(PdfSanitizerEngine.sanitizeDocument(context, Uri.fromFile(source), Uri.fromFile(kept), purgeMetadata = false, purgeAttachments = false).isSuccess)
+            PDDocument.load(kept).use { document ->
+                val alias = document.documentCatalog.cosObject.getDictionaryObject(aliasKey) as com.tom_roush.pdfbox.cos.COSStream
+                assertEquals(marker, alias.createInputStream().use { String(it.readBytes()) })
+            }
+            val result = PdfSanitizerEngine.sanitizeDocument(context, Uri.fromFile(source), Uri.fromFile(purged), purgeMetadata = false)
+            assertTrue(result.isSuccess)
+            assertEquals(1, result.attachmentsRemoved)
+            PDDocument.load(purged).use { document ->
+                assertEquals("KEEP_AUTHOR", document.documentInformation.author)
+                assertNull(document.documentCatalog.cosObject.getItem(aliasKey))
+                for (obj in document.document.objects) (obj.`object` as? com.tom_roush.pdfbox.cos.COSStream)?.let {
+                    assertFalse(it.createInputStream().use { input -> String(input.readBytes()) }.contains(marker))
+                }
+            }
+        } finally { source.delete(); purged.delete(); kept.delete() }
+    }
 }

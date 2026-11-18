@@ -44,18 +44,32 @@ object PdfSanitizerEngineWorker {
         val scratch = com.pdfchemy.app.jail.JailScratch.createTempFile("sanitized_", ".pdf")
         try {
             val removed = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
-                val findings = ActiveContentScrubber.inspect(document, true, purgeJs, purgeActions, purgeAttachments)
-                if (purgeMetadata) PdfPrivacyCleanup.removeMetadata(document)
+                val findings = cleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
                 boundedFileOutput(scratch).use { document.save(it) }
                 findings.selected(purgeJs, purgeActions, purgeAttachments)
             }
             com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
-                require(ActiveContentScrubber.inspect(document).selected(purgeJs, purgeActions, purgeAttachments).total == 0) { "Prohibited carriers survived sanitization" }
-                if (purgeMetadata) require(!PdfPrivacyCleanup.hasMetadata(document)) { "Metadata survived sanitization" }
+                validateCleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
                 .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
         } finally { scratch.delete() }
+    }
+    /** Shared by the FD worker and saved-document regressions; counts precede removal. */
+    internal fun cleanDocument(document: PDDocument, purgeJs: Boolean, purgeActions: Boolean,
+                               purgeMetadata: Boolean, purgeAttachments: Boolean): ActiveContentScrubber.Findings {
+        val findings = ActiveContentScrubber.inspect(document)
+        // Capture all selected private identities together before any carrier links are severed.
+        PdfPrivacyCleanup.removeSelected(document, purgeMetadata, purgeAttachments)
+        ActiveContentScrubber.inspect(document, true, purgeJs, purgeActions, purgeAttachments)
+        return findings
+    }
+
+    internal fun validateCleanDocument(document: PDDocument, purgeJs: Boolean, purgeActions: Boolean,
+                                       purgeMetadata: Boolean, purgeAttachments: Boolean) {
+        require(ActiveContentScrubber.inspect(document).selected(purgeJs, purgeActions, purgeAttachments).total == 0) { "Prohibited carriers survived sanitization" }
+        if (purgeMetadata) require(!PdfPrivacyCleanup.hasMetadata(document)) { "Metadata survived sanitization" }
+        if (purgeAttachments) require(!PdfPrivacyCleanup.hasAttachmentPayloads(document)) { "Attachment payload survived sanitization" }
     }
 }

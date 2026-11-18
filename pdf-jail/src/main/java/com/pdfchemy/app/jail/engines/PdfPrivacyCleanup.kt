@@ -10,6 +10,7 @@ import java.util.IdentityHashMap
 internal object PdfPrivacyCleanup {
     private fun name(value: String) = COSName.getPDFName(value)
     private val metadataKeys = setOf(COSName.METADATA, name("PieceInfo"), COSName.INFO)
+    private val attachmentKeys = setOf("EmbeddedFiles", "AF", "EF", "FS").mapTo(mutableSetOf(), ::name)
     private fun identities(): MutableSet<COSBase> = Collections.newSetFromMap(IdentityHashMap())
 
     private fun value(raw: COSBase?): COSBase? {
@@ -59,10 +60,21 @@ internal object PdfPrivacyCleanup {
         } || node is COSStream && node.getCOSName(COSName.TYPE) == COSName.METADATA)
     }
 
-    fun removeMetadata(document: PDDocument) {
-        removePayloads(document, metadataKeys, setOf(COSName.METADATA))
+    fun removeMetadata(document: PDDocument) = removeSelected(document, metadata = true, attachments = false)
+
+    fun hasAttachmentPayloads(document: PDDocument): Boolean = graph(document).any { node ->
+        node is COSDictionary && (attachmentKeys.any(node::containsKey) ||
+            node is COSStream && node.getCOSName(COSName.TYPE) == name("EmbeddedFile"))
+    }
+
+    fun removeSelected(document: PDDocument, metadata: Boolean, attachments: Boolean) {
+        if (!metadata && !attachments) return
+        val keys = (if (metadata) metadataKeys else emptySet()) + (if (attachments) attachmentKeys else emptySet())
+        val streamTypes = (if (metadata) setOf(COSName.METADATA) else emptySet()) +
+            (if (attachments) setOf(name("EmbeddedFile")) else emptySet())
+        removePayloads(document, keys, streamTypes)
         // PDFBox generates a fresh identifier on save; never retain the source identity.
-        document.document.trailer.removeItem(COSName.ID)
+        if (metadata) document.document.trailer.removeItem(COSName.ID)
     }
 
     private fun removePayloads(document: PDDocument, keys: Set<COSName>, streamTypes: Set<COSName>) {
