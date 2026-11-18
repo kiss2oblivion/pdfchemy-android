@@ -77,6 +77,23 @@ internal object PdfPrivacyCleanup {
         if (metadata) document.document.trailer.removeItem(COSName.ID)
     }
 
+    /** Validate serialized privacy output before any producer bytes enter publication. */
+    fun saveWithoutMetadata(document: PDDocument, target: android.os.ParcelFileDescriptor) {
+        removeMetadata(document)
+        val scratch = com.pdfchemy.app.jail.JailScratch.createTempFile("metadata_clean_", ".pdf")
+        try {
+            com.pdfchemy.app.jail.boundedFileOutput(scratch).use { document.save(it) }
+            com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { input ->
+                PDDocument.load(input, com.pdfchemy.app.jail.JailMemory.settings()).use {
+                    require(!hasMetadata(it)) { "Metadata survived privacy cleanup" }
+                }
+            }
+            com.pdfchemy.app.jail.boundedFileOutput(target.fileDescriptor).use { output ->
+                com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) }
+            }
+        } finally { scratch.delete() }
+    }
+
     private fun removePayloads(document: PDDocument, keys: Set<COSName>, streamTypes: Set<COSName>) {
         val nodes = graph(document)
         val seeds = identities()

@@ -7,7 +7,7 @@ Scope: the seven DA findings in the repository analysis of 18 November 2026, plu
 |---|---|
 | DA-01: sanitizer metadata removal | Complete: bounded alias-aware cleanup, broader audit detection, saved-graph validation; eight new unit regressions; 41 focused unit tests passed; worker lint passed (one existing UseKtx warning); APK/test APK builds passed; three real-worker API 34 sanitizer scope tests passed, including keep/purge metadata. |
 | DA-02: aliased attachment payloads | Complete: selected payload identities and descendant aliases removed before carrier scrubbing; combined purge policy and saved-payload validation; eight new unit regressions; 49 focused unit tests, worker lint and APK builds passed; four API 34 sanitizer scope tests passed. |
-| DA-03: metadata/compression shallow wipe | Pending |
+| DA-03: metadata/compression shallow wipe | Complete: both tools use the bounded graph cleanup and validate serialized privacy output before publication; direct-object fixture regression; 27 focused unit tests, worker lint and APK builds passed; 11 API 34 worker tests passed across deep cleanup, sanitizer scope and existing metadata behavior. |
 | DA-04: sanitizer request ownership | Pending |
 | DA-05: stale inspection state | Pending |
 | DA-06: child attachment name trees | Pending |

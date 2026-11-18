@@ -92,19 +92,8 @@ object JailCompressionWorker {
                     }
                 }
                 document.pages.forEach { optimize(it.resources, 0) }
-                if (params.optBoolean("stripMetadata")) {
-                    document.documentInformation = PDDocumentInformation()
-                    document.documentCatalog.metadata = null
-                    document.document.trailer.removeItem(com.tom_roush.pdfbox.cos.COSName.ID)
-                    for (cosObject in document.document.objects) {
-                        val obj = cosObject.`object`
-                        if (obj is com.tom_roush.pdfbox.cos.COSDictionary) {
-                            obj.removeItem(com.tom_roush.pdfbox.cos.COSName.METADATA)
-                            obj.removeItem(com.tom_roush.pdfbox.cos.COSName.getPDFName("PieceInfo"))
-                        }
-                    }
-                }
-                boundedFileOutput(target.fileDescriptor).use { document.save(it) }
+                if (params.optBoolean("stripMetadata")) PdfPrivacyCleanup.saveWithoutMetadata(document, target)
+                else boundedFileOutput(target.fileDescriptor).use { document.save(it) }
                 JSONObject().put("size", com.pdfchemy.app.jail.JailScratch.outputSize(target.fileDescriptor)).put("imagesProcessed", processed).put("hasSignatures", signed).toString()
             }
         }

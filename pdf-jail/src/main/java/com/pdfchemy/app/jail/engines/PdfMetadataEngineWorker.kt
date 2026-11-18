@@ -55,18 +55,7 @@ object PdfMetadataEngineWorker {
             
             document = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }
 
-            if (wipeAllMetadata) {
-                document.documentInformation = PDDocumentInformation()
-                document.documentCatalog?.metadata = null
-                document.document.trailer.removeItem(com.tom_roush.pdfbox.cos.COSName.ID)
-                for (cosObject in document.document.objects) {
-                    val obj = cosObject.`object`
-                    if (obj is com.tom_roush.pdfbox.cos.COSDictionary) {
-                        obj.removeItem(com.tom_roush.pdfbox.cos.COSName.METADATA)
-                        obj.removeItem(com.tom_roush.pdfbox.cos.COSName.getPDFName("PieceInfo"))
-                    }
-                }
-            } else if (params.has("newMetadata")) {
+            if (!wipeAllMetadata && params.has("newMetadata")) {
                 val md = params.getJSONObject("newMetadata")
                 var info = document.documentInformation
                 if (info == null) {
@@ -82,7 +71,8 @@ object PdfMetadataEngineWorker {
                 info.modificationDate = Calendar.getInstance()
             }
 
-            FileOutputStream(destFd.fileDescriptor).use { document.save(it) }
+            if (wipeAllMetadata) PdfPrivacyCleanup.saveWithoutMetadata(document, destFd)
+            else FileOutputStream(destFd.fileDescriptor).use { document.save(it) }
             return "{}"
         } finally {
             try { document?.close() } catch(_: Exception){}

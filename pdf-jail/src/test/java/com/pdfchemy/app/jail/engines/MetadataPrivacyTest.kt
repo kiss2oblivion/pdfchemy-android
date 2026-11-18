@@ -131,4 +131,19 @@ class MetadataPrivacyTest {
             assertTrue(runCatching { PdfPrivacyCleanup.removeMetadata(doc) }.isFailure)
         }
     }
+    @Test fun handSerializedDirectMetadataIsRemovedWithoutChangingDrawingCommands() {
+        val fixture = requireNotNull(javaClass.getResourceAsStream("/privacy-direct-metadata.pdf")).use { it.readBytes() }
+        PDDocument.load(fixture).use { doc ->
+            assertTrue(doc.documentCatalog.cosObject.getItem(name("CustomWrapper")) is COSDictionary)
+            val content = doc.getPage(0).contents.use { it.readBytes() }
+            PdfPrivacyCleanup.removeMetadata(doc)
+            saved(doc) { output, bytes ->
+                assertFalse(String(bytes).contains("PRIVATE_DIRECT_METADATA_55321"))
+                val wrapper = output.documentCatalog.cosObject.getDictionaryObject(name("CustomWrapper")) as COSDictionary
+                assertNull(wrapper.getItem(name("PieceInfo")))
+                assertArrayEquals(content, output.getPage(0).contents.use { it.readBytes() })
+                assertFalse(PdfPrivacyCleanup.hasMetadata(output))
+            }
+        }
+    }
 }
