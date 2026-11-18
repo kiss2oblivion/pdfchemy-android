@@ -306,7 +306,7 @@ fun AttachmentManagerScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(text = item.name, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(
-                                            text = "${FileUtils.formatFileSize(item.sizeBytes)} Ã¢â‚¬Â¢ ${item.mimeType}",
+                                            text = "${FileUtils.formatFileSize(item.sizeBytes)} • ${item.mimeType}",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
