@@ -13,12 +13,16 @@ import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.common.PDMetadata
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class CorePdfAHonestyTest {
-    @get:Rule val compose = createComposeRule()
+    // IO completion must enqueue composition on the rule's clock, not resume a frame on IO.
+    @get:Rule val compose = createComposeRule(effectContext = StandardTestDispatcher())
     @Test fun actualInspectionDisplaysNotCertifiedAndNoCompliancePercentage() {
         val app = ApplicationProvider.getApplicationContext<Application>()
         PDFBoxResourceLoader.init(app)
