@@ -23,7 +23,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class ReflowOfflineSpeechTest {
@@ -57,25 +57,33 @@ class ReflowOfflineSpeechTest {
             }
             document.save(documentFile)
         }
-        val initialized = AtomicReference<Int?>()
+        val initialized = java.util.concurrent.ConcurrentHashMap<Int, Int>()
+        val generations = AtomicInteger()
         compose.setContent {
             MaterialTheme {
                 ReflowReaderScreen(Uri.fromFile(documentFile), model, onBack = {}, speechFactory = { context, listener ->
-                    TextToSpeech(context, { result -> listener.onInit(result); initialized.set(result) }, "com.pdfchemy.app.test")
+                    val generation = generations.incrementAndGet()
+                    TextToSpeech(context, { result -> listener.onInit(result); initialized[generation] = result }, "com.pdfchemy.app.test")
                         .also(engines::add)
                 })
             }
         }
-        compose.waitUntil(60000) { initialized.get() != null }
-        assertEquals(TextToSpeech.SUCCESS, initialized.get())
-        val engine = engines.single()
+        // Staging can replace the initial URI and its speech session. Inspect the initialized
+        // engine owned by the loaded document, after that transition has settled.
+        compose.waitUntil(60000) {
+            compose.onAllNodesWithText("Synthetic offline speech phrase.", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.waitUntil(60000) {
+            val current = generations.get()
+            current > 0 && engines.size == current && initialized.containsKey(current)
+        }
+        val current = generations.get()
+        assertEquals(TextToSpeech.SUCCESS, initialized[current])
+        val engine = engines[current - 1]
         assertTrue("Fixture engine must be discoverable", engine.engines.any { it.name == "com.pdfchemy.app.test" })
         assertEquals("Do not accept framework fallback to another engine",
             if (networkOnly) setOf("network") else setOf("network", "offline"), engine.voices.map { it.name }.toSet())
         assertTrue("Fixture must receive the voice discovery call", status().getInt("queries") > 0)
-        compose.waitUntil(60000) {
-            compose.onAllNodesWithText("Synthetic offline speech phrase.", substring = true).fetchSemanticsNodes().isNotEmpty()
-        }
         compose.onNodeWithContentDescription(app.getString(R.string.tts_play)).performClick()
     }
 
