@@ -11,6 +11,8 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PcmWriterTest {
@@ -142,7 +144,7 @@ class PcmWriterTest {
         override fun close() = output.close()
     }
 
-    private fun exerciseBackpressure(callbacks: Int, cancel: Boolean) = runBlocking {
+    private fun exerciseBackpressure(callbacks: Int, cancel: Boolean, immediateCleanup: Boolean = false) = runBlocking {
         val raw = temporary()
         val sink = PausedOutput(raw)
         val writer = PcmWriter(UUID.randomUUID(), UUID.randomUUID(), raw,
@@ -171,7 +173,24 @@ class PcmWriterTest {
             assertFalse("A full queue must pause the producer", finished.await(100, TimeUnit.MILLISECONDS))
             assertFalse("Drain must wait for real IO", drained.isCompleted)
             if (cancel) {
+                val caller = Thread.currentThread()
+                val posted = ConcurrentLinkedQueue<Runnable>()
+                val immediateCaller = object : CoroutineDispatcher() {
+                    override fun isDispatchNeeded(context: CoroutineContext) = Thread.currentThread() !== caller
+                    override fun dispatch(context: CoroutineContext, block: Runnable) { posted.add(block) }
+                }
+                val cleaned = CompletableDeferred<Boolean>()
+                if (immediateCleanup) launch(immediateCaller, start = CoroutineStart.UNDISPATCHED) {
+                    try { drained.await() }
+                    catch (_: CancellationException) { /* Cancellation resumes service cleanup. */ }
+                    finally {
+                        // Models a synchronous engine stop waiting for the callback to return.
+                        cleaned.complete(finished.await(1, TimeUnit.SECONDS))
+                    }
+                }
                 writer.invalidate()
+                while (true) { (posted.poll() ?: break).run() }
+                if (immediateCleanup) assertTrue("Callbacks must be released before immediate service cleanup", cleaned.await())
                 assertTrue("Cancellation must release a blocked producer", finished.await(5, TimeUnit.SECONDS))
                 assertTrue(drained.isCancelled)
             }
@@ -205,6 +224,10 @@ class PcmWriterTest {
 
     @Test(timeout = 20_000) fun `cancellation releases a producer waiting for queue space`() {
         exerciseBackpressure(callbacks = 512, cancel = true)
+    }
+
+    @Test(timeout = 20_000) fun `cancellation releases callbacks before immediate drain waiter cleanup`() {
+        exerciseBackpressure(callbacks = 512, cancel = true, immediateCleanup = true)
     }
 
     @Test fun `actual free-space reserve enforced before queueing PCM`() = runTest {

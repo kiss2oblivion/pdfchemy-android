@@ -25,6 +25,7 @@ class PcmWriter(
         class Data(val bytes: ByteArray) : Message()
         class Barrier(val result: CompletableDeferred<Long>) : Message()
     }
+    private data class FailureAction(val result: CompletableDeferred<Long>?, val error: Throwable)
     private val queue = Channel<Message>(64)
     private val callbackLock = Any()
     private var accepting = true
@@ -41,21 +42,28 @@ class PcmWriter(
         try {
             openOutput().use { output ->
                 for (message in queue) {
-                    if (!synchronized(this@PcmWriter) { accepting && isJobActive() }) break
+                    if (!synchronized(this@PcmWriter) { accepting && isJobActive() }) {
+                        invalidate(CancellationException("Audio job is no longer active"))
+                        break
+                    }
                     when (message) {
                         is Message.Data -> output.write(message.bytes)
                         is Message.Barrier -> {
                             output.flush()
-                            synchronized(this@PcmWriter) {
-                                if (accepting) message.result.complete(chunkBytes)
-                                else message.result.completeExceptionally(CancellationException("Export aborted"))
+                            val completion = synchronized(this@PcmWriter) {
+                                chunkBytes to if (accepting) null else
+                                    (failure ?: CancellationException("Export aborted"))
                             }
+                            // Completing a deferred can immediately resume service cleanup.
+                            // Never run that continuation while holding the state monitor.
+                            if (completion.second == null) message.result.complete(completion.first)
+                            else message.result.completeExceptionally(requireNotNull(completion.second))
                         }
                     }
                 }
             }
         } catch (error: Throwable) {
-            synchronized(this@PcmWriter) { fail(error) }
+            invalidate(error)
         }
     }
 
@@ -72,18 +80,24 @@ class PcmWriter(
 
     private fun matches(id: String) = accepting && isJobActive() && id == utterance && !done
 
-    @Synchronized fun begin(id: String, sampleRate: Int, encoding: Int, channels: Int) {
-        if (!matches(id)) return
-        try {
-            check(!began) { "Duplicate synthesis format" }
-            val next = PcmFormat(sampleRate, channels, encoding)
-            require(pcmFormat == null || pcmFormat == next) { "PCM format changed between chunks" }
-            pcmFormat = next; began = true
-        } catch (error: Throwable) { fail(error) }
+    fun begin(id: String, sampleRate: Int, encoding: Int, channels: Int) {
+        val action = synchronized(this) {
+            if (!matches(id)) return
+            try {
+                check(!began) { "Duplicate synthesis format" }
+                val next = PcmFormat(sampleRate, channels, encoding)
+                require(pcmFormat == null || pcmFormat == next) { "PCM format changed between chunks" }
+                pcmFormat = next
+                began = true
+                null
+            } catch (error: Throwable) { failLocked(error) }
+        }
+        action?.let(::notifyFailure)
     }
 
     fun audio(id: String, bytes: ByteArray) {
-        synchronized(callbackLock) {
+        val action = synchronized(callbackLock) {
+            var rejected: FailureAction? = null
             val message = synchronized(this) {
                 if (!matches(id)) return
                 try {
@@ -96,44 +110,60 @@ class PcmWriter(
                     chunkBytes += bytes.size
                     acceptedBytes += bytes.size
                     data
-                } catch (error: Throwable) { fail(error); return }
+                } catch (error: Throwable) { rejected = failLocked(error); null }
             }
-            enqueue(message)
+            rejected ?: message?.let(::enqueue)
         }
+        action?.let(::notifyFailure)
     }
 
     fun done(id: String) {
-        synchronized(callbackLock) {
+        val action = synchronized(callbackLock) {
+            var rejected: FailureAction? = null
             val message = synchronized(this) {
                 if (!matches(id)) return
                 try {
                     check(began && chunkBytes > 0 && chunkBytes % format.blockAlign == 0L) { "Missing or incomplete PCM frames" }
                     done = true
                     Message.Barrier(requireNotNull(pending))
-                } catch (error: Throwable) { fail(error); return }
+                } catch (error: Throwable) { rejected = failLocked(error); null }
             }
-            enqueue(message)
+            rejected ?: message?.let(::enqueue)
         }
+        action?.let(::notifyFailure)
     }
 
-    private fun enqueue(message: Message) {
-        // TTS callbacks may arrive faster than disk IO. Keep the queue bounded and
-        // wait outside the state monitor, so the consumer and cancellation can run.
-        try { queue.trySendBlocking(message).getOrThrow() }
-        catch (error: Throwable) { synchronized(this) { fail(error) } }
+    private fun enqueue(message: Message): FailureAction? = try {
+        // Wait outside the state monitor, so IO and cancellation can make progress.
+        queue.trySendBlocking(message).getOrThrow()
+        null
+    } catch (error: Throwable) { synchronized(this) { failLocked(error) } }
+
+    fun error(id: String, error: Throwable) {
+        val action = synchronized(this) { if (matches(id)) failLocked(error) else null }
+        action?.let(::notifyFailure)
     }
 
-    @Synchronized fun error(id: String, error: Throwable) { if (matches(id)) fail(error) }
-
-    private fun fail(error: Throwable) {
+    // Called only under the state monitor. Notifications happen after all locks are released.
+    private fun failLocked(error: Throwable): FailureAction {
         if (failure == null) failure = error
         accepting = false
-        pending?.completeExceptionally(error)
-        queue.cancel(CancellationException("PCM writer aborted", error))
+        return FailureAction(pending, requireNotNull(failure))
     }
 
-    // Invalidation is synchronous, before tts.stop(), even if the caller must await IO cleanup later.
-    @Synchronized fun invalidate(error: Throwable = CancellationException("Export cancelled")) { fail(error) }
+    private fun notifyFailure(action: FailureAction) {
+        // Free callbacks before resuming a Main.immediate waiter which may stop TTS
+        // synchronously and wait for those callbacks to return.
+        queue.cancel(CancellationException("PCM writer aborted", action.error))
+        action.result?.completeExceptionally(action.error)
+    }
+
+    // Invalidation rejects callbacks synchronously, before tts.stop(), without
+    // holding the state monitor across a resumed cleanup continuation.
+    fun invalidate(error: Throwable = CancellationException("Export cancelled")) {
+        val action = synchronized(this) { failLocked(error) }
+        notifyFailure(action)
+    }
 
     suspend fun closeAndJoin() {
         queue.close()
