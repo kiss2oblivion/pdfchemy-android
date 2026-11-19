@@ -11,7 +11,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -174,7 +174,7 @@ class PcmWriterTest {
             assertFalse("Drain must wait for real IO", drained.isCompleted)
             if (cancel) {
                 val caller = Thread.currentThread()
-                val posted = ConcurrentLinkedQueue<Runnable>()
+                val posted = LinkedBlockingQueue<Runnable>()
                 val immediateCaller = object : CoroutineDispatcher() {
                     override fun isDispatchNeeded(context: CoroutineContext) = Thread.currentThread() !== caller
                     override fun dispatch(context: CoroutineContext, block: Runnable) { posted.add(block) }
@@ -189,8 +189,16 @@ class PcmWriterTest {
                     }
                 }
                 writer.invalidate()
-                while (true) { (posted.poll() ?: break).run() }
-                if (immediateCleanup) assertTrue("Callbacks must be released before immediate service cleanup", cleaned.await())
+                if (immediateCleanup) {
+                    // A producer may win deferred completion before posting its resume.
+                    // Drive the caller's event loop until that dispatch has arrived.
+                    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+                    while (!cleaned.isCompleted && System.nanoTime() < deadline) {
+                        posted.poll(10, TimeUnit.MILLISECONDS)?.run()
+                    }
+                    assertTrue("Cleanup continuation must be dispatched", cleaned.isCompleted)
+                    assertTrue("Callbacks must be released before immediate service cleanup", cleaned.await())
+                }
                 assertTrue("Cancellation must release a blocked producer", finished.await(5, TimeUnit.SECONDS))
                 assertTrue(drained.isCancelled)
             }
