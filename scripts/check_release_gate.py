@@ -2,6 +2,9 @@
 import argparse
 import hashlib
 import json
+import os
+import shutil
+import subprocess
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -17,6 +20,26 @@ A = "{http://schemas.android.com/apk/res/android}"
 def check(condition, message):
     if not condition:
         raise RuntimeError(message)
+
+
+
+def inspect_device_features(apk, version_code, version_name):
+    """Check packaged Play filters, including features inferred from libraries."""
+    sdk = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+    executable = "aapt.exe" if os.name == "nt" else "aapt"
+    candidates = sorted((Path(sdk) / "build-tools").glob("*/" + executable), reverse=True) if sdk else []
+    tool = str(candidates[0]) if candidates else shutil.which(executable)
+    check(tool is not None, "Android SDK aapt is required for device-availability checks")
+    badging = subprocess.run([tool, "dump", "badging", str(apk)], capture_output=True,
+                             text=True, encoding="utf-8", errors="replace", check=True, timeout=60).stdout
+    check(f"versionCode='{version_code}' versionName='{version_name}'" in badging,
+          "Packaged APK version differs from the release manifest")
+    required = set(re.findall(r"^\s*uses-feature: name='([^']+)'", badging, re.MULTILINE))
+    optional = set(re.findall(r"^\s*uses-feature-not-required: name='([^']+)'", badging, re.MULTILINE))
+    orientations = {"android.hardware.screen.portrait", "android.hardware.screen.landscape"}
+    check(not required & orientations, f"Required orientation features restrict Play availability: {sorted(required & orientations)}")
+    check(orientations <= optional, "Packaged screen orientation features must be explicitly optional")
+    return dict(required=sorted(required), optional=sorted(optional), orientation_filter="NONE")
 
 
 def main():
@@ -50,6 +73,10 @@ def main():
     check(len(rows) == len(screens), "Duplicate smoke matrix entries")
     for row in rows:
         check(all(row.get(field) for field in ("input", "operation", "output", "open_share", "cancel", "verification")), f"Incomplete checklist: {row['screen']}")
+    source_manifest = ET.parse(ROOT / "app-host/src/main/AndroidManifest.xml").getroot()
+    features = {node.get(A + "name"): node.get(A + "required") for node in source_manifest.findall("uses-feature")}
+    for feature in ("android.hardware.screen.portrait", "android.hardware.screen.landscape"):
+        check(features.get(feature) == "false", f"Non-essential screen hardware must be optional: {feature}")
     gradle = (ROOT / "app-host/build.gradle.kts").read_text(encoding="utf-8")
     release = gradle.split("        release {", 1)[1].split("    compileOptions", 1)[0]
     check("isMinifyEnabled = true" in release and "isShrinkResources = true" in release, "Release shrinking disabled")
@@ -73,7 +100,7 @@ def main():
               "Internal document alias must remain private and target MainActivity")
         sdk = tree.find("uses-sdk")
         check(sdk.get(A + "minSdkVersion") == "24" and sdk.get(A + "targetSdkVersion") == "36", "Unexpected SDK configuration")
-        check(tree.get(A + "versionCode") == "15" and tree.get(A + "versionName") == "2.1.0", "Unexpected RC version; deliberately update gate when incrementing")
+        check(tree.get(A + "versionCode") == "16" and tree.get(A + "versionName") == "2.1.0", "Unexpected RC version; deliberately update gate when incrementing")
         metadata = {node.get(A + "name"): node.get(A + "value") for node in application.findall("meta-data")}
         check(metadata.get("com.google.android.gms.ads.APPLICATION_ID") == "ca-app-pub-8945763551071628~8206577473", "Unexpected production AdMob app ID")
         check(metadata.get("firebase_analytics_collection_deactivated") == "true", "Analytics deactivation missing")
@@ -101,9 +128,10 @@ def main():
                            b"Lcom/pdfchemy/app/security/RedactionCountSecurityTest;",
                            b"Lcom/pdfchemy/app/security/FormValueAliasSecurityTest;"):
                 check(marker not in dex, "Instrumentation class leaked into production DEX")
+        report["device_features"] = inspect_device_features(apk, tree.get(A + "versionCode"), tree.get(A + "versionName"))
         from check_release_gson_contract import inspect_apk
         report["gson_runtime_contract"] = inspect_apk(apk)
-        report.update(version="2.1.0 (15)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
+        report.update(version="2.1.0 (16)", sdk="24..36", release_apk=apk.name, artifact_hygiene="PASS", exported_components=exported)
     print(json.dumps(report, indent=2))
 
 
