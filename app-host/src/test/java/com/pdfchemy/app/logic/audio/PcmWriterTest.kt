@@ -8,6 +8,9 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PcmWriterTest {
@@ -125,14 +128,83 @@ class PcmWriterTest {
         }
     }
 
-    @Test fun `bounded queue fails instead of consuming unlimited heap`() = runTest {
+    private class PausedOutput(raw: File) : OutputStream() {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        private val output = raw.outputStream()
+        override fun write(value: Int) = write(byteArrayOf(value.toByte()), 0, 1)
+        override fun write(bytes: ByteArray, offset: Int, length: Int) {
+            entered.countDown()
+            check(release.await(5, TimeUnit.SECONDS)) { "Test writer was not released" }
+            output.write(bytes, offset, length)
+        }
+        override fun flush() = output.flush()
+        override fun close() = output.close()
+    }
+
+    private fun exerciseBackpressure(callbacks: Int, cancel: Boolean) = runBlocking {
         val raw = temporary()
-        val writer = PcmWriter(UUID.randomUUID(), UUID.randomUUID(), raw, this, { Long.MAX_VALUE })
-        val (id, barrier) = writer.beginChunk(0)
+        val sink = PausedOutput(raw)
+        val writer = PcmWriter(UUID.randomUUID(), UUID.randomUUID(), raw,
+            CoroutineScope(coroutineContext + Dispatchers.IO), { Long.MAX_VALUE }, { sink })
+        val (id, drained) = writer.beginChunk(0)
         writer.begin(id, 22050, 2, 1)
-        repeat(65) { writer.audio(id, ByteArray(2)) }
-        assertTrue(barrier.isCancelled); runCurrent()
-        runCatching { writer.closeAndJoin() }; raw.delete()
+        val filled = CountDownLatch(1)
+        val finished = CountDownLatch(1)
+        val producerError = AtomicReference<Throwable>()
+        val expected = ByteArray(callbacks * 2) { index ->
+            if (index % 2 == 0) (index / 2).toByte() else ((index / 2) ushr 8).toByte()
+        }
+        val producer = Thread {
+            try {
+                repeat(callbacks) { index ->
+                    writer.audio(id, expected.copyOfRange(index * 2, index * 2 + 2))
+                    if (index == 64) filled.countDown()
+                }
+                writer.done(id)
+            } catch (error: Throwable) { producerError.set(error) }
+            finally { finished.countDown() }
+        }.apply { isDaemon = true; start() }
+        try {
+            assertTrue("Consumer must reach the paused real IO write", sink.entered.await(5, TimeUnit.SECONDS))
+            assertTrue("Producer must fill the bounded queue", filled.await(5, TimeUnit.SECONDS))
+            assertFalse("A full queue must pause the producer", finished.await(100, TimeUnit.MILLISECONDS))
+            assertFalse("Drain must wait for real IO", drained.isCompleted)
+            if (cancel) {
+                writer.invalidate()
+                assertTrue("Cancellation must release a blocked producer", finished.await(5, TimeUnit.SECONDS))
+                assertTrue(drained.isCancelled)
+            }
+            sink.release.countDown()
+            assertTrue("Producer must finish after IO resumes", finished.await(5, TimeUnit.SECONDS))
+            assertNull(producerError.get())
+            if (cancel) {
+                assertTrue(runCatching { writer.closeAndJoin() }.isFailure)
+                assertTrue("Only the already-started write may finish", raw.length() <= 2L)
+            } else {
+                assertEquals(expected.size.toLong(), withTimeout(5_000) { drained.await() })
+                writer.closeAndJoin()
+                assertArrayEquals(expected, raw.readBytes())
+            }
+        } finally {
+            sink.release.countDown()
+            writer.invalidate()
+            producer.join(5_000)
+            runCatching { writer.closeAndJoin() }
+            raw.delete()
+        }
+    }
+
+    @Test(timeout = 20_000) fun `fast synthesis waits for bounded IO and preserves every PCM frame`() {
+        exerciseBackpressure(callbacks = 512, cancel = false)
+    }
+
+    @Test(timeout = 20_000) fun `done barrier waits for space behind buffered PCM`() {
+        exerciseBackpressure(callbacks = 65, cancel = false)
+    }
+
+    @Test(timeout = 20_000) fun `cancellation releases a producer waiting for queue space`() {
+        exerciseBackpressure(callbacks = 512, cancel = true)
     }
 
     @Test fun `actual free-space reserve enforced before queueing PCM`() = runTest {

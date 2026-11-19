@@ -2,6 +2,7 @@ package com.pdfchemy.app.logic.audio
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.trySendBlocking
 import java.io.File
 import java.io.OutputStream
 import java.util.UUID
@@ -10,7 +11,7 @@ import java.util.UUID
 @android.annotation.SuppressLint("UsableSpace")
 private fun defaultAvailableBytes(raw: File): Long = raw.parentFile!!.usableSpace
 
-/** One bounded writer per job. Callback identity and queue insertion share the same lock. */
+/** One bounded writer per job. Callback order is serialized without holding the writer state lock during backpressure. */
 class PcmWriter(
     private val jobId: UUID,
     private val generation: UUID,
@@ -25,6 +26,7 @@ class PcmWriter(
         class Barrier(val result: CompletableDeferred<Long>) : Message()
     }
     private val queue = Channel<Message>(64)
+    private val callbackLock = Any()
     private var accepting = true
     private var utterance: String? = null
     private var began = false
@@ -80,27 +82,45 @@ class PcmWriter(
         } catch (error: Throwable) { fail(error) }
     }
 
-    @Synchronized fun audio(id: String, bytes: ByteArray) {
-        if (!matches(id)) return
-        try {
-            check(began) { "PCM arrived before format" }
-            require(bytes.size <= 1024 * 1024) { "Oversized PCM callback" }
-            require(bytes.size.toLong() <= WavWriter.MAX_PCM_BYTES - acceptedBytes) { "RIFF size limit exceeded" }
-            require(availableBytes() - bytes.size > QuotaProjector.FILESYSTEM_RESERVE) { "Insufficient staging space" }
-            if (bytes.isNotEmpty()) {
-                check(queue.trySend(Message.Data(bytes.copyOf())).isSuccess) { "PCM writer queue overflow" }
-                chunkBytes += bytes.size; acceptedBytes += bytes.size
+    fun audio(id: String, bytes: ByteArray) {
+        synchronized(callbackLock) {
+            val message = synchronized(this) {
+                if (!matches(id)) return
+                try {
+                    check(began) { "PCM arrived before format" }
+                    require(bytes.size <= 1024 * 1024) { "Oversized PCM callback" }
+                    require(bytes.size.toLong() <= WavWriter.MAX_PCM_BYTES - acceptedBytes) { "RIFF size limit exceeded" }
+                    require(availableBytes() - bytes.size > QuotaProjector.FILESYSTEM_RESERVE) { "Insufficient staging space" }
+                    if (bytes.isEmpty()) return
+                    val data = Message.Data(bytes.copyOf())
+                    chunkBytes += bytes.size
+                    acceptedBytes += bytes.size
+                    data
+                } catch (error: Throwable) { fail(error); return }
             }
-        } catch (error: Throwable) { fail(error) }
+            enqueue(message)
+        }
     }
 
-    @Synchronized fun done(id: String) {
-        if (!matches(id)) return
-        try {
-            check(began && chunkBytes > 0 && chunkBytes % format.blockAlign == 0L) { "Missing or incomplete PCM frames" }
-            done = true
-            check(queue.trySend(Message.Barrier(requireNotNull(pending))).isSuccess) { "PCM writer queue overflow" }
-        } catch (error: Throwable) { fail(error) }
+    fun done(id: String) {
+        synchronized(callbackLock) {
+            val message = synchronized(this) {
+                if (!matches(id)) return
+                try {
+                    check(began && chunkBytes > 0 && chunkBytes % format.blockAlign == 0L) { "Missing or incomplete PCM frames" }
+                    done = true
+                    Message.Barrier(requireNotNull(pending))
+                } catch (error: Throwable) { fail(error); return }
+            }
+            enqueue(message)
+        }
+    }
+
+    private fun enqueue(message: Message) {
+        // TTS callbacks may arrive faster than disk IO. Keep the queue bounded and
+        // wait outside the state monitor, so the consumer and cancellation can run.
+        try { queue.trySendBlocking(message).getOrThrow() }
+        catch (error: Throwable) { synchronized(this) { fail(error) } }
     }
 
     @Synchronized fun error(id: String, error: Throwable) { if (matches(id)) fail(error) }
