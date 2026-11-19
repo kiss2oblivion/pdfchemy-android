@@ -143,6 +143,42 @@ class AudioServiceLifecycleTest {
         }
     }
 
+    @Test fun `user cancellation stops foreground service after IO cleanup`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val controller = Robolectric.buildService(AudioExportService::class.java).create()
+        val service = controller.get()
+        val id = UUID.randomUUID()
+        val store = AudioExportDependencies.jobStore
+        val staging = AudioExportDependencies.stagingManager
+        try {
+            store.createJob(id)
+            val uri = Uri.parse("content://missing.test/$id")
+            OutputPolicy.registerFreshCopy(uri)
+            AudioExportDependencies.registerDestination(id, uri)
+            staging.stageText(id, "Cancellation regression text")
+            service.onStartCommand(Intent().putExtra(AudioExportService.EXTRA_JOB_ID, id.toString()), 0, 1)
+            runCurrent() // Export is suspended awaiting TTS initialization.
+            store.updateState(id, AudioExportState.CANCELLING)
+            val deadline = System.nanoTime() + 5_000_000_000L
+            while (service.exportJobForTesting?.isCompleted != true && System.nanoTime() < deadline) {
+                runCurrent()
+                Thread.sleep(5) // Cleanup uses the real IO dispatcher.
+            }
+            runCurrent()
+            assertTrue("Export coroutine must finish", service.exportJobForTesting?.isCompleted == true)
+            assertEquals(AudioExportState.CANCELLED, store.getJob(id)!!.state)
+            assertFalse(staging.getTextArtifactFile(id).exists())
+            assertTrue("Cancellation must stop the service, not just delete staging", shadowOf(service).isStoppedBySelf)
+            assertTrue("Cancellation must remove the foreground notification", shadowOf(service).isForegroundStopped)
+        } finally {
+            controller.destroy()
+            staging.clearJobStaging(id)
+            AudioExportDependencies.forgetDestination(service, id)
+            store.removeJob(id)
+            Dispatchers.resetMain()
+        }
+    }
+
     @Test fun `media timeout aborts initializing service and cleans staged files`() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val controller = Robolectric.buildService(AudioExportService::class.java).create()

@@ -11,3 +11,7 @@ Release verification must cover actual signed Google/eSpeak audio exports as wel
 Android 13+ can show a foreground task under Active apps when notification permission is unavailable. Declaration text and videos must describe the behavior shown by the device. No Play publication or video upload is performed by the agent. Owner phone testing remains after deployment as agreed.
 
 Local diagnostics and baseline/fixed test reports: `.release-ready/play-fgs-videos-20261119/`. No signing keys are copied into source or release artifacts.
+
+The signed code-15 runtime check also reproduced a foreground-service teardown failure after user cancellation: staging was removed and CANCELLED was published, but the foreground service remained active. Returning from the first NonCancellable IO context checked the cancelled parent and skipped the subsequent service-stop context. Teardown now has one outer NonCancellable block spanning file cleanup and the Main-dispatcher foreground/service stop. The new lifecycle regression fails on the previous code specifically because stopSelf was not called; it checks both service stop and foreground-notification removal after real IO cleanup.
+
+With the teardown regression included, all 80 audio JVM tests pass with zero failures, errors or skips. The release source gate passes 14 fixtures and 62 routes; all 16 Gson release-contract selftests pass.

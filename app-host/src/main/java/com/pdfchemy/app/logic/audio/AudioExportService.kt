@@ -182,26 +182,30 @@ class AudioExportService : Service() {
             writer?.invalidate(error)
             store.updateState(id, AudioExportState.FAILED, error)
         } finally {
-            cancellationWatcher.cancel()
-            writer?.invalidate()
-            tts?.stop(); tts?.shutdown(); tts = null
-            withContext(NonCancellable + Dispatchers.IO) {
-                runCatching { writer?.closeAndJoin() }
-                staging.clearJobStaging(id)
-                AudioExportDependencies.forgetDestination(this@AudioExportService, id)
-                if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
-            }
-            withContext(NonCancellable + Dispatchers.Main) {
-                writer = null
-                abort = null
-                if (activeId == id) activeId = null
-                pipeline = null
-                if (activeId == null) {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
+            // Returning from an IO dispatcher checks the caller's cancellation.
+            // Protect the complete teardown, including the foreground-service stop.
+            withContext(NonCancellable) {
+                cancellationWatcher.cancel()
+                writer?.invalidate()
+                tts?.stop(); tts?.shutdown(); tts = null
+                withContext(Dispatchers.IO) {
+                    runCatching { writer?.closeAndJoin() }
+                    staging.clearJobStaging(id)
+                    AudioExportDependencies.forgetDestination(this@AudioExportService, id)
+                    if (store.getJob(id)?.state == AudioExportState.CANCELLING) store.updateState(id, AudioExportState.CANCELLED)
                 }
-                if (destroyed) {
-                    scope.cancel()
+                withContext(Dispatchers.Main) {
+                    writer = null
+                    abort = null
+                    if (activeId == id) activeId = null
+                    pipeline = null
+                    if (activeId == null) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        stopSelf()
+                    }
+                    if (destroyed) {
+                        scope.cancel()
+                    }
                 }
             }
         }
