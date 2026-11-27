@@ -34,7 +34,10 @@ import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.DocumentDiffSummary
 import com.pdfchemy.app.logic.PdfDiffEngine
 import com.pdfchemy.app.utils.FileUtils
+import com.pdfchemy.app.utils.ResourceTransferOwner
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -60,37 +63,56 @@ fun PdfCompareScreen(
 
     var diffSummary by remember { mutableStateOf<DocumentDiffSummary?>(null) }
     var isComparing by remember { mutableStateOf(false) }
+    var comparisonFailed by remember { mutableStateOf(false) }
+    var comparisonJob by remember { mutableStateOf<Job?>(null) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var viewMode by remember { mutableStateOf(CompareViewMode.VISUAL_OVERLAY) }
 
-    val currentDiffSummary by rememberUpdatedState(diffSummary)
+    fun releaseSummary(summary: DocumentDiffSummary?) {
+        summary?.pageDiffs?.forEach { page -> page.diffBitmap?.let { if (!it.isRecycled) it.recycle() } }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
-            currentDiffSummary?.pageDiffs?.forEach { it.diffBitmap?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
+            comparisonJob?.cancel()
+            releaseSummary(diffSummary)
         }
     }
 
     fun runComparison(u1: Uri, u2: Uri) {
-        diffSummary?.pageDiffs?.forEach { it.diffBitmap?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
+        if (isComparing) return
+        releaseSummary(diffSummary)
         diffSummary = null
+        comparisonFailed = false
         isComparing = true
-        coroutineScope.launch(Dispatchers.IO) {
-            val result = PdfDiffEngine.compareDocuments(context, u1, u2)
-            withContext(Dispatchers.Main) {
-                diffSummary = result
-                currentPageIndex = 0
+        comparisonJob = coroutineScope.launch {
+            try {
+                ResourceTransferOwner<DocumentDiffSummary> { releaseSummary(it) }.use { owner ->
+                    withContext(Dispatchers.IO) {
+                        owner.stage(PdfDiffEngine.compareDocuments(context, u1, u2))
+                    }
+                    diffSummary = checkNotNull(owner.commit())
+                    currentPageIndex = 0
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                comparisonFailed = true
+            } finally {
                 isComparing = false
             }
         }
     }
 
     val doc1PickerLauncher = rememberVanguardPdfPicker { uri ->
+        if (isComparing) return@rememberVanguardPdfPicker
         doc1Uri = uri
         val currentDoc2 = doc2Uri
         if (currentDoc2 != null) runComparison(uri, currentDoc2)
     }
 
     val doc2PickerLauncher = rememberVanguardPdfPicker { uri ->
+        if (isComparing) return@rememberVanguardPdfPicker
         doc2Uri = uri
         val currentDoc1 = doc1Uri
         if (currentDoc1 != null) runComparison(currentDoc1, uri)
@@ -168,7 +190,7 @@ fun PdfCompareScreen(
                         ) {
                             // Doc 1 (Original)
                             OutlinedCard(
-                                modifier = Modifier.weight(1f).clickable { doc1PickerLauncher.launch(arrayOf("application/pdf")) },
+                                modifier = Modifier.weight(1f).clickable(enabled = !isComparing) { doc1PickerLauncher.launch(arrayOf("application/pdf")) },
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(
@@ -193,7 +215,7 @@ fun PdfCompareScreen(
 
                             // Doc 2 (Modified)
                             OutlinedCard(
-                                modifier = Modifier.weight(1f).clickable { doc2PickerLauncher.launch(arrayOf("application/pdf")) },
+                                modifier = Modifier.weight(1f).clickable(enabled = !isComparing) { doc2PickerLauncher.launch(arrayOf("application/pdf")) },
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Column(
@@ -225,6 +247,17 @@ fun PdfCompareScreen(
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.5.dp)
                                 Text(stringResource(R.string.comparing_documents_progress), style = MaterialTheme.typography.bodyMedium)
                             }
+                            TextButton(onClick = { comparisonJob?.cancel() }) { Text(stringResource(R.string.cancel)) }
+                        } else if (doc1Uri != null && doc2Uri != null) {
+                            if (comparisonFailed) {
+                                Text(stringResource(R.string.error_operation_recovery),
+                                    color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                            }
+                            Button(onClick = {
+                                val original = doc1Uri
+                                val modified = doc2Uri
+                                if (original != null && modified != null) runComparison(original, modified)
+                            }) { Text(stringResource(R.string.action_retry)) }
                         }
                     }
                 }
@@ -296,7 +329,7 @@ fun PdfCompareScreen(
                                 contentScale = ContentScale.Fit
                             )
                         } else {
-                            Text(stringResource(R.string.no_visual_diff_available), color = Color.Gray)
+                            Text(stringResource(R.string.error_operation_recovery), color = Color.Gray, textAlign = TextAlign.Center)
                         }
                     } else {
                         // Text Changes Log

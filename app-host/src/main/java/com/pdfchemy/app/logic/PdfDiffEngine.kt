@@ -6,6 +6,7 @@ import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.graphics.createBitmap
+import com.pdfchemy.app.security.SecurityLimits
 
 data class PageDiffResult(
     val pageIndex: Int,
@@ -50,28 +51,41 @@ object PdfDiffEngine {
             val alignments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 alignPagesChecked(texts1, texts2) { comparisonContext.ensureActive() }
             }
+            var retainedBitmapBytes = 0L
             for ((idx, pair) in alignments.withIndex()) {
+                comparisonContext.ensureActive()
                 val p1 = pair.doc1PageIndex
                 val p2 = pair.doc2PageIndex
                 var bmp1: Bitmap? = null
                 var bmp2: Bitmap? = null
                 try {
-                    bmp1 = if (p1 != null) PdfEditor.renderPageBitmap(context, first.uri, p1, 720) else null
-                    bmp2 = if (p2 != null) PdfEditor.renderPageBitmap(context, second.uri, p2, 720) else null
+                    // Null is legitimate only for a page absent from the alignment.
+                    // A missing render of an existing page invalidates the comparison.
+                    bmp1 = p1?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, first.uri, it, 720)) }
+                    bmp2 = p2?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, second.uri, it, 720)) }
+
+                    val canvasWidth = maxOf(bmp1?.width ?: 0, bmp2?.width ?: 0)
+                    val canvasHeight = maxOf(bmp1?.height ?: 0, bmp2?.height ?: 0)
+                    SecurityLimits.requirePixels(canvasWidth, canvasHeight)
+                    val nextBytes = canvasWidth.toLong() * canvasHeight * 4L
+                    require(nextBytes <= MAX_RETAINED_DIFF_BYTES - retainedBitmapBytes) {
+                        "Comparison exceeds its preview memory budget; compare smaller documents"
+                    }
 
                     val lines1 = if (p1 != null) texts1.getOrNull(p1)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
                     val lines2 = if (p2 != null) texts2.getOrNull(p2)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
 
                     val (added, removed) = computeLineDiff(lines1, lines2)
                     val visual = if (bmp1 != null && bmp2 != null) {
-                        generateVisualDiff(bmp1, bmp2)
+                        generateVisualDiff(bmp1, bmp2) { comparisonContext.ensureActive() }
                     } else if (bmp1 == null && bmp2 != null) {
                         100f to generateSinglePageTinted(bmp2, Color.argb(160, 46, 125, 50))
                     } else if (bmp1 != null && bmp2 == null) {
                         100f to generateSinglePageTinted(bmp1, Color.argb(160, 198, 40, 40))
                     } else {
-                        100f to null
+                        error("Alignment contains no page")
                     }
+                    retainedBitmapBytes += nextBytes
 
                     val label = when {
                         p1 != null && p2 != null -> "Page ${p1 + 1} vs ${p2 + 1}"
@@ -99,7 +113,7 @@ object PdfDiffEngine {
             }
 
             val identical = diffs.count {
-                it.diffPercent < 0.05f &&
+                it.diffPercent == 0f &&
                     it.textAddedLines.isEmpty() &&
                     it.textRemovedLines.isEmpty() &&
                     it.doc1PageIndex != null &&
@@ -216,68 +230,124 @@ object PdfDiffEngine {
         return intersectionSize.toFloat() / unionSize.toFloat()
     }
 
-    private fun generateSinglePageTinted(source: Bitmap, tintColor: Int): Bitmap? {
-        return try {
-            val bmp = createBitmap(source.width, source.height)
+    // A conservative cap on previews retained in the summary, not a total heap guarantee.
+    private const val MAX_RETAINED_DIFF_BYTES = 32L * 1024 * 1024
+
+    internal fun <T : Any> requireRenderedPage(index: Int, rendered: T?): T =
+        checkNotNull(rendered) { "Unable to render page ${index + 1}" }
+
+    private fun generateSinglePageTinted(source: Bitmap, tintColor: Int): Bitmap {
+        val bmp = createBitmap(source.width, source.height)
+        try {
             val canvas = android.graphics.Canvas(bmp)
             canvas.drawBitmap(source, 0f, 0f, null)
             canvas.drawColor(tintColor)
-            bmp
-        } catch (_: Exception) {
-            null
+            return bmp
+        } catch (failure: Throwable) {
+            bmp.recycle()
+            throw failure
         }
     }
-    private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap): Pair<Float, Bitmap?> {
-        return try {
-            val width = minOf(bmp1.width, bmp2.width)
-            val height = minOf(bmp1.height, bmp2.height)
-            val diffBmp = createBitmap(width, height)
 
-            var diffPixelCount = 0
-            val totalPixels = width * height
+    private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap, checkCancellation: () -> Unit): Pair<Float, Bitmap> {
+        val width = maxOf(bmp1.width, bmp2.width)
+        val height = maxOf(bmp1.height, bmp2.height)
+        SecurityLimits.requirePixels(width, height)
+        val diff = createBitmap(width, height)
+        try {
+            val percent = compareRasterRows(
+                bmp1.width, bmp1.height, bmp2.width, bmp2.height,
+                read1 = { y, row -> bmp1.getPixels(row, 0, bmp1.width, 0, y, bmp1.width, 1) },
+                read2 = { y, row -> bmp2.getPixels(row, 0, bmp2.width, 0, y, bmp2.width, 1) },
+                write = { y, row -> diff.setPixels(row, 0, width, 0, y, width, 1) },
+                checkCancellation = checkCancellation
+            )
+            return percent to diff
+        } catch (failure: Throwable) {
+            diff.recycle()
+            throw failure
+        }
+    }
 
-            val pixels1 = IntArray(width * height)
-            val pixels2 = IntArray(width * height)
-            val diffPixels = IntArray(width * height)
-
-            bmp1.getPixels(pixels1, 0, width, 0, 0, width, height)
-            bmp2.getPixels(pixels2, 0, width, 0, 0, width, height)
-
-            for (idx in 0 until totalPixels) {
-                val c1 = pixels1[idx]
-                val c2 = pixels2[idx]
-
-                val rDiff = kotlin.math.abs(Color.red(c1) - Color.red(c2))
-                val gDiff = kotlin.math.abs(Color.green(c1) - Color.green(c2))
-                val bDiff = kotlin.math.abs(Color.blue(c1) - Color.blue(c2))
-
-                if (rDiff > 30 || gDiff > 30 || bDiff > 30) {
-                    diffPixelCount++
-                    // Highlight modified pixel with vibrant magenta / red tint
-                    diffPixels[idx] = Color.argb(230, 235, 30, 100)
+    /**
+     * Compare the union of both rendered page areas. Pixels outside both pages
+     * are not counted. Non-overlapping page regions are always differences.
+     * Row buffers keep working memory proportional to width rather than area.
+     */
+    internal fun compareRasterRows(
+        width1: Int, height1: Int, width2: Int, height2: Int,
+        read1: (Int, IntArray) -> Unit,
+        read2: (Int, IntArray) -> Unit,
+        write: (Int, IntArray) -> Unit,
+        checkCancellation: () -> Unit = {}
+    ): Float {
+        SecurityLimits.requirePixels(width1, height1)
+        SecurityLimits.requirePixels(width2, height2)
+        val width = maxOf(width1, width2)
+        val height = maxOf(height1, height2)
+        SecurityLimits.requirePixels(width, height)
+        val row1 = IntArray(width1)
+        val row2 = IntArray(width2)
+        val out = IntArray(width)
+        var compared = 0L
+        var changed = 0L
+        for (y in 0 until height) {
+            checkCancellation()
+            if (y < height1) read1(y, row1)
+            if (y < height2) read2(y, row2)
+            for (x in 0 until width) {
+                val in1 = x < width1 && y < height1
+                val in2 = x < width2 && y < height2
+                if (!in1 && !in2) {
+                    out[x] = 0 // transparent area outside both pages
+                    continue
+                }
+                compared++
+                if (!in1 || !in2) {
+                    changed++
+                    out[x] = if (in2) 0xA02E7D32.toInt() else 0xA0C62828.toInt()
+                    continue
+                }
+                val c1 = row1[x]
+                val c2 = row2[x]
+                val r = (c2 ushr 16) and 255
+                val g = (c2 ushr 8) and 255
+                val b = c2 and 255
+                val different = kotlin.math.abs(((c1 ushr 16) and 255) - r) > 30 ||
+                    kotlin.math.abs(((c1 ushr 8) and 255) - g) > 30 ||
+                    kotlin.math.abs((c1 and 255) - b) > 30
+                if (different) {
+                    changed++
+                    out[x] = 0xE6EB1E64.toInt()
                 } else {
-                    // Muted grayscale background
-                    val gray = (Color.red(c2) + Color.green(c2) + Color.blue(c2)) / 3
-                    diffPixels[idx] = Color.argb(120, gray, gray, gray)
+                    val gray = (r + g + b) / 3
+                    out[x] = (120 shl 24) or (gray shl 16) or (gray shl 8) or gray
                 }
             }
-
-            diffBmp.setPixels(diffPixels, 0, width, 0, 0, width, height)
-            val percent = if (totalPixels > 0) (diffPixelCount.toFloat() / totalPixels.toFloat()) * 100f else 0f
-            Pair(percent, diffBmp)
-        } catch (e: Exception) {
-            Pair(0f, null)
+            write(y, out)
         }
+        return (changed.toDouble() * 100.0 / compared).toFloat()
     }
 
-    private fun computeLineDiff(lines1: List<String>, lines2: List<String>): Pair<List<String>, List<String>> {
+    internal fun computeLineDiff(lines1: List<String>, lines2: List<String>): Pair<List<String>, List<String>> {
         if (lines1.isEmpty()) return lines2 to emptyList<String>()
         if (lines2.isEmpty()) return emptyList<String>() to lines1
         if (lines1 == lines2) return emptyList<String>() to emptyList<String>()
 
-        val maxLines = 600
-        val l1 = if (lines1.size > maxLines) lines1.take(maxLines) else lines1
-        val l2 = if (lines2.size > maxLines) lines2.take(maxLines) else lines2
+        // Strip the shared prefix/suffix before allocating the bounded LCS table.
+        // Never silently discard differences beyond the previous 600-line cutoff.
+        var prefix = 0
+        while (prefix < minOf(lines1.size, lines2.size) && lines1[prefix] == lines2[prefix]) prefix++
+        var suffix = 0
+        while (suffix < minOf(lines1.size, lines2.size) - prefix &&
+            lines1[lines1.lastIndex - suffix] == lines2[lines2.lastIndex - suffix]) suffix++
+        val l1 = lines1.subList(prefix, lines1.size - suffix)
+        val l2 = lines2.subList(prefix, lines2.size - suffix)
+        if (l1.isEmpty()) return l2.toList() to emptyList()
+        if (l2.isEmpty()) return emptyList<String>() to l1.toList()
+        require((l1.size.toLong() + 1) * (l2.size.toLong() + 1) <= 601L * 601L) {
+            "Text comparison exceeds its memory budget; compare smaller page ranges"
+        }
 
         val n = l1.size
         val m = l2.size

@@ -114,4 +114,76 @@ class PdfDiffEngineTest {
         val pages = java.util.Collections.nCopies(com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT + 1, "")
         assertThrows(IllegalArgumentException::class.java) { PdfDiffEngine.alignPages(pages, emptyList()) }
     }
+    private fun raster(
+        w1: Int, h1: Int, w2: Int, h2: Int,
+        first: (Int, Int) -> Int = { _, _ -> -1 },
+        second: (Int, Int) -> Int = { _, _ -> -1 },
+        checkCancellation: () -> Unit = {}
+    ): Pair<Float, List<IntArray>> {
+        val rows = mutableListOf<IntArray>()
+        val percent = PdfDiffEngine.compareRasterRows(w1, h1, w2, h2,
+            { y, row -> for (x in row.indices) row[x] = first(x, y) },
+            { y, row -> for (x in row.indices) row[x] = second(x, y) },
+            { _, row -> rows.add(row.copyOf()) }, checkCancellation)
+        return percent to rows
+    }
+
+    @Test fun equalRastersHaveNoDifferences() {
+        assertEquals(0f, raster(2, 2, 2, 2).first, 0f)
+    }
+
+    @Test fun detectsAddedWidthAndRemovedHeightInUnion() {
+        val (percent, rows) = raster(2, 3, 3, 2)
+        assertEquals(50f, percent, 0f) // intersection 4, union 8, changed 4
+        assertEquals(3, rows.size)
+        assertEquals(3, rows[0].size)
+        assertEquals(0xA02E7D32.toInt(), rows[0][2])
+        assertEquals(0xA0C62828.toInt(), rows[2][0])
+        assertEquals(0, rows[2][2]) // outside both pages
+    }
+
+    @Test fun detectsSinglePixelAndDoesNotRoundItToIdentical() {
+        val result = raster(100, 100, 100, 100, second = { x, y ->
+            if (x == 99 && y == 99) 0xff000000.toInt() else -1
+        })
+        assertEquals(0.01f, result.first, 0.00001f)
+        assertEquals(0xE6EB1E64.toInt(), result.second.last().last())
+    }
+
+    @Test fun rasterThresholdRemainsThirtyPerChannel() {
+        assertEquals(0f, raster(1, 1, 1, 1, second = { _, _ -> 0xffe1ffff.toInt() }).first, 0f)
+        assertEquals(100f, raster(1, 1, 1, 1, second = { _, _ -> 0xffe0ffff.toInt() }).first, 0f)
+    }
+
+    @Test fun rejectsMissingRenderForAnExistingPage() {
+        assertThrows(IllegalStateException::class.java) {
+            PdfDiffEngine.requireRenderedPage<String>(2, null)
+        }
+        assertEquals("rendered", PdfDiffEngine.requireRenderedPage(2, "rendered"))
+    }
+
+    @Test fun cancellationPropagatesInsteadOfBecomingZeroDifference() {
+        assertThrows(java.util.concurrent.CancellationException::class.java) {
+            raster(2, 2, 2, 2, checkCancellation = { throw java.util.concurrent.CancellationException() })
+        }
+    }
+
+    @Test fun rejectsRasterAboveSecurityQuota() {
+        assertThrows(IllegalArgumentException::class.java) { raster(2049, 1, 1, 1) }
+    }
+
+    @Test fun textDifferenceAfterSixHundredLinesIsNotLost() {
+        val prefix = List(700) { "unchanged line $it" }
+        val (added, removed) = PdfDiffEngine.computeLineDiff(prefix + "before", prefix + "after")
+        assertEquals(listOf("after"), added)
+        assertEquals(listOf("before"), removed)
+    }
+
+    @Test fun oversizedChangedTextFailsExplicitlyInsteadOfTruncating() {
+        val left = List(1000) { "before $it" }
+        val right = List(1000) { "after $it" }
+        assertThrows(IllegalArgumentException::class.java) {
+            PdfDiffEngine.computeLineDiff(left, right)
+        }
+    }
 }
