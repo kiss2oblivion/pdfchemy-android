@@ -32,6 +32,9 @@ class ToolRegistryTest {
     @Test fun conceptualQueriesReachDistinctCorrectTools() {
         assertEquals(listOf(Screen.OcrPdf), search("text recognition"))
         assertEquals(listOf(Screen.ExtractText), search("pdf to text"))
+        assertEquals(listOf(Screen.TextToPdf), search("text to pdf"))
+        assertTrue(search("csv").contains(Screen.TableExtractor))
+        assertTrue(search("extract tables").contains(Screen.TableExtractor))
         assertEquals(listOf(Screen.PdfToImages), search("pdf to jpg"))
         assertTrue(search("extract embedded images").contains(Screen.ExtractImages))
         assertEquals(listOf(Screen.OfficeExport(OfficeFormat.WORD)), search("docx"))
@@ -52,7 +55,8 @@ class ToolRegistryTest {
     }
 
     @Test fun emptyUnknownAndRepeatedQueriesArePredictable() {
-        assertTrue(search("   ").isEmpty())
+        assertTrue(search("").isEmpty())
+        assertTrue(search("   \t  ").isEmpty())
         assertTrue(search("not-a-tool-9381").isEmpty())
         assertEquals(search("pdf"), search("pdf"))
         ToolRegistry.allTools.forEach {

@@ -1,10 +1,12 @@
 package com.pdfchemy.app.logic
 
 import android.content.Context
+import android.app.ActivityManager
+import io.mockk.mockk
+import io.mockk.every
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -24,9 +26,17 @@ class DeviceGuardTest {
     }
 
     @Test
-    fun getAvailableMemoryMb_returnsPositiveMemory() {
-        val memMb = DeviceGuard.getAvailableMemoryMb(context)
-        assertTrue("Available memory should be > 0 MB", memMb > 0)
+    fun subMebibyteSystemMemoryMustNotInventHeadroom() {
+        val limitedContext = mockk<Context>()
+        val manager = mockk<ActivityManager>()
+        every { limitedContext.getSystemService(Context.ACTIVITY_SERVICE) } returns manager
+        for (bytes in listOf(1L, 512L * 1024L)) {
+            every { manager.getMemoryInfo(any()) } answers {
+                firstArg<ActivityManager.MemoryInfo>().availMem = bytes
+            }
+            assertEquals("Known system headroom of $bytes bytes must round down", 0,
+                DeviceGuard.getAvailableMemoryMb(limitedContext))
+        }
     }
 
     @Test

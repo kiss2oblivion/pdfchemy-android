@@ -19,12 +19,14 @@ import org.robolectric.annotation.Config
 class ReaderCommandCentreTest {
 
     @Test
-    fun allCorePdfOperationsAreReachableWithinOneOrTwoTapsFromReader() {
+    fun commandCatalogueDeclaresUniqueActionsAndExpectedTapBudget() {
         val actions = ReaderCommandCentreCatalog.allSheetActions
+        assertEquals(ReaderCommandAction.entries.toSet(), actions.toSet())
+        assertEquals(actions.size, actions.distinct().size)
         assertEquals(17, actions.size)
         for (action in actions) {
             assertTrue(
-                "Action $action must be reachable in 1 or 2 taps from Reader, was ${action.maxTapsFromReader}",
+                "Action $action must declare a budget of 1 or 2 taps from Reader, was ${action.maxTapsFromReader}",
                 action.maxTapsFromReader in 1..2
             )
         }
