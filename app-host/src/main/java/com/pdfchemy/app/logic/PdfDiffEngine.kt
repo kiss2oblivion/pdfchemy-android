@@ -7,11 +7,15 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.graphics.createBitmap
 import com.pdfchemy.app.security.SecurityLimits
+import com.pdfchemy.app.utils.DocumentStager
+import com.pdfchemy.app.jail.StagedPdf
+import java.io.Closeable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class PageDiffResult(
     val pageIndex: Int,
     val diffPercent: Float,
-    val diffBitmap: Bitmap?,
     val textAddedLines: List<String>,
     val textRemovedLines: List<String>,
     val doc1PageIndex: Int? = pageIndex,
@@ -22,13 +26,55 @@ data class PageDiffResult(
     val geometry2: ComparePageGeometry? = null
 )
 
-data class DocumentDiffSummary(
+/** Owns immutable staged documents until the result is dismissed. No page bitmaps are retained. */
+class DocumentDiffSummary internal constructor(
     val totalPagesDoc1: Int,
     val totalPagesDoc2: Int,
     val identicalPages: Int,
     val modifiedPages: Int,
-    val pageDiffs: List<PageDiffResult>
-)
+    val pageDiffs: List<PageDiffResult>,
+    private val sources: ComparisonPreviewSources
+) : Closeable {
+    private val previewMutex = Mutex()
+
+    suspend fun renderPreview(context: Context, index: Int): Bitmap =
+        previewMutex.withLock {
+            val page = pageDiffs[index]
+            sources.acquire().use {
+                PdfDiffEngine.renderPreview(context, sources.first.uri, sources.second.uri, page)
+            }
+        }
+
+    override fun close() = sources.close()
+}
+
+/** The session holds one lease per input. An in-flight preview takes its own leases
+ * before the session can be closed, so closing never invalidates a running read. */
+internal class ComparisonPreviewSources(
+    val first: StagedPdf,
+    val second: StagedPdf,
+    private val releaseSession: () -> Unit
+) : Closeable {
+    private var closed = false
+
+    @Synchronized fun acquire(): Closeable {
+        check(!closed) { "Comparison session is closed" }
+        val a = DocumentStager.retain(first)
+        try {
+            val b = DocumentStager.retain(second)
+            return Closeable { try { b.close() } finally { a.close() } }
+        } catch (failure: Throwable) {
+            a.close()
+            throw failure
+        }
+    }
+
+    @Synchronized override fun close() {
+        if (closed) return
+        closed = true
+        releaseSession()
+    }
+}
 
 object PdfDiffEngine {
 
@@ -44,6 +90,14 @@ object PdfDiffEngine {
         val leases = mutableListOf<java.io.Closeable>()
         val diffs = mutableListOf<PageDiffResult>()
         var completed = false
+        fun releaseInputs() {
+            try {
+                snapshots.zip(listOf(uri1, uri2)).filter { (snapshot, original) -> snapshot.uri != original }
+                    .forEach { stager.release(it.first) }
+            } finally {
+                leases.forEach { it.close() }
+            }
+        }
         try {
             val first = stager.stageDocumentCancellableWithLease(context, uri1).also { snapshots.add(it.document); leases.add(it.lease) }.document
             val second = stager.stageDocumentCancellableWithLease(context, uri2).also { snapshots.add(it.document); leases.add(it.lease) }.document
@@ -62,7 +116,6 @@ object PdfDiffEngine {
             val alignments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 alignPagesChecked(texts1, texts2, fingerprints1, fingerprints2) { comparisonContext.ensureActive() }
             }
-            var retainedBitmapBytes = 0L
             for ((idx, pair) in alignments.withIndex()) {
                 comparisonContext.ensureActive()
                 val p1 = pair.doc1PageIndex
@@ -78,25 +131,15 @@ object PdfDiffEngine {
                     val canvasWidth = maxOf(bmp1?.width ?: 0, bmp2?.width ?: 0)
                     val canvasHeight = maxOf(bmp1?.height ?: 0, bmp2?.height ?: 0)
                     SecurityLimits.requirePixels(canvasWidth, canvasHeight)
-                    val nextBytes = canvasWidth.toLong() * canvasHeight * 4L
-                    require(nextBytes <= MAX_RETAINED_DIFF_BYTES - retainedBitmapBytes) {
-                        "Comparison exceeds its preview memory budget; compare smaller documents"
-                    }
 
                     val lines1 = if (p1 != null) texts1.getOrNull(p1)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
                     val lines2 = if (p2 != null) texts2.getOrNull(p2)?.lines()?.map(String::trim)?.filter(String::isNotBlank).orEmpty() else emptyList()
 
                     val (added, removed) = computeLineDiff(lines1, lines2)
-                    val visual = if (bmp1 != null && bmp2 != null) {
-                        generateVisualDiff(bmp1, bmp2) { comparisonContext.ensureActive() }
-                    } else if (bmp1 == null && bmp2 != null) {
-                        100f to generateSinglePageTinted(bmp2, Color.argb(160, 46, 125, 50))
-                    } else if (bmp1 != null && bmp2 == null) {
-                        100f to generateSinglePageTinted(bmp1, Color.argb(160, 198, 40, 40))
-                    } else {
-                        error("Alignment contains no page")
-                    }
-                    retainedBitmapBytes += nextBytes
+                    // Compute the score without allocating an overlay bitmap.
+                    val visualPercent = if (bmp1 != null && bmp2 != null) {
+                        compareBitmaps(bmp1, bmp2, null) { comparisonContext.ensureActive() }
+                    } else 100f
 
                     val label = when {
                         p1 != null && p2 != null -> "Page ${p1 + 1} vs ${p2 + 1}"
@@ -108,8 +151,7 @@ object PdfDiffEngine {
                     diffs.add(
                         PageDiffResult(
                             pageIndex = idx,
-                            diffPercent = visual.first,
-                            diffBitmap = visual.second,
+                            diffPercent = visualPercent,
                             textAddedLines = added,
                             textRemovedLines = removed,
                             doc1PageIndex = p1,
@@ -133,12 +175,13 @@ object PdfDiffEngine {
                     it.doc1PageIndex != null &&
                     it.doc2PageIndex != null
             }
+            comparisonContext.ensureActive()
+            val summary = DocumentDiffSummary(texts1.size, texts2.size, identical, diffs.size - identical,
+                diffs.toList(), ComparisonPreviewSources(first, second, ::releaseInputs))
             completed = true
-            return DocumentDiffSummary(texts1.size, texts2.size, identical, diffs.size - identical, diffs)
+            return summary
         } finally {
-            if (!completed) diffs.forEach { it.diffBitmap?.recycle() }
-            snapshots.zip(listOf(uri1, uri2)).filter { (snapshot, original) -> snapshot.uri != original }.forEach { stager.release(it.first) }
-            leases.forEach { it.close() }
+            if (!completed) releaseInputs()
         }
     }
 
@@ -333,8 +376,39 @@ object PdfDiffEngine {
         return results
     }
 
-    // A conservative cap on previews retained in the summary, not a total heap guarantee.
-    private const val MAX_RETAINED_DIFF_BYTES = 32L * 1024 * 1024
+    /** Generate one overlay on demand from the exact same staged inputs and render size. */
+    internal suspend fun renderPreview(context: Context, first: Uri, second: Uri, page: PageDiffResult): Bitmap {
+        val cancellation = kotlinx.coroutines.currentCoroutineContext()
+        var a: Bitmap? = null
+        var b: Bitmap? = null
+        var output: Bitmap? = null
+        try {
+            a = page.doc1PageIndex?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, first, it, 720)) }
+            b = page.doc2PageIndex?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, second, it, 720)) }
+            cancellation.ensureActive()
+            output = when {
+                a != null && b != null -> {
+                    val (score, overlay) = generateVisualDiff(a, b) { cancellation.ensureActive() }
+                    if (score != page.diffPercent) {
+                        overlay.recycle()
+                        error("Preview does not match comparison result")
+                    }
+                    overlay
+                }
+                a != null -> generateSinglePageTinted(a, Color.argb(160, 198, 40, 40))
+                b != null -> generateSinglePageTinted(b, Color.argb(160, 46, 125, 50))
+                else -> error("Alignment contains no page")
+            }
+            cancellation.ensureActive()
+            val result = checkNotNull(output)
+            output = null
+            return result
+        } finally {
+            output?.recycle()
+            a?.recycle()
+            b?.recycle()
+        }
+    }
 
     internal fun <T : Any> requireRenderedPage(index: Int, rendered: T?): T =
         checkNotNull(rendered) { "Unable to render page ${index + 1}" }
@@ -358,19 +432,22 @@ object PdfDiffEngine {
         SecurityLimits.requirePixels(width, height)
         val diff = createBitmap(width, height)
         try {
-            val percent = compareRasterRows(
-                bmp1.width, bmp1.height, bmp2.width, bmp2.height,
-                read1 = { y, row -> bmp1.getPixels(row, 0, bmp1.width, 0, y, bmp1.width, 1) },
-                read2 = { y, row -> bmp2.getPixels(row, 0, bmp2.width, 0, y, bmp2.width, 1) },
-                write = { y, row -> diff.setPixels(row, 0, width, 0, y, width, 1) },
-                checkCancellation = checkCancellation
-            )
+            val percent = compareBitmaps(bmp1, bmp2, diff, checkCancellation)
             return percent to diff
         } catch (failure: Throwable) {
             diff.recycle()
             throw failure
         }
     }
+
+    private fun compareBitmaps(a: Bitmap, b: Bitmap, overlay: Bitmap?, checkCancellation: () -> Unit): Float =
+        compareRasterRows(a.width, a.height, b.width, b.height,
+            read1 = { y, row -> a.getPixels(row, 0, a.width, 0, y, a.width, 1) },
+            read2 = { y, row -> b.getPixels(row, 0, b.width, 0, y, b.width, 1) },
+            write = overlay?.let { bitmap ->
+                { y: Int, row: IntArray -> bitmap.setPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1) }
+            },
+            checkCancellation = checkCancellation)
 
     /**
      * Compare the union of both rendered page areas. Pixels outside both pages
@@ -381,7 +458,7 @@ object PdfDiffEngine {
         width1: Int, height1: Int, width2: Int, height2: Int,
         read1: (Int, IntArray) -> Unit,
         read2: (Int, IntArray) -> Unit,
-        write: (Int, IntArray) -> Unit,
+        write: ((Int, IntArray) -> Unit)? = null,
         checkCancellation: () -> Unit = {}
     ): Float {
         SecurityLimits.requirePixels(width1, height1)
@@ -427,7 +504,7 @@ object PdfDiffEngine {
                     out[x] = (120 shl 24) or (gray shl 16) or (gray shl 8) or gray
                 }
             }
-            write(y, out)
+            write?.invoke(y, out)
         }
         return (changed.toDouble() * 100.0 / compared).toFloat()
     }

@@ -69,7 +69,7 @@ fun PdfCompareScreen(
     var viewMode by remember { mutableStateOf(CompareViewMode.VISUAL_OVERLAY) }
 
     fun releaseSummary(summary: DocumentDiffSummary?) {
-        summary?.pageDiffs?.forEach { page -> page.diffBitmap?.let { if (!it.isRecycled) it.recycle() } }
+        summary?.close()
     }
 
     DisposableEffect(Unit) {
@@ -144,7 +144,7 @@ fun PdfCompareScreen(
                     if (diffSummary != null && !isComparing) {
                         IconButton(
                             onClick = {
-                                diffSummary?.pageDiffs?.forEach { it.diffBitmap?.let { bmp -> if (!bmp.isRecycled) bmp.recycle() } }
+                                releaseSummary(diffSummary)
                                 diffSummary = null
                             }
                         ) {
@@ -335,16 +335,10 @@ fun PdfCompareScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     if (viewMode == CompareViewMode.VISUAL_OVERLAY) {
-                        val dbmp = currentDiff?.diffBitmap
-                        if (dbmp != null) {
-                            Image(
-                                bitmap = dbmp.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Fit
-                            )
-                        } else {
-                            Text(stringResource(R.string.error_operation_recovery), color = Color.Gray, textAlign = TextAlign.Center)
+                        if (currentDiff != null) {
+                            key(summary, currentPageIndex) {
+                                LazyComparisonPreview(summary, currentPageIndex)
+                            }
                         }
                     } else {
                         // Text Changes Log
@@ -426,5 +420,47 @@ fun PdfCompareScreen(
                 }
             }
         }
+    }
+}
+
+/** At most one overlay is displayed. Old requests are cancelled on page/mode changes.
+ * ResourceTransferOwner disposes a bitmap even if dispatcher resumption is cancelled. */
+@Composable
+private fun LazyComparisonPreview(summary: DocumentDiffSummary, index: Int) {
+    val context = LocalContext.current
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    var retry by remember { mutableIntStateOf(0) }
+    DisposableEffect(Unit) {
+        onDispose { bitmap?.let { if (!it.isRecycled) it.recycle() } }
+    }
+    LaunchedEffect(retry) {
+        failed = false
+        try {
+            ResourceTransferOwner<Bitmap> { if (!it.isRecycled) it.recycle() }.use { owner ->
+                withContext(Dispatchers.IO) {
+                    owner.stage(summary.renderPreview(context, index))
+                }
+                bitmap = checkNotNull(owner.commit())
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            failed = true
+        }
+    }
+    val current = bitmap
+    when {
+        current != null -> Image(
+            bitmap = current.asImageBitmap(), contentDescription = null,
+            modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit
+        )
+        failed -> Column(horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)) {
+            Text(stringResource(R.string.error_operation_recovery), color = Color.Gray,
+                textAlign = TextAlign.Center)
+            TextButton(onClick = { retry++ }) { Text(stringResource(R.string.action_retry)) }
+        }
+        else -> CircularProgressIndicator()
     }
 }

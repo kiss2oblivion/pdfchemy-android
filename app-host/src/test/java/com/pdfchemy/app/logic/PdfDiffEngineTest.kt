@@ -228,4 +228,15 @@ class PdfDiffEngineTest {
         val b = PdfDiffEngine.fingerprint(IntArray(72) { (it % 9) * 20 + 5 })
         assertTrue(PdfDiffEngine.fingerprintSimilarity(a, b) > 0.95f)
     }
+    @Test fun scoreOnlyComparisonMatchesOverlayComparison() {
+        val first = { _: Int, row: IntArray -> row.fill(-1) }
+        val second = { y: Int, row: IntArray ->
+            row.fill(-1)
+            if (y == 0) row[0] = 0xff000000.toInt()
+        }
+        val score = PdfDiffEngine.compareRasterRows(2, 3, 3, 2, first, second)
+        val withOverlay = PdfDiffEngine.compareRasterRows(2, 3, 3, 2, first, second, { _, _ -> })
+        assertEquals(62.5f, score, 0f)
+        assertEquals(score, withOverlay, 0f)
+    }
 }
