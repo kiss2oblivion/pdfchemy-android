@@ -186,4 +186,46 @@ class PdfDiffEngineTest {
             PdfDiffEngine.computeLineDiff(left, right)
         }
     }
+    private fun geometry(width: Double, height: Double, unit: Double = 1.0, rotation: Int = 0,
+                         cropX: Double = 0.0) =
+        ComparePageGeometry(0.0, 0.0, width, height, cropX, 0.0, width, height, unit, rotation)
+
+    @Test fun detectsPhysicalSizeChangeAtEqualAspectRatio() {
+        assertTrue(PdfDiffEngine.geometryDiffers(geometry(300.0, 400.0), geometry(600.0, 800.0)))
+    }
+
+    @Test fun detectsUserUnitRotationAndCropOriginChanges() {
+        val base = geometry(300.0, 400.0)
+        assertTrue(PdfDiffEngine.geometryDiffers(base, geometry(300.0, 400.0, unit = 2.0)))
+        assertTrue(PdfDiffEngine.geometryDiffers(base, geometry(300.0, 400.0, rotation = 180)))
+        assertTrue(PdfDiffEngine.geometryDiffers(base, geometry(300.0, 400.0, cropX = 2.0)))
+        assertEquals(400.0, geometry(300.0, 400.0, rotation = 90).widthPoints, 0.0)
+    }
+
+    @Test fun equivalentPhysicalBoxesAndSmallSerializationNoiseMatch() {
+        org.junit.Assert.assertFalse(PdfDiffEngine.geometryDiffers(geometry(300.0, 400.0), geometry(150.0, 200.0, 2.0)))
+        org.junit.Assert.assertFalse(PdfDiffEngine.geometryDiffers(geometry(300.0, 400.0), geometry(300.005, 400.0)))
+    }
+
+    @Test fun blankAndDarkScansWithEqualGradientHashesAreNotMatched() {
+        val white = PdfDiffEngine.fingerprint(IntArray(72) { 255 })
+        val black = PdfDiffEngine.fingerprint(IntArray(72) { 0 })
+        assertEquals(white.hash, black.hash)
+        assertEquals(0f, PdfDiffEngine.fingerprintSimilarity(white, black), 0f)
+    }
+
+    @Test fun scannedPageAlignmentUsesVisualEvidenceAfterInsertion() {
+        val a = PdfDiffEngine.fingerprint(IntArray(72) { if (it % 9 < 4) 0 else 255 })
+        val b = PdfDiffEngine.fingerprint(IntArray(72) { if (it / 9 < 4) 0 else 255 })
+        val cover = PdfDiffEngine.fingerprint(IntArray(72) { 255 })
+        val aligned = PdfDiffEngine.alignPagesChecked(listOf("", ""), listOf("", "", ""),
+            mapOf(0 to a, 1 to b), mapOf(0 to cover, 1 to a, 2 to b))
+        assertEquals(listOf(null to 0, 0 to 1, 1 to 2), aligned.map { it.doc1PageIndex to it.doc2PageIndex })
+    }
+
+    @Test fun modestLuminanceNoiseKeepsAVisualMatch() {
+        val a = PdfDiffEngine.fingerprint(IntArray(72) { (it % 9) * 20 })
+        val b = PdfDiffEngine.fingerprint(IntArray(72) { (it % 9) * 20 + 5 })
+        assertTrue(PdfDiffEngine.fingerprintSimilarity(a, b) > 0.95f)
+    }
 }

@@ -16,7 +16,10 @@ data class PageDiffResult(
     val textRemovedLines: List<String>,
     val doc1PageIndex: Int? = pageIndex,
     val doc2PageIndex: Int? = pageIndex,
-    val alignmentLabel: String = ""
+    val alignmentLabel: String = "",
+    val geometryChanged: Boolean = false,
+    val geometry1: ComparePageGeometry? = null,
+    val geometry2: ComparePageGeometry? = null
 )
 
 data class DocumentDiffSummary(
@@ -44,12 +47,20 @@ object PdfDiffEngine {
         try {
             val first = stager.stageDocumentCancellableWithLease(context, uri1).also { snapshots.add(it.document); leases.add(it.lease) }.document
             val second = stager.stageDocumentCancellableWithLease(context, uri2).also { snapshots.add(it.document); leases.add(it.lease) }.document
-            val texts1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null).pages
-            val texts2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null).pages
+            val profile1 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", first.uri, null, mapOf("includeGeometry" to true))
+            val profile2 = JailEngineBridge.callTyped<TextPagesContract>(context, "TEXT_PAGES", second.uri, null, mapOf("includeGeometry" to true))
+            val texts1 = profile1.pages
+            val texts2 = profile2.pages
+            val geometry1 = requireNotNull(profile1.geometry) { "Missing source page geometry" }
+            val geometry2 = requireNotNull(profile2.geometry) { "Missing modified page geometry" }
+            require(geometry1.size == texts1.size && geometry2.size == texts2.size)
+            requireAlignmentBudget(texts1.size, texts2.size)
 
             val comparisonContext = kotlinx.coroutines.currentCoroutineContext()
+            val fingerprints1 = scannedFingerprints(context, first.uri, texts1)
+            val fingerprints2 = scannedFingerprints(context, second.uri, texts2)
             val alignments = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                alignPagesChecked(texts1, texts2) { comparisonContext.ensureActive() }
+                alignPagesChecked(texts1, texts2, fingerprints1, fingerprints2) { comparisonContext.ensureActive() }
             }
             var retainedBitmapBytes = 0L
             for ((idx, pair) in alignments.withIndex()) {
@@ -103,7 +114,10 @@ object PdfDiffEngine {
                             textRemovedLines = removed,
                             doc1PageIndex = p1,
                             doc2PageIndex = p2,
-                            alignmentLabel = label
+                            alignmentLabel = label,
+                            geometryChanged = p1 != null && p2 != null && geometryDiffers(geometry1[p1], geometry2[p2]),
+                            geometry1 = p1?.let(geometry1::get),
+                            geometry2 = p2?.let(geometry2::get)
                         )
                     )
                 } finally {
@@ -113,7 +127,7 @@ object PdfDiffEngine {
             }
 
             val identical = diffs.count {
-                it.diffPercent == 0f &&
+                it.diffPercent == 0f && !it.geometryChanged &&
                     it.textAddedLines.isEmpty() &&
                     it.textRemovedLines.isEmpty() &&
                     it.doc1PageIndex != null &&
@@ -131,15 +145,25 @@ object PdfDiffEngine {
     fun alignPages(texts1: List<String>, texts2: List<String>): List<PageAlignment> =
         alignPagesChecked(texts1, texts2) {}
 
-    private fun alignPagesChecked(texts1: List<String>, texts2: List<String>, checkCancellation: () -> Unit): List<PageAlignment> {
-        checkCancellation()
-        val n = texts1.size
-        val m = texts2.size
-        require(n <= com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT &&
-            m <= com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) { "Too many pages to compare" }
+    private fun requireAlignmentBudget(n: Int, m: Int) {
+        require(n in 0..SecurityLimits.MAX_PAGE_COUNT && m in 0..SecurityLimits.MAX_PAGE_COUNT) {
+            "Too many pages to compare"
+        }
         require((n.toLong() + 1) * (m.toLong() + 1) <= 1_000_000L) {
             "Page alignment exceeds its memory budget; compare smaller page ranges"
         }
+    }
+
+    internal fun alignPagesChecked(
+        texts1: List<String>, texts2: List<String>,
+        fingerprints1: Map<Int, PageFingerprint> = emptyMap(),
+        fingerprints2: Map<Int, PageFingerprint> = emptyMap(),
+        checkCancellation: () -> Unit = {}
+    ): List<PageAlignment> {
+        checkCancellation()
+        val n = texts1.size
+        val m = texts2.size
+        requireAlignmentBudget(n, m)
 
         if (n == 0 && m == 0) return emptyList()
         if (n == 0) return (0 until m).map { PageAlignment(null, it, 0f) }
@@ -151,7 +175,11 @@ object PdfDiffEngine {
         val simMatrix = Array(n) { i ->
             checkCancellation()
             FloatArray(m) { j ->
-                computePageSimilarity(tokens1[i], tokens2[j], texts1[i], texts2[j], i == j)
+                val a = fingerprints1[i]
+                val b = fingerprints2[j]
+                if (tokens1[i].isEmpty() && tokens2[j].isEmpty() && a != null && b != null)
+                    fingerprintSimilarity(a, b)
+                else computePageSimilarity(tokens1[i], tokens2[j], texts1[i], texts2[j], i == j)
             }
         }
 
@@ -228,6 +256,81 @@ object PdfDiffEngine {
         val unionSize = tokens1.union(tokens2).size
         if (unionSize == 0) return 1.0f
         return intersectionSize.toFloat() / unionSize.toFloat()
+    }
+
+    internal fun geometryDiffers(a: ComparePageGeometry, b: ComparePageGeometry): Boolean {
+        // Compare both boxes and offsets in physical points, plus the rotation.
+        // 0.01 pt tolerance avoids insignificant PDF float serialization noise.
+        val left = listOf(a.mediaX, a.mediaY, a.mediaWidth, a.mediaHeight,
+            a.cropX, a.cropY, a.cropWidth, a.cropHeight)
+        val right = listOf(b.mediaX, b.mediaY, b.mediaWidth, b.mediaHeight,
+            b.cropX, b.cropY, b.cropWidth, b.cropHeight)
+        return a.rotation != b.rotation ||
+            left.indices.any { kotlin.math.abs(left[it] * a.userUnit - right[it] * b.userUnit) > 0.01 }
+    }
+
+    internal data class PageFingerprint(val hash: Long, val luminance: IntArray)
+
+    /** 9 x 8 spatial luminance cells plus 64 horizontal-gradient bits.
+     * Similarity is only an alignment heuristic, never proof of equality. */
+    internal fun fingerprint(cells: IntArray): PageFingerprint {
+        require(cells.size == 72 && cells.all { it in 0..255 })
+        var hash = 0L
+        for (y in 0 until 8) for (x in 0 until 8) {
+            if (cells[y * 9 + x] > cells[y * 9 + x + 1])
+                hash = hash or (1L shl (y * 8 + x))
+        }
+        return PageFingerprint(hash, cells.copyOf())
+    }
+
+    internal fun fingerprintSimilarity(a: PageFingerprint, b: PageFingerprint): Float {
+        val hamming = java.lang.Long.bitCount(a.hash xor b.hash)
+        val meanDifference = a.luminance.indices.sumOf {
+            kotlin.math.abs(a.luminance[it] - b.luminance[it])
+        } / 72.0
+        if (hamming > 12 || meanDifference > 25.0) return 0f
+        return (1.0 - 0.5 * hamming / 64.0 - 0.5 * meanDifference / 255.0).toFloat()
+    }
+
+    private suspend fun scannedFingerprints(
+        context: Context, uri: Uri, texts: List<String>
+    ): Map<Int, PageFingerprint> {
+        val results = mutableMapOf<Int, PageFingerprint>()
+        for ((index, text) in texts.withIndex()) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            if (extractPageTokens(text).isNotEmpty()) continue
+            val bitmap = requireRenderedPage(index, PdfEditor.renderPageBitmap(context, uri, index, 96))
+            try {
+                val sums = LongArray(72)
+                val counts = IntArray(72)
+                val row = IntArray(bitmap.width)
+                for (y in 0 until bitmap.height) {
+                    kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                    bitmap.getPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1)
+                    for (x in row.indices) {
+                        val color = row[x]
+                        val r = (color ushr 16) and 255
+                        val g = (color ushr 8) and 255
+                        val b = color and 255
+                        val cell = (y * 8 / bitmap.height) * 9 + x * 9 / bitmap.width
+                        sums[cell] += (299 * r + 587 * g + 114 * b) / 1000
+                        counts[cell]++
+                    }
+                }
+                // Tiny pages may leave cells unsampled; use a deterministic nearest sample.
+                val cells = IntArray(72) { i ->
+                    if (counts[i] > 0) (sums[i] / counts[i]).toInt()
+                    else {
+                        val color = bitmap.getPixel(
+                            ((i % 9 + 0.5) * bitmap.width / 9).toInt().coerceIn(0, bitmap.width - 1),
+                            ((i / 9 + 0.5) * bitmap.height / 8).toInt().coerceIn(0, bitmap.height - 1))
+                        (299 * ((color ushr 16) and 255) + 587 * ((color ushr 8) and 255) + 114 * (color and 255)) / 1000
+                    }
+                }
+                results[index] = fingerprint(cells)
+            } finally { bitmap.recycle() }
+        }
+        return results
     }
 
     // A conservative cap on previews retained in the summary, not a total heap guarantee.

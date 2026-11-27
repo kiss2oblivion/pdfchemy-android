@@ -584,4 +584,24 @@ class WorkerResponseValidatorTest {
         repeat(5005) { sb.append("a,b\n") }
         assertRejected { WorkerResponseValidator.validateCsvTable(sb.toString()) }
     }
+    private val compareGeometryJson = """{"mediaX":0,"mediaY":0,"mediaWidth":600,"mediaHeight":800,
+        "cropX":0,"cropY":0,"cropWidth":600,"cropHeight":800,"userUnit":2,"rotation":90}"""
+
+    @Test fun comparisonGeometryIsValidatedAndLegacyTextPagesRemainSupported() {
+        val result = WorkerResponseValidator.validate("TEXT_PAGES",
+            """{"pages":["text"],"geometry":[$compareGeometryJson]}""") as TextPagesContract
+        assertEquals(listOf("text"), result.pages)
+        assertEquals(1600.0, result.geometry!!.single().widthPoints, 0.0)
+        assertNull((WorkerResponseValidator.validate("TEXT_PAGES", """["text"]""") as TextPagesContract).geometry)
+    }
+
+    @Test fun comparisonGeometryRejectsInvalidDimensionsRotationAndCounts() {
+        for (bad in listOf(compareGeometryJson.replace("\"cropWidth\":600", "\"cropWidth\":0"),
+            compareGeometryJson.replace("\"rotation\":90", "\"rotation\":45"),
+            compareGeometryJson.replace("\"userUnit\":2", "\"userUnit\":-1"))) {
+            assertRejected { WorkerResponseValidator.validate("TEXT_PAGES",
+                """{"pages":["text"],"geometry":[$bad]}""") }
+        }
+        assertRejected { WorkerResponseValidator.validate("TEXT_PAGES", """{"pages":["text"],"geometry":[]}""") }
+    }
 }

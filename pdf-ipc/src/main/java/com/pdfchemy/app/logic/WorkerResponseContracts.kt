@@ -289,8 +289,19 @@ data class ImageListContract(
  * Extracted text pages contract for TEXT_PAGES.
  */
 data class TextPagesContract(
-    val pages: List<String>
+    val pages: List<String>,
+    val geometry: List<ComparePageGeometry>? = null
 ) : OperationContract
+
+/** Page boxes in PDF user-space units, with explicit scale and normalized rotation. */
+data class ComparePageGeometry(
+    val mediaX: Double, val mediaY: Double, val mediaWidth: Double, val mediaHeight: Double,
+    val cropX: Double, val cropY: Double, val cropWidth: Double, val cropHeight: Double,
+    val userUnit: Double, val rotation: Int
+) {
+    val widthPoints: Double get() = (if (rotation == 90 || rotation == 270) cropHeight else cropWidth) * userUnit
+    val heightPoints: Double get() = (if (rotation == 90 || rotation == 270) cropWidth else cropHeight) * userUnit
+}
 
 /**
  * Find occurrences contract for FIND_OCCURRENCES.

@@ -61,7 +61,31 @@ object MigratedEngineDispatch {
                 try { PdfImageReplacerEngine.replaceEmbeddedImage(context, src, dst, p.getInt("pageIndex"), p.getString("resourceName"), bitmap, p.getBoolean("isLossless")).getOrThrow() } finally { bitmap.recycle() }
             }
             "TEXT_PAGES" -> FileInputStream(source!!.fileDescriptor).use { input ->
-                com.tom_roush.pdfbox.pdmodel.PDDocument.load(input, com.pdfchemy.app.jail.JailMemory.settings()).use(PdfTextExtractorWorker::extractAllPagesText)
+                com.tom_roush.pdfbox.pdmodel.PDDocument.load(input, com.pdfchemy.app.jail.JailMemory.settings()).use { doc ->
+                    val pages = PdfTextExtractorWorker.extractAllPagesText(doc)
+                    if (!p.optBoolean("includeGeometry", false)) pages else {
+                        require(pages.size == doc.numberOfPages) { "Text and geometry page counts differ" }
+                        val geometry = doc.pages.map { page ->
+                            val media = page.mediaBox
+                            val crop = page.cropBox ?: media
+                            val unit = page.cosObject.getFloat(com.tom_roush.pdfbox.cos.COSName.USER_UNIT, 1f)
+                            val rotation = ((page.rotation % 360) + 360) % 360
+                            val values = listOf(media.lowerLeftX, media.lowerLeftY, media.width, media.height,
+                                crop.lowerLeftX, crop.lowerLeftY, crop.width, crop.height, unit)
+                            require(values.all { it.isFinite() } && media.width > 0 && media.height > 0 &&
+                                crop.width > 0 && crop.height > 0 && unit > 0 && rotation % 90 == 0) {
+                                "Invalid PDF page geometry"
+                            }
+                            // Explicit keys avoid depending on reflection-based field names after R8.
+                            mapOf("mediaX" to media.lowerLeftX, "mediaY" to media.lowerLeftY,
+                                "mediaWidth" to media.width, "mediaHeight" to media.height,
+                                "cropX" to crop.lowerLeftX, "cropY" to crop.lowerLeftY,
+                                "cropWidth" to crop.width, "cropHeight" to crop.height,
+                                "userUnit" to unit, "rotation" to rotation)
+                        }
+                        mapOf("pages" to pages, "geometry" to geometry)
+                    }
+                }
             }
             else -> throw IllegalArgumentException("Unknown engine: $engine")
         }

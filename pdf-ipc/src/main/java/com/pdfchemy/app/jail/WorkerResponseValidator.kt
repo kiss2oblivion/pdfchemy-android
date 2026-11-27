@@ -692,17 +692,41 @@ object WorkerResponseValidator {
     }
 
     private fun parseTextPages(root: Any?): TextPagesContract {
-        val arr = requireArray(root, maxItems = SecurityLimits.MAX_PAGE_COUNT)
+        // Legacy callers still receive an array; comparison opts into a structured response.
+        val obj = root as? JSONObject
+        val arr = if (obj == null) requireArray(root, maxItems = SecurityLimits.MAX_PAGE_COUNT)
+            else obj.requireArray("pages", maxItems = SecurityLimits.MAX_OUTPUT_FILES)
         val pages = mutableListOf<String>()
         var totalChars = 0L
         for (i in 0 until arr.length()) {
-            val s = arr.getString(i)
-            require(s.length <= MAX_LONG_STRING_LENGTH) { "Page text exceeds maximum length" }
+            val s = arr.get(i)
+            require(s is String && s.length <= MAX_LONG_STRING_LENGTH) { "Invalid or oversized page text" }
             totalChars += s.length
             require(totalChars <= SecurityLimits.MAX_OUTPUT_BYTES) { "Aggregate extracted text exceeds limit" }
             pages.add(s)
         }
-        return TextPagesContract(pages = pages)
+        val geometry = obj?.let {
+            val records = it.requireArray("geometry", maxItems = SecurityLimits.MAX_OUTPUT_FILES)
+            require(records.length() == pages.size) { "Page geometry count mismatch" }
+            List(records.length()) { index ->
+                val item = requireObject(records.get(index))
+                fun coord(name: String) = item.requireDouble(name, -1e9, 1e9)
+                fun size(name: String) = item.requireDouble(name, 0.000001, 1e9)
+                val rotation = item.requireInt("rotation", min = 0, max = 270)
+                require(rotation % 90 == 0) { "Invalid page rotation" }
+                val g = ComparePageGeometry(
+                    coord("mediaX"), coord("mediaY"), size("mediaWidth"), size("mediaHeight"),
+                    coord("cropX"), coord("cropY"), size("cropWidth"), size("cropHeight"),
+                    item.requireDouble("userUnit", 0.000001, 75000.0), rotation
+                )
+                require(listOf(g.widthPoints, g.heightPoints, g.mediaWidth * g.userUnit,
+                    g.mediaHeight * g.userUnit).all { d -> d.isFinite() && d > 0 && d <= 1e9 }) {
+                    "Invalid physical page dimensions"
+                }
+                g
+            }
+        }
+        return TextPagesContract(pages = pages, geometry = geometry)
     }
 
     private fun parseFindOccurrences(root: Any?): FindOccurrencesContract {

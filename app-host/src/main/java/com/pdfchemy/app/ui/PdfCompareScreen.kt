@@ -309,6 +309,21 @@ fun PdfCompareScreen(
                     }
                 }
 
+                // Physical geometry is separate from raster difference percentage.
+                // Show both displayed page sizes and rotations when page boxes differ.
+                if (currentDiff?.geometryChanged == true) {
+                    val a = currentDiff.geometry1
+                    val b = currentDiff.geometry2
+                    if (a != null && b != null) {
+                        val before = String.format(java.util.Locale.getDefault(), "%.2f × %.2f pt · %d°",
+                            a.widthPoints, a.heightPoints, a.rotation)
+                        val after = String.format(java.util.Locale.getDefault(), "%.2f × %.2f pt · %d°",
+                            b.widthPoints, b.heightPoints, b.rotation)
+                        Text("${stringResource(R.string.image_result_dimensions)}: $before → $after",
+                            color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
                 // Comparison Content View
                 Box(
                     modifier = Modifier
