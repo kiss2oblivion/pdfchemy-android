@@ -4,20 +4,19 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.pdfchemy.app.logic.PdfCompressor
-import com.pdfchemy.app.logic.PdfScenario
-import com.pdfchemy.app.logic.PdfAnalysis
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.graphics.image.LosslessFactory
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
+import org.junit.After
+import androidx.test.platform.app.InstrumentationRegistry
+import com.tom_roush.pdfbox.text.PDFTextStripper
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,24 +27,28 @@ import java.io.FileOutputStream
 class PdfCompressorTest {
 
     private lateinit var context: Context
+    private lateinit var testDir: File
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
         PDFBoxResourceLoader.init(context)
+        testDir = File(context.cacheDir, "compression-test-" + java.util.UUID.randomUUID()).apply { check(mkdirs()) }
     }
+
+    @After fun cleanup() { testDir.deleteRecursively() }
 
     @Test
     fun testCompressionReducesFileSize() = runBlocking {
         // 1. Create a dummy PDF with a large uncompressed image
-        val sourceFile = File(context.cacheDir, "source.pdf")
+        val sourceFile = File(testDir, "source.pdf")
         createDummyPdfWithImage(sourceFile)
         val sourceSize = sourceFile.length()
         System.err.println("DEBUG: Source size: $sourceSize bytes")
         assertTrue("Source file should not be empty", sourceSize > 0)
 
         // 2. Prepare destination file
-        val destFile = File(context.cacheDir, "compressed.pdf")
+        val destFile = File(testDir, "compressed.pdf")
         if (destFile.exists()) destFile.delete()
 
         // 3. Compress
@@ -71,15 +74,13 @@ class PdfCompressorTest {
         
         val destSize = destFile.length()
         System.err.println("DEBUG: Compressed size: $destSize bytes")
-        // NOTE: In small test files, JPEG overhead might exceed lossless savings.
-        // For verification, we just check that it runs and produces a valid PDF.
-        // Real-world PDFs with high-res photos will definitely shrink.
-        assertTrue("Compressed file should be valid and have some content", destSize > 0)
+        assertTrue("High-entropy image fixture must shrink: $sourceSize -> $destSize", destSize in 1 until sourceSize)
+        assertSameDocumentContent(sourceFile, destFile)
     }
 
     @Test
     fun testCompressPdfDeduplicatesSharedImagesOnAndroid() = runBlocking {
-        val sourceFile = File(context.cacheDir, "shared_source.pdf")
+        val sourceFile = File(testDir, "shared_source.pdf")
         val doc = PDDocument()
         val bitmap = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -97,7 +98,7 @@ class PdfCompressorTest {
         doc.close()
         bitmap.recycle()
 
-        val destFile = File(context.cacheDir, "shared_compressed.pdf")
+        val destFile = File(testDir, "shared_compressed.pdf")
         if (destFile.exists()) destFile.delete()
 
         val result = PdfCompressor.compressPdf(
@@ -118,99 +119,55 @@ class PdfCompressorTest {
     }
 
     @Test
-    fun testRealDizertatieFiles() {
-        runBlocking {
-            val dizDir = File("C:\\Users\\cucos\\Downloads\\dizertatie")
-        if (!dizDir.exists() || !dizDir.isDirectory) {
-            System.err.println("Dizertatie directory does not exist at C:\\Users\\cucos\\Downloads\\dizertatie")
-            return@runBlocking
+    fun committedWordCorpusPreservesContentAtCompressionPresets() = runBlocking {
+        val assets = InstrumentationRegistry.getInstrumentation().context.assets
+        val fixtures = listOf("11-word-metadata.pdf", "12-word-links-bookmarks.pdf")
+        for (name in fixtures) {
+            val source = File(testDir, name)
+            assets.open("vanguard-benign/$name").use { input ->
+                source.outputStream().use { output -> input.copyTo(output) }
+            }
+            val original = source.readBytes()
+            val analysis = PdfCompressor.analyzePdf(context, Uri.fromFile(source)).getOrThrow()
+            PDDocument.load(source).use { assertEquals(it.numberOfPages, analysis.pageCount) }
+            for (quality in listOf(0.25f, 0.75f)) {
+                val output = File(testDir, "$quality-$name")
+                val report = PdfCompressor.compressPdf(
+                    context, Uri.fromFile(source), Uri.fromFile(output), quality
+                ).getOrThrow()
+                assertEquals("$name original size", original.size.toLong(), report.originalSize)
+                assertArrayEquals("$name source mutated", original, source.readBytes())
+                assertSameDocumentContent(source, output)
+            }
         }
+    }
 
-        val pdfFiles = mutableListOf<File>()
-        fun findPdfs(dir: File) {
-            dir.listFiles()?.forEach { file ->
-                if (file.isDirectory) {
-                    findPdfs(file)
-                } else if (file.name.endsWith(".pdf", ignoreCase = true)) {
-                    pdfFiles.add(file)
+    private fun assertSameDocumentContent(source: File, output: File) {
+        assertTrue("Output must exist and be nonempty", output.isFile && output.length() > 0)
+        PDDocument.load(source).use { before ->
+            PDDocument.load(output).use { after ->
+                assertEquals("Page count", before.numberOfPages, after.numberOfPages)
+                for (i in 0 until before.numberOfPages) {
+                    val a = before.getPage(i)
+                    val b = after.getPage(i)
+                    assertEquals("Page rotation $i", a.rotation, b.rotation)
+                    assertEquals("Page width $i", a.mediaBox.width, b.mediaBox.width, 0.001f)
+                    assertEquals("Page height $i", a.mediaBox.height, b.mediaBox.height, 0.001f)
+                    assertEquals("Annotations $i", a.annotations.size, b.annotations.size)
                 }
+                val strip = PDFTextStripper()
+                assertEquals("Extracted document text", strip.getText(before), PDFTextStripper().getText(after))
             }
-        }
-        findPdfs(dizDir)
-
-        if (pdfFiles.isEmpty()) {
-            System.err.println("No PDF files found in dizertatie folder.")
-            return@runBlocking
-        }
-
-        val reportBuilder = java.lang.StringBuilder()
-        reportBuilder.append("# PDF Compression & Analysis Test Report\n\n")
-        reportBuilder.append("Tested on files from: `C:\\Users\\cucos\\Downloads\\dizertatie`\n\n")
-        reportBuilder.append("| File Name | Pages | Images | Scenario | Rec. Preset | Original Size | High (25%) | Balanced (50%) | Better (75%) |\n")
-        reportBuilder.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
-
-        for (file in pdfFiles) {
-            val sizeBytes = file.length()
-            val sizeStr = formatSize(sizeBytes)
-            val uri = Uri.fromFile(file)
-
-            // 1. Analyze
-            val analysisRes = PdfCompressor.analyzePdf(context, uri)
-            if (analysisRes.isFailure) {
-                System.err.println("Failed to analyze ${file.name}: ${analysisRes.exceptionOrNull()?.message}")
-                continue
-            }
-            val analysis = analysisRes.getOrThrow()
-
-            // 2. Compress at different levels
-            val highTemp = File(context.cacheDir, "high_${file.name}")
-            val balTemp = File(context.cacheDir, "bal_${file.name}")
-            val betTemp = File(context.cacheDir, "bet_${file.name}")
-
-            val highRes = PdfCompressor.compressPdf(context, uri, Uri.fromFile(highTemp), 0.25f)
-            val balRes = PdfCompressor.compressPdf(context, uri, Uri.fromFile(balTemp), 0.50f)
-            val betRes = PdfCompressor.compressPdf(context, uri, Uri.fromFile(betTemp), 0.75f)
-
-            val highSize = if (highRes.isSuccess && highTemp.exists()) {
-                val s = highTemp.length()
-                val pct = ((sizeBytes - s).toFloat() / sizeBytes * 100).toInt()
-                "${formatSize(s)} (-$pct%)"
-            } else "N/A"
-
-            val balSize = if (balRes.isSuccess && balTemp.exists()) {
-                val s = balTemp.length()
-                val pct = ((sizeBytes - s).toFloat() / sizeBytes * 100).toInt()
-                "${formatSize(s)} (-$pct%)"
-            } else "N/A"
-
-            val betSize = if (betRes.isSuccess && betTemp.exists()) {
-                val s = betTemp.length()
-                val pct = ((sizeBytes - s).toFloat() / sizeBytes * 100).toInt()
-                "${formatSize(s)} (-$pct%)"
-            } else "N/A"
-
-            reportBuilder.append("| ${file.name} | ${analysis.pageCount} | ${analysis.imageCount} | ${analysis.scenario} | ${analysis.recommendedQuality} | $sizeStr | $highSize | $balSize | $betSize |\n")
-
-            // Cleanup
-            highTemp.delete()
-            balTemp.delete()
-            betTemp.delete()
-        }
-
-        // Save report to artifacts directory
-        val reportFile = File("C:\\Users\\cucos\\.gemini\\antigravity-ide\\brain\\9cad113b-51b3-4bf4-8187-0d2ebaa5800c\\test_results.md")
-            reportFile.writeText(reportBuilder.toString())
-            System.err.println("REAL WORLD TEST REPORT WRITTEN TO: ${reportFile.absolutePath}")
         }
     }
 
     @Test
     fun testAdvancedCompressionOptions() {
         runBlocking {
-            val sourceFile = File(context.cacheDir, "source_adv.pdf")
+            val sourceFile = File(testDir, "source_adv.pdf")
         createDummyPdfWithImage(sourceFile)
 
-        val destFile = File(context.cacheDir, "dest_adv.pdf")
+        val destFile = File(testDir, "dest_adv.pdf")
         if (destFile.exists()) destFile.delete()
 
         // Test Grayscale, Lossless, and Metadata Stripping together
@@ -239,115 +196,22 @@ class PdfCompressorTest {
         }
     }
 
-    @Test
-    fun testAlgorithmEfficiencyMatrix() {
-        runBlocking {
-            val dizDir = File("C:\\Users\\cucos\\Downloads\\dizertatie")
-            if (!dizDir.exists() || !dizDir.isDirectory) {
-                System.err.println("Dizertatie directory does not exist at C:\\Users\\cucos\\Downloads\\dizertatie")
-                return@runBlocking
-            }
-
-            val pdfFiles = mutableListOf<File>()
-            fun findPdfs(dir: File) {
-                dir.listFiles()?.forEach { file ->
-                    if (file.isDirectory) {
-                        findPdfs(file)
-                    } else if (file.name.endsWith(".pdf", ignoreCase = true)) {
-                        pdfFiles.add(file)
-                    }
-                }
-            }
-            findPdfs(dizDir)
-
-            if (pdfFiles.isEmpty()) {
-                System.err.println("No PDF files found in dizertatie folder.")
-                return@runBlocking
-            }
-
-            val reportBuilder = java.lang.StringBuilder()
-            reportBuilder.append("# PDF Compression Algorithms Efficiency Matrix\n\n")
-            reportBuilder.append("Tested on files from: `C:\\Users\\cucos\\Downloads\\dizertatie`\n\n")
-            reportBuilder.append("| File Name | Original Size | JPEG High (25%) | JPEG Balanced (50%) | Grayscale Balanced (50%) | Lossless ZIP | Metadata Strip Only |\n")
-            reportBuilder.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
-
-            for (file in pdfFiles) {
-                val sizeBytes = file.length()
-                val sizeStr = formatSize(sizeBytes)
-                val uri = Uri.fromFile(file)
-
-                // Temps
-                val tHigh = File(context.cacheDir, "matrix_high_${file.name}")
-                val tBal = File(context.cacheDir, "matrix_bal_${file.name}")
-                val tGray = File(context.cacheDir, "matrix_gray_${file.name}")
-                val tLossless = File(context.cacheDir, "matrix_zip_${file.name}")
-                val tMeta = File(context.cacheDir, "matrix_meta_${file.name}")
-
-                // Compression runs
-                val resHigh = PdfCompressor.compressPdf(context, uri, Uri.fromFile(tHigh), 0.25f, useGrayscale = false, useLossless = false, stripMetadata = false)
-                val resBal = PdfCompressor.compressPdf(context, uri, Uri.fromFile(tBal), 0.50f, useGrayscale = false, useLossless = false, stripMetadata = false)
-                val resGray = PdfCompressor.compressPdf(context, uri, Uri.fromFile(tGray), 0.50f, useGrayscale = true, useLossless = false, stripMetadata = false)
-                val resLossless = PdfCompressor.compressPdf(context, uri, Uri.fromFile(tLossless), 0.50f, useGrayscale = false, useLossless = true, stripMetadata = false)
-                val resMeta = PdfCompressor.compressPdf(context, uri, Uri.fromFile(tMeta), 1.0f, useGrayscale = false, useLossless = false, stripMetadata = true)
-
-                fun getResultStr(res: Result<PdfCompressor.CompressionReport>, tempFile: File): String {
-                    return if (res.isSuccess && tempFile.exists()) {
-                        val s = tempFile.length()
-                        val pct = ((sizeBytes - s).toFloat() / sizeBytes * 100).toInt()
-                        "${formatSize(s)} (-$pct%)"
-                    } else "N/A"
-                }
-
-                val highStr = getResultStr(resHigh, tHigh)
-                val balStr = getResultStr(resBal, tBal)
-                val grayStr = getResultStr(resGray, tGray)
-                val losslessStr = getResultStr(resLossless, tLossless)
-                val metaStr = getResultStr(resMeta, tMeta)
-
-                reportBuilder.append("| ${file.name} | $sizeStr | $highStr | $balStr | $grayStr | $losslessStr | $metaStr |\n")
-
-                // Cleanup
-                tHigh.delete()
-                tBal.delete()
-                tGray.delete()
-                tLossless.delete()
-                tMeta.delete()
-            }
-
-            // Save report
-            val reportFile = File("C:\\Users\\cucos\\.gemini\\antigravity-ide\\brain\\9cad113b-51b3-4bf4-8187-0d2ebaa5800c\\algorithm_efficiency_matrix.md")
-            reportFile.writeText(reportBuilder.toString())
-            System.err.println("ALGORITHM EFFICIENCY MATRIX WRITTEN TO: ${reportFile.absolutePath}")
-        }
-    }
-
-
-    private fun formatSize(bytes: Long): String {
-        if (bytes <= 0) return "0 B"
-        val units = arrayOf("B", "KB", "MB", "GB")
-        val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
-        return String.format("%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
-    }
-
-
     private fun createDummyPdfWithImage(file: File) {
         val document = PDDocument()
         val page = PDPage()
         document.addPage(page)
 
-        // Create a 2000x2000 bitmap
-        val bitmap = Bitmap.createBitmap(2000, 2000, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint()
-        
-        // Draw a random noise pattern which is very hard to compress losslessly
+        document.documentInformation.title = "Compression fixture"
+        document.documentInformation.author = "Synthetic test author"
+        // Opaque deterministic high-entropy RGB pixels ensure a measurable lossy reduction.
+        val bitmap = Bitmap.createBitmap(1600, 1600, Bitmap.Config.ARGB_8888)
         val random = java.util.Random(42)
-        for (x in 0 until 2000 step 2) {
-            for (y in 0 until 2000 step 2) {
-                paint.color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256))
-                canvas.drawPoint(x.toFloat(), y.toFloat(), paint)
-            }
+        val row = IntArray(bitmap.width)
+        for (y in 0 until bitmap.height) {
+            for (x in row.indices) row[x] = 0xff000000.toInt() or random.nextInt(0x1000000)
+            bitmap.setPixels(row, 0, row.size, 0, y, row.size, 1)
         }
+        bitmap.setHasAlpha(false)
 
         // Add as lossless image
         val xImage = LosslessFactory.createFromImage(document, bitmap)
@@ -359,5 +223,6 @@ class PdfCompressorTest {
             document.save(it)
         }
         document.close()
+        bitmap.recycle()
     }
 }

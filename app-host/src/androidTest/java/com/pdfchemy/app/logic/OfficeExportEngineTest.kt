@@ -105,6 +105,13 @@ class OfficeExportEngineTest {
         assertTrue("Must contain [Content_Types].xml", entries.contains("[Content_Types].xml"))
         assertTrue("Must contain word/document.xml", entries.contains("word/document.xml"))
         assertTrue("Must contain word/styles.xml", entries.contains("word/styles.xml"))
+        val document = readXml(destDocx, "word/document.xml")
+        val ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        val nodes = document.getElementsByTagNameNS(ns, "t")
+        assertEquals(listOf("Quarterly Financial Report", "Revenue, Expenses, Profit",
+            "100000, 45000, 55000", "Key Conclusions", "All targets were achieved successfully."),
+            (0 until nodes.length).map { nodes.item(it).textContent.trim() })
+        assertEquals("Preserve page boundary", 1, document.getElementsByTagNameNS(ns, "br").length)
     }
 
     @Test
@@ -133,6 +140,19 @@ class OfficeExportEngineTest {
         assertTrue("Must contain [Content_Types].xml", entries.contains("[Content_Types].xml"))
         assertTrue("Must contain xl/workbook.xml", entries.contains("xl/workbook.xml"))
         assertTrue("Must contain xl/worksheets/sheet1.xml", entries.contains("xl/worksheets/sheet1.xml"))
+        val sheet = readXml(destXlsx, "xl/worksheets/sheet1.xml")
+        val ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+        val rows = sheet.getElementsByTagNameNS(ns, "row")
+        val cells = (0 until rows.length).map { index ->
+            val row = rows.item(index) as org.w3c.dom.Element
+            val nodes = row.getElementsByTagNameNS(ns, "c")
+            (0 until nodes.length).map { nodes.item(it) as org.w3c.dom.Element }
+        }
+        assertEquals(listOf(listOf("Quarterly Financial Report"), listOf("Revenue", "Expenses", "Profit"),
+            listOf("100000", "45000", "55000"), listOf("Key Conclusions"),
+            listOf("All targets were achieved successfully.")),
+            cells.map { row -> row.map { it.textContent.trim() } })
+        assertTrue("Financial values must remain numeric cells", cells[2].all { it.getAttribute("t") == "n" })
     }
 
     @Test
@@ -173,4 +193,13 @@ class OfficeExportEngineTest {
             }
         }
     }
+    private fun readXml(file: File, name: String): org.w3c.dom.Document =
+        java.util.zip.ZipFile(file).use { zip ->
+            val entry = requireNotNull(zip.getEntry(name)) { "Missing $name" }
+            zip.getInputStream(entry).use { input ->
+                javax.xml.parsers.DocumentBuilderFactory.newInstance().apply {
+                    isNamespaceAware = true
+                }.newDocumentBuilder().parse(input)
+            }
+        }
 }

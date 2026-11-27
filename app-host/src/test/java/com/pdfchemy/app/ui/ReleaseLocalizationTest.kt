@@ -47,4 +47,14 @@ class ReleaseLocalizationTest {
             assertFalse("Unformatted page number for $tag", page.contains("%"))
         }
     }
+    @Test fun romanianRecoveryMessagesAreActuallyTranslated() {
+        val en = context("en")
+        val ro = context("ro")
+        for (id in listOf(R.string.document_load_recovery, R.string.document_damaged_recovery,
+            R.string.error_operation_recovery, R.string.error_storage_recovery,
+            R.string.error_password_recovery, R.string.reader_reset_defaults)) {
+            assertFalse("Romanian resource ${ro.resources.getResourceEntryName(id)} is still English",
+                ro.getString(id) == en.getString(id))
+        }
+    }
 }

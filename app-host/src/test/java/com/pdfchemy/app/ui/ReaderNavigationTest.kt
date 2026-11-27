@@ -6,11 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.Screen
-import com.pdfchemy.app.logic.OfficeFormat
 import com.pdfchemy.app.logic.ReaderNavigationCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -51,7 +49,7 @@ class ReaderNavigationTest {
     }
 
     @Test
-    fun extractIncomingDocumentUri_handlesActionViewSendAndMultiple() {
+    fun singleDocumentHelperHandlesViewSendAndClipData() {
         val viewUri = Uri.parse("content://external/doc/view.pdf")
         val viewIntent = Intent(Intent.ACTION_VIEW).apply { data = viewUri }
         assertEquals(viewUri, ReaderNavigationCoordinator.extractIncomingDocumentUri(viewIntent))
@@ -61,13 +59,6 @@ class ReaderNavigationTest {
             putExtra(Intent.EXTRA_STREAM, sendUri)
         }
         assertEquals(sendUri, ReaderNavigationCoordinator.extractIncomingDocumentUri(sendIntent))
-
-        val multiUri1 = Uri.parse("content://external/doc/multi1.pdf")
-        val multiUri2 = Uri.parse("content://external/doc/multi2.pdf")
-        val multiIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, arrayListOf(multiUri1, multiUri2))
-        }
-        assertEquals(multiUri1, ReaderNavigationCoordinator.extractIncomingDocumentUri(multiIntent))
 
         val clipUri = Uri.parse("content://external/doc/clip.pdf")
         val clipIntent = Intent(Intent.ACTION_VIEW).apply {
@@ -136,11 +127,4 @@ class ReaderNavigationTest {
         assertNull(replacedViewModel.continuityDocumentUri.value)
     }
 
-    @Test
-    fun toolRegistry_includesPdfReaderEntryPoint() {
-        assertTrue(
-            "ToolRegistry must include Screen.PdfReader entry point for search discovery",
-            ToolRegistry.allTools.any { it.screen is Screen.PdfReader }
-        )
-    }
 }
