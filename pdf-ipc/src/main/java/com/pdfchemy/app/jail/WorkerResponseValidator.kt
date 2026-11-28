@@ -156,8 +156,10 @@ object WorkerResponseValidator {
             "TABLE_EXTRACT" -> parseTableExtract(root, targetCount)
             "FONT_EXTRACT" -> parseFontExport(root, targetCount)
 
+            "UNLOCK" -> parseStandardOutput(root, targetCount, allowRecovery = true)
+
             // Standard output / status operations
-            "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT", "UNLOCK",
+            "METADATA_WRITE", "DELETE_PAGES", "ROTATE", "PROTECT",
             "BOOKMARK_WRITE", "TEXT_EXTRACT", "IMAGE_EXTRACT_FRAMED", "IMAGE_EXTRACT",
             "ARCHIVE_CONVERT", "LINEARIZE_OPTIMIZE", "PAGE_ORGANIZE", "COMIC_BOOK",
             "CROP", "FLATTEN_APPLY", "REDACT",
@@ -308,7 +310,8 @@ object WorkerResponseValidator {
             jsRemoved = obj.requireInt("jsRemoved", min = 0),
             actionsRemoved = obj.requireInt("actionsRemoved", min = 0),
             metadataRemoved = obj.requireBoolean("metadataRemoved"),
-            attachmentsRemoved = obj.requireInt("attachmentsRemoved", min = 0)
+            attachmentsRemoved = obj.requireInt("attachmentsRemoved", min = 0),
+            recovery = parseRecoveryAccounting(obj, setOf(RecoveryMethod.SANITIZE))
         )
     }
 
@@ -567,7 +570,9 @@ object WorkerResponseValidator {
         val obj = requireObject(root)
         require(obj.requireBoolean("success")) { "REPAIR_APPLY reported failure: success=false" }
         val pages = obj.requireInt("recoveredPages", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
-        return RepairApplyContract(success = true, recoveredPages = pages)
+        val recovery = parseRecoveryAccounting(obj, setOf(RecoveryMethod.RESERIALIZE, RecoveryMethod.NORMALIZE_CONTAINER))
+        require(recovery == null || recovery.verifiedOutputPages == pages) { "Recovery page count mismatch" }
+        return RepairApplyContract(success = true, recoveredPages = pages, recovery = recovery)
     }
 
     private fun parseDeskew(root: Any?): DeskewContract {
@@ -822,7 +827,31 @@ object WorkerResponseValidator {
         )
     }
 
-    private fun parseStandardOutput(root: Any?, targetCount: Int): StandardOutputContract {
+    private fun parseRecoveryAccounting(root: JSONObject, allowed: Set<RecoveryMethod>): RecoveryAccounting? {
+        if (!root.has("recovery")) return null
+        val obj = requireObject(root.get("recovery"))
+        val method = RecoveryMethod.valueOf(obj.requireString("method", maxLength = 32))
+        require(method in allowed) { "Recovery method does not match operation" }
+        val input = obj.requireInt("readableInputPages", min = 1, max = SecurityLimits.MAX_PAGE_COUNT)
+        val output = obj.requireInt("verifiedOutputPages", min = 1, max = SecurityLimits.MAX_PAGE_COUNT)
+        require(input == output) { "Recovery page parity failed" }
+        val header = obj.requireBoolean("headerInserted")
+        val prefix = obj.requireLong("prefixBytesRemoved", min = 0L, max = 65535L)
+        val eof = obj.requireBoolean("eofAppended")
+        require(!header || prefix == 0L) { "Contradictory header normalization" }
+        require((header || prefix > 0L || eof) == (method == RecoveryMethod.NORMALIZE_CONTAINER)) {
+            "Recovery method and normalization disagree"
+        }
+        val before = if (obj.has("activeFindingsBefore"))
+            obj.requireInt("activeFindingsBefore", min = 0, max = 3 * SecurityLimits.MAX_GRAPH_NODES) else null
+        require((before != null) == (method == RecoveryMethod.SANITIZE || method == RecoveryMethod.UNLOCK)) {
+            "Unexpected or missing active-content accounting"
+        }
+        val after = obj.requireInt("activeFindingsAfter", min = 0, max = 0)
+        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after)
+    }
+
+    private fun parseStandardOutput(root: Any?, targetCount: Int, allowRecovery: Boolean = false): StandardOutputContract {
         when (root) {
             is JSONObject -> {
                 require(!root.has("error")) { "Worker reported error" }
@@ -842,7 +871,8 @@ object WorkerResponseValidator {
                 } else {
                     1
                 }
-                return StandardOutputContract(success = true, size = size, count = count)
+                val recovery = if (allowRecovery) parseRecoveryAccounting(root, setOf(RecoveryMethod.UNLOCK)) else null
+                return StandardOutputContract(success = true, size = size, count = count, recovery = recovery)
             }
             is Boolean -> {
                 require(root) { "Worker reported boolean false" }

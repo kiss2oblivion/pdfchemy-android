@@ -1469,4 +1469,18 @@
     <string name="vanguard_diagnostic_parser_opened">The parser completed the read. This does not certify structural validity or security.</string>
     <string name="vanguard_diagnostic_parser_incomplete">The parser could not complete the read.</string>
     <string name="vanguard_diagnostic_pool">Parsed object pool: %1$d entries (not the full traversal count)</string>
+    <string name="vanguard_recovery_complete">Recovered copy ready</string>
+    <string name="vanguard_copy_saved">A separate copy was saved and inspected by Vanguard. Your original is unchanged.</string>
+    <string name="vanguard_method_reserialize">Method: parsed and rewrote the PDF without container normalization.</string>
+    <string name="vanguard_method_normalize">Method: container normalization followed by PDF reconstruction.</string>
+    <string name="vanguard_method_sanitize">Method: active-content sanitization.</string>
+    <string name="vanguard_method_unlock">Method: unlocking with active-content removal if needed.</string>
+    <string name="vanguard_page_parity">Readable input pages: %1$d. Reopened output pages: %2$d.</string>
+    <string name="vanguard_header_inserted">Fallback inserted a PDF header.</string>
+    <string name="vanguard_prefix_removed">Fallback removed %1$d prefix bytes.</string>
+    <string name="vanguard_eof_appended">Fallback appended an EOF marker.</string>
+    <string name="vanguard_findings_parity">Active-content findings: %1$d before; %2$d after. Counts may include multiple inspection contexts for one object.</string>
+    <string name="vanguard_no_active_after">No blocked active content detected in the rebuilt copy. The input count was not measured.</string>
+    <string name="vanguard_recovery_uncertainty">Page counts match the readable input, not necessarily the original intended document. Missing content, visual fidelity, links, attachments and digital signatures have not been independently verified.</string>
+    <string name="vanguard_use_recovered">Use recovered copy</string>
 </resources>

@@ -89,6 +89,10 @@ class VanguardRecoveryIntegrityTest {
             val result = PdfGateway.executeEngineTyped<RepairApplyContract>(context, "REPAIR_APPLY",
                 Uri.fromFile(source), Uri.fromFile(output), """{"requireVanguardClean":true}""")
             assertEquals(2, result.recoveredPages)
+            val accounting = requireNotNull(result.recovery)
+            assertEquals(2, accounting.readableInputPages)
+            assertEquals(2, accounting.verifiedOutputPages)
+            assertEquals(0, accounting.activeFindingsAfter)
             assertArrayEquals(damaged, source.readBytes())
             assertCleanOutput(output)
         }
@@ -120,6 +124,8 @@ class VanguardRecoveryIntegrityTest {
                 """{"purgeJs":true,"purgeActions":true,"purgeMetadata":false,"purgeAttachments":false,"requireVanguardClean":true}""")
             assertTrue(report.isSuccess)
             assertTrue(report.jsRemoved > 0)
+            assertTrue(requireNotNull(report.recovery?.activeFindingsBefore) > 0)
+            assertEquals(0, report.recovery?.activeFindingsAfter)
             assertArrayEquals(original, source.readBytes())
             assertCleanOutput(output)
         }
@@ -168,6 +174,8 @@ class VanguardRecoveryIntegrityTest {
             val result = PdfGateway.executeEngineTyped<StandardOutputContract>(context, "UNLOCK",
                 Uri.fromFile(source), Uri.fromFile(output), params.toString())
             assertTrue(result.success)
+            assertTrue(requireNotNull(result.recovery?.activeFindingsBefore) > 0)
+            assertEquals(0, result.recovery?.activeFindingsAfter)
             assertArrayEquals(original, source.readBytes())
             assertCleanOutput(output)
         }

@@ -63,7 +63,9 @@ object PdfSanitizerEngineWorker {
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
-                .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
+                .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata)
+                .apply { if (requireVanguardClean) put("recovery", recoveryAccounting("SANITIZE",
+                    originalPageCount, activeFindingsBefore = removed.executableFindingCount())) }.toString()
         } finally { scratch.delete() }
     }
     private fun verifyRecoveredPageCount(document: PDDocument, expectedPages: Int) {

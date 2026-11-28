@@ -1452,4 +1452,18 @@
     <string name="vanguard_diagnostic_parser_opened">Cititorul a finalizat interpretarea. Aceasta nu certifică validitatea structurală sau siguranța.</string>
     <string name="vanguard_diagnostic_parser_incomplete">Cititorul nu a putut finaliza interpretarea.</string>
     <string name="vanguard_diagnostic_pool">Obiecte în registrul cititorului: %1$d (nu reprezintă numărul total de noduri traversate)</string>
+    <string name="vanguard_recovery_complete">Copia recuperată este pregătită</string>
+    <string name="vanguard_copy_saved">O copie separată a fost salvată și inspectată de Vanguard. Originalul rămâne neschimbat.</string>
+    <string name="vanguard_method_reserialize">Metodă: interpretare și rescriere PDF fără normalizarea containerului.</string>
+    <string name="vanguard_method_normalize">Metodă: normalizarea containerului urmată de reconstruirea PDF-ului.</string>
+    <string name="vanguard_method_sanitize">Metodă: curățarea conținutului activ.</string>
+    <string name="vanguard_method_unlock">Metodă: deblocare cu eliminarea conținutului activ dacă a fost necesar.</string>
+    <string name="vanguard_page_parity">Pagini identificate la intrare: %1$d. Pagini la redeschiderea copiei: %2$d.</string>
+    <string name="vanguard_header_inserted">Procedura de rezervă a adăugat un antet PDF.</string>
+    <string name="vanguard_prefix_removed">Procedura de rezervă a eliminat %1$d octeți din prefix.</string>
+    <string name="vanguard_eof_appended">Procedura de rezervă a adăugat un marcaj EOF.</string>
+    <string name="vanguard_findings_parity">Constatări privind conținutul activ: %1$d înainte; %2$d după. Un obiect poate fi numărat în mai multe contexte de inspectare.</string>
+    <string name="vanguard_no_active_after">Nu s-a detectat conținut activ blocat în copia reconstruită. Numărul inițial nu a fost măsurat.</string>
+    <string name="vanguard_recovery_uncertainty">Numărul de pagini corespunde intrării lizibile, nu neapărat documentului original complet. Conținutul lipsă, fidelitatea vizuală, linkurile, atașamentele și semnăturile digitale nu au fost verificate independent.</string>
+    <string name="vanguard_use_recovered">Folosește copia recuperată</string>
 </resources>

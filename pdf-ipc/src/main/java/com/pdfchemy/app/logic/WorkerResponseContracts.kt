@@ -10,10 +10,25 @@ sealed interface OperationContract
 /**
  * Standard contract for output-producing operations or operations reporting simple status.
  */
+/** Counts describe inspected object contexts, not distinct scripts or links.
+ * Page parity is measured against the readable input, not unknown lost original pages. */
+enum class RecoveryMethod { RESERIALIZE, NORMALIZE_CONTAINER, SANITIZE, UNLOCK }
+data class RecoveryAccounting(
+    val method: RecoveryMethod,
+    val readableInputPages: Int,
+    val verifiedOutputPages: Int,
+    val headerInserted: Boolean,
+    val prefixBytesRemoved: Long,
+    val eofAppended: Boolean,
+    val activeFindingsBefore: Int?,
+    val activeFindingsAfter: Int
+)
+
 data class StandardOutputContract(
     val success: Boolean = true,
     val size: Long = 0L,
-    val count: Int = 1
+    val count: Int = 1,
+    val recovery: RecoveryAccounting? = null
 ) : OperationContract
 
 /**
@@ -86,7 +101,8 @@ data class SanitizerCleanContract(
     val jsRemoved: Int,
     val actionsRemoved: Int,
     val metadataRemoved: Boolean,
-    val attachmentsRemoved: Int
+    val attachmentsRemoved: Int,
+    val recovery: RecoveryAccounting? = null
 ) : OperationContract
 
 /**
@@ -246,7 +262,8 @@ data class RepairDiagnoseContract(
  */
 data class RepairApplyContract(
     val success: Boolean = true,
-    val recoveredPages: Int
+    val recoveredPages: Int,
+    val recovery: RecoveryAccounting? = null
 ) : OperationContract
 
 /**

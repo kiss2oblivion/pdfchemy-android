@@ -91,11 +91,15 @@ object PdfRepairEngineWorker {
             }
             return com.pdfchemy.app.jail.CapabilityIo.input(file).use {
                 PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
-            }.use { publishRecovered(it, targetFd, requireVanguardClean) }
+            }.use { publishRecovered(it, targetFd, requireVanguardClean,
+                headerInserted = headerIndex < 0, prefixBytesRemoved = headerIndex.coerceAtLeast(0).toLong(),
+                eofAppended = !suffix.contains("%%EOF")) }
         } finally { file.delete() }
     }
 
-    private fun publishRecovered(document: PDDocument, targetFd: ParcelFileDescriptor, requireVanguardClean: Boolean): String {
+    private fun publishRecovered(document: PDDocument, targetFd: ParcelFileDescriptor, requireVanguardClean: Boolean,
+                                 headerInserted: Boolean = false, prefixBytesRemoved: Long = 0L,
+                                 eofAppended: Boolean = false): String {
         val pageCount = document.numberOfPages
         check(pageCount in 1..com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) {
             "No supported readable pages recovered"
@@ -116,7 +120,9 @@ object PdfRepairEngineWorker {
             boundedFileOutput(targetFd.fileDescriptor).use { output ->
                 com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
             }
-            return JSONObject().put("success", true).put("recoveredPages", pageCount).toString()
+            val method = if (headerInserted || prefixBytesRemoved > 0 || eofAppended) "NORMALIZE_CONTAINER" else "RESERIALIZE"
+            return JSONObject().put("success", true).put("recoveredPages", pageCount)
+                .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended)).toString()
         } finally { candidate.delete() }
     }
 }

@@ -610,4 +610,18 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current.replace("\"parserOpened\":true", "\"parserOpened\":false")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current.replace("\"pooledObjects\":20", "\"pooledObjects\":-1")) }
     }
+
+    @Test fun verifiedRecoveryAccountingRejectsContradictoryClaims() {
+        val valid = """{"success":true,"recoveredPages":2,"recovery":{"method":"NORMALIZE_CONTAINER",
+            "readableInputPages":2,"verifiedOutputPages":2,"headerInserted":false,"prefixBytesRemoved":0,
+            "eofAppended":true,"activeFindingsAfter":0}}"""
+        val report = (WorkerResponseValidator.validate("REPAIR_APPLY", valid) as RepairApplyContract).recovery!!
+        assertEquals(RecoveryMethod.NORMALIZE_CONTAINER, report.method)
+        assertTrue(report.eofAppended)
+        assertNull(report.activeFindingsBefore)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"verifiedOutputPages\":2", "\"verifiedOutputPages\":3")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"activeFindingsAfter\":0", "\"activeFindingsAfter\":1")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"eofAppended\":true", "\"eofAppended\":false")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("NORMALIZE_CONTAINER", "UNLOCK")) }
+    }
 }

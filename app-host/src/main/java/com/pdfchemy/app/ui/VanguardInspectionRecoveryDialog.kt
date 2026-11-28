@@ -56,6 +56,8 @@ internal fun VanguardInspectionRecoveryDialog(
     var diagnosisFailed by remember(sourceUri, failure) { mutableStateOf(false) }
     var repairFailed by remember(sourceUri, failure) { mutableStateOf(false) }
     var showDetails by remember(sourceUri, failure) { mutableStateOf(false) }
+    var recoveredUri by remember(sourceUri, failure) { mutableStateOf<Uri?>(null) }
+    var recoveryReport by remember(sourceUri, failure) { mutableStateOf<RecoveryAccounting?>(null) }
     val busy = diagnosing || repairing || choosingDestination
     val allowRepair = failure.canAttemptStructuralRecovery() && diagnostic?.isEncrypted == false
     val canDiagnose = failure !in setOf(VanguardInspectionFailure.ACCESS_FAILED,
@@ -73,8 +75,8 @@ internal fun VanguardInspectionRecoveryDialog(
                         sourceUri, destination.uri, """{"requireVanguardClean":true}""")
                     check(result.success && result.recoveredPages > 0)
                     currentCoroutineContext().ensureActive()
-                    // The original selection path inspects again, even if the setting changed.
-                    continueLatest(destination.uri)
+                    recoveryReport = requireNotNull(result.recovery) { "Missing verified recovery accounting" }
+                    recoveredUri = destination.uri
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
@@ -91,10 +93,13 @@ internal fun VanguardInspectionRecoveryDialog(
 
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text(stringResource(R.string.vanguard_damaged_title)) },
+        title = { Text(stringResource(if (recoveredUri != null) R.string.vanguard_recovery_complete else R.string.vanguard_damaged_title)) },
         text = {
             Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (recoveredUri != null) {
+                    recoveryReport?.let { RecoveryAccountingView(it) }
+                } else {
                 Text(stringResource(failure.explanationRes()), fontWeight = FontWeight.Medium)
                 Text(stringResource(R.string.vanguard_damaged_message))
                 Text(stringResource(when (failure) {
@@ -181,11 +186,13 @@ internal fun VanguardInspectionRecoveryDialog(
                         Toast.makeText(context, R.string.msg_diagnostic_report_copied, Toast.LENGTH_SHORT).show()
                     }) { Text(stringResource(R.string.desc_copy_diagnostic_report)) }
                 }
+                }
             }
         },
         confirmButton = {
-            Button(enabled = !busy && failure != VanguardInspectionFailure.INPUT_SIZE_LIMIT, onClick = { continueLatest(sourceUri) }) {
-                Text(stringResource(R.string.vanguard_recovery_retry))
+            Button(enabled = !busy && (recoveredUri != null || failure != VanguardInspectionFailure.INPUT_SIZE_LIMIT),
+                onClick = { continueLatest(recoveredUri ?: sourceUri) }) {
+                Text(stringResource(if (recoveredUri != null) R.string.vanguard_use_recovered else R.string.vanguard_recovery_retry))
             }
         },
         dismissButton = {

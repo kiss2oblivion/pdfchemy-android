@@ -36,6 +36,8 @@ internal fun VanguardProtectedRecoveryDialog(
     var failed by remember { mutableStateOf(false) }
     var passwordRejected by remember { mutableStateOf(false) }
     var operationJob by remember { mutableStateOf<Job?>(null) }
+    var recoveredUri by remember(sourceUri) { mutableStateOf<Uri?>(null) }
+    var recoveryReport by remember(sourceUri) { mutableStateOf<RecoveryAccounting?>(null) }
     val busy = saving || running
     val save = rememberPreferredDocumentDestinationCreator("application/pdf") { target ->
         saving = false
@@ -46,20 +48,22 @@ internal fun VanguardProtectedRecoveryDialog(
             operationJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 try {
                     check(target.isFreshCopy && consent)
-                    if (encrypted) {
+                    val report = if (encrypted) {
                         val params = JSONObject().put("password", entered)
                             .put("requireVanguardClean", true).put("allowActiveContentRemoval", true)
                         PdfGateway.executeEngineTyped<StandardOutputContract>(context, "UNLOCK",
-                            sourceUri, target.uri, params.toString())
+                            sourceUri, target.uri, params.toString()).recovery
                     } else {
                         val params = JSONObject().put("purgeJs", true).put("purgeActions", true)
                             .put("purgeMetadata", false).put("purgeAttachments", false).put("requireVanguardClean", true)
                         val result = PdfGateway.executeEngineTyped<SanitizerCleanContract>(context, "SANITIZE_CLEAN",
                             sourceUri, target.uri, params.toString())
                         check(result.isSuccess)
+                        result.recovery
                     }
                     currentCoroutineContext().ensureActive()
-                    continueLatest(target.uri)
+                    recoveryReport = requireNotNull(report) { "Missing verified recovery accounting" }
+                    recoveredUri = target.uri
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
@@ -76,10 +80,14 @@ internal fun VanguardProtectedRecoveryDialog(
     AlertDialog(
         properties = DialogProperties(securePolicy = if (encrypted) SecureFlagPolicy.SecureOn else SecureFlagPolicy.Inherit),
         onDismissRequest = { if (!busy) onDismiss() },
-        title = { Text(stringResource(if (encrypted) R.string.vanguard_encrypted_title else R.string.vanguard_blocked_title)) },
+        title = { Text(stringResource(if (recoveredUri != null) R.string.vanguard_recovery_complete
+            else if (encrypted) R.string.vanguard_encrypted_title else R.string.vanguard_blocked_title)) },
         text = {
             Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (recoveredUri != null) {
+                    recoveryReport?.let { RecoveryAccountingView(it) }
+                } else {
                 Text(stringResource(if (encrypted) R.string.vanguard_encrypted_message else blockedReasonResId))
                 Text(stringResource(R.string.vanguard_protected_copy_help))
                 if (encrypted) OutlinedTextField(password, { password = it.take(1024) },
@@ -98,13 +106,19 @@ internal fun VanguardProtectedRecoveryDialog(
                     else -> R.string.vanguard_sanitize_failed
                 }),
                     color = MaterialTheme.colorScheme.error)
+                }
             }
         },
         confirmButton = {
-            Button(enabled = consent && !busy, onClick = {
-                failed = false; passwordRejected = false; saving = true
-                save.launch(if (encrypted) "unlocked.pdf" else "sanitized.pdf")
-            }) { Text(stringResource(if (encrypted) R.string.vanguard_unlock_continue else R.string.vanguard_sanitize_continue)) }
+            Button(enabled = !busy && (recoveredUri != null || consent), onClick = {
+                val ready = recoveredUri
+                if (ready != null) continueLatest(ready)
+                else {
+                    failed = false; passwordRejected = false; saving = true
+                    save.launch(if (encrypted) "unlocked.pdf" else "sanitized.pdf")
+                }
+            }) { Text(stringResource(if (recoveredUri != null) R.string.vanguard_use_recovered
+                else if (encrypted) R.string.vanguard_unlock_continue else R.string.vanguard_sanitize_continue)) }
         },
         dismissButton = {
             TextButton(enabled = !saving, onClick = {

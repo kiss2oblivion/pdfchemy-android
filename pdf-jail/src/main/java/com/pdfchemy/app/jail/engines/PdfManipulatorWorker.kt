@@ -410,6 +410,9 @@ object PdfManipulatorWorker {
                         FileOutputStream(targetFd.fileDescriptor).use { out ->
                             com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(out) }
                         }
+                        return JSONObject().put("success", true)
+                            .put("recovery", recoveryAccounting("UNLOCK", pages,
+                                activeFindingsBefore = f.executableFindingCount())).toString()
                     } finally { candidate.delete() }
                 } else {
                     FileOutputStream(targetFd.fileDescriptor).use { out -> opened.save(out) }
