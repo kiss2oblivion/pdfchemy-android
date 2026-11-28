@@ -1067,8 +1067,8 @@
     <string name="dialog_unsaved_save">Save / Export</string>
     <string name="dialog_unsaved_discard">Discard</string>
     <string name="dialog_unsaved_continue">Continue Editing</string>
-    <string name="vanguard_damaged_title">Damaged PDF</string>
-    <string name="vanguard_damaged_message">This PDF appears to be damaged or truncated and could not be read safely. Try running Repair or selecting another copy.</string>
+    <string name="vanguard_damaged_title">Document inspection incomplete</string>
+    <string name="vanguard_damaged_message">Vanguard stopped this operation because the document could not be verified. This does not establish that the PDF is damaged or malicious.</string>
     <string name="vanguard_provider_error_title">File Inaccessible</string>
     <string name="vanguard_provider_error_message">The selected file could not be accessed. The storage provider may be unavailable or permissions were revoked.</string>
     <string name="consent_dialog_decline">Continue without Personalization</string>
@@ -1110,7 +1110,7 @@
     <string name="visual_page_number">Page %1$d</string>
     <string name="apply">Apply</string>
     <string name="document_load_recovery">This file could not be opened. Check that it is still available and select it again to restore access.</string>
-    <string name="document_damaged_recovery">This PDF could not be read. Try another copy or use Repair PDF.</string>
+    <string name="document_damaged_recovery">PDFchemy could not finish reading or verifying this PDF. The exact cause is unknown. Retry, diagnose using Repair PDF, or select another copy.</string>
     <string name="processing_document">Processing documentâ€¦</string>
     <string name="operation_batch_progress" tools:ignore="PluralsCandidate">Completed %1$d of %2$d files</string>
     <string name="advanced_options">Advanced options</string>
@@ -1425,4 +1425,31 @@
     <string name="billing_opening_play">Opening Google Play…</string>
     <string name="billing_checkout_network_error">Network error opening checkout. Check your connection and try again.</string>
     <string name="billing_checkout_failed">Google Play could not open checkout. Check your connection and try again.</string>
+    <string name="vanguard_reason_read">The PDF reader could not complete parsing. The file may be damaged or contain unsupported structures; the exact cause is not established.</string>
+    <string name="vanguard_reason_limit">This PDF exceeded the safe object-inspection budget. This can happen with complex, otherwise readable documents. Repair may not help; try a smaller copy or split it using a trusted tool.</string>
+    <string name="vanguard_reason_active">The active-content inspection could not finish. PDFchemy cannot determine whether executable instructions are present.</string>
+    <string name="vanguard_reason_metadata">The metadata inspection could not finish. PDFchemy has not completed verification of this document.</string>
+    <string name="vanguard_reason_busy">The isolated document processor is busy. Wait until the other operation finishes, then retry.</string>
+    <string name="vanguard_reason_timeout">The inspection did not finish before its safety deadline. Try again; if it keeps happening, use a smaller copy.</string>
+    <string name="vanguard_reason_worker">The isolated processing engine could not complete the request. Retry; if it persists, reopen the app.</string>
+    <string name="vanguard_reason_access">The input could not be opened. Check storage access, reconnect the provider, or select another copy.</string>
+    <string name="vanguard_reason_unknown">The inspection failed for an undetermined reason. This is not proof of corruption or malicious content.</string>
+    <string name="vanguard_recovery_next">The original is unchanged. Retry, diagnose its structure, or cancel and choose another file. Only a verified copy can resume the operation.</string>
+    <string name="vanguard_recovery_diagnose">Diagnose document</string>
+    <string name="vanguard_recovery_retry">Retry inspection</string>
+    <string name="vanguard_recovery_rebuilding">Rebuilding and inspecting copy…</string>
+    <string name="vanguard_recovery_repair">Recover and continue</string>
+    <string name="vanguard_recovery_copy_help">PDFchemy will attempt to rebuild a separate copy, reopen it, and check it again. Recovery may alter formatting, remove damaged content or invalidate signatures. This is not a guarantee of full content recovery.</string>
+    <string name="vanguard_recovery_header">PDF header marker: %1$s</string>
+    <string name="vanguard_recovery_eof">End-of-file marker: %1$s</string>
+    <string name="vanguard_recovery_found">Found</string>
+    <string name="vanguard_recovery_not_found">Not found in checked region</string>
+    <string name="vanguard_recovery_pages">Readable page count: %1$d</string>
+    <string name="vanguard_recovery_password">A password is required or encryption was detected. Use Unlock PDF before recovery.</string>
+    <string name="vanguard_recovery_readable">The parser found pages. This does not verify every page or establish security.</string>
+    <string name="vanguard_recovery_undetermined">No readable page count was established. The exact structural problem remains undetermined.</string>
+    <string name="vanguard_recovery_diagnosis_failed">Diagnosis could not finish. Retry or choose another copy; the cause is still unknown.</string>
+    <string name="vanguard_recovery_repair_failed">PDFchemy could not produce a verified recovered copy. The original is unchanged. Retry inspection or choose another copy.</string>
+    <string name="vanguard_recovery_details">Technical details</string>
+    <string name="vanguard_recovery_limits">Object graph budget: %1$d nodes; depth %2$d.</string>
 </resources>

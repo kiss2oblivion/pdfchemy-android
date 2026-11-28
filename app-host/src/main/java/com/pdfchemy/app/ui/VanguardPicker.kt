@@ -29,6 +29,7 @@ import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.PickerOutcome
 import com.pdfchemy.app.logic.VanguardPickerProcessor
 import com.pdfchemy.app.logic.VanguardThreatResult
+import com.pdfchemy.app.logic.VanguardInspectionFailure
 import com.pdfchemy.app.utils.FileUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -80,6 +81,7 @@ fun rememberVanguardPdfPicker(
     var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
     var damagedPendingUri by remember { mutableStateOf<Uri?>(null) }
+    var inspectionFailure by remember { mutableStateOf(VanguardInspectionFailure.UNKNOWN) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
@@ -127,75 +129,63 @@ fun rememberVanguardPdfPicker(
         )
     }
 
+    fun startSelection(originalUri: Uri, forceInspection: Boolean = false) {
+        if (!isScanning) {
+            isScanning = true
+            scope.launch {
+                if (forceInspection || isVanguardEnabled) {
+                    isScanning = true
+                    scanningFileName = null
+                    com.pdfchemy.app.utils.ProviderMetadata.load(context, originalUri)
+                    scanningFileName = FileUtils.getFileName(context, originalUri)
+                }
+                try {
+                    when (val outcome = VanguardPickerProcessor.processSingle(context, originalUri, forceInspection || isVanguardEnabled)) {
+                        is PickerOutcome.Selected -> {
+                            onPdfSelected(outcome.stagedUris.first())
+                        }
+                        is PickerOutcome.BlockedThreat -> {
+                            blockedReasonResId = outcome.reasonResId
+                            showBlockedDialog = true
+                        }
+                        is PickerOutcome.Encrypted -> {
+                            encryptedPendingUri = outcome.stagedUri
+                            showEncryptedDialog = true
+                        }
+                        is PickerOutcome.Damaged -> {
+                            inspectionFailure = outcome.failure
+                            damagedPendingUri = originalUri
+                            showDamagedDialog = true
+                        }
+                        is PickerOutcome.ProviderError -> {
+                            showProviderErrorDialog = true
+                        }
+                        is PickerOutcome.Cancelled -> {
+                            // Cancelled - no error dialog
+                        }
+                    }
+                } catch (_: CancellationException) {
+                    // Staging or scope cancelled - no error dialog
+                } finally {
+                    isScanning = false
+                    scanningFileName = null
+                }
+            }
+        }
+    }
+
     if (showDamagedDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                showDamagedDialog = false
-                damagedPendingUri = null
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Rounded.WarningAmber,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(36.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.vanguard_damaged_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.error
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.vanguard_damaged_message),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                if (onNavigateToRepair != null && damagedPendingUri != null) {
-                    Button(
-                        onClick = {
-                            val targetUri = damagedPendingUri
-                            showDamagedDialog = false
-                            damagedPendingUri = null
-                            if (targetUri != null) {
-                                onNavigateToRepair(targetUri)
-                            }
-                        }
-                    ) {
-                        Text(stringResource(R.string.menu_repair_pdf))
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            showDamagedDialog = false
-                            damagedPendingUri = null
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text(stringResource(R.string.ok))
-                    }
+        damagedPendingUri?.let { failedUri ->
+            VanguardInspectionRecoveryDialog(
+                sourceUri = failedUri, failure = inspectionFailure,
+                onDismiss = { showDamagedDialog = false; damagedPendingUri = null },
+                onContinue = { replacement ->
+                    showDamagedDialog = false
+                    damagedPendingUri = null
+                    startSelection(replacement, forceInspection = true)
                 }
-            },
-            dismissButton = if (onNavigateToRepair != null && damagedPendingUri != null) {
-                {
-                    TextButton(
-                        onClick = {
-                            showDamagedDialog = false
-                            damagedPendingUri = null
-                        }
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            } else null
-        )
+            )
+        }
     }
 
     if (showProviderErrorDialog) {
@@ -302,52 +292,11 @@ fun rememberVanguardPdfPicker(
         )
     }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { originalUri: Uri? ->
-        if (originalUri != null) {
-            scope.launch {
-                if (isVanguardEnabled) {
-                    isScanning = true
-                    scanningFileName = null
-                    com.pdfchemy.app.utils.ProviderMetadata.load(context, originalUri)
-                    scanningFileName = FileUtils.getFileName(context, originalUri)
-                }
-                try {
-                    when (val outcome = VanguardPickerProcessor.processSingle(context, originalUri, isVanguardEnabled)) {
-                        is PickerOutcome.Selected -> {
-                            onPdfSelected(outcome.stagedUris.first())
-                        }
-                        is PickerOutcome.BlockedThreat -> {
-                            blockedReasonResId = outcome.reasonResId
-                            showBlockedDialog = true
-                        }
-                        is PickerOutcome.Encrypted -> {
-                            encryptedPendingUri = outcome.stagedUri
-                            showEncryptedDialog = true
-                        }
-                        is PickerOutcome.Damaged -> {
-                            damagedPendingUri = originalUri
-                            showDamagedDialog = true
-                        }
-                        is PickerOutcome.ProviderError -> {
-                            showProviderErrorDialog = true
-                        }
-                        is PickerOutcome.Cancelled -> {
-                            // Cancelled - no error dialog
-                        }
-                    }
-                } catch (_: CancellationException) {
-                    // Staging or scope cancelled - no error dialog
-                } finally {
-                    isScanning = false
-                    scanningFileName = null
-                }
-            }
-        }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let { startSelection(it) }
     }
 
-    return remember(launcher) { VanguardPickerLauncher { types -> launcher.launch(types) } }
+    return remember(launcher) { VanguardPickerLauncher { types -> if (!isScanning && !showDamagedDialog) launcher.launch(types) } }
 }
 
 /**
@@ -385,6 +334,8 @@ fun rememberVanguardMultiplePdfPicker(
     var blockedReasonResId by remember { androidx.compose.runtime.mutableIntStateOf(R.string.vanguard_blocked_message_default) }
     var showDamagedDialog by remember { mutableStateOf(false) }
     var damagedPendingUri by remember { mutableStateOf<Uri?>(null) }
+    var inspectionFailure by remember { mutableStateOf(VanguardInspectionFailure.UNKNOWN) }
+    var pendingBatch by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var showProviderErrorDialog by remember { mutableStateOf(false) }
     var showEncryptedDialog by remember { mutableStateOf(false) }
     var encryptedPendingUri by remember { mutableStateOf<Uri?>(null) }
@@ -436,75 +387,77 @@ fun rememberVanguardMultiplePdfPicker(
         )
     }
 
-    if (showDamagedDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                showDamagedDialog = false
-                damagedPendingUri = null
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Rounded.WarningAmber,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(36.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.vanguard_damaged_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.error
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.vanguard_damaged_message),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                if (onNavigateToRepair != null && damagedPendingUri != null) {
-                    Button(
-                        onClick = {
-                            val targetUri = damagedPendingUri
-                            showDamagedDialog = false
-                            damagedPendingUri = null
-                            if (targetUri != null) {
-                                onNavigateToRepair(targetUri)
+    fun startSelection(uris: List<Uri>, forceInspection: Boolean = false) {
+        if (uris.isNotEmpty() && !isScanning) {
+            isScanning = true
+            scope.launch {
+                try {
+                    var currentItemUri: Uri? = uris.firstOrNull()
+                    val outcome = VanguardPickerProcessor.processMultiple(
+                        context = context,
+                        uris = uris,
+                        isVanguardEnabled = forceInspection || isVanguardEnabled,
+                        onItemScanning = { itemUri ->
+                            currentItemUri = itemUri
+                            if (forceInspection || isVanguardEnabled) {
+                                isScanning = true
+                                scanningFileName = null
+                                com.pdfchemy.app.utils.ProviderMetadata.load(context, itemUri)
+                                scanningFileName = FileUtils.getFileName(context, itemUri)
                             }
                         }
-                    ) {
-                        Text(stringResource(R.string.menu_repair_pdf))
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            showDamagedDialog = false
-                            damagedPendingUri = null
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text(stringResource(R.string.ok))
-                    }
-                }
-            },
-            dismissButton = if (onNavigateToRepair != null && damagedPendingUri != null) {
-                {
-                    TextButton(
-                        onClick = {
-                            showDamagedDialog = false
-                            damagedPendingUri = null
+                    )
+                    when (outcome) {
+                        is PickerOutcome.Selected -> {
+                            outcome.use { onPdfsSelected(it.stagedUris) }
                         }
-                    ) {
-                        Text(stringResource(R.string.cancel))
+                        is PickerOutcome.BlockedThreat -> {
+                            blockedReasonResId = outcome.reasonResId
+                            showBlockedDialog = true
+                        }
+                        is PickerOutcome.Encrypted -> {
+                            pendingOutcome?.close()
+                            pendingOutcome = outcome
+                            encryptedPendingUri = outcome.stagedUri
+                            showEncryptedDialog = true
+                        }
+                        is PickerOutcome.Damaged -> {
+                            inspectionFailure = outcome.failure
+                            pendingBatch = uris
+                            damagedPendingUri = currentItemUri
+                            showDamagedDialog = true
+                        }
+                        is PickerOutcome.ProviderError -> {
+                            showProviderErrorDialog = true
+                        }
+                        is PickerOutcome.Cancelled -> {
+                            // Cancelled - no error dialog
+                        }
                     }
+                } catch (_: CancellationException) {
+                    // Staging or scope cancelled - no error dialog
+                } finally {
+                    isScanning = false
+                    scanningFileName = null
                 }
-            } else null
-        )
+            }
+        }
+    }
+
+    if (showDamagedDialog) {
+        damagedPendingUri?.let { failedUri ->
+            VanguardInspectionRecoveryDialog(
+                sourceUri = failedUri, failure = inspectionFailure,
+                onDismiss = { showDamagedDialog = false; damagedPendingUri = null; pendingBatch = emptyList() },
+                onContinue = { replacement ->
+                    showDamagedDialog = false
+                    damagedPendingUri = null
+                    val batch = pendingBatch.map { if (it == failedUri) replacement else it }
+                    pendingBatch = emptyList()
+                    startSelection(batch, forceInspection = true)
+                }
+            )
+        }
     }
 
     if (showProviderErrorDialog) {
@@ -619,61 +572,9 @@ fun rememberVanguardMultiplePdfPicker(
         )
     }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenMultipleDocuments()
-    ) { uris: List<Uri> ->
-        if (uris.isNotEmpty()) {
-            scope.launch {
-                try {
-                    var currentItemUri: Uri? = uris.firstOrNull()
-                    val outcome = VanguardPickerProcessor.processMultiple(
-                        context = context,
-                        uris = uris,
-                        isVanguardEnabled = isVanguardEnabled,
-                        onItemScanning = { itemUri ->
-                            currentItemUri = itemUri
-                            if (isVanguardEnabled) {
-                                isScanning = true
-                                scanningFileName = null
-                                com.pdfchemy.app.utils.ProviderMetadata.load(context, itemUri)
-                                scanningFileName = FileUtils.getFileName(context, itemUri)
-                            }
-                        }
-                    )
-                    when (outcome) {
-                        is PickerOutcome.Selected -> {
-                            outcome.use { onPdfsSelected(it.stagedUris) }
-                        }
-                        is PickerOutcome.BlockedThreat -> {
-                            blockedReasonResId = outcome.reasonResId
-                            showBlockedDialog = true
-                        }
-                        is PickerOutcome.Encrypted -> {
-                            pendingOutcome?.close()
-                            pendingOutcome = outcome
-                            encryptedPendingUri = outcome.stagedUri
-                            showEncryptedDialog = true
-                        }
-                        is PickerOutcome.Damaged -> {
-                            damagedPendingUri = currentItemUri
-                            showDamagedDialog = true
-                        }
-                        is PickerOutcome.ProviderError -> {
-                            showProviderErrorDialog = true
-                        }
-                        is PickerOutcome.Cancelled -> {
-                            // Cancelled - no error dialog
-                        }
-                    }
-                } catch (_: CancellationException) {
-                    // Staging or scope cancelled - no error dialog
-                } finally {
-                    isScanning = false
-                    scanningFileName = null
-                }
-            }
-        }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris: List<Uri> ->
+        startSelection(uris)
     }
 
-    return remember(launcher) { VanguardPickerLauncher { types -> launcher.launch(types) } }
+    return remember(launcher) { VanguardPickerLauncher { types -> if (!isScanning && !showDamagedDialog) launcher.launch(types) } }
 }

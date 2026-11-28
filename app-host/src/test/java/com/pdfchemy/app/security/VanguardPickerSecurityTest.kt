@@ -8,6 +8,9 @@ import com.pdfchemy.app.logic.PickerOutcome
 import com.pdfchemy.app.logic.SanitizerAuditReport
 import com.pdfchemy.app.logic.VanguardPickerProcessor
 import com.pdfchemy.app.logic.VanguardThreatResult
+import com.pdfchemy.app.logic.VanguardInspectionFailure
+import com.pdfchemy.app.logic.PdfGateway
+import com.pdfchemy.app.logic.PdfSanitizerEngine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -234,5 +237,27 @@ class VanguardPickerSecurityTest {
 
         assertEquals(PickerOutcome.Selected(listOf(staged1, staged2)), outcome)
         assertTrue("No URIs should be released when all clean", released.isEmpty())
+    }
+    @Test fun incompleteInspectionPreservesFailureAndReleasesSelection() = runTest {
+        val original = mockUri("failed")
+        val staged = mockUri("staged-failed")
+        val released = mutableListOf<Uri>()
+        val result = VanguardPickerProcessor.processSingle(context, original, true,
+            stager = { staged },
+            threatChecker = { VanguardThreatResult.ParseFailed(it, VanguardInspectionFailure.GRAPH_LIMIT) },
+            releaser = { released.add(it) })
+        assertEquals(PickerOutcome.Damaged(VanguardInspectionFailure.GRAPH_LIMIT), result)
+        assertEquals(listOf(staged), released)
+    }
+
+    @Test fun gatewayFailuresAreNotDescribedAsCorruption() {
+        assertEquals(VanguardInspectionFailure.WORKER_BUSY,
+            PdfSanitizerEngine.classifyInspectionFailure(PdfGateway.WorkerAdmissionBusyException()))
+        assertEquals(VanguardInspectionFailure.WORKER_TIMEOUT,
+            PdfSanitizerEngine.classifyInspectionFailure(PdfGateway.WorkerTimeoutException("deadline")))
+        assertEquals(VanguardInspectionFailure.WORKER_UNAVAILABLE,
+            PdfSanitizerEngine.classifyInspectionFailure(PdfGateway.WorkerDiedException("dead")))
+        assertEquals(VanguardInspectionFailure.UNKNOWN,
+            PdfSanitizerEngine.classifyInspectionFailure(IllegalArgumentException("unknown")))
     }
 }

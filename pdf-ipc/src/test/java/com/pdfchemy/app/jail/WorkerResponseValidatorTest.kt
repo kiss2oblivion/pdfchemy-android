@@ -584,4 +584,15 @@ class WorkerResponseValidatorTest {
         repeat(5005) { sb.append("a,b\n") }
         assertRejected { WorkerResponseValidator.validateCsvTable(sb.toString()) }
     }
+    @Test fun inspectionFailureCodesAreBoundedAndCannotClaimClean() {
+        val failed = """{"threatsFound":1,"isClean":false,"jsCount":0,"launchActionsCount":0,
+            "otherActionsCount":0,"untrustedUriCount":0,"attachmentCount":0,"uriCount":0,
+            "hasMetadata":false,"isEncrypted":false,"parseFailed":true,"inspectionFailure":"GRAPH_LIMIT"}"""
+        val report = WorkerResponseValidator.validate("SANITIZE_AUDIT", failed) as SanitizeAuditContract
+        assertEquals(VanguardInspectionFailure.GRAPH_LIMIT, report.failure)
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("GRAPH_LIMIT", "UNRECOGNIZED")) }
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("GRAPH_LIMIT", "WORKER_BUSY")) }
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("\"isClean\":false", "\"isClean\":true")) }
+        assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("\"parseFailed\":true", "\"parseFailed\":false")) }
+    }
 }
