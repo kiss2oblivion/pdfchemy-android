@@ -14,6 +14,9 @@ import com.pdfchemy.app.logic.VanguardThreatResult
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
+import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
+import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
+import com.tom_roush.pdfbox.text.PDFTextStripper
 import com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission
 import com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionJavaScript
@@ -205,6 +208,43 @@ class VanguardRecoveryIntegrityTest {
             val after = PdfRepairEngine.diagnosePdf(context, Uri.fromFile(output)).getOrThrow()
             assertTrue(after.xref?.kind in setOf(com.pdfchemy.app.logic.XrefObservationKind.TABLE_MARKER,
                 com.pdfchemy.app.logic.XrefObservationKind.INDIRECT_OBJECT_MARKER))
+        }
+    }
+
+    @Test fun recoveryMeasuresActualExtractedTextAndNonDefaultPageGeometry() = runBlocking<Unit> {
+        withFiles { source, output ->
+            PDFBoxResourceLoader.init(context)
+            PDDocument().use { document ->
+                val page = PDPage(com.tom_roush.pdfbox.pdmodel.common.PDRectangle.A4)
+                page.rotation = 90
+                page.cosObject.setFloat(com.tom_roush.pdfbox.cos.COSName.USER_UNIT, 2f)
+                document.addPage(page)
+                PDPageContentStream(document, page).use { stream ->
+                    stream.beginText()
+                    stream.setFont(PDType1Font.HELVETICA, 12f)
+                    stream.newLineAtOffset(48f, 100f)
+                    stream.showText("Recovery evidence: real PDF text")
+                    stream.endText()
+                }
+                document.addPage(PDPage())
+                document.save(source)
+            }
+            val original = source.readBytes()
+            val expected = PDDocument.load(source).use { PDFTextStripper().getText(it) }
+            assertTrue(expected.contains("Recovery evidence: real PDF text"))
+            val result = PdfGateway.executeEngineTyped<RepairApplyContract>(context, "REPAIR_APPLY",
+                Uri.fromFile(source), Uri.fromFile(output), """{"requireVanguardClean":true}""")
+            val evidence = requireNotNull(result.recovery)
+            assertEquals(com.pdfchemy.app.logic.PageTextEvidence(1, 0, 1, 0), evidence.textEvidence)
+            assertEquals(com.pdfchemy.app.logic.PageStreamEvidence(2, 0, 0), evidence.geometryEvidence)
+            assertArrayEquals(original, source.readBytes())
+            PDDocument.load(output).use { rebuilt ->
+                assertEquals(expected, PDFTextStripper().getText(rebuilt))
+                assertEquals(90, rebuilt.getPage(0).rotation)
+                assertEquals(2f, rebuilt.getPage(0).cosObject.getFloat(com.tom_roush.pdfbox.cos.COSName.USER_UNIT), 0f)
+            }
+            assertEquals(VanguardThreatResult.Clean,
+                PdfSanitizerEngine.checkVanguardThreat(context, Uri.fromFile(output)))
         }
     }
 }

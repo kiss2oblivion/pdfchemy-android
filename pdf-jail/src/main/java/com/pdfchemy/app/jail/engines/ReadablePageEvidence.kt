@@ -120,7 +120,7 @@ internal object ReadablePageEvidence {
             val values = boxes.flatMap { listOf(it.lowerLeftX, it.lowerLeftY, it.upperRightX, it.upperRightY) }
             val unit = page.cosObject.getFloat(COSName.USER_UNIT, 1f)
             if (values.any { !it.isFinite() } || !unit.isFinite() || unit <= 0f ||
-                boxes.any { it.width <= 0f || it.height <= 0f }) return null
+                boxes.any { !it.width.isFinite() || !it.height.isFinite() || it.width <= 0f || it.height <= 0f }) return null
             val encoded = ByteBuffer.allocate((values.size + 2) * 4)
             values.forEach { encoded.putFloat(if (it == 0f) 0f else it) }
             encoded.putFloat(unit)
