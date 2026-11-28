@@ -665,4 +665,15 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"matchingPages\":4", "\"matchingPages\":3")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"matchingTextPages\":1", "\"matchingTextPages\":-1")) }
     }
+
+    @Test fun resourceEvidenceMustPartitionRecoveredPages() {
+        val valid = """{"success":true,"recoveredPages":3,"recovery":{"method":"RESERIALIZE",
+            "readableInputPages":3,"verifiedOutputPages":3,"headerInserted":false,"prefixBytesRemoved":0,
+            "eofAppended":false,"activeFindingsAfter":0,
+            "resourceEvidence":{"matchingPages":1,"differentPages":1,"unmeasuredPages":1}}}"""
+        val report = (WorkerResponseValidator.validate("REPAIR_APPLY", valid) as RepairApplyContract).recovery!!
+        assertEquals(PageStreamEvidence(1, 1, 1), report.resourceEvidence)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"differentPages\":1", "\"differentPages\":2")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"unmeasuredPages\":1", "\"unmeasuredPages\":-1")) }
+    }
 }

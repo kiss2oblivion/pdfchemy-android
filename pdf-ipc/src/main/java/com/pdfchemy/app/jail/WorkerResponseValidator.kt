@@ -892,7 +892,8 @@ object WorkerResponseValidator {
             PageTextEvidence(matched, different, empty, unknown)
         } else null
         return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected,
-            pageEvidence("streamEvidence"), textEvidence, pageEvidence("geometryEvidence"))
+            pageEvidence("streamEvidence"), textEvidence, pageEvidence("geometryEvidence"),
+            pageEvidence("resourceEvidence"))
     }
 
     private fun parseStandardOutput(root: Any?, targetCount: Int, allowRecovery: Boolean = false): StandardOutputContract {

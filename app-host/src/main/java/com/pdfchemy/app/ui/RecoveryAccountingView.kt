@@ -53,6 +53,13 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
             Text(stringResource(R.string.vanguard_geometry_review), color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall)
     }
+    report.resourceEvidence?.let {
+        Text(stringResource(R.string.vanguard_resource_evidence, it.matchingPages, it.differentPages, it.unmeasuredPages))
+        if (it.differentPages > 0 || it.unmeasuredPages > 0)
+            Text(stringResource(R.string.vanguard_resource_review), color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.vanguard_resource_limits), style = MaterialTheme.typography.bodySmall)
+    }
     Text(stringResource(R.string.vanguard_recovery_uncertainty), style = MaterialTheme.typography.bodySmall)
     TextButton(onClick = {
         val text = buildString {
@@ -81,6 +88,11 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
                 appendLine("Matching effective page geometry: " + it.matchingPages)
                 appendLine("Different effective page geometry: " + it.differentPages)
                 appendLine("Unmeasured page geometry: " + it.unmeasuredPages)
+            }
+            report.resourceEvidence?.let {
+                appendLine("Matching effective resource representations: " + it.matchingPages)
+                appendLine("Different effective resource representations: " + it.differentPages)
+                appendLine("Unmeasured resource representations: " + it.unmeasuredPages)
             }
             appendLine("Full content, visual and signature preservation not verified")
         }

@@ -1501,4 +1501,7 @@
     <string name="vanguard_text_limits">Only the bounded local text extraction is compared. No OCR, reading-order or visual equivalence is certified.</string>
     <string name="vanguard_geometry_evidence">Effective page geometry: %1$d matching, %2$d different, %3$d not measured (page boxes, rotation and user unit).</string>
     <string name="vanguard_geometry_review">Some page geometry differs or could not be measured. Review the layout before using this copy.</string>
+    <string name="vanguard_resource_evidence">Effective page resources: %1$d matching, %2$d different, %3$d not measured.</string>
+    <string name="vanguard_resource_review">Some resource representations differ or could not be compared. Review fonts, illustrations and layout.</string>
+    <string name="vanguard_resource_limits">Compared reachable resource dictionaries and encoded streams, including nested fonts and images. Matching representations do not certify rendering; different encodings can represent the same content.</string>
 </resources>

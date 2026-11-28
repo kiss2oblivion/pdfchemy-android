@@ -33,7 +33,8 @@ data class RecoveryAccounting(
     val pageTreeCountsCorrected: Int = 0,
     val streamEvidence: PageStreamEvidence? = null,
     val textEvidence: PageTextEvidence? = null,
-    val geometryEvidence: PageStreamEvidence? = null
+    val geometryEvidence: PageStreamEvidence? = null,
+    val resourceEvidence: PageStreamEvidence? = null
 )
 
 data class StandardOutputContract(

@@ -1484,4 +1484,7 @@
     <string name="vanguard_text_limits">Se compară numai extragerea locală limitată a textului. Nu se certifică recunoașterea OCR, ordinea de citire sau echivalența vizuală.</string>
     <string name="vanguard_geometry_evidence">Geometria efectivă a paginilor: %1$d identice, %2$d diferite, %3$d nemăsurate (casete, rotație și unitatea de măsură).</string>
     <string name="vanguard_geometry_review">Geometria unor pagini diferă sau nu a putut fi măsurată. Verificați aspectul înainte de a folosi copia.</string>
+    <string name="vanguard_resource_evidence">Resurse efective ale paginilor: %1$d identice, %2$d diferite, %3$d nemăsurate.</string>
+    <string name="vanguard_resource_review">Reprezentarea unor resurse diferă sau nu a putut fi comparată. Verificați fonturile, ilustrațiile și aspectul.</string>
+    <string name="vanguard_resource_limits">Au fost comparate dicționarele de resurse accesibile și fluxurile codificate, inclusiv fonturile și imaginile imbricate. Reprezentările identice nu certifică redarea; codificări diferite pot reprezenta același conținut.</string>
 </resources>

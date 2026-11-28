@@ -237,6 +237,7 @@ class VanguardRecoveryIntegrityTest {
             val evidence = requireNotNull(result.recovery)
             assertEquals(com.pdfchemy.app.logic.PageTextEvidence(1, 0, 1, 0), evidence.textEvidence)
             assertEquals(com.pdfchemy.app.logic.PageStreamEvidence(2, 0, 0), evidence.geometryEvidence)
+            assertEquals(com.pdfchemy.app.logic.PageStreamEvidence(2, 0, 0), evidence.resourceEvidence)
             assertArrayEquals(original, source.readBytes())
             PDDocument.load(output).use { rebuilt ->
                 assertEquals(expected, PDFTextStripper().getText(rebuilt))

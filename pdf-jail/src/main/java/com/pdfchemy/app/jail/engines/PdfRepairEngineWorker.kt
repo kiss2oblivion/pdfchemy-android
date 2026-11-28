@@ -117,19 +117,22 @@ object PdfRepairEngineWorker {
         val inputFindings = ActiveContentScrubber.inspect(document)
         check(inputFindings.executableFindingCount() == 0) { "Input contains blocked active content; use sanitization" }
         val inputEvidence = PageContentEvidence.capture(document)
+        val inputResources = PageResourceEvidence.capture(document)
         val inputReadable = ReadablePageEvidence.capture(document)
         val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
         try {
             boundedFileOutput(candidate).use { document.save(it) }
-            val (streamEvidence, textEvidence, geometryEvidence) = com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
+            val (resourceEvidence, remainingEvidence) = com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
                 PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
             }.use {
                 PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pageCount)
+                val resources = PageContentEvidence.compare(inputResources, PageResourceEvidence.capture(it))
                 val readable = ReadablePageEvidence.capture(it)
-                Triple(PageContentEvidence.compare(inputEvidence, PageContentEvidence.capture(it)),
+                resources to Triple(PageContentEvidence.compare(inputEvidence, PageContentEvidence.capture(it)),
                     ReadablePageEvidence.compareText(inputReadable.text, readable.text),
                     ReadablePageEvidence.compareGeometry(inputReadable, readable))
             }
+            val (streamEvidence, textEvidence, geometryEvidence) = remainingEvidence
             boundedFileOutput(targetFd.fileDescriptor).use { output ->
                 com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
             }
@@ -138,7 +141,7 @@ object PdfRepairEngineWorker {
                 .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended,
                     pageTreeCountsCorrected = pageTree.correctedCounts,
                     streamEvidence = streamEvidence, textEvidence = textEvidence,
-                    geometryEvidence = geometryEvidence)).toString()
+                    geometryEvidence = geometryEvidence, resourceEvidence = resourceEvidence)).toString()
         } finally { candidate.delete() }
     }
 }
