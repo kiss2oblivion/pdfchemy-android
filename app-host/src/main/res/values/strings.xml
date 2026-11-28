@@ -1425,4 +1425,18 @@
     <string name="billing_opening_play">Opening Google Play…</string>
     <string name="billing_checkout_network_error">Network error opening checkout. Check your connection and try again.</string>
     <string name="billing_checkout_failed">Google Play could not open checkout. Check your connection and try again.</string>
+    <string name="compare_sensitivity">Visual sensitivity</string>
+    <string name="compare_sensitivity_strict">Strict</string>
+    <string name="compare_sensitivity_balanced">Balanced</string>
+    <string name="compare_sensitivity_relaxed">Relaxed</string>
+    <string name="compare_sensitivity_help">Strict detects any rendered RGB change. Balanced and Relaxed ignore small color differences. Text and geometry checks are unchanged.</string>
+    <string name="compare_sensitivity_active">Sensitivity: %1$s</string>
+    <string name="compare_run">Compare</string>
+    <string name="compare_detected_counts">Changed: %1$d • No detected changes: %2$d</string>
+    <string name="compare_geometry_changed">Page geometry changed</string>
+    <string name="compare_previous_region">Previous region</string>
+    <string name="compare_next_region">Next region</string>
+    <string name="compare_region_position">Region %1$d / %2$d</string>
+    <string name="compare_previous_changed_page">Previous change</string>
+    <string name="compare_next_changed_page">Next change</string>
 </resources>

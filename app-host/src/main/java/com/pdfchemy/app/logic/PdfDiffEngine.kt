@@ -23,8 +23,15 @@ data class PageDiffResult(
     val alignmentLabel: String = "",
     val geometryChanged: Boolean = false,
     val geometry1: ComparePageGeometry? = null,
-    val geometry2: ComparePageGeometry? = null
-)
+    val geometry2: ComparePageGeometry? = null,
+    val rasterWidth: Int = 0,
+    val rasterHeight: Int = 0,
+    val regions: List<CompareRegion> = emptyList()
+) {
+    val hasDetectedChanges: Boolean get() = diffPercent != 0f || geometryChanged ||
+        textAddedLines.isNotEmpty() || textRemovedLines.isNotEmpty() ||
+        doc1PageIndex == null || doc2PageIndex == null
+}
 
 /** Owns immutable staged documents until the result is dismissed. No page bitmaps are retained. */
 class DocumentDiffSummary internal constructor(
@@ -33,6 +40,7 @@ class DocumentDiffSummary internal constructor(
     val identicalPages: Int,
     val modifiedPages: Int,
     val pageDiffs: List<PageDiffResult>,
+    val sensitivity: CompareSensitivity,
     private val sources: ComparisonPreviewSources
 ) : Closeable {
     private val previewMutex = Mutex()
@@ -41,7 +49,7 @@ class DocumentDiffSummary internal constructor(
         previewMutex.withLock {
             val page = pageDiffs[index]
             sources.acquire().use {
-                PdfDiffEngine.renderPreview(context, sources.first.uri, sources.second.uri, page)
+                PdfDiffEngine.renderPreview(context, sources.first.uri, sources.second.uri, page, sensitivity)
             }
         }
 
@@ -84,7 +92,10 @@ object PdfDiffEngine {
         val similarity: Float
     )
 
-    suspend fun compareDocuments(context: Context, uri1: Uri, uri2: Uri): DocumentDiffSummary {
+    suspend fun compareDocuments(
+        context: Context, uri1: Uri, uri2: Uri,
+        sensitivity: CompareSensitivity = CompareSensitivity.BALANCED
+    ): DocumentDiffSummary {
         val stager = com.pdfchemy.app.utils.DocumentStager
         val snapshots = mutableListOf<com.pdfchemy.app.jail.StagedPdf>()
         val leases = mutableListOf<java.io.Closeable>()
@@ -137,9 +148,15 @@ object PdfDiffEngine {
 
                     val (added, removed) = computeLineDiff(lines1, lines2)
                     // Compute the score without allocating an overlay bitmap.
+                    val collector = CompareRegionAccumulator(canvasWidth, canvasHeight)
                     val visualPercent = if (bmp1 != null && bmp2 != null) {
-                        compareBitmaps(bmp1, bmp2, null) { comparisonContext.ensureActive() }
+                        compareBitmaps(bmp1, bmp2, null, sensitivity.threshold, collector::add) {
+                            comparisonContext.ensureActive()
+                        }
                     } else 100f
+                    val regions = if (p1 == null || p2 == null) {
+                        listOf(CompareRegion(0, 0, canvasWidth, canvasHeight, canvasWidth.toLong() * canvasHeight))
+                    } else collector.regions()
 
                     val label = when {
                         p1 != null && p2 != null -> "Page ${p1 + 1} vs ${p2 + 1}"
@@ -159,7 +176,9 @@ object PdfDiffEngine {
                             alignmentLabel = label,
                             geometryChanged = p1 != null && p2 != null && geometryDiffers(geometry1[p1], geometry2[p2]),
                             geometry1 = p1?.let(geometry1::get),
-                            geometry2 = p2?.let(geometry2::get)
+                            geometry2 = p2?.let(geometry2::get),
+                            rasterWidth = canvasWidth, rasterHeight = canvasHeight,
+                            regions = regions
                         )
                     )
                 } finally {
@@ -168,16 +187,10 @@ object PdfDiffEngine {
                 }
             }
 
-            val identical = diffs.count {
-                it.diffPercent == 0f && !it.geometryChanged &&
-                    it.textAddedLines.isEmpty() &&
-                    it.textRemovedLines.isEmpty() &&
-                    it.doc1PageIndex != null &&
-                    it.doc2PageIndex != null
-            }
+            val identical = diffs.count { !it.hasDetectedChanges }
             comparisonContext.ensureActive()
             val summary = DocumentDiffSummary(texts1.size, texts2.size, identical, diffs.size - identical,
-                diffs.toList(), ComparisonPreviewSources(first, second, ::releaseInputs))
+                diffs.toList(), sensitivity, ComparisonPreviewSources(first, second, ::releaseInputs))
             completed = true
             return summary
         } finally {
@@ -377,7 +390,9 @@ object PdfDiffEngine {
     }
 
     /** Generate one overlay on demand from the exact same staged inputs and render size. */
-    internal suspend fun renderPreview(context: Context, first: Uri, second: Uri, page: PageDiffResult): Bitmap {
+    internal suspend fun renderPreview(
+        context: Context, first: Uri, second: Uri, page: PageDiffResult, sensitivity: CompareSensitivity
+    ): Bitmap {
         val cancellation = kotlinx.coroutines.currentCoroutineContext()
         var a: Bitmap? = null
         var b: Bitmap? = null
@@ -386,9 +401,13 @@ object PdfDiffEngine {
             a = page.doc1PageIndex?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, first, it, 720)) }
             b = page.doc2PageIndex?.let { requireRenderedPage(it, PdfEditor.renderPageBitmap(context, second, it, 720)) }
             cancellation.ensureActive()
+            check(maxOf(a?.width ?: 0, b?.width ?: 0) == page.rasterWidth &&
+                maxOf(a?.height ?: 0, b?.height ?: 0) == page.rasterHeight) {
+                "Preview raster geometry does not match comparison result"
+            }
             output = when {
                 a != null && b != null -> {
-                    val (score, overlay) = generateVisualDiff(a, b) { cancellation.ensureActive() }
+                    val (score, overlay) = generateVisualDiff(a, b, sensitivity.threshold) { cancellation.ensureActive() }
                     if (score != page.diffPercent) {
                         overlay.recycle()
                         error("Preview does not match comparison result")
@@ -426,13 +445,14 @@ object PdfDiffEngine {
         }
     }
 
-    private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap, checkCancellation: () -> Unit): Pair<Float, Bitmap> {
+    private fun generateVisualDiff(bmp1: Bitmap, bmp2: Bitmap, threshold: Int,
+                                   checkCancellation: () -> Unit): Pair<Float, Bitmap> {
         val width = maxOf(bmp1.width, bmp2.width)
         val height = maxOf(bmp1.height, bmp2.height)
         SecurityLimits.requirePixels(width, height)
         val diff = createBitmap(width, height)
         try {
-            val percent = compareBitmaps(bmp1, bmp2, diff, checkCancellation)
+            val percent = compareBitmaps(bmp1, bmp2, diff, threshold, null, checkCancellation)
             return percent to diff
         } catch (failure: Throwable) {
             diff.recycle()
@@ -440,14 +460,15 @@ object PdfDiffEngine {
         }
     }
 
-    private fun compareBitmaps(a: Bitmap, b: Bitmap, overlay: Bitmap?, checkCancellation: () -> Unit): Float =
+    private fun compareBitmaps(a: Bitmap, b: Bitmap, overlay: Bitmap?, threshold: Int,
+                               onChanged: ((Int, Int) -> Unit)?, checkCancellation: () -> Unit): Float =
         compareRasterRows(a.width, a.height, b.width, b.height,
             read1 = { y, row -> a.getPixels(row, 0, a.width, 0, y, a.width, 1) },
             read2 = { y, row -> b.getPixels(row, 0, b.width, 0, y, b.width, 1) },
             write = overlay?.let { bitmap ->
                 { y: Int, row: IntArray -> bitmap.setPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1) }
             },
-            checkCancellation = checkCancellation)
+            checkCancellation = checkCancellation, threshold = threshold, onChanged = onChanged)
 
     /**
      * Compare the union of both rendered page areas. Pixels outside both pages
@@ -459,8 +480,11 @@ object PdfDiffEngine {
         read1: (Int, IntArray) -> Unit,
         read2: (Int, IntArray) -> Unit,
         write: ((Int, IntArray) -> Unit)? = null,
-        checkCancellation: () -> Unit = {}
+        checkCancellation: () -> Unit = {},
+        threshold: Int = CompareSensitivity.BALANCED.threshold,
+        onChanged: ((Int, Int) -> Unit)? = null
     ): Float {
+        require(threshold in 0..255)
         SecurityLimits.requirePixels(width1, height1)
         SecurityLimits.requirePixels(width2, height2)
         val width = maxOf(width1, width2)
@@ -485,6 +509,7 @@ object PdfDiffEngine {
                 compared++
                 if (!in1 || !in2) {
                     changed++
+                    onChanged?.invoke(x, y)
                     out[x] = if (in2) 0xA02E7D32.toInt() else 0xA0C62828.toInt()
                     continue
                 }
@@ -493,11 +518,12 @@ object PdfDiffEngine {
                 val r = (c2 ushr 16) and 255
                 val g = (c2 ushr 8) and 255
                 val b = c2 and 255
-                val different = kotlin.math.abs(((c1 ushr 16) and 255) - r) > 30 ||
-                    kotlin.math.abs(((c1 ushr 8) and 255) - g) > 30 ||
-                    kotlin.math.abs((c1 and 255) - b) > 30
+                val different = kotlin.math.abs(((c1 ushr 16) and 255) - r) > threshold ||
+                    kotlin.math.abs(((c1 ushr 8) and 255) - g) > threshold ||
+                    kotlin.math.abs((c1 and 255) - b) > threshold
                 if (different) {
                     changed++
+                    onChanged?.invoke(x, y)
                     out[x] = 0xE6EB1E64.toInt()
                 } else {
                     val gray = (r + g + b) / 3

@@ -13,14 +13,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -32,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pdfchemy.app.R
 import com.pdfchemy.app.logic.DocumentDiffSummary
+import com.pdfchemy.app.logic.CompareSensitivity
+import com.pdfchemy.app.logic.CompareRegion
 import com.pdfchemy.app.logic.PdfDiffEngine
 import com.pdfchemy.app.utils.FileUtils
 import com.pdfchemy.app.utils.ResourceTransferOwner
@@ -64,6 +72,7 @@ fun PdfCompareScreen(
     var diffSummary by remember { mutableStateOf<DocumentDiffSummary?>(null) }
     var isComparing by remember { mutableStateOf(false) }
     var comparisonFailed by remember { mutableStateOf(false) }
+    var sensitivity by rememberSaveable { mutableStateOf(CompareSensitivity.BALANCED) }
     var comparisonJob by remember { mutableStateOf<Job?>(null) }
     var currentPageIndex by remember { mutableIntStateOf(0) }
     var viewMode by remember { mutableStateOf(CompareViewMode.VISUAL_OVERLAY) }
@@ -85,11 +94,12 @@ fun PdfCompareScreen(
         diffSummary = null
         comparisonFailed = false
         isComparing = true
+        val selectedSensitivity = sensitivity
         comparisonJob = coroutineScope.launch {
             try {
                 ResourceTransferOwner<DocumentDiffSummary> { releaseSummary(it) }.use { owner ->
                     withContext(Dispatchers.IO) {
-                        owner.stage(PdfDiffEngine.compareDocuments(context, u1, u2))
+                        owner.stage(PdfDiffEngine.compareDocuments(context, u1, u2, selectedSensitivity))
                     }
                     diffSummary = checkNotNull(owner.commit())
                     currentPageIndex = 0
@@ -239,6 +249,18 @@ fun PdfCompareScreen(
                             }
                         }
 
+                        Text(stringResource(R.string.compare_sensitivity), style = MaterialTheme.typography.labelLarge)
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            CompareSensitivity.entries.forEach { option ->
+                                FilterChip(selected = sensitivity == option,
+                                    onClick = { sensitivity = option }, enabled = !isComparing,
+                                    label = { Text(stringResource(option.labelRes())) })
+                            }
+                        }
+                        Text(stringResource(R.string.compare_sensitivity_help),
+                            style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+
                         if (isComparing) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -257,13 +279,18 @@ fun PdfCompareScreen(
                                 val original = doc1Uri
                                 val modified = doc2Uri
                                 if (original != null && modified != null) runComparison(original, modified)
-                            }) { Text(stringResource(R.string.action_retry)) }
+                            }) { Text(stringResource(if (comparisonFailed) R.string.action_retry else R.string.compare_run)) }
                         }
                     }
                 }
             } else {
                 val summary = diffSummary!!
                 val currentDiff = summary.pageDiffs.getOrNull(currentPageIndex)
+                var regionIndex by remember(summary, currentPageIndex) { mutableIntStateOf(0) }
+                val regions = currentDiff?.regions.orEmpty()
+                val selectedRegion = regions.getOrNull(regionIndex)
+                val previousChanged = summary.pageDiffs.indexOfLast { it.pageIndex < currentPageIndex && it.hasDetectedChanges }
+                val nextChanged = summary.pageDiffs.indexOfFirst { it.pageIndex > currentPageIndex && it.hasDetectedChanges }
 
                 // Comparison Summary Header
                 Surface(
@@ -283,7 +310,7 @@ fun PdfCompareScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                stringResource(R.string.compare_summary_counts, summary.modifiedPages, summary.identicalPages),
+                                stringResource(R.string.compare_detected_counts, summary.modifiedPages, summary.identicalPages),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -309,6 +336,8 @@ fun PdfCompareScreen(
                     }
                 }
 
+                Text(stringResource(R.string.compare_sensitivity_active, stringResource(summary.sensitivity.labelRes())),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // Physical geometry is separate from raster difference percentage.
                 // Show both displayed page sizes and rotations when page boxes differ.
                 if (currentDiff?.geometryChanged == true) {
@@ -319,7 +348,7 @@ fun PdfCompareScreen(
                             a.widthPoints, a.heightPoints, a.rotation)
                         val after = String.format(java.util.Locale.getDefault(), "%.2f × %.2f pt · %d°",
                             b.widthPoints, b.heightPoints, b.rotation)
-                        Text("${stringResource(R.string.image_result_dimensions)}: $before → $after",
+                        Text("${stringResource(R.string.compare_geometry_changed)}: $before → $after",
                             color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -337,7 +366,7 @@ fun PdfCompareScreen(
                     if (viewMode == CompareViewMode.VISUAL_OVERLAY) {
                         if (currentDiff != null) {
                             key(summary, currentPageIndex) {
-                                LazyComparisonPreview(summary, currentPageIndex)
+                                LazyComparisonPreview(summary, currentPageIndex, selectedRegion)
                             }
                         }
                     } else {
@@ -369,6 +398,29 @@ fun PdfCompareScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                if (viewMode == CompareViewMode.VISUAL_OVERLAY && regions.isNotEmpty()) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween) {
+                        IconButton(onClick = { regionIndex-- }, enabled = regionIndex > 0) {
+                            Icon(Icons.Rounded.ChevronLeft, stringResource(R.string.compare_previous_region))
+                        }
+                        Text(stringResource(R.string.compare_region_position, regionIndex + 1, regions.size),
+                            style = MaterialTheme.typography.labelMedium)
+                        IconButton(onClick = { regionIndex++ }, enabled = regionIndex < regions.lastIndex) {
+                            Icon(Icons.Rounded.ChevronRight, stringResource(R.string.compare_next_region))
+                        }
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentPageIndex = previousChanged }, enabled = previousChanged >= 0) {
+                        Text(stringResource(R.string.compare_previous_changed_page))
+                    }
+                    TextButton(onClick = { currentPageIndex = nextChanged }, enabled = nextChanged >= 0) {
+                        Text(stringResource(R.string.compare_next_changed_page))
                     }
                 }
 
@@ -426,7 +478,7 @@ fun PdfCompareScreen(
 /** At most one overlay is displayed. Old requests are cancelled on page/mode changes.
  * ResourceTransferOwner disposes a bitmap even if dispatcher resumption is cancelled. */
 @Composable
-private fun LazyComparisonPreview(summary: DocumentDiffSummary, index: Int) {
+private fun LazyComparisonPreview(summary: DocumentDiffSummary, index: Int, selectedRegion: CompareRegion?) {
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var failed by remember { mutableStateOf(false) }
@@ -453,7 +505,22 @@ private fun LazyComparisonPreview(summary: DocumentDiffSummary, index: Int) {
     when {
         current != null -> Image(
             bitmap = current.asImageBitmap(), contentDescription = null,
-            modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Fit
+            modifier = Modifier.fillMaxSize().drawWithContent {
+                drawContent()
+                val region = selectedRegion
+                if (region != null) {
+                    val scale = minOf(size.width / current.width, size.height / current.height)
+                    val ox = (size.width - current.width * scale) / 2f
+                    val oy = (size.height - current.height * scale) / 2f
+                    val minExtent = 8.dp.toPx()
+                    val w = maxOf((region.right - region.left) * scale, minExtent).coerceAtMost(size.width)
+                    val h = maxOf((region.bottom - region.top) * scale, minExtent).coerceAtMost(size.height)
+                    val x = (ox + (region.left + region.right) * scale / 2f - w / 2f).coerceIn(0f, size.width - w)
+                    val y = (oy + (region.top + region.bottom) * scale / 2f - h / 2f).coerceIn(0f, size.height - h)
+                    drawRect(Color.Black, Offset(x, y), Size(w, h), style = Stroke(4.dp.toPx()))
+                    drawRect(Color.Yellow, Offset(x, y), Size(w, h), style = Stroke(2.dp.toPx()))
+                }
+            }, contentScale = ContentScale.Fit
         )
         failed -> Column(horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(16.dp)) {
@@ -463,4 +530,10 @@ private fun LazyComparisonPreview(summary: DocumentDiffSummary, index: Int) {
         }
         else -> CircularProgressIndicator()
     }
+}
+
+private fun CompareSensitivity.labelRes(): Int = when (this) {
+    CompareSensitivity.STRICT -> R.string.compare_sensitivity_strict
+    CompareSensitivity.BALANCED -> R.string.compare_sensitivity_balanced
+    CompareSensitivity.RELAXED -> R.string.compare_sensitivity_relaxed
 }

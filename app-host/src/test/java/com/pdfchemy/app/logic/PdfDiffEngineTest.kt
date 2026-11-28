@@ -239,4 +239,61 @@ class PdfDiffEngineTest {
         assertEquals(62.5f, score, 0f)
         assertEquals(score, withOverlay, 0f)
     }
+    @Test fun sensitivityChangesOnlyVisualThreshold() {
+        val first = { _: Int, row: IntArray -> row.fill(-1) }
+        val second = { _: Int, row: IntArray -> row.fill(0xffebffff.toInt()) }
+        assertEquals(100f, PdfDiffEngine.compareRasterRows(1, 1, 1, 1, first, second,
+            threshold = CompareSensitivity.STRICT.threshold), 0f)
+        assertEquals(0f, PdfDiffEngine.compareRasterRows(1, 1, 1, 1, first, second,
+            threshold = CompareSensitivity.BALANCED.threshold), 0f)
+        assertEquals(0f, PdfDiffEngine.compareRasterRows(1, 1, 1, 1, first, second,
+            threshold = CompareSensitivity.RELAXED.threshold), 0f)
+        assertThrows(IllegalArgumentException::class.java) {
+            PdfDiffEngine.compareRasterRows(1, 1, 1, 1, first, second, threshold = -1)
+        }
+    }
+
+    @Test fun separatesDistantRegionsAndPreservesExactPixelBounds() {
+        val collector = CompareRegionAccumulator(64, 64)
+        collector.add(1, 2)
+        collector.add(2, 2)
+        collector.add(60, 61)
+        assertEquals(listOf(CompareRegion(1, 2, 3, 3, 2), CompareRegion(60, 61, 61, 62, 1)), collector.regions())
+    }
+
+    @Test fun connectsAdjacentOccupiedTilesButNotDiagonalTiles() {
+        val collector = CompareRegionAccumulator(64, 64)
+        collector.add(3, 1)
+        collector.add(4, 1)
+        collector.add(8, 4)
+        assertEquals(listOf(CompareRegion(3, 1, 5, 2, 2), CompareRegion(8, 4, 9, 5, 1)), collector.regions())
+    }
+
+    @Test fun regionPixelCountsMatchRasterDifferenceIncludingAddedArea() {
+        val first = { _: Int, row: IntArray -> row.fill(-1) }
+        val second = { y: Int, row: IntArray -> row.fill(-1); if (y == 0) row[0] = 0xff000000.toInt() }
+        val collector = CompareRegionAccumulator(3, 3)
+        val score = PdfDiffEngine.compareRasterRows(2, 3, 3, 2, first, second, onChanged = collector::add)
+        assertEquals(62.5f, score, 0f)
+        assertEquals(5L, collector.regions().sumOf { it.changedPixels })
+        assertEquals(3, collector.regions().size)
+    }
+
+    @Test fun regionGridHasBoundedWorstCaseAndNoLostPixels() {
+        val collector = CompareRegionAccumulator(2048, 2048)
+        for (y in 0 until 16) for (x in 0 until 16) {
+            if ((x + y) % 2 == 0) collector.add(x * 128, y * 128)
+        }
+        assertEquals(128, collector.regions().size)
+        assertEquals(128L, collector.regions().sumOf { it.changedPixels })
+        assertTrue(CompareRegionAccumulator(1, 1).regions().isEmpty())
+    }
+
+    @Test fun geometryOnlyAndTextOnlyChangesRemainNavigable() {
+        val page = PageDiffResult(0, 0f, emptyList(), emptyList())
+        org.junit.Assert.assertFalse(page.hasDetectedChanges)
+        assertTrue(page.copy(geometryChanged = true).hasDetectedChanges)
+        assertTrue(page.copy(textAddedLines = listOf("added")).hasDetectedChanges)
+        assertTrue(page.copy(doc1PageIndex = null).hasDetectedChanges)
+    }
 }

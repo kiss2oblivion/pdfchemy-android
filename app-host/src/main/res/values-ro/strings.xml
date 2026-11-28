@@ -1408,4 +1408,18 @@
     <string name="billing_opening_play">Se deschide Google Play…</string>
     <string name="billing_checkout_network_error">Eroare de rețea la deschiderea plății. Verifică conexiunea și încearcă din nou.</string>
     <string name="billing_checkout_failed">Google Play nu a putut deschide plata. Verifică conexiunea și încearcă din nou.</string>
+    <string name="compare_sensitivity">Sensibilitate vizuală</string>
+    <string name="compare_sensitivity_strict">Strictă</string>
+    <string name="compare_sensitivity_balanced">Echilibrată</string>
+    <string name="compare_sensitivity_relaxed">Redusă</string>
+    <string name="compare_sensitivity_help">Modul strict detectează orice schimbare RGB în imaginea redată. Modurile echilibrat și redus ignoră diferențele mici de culoare. Verificările textului și geometriei rămân neschimbate.</string>
+    <string name="compare_sensitivity_active">Sensibilitate: %1$s</string>
+    <string name="compare_run">Compară</string>
+    <string name="compare_detected_counts">Modificate: %1$d • Fără modificări detectate: %2$d</string>
+    <string name="compare_geometry_changed">Geometria paginii s-a modificat</string>
+    <string name="compare_previous_region">Regiunea anterioară</string>
+    <string name="compare_next_region">Regiunea următoare</string>
+    <string name="compare_region_position">Regiunea %1$d / %2$d</string>
+    <string name="compare_previous_changed_page">Modificarea anterioară</string>
+    <string name="compare_next_changed_page">Modificarea următoare</string>
 </resources>
