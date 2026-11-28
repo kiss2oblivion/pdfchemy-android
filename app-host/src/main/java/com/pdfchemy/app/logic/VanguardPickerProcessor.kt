@@ -17,7 +17,7 @@ sealed class PickerOutcome : java.io.Closeable {
     data class Selected(val stagedUris: List<Uri>) : PickerOutcome()
     data class BlockedThreat(val reasonResId: Int) : PickerOutcome()
     data class Encrypted(val stagedUri: Uri) : PickerOutcome()
-    object Damaged : PickerOutcome()
+    data class Damaged(val failure: VanguardInspectionFailure = VanguardInspectionFailure.UNKNOWN) : PickerOutcome()
     object ProviderError : PickerOutcome()
     object Cancelled : PickerOutcome()
 }
@@ -80,7 +80,7 @@ object VanguardPickerProcessor {
                     }
                     is VanguardThreatResult.ParseFailed -> {
                         releaser(staged)
-                        PickerOutcome.Damaged
+                        PickerOutcome.Damaged(threat.failure)
                     }
                 }
             } else {
@@ -137,7 +137,7 @@ object VanguardPickerProcessor {
                         }
                         is VanguardThreatResult.ParseFailed -> {
                             owner.close()
-                            return PickerOutcome.Damaged
+                            return PickerOutcome.Damaged(threat.failure)
                         }
                     }
                 }

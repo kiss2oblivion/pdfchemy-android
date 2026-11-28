@@ -184,7 +184,12 @@ internal fun DocumentSanitizerContent(
                         IconButton(
                             onClick = {
                                 val summary = buildString {
-                                    appendLine("Status: ${if (report.isClean) "Clean" else "${report.threatsFound} threats detected"}")
+                                    appendLine("Status: ${when {
+                                         report.isEncrypted -> "Encrypted; inspection unverified"
+                                         report.parseFailed -> "Inspection incomplete: ${report.failure?.name ?: "UNKNOWN"}"
+                                         report.isClean -> "No detected active content"
+                                         else -> "${report.threatsFound} threats detected"
+                                     }}")
                                     appendLine("JavaScript Triggers: ${report.jsCount}")
                                     appendLine("Launch Actions: ${report.launchActionsCount}")
                                     appendLine("Other Actions: ${report.otherActionsCount}")
@@ -263,8 +268,12 @@ internal fun DocumentSanitizerContent(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                if (report.isClean) stringResource(R.string.sanitizer_all_clean)
-                                else stringResource(R.string.sanitizer_threats_detected, report.threatsFound),
+                                when {
+                                    report.isEncrypted -> stringResource(R.string.vanguard_encrypted_title)
+                                    report.parseFailed -> stringResource(R.string.vanguard_damaged_title)
+                                    report.isClean -> stringResource(R.string.sanitizer_all_clean)
+                                    else -> stringResource(R.string.sanitizer_threats_detected, report.threatsFound)
+                                },
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleMedium
                             )

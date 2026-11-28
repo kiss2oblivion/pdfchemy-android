@@ -17,7 +17,8 @@ internal object PdfPrivacyCleanup {
         var node = raw
         val references = identities()
         while (node is COSObject) {
-            require(references.add(node) && references.size <= SecurityLimits.MAX_GRAPH_DEPTH) { "Invalid private object reference" }
+            require(references.add(node)) { "Invalid private object reference cycle" }
+            requireInspectionGraphLimit(references.size <= SecurityLimits.MAX_GRAPH_DEPTH)
             node = node.`object`
         }
         return node
@@ -25,11 +26,11 @@ internal object PdfPrivacyCleanup {
 
     private fun children(node: COSBase): List<Pair<COSName?, COSBase?>> = when (node) {
         is COSDictionary -> {
-            require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive private dictionary" }
+            requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
             node.keySet().map { it to node.getItem(it) }
         }
         is COSArray -> {
-            require(node.size() <= SecurityLimits.MAX_GRAPH_NODES) { "Excessive private array" }
+            requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
             (0 until node.size()).map { null to node.get(it) }
         }
         else -> emptyList()
@@ -41,7 +42,7 @@ internal object PdfPrivacyCleanup {
         fun visit(raw: COSBase?, depth: Int) {
             val node = value(raw) ?: return
             if (node in boundary || node !is COSDictionary && node !is COSArray && node !is COSString || !seen.add(node)) return
-            require(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES) { "Private graph quota exceeded" }
+            requireInspectionGraphLimit(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES)
             for ((key, child) in children(node)) if (key !in skip) visit(child, depth + 1)
         }
         roots.forEach { visit(it, 0) }
@@ -49,7 +50,7 @@ internal object PdfPrivacyCleanup {
     }
 
     private fun graph(document: PDDocument): Set<COSBase> {
-        require(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES) { "PDF object quota exceeded" }
+        requireInspectionGraphLimit(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES)
         return walk(listOf(document.document.trailer) + document.document.objects)
     }
 

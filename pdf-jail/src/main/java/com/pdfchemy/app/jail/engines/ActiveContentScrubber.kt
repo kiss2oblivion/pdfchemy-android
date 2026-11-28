@@ -7,6 +7,12 @@ import java.util.IdentityHashMap
 import java.util.ArrayDeque
 import com.pdfchemy.app.security.SecurityLimits
 
+internal class InspectionGraphLimitException : IllegalArgumentException("PDF inspection graph quota exceeded")
+
+internal fun requireInspectionGraphLimit(allowed: Boolean) {
+    if (!allowed) throw InspectionGraphLimitException()
+}
+
 /** Visits every reachable and pooled object, including outlines and associated-file dictionaries. */
 object ActiveContentScrubber {
     data class Findings(var javascript: Int = 0, var launches: Int = 0, var actions: Int = 0, var untrustedUris: Int = 0, var attachments: Int = 0, var uris: Int = 0) {
@@ -34,22 +40,22 @@ object ActiveContentScrubber {
         val uriObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val logicalAttachments = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         queue.add(Triple(document.documentCatalog.cosObject, 0, false))
-        require(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES) { "PDF object quota exceeded" }
+        requireInspectionGraphLimit(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES)
         document.document.objects.forEach { queue.add(Triple(it, 0, false)) }
         val findings = Findings()
         while (queue.isNotEmpty()) {
             val (base, depth, isTriggered) = queue.removeFirst()
             if (!(if (isTriggered) triggered else visited).add(base)) continue
-            require(visited.size + triggered.size <= SecurityLimits.MAX_GRAPH_NODES && depth <= SecurityLimits.MAX_GRAPH_DEPTH && queue.size <= SecurityLimits.MAX_GRAPH_NODES) { "PDF traversal quota exceeded" }
+            requireInspectionGraphLimit(visited.size + triggered.size <= SecurityLimits.MAX_GRAPH_NODES && depth <= SecurityLimits.MAX_GRAPH_DEPTH && queue.size <= SecurityLimits.MAX_GRAPH_NODES)
             when (base) {
                 is COSObject -> base.`object`?.let { queue.add(Triple(it, depth + 1, isTriggered)) }
                 is COSArray -> {
-                    require(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
+                    requireInspectionGraphLimit(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
                     for (i in 0 until base.size()) queue.add(Triple(base.get(i), depth + 1, isTriggered))
                 }
                 is COSDictionary -> {
                     // Capture children before removing links, so orphaned carriers are scrubbed too.
-                    require(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
+                    requireInspectionGraphLimit(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
                     base.keySet().toList().forEach { key -> base.getItem(key)?.let {
                         val child = if (it is COSObject) it.`object` else it
                         val automaticAction = key.name == "OpenAction" && child is COSDictionary && child.containsKey(COSName.S)

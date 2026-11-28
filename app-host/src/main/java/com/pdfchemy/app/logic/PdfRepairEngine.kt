@@ -44,6 +44,8 @@ object PdfRepairEngine {
                     issueSummary = contract.issueSummary
                 )
             )
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfRepairEngine: Error diagnosing PDF", e)
             return Result.failure(e)
@@ -77,6 +79,8 @@ object PdfRepairEngine {
             )
 
             return Result.success(contract.recoveredPages)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
             AppLogger.e("PdfRepairEngine: Error repairing PDF", e)
             return Result.failure(e)

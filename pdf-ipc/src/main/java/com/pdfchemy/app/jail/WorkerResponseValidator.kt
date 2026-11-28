@@ -251,6 +251,14 @@ object WorkerResponseValidator {
         val isClean = obj.requireBoolean("isClean")
         val isEncrypted = obj.requireBoolean("isEncrypted")
         val parseFailed = obj.requireBoolean("parseFailed")
+        val failure = if (obj.has("inspectionFailure") && !obj.isNull("inspectionFailure")) {
+            VanguardInspectionFailure.valueOf(obj.requireString("inspectionFailure", maxLength = 64)).also {
+                require(parseFailed && !isEncrypted && !isClean) { "Contradictory inspection failure" }
+                require(it in setOf(VanguardInspectionFailure.PDF_READ_FAILED, VanguardInspectionFailure.GRAPH_LIMIT,
+                    VanguardInspectionFailure.ACTIVE_CONTENT_INSPECTION_FAILED, VanguardInspectionFailure.METADATA_INSPECTION_FAILED,
+                    VanguardInspectionFailure.UNKNOWN)) { "Invalid worker inspection code" }
+            }
+        } else if (parseFailed) VanguardInspectionFailure.UNKNOWN else null
 
         // Fail-closed invariant: (isEncrypted || parseFailed) => !isClean
         if (isEncrypted || parseFailed) {
@@ -285,7 +293,8 @@ object WorkerResponseValidator {
             uriCount = uriCount,
             hasMetadata = hasMetadata,
             isEncrypted = isEncrypted,
-            parseFailed = parseFailed
+            parseFailed = parseFailed,
+            failure = failure
         )
     }
 

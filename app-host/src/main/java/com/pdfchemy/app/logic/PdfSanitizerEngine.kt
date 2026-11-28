@@ -20,14 +20,15 @@ data class SanitizerAuditReport(
     val hasMetadata: Boolean = false,
     val isClean: Boolean = true,
     val isEncrypted: Boolean = false,
-    val parseFailed: Boolean = false
+    val parseFailed: Boolean = false,
+    val failure: VanguardInspectionFailure? = null
 )
 
 sealed class VanguardThreatResult {
     object Clean : VanguardThreatResult()
     data class ExecutableThreat(val report: SanitizerAuditReport) : VanguardThreatResult()
     data class EncryptedCannotVerify(val uri: Uri) : VanguardThreatResult()
-    data class ParseFailed(val uri: Uri) : VanguardThreatResult()
+    data class ParseFailed(val uri: Uri, val failure: VanguardInspectionFailure = VanguardInspectionFailure.UNKNOWN) : VanguardThreatResult()
 }
 
 data class SanitizerResult(
@@ -40,6 +41,15 @@ data class SanitizerResult(
 )
 
 object PdfSanitizerEngine {
+
+    internal fun classifyInspectionFailure(error: Exception): VanguardInspectionFailure = when (error) {
+        is PdfGateway.WorkerAdmissionBusyException -> VanguardInspectionFailure.WORKER_BUSY
+        is PdfGateway.WorkerTimeoutException -> VanguardInspectionFailure.WORKER_TIMEOUT
+        is PdfGateway.WorkerDiedException, is PdfGateway.WorkerBindingException,
+        is PdfGateway.WorkerFailure -> VanguardInspectionFailure.WORKER_UNAVAILABLE
+        is java.io.FileNotFoundException -> VanguardInspectionFailure.ACCESS_FAILED
+        else -> VanguardInspectionFailure.UNKNOWN
+    }
 
     suspend fun auditDocumentThreats(
         context: Context,
@@ -64,12 +74,14 @@ object PdfSanitizerEngine {
                 hasMetadata = contract.hasMetadata,
                 isClean = contract.isClean,
                 isEncrypted = contract.isEncrypted,
-                parseFailed = contract.parseFailed
+                parseFailed = contract.parseFailed,
+                failure = contract.failure
             )
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {
-            SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true)
+            SanitizerAuditReport(threatsFound = 1, isClean = false, parseFailed = true,
+                failure = classifyInspectionFailure(e))
         }
     }
 
@@ -90,7 +102,7 @@ object PdfSanitizerEngine {
         pdfUri: Uri
     ): Boolean {
         val report = auditDocumentThreats(context, pdfUri)
-        return report.jsCount > 0 || report.launchActionsCount > 0 || report.otherActionsCount > 0 || report.untrustedUriCount > 0 || report.isEncrypted || report.parseFailed
+        return !report.isClean || report.threatsFound != 0 || report.jsCount > 0 || report.launchActionsCount > 0 || report.otherActionsCount > 0 || report.untrustedUriCount > 0 || report.isEncrypted || report.parseFailed
     }
 
     suspend fun checkVanguardThreat(
@@ -104,8 +116,8 @@ object PdfSanitizerEngine {
         if (report.jsCount > 0 || report.launchActionsCount > 0 || report.otherActionsCount > 0 || report.untrustedUriCount > 0) {
             return VanguardThreatResult.ExecutableThreat(report)
         }
-        if (report.parseFailed) {
-            return VanguardThreatResult.ParseFailed(pdfUri)
+        if (report.parseFailed || !report.isClean || report.threatsFound != 0) {
+            return VanguardThreatResult.ParseFailed(pdfUri, report.failure ?: VanguardInspectionFailure.UNKNOWN)
         }
         return VanguardThreatResult.Clean
     }

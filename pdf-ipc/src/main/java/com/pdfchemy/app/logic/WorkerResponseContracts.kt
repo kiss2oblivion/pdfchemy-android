@@ -56,6 +56,12 @@ data class PageCountContract(
  * Sanitizer audit contract for SANITIZE_AUDIT.
  * Fail-closed: threatsFound > 0 requires isClean == false.
  */
+/** Fixed diagnostic codes: never forward untrusted PDF strings or stack traces to the UI. */
+enum class VanguardInspectionFailure {
+    PDF_READ_FAILED, GRAPH_LIMIT, ACTIVE_CONTENT_INSPECTION_FAILED, METADATA_INSPECTION_FAILED,
+    WORKER_BUSY, WORKER_TIMEOUT, WORKER_UNAVAILABLE, ACCESS_FAILED, UNKNOWN
+}
+
 data class SanitizeAuditContract(
     val threatsFound: Int,
     val isClean: Boolean,
@@ -67,7 +73,8 @@ data class SanitizeAuditContract(
     val uriCount: Int,
     val hasMetadata: Boolean,
     val isEncrypted: Boolean,
-    val parseFailed: Boolean
+    val parseFailed: Boolean,
+    val failure: VanguardInspectionFailure? = null
 ) : OperationContract
 
 /**

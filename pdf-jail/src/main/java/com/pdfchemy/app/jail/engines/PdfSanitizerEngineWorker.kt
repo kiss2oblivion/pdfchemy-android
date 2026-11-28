@@ -10,30 +10,34 @@ import java.io.File
 import com.pdfchemy.app.jail.boundedFileOutput
 
 object PdfSanitizerEngineWorker {
-    fun audit(sourceFd: ParcelFileDescriptor): String = try {
-        FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, "", com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
-            val f = ActiveContentScrubber.inspect(document)
-            val metadata = PdfPrivacyCleanup.hasMetadata(document)
-            val executableThreats = f.javascript + f.launches + f.actions + f.untrustedUris
-            JSONObject().put("threatsFound", executableThreats).put("isClean", executableThreats == 0)
-                .put("jsCount", f.javascript).put("launchActionsCount", f.launches).put("otherActionsCount", f.actions).put("untrustedUriCount", f.untrustedUris).put("attachmentCount", f.attachments).put("uriCount", f.uris)
-                .put("hasMetadata", metadata).put("isEncrypted", document.isEncrypted).put("parseFailed", false).toString()
+    fun audit(sourceFd: ParcelFileDescriptor): String {
+        var stage = com.pdfchemy.app.logic.VanguardInspectionFailure.PDF_READ_FAILED
+        return try {
+            FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, "", com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
+                stage = com.pdfchemy.app.logic.VanguardInspectionFailure.ACTIVE_CONTENT_INSPECTION_FAILED
+                val f = ActiveContentScrubber.inspect(document)
+                stage = com.pdfchemy.app.logic.VanguardInspectionFailure.METADATA_INSPECTION_FAILED
+                val metadata = PdfPrivacyCleanup.hasMetadata(document)
+                val executableThreats = f.javascript + f.launches + f.actions + f.untrustedUris
+                val encrypted = document.isEncrypted
+                // The legacy count includes a blocking sentinel for encrypted/incomplete audits.
+                JSONObject().put("threatsFound", if (encrypted) maxOf(1, executableThreats) else executableThreats)
+                    .put("isClean", executableThreats == 0 && !encrypted)
+                    .put("jsCount", f.javascript).put("launchActionsCount", f.launches).put("otherActionsCount", f.actions)
+                    .put("untrustedUriCount", f.untrustedUris).put("attachmentCount", f.attachments).put("uriCount", f.uris)
+                    .put("hasMetadata", metadata).put("isEncrypted", encrypted).put("parseFailed", false).toString()
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            val encrypted = e is InvalidPasswordException
+            val failure = if (e is InspectionGraphLimitException) com.pdfchemy.app.logic.VanguardInspectionFailure.GRAPH_LIMIT else stage
+            JSONObject().put("threatsFound", 1).put("isClean", false)
+                .put("jsCount", 0).put("launchActionsCount", 0).put("otherActionsCount", 0)
+                .put("untrustedUriCount", 0).put("attachmentCount", 0).put("uriCount", 0)
+                .put("hasMetadata", false).put("isEncrypted", encrypted).put("parseFailed", !encrypted)
+                .apply { if (!encrypted) put("inspectionFailure", failure.name) }.toString()
         }
-    } catch (e: Exception) {
-        val isEncrypted = e is InvalidPasswordException
-        JSONObject()
-            .put("threatsFound", 1)
-            .put("isClean", false)
-            .put("jsCount", 0)
-            .put("launchActionsCount", 0)
-            .put("otherActionsCount", 0)
-            .put("untrustedUriCount", 0)
-            .put("attachmentCount", 0)
-            .put("uriCount", 0)
-            .put("hasMetadata", false)
-            .put("isEncrypted", isEncrypted)
-            .put("parseFailed", !isEncrypted)
-            .toString()
     }
     fun sanitize(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, paramsJson: String): String {
         val p = JSONObject(paramsJson)
