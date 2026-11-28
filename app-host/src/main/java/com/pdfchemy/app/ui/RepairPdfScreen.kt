@@ -117,9 +117,13 @@ fun RepairPdfScreen(
                         IconButton(
                             onClick = {
                                 val summary = buildString {
-                                    appendLine("PDF Header: ${if (diag.hasValidHeader) "Valid (%PDF-)" else "Corrupted / Missing"}")
-                                    appendLine("EOF Marker: ${if (diag.hasValidEof) "Valid (%%EOF)" else "Truncated / Missing"}")
+                                    appendLine("PDF Header: ${if (diag.hasValidHeader) "Marker found" else "Marker not found in checked region"}")
+                                    appendLine("EOF Marker: ${if (diag.hasValidEof) "Marker found" else "Marker not found in checked region"}")
                                     appendLine("Recovered Pages: ${diag.recoveredPages}")
+                                    diag.sourceBytes?.let { appendLine("Staged input bytes: $it") }
+                                    diag.diagnosticElapsedMs?.let { appendLine("Worker diagnosis ms: $it") }
+                                    diag.parserOpened?.let { appendLine("Parser completed: $it") }
+                                    diag.pooledObjects?.let { appendLine("Parsed object pool entries: $it") }
                                     if (diag.issueSummary.isNotBlank()) {
                                         append("Issues: ${diag.issueSummary}")
                                     }
@@ -250,7 +254,7 @@ fun RepairPdfScreen(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(stringResource(R.string.label_pdf_header), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                if (diagnostic?.hasValidHeader == true) "Valid (%PDF-)" else "Corrupted / Missing",
+                                stringResource(if (diagnostic?.hasValidHeader == true) R.string.vanguard_recovery_found else R.string.vanguard_recovery_not_found),
                                 fontWeight = FontWeight.Bold,
                                 color = if (diagnostic?.hasValidHeader == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                             )
@@ -259,7 +263,7 @@ fun RepairPdfScreen(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(stringResource(R.string.label_eof_marker), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                if (diagnostic?.hasValidEof == true) "Valid (%%EOF)" else "Truncated / Missing",
+                                stringResource(if (diagnostic?.hasValidEof == true) R.string.vanguard_recovery_found else R.string.vanguard_recovery_not_found),
                                 fontWeight = FontWeight.Bold,
                                 color = if (diagnostic?.hasValidEof == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                             )
@@ -270,7 +274,11 @@ fun RepairPdfScreen(
                             Text("${diagnostic?.recoveredPages ?: 0}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         }
 
-                        if (!diagnostic?.issueSummary.isNullOrBlank()) {
+                        diagnostic?.let { RecoveryDiagnosticMetrics(it) }
+
+                        if (diagnostic?.isEncrypted == true) {
+                            Text(stringResource(R.string.vanguard_recovery_password), style = MaterialTheme.typography.bodySmall)
+                        } else if (!diagnostic?.issueSummary.isNullOrBlank()) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                             Text(
                                 text = stringResource(R.string.repair_issues_summary, diagnostic?.issueSummary.orEmpty()),
@@ -291,7 +299,7 @@ fun RepairPdfScreen(
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 52.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                enabled = !isProcessing && !isDiagnosing && selectedPdfUri != null && diagnostic != null
+                enabled = !isProcessing && !isDiagnosing && selectedPdfUri != null && diagnostic?.isEncrypted == false
             ) {
                 if (isProcessing) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)

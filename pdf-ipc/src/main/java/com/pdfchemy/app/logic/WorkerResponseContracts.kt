@@ -234,7 +234,11 @@ data class RepairDiagnoseContract(
     val hasValidEof: Boolean,
     val recoveredPages: Int,
     val isEncrypted: Boolean,
-    val issueSummary: String
+    val issueSummary: String,
+    val sourceBytes: Long? = null,
+    val diagnosticElapsedMs: Long? = null,
+    val parserOpened: Boolean? = null,
+    val pooledObjects: Int? = null
 ) : OperationContract
 
 /**

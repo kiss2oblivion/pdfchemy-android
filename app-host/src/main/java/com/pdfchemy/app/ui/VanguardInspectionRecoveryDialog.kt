@@ -115,6 +115,7 @@ internal fun VanguardInspectionRecoveryDialog(
                     Text(stringResource(R.string.vanguard_recovery_eof, if (report.hasValidEof)
                         stringResource(R.string.vanguard_recovery_found) else stringResource(R.string.vanguard_recovery_not_found)))
                     Text(stringResource(R.string.vanguard_recovery_pages, report.recoveredPages))
+                    RecoveryDiagnosticMetrics(report)
                     Text(stringResource(when {
                         report.isEncrypted -> R.string.vanguard_recovery_password
                         report.recoveredPages > 0 -> R.string.vanguard_recovery_readable
@@ -169,6 +170,10 @@ internal fun VanguardInspectionRecoveryDialog(
                                 appendLine("EOF marker: " + it.hasValidEof)
                                 appendLine("Readable page count: " + it.recoveredPages)
                                 appendLine("Encrypted: " + it.isEncrypted)
+                                it.sourceBytes?.let { value -> appendLine("Staged input bytes: $value") }
+                                it.diagnosticElapsedMs?.let { value -> appendLine("Worker diagnosis ms: $value") }
+                                it.parserOpened?.let { value -> appendLine("Parser completed: $value") }
+                                it.pooledObjects?.let { value -> appendLine("Parsed object pool entries: $value") }
                             }
                         }
                         (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)
@@ -189,4 +194,18 @@ internal fun VanguardInspectionRecoveryDialog(
             }) { Text(stringResource(R.string.cancel)) }
         }
     )
+}
+
+/** These observations describe the staged PDF, not a conformance certificate. */
+@Composable
+internal fun RecoveryDiagnosticMetrics(report: RepairDiagnostic) {
+    report.sourceBytes?.let { Text(stringResource(R.string.vanguard_diagnostic_bytes, it)) }
+    report.diagnosticElapsedMs?.let { Text(stringResource(R.string.vanguard_diagnostic_duration, it)) }
+    report.parserOpened?.let {
+        Text(stringResource(if (it) R.string.vanguard_diagnostic_parser_opened else R.string.vanguard_diagnostic_parser_incomplete),
+            style = MaterialTheme.typography.bodySmall)
+    }
+    report.pooledObjects?.let {
+        Text(stringResource(R.string.vanguard_diagnostic_pool, it), style = MaterialTheme.typography.bodySmall)
+    }
 }

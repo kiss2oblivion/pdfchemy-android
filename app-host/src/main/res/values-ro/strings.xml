@@ -1447,4 +1447,9 @@
     <string name="vanguard_reason_staging_capacity">Aplicația a atins limita de stocare temporară a documentelor. Aceasta este o limită de resurse, nu o constatare a deteriorării.</string>
     <string name="vanguard_input_next">Anulați și alegeți o copie mai mică. Dacă este necesar, folosiți un instrument de încredere pentru a împărți originalul în volume mai mici. Reîncercarea aceluiași fișier prea mare nu va ajuta.</string>
     <string name="vanguard_capacity_next">Închideți alte documente sau așteptați finalizarea operațiunilor active, apoi reîncercați. Fișierul original rămâne neschimbat.</string>
+    <string name="vanguard_diagnostic_bytes">Fișier temporar: %1$d octeți</string>
+    <string name="vanguard_diagnostic_duration">Diagnostic în motorul izolat: %1$d ms</string>
+    <string name="vanguard_diagnostic_parser_opened">Cititorul a finalizat interpretarea. Aceasta nu certifică validitatea structurală sau siguranța.</string>
+    <string name="vanguard_diagnostic_parser_incomplete">Cititorul nu a putut finaliza interpretarea.</string>
+    <string name="vanguard_diagnostic_pool">Obiecte în registrul cititorului: %1$d (nu reprezintă numărul total de noduri traversate)</string>
 </resources>

@@ -540,12 +540,26 @@ object WorkerResponseValidator {
 
     private fun parseRepairDiagnose(root: Any?): RepairDiagnoseContract {
         val obj = requireObject(root)
+        val pages = obj.requireInt("recoveredPages", min = 0, max = SecurityLimits.MAX_PAGE_COUNT)
+        val parserOpened = if (obj.has("parserOpened")) obj.requireBoolean("parserOpened") else null
+        val objects = if (obj.has("pooledObjects")) obj.requireInt("pooledObjects", min = 0) else null
+        if (parserOpened == false) require(pages == 0 && objects == null) {
+            "Incomplete diagnosis cannot claim recovered pages or object counts"
+        }
+        if (parserOpened == true) require(objects != null) { "Missing parsed object count" }
+        if (objects != null) require(parserOpened == true) { "Object count without completed parser read" }
         return RepairDiagnoseContract(
             hasValidHeader = obj.requireBoolean("hasValidHeader"),
             hasValidEof = obj.requireBoolean("hasValidEof"),
-            recoveredPages = obj.requireInt("recoveredPages", min = 0, max = SecurityLimits.MAX_PAGE_COUNT),
+            recoveredPages = pages,
             isEncrypted = obj.requireBoolean("isEncrypted"),
-            issueSummary = obj.requireString("issueSummary", maxLength = 1024)
+            issueSummary = obj.requireString("issueSummary", maxLength = 1024),
+            sourceBytes = if (obj.has("sourceBytes"))
+                obj.requireLong("sourceBytes", min = 1L, max = SecurityLimits.MAX_PDF_FILESIZE) else null,
+            diagnosticElapsedMs = if (obj.has("diagnosticElapsedMs"))
+                obj.requireLong("diagnosticElapsedMs", min = 0L, max = SecurityLimits.WORKER_DEADLINE_MS) else null,
+            parserOpened = parserOpened,
+            pooledObjects = objects
         )
     }
 

@@ -12,7 +12,11 @@ data class RepairDiagnostic(
     val hasValidEof: Boolean = false,
     val recoveredPages: Int = 0,
     val isEncrypted: Boolean = false,
-    val issueSummary: String = ""
+    val issueSummary: String = "",
+    val sourceBytes: Long? = null,
+    val diagnosticElapsedMs: Long? = null,
+    val parserOpened: Boolean? = null,
+    val pooledObjects: Int? = null
 )
 
 object PdfRepairEngine {
@@ -41,7 +45,11 @@ object PdfRepairEngine {
                     hasValidEof = contract.hasValidEof,
                     recoveredPages = contract.recoveredPages,
                     isEncrypted = contract.isEncrypted,
-                    issueSummary = contract.issueSummary
+                    issueSummary = contract.issueSummary,
+                    sourceBytes = contract.sourceBytes,
+                    diagnosticElapsedMs = contract.diagnosticElapsedMs,
+                    parserOpened = contract.parserOpened,
+                    pooledObjects = contract.pooledObjects
                 )
             )
         } catch (cancelled: kotlinx.coroutines.CancellationException) {

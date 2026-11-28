@@ -595,4 +595,19 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("\"isClean\":false", "\"isClean\":true")) }
         assertRejected { WorkerResponseValidator.validate("SANITIZE_AUDIT", failed.replace("\"parseFailed\":true", "\"parseFailed\":false")) }
     }
+
+    @Test fun repairDiagnosticsValidateMeasurementsAndParserOutcome() {
+        val legacy = """{"hasValidHeader":true,"hasValidEof":false,"recoveredPages":2,"isEncrypted":false,"issueSummary":"Parser opened"}"""
+        val old = WorkerResponseValidator.validate("REPAIR_DIAGNOSE", legacy) as RepairDiagnoseContract
+        assertNull(old.sourceBytes)
+        val current = legacy.dropLast(1) + ""","sourceBytes":4096,"diagnosticElapsedMs":100,"parserOpened":true,"pooledObjects":20}"""
+        val report = WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current) as RepairDiagnoseContract
+        assertEquals(4096L, report.sourceBytes)
+        assertEquals(100L, report.diagnosticElapsedMs)
+        assertEquals(20, report.pooledObjects)
+        assertEquals(true, report.parserOpened)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current.replace("4096", "-1")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current.replace("\"parserOpened\":true", "\"parserOpened\":false")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", current.replace("\"pooledObjects\":20", "\"pooledObjects\":-1")) }
+    }
 }

@@ -1464,4 +1464,9 @@
     <string name="vanguard_reason_staging_capacity">The app has reached its temporary document-storage budget. This is a resource limit, not a finding of corruption.</string>
     <string name="vanguard_input_next">Cancel and choose a smaller copy. If necessary, use a trusted tool to split the original into smaller volumes. Retrying the same oversized file will not help.</string>
     <string name="vanguard_capacity_next">Close other documents or wait for active operations to finish, then retry. The original file is unchanged.</string>
+    <string name="vanguard_diagnostic_bytes">Staged input: %1$d bytes</string>
+    <string name="vanguard_diagnostic_duration">Worker diagnosis: %1$d ms</string>
+    <string name="vanguard_diagnostic_parser_opened">The parser completed the read. This does not certify structural validity or security.</string>
+    <string name="vanguard_diagnostic_parser_incomplete">The parser could not complete the read.</string>
+    <string name="vanguard_diagnostic_pool">Parsed object pool: %1$d entries (not the full traversal count)</string>
 </resources>

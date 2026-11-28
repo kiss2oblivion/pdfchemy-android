@@ -82,6 +82,10 @@ class VanguardRecoveryIntegrityTest {
             source.writeBytes(damaged)
             val diagnosis = PdfRepairEngine.diagnosePdf(context, Uri.fromFile(source)).getOrThrow()
             assertFalse(diagnosis.hasValidEof)
+            assertEquals(damaged.size.toLong(), diagnosis.sourceBytes)
+            assertNotNull(diagnosis.parserOpened)
+            assertTrue(requireNotNull(diagnosis.diagnosticElapsedMs) >= 0L)
+            if (diagnosis.parserOpened == true) assertNotNull(diagnosis.pooledObjects)
             val result = PdfGateway.executeEngineTyped<RepairApplyContract>(context, "REPAIR_APPLY",
                 Uri.fromFile(source), Uri.fromFile(output), """{"requireVanguardClean":true}""")
             assertEquals(2, result.recoveredPages)
