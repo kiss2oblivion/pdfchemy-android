@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.pdfchemy.app.logic.PickerOutcome
+import com.pdfchemy.app.logic.VanguardInspectionFailure
 import com.pdfchemy.app.logic.VanguardPickerProcessor
 import com.pdfchemy.app.logic.VanguardThreatResult
 import com.pdfchemy.app.utils.DocumentStager
@@ -80,8 +81,8 @@ class PickerBatchRetentionTest {
     @Test fun rejectedBatchReleasesAllLeases() = runBlocking {
         var scanned = 0
         val outcome = VanguardPickerProcessor.processMultiple(context, (1..6).map(::source), true,
-            threatChecker = { if (++scanned == 6) VanguardThreatResult.ParseFailed(it) else VanguardThreatResult.Clean })
-        assertEquals(PickerOutcome.Damaged, outcome)
+            threatChecker = { if (++scanned == 6) VanguardThreatResult.ParseFailed(it, VanguardInspectionFailure.GRAPH_LIMIT) else VanguardThreatResult.Clean })
+        assertEquals(PickerOutcome.Damaged(VanguardInspectionFailure.GRAPH_LIMIT), outcome)
         assertEquals(0, DocumentStager.stagedCount)
     }
 
