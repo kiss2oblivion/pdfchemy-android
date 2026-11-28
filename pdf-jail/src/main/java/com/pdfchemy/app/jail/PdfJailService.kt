@@ -84,7 +84,9 @@ class PdfJailService : Service() {
                 JailScratch.close()
             }
             runCatching {
-                if (failure != null) callback.onFailure(400, failure.message ?: "Worker failed")
+                if (failure is com.pdfchemy.app.jail.engines.RecoveryPasswordRejected) {
+                    callback.onFailure(401, "Password rejected")
+                } else if (failure != null) callback.onFailure(400, failure.message ?: "Worker failed")
                 else {
                     callback.onSuccess(requireNotNull(result))
                     if (com.pdfchemy.pdfjail.BuildConfig.DEBUG && result.contains("\"duplicateSuccess\":true")) {

@@ -34,6 +34,8 @@ internal fun VanguardProtectedRecoveryDialog(
     var saving by remember { mutableStateOf(false) }
     var running by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
+    var passwordRejected by remember { mutableStateOf(false) }
+    var operationJob by remember { mutableStateOf<Job?>(null) }
     val busy = saving || running
     val save = rememberPreferredDocumentDestinationCreator("application/pdf") { target ->
         saving = false
@@ -41,7 +43,7 @@ internal fun VanguardProtectedRecoveryDialog(
             val entered = password
             password = ""
             running = true
-            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            operationJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 try {
                     check(target.isFreshCopy && consent)
                     if (encrypted) {
@@ -60,7 +62,10 @@ internal fun VanguardProtectedRecoveryDialog(
                     continueLatest(target.uri)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: Exception) { failed = true }
+                } catch (error: Exception) {
+                    passwordRejected = encrypted && error is PdfGateway.WorkerFailure && error.errorCode == 401
+                    failed = true
+                }
                 finally {
                     withContext(NonCancellable + Dispatchers.IO) { OutputPolicy.deleteIfFresh(context, target.uri) }
                     running = false
@@ -87,16 +92,24 @@ internal fun VanguardProtectedRecoveryDialog(
                     Text(stringResource(R.string.vanguard_protected_consent), Modifier.padding(top = 12.dp))
                 }
                 if (running) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (failed) Text(stringResource(if (encrypted) R.string.vanguard_unlock_failed else R.string.vanguard_sanitize_failed),
+                if (failed) Text(stringResource(when {
+                    passwordRejected -> R.string.vanguard_password_rejected
+                    encrypted -> R.string.vanguard_unlock_failed
+                    else -> R.string.vanguard_sanitize_failed
+                }),
                     color = MaterialTheme.colorScheme.error)
             }
         },
         confirmButton = {
             Button(enabled = consent && !busy, onClick = {
-                failed = false; saving = true
+                failed = false; passwordRejected = false; saving = true
                 save.launch(if (encrypted) "unlocked.pdf" else "sanitized.pdf")
             }) { Text(stringResource(if (encrypted) R.string.vanguard_unlock_continue else R.string.vanguard_sanitize_continue)) }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = {
+            TextButton(enabled = !saving, onClick = {
+                if (running) operationJob?.cancel() else onDismiss()
+            }) { Text(stringResource(R.string.cancel)) }
+        }
     )
 }

@@ -86,6 +86,7 @@ fun PdfReaderScreen(
 ) {
     val sanitizedInitial = initialUri?.takeIf { it != Uri.EMPTY } ?: viewModel.continuityDocumentUri.collectAsState().value?.takeIf { it != Uri.EMPTY }
     var documentUri by remember(sanitizedInitial) { mutableStateOf(sanitizedInitial) }
+    var forceRecoveryInspection by remember(sanitizedInitial) { mutableStateOf(false) }
     val picker = rememberVanguardPdfPicker(
         onNavigateToUnlock = { onNavigateToTool(Screen.UnlockPdf(it)) },
         onPdfSelected = { pickedUri ->
@@ -99,6 +100,11 @@ fun PdfReaderScreen(
             PdfReaderDocument(
                 viewModel = viewModel,
                 initialUri = activeUri,
+                forceRecoveryInspection = forceRecoveryInspection,
+                onRecovered = { replacement ->
+                    forceRecoveryInspection = true
+                    documentUri = replacement
+                },
                 onBack = onBack,
                 onNavigateToTool = onNavigateToTool
             )
@@ -138,6 +144,8 @@ fun PdfReaderScreen(
 private fun PdfReaderDocument(
     viewModel: MainViewModel,
     initialUri: Uri,
+    forceRecoveryInspection: Boolean,
+    onRecovered: (Uri) -> Unit,
     onBack: () -> Unit,
     onNavigateToTool: (Screen) -> Unit
 ) {
@@ -247,6 +255,9 @@ private fun PdfReaderDocument(
     var showVanguardEncryptedDialog by remember { mutableStateOf(false) }
     var showVanguardDamagedDialog by remember { mutableStateOf(false) }
     var showAccessErrorDialog by remember { mutableStateOf(false) }
+    var inspectionFailure by remember { mutableStateOf(com.pdfchemy.app.logic.VanguardInspectionFailure.UNKNOWN) }
+    var blockedReason by remember { mutableIntStateOf(R.string.vanguard_blocked_message_default) }
+    var recoveryRetry by remember { mutableIntStateOf(0) }
     var isVanguardScanning by remember { mutableStateOf(false) }
     var isDocumentLoading by remember(initialUri) { mutableStateOf(true) }
     var isRestoringPosition by remember(initialUri) { mutableStateOf(false) }
@@ -297,16 +308,21 @@ private fun PdfReaderDocument(
         }
     }
 
-    LaunchedEffect(initialUri) {
+    LaunchedEffect(initialUri, recoveryRetry) {
         isDocumentLoading = true
+        showVanguardBlockedDialog = false
+        showVanguardEncryptedDialog = false
+        showVanguardDamagedDialog = false
+        showAccessErrorDialog = false
+        totalPages = 0
         guardDocumentLoadWithCause(onFailure = { err ->
             isVanguardScanning = false
             isDocumentLoading = false
             val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
             if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
-                viewModel.removeHistoryItem(initialUri.toString())
                 showAccessErrorDialog = true
             } else {
+                inspectionFailure = com.pdfchemy.app.logic.PdfSanitizerEngine.classifyInspectionFailure(err)
                 showVanguardDamagedDialog = true
             }
         }) {
@@ -332,9 +348,18 @@ private fun PdfReaderDocument(
 
                 // Finish the single-flight startup before publishing pages or enabling tools.
                 val startupResult = com.pdfchemy.app.logic.ReaderStartupCoordinator.executeSequentialStartup(
-                    isVanguardEnabled = isVanguardEnabled,
+                    isVanguardEnabled = isVanguardEnabled || forceRecoveryInspection || recoveryRetry > 0,
                     onVanguardScanningChanged = { isVanguardScanning = it },
-                    checkVanguardThreat = { com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri) },
+                    checkVanguardThreat = {
+                        com.pdfchemy.app.logic.PdfSanitizerEngine.checkVanguardThreat(context, stagedUri).also { threat ->
+                            when (threat) {
+                                is VanguardThreatResult.ParseFailed -> inspectionFailure = threat.failure
+                                is VanguardThreatResult.ExecutableThreat ->
+                                    blockedReason = com.pdfchemy.app.logic.VanguardPickerProcessor.resolveBlockedReasonResId(threat.report)
+                                else -> Unit
+                            }
+                        }
+                    },
                     getPageCount = { PdfEditor.getPageCount(context, stagedUri) },
                     extractOutline = { com.pdfchemy.app.logic.PdfOutlineReader.extractOutline(context, stagedUri) },
                     onRecordHistory = { viewModel.recordReaderHistory(initialUri, fileName) }
@@ -382,60 +407,22 @@ private fun PdfReaderDocument(
         }
     }
 
-    if (showAccessErrorDialog) {
-        AlertDialog(
-            onDismissRequest = onBack,
-            title = { Text(stringResource(R.string.vanguard_provider_error_title)) },
-            text = { Text(stringResource(R.string.vanguard_provider_error_message)) },
-            confirmButton = { Button(onClick = onBack) { Text(stringResource(R.string.ok)) } }
-        )
-        return
-    }
-
-    if (showVanguardEncryptedDialog) {
-        AlertDialog(
-            onDismissRequest = onBack,
-            title = { Text(stringResource(R.string.vanguard_encrypted_title)) },
-            text = { Text(stringResource(R.string.vanguard_encrypted_message)) },
-            confirmButton = {
-                Button(onClick = { onNavigateToTool(Screen.UnlockPdf(selectedPdfUri ?: initialUri)) }) {
-                    Text(stringResource(R.string.vanguard_action_unlock))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onBack) { Text(stringResource(R.string.cancel)) }
-            }
-        )
-        return
-    }
-
-    if (showVanguardDamagedDialog) {
-        AlertDialog(
-            onDismissRequest = onBack,
-            title = { Text(stringResource(R.string.vanguard_damaged_title)) },
-            text = { Text(stringResource(R.string.vanguard_damaged_message)) },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.setContinuityUri(selectedPdfUri ?: initialUri)
-                    onNavigateToTool(Screen.RepairPdf)
-                }) {
-                    Text(stringResource(R.string.menu_repair_pdf))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onBack) { Text(stringResource(R.string.cancel)) }
-            }
-        )
-        return
-    }
-
-    if (showVanguardBlockedDialog) {
-        AlertDialog(
-            onDismissRequest = onBack,
-            title = { Text(stringResource(R.string.vanguard_blocked_title)) },
-            text = { Text(stringResource(R.string.vanguard_blocked_message)) },
-            confirmButton = { Button(onClick = onBack) { Text(stringResource(R.string.ok)) } }
-        )
+    if (showAccessErrorDialog || showVanguardDamagedDialog || showVanguardEncryptedDialog || showVanguardBlockedDialog) {
+        // Prefer the immutable snapshot for diagnosis and repair; retry the original URI
+        // if staging failed. Never enable rendering before a fresh successful audit.
+        val source = if (showAccessErrorDialog) initialUri else selectedPdfUri ?: initialUri
+        val resume: (Uri) -> Unit = { replacement ->
+            if (replacement == source || replacement == initialUri) recoveryRetry++
+            else onRecovered(replacement)
+        }
+        if (showVanguardEncryptedDialog || showVanguardBlockedDialog) {
+            VanguardProtectedRecoveryDialog(source, showVanguardEncryptedDialog, blockedReason,
+                onDismiss = onBack, onContinue = resume)
+        } else {
+            VanguardInspectionRecoveryDialog(source,
+                if (showAccessErrorDialog) com.pdfchemy.app.logic.VanguardInspectionFailure.ACCESS_FAILED else inspectionFailure,
+                onDismiss = onBack, onContinue = resume)
+        }
         return
     }
 

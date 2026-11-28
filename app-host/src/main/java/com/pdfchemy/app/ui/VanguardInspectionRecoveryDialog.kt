@@ -46,6 +46,7 @@ internal fun VanguardInspectionRecoveryDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val continueLatest by rememberUpdatedState(onContinue)
+    var operationJob by remember(sourceUri, failure) { mutableStateOf<Job?>(null) }
     var diagnosing by remember(sourceUri, failure) { mutableStateOf(false) }
     var repairing by remember(sourceUri, failure) { mutableStateOf(false) }
     var choosingDestination by remember(sourceUri, failure) { mutableStateOf(false) }
@@ -60,7 +61,7 @@ internal fun VanguardInspectionRecoveryDialog(
         choosingDestination = false
         if (destination != null) {
             repairing = true
-            scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            operationJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
                 try {
                     check(destination.isFreshCopy)
                     // The worker verifies its rebuilt scratch PDF before the normal gateway publication.
@@ -117,7 +118,7 @@ internal fun VanguardInspectionRecoveryDialog(
                 if (failure != VanguardInspectionFailure.ACCESS_FAILED) {
                     OutlinedButton(enabled = !busy, onClick = {
                         diagnosing = true; diagnosisFailed = false; repairFailed = false; diagnostic = null
-                        scope.launch {
+                        operationJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
                             try {
                                 diagnostic = PdfRepairEngine.diagnosePdf(context, sourceUri).getOrThrow()
                             } catch (cancelled: CancellationException) {
@@ -169,6 +170,10 @@ internal fun VanguardInspectionRecoveryDialog(
                 Text(stringResource(R.string.vanguard_recovery_retry))
             }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        dismissButton = {
+            TextButton(enabled = !choosingDestination, onClick = {
+                if (diagnosing || repairing) operationJob?.cancel() else onDismiss()
+            }) { Text(stringResource(R.string.cancel)) }
+        }
     )
 }

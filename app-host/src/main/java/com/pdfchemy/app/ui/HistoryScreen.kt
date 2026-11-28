@@ -109,7 +109,8 @@ fun HistoryScreen(viewModel: MainViewModel, onNavigate: (Screen) -> Unit, onBack
                                     null -> stringResource(R.string.history_checking_access)
                                 })
                                 Row {
-                                    TextButton(enabled = availability[item.uriString] == true, onClick = {
+                                    TextButton(enabled = availability[item.uriString] == true ||
+                                        (!item.isDirectory && item.mimeType == "application/pdf"), onClick = {
                                         val uri = item.uriString.toUri()
                                         when {
                                             !item.isDirectory && item.mimeType == "application/pdf" -> onNavigate(Screen.PdfReader(uri))

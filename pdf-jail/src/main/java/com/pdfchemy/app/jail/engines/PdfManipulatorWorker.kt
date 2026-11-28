@@ -13,6 +13,8 @@ import org.json.JSONObject
 import com.pdfchemy.app.jail.capabilityInput as FileInputStream
 import com.pdfchemy.app.jail.boundedFileOutput as FileOutputStream
 
+internal class RecoveryPasswordRejected : IllegalStateException("Password rejected")
+
 object PdfManipulatorWorker {
 
     fun mergePdfs(context: Context, sourceFds: Array<out ParcelFileDescriptor>, targetFd: ParcelFileDescriptor?): String {
@@ -418,6 +420,8 @@ object PdfManipulatorWorker {
             throw cancelled
         } catch (e: Exception) {
             // Never echo password-related parser messages through the recovery protocol.
+            if (e is com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException &&
+                JSONObject(paramsJson).optBoolean("requireVanguardClean", false)) throw RecoveryPasswordRejected()
             val error = if (e is com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException)
                 "Password rejected" else "Unable to unlock or verify PDF"
             return JSONObject().put("success", false).put("error", error).toString()

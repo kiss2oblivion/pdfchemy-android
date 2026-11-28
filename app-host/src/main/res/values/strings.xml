@@ -1459,4 +1459,5 @@
     <string name="vanguard_unlock_failed">No verified unlocked copy could be created. Check the password or try another copy. The document may still exceed inspection limits.</string>
     <string name="vanguard_sanitize_failed">No verified sanitized copy could be created. The original is unchanged. Try another copy or contact support.</string>
     <string name="vanguard_access_next">Restore access or retry. Cancel and choose another file if the provider remains unavailable. PDFchemy has not determined the document\'s security status.</string>
+    <string name="vanguard_password_rejected">The PDF password was rejected. Enter the correct password and try again. No verified copy was created.</string>
 </resources>
