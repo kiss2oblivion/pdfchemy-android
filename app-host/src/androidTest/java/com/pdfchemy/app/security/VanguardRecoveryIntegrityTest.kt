@@ -180,4 +180,22 @@ class VanguardRecoveryIntegrityTest {
             assertCleanOutput(output)
         }
     }
+
+    @Test fun damagedStartxrefCanBeRebuiltByExistingParserWithoutInventingPages() = runBlocking<Unit> {
+        withFiles { source, output ->
+            fixture(source)
+            val original = source.readBytes()
+            val text = String(original, Charsets.ISO_8859_1)
+            val match = requireNotNull(Regex("startxref\\s+(\\d+)\\s+%%EOF").findAll(text).lastOrNull())
+            val offset = requireNotNull(match.groups[1]).range
+            val damaged = original.copyOf()
+            for (index in offset) damaged[index] = '0'.code.toByte()
+            source.writeBytes(damaged)
+            val result = PdfGateway.executeEngineTyped<RepairApplyContract>(context, "REPAIR_APPLY",
+                Uri.fromFile(source), Uri.fromFile(output), """{"requireVanguardClean":true}""")
+            assertEquals(2, result.recoveredPages)
+            assertArrayEquals(damaged, source.readBytes())
+            assertCleanOutput(output)
+        }
+    }
 }

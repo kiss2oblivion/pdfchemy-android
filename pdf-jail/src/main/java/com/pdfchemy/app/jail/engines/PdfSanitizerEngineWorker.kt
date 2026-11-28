@@ -69,7 +69,8 @@ object PdfSanitizerEngineWorker {
         } finally { scratch.delete() }
     }
     private fun verifyRecoveredPageCount(document: PDDocument, expectedPages: Int) {
-        check(!document.isEncrypted && expectedPages > 0 && document.numberOfPages == expectedPages) {
+        check(!document.isEncrypted && expectedPages > 0 &&
+            PageTreeRecovery.inspect(document).pages == expectedPages && document.numberOfPages == expectedPages) {
             "Recovered PDF encryption or page count not verified"
         }
     }

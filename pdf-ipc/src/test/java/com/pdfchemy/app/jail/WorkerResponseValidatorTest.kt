@@ -619,6 +619,9 @@ class WorkerResponseValidatorTest {
         assertEquals(RecoveryMethod.NORMALIZE_CONTAINER, report.method)
         assertTrue(report.eofAppended)
         assertNull(report.activeFindingsBefore)
+        val corrected = valid.replace("\"activeFindingsAfter\":0", "\"activeFindingsAfter\":0,\"pageTreeCountsCorrected\":2")
+        assertEquals(2, (WorkerResponseValidator.validate("REPAIR_APPLY", corrected) as RepairApplyContract).recovery?.pageTreeCountsCorrected)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", corrected.replace("\"pageTreeCountsCorrected\":2", "\"pageTreeCountsCorrected\":-1")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"verifiedOutputPages\":2", "\"verifiedOutputPages\":3")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"activeFindingsAfter\":0", "\"activeFindingsAfter\":1")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"eofAppended\":true", "\"eofAppended\":false")) }

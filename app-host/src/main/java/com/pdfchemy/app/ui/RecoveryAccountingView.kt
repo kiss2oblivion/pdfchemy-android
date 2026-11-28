@@ -27,6 +27,8 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
     if (report.headerInserted) Text(stringResource(R.string.vanguard_header_inserted))
     if (report.prefixBytesRemoved > 0) Text(stringResource(R.string.vanguard_prefix_removed, report.prefixBytesRemoved))
     if (report.eofAppended) Text(stringResource(R.string.vanguard_eof_appended))
+    if (report.pageTreeCountsCorrected > 0)
+        Text(stringResource(R.string.vanguard_page_counts_corrected, report.pageTreeCountsCorrected))
     report.activeFindingsBefore?.let {
         Text(stringResource(R.string.vanguard_findings_parity, it, report.activeFindingsAfter))
     } ?: Text(stringResource(R.string.vanguard_no_active_after))
@@ -40,6 +42,7 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
             appendLine("Fallback header inserted: " + report.headerInserted)
             appendLine("Fallback prefix bytes removed: " + report.prefixBytesRemoved)
             appendLine("Fallback EOF appended: " + report.eofAppended)
+            appendLine("Page-tree count entries corrected: " + report.pageTreeCountsCorrected)
             appendLine("Active findings before: " + (report.activeFindingsBefore?.toString() ?: "Not measured"))
             appendLine("Active findings after: " + report.activeFindingsAfter)
             appendLine("Full content, visual and signature preservation not verified")

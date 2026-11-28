@@ -100,10 +100,9 @@ object PdfRepairEngineWorker {
     private fun publishRecovered(document: PDDocument, targetFd: ParcelFileDescriptor, requireVanguardClean: Boolean,
                                  headerInserted: Boolean = false, prefixBytesRemoved: Long = 0L,
                                  eofAppended: Boolean = false): String {
-        val pageCount = document.numberOfPages
-        check(pageCount in 1..com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) {
-            "No supported readable pages recovered"
-        }
+        val pageTree = PageTreeRecovery.inspect(document, repairCounts = true)
+        val pageCount = pageTree.pages
+        check(document.numberOfPages == pageCount) { "Parser disagrees with reconstructed page hierarchy" }
         if (!requireVanguardClean) {
             boundedFileOutput(targetFd.fileDescriptor).use { document.save(it) }
             return JSONObject().put("success", true).put("recoveredPages", pageCount).toString()
@@ -111,6 +110,10 @@ object PdfRepairEngineWorker {
         // Verified recovery never quietly strips blocked content: sanitization
         // requires the user's separate consent. Reopen the actual candidate.
         check(!document.isEncrypted) { "Recovery requires an unencrypted PDF" }
+        // Check input as well as output so structural repair cannot silently discard
+        // a detectable active-content carrier during serialization.
+        val inputFindings = ActiveContentScrubber.inspect(document)
+        check(inputFindings.executableFindingCount() == 0) { "Input contains blocked active content; use sanitization" }
         val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
         try {
             boundedFileOutput(candidate).use { document.save(it) }
@@ -122,7 +125,8 @@ object PdfRepairEngineWorker {
             }
             val method = if (headerInserted || prefixBytesRemoved > 0 || eofAppended) "NORMALIZE_CONTAINER" else "RESERIALIZE"
             return JSONObject().put("success", true).put("recoveredPages", pageCount)
-                .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended)).toString()
+                .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended,
+                    pageTreeCountsCorrected = pageTree.correctedCounts)).toString()
         } finally { candidate.delete() }
     }
 }

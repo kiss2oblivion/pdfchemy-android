@@ -1466,4 +1466,5 @@
     <string name="vanguard_no_active_after">Nu s-a detectat conținut activ blocat în copia reconstruită. Numărul inițial nu a fost măsurat.</string>
     <string name="vanguard_recovery_uncertainty">Numărul de pagini corespunde intrării lizibile, nu neapărat documentului original complet. Conținutul lipsă, fidelitatea vizuală, linkurile, atașamentele și semnăturile digitale nu au fost verificate independent.</string>
     <string name="vanguard_use_recovered">Folosește copia recuperată</string>
+    <string name="vanguard_page_counts_corrected">Intrări de număr de pagini corectate: %1$d. Ordinea existentă a paginilor a fost păstrată.</string>
 </resources>

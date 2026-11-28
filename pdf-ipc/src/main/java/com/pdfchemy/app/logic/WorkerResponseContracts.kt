@@ -21,7 +21,8 @@ data class RecoveryAccounting(
     val prefixBytesRemoved: Long,
     val eofAppended: Boolean,
     val activeFindingsBefore: Int?,
-    val activeFindingsAfter: Int
+    val activeFindingsAfter: Int,
+    val pageTreeCountsCorrected: Int = 0
 )
 
 data class StandardOutputContract(

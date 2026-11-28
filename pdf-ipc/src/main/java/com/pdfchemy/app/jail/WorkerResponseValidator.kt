@@ -848,7 +848,12 @@ object WorkerResponseValidator {
             "Unexpected or missing active-content accounting"
         }
         val after = obj.requireInt("activeFindingsAfter", min = 0, max = 0)
-        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after)
+        val corrected = if (obj.has("pageTreeCountsCorrected"))
+            obj.requireInt("pageTreeCountsCorrected", min = 0, max = SecurityLimits.MAX_GRAPH_NODES) else 0
+        require(corrected == 0 || method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
+            "Unexpected page tree correction in non-repair operation"
+        }
+        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected)
     }
 
     private fun parseStandardOutput(root: Any?, targetCount: Int, allowRecovery: Boolean = false): StandardOutputContract {
