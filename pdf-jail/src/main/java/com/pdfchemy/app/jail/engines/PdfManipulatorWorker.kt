@@ -389,15 +389,38 @@ object PdfManipulatorWorker {
 
             FileInputStream(sourceFd.fileDescriptor).use { inputStream ->
                 document = PDDocument.load(inputStream, password, com.pdfchemy.app.jail.JailMemory.settings())
-                document!!.isAllSecurityToBeRemoved = true
-
-                FileOutputStream(targetFd.fileDescriptor).use { out ->
-                    document!!.save(out)
+                val opened = checkNotNull(document)
+                opened.isAllSecurityToBeRemoved = true
+                if (params.optBoolean("requireVanguardClean", false)) {
+                    val pages = opened.numberOfPages
+                    check(pages > 0) { "No pages to recover" }
+                    val f = ActiveContentScrubber.inspect(opened)
+                    if (f.javascript + f.launches + f.actions + f.untrustedUris > 0) {
+                        check(params.optBoolean("allowActiveContentRemoval", false)) { "Active content requires explicit removal consent" }
+                        PdfSanitizerEngineWorker.cleanDocument(opened, true, true, false, false)
+                    }
+                    val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_unlock_", ".pdf")
+                    try {
+                        com.pdfchemy.app.jail.boundedFileOutput(candidate).use { opened.save(it) }
+                        com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
+                            PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+                        }.use { PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pages) }
+                        FileOutputStream(targetFd.fileDescriptor).use { out ->
+                            com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(out) }
+                        }
+                    } finally { candidate.delete() }
+                } else {
+                    FileOutputStream(targetFd.fileDescriptor).use { out -> opened.save(out) }
                 }
             }
             return JSONObject().put("success", true).toString()
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
         } catch (e: Exception) {
-            return JSONObject().put("success", false).put("error", e.message).toString()
+            // Never echo password-related parser messages through the recovery protocol.
+            val error = if (e is com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException)
+                "Password rejected" else "Unable to unlock or verify PDF"
+            return JSONObject().put("success", false).put("error", error).toString()
         } finally {
             try { document?.close() } catch (e: Exception) {}
         }

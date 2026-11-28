@@ -1452,4 +1452,11 @@
     <string name="vanguard_recovery_repair_failed">PDFchemy could not produce a verified recovered copy. The original is unchanged. Retry inspection or choose another copy.</string>
     <string name="vanguard_recovery_details">Technical details</string>
     <string name="vanguard_recovery_limits">Object graph budget: %1$d nodes; depth %2$d.</string>
+    <string name="vanguard_protected_copy_help">PDFchemy can create a separate inspected copy. For encrypted files, enter the password you are authorized to use. Your original stays unchanged.</string>
+    <string name="vanguard_protected_consent">I agree to remove blocked scripts and actions if present. This can remove ordinary links and invalidate signatures; metadata and attachments are not intentionally removed.</string>
+    <string name="vanguard_unlock_continue">Unlock and continue</string>
+    <string name="vanguard_sanitize_continue">Sanitize and continue</string>
+    <string name="vanguard_unlock_failed">No verified unlocked copy could be created. Check the password or try another copy. The document may still exceed inspection limits.</string>
+    <string name="vanguard_sanitize_failed">No verified sanitized copy could be created. The original is unchanged. Try another copy or contact support.</string>
+    <string name="vanguard_access_next">Restore access or retry. Cancel and choose another file if the provider remains unavailable. PDFchemy has not determined the document\'s security status.</string>
 </resources>

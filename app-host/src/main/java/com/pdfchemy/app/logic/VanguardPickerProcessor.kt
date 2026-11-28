@@ -75,11 +75,11 @@ object VanguardPickerProcessor {
                         PickerOutcome.Encrypted(staged)
                     }
                     is VanguardThreatResult.ExecutableThreat -> {
-                        releaser(staged)
+                        if (staged != originalUri) releaser(staged)
                         PickerOutcome.BlockedThreat(resolveBlockedReasonResId(threat.report))
                     }
                     is VanguardThreatResult.ParseFailed -> {
-                        releaser(staged)
+                        if (staged != originalUri) releaser(staged)
                         PickerOutcome.Damaged(threat.failure)
                     }
                 }
@@ -87,10 +87,10 @@ object VanguardPickerProcessor {
                 PickerOutcome.Selected(listOf(staged))
             }
         } catch (cancelled: CancellationException) {
-            stagedUri?.let(releaser)
+            stagedUri?.takeIf { it != originalUri }?.let(releaser)
             throw cancelled
         } catch (_: Exception) {
-            stagedUri?.let(releaser)
+            stagedUri?.takeIf { it != originalUri }?.let(releaser)
             PickerOutcome.ProviderError
         }
     }

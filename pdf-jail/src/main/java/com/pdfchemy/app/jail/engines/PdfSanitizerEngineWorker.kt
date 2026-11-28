@@ -45,21 +45,37 @@ object PdfSanitizerEngineWorker {
         val purgeActions = p.optBoolean("purgeActions", true)
         val purgeAttachments = p.optBoolean("purgeAttachments", true)
         val purgeMetadata = p.optBoolean("purgeMetadata", true)
+        val requireVanguardClean = p.optBoolean("requireVanguardClean", false)
+        if (requireVanguardClean) require(purgeJs && purgeActions) { "Verified recovery requires active-content removal" }
         val scratch = com.pdfchemy.app.jail.JailScratch.createTempFile("sanitized_", ".pdf")
         try {
+            var originalPageCount = 0
             val removed = FileInputStream(sourceFd.fileDescriptor).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
+                originalPageCount = document.numberOfPages
+                if (requireVanguardClean) check(!document.isEncrypted && originalPageCount > 0) { "Cannot verify encrypted or empty PDF" }
                 val findings = cleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
                 boundedFileOutput(scratch).use { document.save(it) }
                 findings.selected(purgeJs, purgeActions, purgeAttachments)
             }
             com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
                 validateCleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
+                if (requireVanguardClean) verifyRecoveredDocument(document, originalPageCount)
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
                 .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
         } finally { scratch.delete() }
     }
+    internal fun verifyRecoveredDocument(document: PDDocument, expectedPages: Int) {
+        check(!document.isEncrypted && expectedPages > 0 && document.numberOfPages == expectedPages) {
+            "Recovered PDF encryption or page count not verified"
+        }
+        val findings = ActiveContentScrubber.inspect(document)
+        check(findings.javascript == 0 && findings.launches == 0 && findings.actions == 0 &&
+            findings.untrustedUris == 0) { "Recovered PDF contains prohibited active content" }
+        PdfPrivacyCleanup.hasMetadata(document)
+    }
+
     /** Shared by the FD worker and saved-document regressions; counts precede removal. */
     internal fun cleanDocument(document: PDDocument, purgeJs: Boolean, purgeActions: Boolean,
                                purgeMetadata: Boolean, purgeAttachments: Boolean): ActiveContentScrubber.Findings {

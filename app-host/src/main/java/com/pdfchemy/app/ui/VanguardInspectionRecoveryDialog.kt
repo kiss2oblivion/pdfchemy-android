@@ -92,7 +92,8 @@ internal fun VanguardInspectionRecoveryDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(failure.explanationRes()), fontWeight = FontWeight.Medium)
                 Text(stringResource(R.string.vanguard_damaged_message))
-                Text(stringResource(R.string.vanguard_recovery_next), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(if (failure == VanguardInspectionFailure.ACCESS_FAILED)
+                    R.string.vanguard_access_next else R.string.vanguard_recovery_next), style = MaterialTheme.typography.bodySmall)
                 if (diagnosing || repairing) {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                     Text(stringResource(if (diagnosing) R.string.diagnosing_document else R.string.vanguard_recovery_rebuilding))

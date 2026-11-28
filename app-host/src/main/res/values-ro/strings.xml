@@ -1435,4 +1435,11 @@
     <string name="vanguard_recovery_repair_failed">PDFchemy nu a putut produce o copie recuperată și verificată. Originalul rămâne neschimbat. Reîncercați inspectarea sau alegeți altă copie.</string>
     <string name="vanguard_recovery_details">Detalii tehnice</string>
     <string name="vanguard_recovery_limits">Limita grafului de obiecte: %1$d noduri; adâncime %2$d.</string>
+    <string name="vanguard_protected_copy_help">PDFchemy poate crea o copie separată și verificată. Pentru fișierele criptate, introduceți parola pe care sunteți autorizat să o folosiți. Originalul rămâne neschimbat.</string>
+    <string name="vanguard_protected_consent">Sunt de acord cu eliminarea scripturilor și acțiunilor blocate, dacă există. Aceasta poate elimina linkuri obișnuite și invalida semnăturile; metadatele și atașamentele nu sunt eliminate intenționat.</string>
+    <string name="vanguard_unlock_continue">Deblochează și continuă</string>
+    <string name="vanguard_sanitize_continue">Curăță și continuă</string>
+    <string name="vanguard_unlock_failed">Nu s-a putut crea o copie deblocată și verificată. Verificați parola sau încercați altă copie. Documentul poate depăși în continuare limitele de inspectare.</string>
+    <string name="vanguard_sanitize_failed">Nu s-a putut crea o copie curățată și verificată. Originalul rămâne neschimbat. Încercați altă copie sau contactați asistența.</string>
+    <string name="vanguard_access_next">Restabiliți accesul sau reîncercați. Anulați și alegeți alt fișier dacă furnizorul rămâne indisponibil. PDFchemy nu a stabilit starea de siguranță a documentului.</string>
 </resources>
