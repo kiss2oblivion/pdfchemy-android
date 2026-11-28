@@ -179,6 +179,10 @@ internal fun VanguardInspectionRecoveryDialog(
                                 it.diagnosticElapsedMs?.let { value -> appendLine("Worker diagnosis ms: $value") }
                                 it.parserOpened?.let { value -> appendLine("Parser completed: $value") }
                                 it.pooledObjects?.let { value -> appendLine("Parsed object pool entries: $value") }
+                                it.xref?.let { value ->
+                                    appendLine("Cross-reference observation: " + value.kind.name)
+                                    value.offset?.let { offset -> appendLine("Declared startxref offset: $offset") }
+                                }
                             }
                         }
                         (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)
@@ -214,5 +218,18 @@ internal fun RecoveryDiagnosticMetrics(report: RepairDiagnostic) {
     }
     report.pooledObjects?.let {
         Text(stringResource(R.string.vanguard_diagnostic_pool, it), style = MaterialTheme.typography.bodySmall)
+    }
+    report.xref?.let { observation ->
+        Text(stringResource(when (observation.kind) {
+            XrefObservationKind.TERMINAL_EOF_NOT_FOUND -> R.string.vanguard_xref_no_eof
+            XrefObservationKind.STARTXREF_NOT_FOUND -> R.string.vanguard_xref_no_start
+            XrefObservationKind.OFFSET_MALFORMED -> R.string.vanguard_xref_malformed
+            XrefObservationKind.OFFSET_OUT_OF_RANGE -> R.string.vanguard_xref_range
+            XrefObservationKind.TABLE_MARKER -> R.string.vanguard_xref_table
+            XrefObservationKind.INDIRECT_OBJECT_MARKER -> R.string.vanguard_xref_object
+            XrefObservationKind.UNRECOGNIZED_TARGET -> R.string.vanguard_xref_unknown
+        }), style = MaterialTheme.typography.bodySmall)
+        observation.offset?.let { Text(stringResource(R.string.vanguard_xref_offset, it), style = MaterialTheme.typography.bodySmall) }
+        Text(stringResource(R.string.vanguard_xref_limitations), style = MaterialTheme.typography.bodySmall)
     }
 }

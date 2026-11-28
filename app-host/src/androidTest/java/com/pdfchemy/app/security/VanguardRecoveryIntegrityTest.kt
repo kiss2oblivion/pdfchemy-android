@@ -191,11 +191,17 @@ class VanguardRecoveryIntegrityTest {
             val damaged = original.copyOf()
             for (index in offset) damaged[index] = '0'.code.toByte()
             source.writeBytes(damaged)
+            val before = PdfRepairEngine.diagnosePdf(context, Uri.fromFile(source)).getOrThrow()
+            assertEquals(com.pdfchemy.app.logic.XrefObservationKind.UNRECOGNIZED_TARGET, before.xref?.kind)
+            assertEquals(0L, before.xref?.offset)
             val result = PdfGateway.executeEngineTyped<RepairApplyContract>(context, "REPAIR_APPLY",
                 Uri.fromFile(source), Uri.fromFile(output), """{"requireVanguardClean":true}""")
             assertEquals(2, result.recoveredPages)
             assertArrayEquals(damaged, source.readBytes())
             assertCleanOutput(output)
+            val after = PdfRepairEngine.diagnosePdf(context, Uri.fromFile(output)).getOrThrow()
+            assertTrue(after.xref?.kind in setOf(com.pdfchemy.app.logic.XrefObservationKind.TABLE_MARKER,
+                com.pdfchemy.app.logic.XrefObservationKind.INDIRECT_OBJECT_MARKER))
         }
     }
 }

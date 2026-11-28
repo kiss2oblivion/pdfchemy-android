@@ -551,18 +551,33 @@ object WorkerResponseValidator {
         }
         if (parserOpened == true) require(objects != null) { "Missing parsed object count" }
         if (objects != null) require(parserOpened == true) { "Object count without completed parser read" }
+        val sourceBytes = if (obj.has("sourceBytes"))
+            obj.requireLong("sourceBytes", min = 1L, max = SecurityLimits.MAX_PDF_FILESIZE) else null
+        val xref = if (obj.has("xref")) {
+            val raw = requireObject(obj.get("xref"))
+            val size = requireNotNull(sourceBytes) { "Cross-reference observation needs source size" }
+            val kind = XrefObservationKind.valueOf(raw.requireString("kind", maxLength = 32))
+            val offset = if (raw.has("offset")) raw.requireLong("offset", min = 0L) else null
+            when (kind) {
+                XrefObservationKind.TERMINAL_EOF_NOT_FOUND, XrefObservationKind.STARTXREF_NOT_FOUND,
+                XrefObservationKind.OFFSET_MALFORMED -> require(offset == null) { "Unexpected cross-reference offset" }
+                XrefObservationKind.OFFSET_OUT_OF_RANGE -> require(offset != null) { "Missing invalid offset" }
+                else -> require(offset != null && offset < size) { "Cross-reference target exceeds source size" }
+            }
+            XrefObservation(kind, offset)
+        } else null
         return RepairDiagnoseContract(
             hasValidHeader = obj.requireBoolean("hasValidHeader"),
             hasValidEof = obj.requireBoolean("hasValidEof"),
             recoveredPages = pages,
             isEncrypted = obj.requireBoolean("isEncrypted"),
             issueSummary = obj.requireString("issueSummary", maxLength = 1024),
-            sourceBytes = if (obj.has("sourceBytes"))
-                obj.requireLong("sourceBytes", min = 1L, max = SecurityLimits.MAX_PDF_FILESIZE) else null,
+            sourceBytes = sourceBytes,
             diagnosticElapsedMs = if (obj.has("diagnosticElapsedMs"))
                 obj.requireLong("diagnosticElapsedMs", min = 0L, max = SecurityLimits.WORKER_DEADLINE_MS) else null,
             parserOpened = parserOpened,
-            pooledObjects = objects
+            pooledObjects = objects,
+            xref = xref
         )
     }
 

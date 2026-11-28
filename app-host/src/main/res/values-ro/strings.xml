@@ -1467,4 +1467,13 @@
     <string name="vanguard_recovery_uncertainty">Numărul de pagini corespunde intrării lizibile, nu neapărat documentului original complet. Conținutul lipsă, fidelitatea vizuală, linkurile, atașamentele și semnăturile digitale nu au fost verificate independent.</string>
     <string name="vanguard_use_recovered">Folosește copia recuperată</string>
     <string name="vanguard_page_counts_corrected">Intrări de număr de pagini corectate: %1$d. Ordinea existentă a paginilor a fost păstrată.</string>
+    <string name="vanguard_xref_no_eof">Nu s-a găsit marcajul EOF terminal în zona finală verificată.</string>
+    <string name="vanguard_xref_no_start">Nu s-a găsit marcajul startxref înaintea marcajului EOF terminal.</string>
+    <string name="vanguard_xref_malformed">Poziția declarată a referințelor încrucișate este incorect formatată.</string>
+    <string name="vanguard_xref_range">Poziția declarată a referințelor încrucișate este în afara regiunii anterioare permise a fișierului.</string>
+    <string name="vanguard_xref_table">Poziția declarată indică un marcaj de tabel xref.</string>
+    <string name="vanguard_xref_object">Poziția declarată indică un obiect indirect (posibil un flux xref).</string>
+    <string name="vanguard_xref_unknown">Poziția declarată nu indică un marcaj de referințe încrucișate recunoscut.</string>
+    <string name="vanguard_xref_offset">Poziția startxref declarată în octeți: %1$d</string>
+    <string name="vanguard_xref_limitations">Această inspectare limitată a octeților nu validează intrările tabelului, conținutul fluxurilor, reviziile anterioare sau siguranța documentului.</string>
 </resources>

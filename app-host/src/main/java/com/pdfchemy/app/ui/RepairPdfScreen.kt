@@ -124,6 +124,10 @@ fun RepairPdfScreen(
                                     diag.diagnosticElapsedMs?.let { appendLine("Worker diagnosis ms: $it") }
                                     diag.parserOpened?.let { appendLine("Parser completed: $it") }
                                     diag.pooledObjects?.let { appendLine("Parsed object pool entries: $it") }
+                                    diag.xref?.let {
+                                        appendLine("Cross-reference observation: " + it.kind.name)
+                                        it.offset?.let { offset -> appendLine("Declared startxref offset: $offset") }
+                                    }
                                     if (diag.issueSummary.isNotBlank()) {
                                         append("Issues: ${diag.issueSummary}")
                                     }

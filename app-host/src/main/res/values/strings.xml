@@ -1484,4 +1484,13 @@
     <string name="vanguard_recovery_uncertainty">Page counts match the readable input, not necessarily the original intended document. Missing content, visual fidelity, links, attachments and digital signatures have not been independently verified.</string>
     <string name="vanguard_use_recovered">Use recovered copy</string>
     <string name="vanguard_page_counts_corrected">Page-tree count entries corrected: %1$d. Existing child order retained.</string>
+    <string name="vanguard_xref_no_eof">No terminal EOF marker found in the checked tail.</string>
+    <string name="vanguard_xref_no_start">No startxref marker found before the terminal EOF.</string>
+    <string name="vanguard_xref_malformed">The declared cross-reference offset is malformed.</string>
+    <string name="vanguard_xref_range">The declared cross-reference offset is outside the permitted preceding file region.</string>
+    <string name="vanguard_xref_table">The declared offset points to an xref table marker.</string>
+    <string name="vanguard_xref_object">The declared offset points to an indirect object (possibly an xref stream).</string>
+    <string name="vanguard_xref_unknown">The declared offset does not point to a recognized cross-reference marker.</string>
+    <string name="vanguard_xref_offset">Declared startxref byte offset: %1$d</string>
+    <string name="vanguard_xref_limitations">This bounded byte inspection does not validate table entries, stream contents, earlier revisions or document safety.</string>
 </resources>

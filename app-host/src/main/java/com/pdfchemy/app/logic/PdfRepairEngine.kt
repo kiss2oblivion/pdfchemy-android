@@ -16,7 +16,8 @@ data class RepairDiagnostic(
     val sourceBytes: Long? = null,
     val diagnosticElapsedMs: Long? = null,
     val parserOpened: Boolean? = null,
-    val pooledObjects: Int? = null
+    val pooledObjects: Int? = null,
+    val xref: XrefObservation? = null
 )
 
 object PdfRepairEngine {
@@ -49,7 +50,8 @@ object PdfRepairEngine {
                     sourceBytes = contract.sourceBytes,
                     diagnosticElapsedMs = contract.diagnosticElapsedMs,
                     parserOpened = contract.parserOpened,
-                    pooledObjects = contract.pooledObjects
+                    pooledObjects = contract.pooledObjects,
+                    xref = contract.xref
                 )
             )
         } catch (cancelled: kotlinx.coroutines.CancellationException) {

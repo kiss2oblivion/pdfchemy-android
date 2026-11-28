@@ -24,6 +24,7 @@ object PdfRepairEngineWorker {
         val started = System.nanoTime()
         JailQuotas.enforceFileSize(sourceFd)
         val sourceBytes = sourceFd.statSize
+        val xref = XrefDiagnostics.inspect(sourceBytes) { offset, count -> readAt(sourceFd, offset, count) }
         val prefix = String(readAt(sourceFd, 0, 1024), Charsets.US_ASCII)
         val suffix = String(readAt(sourceFd, (sourceBytes - 1024).coerceAtLeast(0), 1024), Charsets.US_ASCII)
         Os.lseek(sourceFd.fileDescriptor, 0, OsConstants.SEEK_SET)
@@ -55,6 +56,7 @@ object PdfRepairEngineWorker {
         return JSONObject().put("hasValidHeader", prefix.contains("%PDF-")).put("hasValidEof", suffix.contains("%%EOF"))
             .put("recoveredPages", pages).put("isEncrypted", encrypted).put("issueSummary", issue)
             .put("sourceBytes", sourceBytes).put("parserOpened", parserOpened)
+            .put("xref", XrefDiagnostics.json(xref))
             .put("diagnosticElapsedMs", ((System.nanoTime() - started) / 1_000_000L).coerceAtLeast(0L))
             .apply { pooledObjects?.let { put("pooledObjects", it) } }.toString()
     }

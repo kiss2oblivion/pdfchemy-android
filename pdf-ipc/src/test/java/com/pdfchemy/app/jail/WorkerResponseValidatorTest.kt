@@ -627,4 +627,17 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"eofAppended\":true", "\"eofAppended\":false")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("NORMALIZE_CONTAINER", "UNLOCK")) }
     }
+
+    @Test fun crossReferenceObservationsValidateOffsetsAndKnownKinds() {
+        val valid = """{"hasValidHeader":true,"hasValidEof":true,"recoveredPages":0,
+            "isEncrypted":false,"issueSummary":"Incomplete","sourceBytes":4096,
+            "parserOpened":false,"xref":{"kind":"TABLE_MARKER","offset":1024}}"""
+        val report = WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid) as RepairDiagnoseContract
+        assertEquals(XrefObservation(XrefObservationKind.TABLE_MARKER, 1024L), report.xref)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace("1024", "4096")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace("TABLE_MARKER", "UNRECOGNIZED_KIND")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace("TABLE_MARKER", "OFFSET_MALFORMED")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace(",\"offset\":1024", "")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace("\"sourceBytes\":4096,", "")) }
+    }
 }

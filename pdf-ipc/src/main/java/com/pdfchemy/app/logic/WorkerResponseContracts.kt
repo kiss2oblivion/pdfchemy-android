@@ -246,6 +246,13 @@ data class AcroFormFieldsContract(
 /**
  * PDF repair diagnostic contract for REPAIR_DIAGNOSE.
  */
+/** Raw-byte observation only; not a validated cross-reference table or stream. */
+enum class XrefObservationKind {
+    TERMINAL_EOF_NOT_FOUND, STARTXREF_NOT_FOUND, OFFSET_MALFORMED,
+    OFFSET_OUT_OF_RANGE, TABLE_MARKER, INDIRECT_OBJECT_MARKER, UNRECOGNIZED_TARGET
+}
+data class XrefObservation(val kind: XrefObservationKind, val offset: Long? = null)
+
 data class RepairDiagnoseContract(
     val hasValidHeader: Boolean,
     val hasValidEof: Boolean,
@@ -255,7 +262,8 @@ data class RepairDiagnoseContract(
     val sourceBytes: Long? = null,
     val diagnosticElapsedMs: Long? = null,
     val parserOpened: Boolean? = null,
-    val pooledObjects: Int? = null
+    val pooledObjects: Int? = null,
+    val xref: XrefObservation? = null
 ) : OperationContract
 
 /**
