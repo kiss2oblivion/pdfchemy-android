@@ -170,7 +170,9 @@ class StagingLifecycleSecurityTest {
         try {
             DocumentStager.stageStream(context, stream(SecurityLimits.MAX_PDF_FILESIZE + 1))
             fail("The quota plus one byte was accepted")
-        } catch (_: SecurityException) {}
+        } catch (error: DocumentStager.InputQuotaExceeded) {
+            assertTrue(error.perFile)
+        }
         assertEquals("Overflow must remove the partial snapshot", before, snapshots())
     }
 }

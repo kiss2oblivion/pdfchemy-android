@@ -719,10 +719,11 @@ fun MainApp(
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            incomingRecoveryFailure = if (com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(error) ==
+            val reason = com.pdfchemy.app.logic.PdfSanitizerEngine.classifyInspectionFailure(error)
+            incomingRecoveryFailure = if (reason == com.pdfchemy.app.logic.VanguardInspectionFailure.UNKNOWN &&
+                com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(error) ==
                 com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE)
-                com.pdfchemy.app.logic.VanguardInspectionFailure.ACCESS_FAILED
-            else com.pdfchemy.app.logic.PdfSanitizerEngine.classifyInspectionFailure(error)
+                com.pdfchemy.app.logic.VanguardInspectionFailure.ACCESS_FAILED else reason
             incomingRecoveryUri = originalUri
         } finally {
             staged?.let { if (handedOff) it.lease.close() else it.discard(originalUri) }

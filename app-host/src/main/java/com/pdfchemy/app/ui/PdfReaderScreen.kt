@@ -318,11 +318,14 @@ private fun PdfReaderDocument(
         guardDocumentLoadWithCause(onFailure = { err ->
             isVanguardScanning = false
             isDocumentLoading = false
-            val failureKind = com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err)
-            if (failureKind == com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE) {
-                showAccessErrorDialog = true
-            } else {
-                inspectionFailure = com.pdfchemy.app.logic.PdfSanitizerEngine.classifyInspectionFailure(err)
+            val reason = com.pdfchemy.app.logic.PdfSanitizerEngine.classifyInspectionFailure(err)
+            val accessFailed = reason == com.pdfchemy.app.logic.VanguardInspectionFailure.ACCESS_FAILED ||
+                (reason == com.pdfchemy.app.logic.VanguardInspectionFailure.UNKNOWN &&
+                    com.pdfchemy.app.utils.DocumentIdentity.classifyLoadException(err) ==
+                    com.pdfchemy.app.utils.DocumentLoadFailureKind.REVOKED_OR_INACCESSIBLE)
+            if (accessFailed) showAccessErrorDialog = true
+            else {
+                inspectionFailure = reason
                 showVanguardDamagedDialog = true
             }
         }) {

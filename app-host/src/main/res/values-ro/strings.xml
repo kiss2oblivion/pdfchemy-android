@@ -1443,4 +1443,8 @@
     <string name="vanguard_sanitize_failed">Nu s-a putut crea o copie curățată și verificată. Originalul rămâne neschimbat. Încercați altă copie sau contactați asistența.</string>
     <string name="vanguard_access_next">Restabiliți accesul sau reîncercați. Anulați și alegeți alt fișier dacă furnizorul rămâne indisponibil. PDFchemy nu a stabilit starea de siguranță a documentului.</string>
     <string name="vanguard_password_rejected">Parola PDF a fost respinsă. Introduceți parola corectă și reîncercați. Nu s-a creat nicio copie verificată.</string>
+    <string name="vanguard_reason_input_size">Fișierul depășește limita de procesare de 100 MiB per fișier. Limita se aplică în timpul citirii documentului; structura și siguranța acestuia nu au fost verificate.</string>
+    <string name="vanguard_reason_staging_capacity">Aplicația a atins limita de stocare temporară a documentelor. Aceasta este o limită de resurse, nu o constatare a deteriorării.</string>
+    <string name="vanguard_input_next">Anulați și alegeți o copie mai mică. Dacă este necesar, folosiți un instrument de încredere pentru a împărți originalul în volume mai mici. Reîncercarea aceluiași fișier prea mare nu va ajuta.</string>
+    <string name="vanguard_capacity_next">Închideți alte documente sau așteptați finalizarea operațiunilor active, apoi reîncercați. Fișierul original rămâne neschimbat.</string>
 </resources>

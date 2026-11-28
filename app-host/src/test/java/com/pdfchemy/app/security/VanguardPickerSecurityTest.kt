@@ -260,4 +260,19 @@ class VanguardPickerSecurityTest {
         assertEquals(VanguardInspectionFailure.UNKNOWN,
             PdfSanitizerEngine.classifyInspectionFailure(IllegalArgumentException("unknown")))
     }
+    @Test fun stagingQuotasDoNotLookLikeRevokedAccess() = runTest {
+        val oversized = com.pdfchemy.app.utils.DocumentStager.InputQuotaExceeded(perFile = true)
+        val capacity = com.pdfchemy.app.utils.DocumentStager.InputQuotaExceeded(perFile = false)
+        assertEquals(PickerOutcome.Damaged(VanguardInspectionFailure.INPUT_SIZE_LIMIT),
+            VanguardPickerProcessor.processSingle(context, mockUri("large"), true, stager = { throw oversized }))
+        assertEquals(PickerOutcome.Damaged(VanguardInspectionFailure.STAGING_CAPACITY),
+            VanguardPickerProcessor.processSingle(context, mockUri("capacity"), true, stager = { throw capacity }))
+        val released = mutableListOf<Uri>()
+        val first = mockUri("first-staged")
+        val result = VanguardPickerProcessor.processMultiple(context, listOf(mockUri("first"), mockUri("second")),
+            true, stager = { if (it == mockUri("first")) first else throw capacity },
+            threatChecker = { VanguardThreatResult.Clean }, releaser = { released.add(it) })
+        assertEquals(PickerOutcome.Damaged(VanguardInspectionFailure.STAGING_CAPACITY), result)
+        assertEquals(listOf(first), released)
+    }
 }

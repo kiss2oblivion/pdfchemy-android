@@ -11,6 +11,10 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.*
 
 object DocumentStager {
+    /** Distinguish enforced quotas from missing provider permissions without weakening either. */
+    class InputQuotaExceeded(val perFile: Boolean) : SecurityException("Staging input quota exceeded")
+    class StagingSlotsExceeded : IllegalArgumentException("Too many staged documents")
+
     data class StagedLease(
         val document: StagedPdf,
         val lease: java.io.Closeable
@@ -352,7 +356,7 @@ object DocumentStager {
             pruneUnleasedSnapshots(targetCount = maxOf(0, SecurityLimits.MAX_STAGED_DOCUMENTS - 1 - inFlightSlots))
         }
         val updatedCount = staged.values.toSet().size + inFlightSlots
-        require(updatedCount < SecurityLimits.MAX_STAGED_DOCUMENTS) { "Too many staged documents" }
+        if (updatedCount >= SecurityLimits.MAX_STAGED_DOCUMENTS) throw StagingSlotsExceeded()
 
         val totalBytes = staged.values.toSet().sumOf { it.size } + inFlightBytes
         if (SecurityLimits.MAX_BATCH_INPUT_BYTES - totalBytes <= 0) {
@@ -373,14 +377,14 @@ object DocumentStager {
     @Synchronized
     private fun accountInFlightBytes(bytes: Long, currentStreamSize: Long) {
         if (currentStreamSize + bytes > SecurityLimits.MAX_PDF_FILESIZE) {
-            throw SecurityException("Staging input quota exceeded")
+            throw InputQuotaExceeded(perFile = true)
         }
         val totalBytes = staged.values.toSet().sumOf { it.size } + inFlightBytes + bytes
         if (totalBytes > SecurityLimits.MAX_BATCH_INPUT_BYTES) {
             pruneUnleasedSnapshots(neededBytes = bytes)
             val updatedTotal = staged.values.toSet().sumOf { it.size } + inFlightBytes + bytes
             if (updatedTotal > SecurityLimits.MAX_BATCH_INPUT_BYTES) {
-                throw SecurityException("Staging input quota exceeded")
+                throw InputQuotaExceeded(perFile = false)
             }
         }
         inFlightBytes += bytes

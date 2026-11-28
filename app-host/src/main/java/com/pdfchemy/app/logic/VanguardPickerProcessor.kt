@@ -28,7 +28,7 @@ sealed class PickerOutcome : java.io.Closeable {
  *
  * Invariants (RA-03):
  * 1. Provider/I/O errors when Vanguard is disabled MUST NEVER produce [PickerOutcome.BlockedThreat].
- *    They must always result in [PickerOutcome.ProviderError].
+ *    Provider errors result in [PickerOutcome.ProviderError]; typed staging quotas retain their own reason.
  * 2. Cancellation during single or multi picking MUST NEVER produce [PickerOutcome.BlockedThreat]
  *    or [PickerOutcome.ProviderError]. Any staged temporary files must be cleaned up immediately,
  *    and [CancellationException] rethrown.
@@ -36,6 +36,12 @@ sealed class PickerOutcome : java.io.Closeable {
  *    batch (except unverified encrypted items kept for unlock) are released immediately.
  */
 object VanguardPickerProcessor {
+    private fun stagingFailure(error: Exception): PickerOutcome = when (error) {
+        is DocumentStager.InputQuotaExceeded, is DocumentStager.StagingSlotsExceeded ->
+            PickerOutcome.Damaged(PdfSanitizerEngine.classifyInspectionFailure(error))
+        else -> PickerOutcome.ProviderError
+    }
+
 
     fun resolveBlockedReasonResId(report: SanitizerAuditReport): Int {
         return when {
@@ -89,9 +95,9 @@ object VanguardPickerProcessor {
         } catch (cancelled: CancellationException) {
             stagedUri?.takeIf { it != originalUri }?.let(releaser)
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
             stagedUri?.takeIf { it != originalUri }?.let(releaser)
-            PickerOutcome.ProviderError
+            stagingFailure(error)
         }
     }
 
@@ -146,9 +152,9 @@ object VanguardPickerProcessor {
         } catch (cancelled: CancellationException) {
             owner.close()
             throw cancelled
-        } catch (_: Exception) {
+        } catch (error: Exception) {
             owner.close()
-            PickerOutcome.ProviderError
+            stagingFailure(error)
         }
     }
 }

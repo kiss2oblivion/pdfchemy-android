@@ -59,7 +59,7 @@ data class PageCountContract(
 /** Fixed diagnostic codes: never forward untrusted PDF strings or stack traces to the UI. */
 enum class VanguardInspectionFailure {
     PDF_READ_FAILED, GRAPH_LIMIT, ACTIVE_CONTENT_INSPECTION_FAILED, METADATA_INSPECTION_FAILED,
-    WORKER_BUSY, WORKER_TIMEOUT, WORKER_UNAVAILABLE, ACCESS_FAILED, UNKNOWN
+    WORKER_BUSY, WORKER_TIMEOUT, WORKER_UNAVAILABLE, ACCESS_FAILED, INPUT_SIZE_LIMIT, STAGING_CAPACITY, UNKNOWN
 }
 
 data class SanitizeAuditContract(

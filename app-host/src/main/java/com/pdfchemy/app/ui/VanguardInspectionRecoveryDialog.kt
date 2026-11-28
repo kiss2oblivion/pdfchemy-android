@@ -29,6 +29,8 @@ internal fun VanguardInspectionFailure.explanationRes(): Int = when (this) {
     VanguardInspectionFailure.WORKER_TIMEOUT -> R.string.vanguard_reason_timeout
     VanguardInspectionFailure.WORKER_UNAVAILABLE -> R.string.vanguard_reason_worker
     VanguardInspectionFailure.ACCESS_FAILED -> R.string.vanguard_reason_access
+    VanguardInspectionFailure.INPUT_SIZE_LIMIT -> R.string.vanguard_reason_input_size
+    VanguardInspectionFailure.STAGING_CAPACITY -> R.string.vanguard_reason_staging_capacity
     VanguardInspectionFailure.UNKNOWN -> R.string.vanguard_reason_unknown
 }
 
@@ -56,6 +58,8 @@ internal fun VanguardInspectionRecoveryDialog(
     var showDetails by remember(sourceUri, failure) { mutableStateOf(false) }
     val busy = diagnosing || repairing || choosingDestination
     val allowRepair = failure.canAttemptStructuralRecovery() && diagnostic?.isEncrypted == false
+    val canDiagnose = failure !in setOf(VanguardInspectionFailure.ACCESS_FAILED,
+        VanguardInspectionFailure.INPUT_SIZE_LIMIT, VanguardInspectionFailure.STAGING_CAPACITY)
 
     val save = rememberPreferredDocumentDestinationCreator("application/pdf") { destination ->
         choosingDestination = false
@@ -93,8 +97,12 @@ internal fun VanguardInspectionRecoveryDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(failure.explanationRes()), fontWeight = FontWeight.Medium)
                 Text(stringResource(R.string.vanguard_damaged_message))
-                Text(stringResource(if (failure == VanguardInspectionFailure.ACCESS_FAILED)
-                    R.string.vanguard_access_next else R.string.vanguard_recovery_next), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(when (failure) {
+                    VanguardInspectionFailure.ACCESS_FAILED -> R.string.vanguard_access_next
+                    VanguardInspectionFailure.INPUT_SIZE_LIMIT -> R.string.vanguard_input_next
+                    VanguardInspectionFailure.STAGING_CAPACITY -> R.string.vanguard_capacity_next
+                    else -> R.string.vanguard_recovery_next
+                }), style = MaterialTheme.typography.bodySmall)
                 if (diagnosing || repairing) {
                     LinearProgressIndicator(Modifier.fillMaxWidth())
                     Text(stringResource(if (diagnosing) R.string.diagnosing_document else R.string.vanguard_recovery_rebuilding))
@@ -115,7 +123,7 @@ internal fun VanguardInspectionRecoveryDialog(
                 }
                 if (diagnosisFailed) Text(stringResource(R.string.vanguard_recovery_diagnosis_failed), color = MaterialTheme.colorScheme.error)
                 if (repairFailed) Text(stringResource(R.string.vanguard_recovery_repair_failed), color = MaterialTheme.colorScheme.error)
-                if (failure != VanguardInspectionFailure.ACCESS_FAILED) {
+                if (canDiagnose) {
                     OutlinedButton(enabled = !busy, onClick = {
                         diagnosing = true; diagnosisFailed = false; repairFailed = false; diagnostic = null
                         operationJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -148,6 +156,11 @@ internal fun VanguardInspectionRecoveryDialog(
                         val report = buildString {
                             appendLine("VANGUARD inspection incomplete")
                             appendLine("Code: " + failure.name)
+                            appendLine("App version: " + com.pdfchemy.app.BuildConfig.VERSION_NAME)
+                            appendLine("App build: " + com.pdfchemy.app.BuildConfig.VERSION_CODE)
+                            appendLine("Per-file input bytes limit: " + SecurityLimits.MAX_PDF_FILESIZE)
+                            appendLine("Aggregate staged bytes limit: " + SecurityLimits.MAX_BATCH_INPUT_BYTES)
+                            appendLine("Staged document count limit: " + SecurityLimits.MAX_STAGED_DOCUMENTS)
                             appendLine("Graph nodes limit: " + SecurityLimits.MAX_GRAPH_NODES)
                             appendLine("Graph depth limit: " + SecurityLimits.MAX_GRAPH_DEPTH)
                             appendLine("Worker deadline ms: " + SecurityLimits.WORKER_DEADLINE_MS)
@@ -166,7 +179,7 @@ internal fun VanguardInspectionRecoveryDialog(
             }
         },
         confirmButton = {
-            Button(enabled = !busy, onClick = { continueLatest(sourceUri) }) {
+            Button(enabled = !busy && failure != VanguardInspectionFailure.INPUT_SIZE_LIMIT, onClick = { continueLatest(sourceUri) }) {
                 Text(stringResource(R.string.vanguard_recovery_retry))
             }
         },

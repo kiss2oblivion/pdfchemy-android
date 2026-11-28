@@ -47,7 +47,10 @@ object PdfSanitizerEngine {
         is PdfGateway.WorkerTimeoutException -> VanguardInspectionFailure.WORKER_TIMEOUT
         is PdfGateway.WorkerDiedException, is PdfGateway.WorkerBindingException,
         is PdfGateway.WorkerFailure -> VanguardInspectionFailure.WORKER_UNAVAILABLE
-        is java.io.FileNotFoundException -> VanguardInspectionFailure.ACCESS_FAILED
+        is com.pdfchemy.app.utils.DocumentStager.InputQuotaExceeded ->
+            if (error.perFile) VanguardInspectionFailure.INPUT_SIZE_LIMIT else VanguardInspectionFailure.STAGING_CAPACITY
+        is com.pdfchemy.app.utils.DocumentStager.StagingSlotsExceeded -> VanguardInspectionFailure.STAGING_CAPACITY
+        is java.io.FileNotFoundException, is SecurityException -> VanguardInspectionFailure.ACCESS_FAILED
         else -> VanguardInspectionFailure.UNKNOWN
     }
 
