@@ -23,6 +23,11 @@ object ActiveContentScrubber {
     }
     private val activeActions = setOf("Launch", "GoToR", "GoToE", "SubmitForm", "ImportData", "Rendition", "Movie", "Sound", "RichMedia", "3D")
     private val activeSubtypes = setOf("RichMedia", "Movie", "Sound", "3D", "Screen")
+    private val triggerBoundaries = setOf("Dest", "D", "Parent", "P", "Pages", "Root", "Prev")
+    private val allowedUriSchemes = setOf("http", "https")
+    private val attachmentCarrierKeys = listOf("EmbeddedFiles", "AF", "EF", "FS")
+    private data class Pending(val base: COSBase, val depth: Int, val triggered: Boolean)
+
     private fun name(key: String) = COSName.getPDFName(key)
 
     /** Carriers reference attachments; the resolved FileSpec owns their logical identity. */
@@ -34,33 +39,46 @@ object ActiveContentScrubber {
     }
 
     fun inspect(document: PDDocument, scrub: Boolean = false, purgeJs: Boolean = true, purgeActions: Boolean = true, purgeAttachments: Boolean = true): Findings {
-        val queue = ArrayDeque<Triple<COSBase, Int, Boolean>>()
+        val queue = ArrayDeque<Pending>()
+        // Identity is recorded on enqueue, not dequeue. A reference shared by
+        // thousands of pages is scheduled at most once per action context.
+        // Keep normal and automatic-action contexts distinct: visiting a URI as
+        // an ordinary link must never suppress a later triggered visit.
         val visited = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val triggered = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val uriObjects = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
         val logicalAttachments = Collections.newSetFromMap(IdentityHashMap<COSBase, Boolean>())
-        queue.add(Triple(document.documentCatalog.cosObject, 0, false))
-        requireInspectionGraphLimit(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES)
-        document.document.objects.forEach { queue.add(Triple(it, 0, false)) }
+        fun enqueue(base: COSBase, depth: Int, automatic: Boolean) {
+            val scheduled = if (automatic) triggered else visited
+            if (base in scheduled) return
+            requireInspectionGraphLimit(visited.size + triggered.size < SecurityLimits.MAX_GRAPH_NODES &&
+                depth <= SecurityLimits.MAX_GRAPH_DEPTH && queue.size < SecurityLimits.MAX_GRAPH_NODES)
+            scheduled.add(base)
+            queue.addLast(Pending(base, depth, automatic))
+        }
+        enqueue(document.documentCatalog.cosObject, 0, false)
+        val pooled = document.document.objects
+        requireInspectionGraphLimit(pooled.size <= SecurityLimits.MAX_GRAPH_NODES)
+        pooled.forEach { enqueue(it, 0, false) }
         val findings = Findings()
         while (queue.isNotEmpty()) {
             val (base, depth, isTriggered) = queue.removeFirst()
-            if (!(if (isTriggered) triggered else visited).add(base)) continue
-            requireInspectionGraphLimit(visited.size + triggered.size <= SecurityLimits.MAX_GRAPH_NODES && depth <= SecurityLimits.MAX_GRAPH_DEPTH && queue.size <= SecurityLimits.MAX_GRAPH_NODES)
             when (base) {
-                is COSObject -> base.`object`?.let { queue.add(Triple(it, depth + 1, isTriggered)) }
+                is COSObject -> base.`object`?.let { enqueue(it, depth + 1, isTriggered) }
                 is COSArray -> {
                     requireInspectionGraphLimit(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
-                    for (i in 0 until base.size()) queue.add(Triple(base.get(i), depth + 1, isTriggered))
+                    for (i in 0 until base.size()) enqueue(base.get(i), depth + 1, isTriggered)
                 }
                 is COSDictionary -> {
                     // Capture children before removing links, so orphaned carriers are scrubbed too.
                     requireInspectionGraphLimit(base.size() <= SecurityLimits.MAX_GRAPH_NODES)
-                    base.keySet().toList().forEach { key -> base.getItem(key)?.let {
+                    // Read all edges before the dictionary can be mutated below.
+                    // No key snapshot is needed here: this loop does not mutate base.
+                    base.keySet().forEach { key -> base.getItem(key)?.let {
                         val child = if (it is COSObject) it.`object` else it
                         val automaticAction = key.name == "OpenAction" && child is COSDictionary && child.containsKey(COSName.S)
-                        val inherited = isTriggered && key.name !in setOf("Dest", "D", "Parent", "P", "Pages", "Root", "Prev")
-                        queue.add(Triple(it, depth + 1, inherited || automaticAction || key.name == "AA"))
+                        val inherited = isTriggered && key.name !in triggerBoundaries
+                        enqueue(it, depth + 1, inherited || automaticAction || key.name == "AA")
                     } }
                     val action = base.getNameAsString(COSName.S)
                     val subtype = base.getNameAsString(COSName.SUBTYPE)
@@ -68,7 +86,7 @@ object ActiveContentScrubber {
                     if (action == "URI") {
                         if (uriObjects.add(base)) findings.uris++
                         val scheme = runCatching { java.net.URI(base.getString(name("URI"), "")).scheme?.lowercase() }.getOrNull()
-                        if (isTriggered || scheme !in setOf("http", "https")) findings.untrustedUris++
+                        if (isTriggered || scheme !in allowedUriSchemes) findings.untrustedUris++
                         listOf("S", "URI", "Next").forEach { remove(it, purgeActions) }
                     }
                     if (action == "JavaScript" || base.containsKey(name("JS")) || base.containsKey(name("JavaScript"))) {
@@ -88,8 +106,8 @@ object ActiveContentScrubber {
                         if (logicalAttachments.add(identity)) findings.attachments++
                     }
                     // Removal remains broader than counting: sever every carrier, including orphans.
-                    if (subtype == "FileAttachment" || listOf("EmbeddedFiles", "AF", "EF", "FS").any { base.containsKey(name(it)) }) {
-                        listOf("EmbeddedFiles", "AF", "EF", "FS").forEach { remove(it, purgeAttachments) }
+                    if (subtype == "FileAttachment" || attachmentCarrierKeys.any { base.containsKey(name(it)) }) {
+                        attachmentCarrierKeys.forEach { remove(it, purgeAttachments) }
                         if (subtype == "FileAttachment" && scrub && purgeAttachments) base.setName(COSName.SUBTYPE, "Text")
                     }
                 }

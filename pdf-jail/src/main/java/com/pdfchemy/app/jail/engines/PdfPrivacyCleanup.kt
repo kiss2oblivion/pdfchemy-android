@@ -14,7 +14,8 @@ internal object PdfPrivacyCleanup {
     private fun identities(): MutableSet<COSBase> = Collections.newSetFromMap(IdentityHashMap())
 
     private fun value(raw: COSBase?): COSBase? {
-        var node = raw
+        if (raw !is COSObject) return raw
+        var node: COSBase? = raw
         val references = identities()
         while (node is COSObject) {
             require(references.add(node)) { "Invalid private object reference cycle" }
@@ -24,18 +25,6 @@ internal object PdfPrivacyCleanup {
         return node
     }
 
-    private fun children(node: COSBase): List<Pair<COSName?, COSBase?>> = when (node) {
-        is COSDictionary -> {
-            requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
-            node.keySet().map { it to node.getItem(it) }
-        }
-        is COSArray -> {
-            requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
-            (0 until node.size()).map { null to node.get(it) }
-        }
-        else -> emptyList()
-    }
-
     private fun walk(roots: Iterable<COSBase?>, skip: Set<COSName> = emptySet(),
                      boundary: Set<COSBase> = emptySet()): Set<COSBase> {
         val seen = identities()
@@ -43,18 +32,30 @@ internal object PdfPrivacyCleanup {
             val node = value(raw) ?: return
             if (node in boundary || node !is COSDictionary && node !is COSArray && node !is COSString || !seen.add(node)) return
             requireInspectionGraphLimit(depth <= SecurityLimits.MAX_GRAPH_DEPTH && seen.size <= SecurityLimits.MAX_GRAPH_NODES)
-            for ((key, child) in children(node)) if (key !in skip) visit(child, depth + 1)
+            // Traverse directly. This walk never mutates dictionaries or arrays.
+            // Preserve the existing raw container-size and resolved-depth limits.
+            when (node) {
+                is COSDictionary -> {
+                    requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
+                    for (key in node.keySet()) if (key !in skip) visit(node.getItem(key), depth + 1)
+                }
+                is COSArray -> {
+                    requireInspectionGraphLimit(node.size() <= SecurityLimits.MAX_GRAPH_NODES)
+                    for (index in 0 until node.size()) visit(node.get(index), depth + 1)
+                }
+            }
         }
         roots.forEach { visit(it, 0) }
         return seen
     }
 
     private fun graph(document: PDDocument): Set<COSBase> {
-        requireInspectionGraphLimit(document.document.objects.size <= SecurityLimits.MAX_GRAPH_NODES)
-        return walk(listOf(document.document.trailer) + document.document.objects)
+        val pooled = document.document.objects
+        requireInspectionGraphLimit(pooled.size <= SecurityLimits.MAX_GRAPH_NODES)
+        return walk(listOf(document.document.trailer) + pooled)
     }
 
-    fun hasMetadata(document: PDDocument): Boolean = graph(document).any { node ->
+    private fun containsMetadata(nodes: Set<COSBase>): Boolean = nodes.any { node ->
         node is COSDictionary && (metadataKeys.any { key ->
             val payload = value(node.getItem(key))
             payload != null && payload !is COSNull && !(key == COSName.INFO && payload is COSDictionary && payload.size() == 0)
@@ -63,9 +64,25 @@ internal object PdfPrivacyCleanup {
 
     fun removeMetadata(document: PDDocument) = removeSelected(document, metadata = true, attachments = false)
 
-    fun hasAttachmentPayloads(document: PDDocument): Boolean = graph(document).any { node ->
+    private fun containsAttachmentPayloads(nodes: Set<COSBase>): Boolean = nodes.any { node ->
         node is COSDictionary && (attachmentKeys.any(node::containsKey) ||
             node is COSStream && node.getCOSName(COSName.TYPE) == name("EmbeddedFile"))
+    }
+
+    fun hasMetadata(document: PDDocument): Boolean = containsMetadata(graph(document))
+
+    fun hasAttachmentPayloads(document: PDDocument): Boolean = containsAttachmentPayloads(graph(document))
+
+    /** Complete the privacy graph once even when checking both categories. */
+    internal fun validatePrivacy(document: PDDocument, inspectMetadata: Boolean,
+                                 requireNoMetadata: Boolean, requireNoAttachments: Boolean) {
+        if (!inspectMetadata && !requireNoMetadata && !requireNoAttachments) return
+        val nodes = graph(document)
+        if (inspectMetadata || requireNoMetadata) {
+            val present = containsMetadata(nodes)
+            require(!requireNoMetadata || !present) { "Metadata survived sanitization" }
+        }
+        if (requireNoAttachments) require(!containsAttachmentPayloads(nodes)) { "Attachment payload survived sanitization" }
     }
 
     fun removeSelected(document: PDDocument, metadata: Boolean, attachments: Boolean) {

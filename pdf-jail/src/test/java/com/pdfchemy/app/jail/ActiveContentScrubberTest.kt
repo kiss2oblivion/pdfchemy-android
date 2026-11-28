@@ -123,4 +123,57 @@ class ActiveContentScrubberTest {
         // NamespaceScope was introduced by upstream 862ba2f; this checks the resolved JAR too.
         Class.forName("org.jsoup.internal.NamespaceBindings")
     }
+
+    @Test fun repeatedReferencesDoNotExhaustQueueWithDuplicateWork() {
+        PDDocument().use { document ->
+            val shared = COSDictionary().apply {
+                setName(COSName.S, "URI")
+                setString(name("URI"), "https://example.com")
+            }
+            val reference = COSObject(shared)
+            val catalog = document.documentCatalog.cosObject
+            // Each container is below the original raw array size limit.
+            // Their combined duplicate pending edges exceed the old queue limit.
+            repeat(3) { index ->
+                catalog.setItem(name("SharedResources$index"), COSArray().apply {
+                    repeat(40_000) { add(reference) }
+                })
+            }
+            val audit = ActiveContentScrubber.inspect(document)
+            assertEquals(1, audit.uris)
+            assertEquals(0, audit.untrustedUris)
+            assertEquals(0, audit.javascript)
+            // Adding an automatic reference must still cause a separate security visit.
+            catalog.setItem(name("OpenAction"), reference)
+            val automatic = ActiveContentScrubber.inspect(document)
+            assertEquals(1, automatic.uris)
+            assertTrue(automatic.untrustedUris > 0)
+        }
+    }
+
+    @Test fun uniqueNodeBudgetStillFailsClosedWithManyDistinctObjects() {
+        PDDocument().use { document ->
+            val array = COSArray()
+            repeat(com.pdfchemy.app.security.SecurityLimits.MAX_GRAPH_NODES) {
+                array.add(COSDictionary())
+            }
+            document.documentCatalog.cosObject.setItem(name("DistinctObjects"), array)
+            try {
+                ActiveContentScrubber.inspect(document)
+                fail("Unique graph budget must remain enforced")
+            } catch (_: com.pdfchemy.app.jail.engines.InspectionGraphLimitException) {}
+        }
+    }
+
+    @Test fun rawContainerSizeLimitIsNotBypassedByDuplicateDeduplication() {
+        PDDocument().use { document ->
+            val array = COSArray()
+            repeat(com.pdfchemy.app.security.SecurityLimits.MAX_GRAPH_NODES + 1) { array.add(COSNull.NULL) }
+            document.documentCatalog.cosObject.setItem(name("OversizedArray"), array)
+            try {
+                ActiveContentScrubber.inspect(document)
+                fail("Oversized container must still be rejected")
+            } catch (_: com.pdfchemy.app.jail.engines.InspectionGraphLimitException) {}
+        }
+    }
 }

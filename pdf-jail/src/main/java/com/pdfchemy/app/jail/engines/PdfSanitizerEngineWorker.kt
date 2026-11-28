@@ -58,22 +58,30 @@ object PdfSanitizerEngineWorker {
                 findings.selected(purgeJs, purgeActions, purgeAttachments)
             }
             com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
-                validateCleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments)
-                if (requireVanguardClean) verifyRecoveredDocument(document, originalPageCount)
+                validateCleanDocument(document, purgeJs, purgeActions, purgeMetadata, purgeAttachments,
+                    expectedPages = if (requireVanguardClean) originalPageCount else null)
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output -> com.pdfchemy.app.jail.CapabilityIo.input(scratch).use { it.copyTo(output) } }
             return JSONObject().put("isSuccess", true).put("threatsRemoved", removed.total).put("jsRemoved", removed.javascript)
                 .put("actionsRemoved", removed.launches + removed.actions + removed.untrustedUris + removed.uris).put("attachmentsRemoved", removed.attachments).put("metadataRemoved", purgeMetadata).toString()
         } finally { scratch.delete() }
     }
-    internal fun verifyRecoveredDocument(document: PDDocument, expectedPages: Int) {
+    private fun verifyRecoveredPageCount(document: PDDocument, expectedPages: Int) {
         check(!document.isEncrypted && expectedPages > 0 && document.numberOfPages == expectedPages) {
             "Recovered PDF encryption or page count not verified"
         }
-        val findings = ActiveContentScrubber.inspect(document)
+    }
+
+    private fun verifyActiveContent(findings: ActiveContentScrubber.Findings) {
         check(findings.javascript == 0 && findings.launches == 0 && findings.actions == 0 &&
             findings.untrustedUris == 0) { "Recovered PDF contains prohibited active content" }
-        PdfPrivacyCleanup.hasMetadata(document)
+    }
+
+    internal fun verifyRecoveredDocument(document: PDDocument, expectedPages: Int) {
+        verifyRecoveredPageCount(document, expectedPages)
+        verifyActiveContent(ActiveContentScrubber.inspect(document))
+        PdfPrivacyCleanup.validatePrivacy(document, inspectMetadata = true,
+            requireNoMetadata = false, requireNoAttachments = false)
     }
 
     /** Shared by the FD worker and saved-document regressions; counts precede removal. */
@@ -87,9 +95,13 @@ object PdfSanitizerEngineWorker {
     }
 
     internal fun validateCleanDocument(document: PDDocument, purgeJs: Boolean, purgeActions: Boolean,
-                                       purgeMetadata: Boolean, purgeAttachments: Boolean) {
-        require(ActiveContentScrubber.inspect(document).selected(purgeJs, purgeActions, purgeAttachments).total == 0) { "Prohibited carriers survived sanitization" }
-        if (purgeMetadata) require(!PdfPrivacyCleanup.hasMetadata(document)) { "Metadata survived sanitization" }
-        if (purgeAttachments) require(!PdfPrivacyCleanup.hasAttachmentPayloads(document)) { "Attachment payload survived sanitization" }
+                                       purgeMetadata: Boolean, purgeAttachments: Boolean,
+                                       expectedPages: Int? = null) {
+        if (expectedPages != null) verifyRecoveredPageCount(document, expectedPages)
+        val findings = ActiveContentScrubber.inspect(document)
+        require(findings.selected(purgeJs, purgeActions, purgeAttachments).total == 0) { "Prohibited carriers survived sanitization" }
+        if (expectedPages != null) verifyActiveContent(findings)
+        PdfPrivacyCleanup.validatePrivacy(document, inspectMetadata = expectedPages != null,
+            requireNoMetadata = purgeMetadata, requireNoAttachments = purgeAttachments)
     }
 }
