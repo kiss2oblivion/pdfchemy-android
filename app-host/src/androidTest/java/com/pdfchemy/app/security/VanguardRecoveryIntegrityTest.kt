@@ -94,6 +94,8 @@ class VanguardRecoveryIntegrityTest {
             assertEquals(2, accounting.verifiedOutputPages)
             assertEquals(0, accounting.activeFindingsAfter)
             assertEquals(com.pdfchemy.app.logic.PageStreamEvidence(2, 0, 0), accounting.streamEvidence)
+            assertEquals(com.pdfchemy.app.logic.PageTextEvidence(0, 0, 2, 0), accounting.textEvidence)
+            assertEquals(com.pdfchemy.app.logic.PageStreamEvidence(2, 0, 0), accounting.geometryEvidence)
             assertArrayEquals(damaged, source.readBytes())
             assertCleanOutput(output)
         }

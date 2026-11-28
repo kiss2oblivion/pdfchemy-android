@@ -1496,4 +1496,9 @@
     <string name="vanguard_stream_evidence">Encoded page-content streams: %1$d matching, %2$d different, %3$d not measured.</string>
     <string name="vanguard_stream_review">Review the recovered document before using it. Some page-content streams differ or could not be compared.</string>
     <string name="vanguard_stream_limits">Matching encoded bytes do not prove matching appearance. Different bytes may result from rewriting or compression rather than content loss. Resources and rendering were not compared.</string>
+    <string name="vanguard_text_evidence">Extracted text: %1$d matching, %2$d different, %3$d with no non-whitespace text on either side, %4$d not measured.</string>
+    <string name="vanguard_text_review">Some extracted text differs or could not be measured. Review the recovered copy.</string>
+    <string name="vanguard_text_limits">Only the bounded local text extraction is compared. No OCR, reading-order or visual equivalence is certified.</string>
+    <string name="vanguard_geometry_evidence">Effective page geometry: %1$d matching, %2$d different, %3$d not measured (page boxes, rotation and user unit).</string>
+    <string name="vanguard_geometry_review">Some page geometry differs or could not be measured. Review the layout before using this copy.</string>
 </resources>

@@ -1479,4 +1479,9 @@
     <string name="vanguard_stream_evidence">Fluxuri codificate de conținut al paginilor: %1$d identice, %2$d diferite, %3$d nemăsurate.</string>
     <string name="vanguard_stream_review">Verificați documentul recuperat înainte de utilizare. Unele fluxuri de conținut diferă sau nu au putut fi comparate.</string>
     <string name="vanguard_stream_limits">Octeții codificați identici nu dovedesc aspectul identic. Octeții diferiți pot rezulta din rescriere sau compresie, nu neapărat din pierderea conținutului. Resursele și redarea nu au fost comparate.</string>
+    <string name="vanguard_text_evidence">Text extras: %1$d identice, %2$d diferite, %3$d fără text vizibil în ambele versiuni, %4$d nemăsurate.</string>
+    <string name="vanguard_text_review">O parte din textul extras diferă sau nu a putut fi măsurată. Verificați copia recuperată.</string>
+    <string name="vanguard_text_limits">Se compară numai extragerea locală limitată a textului. Nu se certifică recunoașterea OCR, ordinea de citire sau echivalența vizuală.</string>
+    <string name="vanguard_geometry_evidence">Geometria efectivă a paginilor: %1$d identice, %2$d diferite, %3$d nemăsurate (casete, rotație și unitatea de măsură).</string>
+    <string name="vanguard_geometry_review">Geometria unor pagini diferă sau nu a putut fi măsurată. Verificați aspectul înainte de a folosi copia.</string>
 </resources>

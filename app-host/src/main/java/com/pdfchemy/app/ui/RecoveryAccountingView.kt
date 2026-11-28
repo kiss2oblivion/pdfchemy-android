@@ -40,6 +40,19 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
         }
         Text(stringResource(R.string.vanguard_stream_limits), style = MaterialTheme.typography.bodySmall)
     }
+    report.textEvidence?.let {
+        Text(stringResource(R.string.vanguard_text_evidence, it.matchingTextPages, it.differentPages, it.noTextPages, it.unmeasuredPages))
+        if (it.differentPages > 0 || it.unmeasuredPages > 0)
+            Text(stringResource(R.string.vanguard_text_review), color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.vanguard_text_limits), style = MaterialTheme.typography.bodySmall)
+    }
+    report.geometryEvidence?.let {
+        Text(stringResource(R.string.vanguard_geometry_evidence, it.matchingPages, it.differentPages, it.unmeasuredPages))
+        if (it.differentPages > 0 || it.unmeasuredPages > 0)
+            Text(stringResource(R.string.vanguard_geometry_review), color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
+    }
     Text(stringResource(R.string.vanguard_recovery_uncertainty), style = MaterialTheme.typography.bodySmall)
     TextButton(onClick = {
         val text = buildString {
@@ -57,6 +70,17 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
                 appendLine("Matching encoded page content streams: " + it.matchingPages)
                 appendLine("Different encoded page content streams: " + it.differentPages)
                 appendLine("Unmeasured page content streams: " + it.unmeasuredPages)
+            }
+            report.textEvidence?.let {
+                appendLine("Matching extracted text pages: " + it.matchingTextPages)
+                appendLine("Different extracted text pages: " + it.differentPages)
+                appendLine("No extracted non-whitespace text on either side: " + it.noTextPages)
+                appendLine("Unmeasured text pages: " + it.unmeasuredPages)
+            }
+            report.geometryEvidence?.let {
+                appendLine("Matching effective page geometry: " + it.matchingPages)
+                appendLine("Different effective page geometry: " + it.differentPages)
+                appendLine("Unmeasured page geometry: " + it.unmeasuredPages)
             }
             appendLine("Full content, visual and signature preservation not verified")
         }

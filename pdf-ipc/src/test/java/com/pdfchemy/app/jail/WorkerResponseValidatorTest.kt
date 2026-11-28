@@ -651,4 +651,18 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"differentPages\":1", "\"differentPages\":2")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"unmeasuredPages\":1", "\"unmeasuredPages\":-1")) }
     }
+
+    @Test fun textAndGeometryEvidenceMustPartitionPagesSeparately() {
+        val valid = """{"success":true,"recoveredPages":4,"recovery":{"method":"RESERIALIZE",
+            "readableInputPages":4,"verifiedOutputPages":4,"headerInserted":false,"prefixBytesRemoved":0,
+            "eofAppended":false,"activeFindingsAfter":0,
+            "textEvidence":{"matchingTextPages":1,"differentPages":1,"noTextPages":1,"unmeasuredPages":1},
+            "geometryEvidence":{"matchingPages":4,"differentPages":0,"unmeasuredPages":0}}}"""
+        val report = (WorkerResponseValidator.validate("REPAIR_APPLY", valid) as RepairApplyContract).recovery!!
+        assertEquals(PageTextEvidence(1, 1, 1, 1), report.textEvidence)
+        assertEquals(PageStreamEvidence(4, 0, 0), report.geometryEvidence)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"noTextPages\":1", "\"noTextPages\":0")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"matchingPages\":4", "\"matchingPages\":3")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"matchingTextPages\":1", "\"matchingTextPages\":-1")) }
+    }
 }

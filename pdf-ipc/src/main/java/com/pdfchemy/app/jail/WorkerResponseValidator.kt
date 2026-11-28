@@ -868,18 +868,31 @@ object WorkerResponseValidator {
         require(corrected == 0 || method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
             "Unexpected page tree correction in non-repair operation"
         }
-        val evidence = if (obj.has("streamEvidence")) {
+        fun pageEvidence(key: String): PageStreamEvidence? = if (obj.has(key)) {
             require(method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
                 "Unexpected page stream evidence for recovery method"
             }
-            val raw = requireObject(obj.get("streamEvidence"))
+            val raw = requireObject(obj.get(key))
             val matched = raw.requireInt("matchingPages", min = 0, max = output)
             val different = raw.requireInt("differentPages", min = 0, max = output)
             val unknown = raw.requireInt("unmeasuredPages", min = 0, max = output)
             require(matched + different + unknown == output) { "Page evidence counts do not partition output pages" }
             PageStreamEvidence(matched, different, unknown)
         } else null
-        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected, evidence)
+        val textEvidence = if (obj.has("textEvidence")) {
+            require(method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
+                "Unexpected text evidence for recovery method"
+            }
+            val raw = requireObject(obj.get("textEvidence"))
+            val matched = raw.requireInt("matchingTextPages", min = 0, max = output)
+            val different = raw.requireInt("differentPages", min = 0, max = output)
+            val empty = raw.requireInt("noTextPages", min = 0, max = output)
+            val unknown = raw.requireInt("unmeasuredPages", min = 0, max = output)
+            require(matched + different + empty + unknown == output) { "Text evidence counts do not partition pages" }
+            PageTextEvidence(matched, different, empty, unknown)
+        } else null
+        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected,
+            pageEvidence("streamEvidence"), textEvidence, pageEvidence("geometryEvidence"))
     }
 
     private fun parseStandardOutput(root: Any?, targetCount: Int, allowRecovery: Boolean = false): StandardOutputContract {

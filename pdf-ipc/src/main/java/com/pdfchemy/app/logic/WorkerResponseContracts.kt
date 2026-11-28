@@ -16,6 +16,11 @@ enum class RecoveryMethod { RESERIALIZE, NORMALIZE_CONTAINER, SANITIZE, UNLOCK }
 /** Encoded content-stream evidence only; resources and rendering are not compared. */
 data class PageStreamEvidence(val matchingPages: Int, val differentPages: Int, val unmeasuredPages: Int)
 
+/** Only text emitted by the local extractor; no OCR or semantic equivalence claim. */
+data class PageTextEvidence(
+    val matchingTextPages: Int, val differentPages: Int, val noTextPages: Int, val unmeasuredPages: Int
+)
+
 data class RecoveryAccounting(
     val method: RecoveryMethod,
     val readableInputPages: Int,
@@ -26,7 +31,9 @@ data class RecoveryAccounting(
     val activeFindingsBefore: Int?,
     val activeFindingsAfter: Int,
     val pageTreeCountsCorrected: Int = 0,
-    val streamEvidence: PageStreamEvidence? = null
+    val streamEvidence: PageStreamEvidence? = null,
+    val textEvidence: PageTextEvidence? = null,
+    val geometryEvidence: PageStreamEvidence? = null
 )
 
 data class StandardOutputContract(

@@ -9,7 +9,9 @@ internal fun recoveryAccounting(
     prefixBytesRemoved: Long = 0L, eofAppended: Boolean = false,
     activeFindingsBefore: Int? = null,
     pageTreeCountsCorrected: Int = 0,
-    streamEvidence: com.pdfchemy.app.logic.PageStreamEvidence? = null
+    streamEvidence: com.pdfchemy.app.logic.PageStreamEvidence? = null,
+    textEvidence: com.pdfchemy.app.logic.PageTextEvidence? = null,
+    geometryEvidence: com.pdfchemy.app.logic.PageStreamEvidence? = null
 ): JSONObject = JSONObject()
     .put("method", method)
     .put("readableInputPages", pages)
@@ -22,6 +24,8 @@ internal fun recoveryAccounting(
     .apply {
         activeFindingsBefore?.let { put("activeFindingsBefore", it) }
         streamEvidence?.let { put("streamEvidence", PageContentEvidence.json(it)) }
+        textEvidence?.let { put("textEvidence", ReadablePageEvidence.json(it)) }
+        geometryEvidence?.let { put("geometryEvidence", PageContentEvidence.json(it)) }
     }
 
 internal fun ActiveContentScrubber.Findings.executableFindingCount(): Int =

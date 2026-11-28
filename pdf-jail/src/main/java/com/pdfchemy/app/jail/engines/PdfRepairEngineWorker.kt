@@ -117,14 +117,18 @@ object PdfRepairEngineWorker {
         val inputFindings = ActiveContentScrubber.inspect(document)
         check(inputFindings.executableFindingCount() == 0) { "Input contains blocked active content; use sanitization" }
         val inputEvidence = PageContentEvidence.capture(document)
+        val inputReadable = ReadablePageEvidence.capture(document)
         val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
         try {
             boundedFileOutput(candidate).use { document.save(it) }
-            val streamEvidence = com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
+            val (streamEvidence, textEvidence, geometryEvidence) = com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
                 PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
             }.use {
                 PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pageCount)
-                PageContentEvidence.compare(inputEvidence, PageContentEvidence.capture(it))
+                val readable = ReadablePageEvidence.capture(it)
+                Triple(PageContentEvidence.compare(inputEvidence, PageContentEvidence.capture(it)),
+                    ReadablePageEvidence.compareText(inputReadable.text, readable.text),
+                    ReadablePageEvidence.compareGeometry(inputReadable, readable))
             }
             boundedFileOutput(targetFd.fileDescriptor).use { output ->
                 com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
@@ -133,7 +137,8 @@ object PdfRepairEngineWorker {
             return JSONObject().put("success", true).put("recoveredPages", pageCount)
                 .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended,
                     pageTreeCountsCorrected = pageTree.correctedCounts,
-                    streamEvidence = streamEvidence)).toString()
+                    streamEvidence = streamEvidence, textEvidence = textEvidence,
+                    geometryEvidence = geometryEvidence)).toString()
         } finally { candidate.delete() }
     }
 }
