@@ -4,10 +4,8 @@ import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
 import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import org.json.JSONObject
 import com.pdfchemy.app.jail.capabilityInput as FileInputStream
-import java.io.File
 import com.pdfchemy.app.jail.boundedFileOutput
 
 object PdfRepairEngineWorker {
@@ -34,9 +32,27 @@ object PdfRepairEngineWorker {
     }
     fun repair(sourceFd: ParcelFileDescriptor, targetFd: ParcelFileDescriptor, requireVanguardClean: Boolean = false): String {
         JailQuotas.enforceFileSize(sourceFd)
+        // Prefer parsing the unchanged bytes. Rewriting a prefix shifts absolute
+        // object offsets; it is a last-resort normalization, not a first step.
+        val original = try {
+            FileInputStream(sourceFd.fileDescriptor).use {
+                PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+            }
+        } catch (password: com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException) {
+            throw password
+        } catch (readFailure: java.io.IOException) {
+            null
+        }
+        if (original != null) {
+            return original.use { publishRecovered(it, targetFd, requireVanguardClean) }
+        }
+
         val prefix = String(readAt(sourceFd, 0, 64 * 1024), Charsets.ISO_8859_1)
         val suffix = String(readAt(sourceFd, (sourceFd.statSize - 1024).coerceAtLeast(0), 1024), Charsets.US_ASCII)
         val headerIndex = prefix.indexOf("%PDF-")
+        check(headerIndex != 0 || !suffix.contains("%%EOF")) {
+            "PDF parsing failed; no supported container normalization is applicable"
+        }
         val file = com.pdfchemy.app.jail.JailScratch.createTempFile("repair_", ".pdf")
         try {
             boundedFileOutput(file).use { output ->
@@ -45,32 +61,34 @@ object PdfRepairEngineWorker {
                 ParcelFileDescriptor.AutoCloseInputStream(sourceFd.dup()).use { it.copyTo(output) }
                 if (!suffix.contains("%%EOF")) output.write("\n%%EOF\n".toByteArray())
             }
-            com.pdfchemy.app.jail.CapabilityIo.input(file).use { PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings()) }.use { document ->
-                if (!requireVanguardClean) {
-                    boundedFileOutput(targetFd.fileDescriptor).use { document.save(it) }
-                    return JSONObject().put("success", true).put("recoveredPages", document.numberOfPages).toString()
-                }
-                // Recovery invoked by Vanguard must verify the rebuilt candidate BEFORE any user output.
-                check(!document.isEncrypted && document.numberOfPages > 0) { "Recovery requires readable unencrypted pages" }
-                val pageCount = document.numberOfPages
-                val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
-                try {
-                    boundedFileOutput(candidate).use { document.save(it) }
-                    com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
-                        PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
-                    }.use { rebuilt ->
-                        check(!rebuilt.isEncrypted && rebuilt.numberOfPages == pageCount) { "Recovered page count not verified" }
-                        val findings = ActiveContentScrubber.inspect(rebuilt)
-                        check(findings.javascript == 0 && findings.launches == 0 && findings.actions == 0 &&
-                            findings.untrustedUris == 0) { "Recovered PDF contains blocked active content" }
-                        PdfPrivacyCleanup.hasMetadata(rebuilt) // same inspection budget as Vanguard
-                    }
-                    boundedFileOutput(targetFd.fileDescriptor).use { output ->
-                        com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
-                    }
-                    return JSONObject().put("success", true).put("recoveredPages", pageCount).toString()
-                } finally { candidate.delete() }
-            }
+            return com.pdfchemy.app.jail.CapabilityIo.input(file).use {
+                PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+            }.use { publishRecovered(it, targetFd, requireVanguardClean) }
         } finally { file.delete() }
+    }
+
+    private fun publishRecovered(document: PDDocument, targetFd: ParcelFileDescriptor, requireVanguardClean: Boolean): String {
+        val pageCount = document.numberOfPages
+        check(pageCount in 1..com.pdfchemy.app.security.SecurityLimits.MAX_PAGE_COUNT) {
+            "No supported readable pages recovered"
+        }
+        if (!requireVanguardClean) {
+            boundedFileOutput(targetFd.fileDescriptor).use { document.save(it) }
+            return JSONObject().put("success", true).put("recoveredPages", pageCount).toString()
+        }
+        // Verified recovery never quietly strips blocked content: sanitization
+        // requires the user's separate consent. Reopen the actual candidate.
+        check(!document.isEncrypted) { "Recovery requires an unencrypted PDF" }
+        val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
+        try {
+            boundedFileOutput(candidate).use { document.save(it) }
+            com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
+                PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
+            }.use { PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pageCount) }
+            boundedFileOutput(targetFd.fileDescriptor).use { output ->
+                com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
+            }
+            return JSONObject().put("success", true).put("recoveredPages", pageCount).toString()
+        } finally { candidate.delete() }
     }
 }
