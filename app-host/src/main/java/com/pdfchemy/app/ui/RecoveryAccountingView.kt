@@ -32,6 +32,14 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
     report.activeFindingsBefore?.let {
         Text(stringResource(R.string.vanguard_findings_parity, it, report.activeFindingsAfter))
     } ?: Text(stringResource(R.string.vanguard_no_active_after))
+    report.streamEvidence?.let {
+        Text(stringResource(R.string.vanguard_stream_evidence, it.matchingPages, it.differentPages, it.unmeasuredPages))
+        if (it.differentPages > 0 || it.unmeasuredPages > 0) {
+            Text(stringResource(R.string.vanguard_stream_review), color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall)
+        }
+        Text(stringResource(R.string.vanguard_stream_limits), style = MaterialTheme.typography.bodySmall)
+    }
     Text(stringResource(R.string.vanguard_recovery_uncertainty), style = MaterialTheme.typography.bodySmall)
     TextButton(onClick = {
         val text = buildString {
@@ -45,6 +53,11 @@ internal fun RecoveryAccountingView(report: RecoveryAccounting) {
             appendLine("Page-tree count entries corrected: " + report.pageTreeCountsCorrected)
             appendLine("Active findings before: " + (report.activeFindingsBefore?.toString() ?: "Not measured"))
             appendLine("Active findings after: " + report.activeFindingsAfter)
+            report.streamEvidence?.let {
+                appendLine("Matching encoded page content streams: " + it.matchingPages)
+                appendLine("Different encoded page content streams: " + it.differentPages)
+                appendLine("Unmeasured page content streams: " + it.unmeasuredPages)
+            }
             appendLine("Full content, visual and signature preservation not verified")
         }
         (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)

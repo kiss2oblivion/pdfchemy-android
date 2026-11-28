@@ -1476,4 +1476,7 @@
     <string name="vanguard_xref_unknown">Poziția declarată nu indică un marcaj de referințe încrucișate recunoscut.</string>
     <string name="vanguard_xref_offset">Poziția startxref declarată în octeți: %1$d</string>
     <string name="vanguard_xref_limitations">Această inspectare limitată a octeților nu validează intrările tabelului, conținutul fluxurilor, reviziile anterioare sau siguranța documentului.</string>
+    <string name="vanguard_stream_evidence">Fluxuri codificate de conținut al paginilor: %1$d identice, %2$d diferite, %3$d nemăsurate.</string>
+    <string name="vanguard_stream_review">Verificați documentul recuperat înainte de utilizare. Unele fluxuri de conținut diferă sau nu au putut fi comparate.</string>
+    <string name="vanguard_stream_limits">Octeții codificați identici nu dovedesc aspectul identic. Octeții diferiți pot rezulta din rescriere sau compresie, nu neapărat din pierderea conținutului. Resursele și redarea nu au fost comparate.</string>
 </resources>

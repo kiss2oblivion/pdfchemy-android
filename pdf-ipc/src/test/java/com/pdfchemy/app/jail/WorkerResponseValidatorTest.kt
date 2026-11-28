@@ -640,4 +640,15 @@ class WorkerResponseValidatorTest {
         assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace(",\"offset\":1024", "")) }
         assertRejected { WorkerResponseValidator.validate("REPAIR_DIAGNOSE", valid.replace("\"sourceBytes\":4096,", "")) }
     }
+
+    @Test fun encodedPageEvidenceMustPartitionTheVerifiedPages() {
+        val valid = """{"success":true,"recoveredPages":3,"recovery":{"method":"RESERIALIZE",
+            "readableInputPages":3,"verifiedOutputPages":3,"headerInserted":false,"prefixBytesRemoved":0,
+            "eofAppended":false,"activeFindingsAfter":0,
+            "streamEvidence":{"matchingPages":1,"differentPages":1,"unmeasuredPages":1}}}"""
+        val report = (WorkerResponseValidator.validate("REPAIR_APPLY", valid) as RepairApplyContract).recovery!!
+        assertEquals(PageStreamEvidence(1, 1, 1), report.streamEvidence)
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"differentPages\":1", "\"differentPages\":2")) }
+        assertRejected { WorkerResponseValidator.validate("REPAIR_APPLY", valid.replace("\"unmeasuredPages\":1", "\"unmeasuredPages\":-1")) }
+    }
 }

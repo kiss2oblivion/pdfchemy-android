@@ -116,19 +116,24 @@ object PdfRepairEngineWorker {
         // a detectable active-content carrier during serialization.
         val inputFindings = ActiveContentScrubber.inspect(document)
         check(inputFindings.executableFindingCount() == 0) { "Input contains blocked active content; use sanitization" }
+        val inputEvidence = PageContentEvidence.capture(document)
         val candidate = com.pdfchemy.app.jail.JailScratch.createTempFile("verified_repair_", ".pdf")
         try {
             boundedFileOutput(candidate).use { document.save(it) }
-            com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
+            val streamEvidence = com.pdfchemy.app.jail.CapabilityIo.input(candidate).use {
                 PDDocument.load(it, com.pdfchemy.app.jail.JailMemory.settings())
-            }.use { PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pageCount) }
+            }.use {
+                PdfSanitizerEngineWorker.verifyRecoveredDocument(it, pageCount)
+                PageContentEvidence.compare(inputEvidence, PageContentEvidence.capture(it))
+            }
             boundedFileOutput(targetFd.fileDescriptor).use { output ->
                 com.pdfchemy.app.jail.CapabilityIo.input(candidate).use { it.copyTo(output) }
             }
             val method = if (headerInserted || prefixBytesRemoved > 0 || eofAppended) "NORMALIZE_CONTAINER" else "RESERIALIZE"
             return JSONObject().put("success", true).put("recoveredPages", pageCount)
                 .put("recovery", recoveryAccounting(method, pageCount, headerInserted, prefixBytesRemoved, eofAppended,
-                    pageTreeCountsCorrected = pageTree.correctedCounts)).toString()
+                    pageTreeCountsCorrected = pageTree.correctedCounts,
+                    streamEvidence = streamEvidence)).toString()
         } finally { candidate.delete() }
     }
 }

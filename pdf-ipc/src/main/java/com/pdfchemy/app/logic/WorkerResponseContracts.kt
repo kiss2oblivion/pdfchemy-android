@@ -13,6 +13,9 @@ sealed interface OperationContract
 /** Counts describe inspected object contexts, not distinct scripts or links.
  * Page parity is measured against the readable input, not unknown lost original pages. */
 enum class RecoveryMethod { RESERIALIZE, NORMALIZE_CONTAINER, SANITIZE, UNLOCK }
+/** Encoded content-stream evidence only; resources and rendering are not compared. */
+data class PageStreamEvidence(val matchingPages: Int, val differentPages: Int, val unmeasuredPages: Int)
+
 data class RecoveryAccounting(
     val method: RecoveryMethod,
     val readableInputPages: Int,
@@ -22,7 +25,8 @@ data class RecoveryAccounting(
     val eofAppended: Boolean,
     val activeFindingsBefore: Int?,
     val activeFindingsAfter: Int,
-    val pageTreeCountsCorrected: Int = 0
+    val pageTreeCountsCorrected: Int = 0,
+    val streamEvidence: PageStreamEvidence? = null
 )
 
 data class StandardOutputContract(

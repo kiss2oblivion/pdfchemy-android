@@ -1493,4 +1493,7 @@
     <string name="vanguard_xref_unknown">The declared offset does not point to a recognized cross-reference marker.</string>
     <string name="vanguard_xref_offset">Declared startxref byte offset: %1$d</string>
     <string name="vanguard_xref_limitations">This bounded byte inspection does not validate table entries, stream contents, earlier revisions or document safety.</string>
+    <string name="vanguard_stream_evidence">Encoded page-content streams: %1$d matching, %2$d different, %3$d not measured.</string>
+    <string name="vanguard_stream_review">Review the recovered document before using it. Some page-content streams differ or could not be compared.</string>
+    <string name="vanguard_stream_limits">Matching encoded bytes do not prove matching appearance. Different bytes may result from rewriting or compression rather than content loss. Resources and rendering were not compared.</string>
 </resources>

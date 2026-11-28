@@ -868,7 +868,18 @@ object WorkerResponseValidator {
         require(corrected == 0 || method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
             "Unexpected page tree correction in non-repair operation"
         }
-        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected)
+        val evidence = if (obj.has("streamEvidence")) {
+            require(method == RecoveryMethod.RESERIALIZE || method == RecoveryMethod.NORMALIZE_CONTAINER) {
+                "Unexpected page stream evidence for recovery method"
+            }
+            val raw = requireObject(obj.get("streamEvidence"))
+            val matched = raw.requireInt("matchingPages", min = 0, max = output)
+            val different = raw.requireInt("differentPages", min = 0, max = output)
+            val unknown = raw.requireInt("unmeasuredPages", min = 0, max = output)
+            require(matched + different + unknown == output) { "Page evidence counts do not partition output pages" }
+            PageStreamEvidence(matched, different, unknown)
+        } else null
+        return RecoveryAccounting(method, input, output, header, prefix, eof, before, after, corrected, evidence)
     }
 
     private fun parseStandardOutput(root: Any?, targetCount: Int, allowRecovery: Boolean = false): StandardOutputContract {
